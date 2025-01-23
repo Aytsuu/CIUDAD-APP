@@ -1,6 +1,10 @@
 ## Tech Stack
 - **Frontend**: [React](https://react.dev/)
+
+- **UI Component**: [Shadcn](https://ui.shadcn.com/docs/installation/vite)
+
 - **Mobile**: [React-Native](https://reactnative.dev/)
+
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
   
 
