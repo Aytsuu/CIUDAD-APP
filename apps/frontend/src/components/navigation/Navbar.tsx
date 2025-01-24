@@ -1,10 +1,14 @@
 import { MessageCircle, Search } from "lucide-react";
+import SanRoqueLogo from "../../assets/images/sanRoqueLogo.svg";
 
 export function Navbar() {
   return (
     <header className="h-14 bg-white text-[#263D67] flex items-center justify-between px-6 w-full drop-shadow-md">
       <div className="flex items-center space-x-4 text-lg font-semibold">
-        <div className="h-[30px] w-[30px] rounded-full bg-black"></div>
+        <div className="h-[30px] w-[30px] rounded-full ">
+          {" "}
+          <img src={SanRoqueLogo} alt="Barangay Logo" />{" "}
+        </div>
         <p>CIUDAD</p>
       </div>
 
