@@ -1,7 +1,7 @@
 ## Tech Stack
 - **Frontend**: [React](https://react.dev/)
 
-- **UI Component**: [DaisyUI](https://daisyui.com/components)
+- **UI Component**: [HyperUI](https://www.hyperui.dev/)
 
 - **Mobile**: [React-Native](https://reactnative.dev/)
 
