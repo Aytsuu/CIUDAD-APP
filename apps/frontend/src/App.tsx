@@ -1,12 +1,11 @@
-import './App.css'
+import MainLayout from "./layout/MainLayout";
 
 function App() {
-
   return (
     <>
-    <div className="">hello</div>
+      <MainLayout children />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
