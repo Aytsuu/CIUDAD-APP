@@ -42,3 +42,7 @@ We follow a consistent naming convention for branches to maintain clarity and or
   Example:  
   `frontend/experiment/test-dark-mode`  
   `backend/experiment/test-api-performance`
+
+## Branch Script 
+### Create a branch (if clone)
+git checkout -b [branch_name]
