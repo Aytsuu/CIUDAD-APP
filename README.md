@@ -1,7 +1,7 @@
 ## Tech Stack
 - **Frontend**: [React](https://react.dev/)
 
-- **UI Component**: [Shadcn](https://ui.shadcn.com/docs/installation/vite)
+- **UI Component**: [DaisyUI](https://daisyui.com/components)
 
 - **Mobile**: [React-Native](https://reactnative.dev/)
 
