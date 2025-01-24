@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react"; // Ensure to import the ChevronDown properly.
+import { ChevronDown, LogOut } from "lucide-react"; // Ensure to import the ChevronDown properly.
 
 const menuItems = [
   {
@@ -31,7 +31,7 @@ const menuItems = [
     label: "Gender & Development",
     subItems: [
       { label: "Records", link: "record" },
-      { label: "Announcement", link: "announcement" }
+      { label: "Announcement", link: "announcement" },
     ],
   },
   {
@@ -58,7 +58,10 @@ export function Sidebar() {
               {item.subItems ? (
                 <details className="group [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer items-center justify-between rounded-lg px-4 py-2 text-[#2D4A72] hover:bg-[#1273B8]/10 hover:text-[#1273B8]">
-                  <span className="text-sm font-['Poppins'] font-medium"> {item.label}</span>
+                    <span className="text-sm font-['Poppins'] font-medium">
+                      {" "}
+                      {item.label}
+                    </span>
                     <span className="shrink-0 transition duration-300 group-open:-rotate-180">
                       <ChevronDown size={20} />
                     </span>
@@ -91,7 +94,12 @@ export function Sidebar() {
         </ul>
       </div>
 
-      <div className="sticky inset-x-0 bottom-0 border-t border-gray-100"></div>
+      <div className="sticky inset-x-0 bottom-0 border-t border-gray-100 px-4 pb-2 pt-2">
+        <div className="flex cursor-pointer items-center justify-center space-x-4 py-2 px-4 text-[#2D4A72]  hover:text-[#1273B8] hover:bg-[#1273B8]/10 hover:rounded-[10px] font-['Poppins'] font-medium">
+          <LogOut />
+          <span>Signout</span>
+        </div>
+      </div>
     </div>
   );
 }
