@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "tracking-application",
-    "slug": "tracking-application",
+    "name": "tracking-mobile",
+    "slug": "tracking-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
