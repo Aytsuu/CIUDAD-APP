@@ -8,59 +8,6 @@
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
   
 
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js**
-- **Git**
-- **npm**
-
-### Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/aytsuu008/CIUDAD-APP.git
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
-   cd apps
-   ```
-
-3. Install frontend dependencies:
-
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-4. Install mobile dependencies:
-
-   ```bash
-   cd barangay-mobile
-   npm install
-   ```
-
-### Running the Project
-
-#### Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
-#### Mobile
-
-```bash
-cd barangay-mobile
-npx expo start
-```
 
 ## Branch Naming Conventions
 
@@ -96,12 +43,8 @@ We follow a consistent naming convention for branches to maintain clarity and or
   `frontend/experiment/test-dark-mode`  
   `backend/experiment/test-api-performance`
 
----
 ## Branch Script 
-
-#### Create a branch (if clone)
-
-```bash
+### Create a branch (if clone)
 git checkout -b [branch_name]
 ```
 
