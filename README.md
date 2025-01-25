@@ -115,11 +115,17 @@ git status
 #### Merged branch
 
 ```bash
-git revert -m 1 [commit hash code]
+git revert -m 1 [commit-hash]
 ```
 
-#### Pushed Updates
+#### Pushed updates
 
 ```bash
-git revert [commit hash code]
+git revert [commit-hash]
+```
+
+#### Restore all files from a specific commit
+
+```bash
+git checkout [commit-hash] -- .
 ```
