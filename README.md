@@ -46,3 +46,6 @@ We follow a consistent naming convention for branches to maintain clarity and or
 ## Branch Script 
 ### Create a branch (if clone)
 git checkout -b [branch_name]
+
+### Check your current branch
+git status
