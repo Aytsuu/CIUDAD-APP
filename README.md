@@ -99,13 +99,13 @@ We follow a consistent naming convention for branches to maintain clarity and or
 ---
 ## Branch Script 
 
-### Create a branch (if clone)
+#### Create a branch (if clone)
 
 ```bash
 git checkout -b [branch_name]
 ```
 
-### Check your current branch
+#### Check your current branch
 
 ```bash
 git status
