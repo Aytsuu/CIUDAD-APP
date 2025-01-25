@@ -1,66 +1,74 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import "../../global.css";
+import { Image, StyleSheet, Platform } from 'react-native';
 
-const LoginScreen = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const router = useRouter();
+import { HelloWave } from '@/components/HelloWave';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
-  const handleLogin = () => {
-    console.log('Username:', username);
-    console.log('Password:', password);
-  };
-
-  const handleSignUp = () => {
-    router.push('/AgeVerification');
-  };
-
+export default function HomeScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-[#ECF8FF]">
-      <Image
-        source={require('../../assets/images/logo.png')}
-        className="w-30 h-30 mb-7"
-      />
-
-      <TextInput
-        className="w-[355px] h-[60px] border border-gray-300 rounded-md px-4 my-3.5 bg-white text-[16px]"
-        placeholder="Username/Email"
-        value={username}
-        onChangeText={setUsername}
-      />
-      <TextInput
-        className="w-[355px] h-[60px] border border-gray-300 rounded-md px-4 my-3.5 bg-white text-[16px]"
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      
-      <TouchableOpacity className="mt-3.5">
-        <Text className="text-black font-extrabold text-[16px]">Forgot Password?</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        className="bg-[#00A8F0] rounded-md w-[355px] py-3.5 items-center justify-center my-8 h-[60px]"
-        onPress={handleLogin}
-      >
-        <Text className="text-white font-bold text-[23px]">Login</Text>
-      </TouchableOpacity>
-      
-      <Text className="mt-2">
-        <Text className="text-black font-extrabold text-[16px]">
-          Don't have an account?
-        </Text>
-      </Text>
-      <TouchableOpacity className="mt-8" onPress={handleSignUp}>
-        <Text className="text-black font-extrabold underline text-[18px]">
-          Sign Up
-        </Text>
-      </TouchableOpacity>
-    </View>
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+        <HelloWave />
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText>
+          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
+          Press{' '}
+          <ThemedText type="defaultSemiBold">
+            {Platform.select({
+              ios: 'cmd + d',
+              android: 'cmd + m',
+              web: 'F12'
+            })}
+          </ThemedText>{' '}
+          to open developer tools.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+        <ThemedText>
+          Tap the Explore tab to learn more about what's included in this starter app.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText>
+          When you're ready, run{' '}
+          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
+          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        </ThemedText>
+      </ThemedView>
+    </ParallaxScrollView>
   );
-};
+}
 
-export default LoginScreen;
+const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+  },
+});
