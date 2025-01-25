@@ -56,10 +56,6 @@ git status
 
 ## Revert Script (If you accidentally commit on main branch)
 
-#### ↓ Click the copy icon to get the full hash ↓
-![image](https://github.com/user-attachments/assets/7067476c-6c5e-4c27-a1a6-03f2174242bc)
-
-
 #### Merged branch
 
 ```bash
