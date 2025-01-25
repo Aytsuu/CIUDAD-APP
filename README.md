@@ -110,3 +110,17 @@ git checkout -b [branch_name]
 ```bash
 git status
 ```
+
+## Revert Script (If you accidentally commit on main branch)
+
+#### Merged branch
+
+```bash
+git revert -m 1 [commit hash code]
+```
+
+#### Pushed Updates
+
+```bash
+git revert [commit hash code]
+```
