@@ -4,8 +4,17 @@ import "../../global.css";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Entypo from '@expo/vector-icons/Entypo';
+import { useRouter } from 'expo-router';
 
+ 
 export default function Announcements() {
+
+  const router = useRouter();
+
+  const notif = () => {
+    router.push('/my-notification');
+  }; 
+
   const announcements = [
     { id: 1, title: 'DSWD Ayuda', subtitle: 'Barangay Council', time: '6 hours ago', contents: 'testing testing testing testing'},
     { id: 2, title: 'DSWD Ayuda', subtitle: 'Barangay Council', time: '6 hours ago', contents: 'testing testing testing testing' },
@@ -23,7 +32,7 @@ export default function Announcements() {
         <TouchableOpacity className="mr-3">
           <Entypo name="dots-three-horizontal" size={24} color="black" />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={notif}>
           <MaterialCommunityIcons name="bell" size={24} color="black" />
         </TouchableOpacity>
       </View>
