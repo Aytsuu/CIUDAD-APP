@@ -64,7 +64,7 @@ export default function Notification() {
   ];
 
   return (
-    <View className="flex-1 bg-gray-900 px-4 pt-4">
+    <View className="flex-1 bg-[#2F2F2F] px-4 pt-4">
       
       <View className="flex-row justify-between items-center mb-5">
         <Text className="text-[30px] font-semibold text-white mx-auto text-center mt-11">Notification</Text>
