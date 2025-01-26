@@ -64,6 +64,7 @@ export default function Notification() {
   ];
 
   return (
+    // background color
     <View className="flex-1 bg-[#2F2F2F] px-4 pt-4">
       
       <View className="flex-row justify-between items-center mb-5">
