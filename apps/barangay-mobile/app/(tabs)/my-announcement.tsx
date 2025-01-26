@@ -42,10 +42,8 @@ export default function Announcements() {
             key={announcement.id}
             className="bg-white rounded-lg shadow-md p-4 mb-4"
           >
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-lg font-bold text-gray-800">
-                {announcement.title}
-              </Text>
+            <View className="flex-row justify-between items-center">
+              <Text className="text-lg font-bold text-gray-800">{announcement.title}</Text>
               <View className="w-2 h-2 bg-red-500 rounded-full" />
             </View>
             <Text className="text-sm text-gray-600">{announcement.subtitle} - {announcement.time} </Text>
