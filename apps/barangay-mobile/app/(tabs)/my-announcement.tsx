@@ -43,9 +43,9 @@ export default function Announcements() {
         <Text className="text-gray-700 text-base mr-2">All <AntDesign name="down" size={16} color="gray" /></Text>
         </TouchableOpacity>
       </View>
-
+      
       {/* Announcement Contents */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 16 }} className='mb-4'>
+      <ScrollView contentContainerStyle={{ paddingBottom: 16 }} className='mb-4' showsVerticalScrollIndicator={false}>
         {announcements.map((announcement) => (
           <View
             key={announcement.id}
