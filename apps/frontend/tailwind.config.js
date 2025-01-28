@@ -68,7 +68,9 @@ module.exports = {
 				snow: '#F6FAFF',
 				blue: '#1273B8',
 				darkBlue1: '#263D67',
-				darkBlue2: '#2D4A72'
+				darkBlue2: '#2D4A72',
+				gray: '#CECECE',
+				teal: '#129073'
     		}
     	}
     },

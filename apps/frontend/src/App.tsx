@@ -1,4 +1,4 @@
-import { AdministrativeRecord } from "./pages/administrative-record"
+import { AdministrativeRecord } from "./pages/administration/administrative-record"
 
 function App() {
 
