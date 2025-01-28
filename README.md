@@ -1,7 +1,7 @@
 ## Tech Stack
 - **Frontend**: [React](https://react.dev/)
 
-- **UI Component**: [HyperUI](https://www.hyperui.dev/)
+- **UI Component**: [Shadcn](https://ui.shadcn.com/docs/installation/vite)
 
 - **Mobile**: [React-Native](https://reactnative.dev/)
 
