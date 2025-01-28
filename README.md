@@ -67,34 +67,39 @@ npx expo start
 We follow a consistent naming convention for branches to maintain clarity and organization.
 
 - **Feature Branches**:  
-  `frontend/feature/{feature-name}` or `backend/feature/{feature-name}`  
+  `frontend/feature/{feature-name}` or `backend/feature/{feature-name}` or `mobile/feature/{feature-name}`
   Example:  
   `frontend/feature/add-login-page`  
   `backend/feature/create-user-api`
+  `mobile/feature/register-page`
 
 - **Bugfix Branches**:  
-  `frontend/bugfix/{bugfix-name}` or `backend/bugfix/{bugfix-name}`  
+  `frontend/bugfix/{bugfix-name}` or `backend/bugfix/{bugfix-name}` or `mobile/bugfix/{feature-name}`
   Example:  
   `frontend/bugfix/fix-header-alignment`  
   `backend/bugfix/fix-user-authentication`
+  `mobile/bugfix/fix-register-page`
 
 - **Hotfix Branches**:  
-  `frontend/hotfix/{hotfix-name}` or `backend/hotfix/{hotfix-name}`  
+  `frontend/hotfix/{hotfix-name}` or `backend/hotfix/{hotfix-name}` or `mobile/hotfix/{feature-name}`  
   Example:  
   `frontend/hotfix/fix-form-validation`  
   `backend/hotfix/fix-database-connection`
+  `mobile/hotfix/fix-register-page`
 
 - **Release Branches**:  
-  `frontend/release/{version}` or `backend/release/{version}`  
+  `frontend/release/{version}` or `backend/release/{version}` or `mobile/release/{feature-name}`   
   Example:  
   `frontend/release/1.0.0`  
   `backend/release/1.0.0`
-
+  `mobile/release/1.0.0`
+  
 - **Experimental Branches**:  
-  `frontend/experiment/{experiment-name}` or `backend/experiment/{experiment-name}`  
+  `frontend/experiment/{experiment-name}` or `backend/experiment/{experiment-name}` or `mobile/experiment/{feature-name}`   
   Example:  
   `frontend/experiment/test-dark-mode`  
   `backend/experiment/test-api-performance`
+  `mobile/experiment/test-ai`
 
 ## Branch Script 
 #### Create a branch (if clone)
