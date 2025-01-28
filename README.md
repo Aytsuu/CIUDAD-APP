@@ -1,5 +1,5 @@
 ## Tech Stack
-- **Frontend**: [React](https://react.dev/)
+- **Frontend**: [React](https://react.dev/) + [Vite](https://vite.dev/guide/)
 
 - **UI Component**: [Shadcn](https://ui.shadcn.com/docs/installation/vite)
 
