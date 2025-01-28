@@ -9,6 +9,9 @@ module.exports = {
     			md: 'calc(var(--radius) - 2px)',
     			sm: 'calc(var(--radius) - 4px)'
     		},
+			fontFamily:{
+				poppins: ['Poppins', 'sans-serif']
+			},
     		colors: {
     			background: 'hsl(var(--background))',
     			foreground: 'hsl(var(--foreground))',
@@ -59,7 +62,13 @@ module.exports = {
     				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
     				border: 'hsl(var(--sidebar-border))',
     				ring: 'hsl(var(--sidebar-ring))'
-    			}
+    			},
+
+				// Use the following color scheme
+				snow: '#F6FAFF',
+				blue: '#1273B8',
+				darkBlue1: '#263D67',
+				darkBlue2: '#2D4A72'
     		}
     	}
     },
