@@ -144,3 +144,49 @@ git revert [commit-hash]
 ```bash
 git checkout [commit-hash] -- .
 ```
+
+---
+## Components
+
+### How to Use
+
+#### Filter Accordion
+
+```bash
+
+const categoryOptions = [
+  { id: "electronics", label: "Electronics", count: 12, checked: false },
+  { id: "fashion", label: "Fashion", count: 8, checked: false },
+  { id: "home", label: "Home", count: 5, checked: false },
+];
+
+function CategoryFilter() {
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  const handleCategoryChange = (id: string, checked: boolean) => {
+    setSelectedCategories((prev) =>
+      checked ? [...prev, id] : prev.filter((category) => category !== id)
+    );
+  };
+
+  const handleReset = () => {
+    setSelectedCategories([]);
+  };
+
+  return (
+    <FilterAccordion
+      title="Categories"
+      options={categoryOptions.map((option) => ({
+        ...option,
+        checked: selectedCategories.includes(option.id),
+      }))}
+      selectedCount={selectedCategories.length}
+      onChange={handleCategoryChange}
+      onReset={handleReset}
+    />
+  );
+}
+
+```
+
+---
