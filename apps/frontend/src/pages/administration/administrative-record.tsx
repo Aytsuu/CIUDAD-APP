@@ -1,3 +1,4 @@
+
 import {
     Table,
     TableBody,
@@ -7,6 +8,8 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
+
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 import { Button } from "@/components/ui/button";
 import { Plus, SquarePen } from "lucide-react";
@@ -40,25 +43,30 @@ export function TableRecord({}){
     )
 }
 
-
 export function AdministrativeRecord(){
 
     return(
         <main className="relative w-full h-[100vh] bg-snow flex flex-col justify-center items-center">
-            <div className="w-1/2 h-1/2 flex flex-col gap-3">
+            <div className="w-1/2 h-2/3 flex flex-col gap-3">
                 <div className="flex flex-row gap-2">
-                    <Button className="bg-blue hover:bg-blue hover:opacity-[80%]"> 
+                    <Button 
+                        className="bg-blue hover:bg-blue hover:opacity-[80%]"
+                    > 
                         <Plus /> Register
                     </Button>
-                    <Button variant='outline' className="border-darkBlue1"> 
+                    <Button 
+                        variant='outline' 
+                        className="border-2 border-blue text-darkBlue1 hover:bg-white hover:opacity-[80%]"
+                    > 
                         Position
                     </Button>
                 </div>
                 <div className="w-full h-full bg-white border border-gray rounded-[10px] p-[10px]">
                     <TableRecord/>
                 </div>
-                <TableCaption>A list of your recent invoices.</TableCaption>
-            </div>
+                <PaginationLayout/>
+                <TableCaption>A list of your staffs.</TableCaption>
+            </div>  
         </main>
     )
 
