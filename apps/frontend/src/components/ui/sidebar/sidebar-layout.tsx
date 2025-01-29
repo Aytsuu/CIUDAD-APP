@@ -11,4 +11,4 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
       </main>
     </SidebarProvider>
   )
-}
+} 
