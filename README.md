@@ -35,6 +35,9 @@
    ```bash
    cd frontend
    npm install
+   npm install -D tailwindcss postcss autoprefixer
+   npm install -D @types/node
+   npx shadcn@latest init
    ```
    
 4. Install mobile dependencies:
