@@ -1,6 +1,6 @@
 interface FilterAccordionProps {
     title: string;
-    options: { id: string; label: string; count: number; checked: boolean }[];
+    options: { id: string; label: string; checked: boolean }[];
     selectedCount: number;
     onReset: () => void;
     onChange: (id: string, checked: boolean) => void;
@@ -61,7 +61,7 @@ interface FilterAccordionProps {
                     className="size-5 rounded border-gray-300"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    {option.label} ({option.count}+)
+                    {option.label}
                   </span>
                 </label>
               </li>
