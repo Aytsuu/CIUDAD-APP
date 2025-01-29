@@ -63,6 +63,14 @@ cd barangay-mobile
 npx expo start
 ```
 
+### Updating your Main Branch
+
+```bash
+git fetch origin
+git checkout main
+git pull
+```
+
 ---
 
 ## Branch Naming Conventions
