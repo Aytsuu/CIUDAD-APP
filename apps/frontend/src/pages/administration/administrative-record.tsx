@@ -29,18 +29,20 @@ export function AdministrativeRecord(){
     };
 
     return(
-        <main className="relative w-full h-[100vh] bg-snow flex flex-col justify-center items-center">
-            <div className="w-2/3 h-2/3 flex flex-row gap-3">
-                <div className="w-full h-full bg-white border border-gray rounded-[10px] p-[10px] flex flex-col gap-2">
-                    <Button 
-                        className="bg-blue hover:bg-blue hover:opacity-[80%]"
-                    > 
-                        <Plus /> Register a Staff
-                    </Button>
+        <div className="relative w-full h-[100vh] bg-snow flex flex-col justify-center items-center">
+            <div className="w-[80%] h-2/3 flex flex-row gap-3">
+                <div className="w-full h-full bg-white border border-gray rounded-[10px] p-5 flex flex-col gap-3">
+                    <div className="w-full flex justify-end">
+                        <Button 
+                            className="bg-blue hover:bg-blue hover:opacity-[80%]"
+                        > 
+                            <Plus /> Register a Staff
+                        </Button>
+                    </div>
                     <TableRecord/>
                     <PaginationLayout/>
                 </div>
-                <div className="w-1/4 bg-white border border-gray rounded-[10px] p-[10px] flex flex-col gap-2">
+                <div className="w-1/4 bg-white border border-gray rounded-[10px] p-5 flex flex-col gap-2">
                     <NewPositionDialog/>
                     <FilterAccordion
                         title="Secretary"
@@ -55,7 +57,7 @@ export function AdministrativeRecord(){
                 </div>
             </div>  
             <TableCaption>A list of all staffs and positions.</TableCaption>
-        </main>
+        </div>
     )
 
 }
