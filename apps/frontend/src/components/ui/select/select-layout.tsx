@@ -17,11 +17,13 @@ import {
     label: string,
     placeholder: string
     options: Option[],
+    value: string,
+    onChange: (value: string) => void
   }
    
-  export function SelectLayout({label, placeholder, options}: SelectProps) {
+  export function SelectLayout({label, placeholder, options, value, onChange}: SelectProps) {
     return (
-      <Select>
+      <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

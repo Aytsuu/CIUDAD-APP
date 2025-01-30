@@ -31,6 +31,7 @@ export default function BlotterForm(){
             complaintDate: "",
             complaintType: "",
             complaintAllegation: "",
+            complaintImg: null,
         },
     });
 
@@ -144,7 +145,7 @@ export default function BlotterForm(){
                                     <FormField
                                         control={form.control}
                                         name="complaintType"
-                                        render={({}) => (
+                                        render={({ field }) => (
                                             <FormItem>
                                             <FormLabel>Type</FormLabel> 
                                             <FormControl>
@@ -152,6 +153,8 @@ export default function BlotterForm(){
                                                     label="Incidents"
                                                     placeholder="Select"
                                                     options={[{id: "1", name: "bahog tae"}]}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -175,12 +178,19 @@ export default function BlotterForm(){
 
                                 <FormField
                                     control={form.control}
-                                    name="complaintAllegation"
+                                    name="complaintImg"
                                     render={({ field }) => (
                                         <FormItem>
-                                        <FormLabel>Supporting Document</FormLabel>
+                                        <FormLabel>Supporting Document (Image)</FormLabel>
                                         <FormControl>
-                                            <Input type="file" {...field} />
+                                            <Input 
+                                                type="file"
+                                                onChange={(e)=>{
+                                                    const file = e.target.files ? e.target.files[0] : null;
+                                                    field.onChange(file);
+                                                }}
+                                                ref={field.ref}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
