@@ -41,134 +41,98 @@ export default function BlotterForm(){
     }
 
     return(
-        <div className="w-full h-[100vh] bg-snow flex flex-col justify-center items-center">
- 
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-1/2 h-2/8 bg-white border border-gray rounded-[10px] p-5 overflow-auto">
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full h-2/8 rounded-[10px] p-5 overflow-auto">
 
-                    <div className="flex flex-row gap-4">
+                <div className="flex flex-row gap-4">
 
-                        {/* Accused's Details */}
+                    {/* Accused's Details */}
 
-                        <div className="w-full flex flex-col gap-10 p-5">
-                            <div className="w-full flex flex-col gap-4">
-                                <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Accused</Label>
-                                <div className="w-full grid grid-cols-1 gap-3"> 
+                    <div className="w-full flex flex-col gap-10 p-5">
+                        <div className="w-full flex flex-col gap-4">
+                            <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Accused</Label>
+                            <div className="w-full grid grid-cols-1 gap-3"> 
+                                
+                                <FormField
+                                    control={form.control}
+                                    name="accusedName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Name</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                     
-                                    <FormField
-                                        control={form.control}
-                                        name="accusedName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Name</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                        
-                                    <FormField
-                                        control={form.control}
-                                        name="accusedAddress"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Address</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Complainant's Details */}
-
-                            <div className="w-full flex flex-col gap-4">
-                                <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Complainant</Label>
-                                <div className="w-full grid grid-cols-1 gap-3"> 
-                                    <FormField
-                                        control={form.control}
-                                        name="complainantName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Name</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                            
-                                    <FormField
-                                        control={form.control}
-                                        name="complainantAddress"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Address</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="accusedAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Address</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </div>
 
-                        {/* Complaint Details */}
+                        {/* Complainant's Details */}
 
-                        <div className="w-full flex flex-col gap-4 p-5">
-                            <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Incident Details</Label>
-                            <div className="w-full h-full grid grid-cols-1 gap-3">
-                                <div className="w-full flex flex-row gap-3">
-                                    <FormField
-                                        control={form.control}
-                                        name="complaintDate"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Date</FormLabel>
-                                            <FormControl>
-                                                <Input type="date" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="complaintType"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Type</FormLabel> 
-                                            <FormControl>
-                                                <SelectLayout
-                                                    label="Incidents"
-                                                    placeholder="Select"
-                                                    options={[{id: "1", name: "bahog tae"}]}
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                        <div className="w-full flex flex-col gap-4">
+                            <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Complainant</Label>
+                            <div className="w-full grid grid-cols-1 gap-3"> 
                                 <FormField
                                     control={form.control}
-                                    name="complaintAllegation"
+                                    name="complainantName"
                                     render={({ field }) => (
                                         <FormItem>
-                                        <FormLabel>Allegation</FormLabel>
+                                        <FormLabel>Name</FormLabel>
                                         <FormControl>
-                                            <Textarea className="h-[11rem]" placeholder="Please enter your allegations." {...field}/>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                        
+                                <FormField
+                                    control={form.control}
+                                    name="complainantAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Address</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Complaint Details */}
+
+                    <div className="w-full flex flex-col gap-4 p-5">
+                        <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Incident Details</Label>
+                        <div className="w-full h-full grid grid-cols-1 gap-3">
+                            <div className="w-full flex flex-row gap-3">
+                                <FormField
+                                    control={form.control}
+                                    name="complaintDate"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Date</FormLabel>
+                                        <FormControl>
+                                            <Input type="date" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -177,18 +141,17 @@ export default function BlotterForm(){
 
                                 <FormField
                                     control={form.control}
-                                    name="complaintImg"
+                                    name="complaintType"
                                     render={({ field }) => (
                                         <FormItem>
-                                        <FormLabel>Supporting Document (Image)</FormLabel>
+                                        <FormLabel>Type</FormLabel> 
                                         <FormControl>
-                                            <Input 
-                                                type="file"
-                                                onChange={(e)=>{
-                                                    const file = e.target.files ? e.target.files[0] : null;
-                                                    field.onChange(file);
-                                                }}
-                                                ref={field.ref}
+                                            <SelectLayout
+                                                label="Incidents"
+                                                placeholder="Select"
+                                                options={[{id: "1", name: "bahog tae"}]}
+                                                value={field.value}
+                                                onChange={field.onChange}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -196,19 +159,53 @@ export default function BlotterForm(){
                                     )}
                                 />
                             </div>
+                            <FormField
+                                control={form.control}
+                                name="complaintAllegation"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Allegation</FormLabel>
+                                    <FormControl>
+                                        <Textarea className="h-[11.5rem]" placeholder="Please enter your allegations." {...field}/>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="complaintImg"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Supporting Document (Image)</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            type="file"
+                                            onChange={(e)=>{
+                                                const file = e.target.files ? e.target.files[0] : null;
+                                                field.onChange(file);
+                                            }}
+                                            ref={field.ref}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </div>
+                </div>
 
-                    <div className="w-full p-5 flex flex-row justify-end"> 
-                        <Button 
-                            type="submit"
-                            className="bg-blue hover:bg-blue hover:opacity-[80%]"
-                        >
-                            Submit
-                        </Button>
-                    </div>
-                </form>
-            </Form>
-        </div>
+                <div className="w-full p-5 flex flex-row justify-end"> 
+                    <Button 
+                        type="submit"
+                        className="bg-blue hover:bg-blue hover:opacity-[80%]"
+                    >
+                        Submit
+                    </Button>
+                </div>
+            </form>
+        </Form>
     );
 }

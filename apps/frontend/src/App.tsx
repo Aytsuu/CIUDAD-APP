@@ -1,10 +1,10 @@
-import BlotterForm from "./pages/complaint/blotter-form"
+import { BlotterRecord } from "./pages/complaint/blotter-record"
 
 function App() {
 
   return (
     <>
-      <BlotterForm/>
+      <BlotterRecord/>
     </> 
   )
 }
