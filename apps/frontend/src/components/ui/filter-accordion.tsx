@@ -1,6 +1,6 @@
 interface FilterAccordionProps {
     title: string;
-    options: { id: string; label: string; count: number; checked: boolean }[];
+    options: { id: string; label: string; checked: boolean }[];
     selectedCount: number;
     onReset: () => void;
     onChange: (id: string, checked: boolean) => void;
@@ -14,7 +14,7 @@ interface FilterAccordionProps {
     onChange,
   }: FilterAccordionProps) {
     return (
-      <details className="overflow-hidden rounded border border-gray-300 [&_summary::-webkit-details-marker]:hidden">
+      <details className="overflow-hidden rounded-[10px] border border-gray-300 [&_summary::-webkit-details-marker]:hidden">
         <summary className="flex cursor-pointer items-center justify-between gap-2 bg-white p-4 text-gray-900 transition">
           <span className="text-sm font-medium">{title}</span>
   
@@ -61,7 +61,7 @@ interface FilterAccordionProps {
                     className="size-5 rounded border-gray-300"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    {option.label} ({option.count}+)
+                    {option.label}
                   </span>
                 </label>
               </li>
