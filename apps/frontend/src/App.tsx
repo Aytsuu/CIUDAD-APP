@@ -1,9 +1,10 @@
+import Dashboard from './pages/CouncilDashboard.tsx'
 
 function App() {
 
   return (
     <>
-
+      <Dashboard/>
     </> 
   )
 }
