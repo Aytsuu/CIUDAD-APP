@@ -6,7 +6,9 @@
 - **Mobile**: [React-Native](https://reactnative.dev/)
 
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
-  
+
+<br></br>
+
 ---
 
 ## Getting Started
@@ -72,6 +74,8 @@ git pull
 
 ---
 
+<br></br>
+
 ## Branch Naming Conventions
 
 We follow a consistent naming convention for branches to maintain clarity and organization.
@@ -112,6 +116,7 @@ We follow a consistent naming convention for branches to maintain clarity and or
   `mobile/experiment/test-ai`
 
 ## Branch Script 
+
 #### Create a branch (if clone)
 ```bash
 git checkout -b [branch_name]
@@ -120,6 +125,8 @@ git checkout -b [branch_name]
 ```bash
 git status
 ```
+
+<br></br>
 
 ## Revert Script (If you accidentally commit on main branch)
 
@@ -145,6 +152,18 @@ git revert [commit-hash]
 git checkout [commit-hash] -- .
 ```
 
+<br></br>
+
+## In case you renamed your branch and can't push changes
+
+#### You need to set the correct tracking branch (the remote branch for the renamed local branch).
+
+First, run the following command to set the upstream branch to the remote version of your renamed branch (Sample):
+```bash
+git push --set-upstream origin frontend/feature/blotter-complaint-page
+```
+
+<br></br>
 ---
 ## Components
 
