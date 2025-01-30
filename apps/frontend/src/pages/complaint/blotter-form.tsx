@@ -19,15 +19,6 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 
-
-// Global Styling
-const style = {
-    0: "w-full flex flex-row gap-10",
-    1: "w-[10%]",
-    2: "w-full flex flex-row gap-3",
-}
-
-
 export default function BlotterForm(){
 
     const form = useForm<z.infer<typeof ComplaintformSchema>>({
@@ -51,53 +42,54 @@ export default function BlotterForm(){
 
     return(
         <div className="w-full h-[100vh] bg-snow flex flex-col justify-center items-center">
-            <div className="w-1/2 h-1/2 bg-white border border-gray rounded-[10px] p-5 flex flex-col gap-10 overflow-auto">        
+ 
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="w-1/2 h-2/8 bg-white border border-gray rounded-[10px] p-5 overflow-auto">
 
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <div className="flex flex-row gap-4">
 
                         {/* Accused's Details */}
 
-                        <div className={style[0]}>
-                            <Label className={style[1]}>Accused:</Label>
-                            <div className={style[2]}> 
-                                
-                                <FormField
-                                    control={form.control}
-                                    name="accusedName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                        <div className="w-full flex flex-col gap-10 p-5">
+                            <div className="w-full flex flex-col gap-4">
+                                <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Accused</Label>
+                                <div className="w-full grid grid-cols-1 gap-3"> 
                                     
-                                <FormField
-                                    control={form.control}
-                                    name="accusedAddress"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Address</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                    <FormField
+                                        control={form.control}
+                                        name="accusedName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Name</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                        
+                                    <FormField
+                                        control={form.control}
+                                        name="accusedAddress"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Address</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Complainant's Details */}
+                            {/* Complainant's Details */}
 
-                        <div className={style[0]}>
-                            <Label className={style[1]}>Complainant:</Label>
-                            <div className={style[2]}> 
-                                <div className="flex flex-col gap-3">
+                            <div className="w-full flex flex-col gap-4">
+                                <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Complainant</Label>
+                                <div className="w-full grid grid-cols-1 gap-3"> 
                                     <FormField
                                         control={form.control}
                                         name="complainantName"
@@ -125,13 +117,22 @@ export default function BlotterForm(){
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+                            </div>
+                        </div>
 
+                        {/* Complaint Details */}
+
+                        <div className="w-full flex flex-col gap-4 p-5">
+                            <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Incident Details</Label>
+                            <div className="w-full h-full grid grid-cols-1 gap-3">
+                                <div className="w-full flex flex-row gap-3">
                                     <FormField
                                         control={form.control}
                                         name="complaintDate"
                                         render={({ field }) => (
                                             <FormItem>
-                                            <FormLabel>Date of Incident</FormLabel>
+                                            <FormLabel>Date</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} />
                                             </FormControl>
@@ -145,7 +146,7 @@ export default function BlotterForm(){
                                         name="complaintType"
                                         render={({}) => (
                                             <FormItem>
-                                            <FormLabel>Type of Incident</FormLabel>
+                                            <FormLabel>Type</FormLabel> 
                                             <FormControl>
                                                 <SelectLayout
                                                     label="Incidents"
@@ -158,31 +159,47 @@ export default function BlotterForm(){
                                         )}
                                     />
                                 </div>
+                                <FormField
+                                    control={form.control}
+                                    name="complaintAllegation"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Allegation</FormLabel>
+                                        <FormControl>
+                                            <Textarea className="h-[11rem]" placeholder="Please enter your allegations." {...field}/>
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="complaintAllegation"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Supporting Document</FormLabel>
+                                        <FormControl>
+                                            <Input type="file" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </div>
+                    </div>
 
-                        {/* Allegation */}
-
-                        <div className="w-full flex flex-col gap-3">
-                            <FormField
-                                control={form.control}
-                                name="complaintAllegation"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Allegation</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Please enter your allegations." {...field}/>
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <Button type="submit">Submit</Button>
-                    </form>
-                </Form>
-                
-            </div>
+                    <div className="w-full p-5 flex flex-row justify-end"> 
+                        <Button 
+                            type="submit"
+                            className="bg-blue hover:bg-blue hover:opacity-[80%]"
+                        >
+                            Submit
+                        </Button>
+                    </div>
+                </form>
+            </Form>
         </div>
     );
 }

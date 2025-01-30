@@ -15,9 +15,7 @@ const ComplaintformSchema = z.object({
     complainantAddress: z.string({
         message: " ",
     }),
-    complaintDate: z.string({
-        message: " ",
-    }).date(),
+    complaintDate: z.string().date(),
     complaintType: z.string({
         message: " ",
     }),
