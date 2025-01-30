@@ -155,9 +155,9 @@ git checkout [commit-hash] -- .
 ```bash
 
 const categoryOptions = [
-  { id: "electronics", label: "Electronics", count: 12, checked: false },
-  { id: "fashion", label: "Fashion", count: 8, checked: false },
-  { id: "home", label: "Home", count: 5, checked: false },
+  { id: "electronics", label: "Electronics", checked: false },
+  { id: "fashion", label: "Fashion", checked: false },
+  { id: "home", label: "Home", checked: false },
 ];
 
 function CategoryFilter() {
