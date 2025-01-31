@@ -133,7 +133,7 @@ export const FamilyPlanningSchema = z.object({
   }),
 
   violenceAgainstWomen: z.object({
-    unpleasantRelationship: z.boolean(),
+    unpleasantRelawtionship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
     referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).refine((val) => val !== undefined, { message: "Please choose referral" }),

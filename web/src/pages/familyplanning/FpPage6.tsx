@@ -36,7 +36,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
   )
 
   const form = useForm<FormData>({
-    resolver: zodResolver(page6Schema),
+    // resolver: zodResolver(page6Schema),
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
     },
@@ -417,7 +417,6 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                     serviceProvisionRecords: updatedRecords,
                   })
 
-                  onSubmitFinal()
                 }}
               >
                 Submit

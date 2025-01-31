@@ -22,7 +22,7 @@ type Page1Props = {
 
 export default function FamilyPlanningForm({ onNext2, updateFormData, formData }: Page1Props) {
   const form = useForm<FormData>({
-    resolver: zodResolver(page1Schema),
+    // resolver: zodResolver(page1Schema),
     defaultValues: formData,
     values: formData,
     mode: "onBlur", // Changed to onBlur for better user experience

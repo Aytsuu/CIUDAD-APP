@@ -1,5 +1,5 @@
 "use client"
-
+import { obstetrical, risks_sti } from "./PostRequest"
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -166,7 +166,8 @@ export default function FamilyPlanningMain() {
 
   const handleSubmit = () => {
     console.log("Submitting data: ", formData)
-    // Here you would typically send the data to your backend
+    obstetrical(formData)
+    risks_sti(formData)
     alert("Form submitted successfully!")
   }
 

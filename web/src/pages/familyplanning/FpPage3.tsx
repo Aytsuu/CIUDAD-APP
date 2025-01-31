@@ -37,7 +37,7 @@ type Page3Props = {
 const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }: Page3Props) => {
   // Update the form initialization to use formData
   const form = useForm<FormData>({
-    resolver: zodResolver(page3Schema),
+    // resolver: zodResolver(page3Schema),
     defaultValues: formData,
     values: formData,
   })
@@ -158,10 +158,10 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                   )}
                   {/* Other STI Risks */}
                   {[
-                    { key: "sores", label: "Sores" },
-                    { key: "pain", label: "Pain" },
-                    { key: "history", label: "History" },
-                    { key: "hiv", label: "HIV" },
+                    { key: "sores", label: "Sores or ulcers in the genital area" },
+                    { key: "pain", label: "Pain or burning sensation in the genital area" },
+                    { key: "history", label: "History of treatment for sexually transmitted infection" },
+                    { key: "hiv", label: "HIV / AIDS / Pelvic-inflammatory disease" },
                   ].map(({ key, label }) => (
                     <FormField
                       key={key}

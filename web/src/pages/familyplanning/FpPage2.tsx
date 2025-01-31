@@ -21,7 +21,7 @@ type Page2Props = {
 // Fix the component props to match the expected props
 export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormData, formData }: Page2Props) {
   const form = useForm<FormData>({
-    resolver: zodResolver(page2Schema), // Use page-specific schema
+    // resolver: zodResolver(page2Schema), // Use page-specific schema
     defaultValues: formData,
     values: formData,
     mode: "onChange", // Validate on change for better user experience

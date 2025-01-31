@@ -21,7 +21,7 @@ type Page4Props = {
 const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }: Page4Props) => {
   // Initialize form with formData values
   const form = useForm<FormData>({
-    resolver: zodResolver(page4Schema),
+    // resolver: zodResolver(page4Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",
