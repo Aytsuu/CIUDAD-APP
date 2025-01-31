@@ -12,10 +12,12 @@ import BlotterForm from "./blotter-form";
 interface ComplaintDialogProps{
     trigger: React.ReactNode,
     action: React.ReactNode
+    title: string,
+    description: string,
 
 }
 
-export default function ComplaintDialog({trigger, action}: ComplaintDialogProps){
+export default function ComplaintDialog({trigger, action, title, description}: ComplaintDialogProps){
 
     return(
         <Dialog>
@@ -24,9 +26,9 @@ export default function ComplaintDialog({trigger, action}: ComplaintDialogProps)
             </DialogTrigger>
             <DialogContent className="max-w-[50%] h-2/8">
                 <DialogHeader>
-                    <DialogTitle></DialogTitle>
+                    <DialogTitle className="text-darkBlue1">{title}</DialogTitle>
                     <DialogDescription>
-
+                        {description}
                     </DialogDescription>
                     <BlotterForm action={action}/>
                 </DialogHeader>

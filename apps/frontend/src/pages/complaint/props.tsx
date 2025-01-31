@@ -11,6 +11,9 @@ const dialogProps = {
                     Submit
                 </Button>,
     
+    addTitle: "Complaint Record",
+    addDescription: "Please fill all required fields (Type N/A if the information is not available for the specific field)",
+    
     viewTrigger: <Button variant='outline' className="border-2 border-blue text-darkBlue1 hover:bg-white hover:opacity-[80%]">
                     View
                 </Button>,
@@ -18,6 +21,9 @@ const dialogProps = {
     ViewAction: <Button type="submit" variant="destructive">
                     Raise Issue
                 </Button>,
+    
+    viewTitle: "Complaint Record",
+    viewDescription: "All information provided should be securely protectd",
 }
 
 export default dialogProps

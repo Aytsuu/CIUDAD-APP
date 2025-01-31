@@ -35,7 +35,12 @@ export default function BlotterTable(){
                     <TableCell className="text-center">Lorem</TableCell>
                     <TableCell className="text-center">Lorem</TableCell>
                     <TableCell className="text-center">
-                        <ComplaintDialog trigger={dialogProps.viewTrigger} action={dialogProps.ViewAction}/>
+                        <ComplaintDialog 
+                            trigger={dialogProps.viewTrigger} 
+                            action={dialogProps.ViewAction}  
+                            title={dialogProps.viewTitle}
+                            description={dialogProps.viewDescription}
+                        />
                     </TableCell>
                 </TableRow>
             </TableBody>
