@@ -30,3 +30,120 @@ class RiskSti(models.Model):
     
     class Meta: 
         db_table = "risk_sti"
+
+class RiskVaw(models.Model):
+    unpleasantRelationship = models.BooleanField(default=False)
+    partnerDisapproval = models.BooleanField(default=False)
+    domesticViolence = models.BooleanField(default=False)
+    referredTo = models.CharField(max_length=10)
+    otherReferral = models.CharField(max_length=30)
+    
+    class Meta:
+        db_table = 'risk_vaw'
+
+class PhysicalExamination(models.Model):
+    # Physical Examination Fields
+    weight = models.FloatField()
+    height = models.FloatField()
+    bloodPressure = models.CharField(max_length=20)
+    pulseRate = models.IntegerField()
+
+    # Examination Fields
+    SKIN_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("pale", "Pale"),
+        ("yellowish", "Yellowish"),
+        ("hematoma", "Hematoma"),
+        
+    ]
+    skinExamination = models.CharField(max_length=20, choices=SKIN_EXAM_CHOICES)
+
+    CONJUNCTIVA_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("pale", "Pale"),
+        ("yellowish", "Yellowish"),
+   
+    ]
+    conjunctivaExamination = models.CharField(max_length=20, choices=CONJUNCTIVA_EXAM_CHOICES)
+
+    NECK_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("neck_mass", "Neck Mass"),
+        ("enlarged_lymph_nodes", "Enlarged Lymph Nodes"),
+      
+    ]
+    neckExamination = models.CharField(max_length=30, choices=NECK_EXAM_CHOICES)
+
+    BREAST_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("mass", "Mass"),
+        ("nipple_discharge", "Nipple Discharge"),
+       
+    ]
+    breastExamination = models.CharField(max_length=30, choices=BREAST_EXAM_CHOICES)
+
+    ABDOMEN_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("abdominal_mass", "Abdominal Mass"),
+        ("varicosities", "Varicosities"),
+   
+    ]
+    abdomenExamination = models.CharField(max_length=30, choices=ABDOMEN_EXAM_CHOICES)
+
+    EXTREMITIES_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("edema", "Edema"),
+        ("varicosities", "Varicosities"),
+      
+    ]
+    extremitiesExamination = models.CharField(max_length=30, choices=EXTREMITIES_EXAM_CHOICES)
+
+    # Pelvic Examination (for IUD Acceptors)
+    PELVIC_EXAM_CHOICES = [
+        ("normal", "Normal"),
+        ("mass", "Mass"),
+        ("abnormal_discharge", "Abnormal Discharge"),
+        ("cervical_abnormalities", "Cervical Abnormalities"),
+        ("warts", "Warts"),
+        ("polyp_or_cyst", "Polyp or Cyst"),
+        ("inflammation_or_erosion", "Inflammation or Erosion"),
+        ("bloody_discharge", "Bloody Discharge"),
+
+    ]
+    pelvicExamination = models.CharField(max_length=30, choices=PELVIC_EXAM_CHOICES)
+
+    # Cervical Examination
+    CERVICAL_CONSISTENCY_CHOICES = [
+        ("firm", "Firm"),
+        ("soft", "Soft"),
+   
+    ]
+    cervicalConsistency = models.CharField(max_length=20, choices=CERVICAL_CONSISTENCY_CHOICES)
+    cervicalTenderness = models.BooleanField(default=False)
+    cervicalAdnexalMassTenderness = models.BooleanField(default=False)
+
+    # Uterine Examination
+    UTERINE_POSITION_CHOICES = [
+        ("mid", "Mid"),
+        ("anteflexed", "Anteflexed"),
+        ("retroflexed", "Retroflexed"),
+
+    ]
+    uterinePosition = models.CharField(max_length=20, choices=UTERINE_POSITION_CHOICES)
+    uterineDepth = models.CharField(max_length=10, null=True, blank=True)
+
+    class Meta:
+        db_table = "physical_examination"
+        
+        
+class Acknowledgement(models.Model):
+    selectedMethod = models.CharField(max_length=50)
+    clientSignature = models.TextField()
+    clientSignatureDate = models.DateField()
+
+    guardianName = models.CharField(max_length=50)
+    guardianSignature = models.TextField()
+    guardianSignatureDate = models.DateField()
+    
+    class Meta:
+        db_table = "acknowledgement"

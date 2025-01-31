@@ -133,7 +133,7 @@ export const FamilyPlanningSchema = z.object({
   }),
 
   violenceAgainstWomen: z.object({
-    unpleasantRelawtionship: z.boolean(),
+    unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
     referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).refine((val) => val !== undefined, { message: "Please choose referral" }),
@@ -148,22 +148,22 @@ export const FamilyPlanningSchema = z.object({
 
   // Updated examination fields with required selections
   skinExamination: z
-    .enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"])
+    .enum(["normal", "pale", "yellowish", "hematoma"])
     .refine((val) => val !== undefined, { message: "Please select skin examination result" }),
   conjunctivaExamination: z
-    .enum(["normal", "pale", "yellowish", "not_applicable"])
+    .enum(["normal", "pale", "yellowish"])
     .refine((val) => val !== undefined, { message: "Please select conjunctiva examination result" }),
   neckExamination: z
-    .enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"])
+    .enum(["normal", "neck_mass", "enlarged_lymph_nodes"])
     .refine((val) => val !== undefined, { message: "Please select neck examination result" }),
   breastExamination: z
-    .enum(["normal", "mass", "nipple_discharge", "not_applicable"])
+    .enum(["normal", "mass", "nipple_discharge"])
     .refine((val) => val !== undefined, { message: "Please select breast examination result" }),
   abdomenExamination: z
-    .enum(["normal", "abdominal_mass", "varicosities", "not_applicable"])
+    .enum(["normal", "abdominal_mass", "varicosities"])
     .refine((val) => val !== undefined, { message: "Please select abdomen examination result" }),
   extremitiesExamination: z
-    .enum(["normal", "edema", "varicosities", "not_applicable"])
+    .enum(["normal", "edema", "varicosities"])
     .refine((val) => val !== undefined, { message: "Please select extremities examination result" }),
 
   // Pelvic Examination (for IUD Acceptors)
@@ -177,18 +177,18 @@ export const FamilyPlanningSchema = z.object({
       "polyp_or_cyst",
       "inflammation_or_erosion",
       "bloody_discharge",
-      "not_applicable",
+
     ])
     .refine((val) => val !== undefined, { message: "Please select pelvic examination result" }),
 
   // Cervical Examination
-  cervicalConsistency: z.enum(["firm", "soft", "not_applicable"]).refine((val) => val !== undefined, { message: "Please select cervical consistency" }),
+  cervicalConsistency: z.enum(["firm", "soft"]).refine((val) => val !== undefined, { message: "Please select cervical consistency" }),
   cervicalTenderness: z.boolean(),
   cervicalAdnexalMassTenderness: z.boolean(),
 
   // Uterine Examination
   uterinePosition: z
-    .enum(["mid", "anteflexed", "retroflexed", "not_applicable"])
+    .enum(["mid", "anteflexed", "retroflexed"])
     .refine((val) => val !== undefined, { message: "Please select uterine position" }),
   uterineDepth: z.string().optional(),
 

@@ -1,5 +1,5 @@
 "use client"
-import { obstetrical, risks_sti } from "./PostRequest"
+import { acknowledgement, obstetrical, physical_exam, risks_sti, risks_vaw } from "./PostRequest"
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -89,7 +89,7 @@ const initialFormData: FormData = {
     unpleasantRelationship: false,
     partnerDisapproval: false,
     domesticViolence: false,
-    referredTo: [],
+    referredTo: undefined,
     otherReferral: "",
   },
   weight: "",
@@ -168,6 +168,9 @@ export default function FamilyPlanningMain() {
     console.log("Submitting data: ", formData)
     obstetrical(formData)
     risks_sti(formData)
+    risks_vaw(formData)
+    physical_exam(formData)
+    acknowledgement(formData)
     alert("Form submitted successfully!")
   }
 

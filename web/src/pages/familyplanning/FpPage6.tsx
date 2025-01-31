@@ -267,25 +267,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
-                <div className="border border-gray-300 rounded p-2 h-32 bg-white">
-                  <SignatureCanvas
-                    ref={(ref) => setServiceProviderSignatureRef(ref)}
-                    canvasProps={{
-                      className: "w-full h-full",
-                    }}
-                  />
-                </div>
-                <div className="flex gap-2 justify-between">
-                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
-                    Clear
-                  </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={saveSignature}>
-                    Save Signature
-                  </Button>
-                </div>
-              </div>
+           
 
               <div className="space-y-2">
                 <Label htmlFor="weight">
@@ -330,7 +312,27 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   onChange={(e) => handleInputChange("bp_diastolic", e.target.value)}
                 />
               </div>
-
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
+                <div className="border border-gray-300 rounded p-2 h-32 bg-white">
+                  <SignatureCanvas
+                    ref={(ref) => setServiceProviderSignatureRef(ref)}
+                    canvasProps={{
+                      className: "w-full h-full",
+                    }}
+                  />
+                </div>
+                <div className="flex gap-2 justify-between">
+                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
+                    Clear
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={saveSignature}>
+                    Save Signature
+                  </Button>
+                </div>
+              </div>
+              
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="medicalFindings">Medical Findings</Label>
                 <Textarea

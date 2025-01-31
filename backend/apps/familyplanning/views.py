@@ -25,3 +25,25 @@ class RiskStiView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
+class RiskVawView(generics.ListCreateAPIView):
+    serializer_class = RiskVawSerializer
+    queryset = RiskVaw.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+class PhysicalExamView(generics.ListCreateAPIView):
+    serializer_class = PhysicalExamSerializer
+    queryset = PhysicalExamination.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+class AcknowledgementView(generics.ListCreateAPIView):
+    serializer_class = AcknowledgementSerializer
+    queryset = Acknowledgement.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    

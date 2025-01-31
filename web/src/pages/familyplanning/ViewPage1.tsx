@@ -912,9 +912,9 @@ const FamilyPlanningView: React.FC = () => {
          <div className="p-2 mt-6 text-[13px] text-center border-t border-black">
           <p>
             Implant = Progestin subdermal implant; IUD = Intrauterine device; BTL = Bilateral tubal ligation; NSV =
-            No-scalpel vasectomy; COC = Combined oral contraceptives; POP = Progestin only pills; CMM = Cervical mucus
-            method; SDM = Standard days method; BBT = Basal body temperature; BOM = Billings ovulation method; CMM
-            =Cervical mucus method; STM = Symptothermal method
+            No-scalpel vasectomy; COC = Combined oral contraceptives; POP = Progestin only pills; LAM = Lactational amenorrhea method; SDM = Standard days method;
+            BBT = Basal body temperature; BOM = Billings ovulation method; CMM = Cervical mucus method;
+            STM = Symptothermal method
           </p>
         </div>
           </div>
