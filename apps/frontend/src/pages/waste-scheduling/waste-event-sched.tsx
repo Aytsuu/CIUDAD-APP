@@ -42,13 +42,24 @@ function WasteEventSched() {
                 <Label>Location:</Label>
                 <Input placeholder='Enter location/venue'></Input>
             </div><br/>
-            <div>
-                <Label>Date:</Label><br></br>
-                <DatePicker></DatePicker>
-            </div><br/>
-
-            {/* Time */}
-            
+            <div className="grid grid-cols-2 gap-2">
+                <div>
+                    <Label>Date:</Label><br/>
+                        <Input
+                            type="date"
+                            id="WasteEventDate"
+                            placeholder="Date of the event"
+                        />
+                    </div>
+                    <div>
+                    <Label>Time:</Label><br/>
+                        <Input
+                            type="time"
+                            id="WasteEventTime"
+                            placeholder="Time of the event"
+                        />
+                    </div> <br/>
+            </div>
             <div>
                 <Label>Organizer:</Label>
                 <Input placeholder='Enter event organizer'></Input>

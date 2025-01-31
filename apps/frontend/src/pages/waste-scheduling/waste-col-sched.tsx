@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectLabel, SelectSeparator, SelectGroup } from "@/components/ui/select";
-import { DatePicker } from '@/components/ui/datepicker';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectLabel, SelectSeparator, SelectGroup } from "@/components/ui/select/select";
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { FilterAccordion } from '@/components/ui/filter-accordion'
@@ -83,17 +83,25 @@ function WasteColSched() {
                 </SelectGroup>
                 </SelectContent>
             </Select>
-            </div>
-
-            <br/>
-            <div>
-                <Label>Date:</Label><br/>
-                <DatePicker></DatePicker>
-            </div>
-
-            {/* Time */}
-            
-            <br/>
+            </div><br/>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                  <Label>Date:</Label><br/>
+                      <Input
+                          type="date"
+                          id="WasteColDate"
+                          placeholder="Date of the event"
+                      />
+                  </div>
+                  <div>
+                    <Label>Time:</Label><br/>
+                      <Input
+                          type="time"
+                          id="WasteColTime"
+                          placeholder="Time of the event"
+                      />
+                  </div> <br/>
+              </div>
             <div>
                 <Label>Additional Instructions:</Label>
                 <Textarea placeholder='Enter additional instructions (if there is any)'></Textarea>
@@ -109,9 +117,7 @@ function WasteColSched() {
             selectedCount={selectedCategories.length}
             onChange={handleCategoryChange}
             onReset={handleReset}
-          />
-
-<br/>
+          /><br/>
             <div className="flex items-center justify-center">
                 <Button className="inline-block rounded-md border border-[#263D67] bg-[#263D67] px-10 py-2 text-sm font-medium text-white hover:bg-transparent hover:text-[#263D67] focus:outline-none focus:ring active:text-[#263D67]">Schedule</Button>
             </div>
