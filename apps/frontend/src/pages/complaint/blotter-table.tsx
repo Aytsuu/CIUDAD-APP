@@ -1,4 +1,6 @@
-import { Button } from "@/components/ui/button";
+import ComplaintDialog from "./complaint-dialog";
+import dialogProps from "./props";
+
 import { 
     Table, 
     TableHeader,
@@ -7,7 +9,6 @@ import {
     TableRow,
     TableCell,
 } from "@/components/ui/table";
-
 
 export default function BlotterTable(){
     return(
@@ -34,12 +35,7 @@ export default function BlotterTable(){
                     <TableCell className="text-center">Lorem</TableCell>
                     <TableCell className="text-center">Lorem</TableCell>
                     <TableCell className="text-center">
-                        <Button
-                            variant='outline' 
-                            className="border-2 border-blue text-darkBlue1 hover:bg-white hover:opacity-[80%]"
-                        >
-                            View
-                        </Button>
+                        <ComplaintDialog trigger={dialogProps.viewTrigger} action={dialogProps.ViewAction}/>
                     </TableCell>
                 </TableRow>
             </TableBody>

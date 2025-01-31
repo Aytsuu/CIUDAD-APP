@@ -7,20 +7,20 @@ import {
     DialogTrigger 
 } from "@/components/ui/dialog";
 
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import BlotterForm from "./blotter-form";
 
-export default function NewComplaintDialog(){
+interface ComplaintDialogProps{
+    trigger: React.ReactNode,
+    action: React.ReactNode
+
+}
+
+export default function ComplaintDialog({trigger, action}: ComplaintDialogProps){
 
     return(
         <Dialog>
             <DialogTrigger>
-                <Button
-                    className="bg-blue hover:bg-blue hover:opacity-[80%]"                
-                >
-                    <Plus/> New Record
-                </Button>
+                {trigger}
             </DialogTrigger>
             <DialogContent className="max-w-[50%] h-2/8">
                 <DialogHeader>
@@ -28,7 +28,7 @@ export default function NewComplaintDialog(){
                     <DialogDescription>
 
                     </DialogDescription>
-                    <BlotterForm/>
+                    <BlotterForm action={action}/>
                 </DialogHeader>
             </DialogContent>
         </Dialog>

@@ -65,7 +65,7 @@ module.exports = {
     			},
 
 				// Use the following color scheme
-				snow: '#F6FAFF',
+				snow: '#F3F4F8',
 				blue: '#1273B8',
 				darkBlue1: '#263D67',
 				darkBlue2: '#2D4A72',

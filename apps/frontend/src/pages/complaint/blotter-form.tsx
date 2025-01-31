@@ -18,7 +18,11 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 
-export default function BlotterForm(){
+interface BlotterFormProps{
+    action: React.ReactNode
+}
+
+export default function BlotterForm({ action }: BlotterFormProps){
 
     const form = useForm<z.infer<typeof ComplaintformSchema>>({
         resolver: zodResolver(ComplaintformSchema),
@@ -198,12 +202,7 @@ export default function BlotterForm(){
                 </div>
 
                 <div className="w-full p-5 flex flex-row justify-end"> 
-                    <Button 
-                        type="submit"
-                        className="bg-blue hover:bg-blue hover:opacity-[80%]"
-                    >
-                        Submit
-                    </Button>
+                    {action}
                 </div>
             </form>
         </Form>

@@ -1,4 +1,4 @@
-import { BlotterRecord } from "./pages/complaint/blotter-record"
+import BlotterRecord from "./pages/complaint/blotter-record"
 
 function App() {
 
