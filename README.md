@@ -126,6 +126,14 @@ git checkout -b [branch_name]
 git status
 ```
 
+#### Renaming a branch
+```bash
+git branch -m [new-branch-name]
+git push origin --delete [old-branch-name]
+git push origin [new-branch-name]
+git push --set-upstream origin [new-branch-name]
+```
+
 <br></br>
 
 ## Revert Script (If you accidentally commit on main branch)
@@ -150,17 +158,6 @@ git revert [commit-hash]
 
 ```bash
 git checkout [commit-hash] -- .
-```
-
-<br></br>
-
-## In case you renamed your branch and can't push changes
-
-#### You need to set the correct tracking branch (the remote branch for the renamed local branch).
-
-First, run the following command to set the upstream branch to the remote version of your renamed branch (Sample):
-```bash
-git push --set-upstream origin frontend/feature/blotter-complaint-page
 ```
 
 <br></br>
