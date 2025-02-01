@@ -1,10 +1,10 @@
-import DrrReport from "./pages/report/drr/drr-report"
+import DrrReport from "./pages/report/drr/resident-report"
 
 function App() {
 
   return (
     <>
-      <DrrReport/>
+      <DrrReport />
     </> 
   )
 }
