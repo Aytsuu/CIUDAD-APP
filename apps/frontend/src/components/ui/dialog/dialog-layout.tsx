@@ -15,7 +15,6 @@ interface DialogProps{
    title: string,
    description: string,
    mainContent: React.ReactNode
-
 }
 
 export default function DialogLayout({trigger, className, title = "", description = "",  mainContent} : DialogProps){

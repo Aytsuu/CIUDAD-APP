@@ -12,9 +12,9 @@ const headerProp = [
 const bodyProp = [
     {cell: "Lorem"}, {cell: "Lorem"},
     {cell: "Lorem"}, {cell: "Lorem"},
-    {cell: "Lorem By"}, {cell: "Lorem"}, 
+    {cell: "Lorem"}, {cell: "Lorem"}, 
     {cell: 
-        <DialogLayout
+        <DialogLayout   
             trigger={<Button variant={"outline"} className=""> View </Button>}
             className="max-w-[50%] h-2/3 flex flex-col"
             title="Report Details"
