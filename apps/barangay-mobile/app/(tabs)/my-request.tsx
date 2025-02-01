@@ -9,6 +9,13 @@ import MedicalLogo from '@/assets/svg/MedicalLogo';
 import { useRouter } from 'expo-router';
 
 export default function MyRequest() {
+
+  const router = useRouter();
+  
+    const notif = () => {
+      router.push('/my-notification');
+    }; 
+
   const [selectedTab, setSelectedTab] = useState('Confirmed');
 
   const pendingRequests = [
@@ -67,7 +74,7 @@ export default function MyRequest() {
             <TouchableOpacity className="mr-3">
               <Entypo name="dots-three-horizontal" size={24} color="black" />
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={notif}>
               <MaterialCommunityIcons name="bell" size={24} color="black" />
             </TouchableOpacity>
           </View>
