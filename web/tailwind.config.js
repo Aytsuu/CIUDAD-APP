@@ -72,6 +72,7 @@ module.exports = {
     				border: 'hsl(var(--sidebar-border))',
     				ring: 'hsl(var(--sidebar-ring))'
     			},
+<<<<<<< HEAD:web/tailwind.config.js
 				buttonBlue: '#2563EB',
     			snow: '#F3F4F8',
     			blue: '#1273B8',
@@ -105,6 +106,17 @@ module.exports = {
     		animation: {
     			'accordion-down': 'accordion-down 0.2s ease-out',
     			'accordion-up': 'accordion-up 0.2s ease-out'
+=======
+
+				// Use the following color scheme
+				snow: '#F3F4F8',
+				blue: '#1273B8',
+				darkBlue1: '#263D67',
+				darkBlue2: '#2D4A72',
+				gray: '#CECECE',
+				darkGray: '#575757',
+				teal: '#129073'
+>>>>>>> 7b9207c3 (Updated):apps/frontend/tailwind.config.js
     		}
     	}
     },
