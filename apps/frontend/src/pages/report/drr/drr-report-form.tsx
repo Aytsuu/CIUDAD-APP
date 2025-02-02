@@ -12,7 +12,7 @@ import {
     ChartBarStacked
 } from "lucide-react";
 
-export default function ReportForm(){
+export default function DRRReportForm(){
     return (
         <div className="w-full h-full flex flex-col  gap-3">
 

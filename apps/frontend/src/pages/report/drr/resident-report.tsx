@@ -1,7 +1,7 @@
 import TableLayout from "@/components/ui/table/table-layout"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Button } from "@/components/ui/button"
-import ReportForm from "./report-form"
+import ReportForm from "./drr-report-form"
 
 const headerProp = [
     {head: "Category"}, {head: "Location"},
