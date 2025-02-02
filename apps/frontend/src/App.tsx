@@ -1,10 +1,10 @@
-import StaffRecord from "./pages/record/drr/staff-record"
+import DRRStaffRecord from "./pages/record/drr/drr-staff-record"
 
 function App() {
 
   return (
     <>
-      <StaffRecord />
+      <DRRStaffRecord />
     </> 
   )
 }
