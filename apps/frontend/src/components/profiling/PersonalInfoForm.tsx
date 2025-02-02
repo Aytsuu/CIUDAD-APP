@@ -17,7 +17,7 @@ import {
   FormControl,
   FormMessage,
 } from "../ui/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { PersonalFormData } from "../profiling/FormDataType";
 import { personalFormSchema } from "../profiling/ProfilingSchema";
 
