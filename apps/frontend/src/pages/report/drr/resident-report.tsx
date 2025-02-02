@@ -24,7 +24,7 @@ const bodyProp = [
     }
 ]
 
-export default function DrrReport(){
+export default function ResidentReport(){
     
     return (
         <div className="w-full h-[100vh] bg-snow flex justify-center items-center">
