@@ -14,6 +14,7 @@ import {
     FormField,
     FormItem,
     FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 
 
@@ -23,12 +24,12 @@ export default function ARForm(){
         resolver: zodResolver(ARSchema),
         defaultValues: {
             name: '',
-            dateStarted: '',
+            dateStarted: '',  
             timeStarted: '',
             dateCompleted: '',
             timeCompleted: '',
             sitio: '',
-            address: '',
+            location : '',
             img: undefined
         }
     })
@@ -55,6 +56,7 @@ export default function ARForm(){
                                 <FormControl>
                                     <Input  {...field}/>
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )}
                         
@@ -62,13 +64,14 @@ export default function ARForm(){
 
                         <FormField
                             control={form.control}
-                            name={'address'}
+                            name={'location'}
                             render={({ field }) => (
                                 <FormItem className='flex-grow'>
-                                <FormLabel>Address</FormLabel>
+                                <FormLabel>Location</FormLabel>
                                 <FormControl>
                                     <Input {...field}/>
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )}
                             
@@ -89,6 +92,7 @@ export default function ARForm(){
                                         onChange={field.onChange}
                                     />
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )} 
                         />
@@ -104,6 +108,7 @@ export default function ARForm(){
                                 <FormControl>
                                     <Input type='date' {...field} />
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )}
                         />
@@ -117,6 +122,7 @@ export default function ARForm(){
                                 <FormControl>
                                     <Input type='time' {...field} />
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )}
                         />
@@ -130,6 +136,7 @@ export default function ARForm(){
                                 <FormControl>
                                     <Input type='date' {...field} />
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )}
                         />
@@ -143,6 +150,7 @@ export default function ARForm(){
                                 <FormControl>
                                     <Input type='time' {...field} />
                                 </FormControl>
+                                <FormMessage/>
                                 </FormItem>
                             )}
                         />
@@ -158,6 +166,7 @@ export default function ARForm(){
                             <FormControl>
                                 <Textarea className='h-[10rem]' {...field} />
                             </FormControl>
+                            <FormMessage/>
                             </FormItem>
                         )}
                     />
@@ -179,6 +188,7 @@ export default function ARForm(){
                                             ref={field.ref}
                                         />
                                     </FormControl>
+                                    <FormMessage/>
                                     </FormItem>
                                 )}
                             />
