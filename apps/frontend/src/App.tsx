@@ -1,10 +1,10 @@
-import ARForm from "./pages/report/drr/ar-form"
+import StaffRecord from "./pages/record/drr/staff-record"
 
 function App() {
 
   return (
     <>
-      <ARForm />
+      <StaffRecord />
     </> 
   )
 }
