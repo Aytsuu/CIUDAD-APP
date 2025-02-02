@@ -10,7 +10,9 @@ const AddEventFormSchema = z.object({
     eventCategory: z.string().min(1, 'Event category address is required'),
     eventTime: z.string().min(1, 'Event time is required'),
     eventDescription: z.string().min(1, 'Event Description is required'),
-    // barangayCouncil: z.string({ message: " " }),
+    barangayCouncil: z.array(z.string()).optional(),
+    gadCommittee: z.array(z.string()).optional(),
+    wasteCommittee: z.array(z.string()).optional(),
     // gadCommittee: z.string({ message: " " }),  
     // wasteCommittee: z.string({ message: " " }),  
 

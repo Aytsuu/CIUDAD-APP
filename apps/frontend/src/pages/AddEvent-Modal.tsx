@@ -43,33 +43,33 @@ function AddEvent(){
 
     //dropdown w/checkbox 
     const CouncilCategory = [
-        { id: "HON. HANNAH SHEEN OBEJERO", label: "HON. HANNAH SHEEN OBEJERO", checked: false },
-        { id: "HON. SARAH MAE DUTS", label: "HON. SARAH MAE DUTS", checked: false },
-        { id: "HON. JARLENE S. GARCIA", label: "HON. JARLENE S. GARCIA", checked: false },
-    ];
-
-    const WasteCategory = [
-        { id: "WASTE SECRETARY BABEL", label: "WASTE SECRETARY BABEL", checked: false },
-        { id: "WASTE TREASURER MABLE", label: "WASTE TREASURER MABLE", checked: false },
-        { id: "WASTE LOREM IPSUM", label: "WASTE LOREM IPSUM", checked: false },
+        { id: "HON. HANNAH SHEEN OBEJERO", label: "HON. HANNAH SHEEN OBEJERO"},
+        { id: "HON. SARAH MAE DUTS", label: "HON. SARAH MAE DUTS"},
+        { id: "HON. JARLENE S. GARCIA", label: "HON. JARLENE S. GARCIA"},
     ];
 
     const GADCategory = [
-        { id: "GAD SECRETARY BABEL", label: "GAD SECRETARY BABEL", checked: false },
-        { id: "GAD TREASURER MABLE", label: "GAD TREASURER MABLE", checked: false },
-        { id: "GAD LOREM IPSUM", label: "GAD LOREM IPSUM", checked: false },
+        { id: "GAD SECRETARY BABEL", label: "GAD SECRETARY BABEL"},
+        { id: "GAD TREASURER MABLE", label: "GAD TREASURER MABLE"},
+        { id: "GAD LOREM IPSUM", label: "GAD LOREM IPSUM"},
     ];
 
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const WasteCategory = [
+        { id: "WASTE SECRETARY BABEL", label: "WASTE SECRETARY BABEL"},
+        { id: "WASTE TREASURER MABLE", label: "WASTE TREASURER MABLE"},
+        { id: "WASTE LOREM IPSUM", label: "WASTE LOREM IPSUM"},
+    ];
 
-    const handleCategoryChange = (id: string, checked: boolean) => {
-      setSelectedCategories((prev) =>
-        checked ? [...prev, id] : prev.filter((category) => category !== id)
-      );
+    const handleResetBarangayCouncil = () => {
+        form.setValue('barangayCouncil', []);
     };
-  
-    const handleReset = () => {
-      setSelectedCategories([]);
+
+    const handleResetGADCommittee = () => {
+        form.setValue('gadCommittee', []);
+    };
+
+    const handleResetWasteCommittee = () => {
+        form.setValue('wasteCommittee', []);
     };
 
     const form = useForm<z.infer<typeof AddEventFormSchema>>({
@@ -81,9 +81,9 @@ function AddEvent(){
             eventCategory: "",
             eventTime: "",
             eventDescription: "",
-            // barangayCouncil: "",
-            // gadCommittee: "",
-            // wasteCommittee: "",
+            barangayCouncil: [],
+            gadCommittee: [],
+            wasteCommittee: [],
         },
     });
 
@@ -164,8 +164,8 @@ function AddEvent(){
                                                     label="Categories"
                                                     placeholder="Select Event Category"
                                                     options={[
-                                                        {id: "1", name: "Meeting"},
-                                                        {id: "2", name: "Activity"}                                                   
+                                                        {id: "meeting", name: "Meeting"},
+                                                        {id: "activity", name: "Activity"}                                                   
                                                     ]}
                                                     value={field.value}
                                                     onChange={field.onChange}
@@ -216,37 +216,88 @@ function AddEvent(){
                             <h1 className="flex justify-center font-bold text-[20px] text-[#394360] pb-8 pt-8">ATTENDEES</h1>
                             <div className="space-y-4 pb-20">
                                 {/* Attendees Checkboxes */}
-                                <FilterAccordion
-                                    title="BARANGAY COUNCIL"
-                                    options={CouncilCategory.map((option) => ({
-                                    ...option,
-                                    checked: selectedCategories.includes(option.id),
-                                    }))}
-                                    selectedCount={selectedCategories.length}
-                                    onChange={handleCategoryChange}
-                                    onReset={handleReset}
+                                <FormField
+                                    control={form.control}
+                                    name="barangayCouncil"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel></FormLabel>
+                                        <FormControl>
+                                            <FilterAccordion
+                                                title="BARANGAY COUNCUL"
+                                                options={CouncilCategory.map((option) => ({
+                                                    ...option,
+                                                    checked: field.value?.includes(option.id) || false, // Use optional chaining
+                                                }))}
+                                                selectedCount={field.value?.length || 0} // Use optional chaining
+                                                onChange={(id: string, checked: boolean) => {
+                                                    const newSelected = checked
+                                                        ? [...(field.value || []), id] // Provide a fallback
+                                                        : (field.value || []).filter((category) => category !== id); // Provide a fallback
+                                                    field.onChange(newSelected);
+                                                }}
+                                                onReset={handleResetBarangayCouncil} // resets the selected boxes
+                                            />                                        
+                                        </FormControl>
+                                        <FormMessage /> 
+                                        </FormItem>
+                                    )}
                                 />
 
-                                <FilterAccordion
-                                    title="WASTE COMMITTEE"
-                                    options={WasteCategory.map((option) => ({
-                                    ...option,
-                                    checked: selectedCategories.includes(option.id),
-                                    }))}
-                                    selectedCount={selectedCategories.length}
-                                    onChange={handleCategoryChange}
-                                    onReset={handleReset}
+                                <FormField
+                                    control={form.control}
+                                    name="gadCommittee"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel></FormLabel>
+                                        <FormControl>
+                                            <FilterAccordion
+                                                title="GAD COMMITTEE"
+                                                options={GADCategory.map((option) => ({
+                                                    ...option,
+                                                    checked: field.value?.includes(option.id) || false, // Use optional chaining
+                                                }))}
+                                                selectedCount={field.value?.length || 0} // Use optional chaining
+                                                onChange={(id: string, checked: boolean) => {
+                                                    const newSelected = checked
+                                                        ? [...(field.value || []), id] // Provide a fallback
+                                                        : (field.value || []).filter((category) => category !== id); // Provide a fallback
+                                                    field.onChange(newSelected);
+                                                }}
+                                                onReset={handleResetGADCommittee} // resets the selected boxes
+                                            />                                        
+                                        </FormControl>
+                                        <FormMessage /> 
+                                        </FormItem>
+                                    )}
                                 />
 
-                                <FilterAccordion
-                                    title="GENDER AND DEVELOPMENT COMMITTEE"
-                                    options={GADCategory.map((option) => ({
-                                    ...option,
-                                    checked: selectedCategories.includes(option.id),
-                                    }))}
-                                    selectedCount={selectedCategories.length}
-                                    onChange={handleCategoryChange}
-                                    onReset={handleReset}
+                                <FormField
+                                    control={form.control}
+                                    name="wasteCommittee"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel></FormLabel>
+                                        <FormControl>
+                                            <FilterAccordion
+                                                title="WASTE COMMITTEE"
+                                                options={WasteCategory.map((option) => ({
+                                                    ...option,
+                                                    checked: field.value?.includes(option.id) || false, // Use optional chaining
+                                                }))}
+                                                selectedCount={field.value?.length || 0} // Use optional chaining
+                                                onChange={(id: string, checked: boolean) => {
+                                                    const newSelected = checked
+                                                        ? [...(field.value || []), id] // Provide a fallback
+                                                        : (field.value || []).filter((category) => category !== id); // Provide a fallback
+                                                    field.onChange(newSelected);
+                                                }}
+                                                onReset={handleResetWasteCommittee} // resets the selected boxes
+                                            />                                        
+                                        </FormControl>
+                                        <FormMessage /> 
+                                        </FormItem>
+                                    )}
                                 />
                             </div>
                             <div className="flex items-center justify-center">
