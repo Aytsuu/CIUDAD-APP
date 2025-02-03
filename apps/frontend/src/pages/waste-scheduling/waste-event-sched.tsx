@@ -92,7 +92,7 @@
 
 // export default WasteEventSched;
 
-import { useState } from 'react';
+// import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -271,7 +271,7 @@ function WasteEventSched() {
                                 /> <br/>
 
                 <div className="flex items-center justify-center">
-                    <Button type="submit" className="inline-block rounded-md border border-[#263D67] bg-[#263D67] px-10 py-2 text-sm font-medium text-white hover:bg-transparent hover:text-[#263D67] focus:outline-none focus:ring active:text-[#263D67]">Schedule</Button>
+                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%">Schedule</Button>
                 </div>
             </form>
         </Form>
