@@ -5,6 +5,7 @@ export interface PersonalFormData {
     suffix?: string;
     sex: string;
     status: string;
+    dateOfBirth: string,
     birthPlace: string;
     citizenship: string;
     religion: string;

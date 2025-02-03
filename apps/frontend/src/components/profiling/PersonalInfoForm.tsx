@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User } from "lucide-react";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -36,6 +35,7 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
       suffix: "",
       sex: "",
       status: "",
+      dateOfBirth: "",
       birthPlace: "",
       citizenship: "",
       religion: "",
@@ -45,205 +45,211 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
 
   return (
     <div className="p-4">
-      {/* <ProfilingTable/> */}
-      <div className="flex pb-10 justify-between">
-        <h1 className="text-center font-bold">Personal Information</h1>
-        {/* Progress */}
-        <div className="flex gap-x-4">
-          <div className="rounded-full w-8 h-8 bg-[#263D67] flex items-center justify-center">
-            <User className="text-white" />
-          </div>
-          <div className="rounded-full w-8 h-8 bg-[#263D67]"></div>
-          <div className="rounded-full w-8 h-8 bg-[#263D67]"></div>
-        </div>
-      </div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="grid grid-cols-4 gap-4"
+          className="flex flex-col gap-4"
         >
-          {/* Last Name */}
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input
-                    className="w-full"
-                    placeholder="Enter Last Name"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* First Name */}
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input
-                    className="w-full"
-                    placeholder="Enter First Name"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Middle Name */}
-          <FormField
-            control={form.control}
-            name="middleName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Middle Name</FormLabel>
-                <FormControl>
-                  <Input
-                    className="w-full"
-                    placeholder="Enter Middle Name"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Suffix */}
-          <FormField
-            control={form.control}
-            name="suffix"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Suffix</FormLabel>
-                <FormControl>
-                  <Input className="col-span-1" placeholder="Sfx." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Sex */}
-          <FormField
-            control={form.control}
-            name="sex"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sex</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-12 gap-4">
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem className="col-span-4">
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Last Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* First Name */}
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem className="col-span-4">
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter First Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Middle Name */}
+            <FormField
+              control={form.control}
+              name="middleName"
+              render={({ field }) => (
+                <FormItem className="col-span-3">
+                  <FormLabel>Middle Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Middle Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Suffix */}
+            <FormField
+              control={form.control}
+              name="suffix"
+              render={({ field }) => (
+                <FormItem className="col-span-1">
+                  <FormLabel>Suffix</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Sfx." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          {/* Status */}
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Single">Single</SelectItem>
-                      <SelectItem value="Married">Married</SelectItem>
-                      <SelectItem value="Widowed">Widowed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Place of Birth */}
-          <FormField
-            control={form.control}
-            name="birthPlace"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Place of Birth</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Street/Barangay/Municipality/Province/City"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Citizenship */}
-          <FormField
-            control={form.control}
-            name="citizenship"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Citizenship</FormLabel>
-                <FormControl>
-                  <Input placeholder="Citizenship" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Religion */}
-          <FormField
-            control={form.control}
-            name="religion"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Citizenship</FormLabel>
-                <FormControl>
-                  <Input placeholder="Religion" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {/* Contact */}
-          <FormField
-            control={form.control}
-            name="contact"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Citizenship</FormLabel>
-                <FormControl>
-                  <Input placeholder="Contact" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-12 gap-4">
+            {/* Sex */}
+            <FormField
+              control={form.control}
+              name="sex"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Sex</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Status */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Single">Single</SelectItem>
+                        <SelectItem value="Married">Married</SelectItem>
+                        <SelectItem value="Widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Date of Birth */}
+            <FormField
+              control={form.control}
+              name="dateOfBirth"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Date of Birth</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Street/Barangay/Municipality/Province/City"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Place of Birth */}
+            <FormField
+              control={form.control}
+              name="birthPlace"
+              render={({ field }) => (
+                <FormItem className="col-span-6">
+                  <FormLabel>Place of Birth</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Street/Barangay/Municipality/Province/City"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="flex gap-4">
+            {/* Citizenship */}
+            <FormField
+              control={form.control}
+              name="citizenship"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Citizenship</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Citizenship" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Religion */}
+            <FormField
+              control={form.control}
+              name="religion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Religion</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Religion" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Contact */}
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-normal">Contact#</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Contact" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           {/* Submit Button */}
-          <div className="col-span-4 flex justify-end mt-4">
+          <div className="col-span-4 flex justify-end mt-4 align-bottom gap-x-4">
+            <Button
+              type="button"
+              className="bg-white text-black hover:bg-gray-300"
+            >
+              Cancel
+            </Button>
             <Button type="submit">Next</Button>
           </div>
         </form>
