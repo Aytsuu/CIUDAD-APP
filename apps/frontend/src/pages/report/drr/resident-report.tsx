@@ -1,7 +1,7 @@
 import TableLayout from "@/components/ui/table/table-layout"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Button } from "@/components/ui/button"
-import ReportForm from "./drr-report-form"
+import DRRReportForm from "./drr-report-form"
 
 const headerProp = [
     {head: "Category"}, {head: "Location"},
@@ -19,7 +19,7 @@ const bodyProp = [
             className="max-w-[50%] h-2/3 flex flex-col"
             title="Report Details"
             description="This report was received on 9th of July, 2025. Please respond accordingly."
-            mainContent={<ReportForm/>}
+            mainContent={<DRRReportForm/>}
         />
     }
 ]
