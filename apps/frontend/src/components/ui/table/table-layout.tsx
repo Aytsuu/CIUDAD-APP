@@ -31,7 +31,7 @@ export default function TableLayout({ header, rows }: TableProps){
                                 ))}
                         </TableRow>))
                     }
-            </TableBody>
+            </TableBody> 
         </Table>
 
     );

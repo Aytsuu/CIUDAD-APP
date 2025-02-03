@@ -1,20 +1,34 @@
 import TableLayout from "@/components/ui/table/table-layout";
 
 const header = [
-    {head: "Last Name"}, {head: "First Name"}, {head: "M.I"}, {head: "Suffix"},
-    {head: "Date of Birth"}, {head: "Contact"}, {head: "Date Assigned"}, {head: "Action"}
+    "Last Name", 
+    "First Name", 
+    "M.I", 
+    "Suffix",
+    "Date of Birth", 
+    "Contact", 
+    "Date Assigned", 
+    "Action"
 ]
 
-const body = [
-    {cell: "Lorem"}, {cell: "Lorem"}, {cell: "Lorem"}, {cell: "Lorem"},
-    {cell: "Lorem"}, {cell: "Lorem"}, {cell: "Lorem"}, {cell: ""},
+const rows = [
+    [
+        "Lorem", 
+        "Lorem", 
+        "Lorem", 
+        "Lorem",
+        "Lorem", 
+        "Lorem", 
+        "Lorem", 
+        "",
+    ]
 ]
 
 export default function DRRStaffRecord(){
     return(
         <div className="w-full h-[100vh] bg-snow flex justify-center items-center">
             <div className="w-[80%] h-4/5 bg-white border border-gray rounded-[5px] p-5">
-                <TableLayout header={header} body={body} />
+                <TableLayout header={header} rows={rows} />
             </div>
         </div>
     );
