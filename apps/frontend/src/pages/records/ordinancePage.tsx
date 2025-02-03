@@ -1,36 +1,20 @@
 // Dashboard.tsx
 import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import CalendarComp from '../components/ui/event-calendar.tsx';
-import AddEvent from './AddEvent-Modal.tsx';
 import { Button } from "@/components/ui/button"
 import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Pencil, Trash, Eye } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
+import AddEvent from '../AddEvent-Modal';
 
 
 
-const headerProp = [
-    { head: "Ordinance No." },
-    { head: "Ordinance Title" },
-    { head: "Actions" }
-];
+const headerProp = ["Ordinance No.", "Ordinance Title", "Actions" ];
 
 const bodyProp = [
-    {
-        cell: "001-24"
-    },
-    {
-        cell: (
-            <div className="max-w-[70%] truncate text-center">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua .  
-            </div>
-        )
-    },
-    {
-        cell: (
+    ["001-24","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+        (
             <div className="grid grid-cols-3 gap-1">
                 <TooltipLayout 
                     trigger={
@@ -70,8 +54,8 @@ const bodyProp = [
                 />                                             
             </div>
         )
-    }
-];
+    ]
+]
 
 
 
@@ -79,17 +63,23 @@ function OrdinancePage() {
 
     return (
         <div>
-
             <div className="mx-4 mb-4 mt-10">
                 <div className='flex justify-end mb-4'>
                     <div>
-                        {/**FILTER (SELECT)*/}                  
+                        {/**FILTER (SELECT)*/}
+                        <DialogLayout   
+                            trigger={<Button className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointer"> Add Event </Button>}
+                            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                            title="Schedule Event"
+                            description="Set an upcoming event."
+                            mainContent={<AddEvent/>}
+                        />                                              
                     </div>
                 </div>
                 
                 <div className="bg-white border border-gray rounded-[5px] p-5">
-                    <TableLayout header={headerProp} body={bodyProp} />
-                </div>
+                    <TableLayout header={headerProp} rows={bodyProp}/>
+                </div>      
 
                 <div>
                     <PaginationLayout />
