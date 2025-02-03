@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button"
 import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { SelectLayout } from "@/components/ui/select/select-layout";
-    import { Pencil, Trash, Eye } from 'lucide-react';
+import { Pencil, Trash, Eye } from 'lucide-react';
+import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
+
 
 
 const headerProp = [
     { head: "Ordinance No." },
     { head: "Ordinance Title" },
-    { head: "Actions" } // New header for the image view
+    { head: "Actions" }
 ];
 
 const bodyProp = [
@@ -22,35 +24,50 @@ const bodyProp = [
     },
     {
         cell: (
-            <div className=" max-w-[600px] truncate">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            <div className="max-w-[70%] truncate text-center">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua .  
             </div>
         )
     },
     {
         cell: (
             <div className="grid grid-cols-3 gap-1">
-                <DialogLayout
-                    trigger={<Button variant={"outline"} className=""> <Eye/> </Button>}
-                    className="max-w-[50%] h-2/3 flex flex-col"
-                    title="Image Details"
-                    description="Here is the image related to the report."
-                    mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                <TooltipLayout 
+                    trigger={
+                        <DialogLayout
+                            trigger={<Button variant={"outline"} className=""> <Eye/> </Button>}
+                            className="max-w-[50%] h-2/3 flex flex-col"
+                            title="Image Details"
+                            description="Here is the image related to the report."
+                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                        />                        
+                    } 
+                    content="View"
                 />
-                <DialogLayout
-                    trigger={<Button variant={"outline"} className=""> <Pencil/> </Button>}
-                    className="max-w-[50%] h-2/3 flex flex-col"
-                    title="Image Details"
-                    description="Here is the image related to the report."
-                    mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                <TooltipLayout 
+                    trigger={
+                        <DialogLayout
+                            trigger={<Button variant={"outline"} className=""> <Pencil/> </Button>}
+                            className="max-w-[50%] h-2/3 flex flex-col"
+                            title="Image Details"
+                            description="Here is the image related to the report."
+                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                        />                      
+                    } 
+                    content="Update"
                 />
-                <DialogLayout
-                    trigger={<Button variant={"destructive"}> <Trash/> </Button>}
-                    className="max-w-[50%] h-2/3 flex flex-col"
-                    title="Image Details"
-                    description="Here is the image related to the report."
-                    mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
-                />                                 
+                <TooltipLayout 
+                    trigger={
+                        <DialogLayout
+                            trigger={<Button variant={"destructive"}> <Trash/> </Button>}
+                            className="max-w-[50%] h-2/3 flex flex-col"
+                            title="Image Details"
+                            description="Here is the image related to the report."
+                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                        />                           
+                    } 
+                    content="Delete"
+                />                                             
             </div>
         )
     }
