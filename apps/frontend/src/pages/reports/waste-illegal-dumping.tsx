@@ -90,6 +90,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button";
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Trash } from "lucide-react";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
 const headerProp = [
     { head: "Report No." },
@@ -122,7 +123,11 @@ const bodyProp = [
         />
         )
     },
-    {cell: (<Button variant={"destructive"} className=""> <Trash/> </Button>)}
+    {cell: (<TooltipLayout 
+        trigger={<Button variant={"destructive"}> <Trash/> </Button>} 
+        content="Delete" 
+        />)
+    }
 ];
 
 function WasteIllegalDumping() {
