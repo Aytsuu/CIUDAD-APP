@@ -1,10 +1,11 @@
 import Dashboard from './pages/CouncilDashboard.tsx'
+import OrdinancePage from './pages/ordinanceRecord.tsx'
 
 function App() {
 
   return (
     <>
-      <Dashboard/>
+      <OrdinancePage/>
     </> 
   )
 }

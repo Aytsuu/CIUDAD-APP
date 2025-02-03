@@ -1,8 +1,9 @@
 // Dashboard.tsx
 import { useState } from 'react';
-import {Dialog,DialogContent,DialogTrigger,DialogHeader,DialogDescription,DialogTitle} from '../components/ui/dialog.tsx'
+import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import CalendarComp from '../components/ui/event-calendar.tsx';
 import AddEvent from './AddEvent-Modal.tsx';
+import { Button } from "@/components/ui/button"
 
 
 
@@ -14,20 +15,13 @@ function Dashboard() {
     return (
         <div>
             <div className="mt-[50px] ml-[1175px]">
-                <Dialog>
-                    <DialogTrigger className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointe">
-                        Add Event
-                    </DialogTrigger>
-                    <DialogContent className="max-w-[700px]">
-                        <DialogHeader>
-                            <DialogTitle></DialogTitle>
-                            <DialogDescription>
-
-                            </DialogDescription>
-                            <AddEvent></AddEvent>
-                        </DialogHeader>
-                    </DialogContent>
-                </Dialog>                
+                <DialogLayout   
+                    trigger={<Button className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointer"> Add Event </Button>}
+                    className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                    title="Schedule Event"
+                    description="Set an upcoming event."
+                    mainContent={<AddEvent/>}
+                />
             </div>
 
             <CalendarComp 

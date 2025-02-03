@@ -5,7 +5,7 @@ import { z } from "zod"
 const AddEventFormSchema = z.object({
     
     eventTitle: z.string().min(1, 'Event title is required'),
-    eventDate: z.string().min(1, 'Event date address is required'),
+    eventDate: z.string().date(),
     roomPlace: z.string().min(1, 'Room / Place is required'),
     eventCategory: z.string().min(1, 'Event category address is required'),
     eventTime: z.string().min(1, 'Event time is required'),

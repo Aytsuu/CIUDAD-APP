@@ -95,14 +95,12 @@ function AddEvent(){
 
 
     return(
-        <div className="fixed inset-0 flex items-center justify-center bg-black/15 z-50">
-            <div className="p-8 w-[900px] mx-auto h-[540px] bg-white shadow-lg rounded-[10px]">
+        <div>
+            <div className="p-5 w-full mx-auto h-full">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-
-                        <h1 className="flex justify-center font-bold text-[30px] text-[#394360] pt-8">ADD EVENT</h1>
-                        <div className="overflow-y-auto max-h-[370px] scrollbar-custom pr-5">
-                            <div className="mt-10">
+                        <div className="max-h-[370px]">
+                            <div>
                                 <FormField
                                     control={form.control}
                                     name="eventTitle"
@@ -301,7 +299,7 @@ function AddEvent(){
                                 />
                             </div>
                             <div className="flex items-center justify-center">
-                                <Button type="submit" className="inline-block rounded-md border border-[#3D4C77] bg-[#3D4C77] px-8 py-2 text-sm font-medium text-white hover:bg-transparent hover:text-[#263D67] focus:outline-none focus:ring active:text-[#263D67]">
+                                <Button type="submit" className="mb-10 inline-block rounded-md border border-[#3D4C77] bg-[#3D4C77] px-8 py-2 text-sm font-medium text-white hover:bg-transparent hover:text-[#263D67] focus:outline-none focus:ring active:text-[#263D67]">
                                     Schedule                                                                                                                          
                                 </Button>
                             </div>                 

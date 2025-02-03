@@ -85,21 +85,18 @@
 
 
 /* SCROLL BAR FOR THE  */
-.scrollbar-custom {
-  padding-left: 8px; /* Adds space to the right of the content */
-}
-
 .scrollbar-custom::-webkit-scrollbar {
   width: 8px; /* Width of the scrollbar */
 }
 
 .scrollbar-custom::-webkit-scrollbar-thumb {
-  background-color: #394360; /* Scrollbar thumb color */
-  border-radius: 4px; /* Rounded edges */
+  background-color: #c7c7c9; /* Scrollbar thumb color */
+  border-radius: 8px;
 }
 
 .scrollbar-custom::-webkit-scrollbar-track {
   background-color: #e5e7eb; /* Track color */
+  border-radius: 8px;
 }
 
 
