@@ -1,10 +1,10 @@
-import DRRStaffRecord from "./pages/record/drr/drr-staff-record"
+import WeeklyARReport from "./pages/report/drr/weekly-ar-report"
 
 function App() {
 
   return (
     <>
-      <DRRStaffRecord />
+      <WeeklyARReport />
     </> 
   )
 }

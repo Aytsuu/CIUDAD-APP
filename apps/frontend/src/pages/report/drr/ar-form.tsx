@@ -35,7 +35,7 @@ export default function ARForm(){
     })
 
     const onSubmit = (values: z.infer<typeof ARSchema>) => {
-        
+        console.log(values)
     }
 
     return(
