@@ -92,43 +92,23 @@ import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Trash } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
-const headerProp = [
-    { head: "Report No." },
-    { head: "Report Matter" },
-    { head: "Location" },
-    { head: "Report Details" },
-    { head: "Violator" },
-    { head: "Reported By" },
-    { head: "Contact No." },
-    { head: "Date and Time" },
-    { head: "Image" },
-    { head: "Action" }
-];
+const headerProp = ["Report No.", "Report Matter", "Location", "Report Details", "Violator", "Reported By", "Contact No.", "Date and Time", "Image", "Action" ];
 
-const bodyProp = [
-    {cell: "0001"},
-    {cell: "Lorem Ipsum"},
-    {cell: "Sitio 1"},
-    {cell: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."},
-    {cell: "Unknown"},
-    {cell: "Anonymous"},
-    {cell: "09xxxxxxxx"},
-    {cell: "01/11/25 05:00PM"},
-    {cell: (<DialogLayout
+const bodyProp = [[ "0001", "Lorem Ipsum", "Sitio 1", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", "Unknown",
+    "Anonymous", "09xxxxxxxx", "01/11/25 05:00PM",
+    (<DialogLayout
             trigger={<Button variant={"outline"} className=""> View </Button>}
             className="max-w-[50%] h-2/3 flex flex-col"
             title="Image Details"
             description="Here is the image related to the report."
             mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
         />
-        )
-    },
-    {cell: (<TooltipLayout 
+        ),
+    (<TooltipLayout 
         trigger={<Button variant={"destructive"}> <Trash/> </Button>} 
         content="Delete" 
         />)
-    }
-];
+]];
 
 function WasteIllegalDumping() {
     return (
@@ -166,7 +146,7 @@ function WasteIllegalDumping() {
 
             {/* Table for Report Details */}
             <div className="bg-white border border-gray rounded-[5px] p-5">
-                <TableLayout header={headerProp} body={bodyProp} />
+                <TableLayout header={headerProp} rows={bodyProp} />
             </div>
 
             <div>

@@ -8,26 +8,29 @@ import {
 } from "@/components/ui/table/table";
 
 interface TableProps{
-    header: {head: React.ReactNode}[],
-    body: {cell: React.ReactNode}[]
+    header: React.ReactNode[]
+    rows: React.ReactNode[][]
 }
 
-export default function TableLayout({ header, body }: TableProps){
+export default function TableLayout({ header, rows }: TableProps){
     return(
         <Table>
             <TableHeader>
                 <TableRow>
                     {
-                        header.map((header) => ( <TableHead className="text-center">{header.head}</TableHead> ))  
+                        header.map((head) => ( <TableHead className="text-center">{head}</TableHead> ))  
                     }             
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableRow>
                     {
-                        body.map((body) => (<TableCell className="text-center">{body.cell}</TableCell>))
+                        rows.map((row) => (
+                        <TableRow>
+                            {row.map((cell) => (
+                                    <TableCell className="text-center">{cell}</TableCell>
+                                ))}
+                        </TableRow>))
                     }
-                </TableRow>
             </TableBody>
         </Table>
 
