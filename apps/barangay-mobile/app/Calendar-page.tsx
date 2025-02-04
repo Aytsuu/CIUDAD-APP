@@ -8,6 +8,17 @@ export default function CalendarPage() {
   const router = useRouter();
   const [selected, setSelected] = useState("2025-02-20");
 
+  // Get today's date in YYYY-MM-DD format
+  const getDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const today = getDate();
+
   const events = [
     { id: 1, title: "4Rs Seminar", time: "10:00 AM" },
     { id: 2, title: "Lorem ipsum", time: "1:00 PM" },
@@ -20,7 +31,7 @@ export default function CalendarPage() {
     router.push("/Gad_home");
   };
 
-  const handleDayPress = (day: DateData) => {
+  const DAY = (day: DateData) => {
     setSelected(day.dateString);
   };
 
@@ -31,15 +42,12 @@ export default function CalendarPage() {
         <Text className="text-black text-lg ml-2">Back</Text>
       </TouchableOpacity>
 
-      {/* calendar */}
       <Calendar
         current={"2025-02-01"}
         hideExtraDays
         theme={{
           calendarBackground: "#ECF8FF",
           textSectionTitleColor: "#A1A1A1",
-          selectedDayBackgroundColor: "#5B43EA",
-          selectedDayTextColor: "white",
           todayTextColor: "#5B43EA",
           dayTextColor: "black",
           textDisabledColor: "#D3D3D3",
@@ -50,10 +58,63 @@ export default function CalendarPage() {
           textDayHeaderFontSize: 12,
         }}
         markedDates={{
-          [selected]: { selected: true, disableTouchEvent: true },
-          "2025-02-29": { selected: true, selectedColor: "#C5B3FF" },
+          [selected]: {
+            selected: true,
+            disableTouchEvent: true,
+            selectedColor: "#3F15EA",
+            customStyles: {
+              container: {
+                backgroundColor: "#3F15EA",
+                borderRadius: 5,
+                width: 32,
+                height: 32,
+                justifyContent: "center",
+                alignItems: "center",
+              },
+              text: {
+                color: "white",
+                fontWeight: "bold",
+              },
+            },
+          },
+          [today]: {
+            customStyles: {
+              container: {
+                borderWidth: 1,
+                borderColor: "#5B43EA",
+                borderRadius: 5,
+                width: 32,
+                height: 32,
+                justifyContent: "center",
+                alignItems: "center",
+              },
+              text: {
+                color: "#5B43EA",
+                fontWeight: "bold",
+              },
+            },
+          },
+          "2025-02-29": {
+            selected: true,
+            selectedColor: "#C5B3FF",
+            customStyles: {
+              container: {
+                backgroundColor: "#C5B3FF",
+                borderRadius: 5,
+                width: 32,
+                height: 32,
+                justifyContent: "center",
+                alignItems: "center",
+              },
+              text: {
+                color: "black",
+                fontWeight: "bold",
+              },
+            },
+          },
         }}
-        onDayPress={handleDayPress}
+        markingType={"custom"}
+        onDayPress={DAY}
       />
 
       <View className="mt-8 items-center">
@@ -62,7 +123,6 @@ export default function CalendarPage() {
         </Text>
       </View>
 
-      {/* list of events */}
       <ScrollView
         contentContainerStyle={{ paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
