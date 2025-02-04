@@ -8,7 +8,7 @@ export default function CalendarPage() {
   const router = useRouter();
   const [selected, setSelected] = useState("2025-02-20");
 
-  // Get today's date in YYYY-MM-DD format
+  // get todats date
   const getDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -36,12 +36,13 @@ export default function CalendarPage() {
   };
 
   return (
+    // backbutton
     <View className="flex-1 bg-[#ECF8FF] p-4 mt-11">
       <TouchableOpacity onPress={Goback} className="flex-row items-center mb-4">
         <AntDesign name="arrowleft" size={24} color="black" />
         <Text className="text-black text-lg ml-2">Back</Text>
       </TouchableOpacity>
-
+      {/* calendar */}
       <Calendar
         current={"2025-02-01"}
         hideExtraDays
@@ -116,7 +117,7 @@ export default function CalendarPage() {
         markingType={"custom"}
         onDayPress={DAY}
       />
-
+      {/* list of events contents */}
       <View className="mt-8 items-center">
         <Text className="text-[#07143F] text-xl font-bold">
           Upcoming Events
