@@ -11,13 +11,13 @@ import BackgroundLogo_Ciudad from "@/assets/svg/BackgroundLogo_Ciudad";
 import BackgroundCiudad from "@/assets/svg/BackgroundCiudad";
 import DonationImage from "@/assets/svg/donationImage";
 import DonationImage2 from "@/assets/svg/donationImage2";
-import { useRouter } from "expo-router";
 import Features_Request_Icon from "@/assets/svg/Features_Request_Icon";
 import Features_Report_Icon from "@/assets/svg/Features_Report_Icon";
 import Features_Health_Icon from "@/assets/svg/Features_Health_Icon";
 import Features_Calendar_Icon from "@/assets/svg/Features_Calendar_Icon";
 import Features_PendingRequest_Icon from "@/assets/svg/Features_PendingRequest_Icon";
 import Features_Donations_Icon from "@/assets/svg/Features_Donations_Icon";
+import { useRouter } from "expo-router";
 
 export default function MyRequestScreen() {
   const router = useRouter();
@@ -28,6 +28,10 @@ export default function MyRequestScreen() {
 
   const donate = () => {
     router.push("/donation-page");
+  };
+
+  const calendar = () => {
+    router.push("/Calendar-page");
   };
 
   return (
@@ -145,7 +149,10 @@ export default function MyRequestScreen() {
             </TouchableOpacity>
 
             {/*calendar*/}
-            <TouchableOpacity className="w-48 h-20 flex-row items-center bg-white rounded-lg p-4 shadow-md">
+            <TouchableOpacity
+              className="w-48 h-20 flex-row items-center bg-white rounded-lg p-4 shadow-md"
+              onPress={calendar}
+            >
               <View className="w-12 h-12 bg-[#FAB440] rounded-full flex items-center justify-center">
                 <Features_Calendar_Icon />
               </View>
