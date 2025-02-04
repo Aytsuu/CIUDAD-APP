@@ -7,7 +7,7 @@ import {
     SelectTrigger,
     SelectValue,
   } from "@/components/ui/select/select"
-  import { cn } from "@/lib/utils"
+import React from "react"
 
   interface Option{
     id: string,
@@ -33,7 +33,7 @@ import {
           <SelectGroup> 
             <SelectLabel>{label}</SelectLabel>
             {options.map((option)=>{
-                return <SelectItem key={option.id} value={option.id} className="cursor-pointer">{option.name}</SelectItem>
+                return <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
             })}
           </SelectGroup>
         </SelectContent>
