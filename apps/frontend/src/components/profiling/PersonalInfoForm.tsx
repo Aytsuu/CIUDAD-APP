@@ -20,9 +20,10 @@ import { Button } from "../ui/button";
 import { PersonalFormData } from "../profiling/FormDataType";
 import { personalFormSchema } from "../profiling/ProfilingSchema";
 
+
 interface PersonalInfoFormProps {
   onSubmit: (data: PersonalFormData) => void;
-  initialData?: Partial<PersonalFormData>;
+  initialData?: PersonalFormData;
 }
 
 const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
@@ -142,7 +143,7 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="status"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>Marital Status</FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}

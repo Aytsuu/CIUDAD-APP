@@ -13,14 +13,15 @@ export const personalFormSchema = z.object({
   contact: z.string().min(1, "Contact is required"),
 });
 
-export const parentsFormSchema = z.object({
-  fatherFirstName: z.string().min(1, "Father's First Name is required"),
-  fatherLastName: z.string().min(1, "Father's Last Name is required"),
-  fatherMiddleName: z.string().optional(),
-  motherFirstName: z.string().min(1, "Mother's First Name is required"),
-  motherLastName: z.string().min(1, "Mother's Last Name is required"),
-  motherMiddleName: z.string().optional(),
-  fatherOccupation: z.string().min(1, "Father's Occupation is required"),
-  motherOccupation: z.string().min(1, "Mother's Occupation is required"),
-  parentAddress: z.string().min(1, "Parents' Address is required"),
+export const motherFormSchema = z.object({});
+
+export const fatherFormSchema = z.object({});
+
+export const dependentFormSchema = z.object({
+  dependentFName: z.string().min(1, "This is required"),
+  dependentLName: z.string().min(1, "Must be 2 or more characters"),
+  dependentMName: z.string().min(1, "This is required"),
+  dependentSuffix: z.string().min(1, "This is required"),
+  dependentDateOfBirth: z.string().min(1, "This is required"),
+  dependentSex: z.string().min(1, "This is required"),
 });

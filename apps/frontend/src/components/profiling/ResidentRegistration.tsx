@@ -20,7 +20,7 @@ export default function ResidentRegistration() {
       <hr />
 
       {/* Form */}
-      <div className="pt-12">
+      <div className="mt-12">
         <ProfilingForm />
       </div>
     </div>
