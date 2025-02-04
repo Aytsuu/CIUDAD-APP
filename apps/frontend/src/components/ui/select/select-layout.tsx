@@ -10,7 +10,7 @@ import {
 
   interface Option{
     id: string,
-    name: React.ReactNode
+    name: string
   }
 
   interface SelectProps{
@@ -31,7 +31,7 @@ import {
           <SelectGroup>
             <SelectLabel>{label}</SelectLabel>
             {options.map((option)=>{
-                return <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                return <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
             })}
           </SelectGroup>
         </SelectContent>
