@@ -25,12 +25,15 @@ export default function MonthlyARReport(){
             <div className="w-[80%] h-4/5 flex gap-3">
                 <div className="grid grid-cols-4 w-full h-full bg-white border border-gray rounded-[5px] p-5 gap-3">
                     {
-                        months.map((month) => (<Card
-                            title={month}
-                            actionText="View"
-                            icon={null}
-                            className="w-full h-full"
-                        />))
+                        months.map((month) => (
+             
+                            <Card
+                                title={month}
+                                actionText="View"
+                                icon={null}
+                                className="w-full h-full"
+                            />
+                     ))
                     }
 
                 </div>
