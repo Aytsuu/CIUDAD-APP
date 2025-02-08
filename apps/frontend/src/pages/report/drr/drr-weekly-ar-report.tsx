@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Scroll } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function WeeklyARReport(){
+export default function DRRWeeklyARReport(){
     return (
         <div className="w-full h-[100vh] flex flex-col">
             <Record 

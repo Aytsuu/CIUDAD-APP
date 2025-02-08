@@ -27,7 +27,7 @@ const rows = [
     ]
 ]
 
-export default function AcknowledgementReport(){
+export default function DRRAcknowledgementReport(){
     
     return(
 
@@ -39,7 +39,7 @@ export default function AcknowledgementReport(){
                 </div>
 
                 {/* Sidebar Section */}
-                <div className="w-[20%] h-full bg-white border border-gray flex flex-col rounded-[5px] p-3 gap-5 overflow-auto">
+                <div className="w-[20%] h-full bg-white border border-gray flex flex-col rounded-[5px] p-3 gap-3 overflow-auto">
                     {/* Reusable Card Component */}
                     <Card
                         icon={<CalendarRange className="absolute bottom-4 right-0 z-0 w-2/3 h-2/3 text-ashGray" />}

@@ -18,16 +18,16 @@ export default function TableLayout({ header, rows }: TableProps){
             <TableHeader>
                 <TableRow>
                     {
-                        header.map((head) => ( <TableHead className="text-center">{head}</TableHead> ))  
+                        header.map((head, index) => ( <TableHead key={`head-${index}`} className="text-center">{head}</TableHead> ))  
                     }             
                 </TableRow>
             </TableHeader>
             <TableBody>
                     {
-                        rows.map((row) => (
-                        <TableRow>
-                            {row.map((cell) => (
-                                    <TableCell className="text-center">{cell}</TableCell>
+                        rows.map((row, index) => (
+                        <TableRow key={`row-${index}`}>
+                            {row.map((cell, index) => (
+                                    <TableCell key={`cell-${index}`} className="text-center">{cell}</TableCell>
                                 ))}
                         </TableRow>))
                     }
