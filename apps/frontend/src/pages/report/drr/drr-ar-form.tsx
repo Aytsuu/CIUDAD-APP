@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form';
 
 
-export default function ARForm(){
+export default function DRRARForm(){
 
     const form = useForm<z.infer<typeof ARSchema>>({
         resolver: zodResolver(ARSchema),
