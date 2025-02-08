@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function DRRWeeklyARReport(){
     return (
-        <div className="w-full h-[100vh] flex flex-col">
+        <div className="w-screen h-screen flex flex-col">
             <Record 
                 title="4th Weekly AR, Nov. 2024"
                 status="Signed"

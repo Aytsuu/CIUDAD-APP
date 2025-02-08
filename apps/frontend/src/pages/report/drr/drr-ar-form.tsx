@@ -40,7 +40,7 @@ export default function DRRARForm(){
 
     return(
 
-        <div className="w-full h-[100vh] bg-snow flex justify-center items-center">
+        <div className="w-screen h-screen bg-snow flex justify-center items-center">
                 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} 
