@@ -105,7 +105,7 @@ const bodyProp = [[ "0001", "Lorem Ipsum", "Sitio 1", "Lorem ipsum dolor sit ame
         />
         ),
     (<TooltipLayout 
-        trigger={<Button variant={"destructive"}> <Trash/> </Button>} 
+        trigger={<div className="w-[35px] h-[35px] border bordery-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]"> <Trash/> </div>} 
         content="Delete" 
         />)
 ]];
