@@ -31,7 +31,7 @@ export default function DRRAcknowledgementReport(){
     
     return(
 
-        <div className="w-full h-[100vh] bg-snow flex justify-center items-center">
+        <div className="w-screen h-screen bg-snow flex justify-center items-center">
             <div className="w-[70%] h-4/5 flex gap-3">
                 {/* Main Table Section */}
                 <div className="w-full h-full bg-white border border-gray rounded-[5px] p-5">

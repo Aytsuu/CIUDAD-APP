@@ -48,7 +48,7 @@ const RecentRecord = ({title, status} : RecentRecordProps) => (
 
 export default function DRRMonthlyARReport(){
     return(
-        <div className="w-full h-[100vh] bg-snow flex justify-center items-center">
+        <div className="w-screen h-screen bg-snow flex justify-center items-center">
             <div className="w-[80%] h-4/5 flex gap-3">
 
                 <div className="w-full h-full flex flex-col bg-white border border-gray rounded-[5px] p-5 gap-3">

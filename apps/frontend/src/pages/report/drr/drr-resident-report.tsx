@@ -37,7 +37,7 @@ const bodyProp = [
 export default function DRRResidentReport(){
     
     return (
-        <div className="w-full h-[100vh] bg-snow flex justify-center items-center">
+        <div className="w-screen h-screen bg-snow flex justify-center items-center">
             <div className="w-[80%] h-2/3 bg-white border border-gray rounded-[5px] p-5">
                 <TableLayout header={headerProp} rows={bodyProp}/>
             </div>

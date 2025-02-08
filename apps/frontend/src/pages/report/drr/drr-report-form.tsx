@@ -14,7 +14,7 @@ import {
 
 export default function DRRReportForm(){
     return (
-        <div className="w-full h-full flex flex-col  gap-3">
+        <div className="w-screen h-screen flex flex-col  gap-3">
 
             <div className="w-full h-[5%] flex justify-between items-start text-darkGray">
 
