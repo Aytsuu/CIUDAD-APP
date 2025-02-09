@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "../ui/input";
+import { Input } from "../../ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../../ui/select";
 import {
   Form,
   FormField,
@@ -15,10 +15,10 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "../ui/form";
-import { Button } from "../ui/button";
-import { PersonalFormData } from "../profiling/FormDataType";
-import { personalFormSchema } from "../profiling/ProfilingSchema";
+} from "../../ui/form";
+import { Button } from "../../ui/button";
+import { PersonalFormData } from "../Schema/FormDataType";
+import { personalFormSchema } from "../Schema/ProfilingSchema";
 
 
 interface PersonalInfoFormProps {
@@ -45,7 +45,7 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
   });
 
   return (
-    <div className="p-4">
+    <div className="p-4 border-2 mx-10">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -57,7 +57,7 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="lastName"
               render={({ field }) => (
                 <FormItem className="col-span-4">
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel className="font-medium text-gray-500">Last Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Last Name" {...field} />
                   </FormControl>
@@ -173,6 +173,7 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                   <FormControl>
                     <Input
                       placeholder="Street/Barangay/Municipality/Province/City"
+                      type="Date"
                       {...field}
                     />
                   </FormControl>

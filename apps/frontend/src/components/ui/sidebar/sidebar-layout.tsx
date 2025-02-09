@@ -1,7 +1,8 @@
 import { SidebarProvider } from "./sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { Navbar } from "./Navbar";
-import ResidentRegistration from "@/components/profiling/ResidentRegistration";
+import ResidentRegistration from "@/components/profiling/Form/ResidentRegistration";
+import ProfilingMain from "@/components/profiling/ProfilingMain";
 
 export default function SidebarLayout({
   children,
@@ -21,12 +22,10 @@ export default function SidebarLayout({
             </main>
           </SidebarProvider>
         </div>
-        <main className="p-4 overflow-y-auto flex-1">
-          <ResidentRegistration/>
+        <main className="p-4 overflow-y-auto flex-1 bg-[#F3F4F8]">
+          <ProfilingMain/>
         </main>
       </div>
-
-      <div></div>
     </div>
   );
 }

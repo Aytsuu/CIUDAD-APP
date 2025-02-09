@@ -9,8 +9,8 @@ import {
   MotherFormData,
   FatherFormData,
   DependentFormData,
-} from "../profiling/FormDataType";
-import Progress from "./progress";
+} from "../Schema/FormDataType";
+import Progress from "../progress";
 
 export function ProfilingForm() {
   const [currentStep, setCurrentStep] = useState(1);

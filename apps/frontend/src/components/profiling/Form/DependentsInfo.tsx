@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
-import { DependentFormData } from "./FormDataType";
-import { dependentFormSchema } from "./ProfilingSchema";
-import { Input } from "../ui/input";
+import { DependentFormData } from "../Schema/FormDataType";
+import { dependentFormSchema } from "../Schema/ProfilingSchema";
+import { Input } from "../../ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -10,7 +10,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "../ui/form";
+} from "../../ui/form";
 
 interface DependentInfoForm {
   onSubmit: (data: DependentFormData) => void;

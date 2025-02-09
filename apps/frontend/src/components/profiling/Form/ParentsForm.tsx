@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Form,
   FormField,
@@ -6,13 +5,13 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "../ui/form";
-import { MotherFormData, FatherFormData } from "./FormDataType";
+} from "../../ui/form";
+import { MotherFormData, FatherFormData } from "../Schema/FormDataType";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motherFormSchema, fatherFormSchema } from "./ProfilingSchema";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+import { motherFormSchema, fatherFormSchema } from "../Schema/ProfilingSchema";
+import { Input } from "../../ui/input";
+import { Button } from "../../ui/button";
 
 interface ParentsInfoFormProps {
   onSubmit: (motherData: MotherFormData, fatherData: FatherFormData) => void;
