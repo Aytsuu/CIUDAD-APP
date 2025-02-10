@@ -87,6 +87,7 @@ export default function DRRARForm(){
                                     <SelectLayout 
                                         placeholder='Select a Sitio'
                                         label=''
+                                        className=''
                                         options={[{id: '1', name: 'bahog tae' }]}
                                         value={field.value}
                                         onChange={field.onChange}
@@ -199,10 +200,10 @@ export default function DRRARForm(){
                             Create
                         </Button>
                     </div>
-
+                    
                 </form>
             </Form>
-
+                        
         </div>
 
     );
