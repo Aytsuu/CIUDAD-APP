@@ -1,9 +1,11 @@
+// Import necessary components and icons
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import DRRReportForm from "./drr-report-form"
 import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 
+// Define the type for the Report object
 type Report = {
     id: string
     category: string
@@ -15,6 +17,7 @@ type Report = {
     date: string
 }
 
+// Define the columns for the data table
 export const columns: ColumnDef<Report>[] = [
     {
         accessorKey: "category",
@@ -32,33 +35,34 @@ export const columns: ColumnDef<Report>[] = [
         )
     },
     {
-        accessorKey: "location",
-        header: "Location",
+        accessorKey: "location", // Key for location data
+        header: "Location", // Column header
     },
     {
-        accessorKey: "description",
-        header: "Description",
+        accessorKey: "description", // Key for description data
+        header: "Description", // Column header
     },
     {
-        accessorKey: "incidentTime",
-        header: "Time of Incident",
+        accessorKey: "incidentTime", // Key for incident time data
+        header: "Time of Incident", // Column header
     },
     {
-        accessorKey: "reportedBy",
+        accessorKey: "reportedBy", // Key for reported by data
         header: "Reported By",
     },
     {
-        accessorKey: "timeReported",
-        header: "Time Reported",
+        accessorKey: "timeReported", // Key for time reported data
+        header: "Time Reported", // Column header
     },
     {
-        accessorKey: "date",
-        header: "Date",
+        accessorKey: "date", // Key for date data
+        header: "Date", // Column header
     },
     {
-        accessorKey: "action",
-        header: "Action",
-        cell: ({row}) => (
+        accessorKey: "action", // Key for action data
+        header: "Action", // Column header
+        cell: ({row}) => ( // Add action button to all existing rows
+            // DialogLayout component to show detailed report on click
             <DialogLayout   
                 trigger={
                     <div className="w-[50px] h-[35px] border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]"> 
@@ -71,11 +75,12 @@ export const columns: ColumnDef<Report>[] = [
                 mainContent={<DRRReportForm />}
             /> 
         ),
-        enableSorting: false,
-        enableHiding: false,
+        enableSorting: false, // Disable sorting
+        enableHiding: false, // Disable hiding
     },
 ]
 
+// Sample data for the reports
 export const reports: Report[] = [
     {
         id: "Lorem",
@@ -99,17 +104,19 @@ export const reports: Report[] = [
     },
 ]
 
+// Main component for displaying the DRR Resident Report
 export default function DRRResidentReport(){
 
     const data = reports;
 
-    
     return (
+        // Container for the entire page
         <div className="w-screen h-screen bg-snow flex justify-center items-center p-4 sm:p-0">
+            {/* Container for the data table */}
             <div className="w-full sm:w-[80%] h-full sm:h-2/3 bg-white border border-gray p-3 rounded-[5px]">
+                {/* DataTable component to display the reports */}
                 <DataTable columns={columns} data={data} />
             </div>
         </div>
-
     )
 }

@@ -6,9 +6,10 @@ import DRRResidentReport from "./pages/report/drr/drr-resident-report"
 import DRRAcknowledgementReport from "./pages/report/drr/drr-acknowledgement-report"
 import DRRMapGoogle from "./pages/report/drr/drr-map-google"
 
+// Creating routes
 const router = createBrowserRouter([
   {
-    path: "/monthlyreport", 
+    path: "/drr-monthly-report", 
     element: <DRRMonthlyARReport/>,
     children: [
       {
@@ -18,11 +19,11 @@ const router = createBrowserRouter([
     ]
   },
   {
-    path: '/residentreport',
+    path: '/drr-resident-report',
     element: <DRRResidentReport/>
   },
   {
-    path: '/acknowledgementreport',
+    path: '/drr-acknowledgement-report',
     element: <DRRAcknowledgementReport/>
   },
   {
