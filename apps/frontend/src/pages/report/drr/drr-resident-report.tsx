@@ -2,7 +2,6 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import DRRReportForm from "./drr-report-form"
 import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { ColumnDef } from "@tanstack/react-table"
 
 type Report = {
@@ -19,17 +18,18 @@ type Report = {
 export const columns: ColumnDef<Report>[] = [
     {
         accessorKey: "category",
-        header: ({ column }) => {
-            return (
-              <Button
-                variant="ghost"
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
                 onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
               >
                 Category
-                <ArrowUpDown />
-              </Button>
-            )
-          },
+                <ArrowUpDown size={15}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="capitalize">{row.getValue("category")}</div>
+        )
     },
     {
         accessorKey: "location",
