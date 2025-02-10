@@ -18,6 +18,10 @@ export default function Services() {
     router.push("/Calendar-page");
   };
 
+  const resolution = () => {
+    router.push("/GAD_resolution");
+  };
+
   
   return (
     <View className="flex-1 bg-[#ECF8FF] p-4 mt-11">
@@ -40,7 +44,7 @@ export default function Services() {
         </TouchableOpacity>
 
         {/*resolution  */}
-        <TouchableOpacity className="w-36 h-36 bg-[#A6CFE2] rounded-2xl items-center justify-center shadow-md">
+        <TouchableOpacity className="w-36 h-36 bg-[#A6CFE2] rounded-2xl items-center justify-center shadow-md" onPress={resolution}>
           <Services_Resolution_Icon width ={50} height = {50} />
           <Text className="mt-2 text-center text-[#0A1D56] font-semibold">Resolution</Text>
         </TouchableOpacity>

@@ -42,7 +42,8 @@ export default function RootLayout() {
         <Stack.Screen name="donation-page" options={{ headerShown: false }} />
         <Stack.Screen name="Calendar-page" options={{ headerShown: false }} />
         <Stack.Screen name="Calendar-multiple-events" options={{ headerShown: false }} />
-         <Stack.Screen name="GAD_services" options={{ headerShown: false }} />
+        <Stack.Screen name="GAD_services" options={{ headerShown: false }} />
+        <Stack.Screen name="GAD_resolution" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="light" />
     </ThemeProvider>
