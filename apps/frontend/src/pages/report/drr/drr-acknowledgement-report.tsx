@@ -6,6 +6,7 @@ import {
     Users,
     FolderPlus
 } from "lucide-react"
+import { SelectLayout } from "@/components/ui/select/select-layout"
 
 const header = [
     "Incident/Activity", 
@@ -31,16 +32,26 @@ export default function DRRAcknowledgementReport(){
     
     return(
 
-        <div className="w-screen h-screen bg-snow flex justify-center items-center">
-            <div className="w-[70%] h-4/5 flex gap-3">
-                {/* Main Table Section */}
-                <div className="w-full h-full bg-white border border-gray rounded-[5px] p-5">
+        <div className="w-screen h-screen bg-snow flex justify-center items-center p-4 sm:p-0">
+            <div className="w-full sm:w-[70%] h-full sm:h-4/5 flex flex-col-reverse sm:flex-row gap-3">
+   
+                <div className="w-full h-full bg-white border border-gray flex flex-col rounded-[5px] p-5 gap-3">
+                    <div className="w-full">
+                        <SelectLayout
+                            placeholder="Year"
+                            label=""
+                            className=""
+                            options={[]}
+                            value=""
+                            onChange={()=>{}}
+                        />
+                    </div>
                     <TableLayout header={header} rows={rows} />
                 </div>
 
-                {/* Sidebar Section */}
-                <div className="w-[20%] h-full bg-white border border-gray flex flex-col rounded-[5px] p-3 gap-3 overflow-auto">
-                    {/* Reusable Card Component */}
+                
+                <div className="w-0 sm:w-[20%] h-0 sm:h-full bg-white sm:border sm:border-gray flex flex-col rounded-[5px] sm:p-3 gap-3 overflow-auto">
+                  
                     <Card
                         icon={<CalendarRange className="absolute bottom-4 right-0 z-0 w-2/3 h-2/3 text-ashGray" />}
                         title="Weekly AR"

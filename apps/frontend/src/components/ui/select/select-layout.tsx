@@ -8,6 +8,7 @@ import {
     SelectValue,
   } from "@/components/ui/select/select"
 import React from "react"
+import { cn } from "@/lib/utils"
 
   interface Option{
     id: string,
@@ -15,17 +16,18 @@ import React from "react"
   }
 
   interface SelectProps{
-    label: string,
+    className: string
     placeholder: string
+    label: string,
     options: Option[],
     value: string,
     onChange: (value: string) => void
   }
    
-  export function SelectLayout({label, placeholder, options, value, onChange}: SelectProps) {
+  export function SelectLayout({placeholder, label, className, options, value, onChange}: SelectProps) {
     return (
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className={cn("w-[180px]", className)}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

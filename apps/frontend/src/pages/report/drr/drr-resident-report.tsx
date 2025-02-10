@@ -26,7 +26,7 @@ const bodyProp = [
                     View 
                 </div>
             }
-            className="max-w-[50%] h-2/3 flex flex-col"
+            className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col"
             title="Report Details"
             description="This report was received on 9th of July, 2025. Please respond accordingly."
             mainContent={<DRRReportForm/>}
@@ -37,8 +37,8 @@ const bodyProp = [
 export default function DRRResidentReport(){
     
     return (
-        <div className="w-screen h-screen bg-snow flex justify-center items-center">
-            <div className="w-[80%] h-2/3 bg-white border border-gray rounded-[5px] p-5">
+        <div className="w-screen h-screen bg-snow flex justify-center items-center p-4 sm:p-0">
+            <div className="w-full sm:w-[80%] h-full sm:h-2/3 bg-white border border-gray p-5 rounded-[5px]">
                 <TableLayout header={headerProp} rows={bodyProp}/>
             </div>
         </div>
