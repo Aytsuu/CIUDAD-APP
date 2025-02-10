@@ -14,9 +14,8 @@ import DonationImage2 from "@/assets/svg/donationImage2";
 import Features_Request_Icon from "@/assets/svg/Features_Request_Icon";
 import Features_Report_Icon from "@/assets/svg/Features_Report_Icon";
 import Features_Health_Icon from "@/assets/svg/Features_Health_Icon";
-import Features_Calendar_Icon from "@/assets/svg/Features_Calendar_Icon";
-import Features_PendingRequest_Icon from "@/assets/svg/Features_PendingRequest_Icon";
-import Features_Donations_Icon from "@/assets/svg/Features_Donations_Icon";
+import Features_GAD_Icon from "@/assets/svg/Features_GAD_Icon";
+
 import { useRouter } from "expo-router";
 
 export default function MyRequestScreen() {
@@ -30,8 +29,8 @@ export default function MyRequestScreen() {
     router.push("/donation-page");
   };
 
-  const calendar = () => {
-    router.push("/Calendar-page");
+  const GAD_services = () => {
+    router.push("/GAD_services");
   };
 
   return (
@@ -148,42 +147,20 @@ export default function MyRequestScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/*calendar*/}
+            {/*GAD*/}
             <TouchableOpacity
               className="w-48 h-20 flex-row items-center bg-white rounded-lg p-4 shadow-md"
-              onPress={calendar}
+              onPress={GAD_services}
             >
               <View className="w-12 h-12 bg-[#FAB440] rounded-full flex items-center justify-center">
-                <Features_Calendar_Icon />
+                <Features_GAD_Icon width={30} height = {30} />
               </View>
               <Text className="ml-4 text-[18px] text-[#07143F] font-bold">
-                Calendar
+                GAD
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* 3rd row */}
-          <View className="flex-row gap-4 mt-2 ml-[-6]">
-            {/*health*/}
-            <TouchableOpacity className="w-48 h-20 flex-row items-center bg-white rounded-lg p-4 shadow-md">
-              <View className="w-12 h-12 bg-[#44A17C] rounded-full flex items-center justify-center">
-                <Features_PendingRequest_Icon />
-              </View>
-              <Text className="ml-4 text-[18px] text-[#07143F] font-bold">
-                Pending Request
-              </Text>
-            </TouchableOpacity>
-
-            {/*calendar*/}
-            <TouchableOpacity className="w-48 h-20 flex-row items-center bg-white rounded-lg p-4 shadow-md">
-              <View className="w-12 h-12 bg-[#FEF163] rounded-full flex items-center justify-center">
-                <Features_Donations_Icon />
-              </View>
-              <Text className="ml-4 text-[18px] text-[#07143F] font-bold">
-                Donations
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* i dont know unsay content ig scroll down */}
