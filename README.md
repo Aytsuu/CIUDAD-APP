@@ -6,7 +6,9 @@
 - **Mobile**: [React-Native](https://reactnative.dev/)
 
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
-  
+
+<br></br>
+
 ---
 
 ## Getting Started
@@ -35,6 +37,8 @@
    ```bash
    cd frontend
    npm install
+   npm install -D tailwindcss postcss autoprefixer
+   npm install -D @types/node
    ```
    
 4. Install mobile dependencies:
@@ -60,7 +64,17 @@ cd barangay-mobile
 npx expo start
 ```
 
+### Updating your Main Branch
+
+```bash
+git fetch origin
+git checkout main
+git pull
+```
+
 ---
+
+<br></br>
 
 ## Branch Naming Conventions
 
@@ -102,6 +116,7 @@ We follow a consistent naming convention for branches to maintain clarity and or
   `mobile/experiment/test-ai`
 
 ## Branch Script 
+
 #### Create a branch (if clone)
 ```bash
 git checkout -b [branch_name]
@@ -110,6 +125,16 @@ git checkout -b [branch_name]
 ```bash
 git status
 ```
+
+#### Renaming a branch
+```bash
+git branch -m [new-branch-name]
+git push origin --delete [old-branch-name]
+git push origin [new-branch-name]
+git push --set-upstream origin [new-branch-name]
+```
+
+<br></br>
 
 ## Revert Script (If you accidentally commit on main branch)
 
@@ -134,3 +159,50 @@ git revert [commit-hash]
 ```bash
 git checkout [commit-hash] -- .
 ```
+
+<br></br>
+---
+## Components
+
+### How to Use
+
+#### Filter Accordion
+
+```bash
+
+const categoryOptions = [
+  { id: "electronics", label: "Electronics", checked: false },
+  { id: "fashion", label: "Fashion", checked: false },
+  { id: "home", label: "Home", checked: false },
+];
+
+function CategoryFilter() {
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  const handleCategoryChange = (id: string, checked: boolean) => {
+    setSelectedCategories((prev) =>
+      checked ? [...prev, id] : prev.filter((category) => category !== id)
+    );
+  };
+
+  const handleReset = () => {
+    setSelectedCategories([]);
+  };
+
+  return (
+    <FilterAccordion
+      title="Categories"
+      options={categoryOptions.map((option) => ({
+        ...option,
+        checked: selectedCategories.includes(option.id),
+      }))}
+      selectedCount={selectedCategories.length}
+      onChange={handleCategoryChange}
+      onReset={handleReset}
+    />
+  );
+}
+
+```
+
+---
