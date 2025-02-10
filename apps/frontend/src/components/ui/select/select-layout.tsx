@@ -10,7 +10,7 @@ import {
 
   interface Option{
     id: string,
-    name: React.ReactNode
+    name: string
   }
 
   interface SelectProps{

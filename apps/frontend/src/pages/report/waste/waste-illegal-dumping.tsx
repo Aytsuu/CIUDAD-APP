@@ -97,7 +97,7 @@ const headerProp = ["Report No.", "Report Matter", "Location", "Report Details",
 const bodyProp = [[ "0001", "Lorem Ipsum", "Sitio 1", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", "Unknown",
     "Anonymous", "09xxxxxxxx", "01/11/25 05:00PM",
     (<DialogLayout
-            trigger={<Button variant={"outline"} className=""> View </Button>}
+            trigger={<div className=""> View </div>}
             className="max-w-[50%] h-2/3 flex flex-col"
             title="Image Details"
             description="Here is the image related to the report."

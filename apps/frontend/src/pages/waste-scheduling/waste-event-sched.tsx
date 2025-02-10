@@ -271,7 +271,7 @@ function WasteEventSched() {
                                 /> <br/>
 
                 <div className="flex items-center justify-center">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%">Schedule</Button>
+                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%]">Schedule</Button>
                 </div>
             </form>
         </Form>

@@ -1,53 +1,51 @@
 import React, { useState } from 'react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import DialogLayout from '@/components/ui/dialog/dialog-layout';// Adjust the import path as necessary
+import DialogLayout from '@/components/ui/dialog/dialog-layout';
 import WasteEventSched from "@/pages/waste-scheduling/waste-event-sched";
 import WasteColSched from "@/pages/waste-scheduling/waste-col-sched";
 import WasteHotSched from "@/pages/waste-scheduling/waste-hotspot-sched";
 
+const scheduleComponents: Record<string, React.ReactNode> = {
+  SchedEvent: <WasteEventSched />,
+  SchedWstCol: <WasteColSched />,
+  SchedHots: <WasteHotSched />,
+};
+
 const WasteMainScheduling = () => {
-    const [selectedValue, setSelectedValue] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
+  const [selectedValue, setSelectedValue] = useState<string>('');
 
-    // Function to handle selection change
-    const handleChange = (value: string) => {
-        setSelectedValue(value);
-        setIsOpen(true); // Open the modal when a selection is made
-    };
+  const handleChange = (value: string) => {
+    console.log("Selected Value (ID):", value);
+    setSelectedValue(value);
+  };
 
-    return (
-        <div>
-            <SelectLayout
-                label=""
-                placeholder="Schedule"
-                options={[
-                    { id: 'SchedEvent', name: <DialogLayout
-                        trigger={<div className="border-none bg-transparent hover:bg-transparent shadow-none text-black">Event/Meeting</div>}
-                        className="" 
-                        title="Schedule Details"
-                        description="Fill out the form below."
-                        mainContent={<WasteEventSched />}   
-                    /> },
-                    { id: 'SchedWstCol', name: <DialogLayout
-                        trigger={<div className="border-none bg-transparent hover:bg-transparent shadow-none text-black">Waste Collection</div>}
-                        className="" 
-                        title="Schedule Details"
-                        description="Fill out the form below."
-                        mainContent={<WasteColSched />}
-                    /> },
-                    { id: 'SchedHots', name: <DialogLayout
-                        trigger={<div className="border-none bg-transparent hover:bg-transparent shadow-none text-black">Hotspot</div>}
-                        className="" 
-                        title="Assignment Details"
-                        description="Fill out the form below."
-                        mainContent={<WasteHotSched />}
-                    />  }
-                ]}
-                value={selectedValue}
-                onChange={handleChange}
-            />
-        </div>
-    );
+  return (
+    <div>
+      <SelectLayout
+        label=""
+        placeholder="Schedule"
+        options={[
+          { id: 'SchedEvent', name: 'Event/Meeting' }, // id for logic, name for display
+          { id: 'SchedWstCol', name: 'Waste Collection' },
+          { id: 'SchedHots', name: 'Hotspot' }
+        ]}
+        value={selectedValue}
+        onChange={handleChange}
+      />
+
+      <DialogLayout
+        trigger={
+          <div className="border rounded border-input bg-black text-white shadow-sm hover:bg-accent hover:text-accent-foreground">
+            Create
+          </div>
+        }
+        className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+        title="Schedule Details"
+        description="Fill out the form below."
+        mainContent={scheduleComponents[selectedValue] || <div>Please select a schedule type.</div>}
+      />
+    </div>
+  );
 };
 
 export default WasteMainScheduling;
