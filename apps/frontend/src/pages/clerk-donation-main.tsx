@@ -6,6 +6,7 @@ import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import ClerkDonateCreate from './clerk-donation-create';
 import ClerkDonateDeleteConf from "./clerk-donation-delete-conf";
+import ClerkDonateView from "./clerk-donation-view";
 
 
 
@@ -14,15 +15,15 @@ const headerProp = ["Ref No.", "Item Name", "Action"];
 const bodyProp = [
     ["0001","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor inc.",
         (
-            <div className="grid grid-cols-2 gap-0">
+            <div className="grid grid-cols-2 gap-3/4">
                 <TooltipLayout 
                     trigger={
                         <DialogLayout
                             trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Eye size={16}/></div>}
-                            className="max-w-[50%] h-2/3 flex flex-col"
-                            title="Image Details"
-                            description="Here is the image related to the report."
-                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                            className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                            title=""
+                            description=""
+                            mainContent={<ClerkDonateView/>} // Replace with actual image path
                         />                        
                     } 
                     content="View"
@@ -92,7 +93,7 @@ function DonationTracker() {
                     </div>
                 </div>
                 
-                <div className="bg-white border border-gray rounded-[5px] p-5">
+                <div className="bg-white border border-gray w-full rounded-[5px] p-5">
                     <TableLayout header={headerProp} rows={bodyProp}/>
                 </div>      
 
