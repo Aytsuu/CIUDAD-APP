@@ -21,7 +21,7 @@ export default function Resolution() {
 
       <Text className="text-center text-2xl font-bold text-[#0A1D56] mt-11 mb-8">Resolution</Text>
 
-      {/* Services Grid */}
+      {/* resolutions */}
       <View className="flex-row flex-wrap justify-start gap-4 ml-5">
         <TouchableOpacity 
           className="w-40 bg-white rounded-2xl shadow-md overflow-hidden"
@@ -39,7 +39,7 @@ export default function Resolution() {
         </TouchableOpacity>
       </View>
 
-      {/* Modal for Image Popup */}
+      {/* image */}
       <Modal
         visible={modalVisible}
         transparent={true}
