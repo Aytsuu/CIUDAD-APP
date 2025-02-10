@@ -22,7 +22,7 @@ export default function SidebarLayout({
             </main>
           </SidebarProvider>
         </div>
-        <main className="p-4 overflow-y-auto flex-1 bg-[#F3F4F8]">
+        <main className="px-8 py-4 overflow-y-auto flex-1 bg-[#F3F4F8]">
           <ProfilingMain/>
         </main>
       </div>

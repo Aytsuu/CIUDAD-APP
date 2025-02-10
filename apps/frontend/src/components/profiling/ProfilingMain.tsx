@@ -1,8 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FaBaby, FaChild, FaUser, FaUserTie } from "react-icons/fa";
+import { FaBaby, FaChild, FaUser, FaUserTie, FaSearch } from "react-icons/fa";
 import ReactECharts from "echarts-for-react";
 import { MoreHorizontal } from "lucide-react";
+import TableLayout from "../ui/table/table-layout";
+import { Header } from "../ui/header";
 
 export default function ProfilingMain() {
   // Sample data for the graph
@@ -153,25 +155,19 @@ export default function ProfilingMain() {
           <h1 className="font-semibold text-2xl text-gray-800">
             Resident Record
           </h1>
-          <p className="text-gray-500 text-sm">
-            Changes were made three minutes ago.{" "}
-            <a href="" className="text-blue-600 hover:text-blue-700">
-              View Changes
-            </a>
-          </p>
         </div>
         <div className="flex space-x-3">
           <Button variant="outline" className="hover:bg-gray-100">
             Pending
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">Register</Button>
+          <Button className="bg-blue hover:bg-sky-400">Register</Button>
         </div>
       </div>
 
       <hr className="border-gray-200 " />
 
-      <div className="flex w-full space-x-4 h-32">
-        {/* Stats cards */}
+      {/* <div className="flex w-full space-x-8 h-32">
+       
         <div className="w-1/4 h-full rounded-lg shadow-md p-6 bg-gradient-to-tr from-blue-200 to-white flex items-center justify-center gap-6">
           <FaBaby className="text-blue-500 w-24 h-24" />
           <div className="flex flex-col items-center">
@@ -223,10 +219,10 @@ export default function ProfilingMain() {
             <p className="text-blue-600 text-2xl font-bold mt-2">1,200</p>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="w-full flex gap-4 h-96">
-        {/* Demographics Card with ECharts */}
+      {/* <div className="w-full flex gap-4 h-96">
+        
         <div className="w-3/4 bg-white rounded-xl shadow-md p-4">
           <ReactECharts
             option={option}
@@ -235,7 +231,7 @@ export default function ProfilingMain() {
           />
         </div>
 
-        {/* Recent Activity Card */}
+        
         <div className="w-1/4 bg-white rounded-xl shadow-md p-4">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-semibold text-gray-800">
@@ -268,23 +264,32 @@ export default function ProfilingMain() {
                       {activity.time}
                     </span>
                   </div>
-                  {/* <Button
-                    size="sm"
-                    className="bg-blue-500 hover:bg-blue-600 text-white h-6 text-xs px-2"
-                  >
-                    View
-                  </Button> */}
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="h-96 w-full bg-white rounded-md">
-        
-        {/* Table Placement */}
-
+      <div className="h-full w-full bg-white rounded-md">
+        <div className="w-full h-10 bg-blue rounded-t-lg flex items-center justify-between">
+          
+        </div>
+        <div className="w-full h-10 mt-[1px] bg-white border-2flex-1 justify-between">
+          <div>
+            <p>Show</p>
+            <input type="number" />
+            <p>Entries</p>
+          </div>
+          <input type="text" className="bg-" />
+        </div>
+        <div className="">
+          {/* Table Placement */}
+          <TableLayout
+            header={["Header1", "Header2", "Header3", "Header4"]}
+            rows={Array(20).fill(["Row1", "Row2", "Row3", "Row4"])}
+          />
+        </div>
       </div>
     </div>
   );
