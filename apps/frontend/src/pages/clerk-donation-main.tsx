@@ -1,7 +1,7 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus } from 'lucide-react';
+import { Trash, Eye, Plus } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import ClerkDonateCreate from './clerk-donation-create';
@@ -15,7 +15,7 @@ const headerProp = ["Ref No.", "Item Name", "Action"];
 const bodyProp = [
     ["0001","Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor inc.",
         (
-            <div className="grid grid-cols-2 gap-3/4">
+            <div className="grid grid-cols-2">
                 <TooltipLayout 
                     trigger={
                         <DialogLayout
@@ -23,7 +23,9 @@ const bodyProp = [
                             className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
                             title=""
                             description=""
-                            mainContent={<ClerkDonateView/>} // Replace with actual image path
+                            mainContent={ <div className="w-full h-full">
+                                <ClerkDonateView />
+                            </div>}
                         />                        
                     } 
                     content="View"
@@ -86,15 +88,17 @@ function DonationTracker() {
                         <DialogLayout   
                             trigger={<div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointer flex items-center"> Create <Plus className="ml-2"/></div>}
                             className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                            title="Schedule Event"
-                            description="Set an upcoming event."
-                            mainContent={<ClerkDonateCreate/>}
+                            title=""
+                            description=""
+                            mainContent={<div className="w-full h-full">
+                                <ClerkDonateCreate />
+                            </div>}
                         />                                              
                     </div>
                 </div>
                 
-                <div className="bg-white border border-gray w-full rounded-[5px] p-5">
-                    <TableLayout header={headerProp} rows={bodyProp}/>
+                <div className="bg-white border border-gray w-full rounded-[5px] p-5 table-fixed">
+                    <TableLayout header={headerProp} rows={bodyProp} />
                 </div>      
 
                 <div>

@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 const ClerkDonateViewSchema = z.object({
-    donorName: z.string().optional(), 
-    itemname: z.string().optional(), 
-    itemqty: z.string().optional(), 
-    itemcategory: z.string().optional(),
-    receiver: z.string().optional(),
+    donorName: z.string().nonempty("Donor name is required"), 
+    itemname: z.string().nonempty("Item name is required"), 
+    itemqty: z.string().nonempty("Item quantity is required"), 
+    itemcategory: z.string().nonempty("Item category is required"),
+    receiver: z.string().nonempty(""),
     itemDescription: z.string().optional(),
 });
 

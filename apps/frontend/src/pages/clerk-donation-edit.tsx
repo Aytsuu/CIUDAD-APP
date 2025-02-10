@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import ClerkDonateCreateSchema from '@/form-schema/clerk-donate-create-form-schema';
 
-function ClerkDonateCreate() {
+function ClerkDonateEdit() {
 
     const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
         resolver: zodResolver(ClerkDonateCreateSchema),
@@ -143,4 +143,4 @@ function ClerkDonateCreate() {
         </Form>
     );
 }
-export default ClerkDonateCreate;
+export default ClerkDonateEdit;
