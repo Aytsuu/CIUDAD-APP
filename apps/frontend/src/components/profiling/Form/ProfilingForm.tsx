@@ -55,6 +55,7 @@ export function ProfilingForm() {
       dependentSuffix: "",
       dependentDateOfBirth: "",
       dependentSex: "",
+      additionalDependents: []
     },
   });
 
@@ -119,16 +120,30 @@ export function ProfilingForm() {
 
   return (
     <div>
-      <div className="flex justify-center items-center pb-10">
+      <div className="flex gap-2 justify-between pb-4">
+        <p className="text-md text-gray-700 text-xl">
+          <span className="border-l-4 rounded-sm border-[#263D67] pr-2"></span>
+          Resident Registration
+        </p>
+        <p className="text-sm text-gray-500">
+          {new Date().toLocaleDateString(undefined, {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+          })}
+        </p>
+      </div>
+      <hr />
+      <div className="flex justify-center items-center pb-4 pt-4 bg-white mt-4 rounded-t-lg">
         <Progress progress={calculateProgress()} />
       </div>
+      <hr />
       <div>
-        <Card className="w-full border-none shadow-none">
+        <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
           {currentStep === 1 && (
             <PersonalInfoForm
               onSubmit={handlePersonalInfoSubmit}
               initialData={formData.personalInfo}
-              
             />
           )}
           {currentStep === 2 && (

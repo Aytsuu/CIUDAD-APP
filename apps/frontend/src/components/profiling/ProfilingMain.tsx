@@ -1,10 +1,19 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FaBaby, FaChild, FaUser, FaUserTie, FaSearch } from "react-icons/fa";
+import {
+  FaBaby,
+  FaChild,
+  FaUser,
+  FaUserTie,
+  FaSearch,
+  FaPlus,
+} from "react-icons/fa";
 import ReactECharts from "echarts-for-react";
-import { MoreHorizontal } from "lucide-react";
 import TableLayout from "../ui/table/table-layout";
 import { Header } from "../ui/header";
+import { Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import { Input } from "../ui/input";
 
 export default function ProfilingMain() {
   // Sample data for the graph
@@ -149,6 +158,7 @@ export default function ProfilingMain() {
 
   return (
     <div className="space-y-4">
+      <Outlet />
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="space-y-1">
@@ -156,11 +166,22 @@ export default function ProfilingMain() {
             Resident Record
           </h1>
         </div>
-        <div className="flex space-x-3">
-          <Button variant="outline" className="hover:bg-gray-100">
+        <div className="flex space-x-3 h-9">
+          <Link
+            to="/"
+            className="flex items-center justify-center shadow-md w-32 bg-white rounded-md hover:bg-gray-100 hover:bg-gray hover:text-white"
+          >
             Pending
-          </Button>
-          <Button className="bg-blue hover:bg-sky-400">Register</Button>
+          </Link>
+          <Link
+            to="/residentRegistration"
+            className="flex gap-x-2 shadow-md items-center justify-center w-32 rounded-md text-white bg-blue hover:bg-sky-400"
+          >
+            <span>
+              <FaPlus />
+            </span>
+            Register
+          </Link>
         </div>
       </div>
 
@@ -271,18 +292,29 @@ export default function ProfilingMain() {
         </div>
       </div> */}
 
-      <div className="h-full w-full bg-white rounded-md">
-        <div className="w-full h-10 bg-blue rounded-t-lg flex items-center justify-between">
+      {/* Header Structure */}
+      <div>
+        <div className="relative w-full flex justify-between items-center gap-4">
+          <div className="relative flex-1">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray" />
+            <Input placeholder="Search..." className="pl-10 w-72" />
+          </div>
+          <div className="flex-shrink-0">
+            <Link
+              to="/"
+              className="flex items-center justify-center shadow-md w-32 bg-white rounded-md hover:bg-gray hover:text-black"
+            >
+              Print List
+            </Link>
+          </div>
+        </div>
+        <div>
           
         </div>
-        <div className="w-full h-10 mt-[1px] bg-white border-2flex-1 justify-between">
-          <div>
-            <p>Show</p>
-            <input type="number" />
-            <p>Entries</p>
-          </div>
-          <input type="text" className="bg-" />
-        </div>
+      </div>
+
+      {/* Table Container */}
+      <div className="h-full w-full bg-white rounded-md">
         <div className="">
           {/* Table Placement */}
           <TableLayout

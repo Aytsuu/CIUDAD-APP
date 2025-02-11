@@ -18,10 +18,20 @@ export const motherFormSchema = z.object({});
 export const fatherFormSchema = z.object({});
 
 export const dependentFormSchema = z.object({
-  dependentFName: z.string().min(1, "This is required"),
-  dependentLName: z.string().min(1, "Must be 2 or more characters"),
-  dependentMName: z.string().min(1, "This is required"),
-  dependentSuffix: z.string().min(1, "This is required"),
-  dependentDateOfBirth: z.string().min(1, "This is required"),
-  dependentSex: z.string().min(1, "This is required"),
+  dependentFName: z.string(),
+  dependentLName: z.string(),
+  dependentMName: z.string(),
+  dependentSuffix: z.string(),
+  dependentDateOfBirth: z.string(),
+  dependentSex: z.string(),
+  additionalDependents: z.array(
+    z.object({
+      dependentFName: z.string(),
+      dependentLName: z.string(),
+      dependentMName: z.string(),
+      dependentSuffix: z.string(),
+      dependentDateOfBirth: z.string(),
+      dependentSex: z.string(),
+    })
+  ),
 });

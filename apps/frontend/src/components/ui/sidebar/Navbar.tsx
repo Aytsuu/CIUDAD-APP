@@ -1,5 +1,4 @@
 import { MessageCircle, Search } from "lucide-react";
-// import SanRoqueLogo from "../../assets/images/sanRoqueLogo.svg";
 
 export function Navbar() {
   return (
@@ -7,7 +6,7 @@ export function Navbar() {
       <div className="flex items-center space-x-4 text-lg font-semibold cursor-pointer">
         <div className="h-[30px] w-[30px] rounded-full">
           {" "}
-          {/* <img src={SanRoqueLogo} alt="Barangay Logo" />{" "} */}
+          {/* <img src={sanRoqueLogo} alt="Barangay Logo" />{" "} */}
         </div>
         <p>CIUDAD</p>
       </div>

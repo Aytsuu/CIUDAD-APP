@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Calendar } from "lucide-react";
 import { Input } from "../../ui/input";
 import {
   Select,
@@ -19,7 +20,7 @@ import {
 import { Button } from "../../ui/button";
 import { PersonalFormData } from "../Schema/FormDataType";
 import { personalFormSchema } from "../Schema/ProfilingSchema";
-
+import { Link } from "react-router-dom";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: PersonalFormData) => void;
@@ -45,7 +46,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
   });
 
   return (
-    <div className="p-4 border-2 mx-10">
+    <div className="flex flex-col h-[calc(90vh-200px)] p-4 rounded-lg">
+      <div className="pb-4">
+        <h2 className="text-lg font-semibold">Personal Information</h2>
+        <p className="text-xs text-black/50">Fill out all necessary fields</p>
+      </div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -57,7 +62,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="lastName"
               render={({ field }) => (
                 <FormItem className="col-span-4">
-                  <FormLabel className="font-medium text-gray-500">Last Name</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Last Name <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Last Name" {...field} />
                   </FormControl>
@@ -71,7 +78,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="firstName"
               render={({ field }) => (
                 <FormItem className="col-span-4">
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    First Name <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter First Name" {...field} />
                   </FormControl>
@@ -85,7 +94,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="middleName"
               render={({ field }) => (
                 <FormItem className="col-span-3">
-                  <FormLabel>Middle Name</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Middle Name <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Middle Name" {...field} />
                   </FormControl>
@@ -99,7 +110,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="suffix"
               render={({ field }) => (
                 <FormItem className="col-span-1">
-                  <FormLabel>Suffix</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Suffix <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Sfx." {...field} />
                   </FormControl>
@@ -116,7 +129,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="sex"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Sex</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Sex <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
@@ -143,7 +158,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="status"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Marital Status</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Marital Status <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
@@ -169,13 +186,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="dateOfBirth"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Date of Birth</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Date of Birth <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Street/Barangay/Municipality/Province/City"
-                      type="Date"
-                      {...field}
-                    />
+                    <Input type="Date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +202,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="birthPlace"
               render={({ field }) => (
                 <FormItem className="col-span-6">
-                  <FormLabel>Place of Birth</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Place of Birth <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Street/Barangay/Municipality/Province/City"
@@ -207,7 +224,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="citizenship"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Citizenship</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Citizenship <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Citizenship" {...field} />
                   </FormControl>
@@ -221,7 +240,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="religion"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Religion</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Religion <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Religion" {...field} />
                   </FormControl>
@@ -235,7 +256,9 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               name="contact"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-normal">Contact#</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Contact# <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Contact" {...field} />
                   </FormControl>
@@ -245,14 +268,18 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
           </div>
           {/* Submit Button */}
-          <div className="col-span-4 flex justify-end mt-4 align-bottom gap-x-4">
-            <Button
-              type="button"
-              className="bg-white text-black hover:bg-gray-300"
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Next</Button>
+          <div className="mt-auto">
+            <div className="p-4 flex justify-end gap-x-4 bg-white">
+              <Link
+                to="/"
+                className="flex justify-center items-center rounded-md w-32 bg-white border-2 border-blue/50 text-black/75 hover:bg-blue hover:text-white"
+              >
+                Cancel
+              </Link>
+              <Button type="submit" className="w-32 bg-blue hover:bg-darkBlue2">
+                Next
+              </Button>
+            </div>
           </div>
         </form>
       </Form>

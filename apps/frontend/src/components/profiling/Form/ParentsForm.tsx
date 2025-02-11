@@ -22,10 +22,7 @@ interface ParentsInfoFormProps {
   };
 }
 
-const ParentsForm = (
-  { onSubmit,onBack, initialData }: ParentsInfoFormProps,
-) => {
-
+const ParentsForm = ({ onSubmit, onBack, initialData }: ParentsInfoFormProps) => {
   const motherForm = useForm<MotherFormData>({
     resolver: zodResolver(motherFormSchema),
     defaultValues: initialData.motherInfo || {
@@ -67,239 +64,164 @@ const ParentsForm = (
     );
   };
 
+  // Common form fields component
+  const ParentFormFields = ({ 
+    control, 
+    prefix 
+  }: { 
+    control: any; 
+    prefix: "Mother" | "Father" 
+  }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4">
+        <FormField
+          control={control}
+          name={`${prefix}LName`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter Last Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`${prefix}FName`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>First Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter First Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`${prefix}MName`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Middle Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter Middle Name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`${prefix}Suffix`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Suffix</FormLabel>
+              <FormControl>
+                <Input placeholder="Sfx." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <div className="space-y-4">
+        <FormField
+          control={control}
+          name={`${prefix}DateOfBirth`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date of Birth</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`${prefix}Status`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Marital Status</FormLabel>
+              <FormControl>
+                <Input placeholder="Marital Status" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`${prefix}Religion`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Religion</FormLabel>
+              <FormControl>
+                <Input placeholder="eg; Catholic" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={`${prefix}EdAttainment`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Educational Attainment</FormLabel>
+              <FormControl>
+                <Input placeholder="*College Graduate" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-4">
-      <div className="grid grid-cols-2 gap-8">
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Mother's Information */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Mother's Information</h2>
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-6">Mother's Information</h2>
           <Form {...motherForm}>
-            <form className="space-y-4">
-              <FormField
-                control={motherForm.control}
-                name="MotherLName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter Last Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Repeat for other mother fields */}
-              <FormField
-                control={motherForm.control}
-                name="MotherFName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter First Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={motherForm.control}
-                name="MotherMName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter Middle Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={motherForm.control}
-                name="MotherSuffix"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Suffix</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Sfx." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={motherForm.control}
-                name="MotherDateOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={motherForm.control}
-                name="MotherStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marital Status</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Marital Status" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={motherForm.control}
-                name="MotherReligion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Religion</FormLabel>
-                    <FormControl>
-                      <Input placeholder="eg; Catholic" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={motherForm.control}
-                name="MotherEdAttainment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Educational Attainment</FormLabel>
-                    <FormControl>
-                      <Input placeholder="*College Graduate" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form>
+              <ParentFormFields control={motherForm.control} prefix="Mother" />
             </form>
           </Form>
         </div>
 
         {/* Father's Information */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Father's Information</h2>
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-6">Father's Information</h2>
           <Form {...fatherForm}>
-            <form className="space-y-4">
-              <FormField
-                control={fatherForm.control}
-                name="FatherLName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter Last Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherFName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter First Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherMName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter Middle Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherSuffix"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Suffix</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Sfx." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherDateOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marital Status</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Marital Status" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherReligion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Religion</FormLabel>
-                    <FormControl>
-                      <Input placeholder="eg; Catholic" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={fatherForm.control}
-                name="FatherEdAttainment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Educational Attainment</FormLabel>
-                    <FormControl>
-                      <Input placeholder="*College Graduate" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form>
+              <ParentFormFields control={fatherForm.control} prefix="Father" />
             </form>
           </Form>
         </div>
       </div>
-      <div className="mt-6 flex justify-end">
-        <Button type="button" onClick={onBack}>Back</Button>
-        <Button onClick={handleSubmit}>Next</Button>
+
+      <div className="mt-8 flex justify-end space-x-4">
+        <Button 
+          variant="outline" 
+          onClick={onBack}
+          className="w-32 bg-white border-2 border-blue/50 text-black/75 hover:bg-blue hover:text-white"
+        >
+          Prev
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          className="w-32 bg-blue hover:bg-darkBlue2"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

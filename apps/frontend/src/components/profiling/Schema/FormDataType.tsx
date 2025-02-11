@@ -35,12 +35,20 @@ export interface PersonalFormData {
   }
 
   export interface DependentFormData {
-    dependentFName: string,
-    dependentLName: string,
-    dependentMName: string,
-    dependentSuffix: string,
-    dependentDateOfBirth: string,
-    dependentSex: string,
+    dependentFName: string;
+    dependentLName: string;
+    dependentMName: string;
+    dependentSuffix: string;
+    dependentDateOfBirth: string;
+    dependentSex: string;
+    additionalDependents: {
+      dependentFName: string;
+      dependentLName: string;
+      dependentMName: string;
+      dependentSuffix: string;
+      dependentDateOfBirth: string;
+      dependentSex: string;
+    }[];
   }
   
   export interface FormData {
