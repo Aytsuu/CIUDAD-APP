@@ -46,49 +46,36 @@ export default function ChildHRPage3({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-white rounded-lg shadow p-6">
+    <div className="w-full max-w-6xl mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
       <Form {...form}>
         <form
           onSubmit={handleSubmit(onSubmitForm)}
-          className="space-y-6 p-4 md:p-6 lg:p-8"
+          className="space-y-6"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            <h1> PAGE 3</h1>
-            <FormField
-              control={form.control}
-              name="hasDisability"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>eyyy No:</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="hasDisability"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      id="hasDisability"
-                      checked={!!field.value} // Ensure it is always a boolean
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked); // Directly update form state
-                        sethasDisablity(checked === true); // Update local state
-                      }}
-                    />
-                  </FormControl>
-                  <FormLabel htmlFor="hasDisability">
-                    Accept terms and conditions
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
+          <div className="w-full flex items-start bg-white rounded-lg p-4 md:p-6 lg:p-8">
+            <div>
+              <FormField
+                control={form.control}
+                name="hasDisability"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        id="hasDisability"
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          sethasDisablity(checked === true);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="hasDisability" className="leading-none">
+                      Accept terms and conditions
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Conditionally Render SelectLayout */}
             {hasDisablity && (
@@ -96,10 +83,11 @@ export default function ChildHRPage3({
                 control={form.control}
                 name="screeningStatus"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Screening Process Status</FormLabel>
+                  <FormItem className="flex flex-col sm:flex-row sm:gap-2 items-center mt-4">
+                    <FormLabel className="mb-2 sm:mb-0">Select/Specify Disablity</FormLabel>
                     <FormControl>
                       <SelectLayout
+                        className="min-w-[100px]"
                         label="Gender"
                         placeholder="Select gender"
                         options={[

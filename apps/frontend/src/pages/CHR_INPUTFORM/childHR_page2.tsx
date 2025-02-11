@@ -109,6 +109,7 @@ export default function ChildHRPage2({
                     <SelectLayout
                       label="Vaccine Type"
                       placeholder="Select Vaccine"
+                      className="w-full" // Add this line!
                       options={[
                         { id: "BGC", name: "BGC" },
                         { id: "Polio", name: "Polio" },
@@ -132,6 +133,7 @@ export default function ChildHRPage2({
                   <FormControl>
                     <SelectLayout
                       label="Dose"
+                      className="w-full" // Add this line!
                       placeholder="Select Dose"
                       options={[
                         { id: "1st Dose", name: "1st Dose" },
@@ -204,11 +206,11 @@ export default function ChildHRPage2({
             )}
           </div>
 
-          <div className="flex justify-around gap-60">
+          <div className="flex flex-col sm:flex-row justify-between gap-10">
             <div className="w-full">
               <h1 className="text-lg font-semibold mb-4">
                 {" "}
-               Administered Vaccine
+                Administered Vaccine
               </h1>
 
               <div className="flex flex-col gap-2">
@@ -251,11 +253,13 @@ export default function ChildHRPage2({
               </div>
             </div>
           </div>
-          <div className="flex w-full justify-between">
-            <Button type="button" variant="outline" onClick={onPrevious1}>
+          <div className="flex w-full justify-end gap-2">
+            <Button type="button"  variant="outline" onClick={onPrevious1}
+              className="w-[100px]"
+          >
               Previous
             </Button>
-            <Button type="submit">Next</Button>
+            <Button type="submit"   className="w-[100px]">Next</Button>
           </div>
         </form>
       </Form>

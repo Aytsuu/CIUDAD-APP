@@ -126,6 +126,7 @@ export default function ChildHRPage1({
                     <FormLabel>Gender</FormLabel>
                     <FormControl>
                       <SelectLayout
+                        className="w-full" // Add this line!
                         label="Gender"
                         placeholder="Select gender"
                         options={[
@@ -388,6 +389,7 @@ export default function ChildHRPage1({
                 <FormLabel>Screening Process Status</FormLabel>
                 <FormControl>
                   <SelectLayout
+                    className="w-full" // Add this line!
                     label="Status"
                     placeholder="Select status"
                     options={[
