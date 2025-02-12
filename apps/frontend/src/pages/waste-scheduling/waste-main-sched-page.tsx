@@ -25,7 +25,7 @@ const WasteMainScheduling = () => {
         label=""
         placeholder="Schedule"
         options={[
-          { id: 'SchedEvent', name: 'Event/Meeting' }, // id for logic, name for display
+          { id: 'SchedEvent', name: 'Event/Meeting' },
           { id: 'SchedWstCol', name: 'Waste Collection' },
           { id: 'SchedHots', name: 'Hotspot' }
         ]}
