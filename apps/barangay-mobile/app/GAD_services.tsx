@@ -22,6 +22,10 @@ export default function Services() {
     router.push("/GAD_resolution");
   };
 
+  const proposal = () => {
+    router.push("/GAD_ProjProp");
+  };
+
   
   return (
     <View className="flex-1 bg-[#ECF8FF] p-4 mt-11">
@@ -50,7 +54,7 @@ export default function Services() {
         </TouchableOpacity>
 
         {/*project*/}
-        <TouchableOpacity className="w-36 h-36 bg-[#A6CFE2] rounded-2xl items-center justify-center shadow-md">
+        <TouchableOpacity className="w-36 h-36 bg-[#A6CFE2] rounded-2xl items-center justify-center shadow-md" onPress={proposal}>
           <Services_ProjProp_Icon width ={50} height = {50} />
           <Text className="mt-2 text-center text-[#0A1D56] font-semibold">Project Proposals</Text>
         </TouchableOpacity>
