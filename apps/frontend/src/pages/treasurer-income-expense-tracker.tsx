@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 
+
 function IncomeandExpenseTracking() {
     const [selectedFromDate, setSelectedFromDate] = useState("");
     const [selectedToDate, setSelectedToDate] = useState("");
     const [selectedEntry, setSelectedEntry] = useState("");
-
     const endDate = new Date().toISOString().split('T')[0];
-
+    const toggleOptions = ["All", "Income", "Expense"];
+    const [toggle, setToggle] = useState("All");
     const entrytype = [
         { id: "0", name: "Income" },
         { id: "1", name: "Expense" }
@@ -43,49 +44,62 @@ function IncomeandExpenseTracking() {
 
     return (
         <div className="mx-4 mb-4 mt-10">
-            {/* Button and Date Filters */}
-            <div className="mb-[1rem] flex flex-col items-end gap-2">
-                <DialogLayout
-                    trigger={<Button className="bg-green">+ New Entry</Button>}
-                    className="max-w-md"
-                    title="Add New Entry"
-                    description="Fill in the details for your entry."
-                    mainContent={
-                        <div>
-                            <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Serial No.</Label>
-                            <Input type="number" />
-
-                            <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Type of Entry</Label>
-                            <SelectLayout className="w-full" label="" placeholder="Entry Type" options={entrytype} value={selectedEntry} onChange={setSelectedEntry} />
-
-                            <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Particulars</Label>
-                            <Input type="text" />
-
-                            <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Amount</Label>
-                            <Input type="number" />
-
-                            <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Receiver</Label>
-                            <Input type="text" />
-
-                            <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Additional Notes</Label>
-                            <textarea className="w-full border border-gray-300 p-2 rounded-md"></textarea>
-
-                            <button className="bg-tealBlue text-white px-4 py-2 rounded-md hover:bg-darkTeal mt-4">Save Entry</button>
-                        </div>
-                    }
-                />
-                <div className="flex gap-5">
-                    <div className="flex gap-3">
-                        From: <Input type="date" className="border border-tealBlue border-[2px] rounded-md p-2" value={selectedFromDate} onChange={(e) => setSelectedFromDate(e.target.value)} max={endDate} />
-                    </div>
-                    <div className="flex gap-3">
-                        To: <Input type="date" className="border border-tealBlue border-[2px] rounded-md p-2" value={selectedToDate} onChange={(e) => setSelectedToDate(e.target.value)} min={selectedFromDate} max={endDate} />
-                    </div>
-                </div>
-            </div>
-
             {/* Table Section */}
             <div className="bg-white border border-gray-300 rounded-[5px] p-5">
+                <div className="mb-[1rem] flex flex-row items-center justify-between gap-2">
+                     {/* <div className="flex items-center bg-gray-200 p-1 rounded-full w-64">
+                        {toggleOptions.map((toggle) => (
+                            <button
+                            key={toggle}
+                            className={`flex-1 text-center py-2 rounded-full transition-all ${
+                                toggle === toggle ? "bg-blue-500 text-white" : "text-gray-700"
+                            }`}
+                            onClick={() => setToggle(toggle)}
+                            >toggle
+                            {toggle}
+                            </button>
+                        ))}
+                    </div> */}
+                    <div className="flex gap-5">
+                        <div className="flex gap-3">
+                            From: <Input type="date" className="border border-tealBlue border-[2px] rounded-md p-2" value={selectedFromDate} onChange={(e) => setSelectedFromDate(e.target.value)} max={endDate} />
+                        </div>
+                        <div className="flex gap-3">
+                            To: <Input type="date" className="border border-tealBlue border-[2px] rounded-md p-2" value={selectedToDate} onChange={(e) => setSelectedToDate(e.target.value)} min={selectedFromDate} max={endDate} />
+                        </div>
+                    </div>
+                    <DialogLayout
+                        trigger={<Button className="bg-green">+ New Entry</Button>}
+                        className="max-w-md"
+                        title="Add New Entry"
+                        description="Fill in the details for your entry."
+                        mainContent={
+                            <div>
+                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Serial No.</Label>
+                                <Input type="number" />
+
+                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Type of Entry</Label>
+                                <SelectLayout className="w-full" label="" placeholder="Entry Type" options={entrytype} value={selectedEntry} onChange={setSelectedEntry} />
+
+                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Particulars</Label>
+                                <Input type="text" />
+
+                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Amount</Label>
+                                <Input type="number" />
+
+                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Receiver</Label>
+                                <Input type="text" />
+
+                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Additional Notes</Label>
+                                <textarea className="w-full border border-gray-300 p-2 rounded-md"></textarea>
+
+                                <div className="flex justify-center mt-4">
+                                    <button className="bg-tealBlue text-white px-4 py-2 rounded-md hover:bg-darkTeal">Save Entry</button>
+                                </div>                           
+                            </div>
+                        }
+                    />
+                </div>
                 <DataTable columns={columns} data={data} />
             </div>
         </div>
