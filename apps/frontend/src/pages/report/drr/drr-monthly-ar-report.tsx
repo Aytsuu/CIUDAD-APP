@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Scroll, Eye, Minus } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 // Array of months for display
 const months = [
@@ -84,16 +86,21 @@ export default function DRRMonthlyARReport() {
                 </div>
 
                 {/* Right Section: Displays recent records */}
-                <div className="sm:w-[50%] sm:h-full bg-white border border-gray flex flex-col rounded-[5px] p-3 sm:p-5 gap-3 overflow-auto">
+                <ScrollArea className="sm:w-[50%] sm:h-full bg-white border border-gray flex flex-col rounded-[5px] p-3 sm:p-5 gap-3 overflow-auto">
                     {/* List of recent records */}
+                    <h4 className="mb-4 text-sm font-medium leading-none">Tags</h4>
                     {months.map((_, index) => (
-                        <RecentRecord
-                            key={index}
-                            title='4th Weekly AR, Nov. 2024'
-                            status='Unsigned'
-                        />
+                        <>
+                            <RecentRecord
+                                key={index}
+                                title='4th Weekly AR, Nov. 2024'
+                                status='Unsigned'
+                            />
+
+                            <Separator className="my-2"/>
+                        </>
                     ))}
-                </div>
+                </ScrollArea>
             </div>
         </div>
     );

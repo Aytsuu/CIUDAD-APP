@@ -31,7 +31,7 @@ const router = createBrowserRouter([
     element: <DRRStaffRecord/>,
   },
   {
-    path: "/drr-map-google",
+    path: "/drr-map-google  ",
     element: <DRRMapGoogle/>
   }
 ])
