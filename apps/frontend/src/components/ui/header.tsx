@@ -2,7 +2,7 @@ import { MessageCircle, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import SanRoqueLogo from "../../assets/images/sanRoqueLogo.svg";
 
-export function Navbar() {
+export function Header() {
   return (
     <header className="h-14 bg-white text-[#263D67] flex items-center justify-between px-6 w-full drop-shadow-md">
       <div className="flex items-center space-x-4 text-lg font-semibold cursor-pointer">
