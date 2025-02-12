@@ -39,18 +39,16 @@ function CalendarComp({className}: CalendarCompProps) {
     };
 
     return (
-        <div>
-            <div className="flex justify-center items-center h-screen p-4">
-                <Calendar
-                    className={className}
-                    localizer={localizer}
-                    events={events}
-                    startAccessor="start"
-                    endAccessor="end"
-                    selectable
-                    onSelectEvent={handleEventClick}
-                />
-            </div>
+        <div className="h-screen">
+            <Calendar
+                className={className}
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                selectable
+                onSelectEvent={handleEventClick}
+            />
         </div>
     );
 }

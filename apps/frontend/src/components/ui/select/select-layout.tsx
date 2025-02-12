@@ -31,7 +31,7 @@ import {
           <SelectGroup>
             <SelectLabel>{label}</SelectLabel>
             {options.map((option)=>{
-                return <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                return <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
             })}
           </SelectGroup>
         </SelectContent>

@@ -15,6 +15,8 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import AddEventFormSchema from "@/form-schema/addevent-schema";
 
+
+
 function AddEvent(){
 
     //css for the 1st modal of adding the event
@@ -71,6 +73,8 @@ function AddEvent(){
     const handleResetWasteCommittee = () => {
         form.setValue('wasteCommittee', []);
     };
+
+
 
     const form = useForm<z.infer<typeof AddEventFormSchema>>({
         resolver: zodResolver(AddEventFormSchema),
