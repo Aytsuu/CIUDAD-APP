@@ -3,6 +3,7 @@ import ProfilingMain from "./components/profiling/ProfilingMain";
 import { MainLayout } from "./layout/MainLayout";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProfilingForm } from "./components/profiling/Form/ProfilingForm";
+import ProfilingRequest from "./components/profiling/ProfilingRequests";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
       {
         path: "residentRegistration",
         element: <ProfilingForm />
+      },
+      {
+        path: "profilingRequest",
+        element: <ProfilingRequest />
       }
     ],
   },

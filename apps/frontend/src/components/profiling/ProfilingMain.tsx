@@ -96,7 +96,7 @@ export default function ProfilingMain() {
         <div>
           <div className="flex space-x-3 h-9">
             <Link
-              to="/"
+              to="/profilingRequest"
               className="flex items-center justify-center shadow-sm w-32 bg-white rounded-md hover:bg-gray-100 hover:bg-gray/20"
             >
               Pending
