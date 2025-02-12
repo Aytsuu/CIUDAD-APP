@@ -178,6 +178,7 @@ function OrdinancePage() {
                     {/**FILTER (SELECT)*/}
                     <div className="flex-1">
                         <SelectLayout
+                            className = {''}
                             label=""
                             placeholder="Filter"
                             options={[
