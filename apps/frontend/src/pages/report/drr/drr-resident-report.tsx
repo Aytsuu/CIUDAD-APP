@@ -27,7 +27,7 @@ export const columns: ColumnDef<Report>[] = [
                 onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
               >
                 Category
-                <ArrowUpDown size={15}/>
+                <ArrowUpDown size={14}/>
               </div>
         ),
         cell: ({row}) => (

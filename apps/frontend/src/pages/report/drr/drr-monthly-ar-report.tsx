@@ -11,7 +11,7 @@ const months = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Type for the RecentRecord component props
+// Define the type for the RecentRecord component props
 type RecentRecordProps = {
     title: string;
     status: string;

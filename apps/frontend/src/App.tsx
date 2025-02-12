@@ -27,11 +27,11 @@ const router = createBrowserRouter([
     element: <DRRAcknowledgementReport/>
   },
   {
-    path: "/staff",
+    path: "/drr-staff",
     element: <DRRStaffRecord/>,
   },
   {
-    path: "/map",
+    path: "/drr-map-google",
     element: <DRRMapGoogle/>
   }
 ])
