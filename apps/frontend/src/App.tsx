@@ -1,10 +1,13 @@
 import AddBudgetPlan from "./pages/treasurer-budgetplan-form"
+import IncomeandExpenseTracking from "./pages/treasurer-income-expense-tracker"
 
 function App() {
 
   return (
-    <AddBudgetPlan>
-    </AddBudgetPlan>
+    <div>
+      {/* <AddBudgetPlan/> */}
+      <IncomeandExpenseTracking/>
+    </div>
   )
 }
 

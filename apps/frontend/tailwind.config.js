@@ -74,7 +74,9 @@ module.exports = {
 				gray: '#CECECE',
 				ashGray: '#D7DDE5',
 				darkGray: '#575757',
-				teal: '#129073'
+				teal: '#129073',
+				tealBlue: '#137F8B',
+				green: '#008163'
     		}
     	}
     },
