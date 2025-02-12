@@ -2,7 +2,8 @@ import { Router } from "lucide-react";
 import ProfilingMain from "./components/profiling/ProfilingMain";
 import { MainLayout } from "./layout/MainLayout";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import ResidentRegistration from "./components/profiling/Form/ResidentRegistration";
+import { ProfilingForm } from "./components/profiling/Form/ProfilingForm";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -14,7 +15,7 @@ const router = createBrowserRouter([
       },
       {
         path: "residentRegistration",
-        element: <ResidentRegistration />
+        element: <ProfilingForm />
       }
     ],
   },

@@ -1,326 +1,225 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
-  FaBaby,
-  FaChild,
-  FaUser,
-  FaUserTie,
-  FaSearch,
   FaPlus,
+  FaFilter,
+  FaFileImport,
+  FaSort,
+  FaEllipsisV,
 } from "react-icons/fa";
-import ReactECharts from "echarts-for-react";
+import { BsSearch } from "react-icons/bs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../ui/pagination/pagination";
+
 import TableLayout from "../ui/table/table-layout";
-import { Header } from "../ui/header";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { Input } from "../ui/input";
 
 export default function ProfilingMain() {
-  // Sample data for the graph
-  const generateData = () => {
-    const data = [];
-    for (let i = 0; i < 1000; i++) {
-      data.push({
-        date: new Date(2024, 0, i + 1).toISOString().split("T")[0],
-        Child: Math.floor(Math.random() * 1000 + 1000),
-        Youth: Math.floor(Math.random() * 1500 + 1500),
-        Adult: Math.floor(Math.random() * 2000 + 2000),
-        Senior: Math.floor(Math.random() * 800 + 700),
-      });
-    }
-    return data;
-  };
-
-  const data = generateData();
-
-  const option = {
-    title: {
-      text: "Demographics Trends",
-      left: "center",
-      top: 0,
-    },
-    tooltip: {
-      trigger: "axis",
-      axisPointer: {
-        type: "cross",
-        label: {
-          backgroundColor: "#6a7985",
-        },
-      },
-    },
-    legend: {
-      data: ["Child", "Youth", "Adult", "Senior"],
-      top: "30px",
-    },
-    toolbox: {
-      feature: {
-        dataZoom: {
-          yAxisIndex: "none",
-        },
-        restore: {},
-        saveAsImage: {},
-        dataView: {},
-      },
-      right: "20px",
-    },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "3%",
-      containLabel: true,
-    },
-    xAxis: [
-      {
-        type: "category",
-        boundaryGap: false,
-        data: data.map((item) => item.date),
-        axisLabel: {
-          rotate: 45,
-        },
-      },
-    ],
-    yAxis: [
-      {
-        type: "value",
-        name: "Number of People",
-      },
-    ],
-    dataZoom: [
-      {
-        type: "inside",
-        start: 0,
-        end: 10,
-      },
-      {
-        start: 0,
-        end: 10,
-      },
-    ],
-    series: [
-      {
-        name: "Child",
-        type: "line",
-        stack: "Total",
-        areaStyle: {},
-        emphasis: {
-          focus: "series",
-        },
-        showSymbol: false,
-        data: data.map((item) => item.Child),
-        color: "#3B82F6",
-      },
-      {
-        name: "Youth",
-        type: "line",
-        stack: "Total",
-        areaStyle: {},
-        emphasis: {
-          focus: "series",
-        },
-        showSymbol: false,
-        data: data.map((item) => item.Youth),
-        color: "#10B981",
-      },
-      {
-        name: "Adult",
-        type: "line",
-        stack: "Total",
-        areaStyle: {},
-        emphasis: {
-          focus: "series",
-        },
-        showSymbol: false,
-        data: data.map((item) => item.Adult),
-        color: "#8B5CF6",
-      },
-      {
-        name: "Senior",
-        type: "line",
-        stack: "Total",
-        areaStyle: {},
-        emphasis: {
-          focus: "series",
-        },
-        showSymbol: false,
-        data: data.map((item) => item.Senior),
-        color: "#F59E0B",
-      },
-    ],
-  };
-
-  const recentActivity = [
-    {
-      name: "Paolo Araneta",
-      status: "Registered",
-      time: "3 minutes ago",
-    },
-  ];
-
   return (
-    <div className="space-y-4">
+    <div>
       <Outlet />
       {/* Header Section */}
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h1 className="font-semibold text-2xl text-gray-800">
-            Resident Record
-          </h1>
-        </div>
-        <div className="flex space-x-3 h-9">
-          <Link
-            to="/"
-            className="flex items-center justify-center shadow-md w-32 bg-white rounded-md hover:bg-gray-100 hover:bg-gray hover:text-white"
-          >
-            Pending
-          </Link>
-          <Link
-            to="/residentRegistration"
-            className="flex gap-x-2 shadow-md items-center justify-center w-32 rounded-md text-white bg-blue hover:bg-sky-400"
-          >
-            <span>
-              <FaPlus />
-            </span>
-            Register
-          </Link>
-        </div>
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-2xl text-darkBlue2">
+          Resident Record
+        </h1>
+        <p className="text-sm text-darkGray">
+          Manage and view resident information
+        </p>
       </div>
-
-      <hr className="border-gray-200 " />
-
-      {/* <div className="flex w-full space-x-8 h-32">
-       
-        <div className="w-1/4 h-full rounded-lg shadow-md p-6 bg-gradient-to-tr from-blue-200 to-white flex items-center justify-center gap-6">
-          <FaBaby className="text-blue-500 w-24 h-24" />
-          <div className="flex flex-col items-center">
-            <h3 className="text-gray-900 text-xl font-bold tracking-tight">
-              Child
-            </h3>
-            <p className="text-gray-500 text-sm font-medium mt-1">
-              0-12 yrs old
-            </p>
-            <p className="text-blue-600 text-2xl font-bold mt-2">1,200</p>
-          </div>
-        </div>
-
-        <div className="w-1/4 h-full rounded-lg shadow-md p-6 bg-gradient-to-tr from-green-200 to-white flex items-center justify-center gap-6">
-          <FaChild className="text-green-500 w-24 h-24 items-center" />
-          <div className="flex flex-col items-center">
-            <h3 className="text-gray-900 text-xl font-bold tracking-tight">
-              Youth
-            </h3>
-            <p className="text-gray-500 text-sm font-medium mt-1">
-              12 - 18 yrs old
-            </p>
-            <p className="text-blue-600 text-2xl font-bold mt-2">1,200</p>
-          </div>
-        </div>
-
-        <div className="w-1/4 h-full rounded-lg shadow-md p-6 bg-gradient-to-tr from-violet-200 to-white flex items-center justify-center gap-6">
-          <FaUser className="text-violet-500 w-24 h-24 items-center" />
-          <div className="flex flex-col items-center">
-            <h3 className="text-gray-900 text-xl font-bold tracking-tight">
-              Adult
-            </h3>
-            <p className="text-gray-500 text-sm font-medium mt-1">
-              18 - 59 yrs old
-            </p>
-            <p className="text-blue-600 text-2xl font-bold mt-2">1,200</p>
-          </div>
-        </div>
-
-        <div className="w-1/4 h-full rounded-lg shadow-md p-6 bg-gradient-to-tr from-orange-200 to-white flex items-center justify-center gap-6">
-          <FaUserTie className="text-orange-500 w-24 h-24 items-center" />
-          <div className="flex flex-col items-center">
-            <h3 className="text-gray-900 text-xl font-bold tracking-tight">
-              Senior Citizen
-            </h3>
-            <p className="text-gray-500 text-sm font-medium mt-1">
-              60+ yrs old
-            </p>
-            <p className="text-blue-600 text-2xl font-bold mt-2">1,200</p>
-          </div>
-        </div>
-      </div> */}
-
-      {/* <div className="w-full flex gap-4 h-96">
-        
-        <div className="w-3/4 bg-white rounded-xl shadow-md p-4">
-          <ReactECharts
-            option={option}
-            style={{ height: "100%", width: "100%" }}
-            opts={{ renderer: "canvas" }}
-          />
-        </div>
-
-        
-        <div className="w-1/4 bg-white rounded-xl shadow-md p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Recent Activity
-            </h2>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
-          </div>
-
-          <hr className="my-2" />
-
-          <div className="space-y-1 max-h-[calc(100%-4rem)]">
-            {recentActivity.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between py-1 px-2 border-b"
-              >
-                <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 bg-gray-900 rounded-full" />
-                  <span className="text-gray-600 text-xs">{activity.name}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-green-500 text-xs">
-                      {activity.status}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {activity.time}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div> */}
+      <hr className="border-gray mb-10" />
 
       {/* Header Structure */}
-      <div>
-        <div className="relative w-full flex justify-between items-center gap-4">
+      <div className="relative w-full flex justify-between items-center mb-4">
+        <div className="flex gap-x-2">
           <div className="relative flex-1">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray" />
+            <BsSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
             <Input placeholder="Search..." className="pl-10 w-72" />
           </div>
-          <div className="flex-shrink-0">
-            <Link
-              to="/"
-              className="flex items-center justify-center shadow-md w-32 bg-white rounded-md hover:bg-gray hover:text-black"
-            >
-              Print List
-            </Link>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 font-normal">
+                <FaFilter />
+                Filter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>By Date</DropdownMenuItem>
+              <DropdownMenuItem>By Status</DropdownMenuItem>
+              <DropdownMenuItem>By Location</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2 font-normal"
+              >
+                <FaSort />
+                Sort
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>Name (A-Z)</DropdownMenuItem>
+              <DropdownMenuItem>Date (Newest)</DropdownMenuItem>
+              <DropdownMenuItem>Location</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <FaEllipsisV />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>...</DropdownMenuItem>
+              <DropdownMenuItem>...</DropdownMenuItem>
+              <DropdownMenuItem>...</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div>
-          
+          <div className="flex space-x-3 h-9">
+            <Link
+              to="/"
+              className="flex items-center justify-center shadow-sm w-32 bg-white rounded-md hover:bg-gray-100 hover:bg-gray/20"
+            >
+              Pending
+            </Link>
+            <Link
+              to="/residentRegistration"
+              className="flex gap-x-2 shadow-sm items-center justify-center w-32 rounded-md text-white bg-blue hover:bg-sky-400"
+            >
+              <span>
+                <FaPlus />
+              </span>
+              Register
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="h-full w-full bg-white rounded-md">
-        <div className="">
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-16 bg-white border-b-2 flex justify-between items-center p-4">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-sm">Show</p>
+            <Input type="number" className="w-14 h-8"></Input>
+            <p className="text-sm">Entries</p>
+          </div>
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center justify-center w-32 p-1 rounded-md gap-x-2 font-normal"
+                >
+                  <FaFileImport />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="bg-white">
           {/* Table Placement */}
           <TableLayout
-            header={["Header1", "Header2", "Header3", "Header4"]}
-            rows={Array(20).fill(["Row1", "Row2", "Row3", "Row4"])}
+            header={[
+              "Resident No.",
+              "Household No.",
+              "Family No.",
+              "Sitio",
+              "Last Nmae",
+              "First Name",
+              "M.I",
+              "Suffix",
+              "Date Registered",
+              "Action",
+            ]}
+            rows={Array(10).fill([
+              "Paolo Araneta Jr. Senpai",
+              "Josef Virtucio AKA The Sheeesh",
+              "Row3",
+              "Row4",
+              "Row4",
+              "Row4",
+              "Row4",
+              "Row4",
+              "Row4",
+              "Row4",
+            ])}
           />
+        </div>
+        <div className="flex items-center justify-between w-full py-3">
+          {/* Showing Rows Info */}
+          <p className="pl-4 text-sm font-normal text-darkGray">Showing 1-10 of 150 rows</p>
+
+          {/* Pagination */}
+          <div>
+            <Pagination className="flex items-center gap-2">
+              <PaginationContent className="flex items-center gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    className="px-3 py-1.5 rounded-lg hover:bg-gray/25 font-normal"
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    className="px-3 py-1.5 rounded-lg hover:bg-gray/25 font-normal"
+                  >
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    className="px-3 py-1.5 rounded-lg hover:bg-gray/25 font-normal"
+                  >
+                    2
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    className="px-3 py-1.5 rounded-lg hover:bg-gray/25 font-normal"
+                  >
+                    3
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationEllipsis className="px-3 py-1.5" />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    className="px-3 py-1.5 rounded-lg hover:bg-gray/20 font-normal"
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </div>
       </div>
     </div>
