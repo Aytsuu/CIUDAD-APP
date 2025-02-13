@@ -9,7 +9,7 @@ export default function Notification() {
   const router = useRouter();
   
     const Goback = () => {
-      router.push('/my-announcement');
+      router.push('/Gad_home');
     }; 
 
   const notifications = [

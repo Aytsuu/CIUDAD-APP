@@ -33,6 +33,10 @@ export default function Proposal() {
     router.push("/GAD_services");
   };
 
+  const proposalFile = () => {
+    router.push("/GAD_PropProjFile");
+  };
+
   return (
     <ScrollView className="flex-1 bg-[#ECF8FF] p-4 mt-11" showsVerticalScrollIndicator={false}>
       {/* back */}
@@ -57,28 +61,28 @@ export default function Proposal() {
           </Picker>
         </View>
       </View>
-
       {filteredProposals.map((proposal, index) => (
-        <View key={index} className="bg-white rounded-xl p-4 mb-4 shadow-lg">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-xl font-bold text-[#0A1D56]">{proposal.title}</Text>
-            <Entypo name="dots-three-vertical" size={20} color="black" />
-          </View>
-          <Text className="text-gray-700 mt-4 mb-4">{proposal.description}</Text>
-          <Text className="mt-4 mb-2 font-semibold text-black">
-            Status: <Text className={proposal.status === "Approved" ? "text-green-600" : "text-red-600"}>{proposal.status}</Text>
-          </Text>
-          <Text className="text-black mb-2">
-            {proposal.status === "Approved" ? "Date of Approval" : "Date of Rejection"}: {proposal.date}
-          </Text>
-          {proposal.reason && (
-            <Text className="text-black mt-2">
-              Reason: <Text className="text-gray-700">{proposal.reason}</Text>
+        <TouchableOpacity key={index} onPress={proposalFile}>
+          <View className="bg-white rounded-xl p-4 mb-4 shadow-lg">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-xl font-bold text-[#0A1D56]">{proposal.title}</Text>
+              <Entypo name="dots-three-vertical" size={20} color="black" />
+            </View>
+            <Text className="text-gray-700 mt-4 mb-4">{proposal.description}</Text>
+            <Text className="mt-4 mb-2 font-semibold text-black">
+              Status: <Text className={proposal.status === "Approved" ? "text-green-600" : "text-red-600"}>{proposal.status}</Text>
             </Text>
-          )}
-        </View>
+            <Text className="text-black mb-2">
+              {proposal.status === "Approved" ? "Date of Approval" : "Date of Rejection"}: {proposal.date}
+            </Text>
+            {proposal.reason && (
+              <Text className="text-black mt-2">
+                Reason: <Text className="text-gray-700">{proposal.reason}</Text>
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
       ))}
-
     </ScrollView>
   );
 }

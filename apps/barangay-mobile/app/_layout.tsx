@@ -44,7 +44,8 @@ export default function RootLayout() {
         <Stack.Screen name="Calendar-multiple-events" options={{ headerShown: false }} />
         <Stack.Screen name="GAD_services" options={{ headerShown: false }} />
         <Stack.Screen name="GAD_resolution" options={{ headerShown: false }} />
-         <Stack.Screen name="GAD_ProjProp" options={{ headerShown: false }} />
+        <Stack.Screen name="GAD_ProjProp" options={{ headerShown: false }} />
+        <Stack.Screen name="GAD_PropProjFile" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="light" />
     </ThemeProvider>
