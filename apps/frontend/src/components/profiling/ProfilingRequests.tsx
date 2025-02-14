@@ -20,6 +20,8 @@ import {
   PaginationPrevious,
 } from "../ui/pagination/pagination";
 
+import { DataTable } from "../ui/table/data-table";
+
 export default function ProfilingRequest() {
   return (
     <div className="w-full">
@@ -79,7 +81,18 @@ export default function ProfilingRequest() {
 
         {/* Table Layout */}
         <div>
-            
+          {/* <DataTable
+            columns={[
+              { Header: 'ID', accessor: 'id' },
+              { Header: 'Name', accessor: 'name' },
+              { Header: 'Age', accessor: 'age' },
+            ]}
+            data={[
+              { id: 1, name: 'John', age: 25 },
+              { id: 2, name: 'Jane', age: 30 },
+              { id: 3, name: 'Doe', age: 28 },
+            ]}
+          /> */}
         </div>
       </div>
     </div>

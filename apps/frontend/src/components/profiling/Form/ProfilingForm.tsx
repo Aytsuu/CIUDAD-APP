@@ -11,6 +11,8 @@ import {
   DependentFormData,
 } from "../Schema/FormDataType";
 import Progress from "../progress";
+import { Link } from "react-router-dom";
+import { BsChevronLeft } from "react-icons/bs";
 
 export function ProfilingForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -55,7 +57,7 @@ export function ProfilingForm() {
       dependentSuffix: "",
       dependentDateOfBirth: "",
       dependentSex: "",
-      additionalDependents: []
+      additionalDependents: [],
     },
   });
 
@@ -121,10 +123,23 @@ export function ProfilingForm() {
   return (
     <div>
       <div className="flex gap-2 justify-between pb-4">
-        <p className="text-md text-gray-700 text-xl">
-          <span className="border-l-4 rounded-sm border-[#263D67] pr-2"></span>
-          Resident Registration
-        </p>
+        <div className="flex items-center gap-x-2">
+          {/* Header */}
+          <Link
+            to="/"
+            className="text-black p-2 hover:bg-darkGray/25 hover:rounded-full"
+          >
+            <BsChevronLeft />
+          </Link>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-2xl text-darkBlue2">
+              Resident Registration Form 
+            </h1>
+            <p className="text-sm text-darkGray">
+              Provide your details to complete the registration process.
+            </p>
+          </div>
+        </div>
         <p className="text-sm text-gray-500">
           {new Date().toLocaleDateString(undefined, {
             month: "short",
@@ -133,7 +148,7 @@ export function ProfilingForm() {
           })}
         </p>
       </div>
-      <hr />
+      <hr className="text-darkGray"/>
       <div className="flex justify-center items-center pb-4 pt-4 bg-white mt-4 rounded-t-lg">
         <Progress progress={calculateProgress()} />
       </div>
