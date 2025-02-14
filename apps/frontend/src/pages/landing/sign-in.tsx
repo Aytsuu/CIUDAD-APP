@@ -81,7 +81,7 @@ export default function SignIn(){
                         />
                     </div>
                     <div className="w-full flex items-end justify-end">
-                        <Button type="submit" className="bg-blue hover:bg-blue/80">
+                        <Button type="submit">
                             Log in
                         </Button>
                     </div>
