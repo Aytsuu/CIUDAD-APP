@@ -1,6 +1,9 @@
+import { useState } from "react";
 import TableLayout from "@/components/ui/table/table-layout";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Label } from "@/components/ui/label";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 function AddBudgetPlan() {
     // ====================== STYLES==========================
@@ -11,6 +14,10 @@ function AddBudgetPlan() {
         subCategory: "font-semibold text-[16px] text-sky-500",
         budgetDetails: "flex text-left text-[15px]",
         indent: "ml-4",
+        labelInputGroup: "flex flex-row gap-4",
+        colDesign: "flex flex-col gap-4",
+        inputField: "w-[15rem] text-right", 
+        labelDesign: "w-1/2 text-left"
     };
 
     const budgetValueStyle = (value: number) => <span className="text-black font-semibold">{value.toFixed(2)}</span>;
@@ -23,6 +30,11 @@ function AddBudgetPlan() {
 
     
     // =====================TABLE PROPS==========================
+    const [selectedYear, setSelectedYear] = useState("")
+    const Years = [...Array(new Date().getFullYear() - 2020 + 1)].map((_, i) => {
+        const year = (2020 + i).toString();
+        return { id: year, name: year };
+    });
     const headerProp = ["", "Per Proposed Budget", "Budgetary Limitation", "Balance"].map(
         (text) => <span className={styles.header}>{text}</span>
     );
@@ -36,6 +48,8 @@ function AddBudgetPlan() {
         localDev: { total: 0.0, budgetLimit: 0.0, balance: 0.0 },
         skFund: { budgetLimit: 0.0, balance: 0.0 },
         calamityFund: { total: 0.0, budgetLimit: 0.0, balance: 0.0 },
+        totalBudObligations: {amount: 0.00},
+        balUnappropriated: {amount: 0.00}
     };
 
     const createRow = ( label: string,key?: string,budgetLimit: string | JSX.Element = "",balance: string | JSX.Element = ""): JSX.Element[] => [
@@ -44,7 +58,6 @@ function AddBudgetPlan() {
         typeof budgetLimit === "string" ? <span>{budgetLimit}</span> : budgetLimit,
         typeof balance === "string" ? <span>{balance}</span> : balance,
     ];
-    
     
 
     const rowsProp = [
@@ -105,11 +118,56 @@ function AddBudgetPlan() {
 
     return (
         <div className="mx-4 mb-4 mt-10">
-            <div className="bg-white border border-gray rounded-[5px] p-5">
-                <TableLayout header={headerProp} rows={rowsProp} />
+            <div className="flex flex-col gap-5">
+                {/* Header Section */}
+                <div className="bg-white border border-gray rounded-[5px] p-5 grid grid-cols-3 gap-6">
+                    {/* Column 1 */}
+                    <div className={styles.colDesign}>
+                        <div className={styles.labelInputGroup}>
+                            <Label className={styles.labelDesign}>NET Available Resources: Php</Label>
+                            <Input className={styles.inputField} placeholder="0.00" />
+                        </div>
+                        <div className={styles.labelInputGroup}>
+                            <Label className={styles.labelDesign}>Actual Income: Php</Label>
+                            <Input className={styles.inputField} placeholder="0.00" />
+                        </div>
+                    </div>
+
+                    {/* Column 2 */}
+                    <div className={styles.colDesign}>
+                        <div className={styles.labelInputGroup}>
+                            <Label className={styles.labelDesign}>Year:</Label>
+                            <SelectLayout className={styles.inputField} label="" placeholder="2020" options={Years} value={selectedYear} onChange={setSelectedYear} />
+                        </div>
+                        <div className={styles.labelInputGroup}>
+                            <Label className={styles.labelDesign}>Actual RPT Income: Php</Label>
+                            <Input className={styles.inputField} placeholder="0.00" />
+                        </div>
+                    </div>
+
+                    {/* Column 3 */}
+                    <div className={styles.colDesign}>
+                        <div className={styles.labelInputGroup}>
+                            <Label className={styles.labelDesign}>TOTAL BUDGETARY OBLIGATIONS:</Label>
+                            <span className="text-green font-semibold">Php {budgetData.totalBudObligations.amount.toFixed(2)}</span>
+                        </div>
+                        <div className={styles.labelInputGroup}>
+                            <Label className={styles.labelDesign}>BALANCE UNAPPROPRIATED:</Label>
+                            <span className="text-red-500 font-semibold">Php {budgetData.balUnappropriated.amount.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Table Section */}
+                <div className="bg-white border border-gray rounded-[5px] p-5">
+                    <TableLayout header={headerProp} rows={rowsProp}/>
+                </div>
+
+                {/* Pagination */}
+                <PaginationLayout />
             </div>
-            <PaginationLayout />
         </div>
+
     );
 }
 
