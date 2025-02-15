@@ -4,6 +4,7 @@ import { MainLayout } from "./layout/MainLayout";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProfilingForm } from "./components/profiling/Form/ProfilingForm";
 import ProfilingRequest from "./components/profiling/ProfilingRequests";
+import ViewInfo from "./components/profiling/ProfilingViewInfo";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
       {
         path: "profilingRequest",
         element: <ProfilingRequest />
+      },
+      {
+        path: "profilingIndivInfo",
+        element: <ViewInfo />
       }
     ],
   },

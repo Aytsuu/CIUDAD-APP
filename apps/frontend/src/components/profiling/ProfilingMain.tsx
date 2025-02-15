@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   FaPlus,
@@ -24,12 +24,120 @@ import {
   PaginationPrevious,
 } from "../ui/pagination/pagination";
 
-import TableLayout from "../ui/table/table-layout";
 import { Link } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { Input } from "../ui/input";
 
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { DataTable } from "../ui/table/data-table";
+import { ArrowUpDown } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
+import Modal from "./profilingModal/FormTypeModal";
+
+// Define the type for the Report object
+type Report = {
+  id: string;
+  category: string;
+  location: string;
+  description: string;
+  incidentTime: string;
+  reportedBy: string;
+  timeReported: string;
+  date: string;
+};
+
+// Define the columns for the data table
+export const columns: ColumnDef<Report>[] = [
+  {
+    accessorKey: "category",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Category
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("category")}</div>
+    ),
+  },
+  {
+    accessorKey: "location", // Key for location data
+    header: "Location", // Column header
+  },
+  {
+    accessorKey: "description", // Key for description data
+    header: "Description", // Column header
+  },
+  {
+    accessorKey: "incidentTime", // Key for incident time data
+    header: "Time of Incident", // Column header
+  },
+  {
+    accessorKey: "reportedBy", // Key for reported by data
+    header: "Reported By",
+  },
+  {
+    accessorKey: "timeReported", // Key for time reported data
+    header: "Time Reported", // Column header
+  },
+  {
+    accessorKey: "date", // Key for date data
+    header: "Date", // Column header
+  },
+  {
+    accessorKey: "action", // Key for action data
+    header: "Action", // Column header
+    cell: (
+      { row } // Add action button to all existing rows
+    ) => (
+      // DialogLayout component to show detailed report on click
+      <DialogLayout
+        trigger={
+          <div className="w-[50px] h-[35px] border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
+            View
+          </div>
+        }
+        className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col"
+        title="Report Details"
+        description="This report was received on 9th of July, 2025. Please respond accordingly."
+        mainContent={"/"}
+      />
+    ),
+    enableSorting: false, // Disable sorting
+    enableHiding: false, // Disable hiding
+  },
+];
+
+// Sample data for the reports
+export const reports: Report[] = [
+  {
+    id: "Lorem",
+    category: "Lorem",
+    location: "Lorem",
+    description: "Lorem",
+    incidentTime: "Lorem",
+    reportedBy: "Lorem",
+    timeReported: "Lorem",
+    date: "Lorem",
+  },
+  {
+    id: "Lorem",
+    category: "Aorem",
+    location: "Lorem",
+    description: "Lorem",
+    incidentTime: "Lorem",
+    reportedBy: "Lorem",
+    timeReported: "Lorem",
+    date: "Lorem",
+  },
+];
+
 export default function ProfilingMain() {
+  const [isModalOpen, setIsModalOpen] = useState(false); //
+  const data = reports;
   return (
     <div>
       <Outlet />
@@ -66,10 +174,7 @@ export default function ProfilingMain() {
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="gap-2 font-normal"
-              >
+              <Button variant="outline" className="gap-2 font-normal">
                 <FaSort />
                 Sort
               </Button>
@@ -101,15 +206,98 @@ export default function ProfilingMain() {
             >
               Pending
             </Link>
-            <Link
-              to="/residentRegistration"
+
+            {/* Registration Button */}
+            <button
+              onClick={() => setIsModalOpen(true)}
               className="flex gap-x-2 shadow-sm items-center justify-center w-32 rounded-md text-white bg-blue hover:bg-sky-400"
             >
               <span>
                 <FaPlus />
               </span>
               Register
-            </Link>
+            </button>
+
+            {/* This is rendered everytime the register button is clicked */}
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Register Resident</h2>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Your registration form content goes here */}
+                <div className="mb-4">
+                  <div className="w-full h-[20rem] space-x-3 grid grid-cols-2">
+
+                    {/* Registration Form */}
+                    <Link
+                      to="/residentRegistration"
+                      className="relative inline-block overflow-hidden group border-2 col-span-1 h-full rounded-lg"
+                    >
+                      {/* Background image */}
+                      <div
+                        className="absolute inset-0 bg-[url('../assets/images/sanRoqueLogo.svg')] bg-cover bg-center 
+                            blur-sm group-hover:blur-none transition-all duration-300"
+                      ></div>
+
+                      {/* Overlay for better text visibility */}
+                      <div
+                        className="absolute inset-0 bg-black/40 group-hover:bg-black/30 
+                            transition-all duration-300"
+                      ></div>
+
+                      {/* Text content */}
+                      <div className="relative flex items-center justify-center h-full">
+                        <span className="text-white font-medium">
+                          Registration Form
+                        </span>
+                      </div>
+                    </Link>
+                    <Link
+                      to="/residentRegistration"
+                      className="relative inline-block overflow-hidden group border-2 col-span-1 h-full rounded-lg"
+                    >
+                      {/* Background image */}
+                      <div
+                        className="absolute inset-0 bg-[url('../assets/images/sanRoqueLogo.svg')] bg-cover bg-center 
+                            blur-sm group-hover:blur-none transition-all duration-300"
+                      ></div>
+
+                      {/* Overlay for better text visibility */}
+                      <div
+                        className="absolute inset-0 bg-black/40 group-hover:bg-black/30 
+                            transition-all duration-300"
+                      ></div>
+
+                      {/* Text content */}
+                      <div className="relative flex items-center justify-center h-full">
+                        <span className="text-white font-medium">
+                          Household Form
+                        </span>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button className="px-4 py-2 bg-blue text-white rounded-md hover:bg-sky-400">
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </Modal>
           </div>
         </div>
       </div>
@@ -143,36 +331,13 @@ export default function ProfilingMain() {
         </div>
         <div className="bg-white">
           {/* Table Placement */}
-          <TableLayout
-            header={[
-              "Resident No.",
-              "Household No.",
-              "Family No.",
-              "Sitio",
-              "Last Nmae",
-              "First Name",
-              "M.I",
-              "Suffix",
-              "Date Registered",
-              "Action",
-            ]}
-            rows={Array(10).fill([
-              "Paolo Araneta Jr. Senpai",
-              "Josef Virtucio AKA The Sheeesh",
-              "Row3",
-              "Row4",
-              "Row4",
-              "Row4",
-              "Row4",
-              "Row4",
-              "Row4",
-              "Row4",
-            ])}
-          />
+          <DataTable columns={columns} data={data} />
         </div>
         <div className="flex items-center justify-between w-full py-3">
           {/* Showing Rows Info */}
-          <p className="pl-4 text-sm font-normal text-darkGray">Showing 1-10 of 150 rows</p>
+          <p className="pl-4 text-sm font-normal text-darkGray">
+            Showing 1-10 of 150 rows
+          </p>
 
           {/* Pagination */}
           <div>
