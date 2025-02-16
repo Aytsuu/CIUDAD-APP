@@ -1,12 +1,12 @@
 import { createBrowserRouter, RouterProvider, Navigate} from 'react-router';
 import Home from "./pages/landing/home";
 import SignIn from "./pages/landing/sign-in";
-import AboutUs from './pages/landing/about-us';
+import About from './pages/landing/about';
 import LandingLayout from './layout/landing-page/landing-layout';
 import Services from './pages/landing/services';
 import Donation from './pages/landing/donation';
 import BarangayCouncil from './pages/landing/barangay-council';
-import DownloadApp from './pages/landing/download-app';
+import MobileApp from './pages/landing/mobile-app';
 
 const router = createBrowserRouter([
   {
@@ -22,8 +22,8 @@ const router = createBrowserRouter([
         element: <Home />
       },
       {
-        path: "about-us",
-        element: <AboutUs />
+        path: "about",
+        element: <About />
       },
       {
         path: "services",
@@ -38,8 +38,8 @@ const router = createBrowserRouter([
         element: <BarangayCouncil />
       },
       {
-        path: "download-app",
-        element: <DownloadApp />
+        path: "mobile-app",
+        element: <MobileApp />
       },
       {
         path: "sign-in",

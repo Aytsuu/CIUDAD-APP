@@ -1,5 +1,5 @@
 
-export default function DownloadApp(){
+export default function MobileApp(){
     return(
         <div>
 
