@@ -4,7 +4,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { FilterAccordion } from "@/components/ui/filter-accordion";
-import { TableCaption } from "@/components/ui/table";
+import { TableCaption } from "@/components/ui/table/table";
 import TableRecord from "./table-record";
 import { NewPositionDialog } from "./new-position-dialog";
 

@@ -6,7 +6,9 @@
 - **Mobile**: [React-Native](https://reactnative.dev/)
 
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
-  
+
+<br></br>
+ 
 ---
 
 ## Getting Started
@@ -72,6 +74,8 @@ git pull
 
 ---
 
+<br></br>
+
 ## Branch Naming Conventions
 
 We follow a consistent naming convention for branches to maintain clarity and organization.
@@ -112,6 +116,7 @@ We follow a consistent naming convention for branches to maintain clarity and or
   `mobile/experiment/test-ai`
 
 ## Branch Script 
+
 #### Create a branch (if clone)
 ```bash
 git checkout -b [branch_name]
@@ -120,6 +125,24 @@ git checkout -b [branch_name]
 ```bash
 git status
 ```
+
+#### Renaming a branch
+```bash
+git branch -m [new-branch-name]
+git push origin --delete [old-branch-name]
+git push origin [new-branch-name]
+git push --set-upstream origin [new-branch-name]
+```
+
+#### Pulling main and updating branch
+```bash
+git fetch origin
+git checkout main
+git pull
+git checkout branchname_nimo
+git merge main
+```
+<br></br>
 
 ## Revert Script (If you accidentally commit on main branch)
 
@@ -145,6 +168,7 @@ git revert [commit-hash]
 git checkout [commit-hash] -- .
 ```
 
+<br></br>
 ---
 ## Components
 
@@ -155,9 +179,9 @@ git checkout [commit-hash] -- .
 ```bash
 
 const categoryOptions = [
-  { id: "electronics", label: "Electronics", count: 12, checked: false },
-  { id: "fashion", label: "Fashion", count: 8, checked: false },
-  { id: "home", label: "Home", count: 5, checked: false },
+  { id: "electronics", label: "Electronics", checked: false },
+  { id: "fashion", label: "Fashion", checked: false },
+  { id: "home", label: "Home", checked: false },
 ];
 
 function CategoryFilter() {
@@ -188,5 +212,5 @@ function CategoryFilter() {
 }
 
 ```
-
+ 
 ---
