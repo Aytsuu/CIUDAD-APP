@@ -82,14 +82,6 @@ function IncomeandExpenseTracking() {
                         <Input className="w-[20rem]"placeholder="Search"></Input>
                         <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
                     </div>
-                    {/* <div className="flex gap-5">
-                        <div className="flex gap-3">
-                            From: <Input type="date" className="border border-tealBlue border-[2px] rounded-md p-2" value={selectedFromDate} onChange={(e) => setSelectedFromDate(e.target.value)} max={endDate} />
-                        </div>
-                        <div className="flex gap-3">
-                            To: <Input type="date" className="border border-tealBlue border-[2px] rounded-md p-2" value={selectedToDate} onChange={(e) => setSelectedToDate(e.target.value)} min={selectedFromDate} max={endDate} />
-                        </div>
-                    </div> */}
                     <DialogLayout
                         trigger={<Button className="bg-green">+ New Entry</Button>}
                         className="max-w-md"
