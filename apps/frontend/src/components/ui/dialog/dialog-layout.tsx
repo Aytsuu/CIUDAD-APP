@@ -21,7 +21,7 @@ export default function DialogLayout({trigger, className, title = "", descriptio
    return(
        <Dialog>
            <DialogTrigger>
-               {trigger}
+                {trigger}
            </DialogTrigger>
            <DialogContent className={className}>
                <DialogHeader>
