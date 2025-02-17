@@ -1,11 +1,12 @@
 // Import necessary components and icons
-import Card from "@/components/ui/card";
+// import Card from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Scroll, Eye, Minus } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import React from "react";
 
 // Array of months for display
 const months = [
@@ -73,7 +74,7 @@ export default function DRRMonthlyARReport() {
 
                     {/* Grid of months displayed as cards */}
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full h-full gap-3">
-                        {months.map((month, index) => (
+                        {/* {months.map((month, index) => (
                             <Card
                                 key={index}
                                 title={month}
@@ -81,7 +82,7 @@ export default function DRRMonthlyARReport() {
                                 icon={null}
                                 className="w-full h-full bg-white border"
                             />
-                        ))}
+                        ))} */}
                     </div>
                 </div>
 
@@ -90,15 +91,14 @@ export default function DRRMonthlyARReport() {
                     {/* List of recent records */}
                     <h4 className="mb-4 text-sm font-medium leading-none">Tags</h4>
                     {months.map((_, index) => (
-                        <>
+                        <React.Fragment key={index}>
                             <RecentRecord
-                                key={index}
                                 title='4th Weekly AR, Nov. 2024'
                                 status='Unsigned'
                             />
 
                             <Separator className="my-2"/>
-                        </>
+                        </React.Fragment>
                     ))}
                 </ScrollArea>
             </div>
