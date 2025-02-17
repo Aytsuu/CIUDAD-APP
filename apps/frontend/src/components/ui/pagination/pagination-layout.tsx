@@ -1,12 +1,12 @@
 import {
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-  } from "@/components/ui/pagination/pagination"
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination/pagination"
 
 export default function PaginationLayout({className} : {className: string}){
   return(
@@ -29,4 +29,3 @@ export default function PaginationLayout({className} : {className: string}){
     </Pagination>
   )
 }
-  
