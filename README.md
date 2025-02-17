@@ -8,7 +8,7 @@
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
 
 <br></br>
-
+ 
 ---
 
 ## Getting Started
@@ -212,5 +212,5 @@ function CategoryFilter() {
 }
 
 ```
-
+ 
 ---
