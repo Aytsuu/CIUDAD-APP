@@ -164,7 +164,7 @@ function AddBudgetPlan() {
                 </div>
 
                 {/* Pagination */}
-                <PaginationLayout />
+                <PaginationLayout className=""/>
             </div>
         </div>
 
