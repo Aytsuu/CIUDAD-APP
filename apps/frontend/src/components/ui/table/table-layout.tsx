@@ -25,7 +25,7 @@ export default function TableLayout({ header, rows }: TableProps){
             <TableBody className="">
                     {
                         rows.map((row, index) => (
-                        <TableRow key={`row-${index}`}>
+                        <TableRow key={`row-${index}`}> 
                             {row.map((cell, index) => (
                                     <TableCell key={`cell-${index}`} className="text-center">{cell}</TableCell>
                                 ))}

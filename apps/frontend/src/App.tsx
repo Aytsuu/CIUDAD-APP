@@ -1,3 +1,4 @@
+
 import DRRMonthlyARReport from "./pages/report/drr/drr-monthly-ar-report"
 import DRRWeeklyARReport from "./pages/report/drr/drr-weekly-ar-report"
 import { createBrowserRouter, RouterProvider } from 'react-router'
@@ -43,4 +44,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

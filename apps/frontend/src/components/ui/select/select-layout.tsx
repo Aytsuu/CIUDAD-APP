@@ -7,8 +7,12 @@ import {
     SelectTrigger,
     SelectValue,
   } from "@/components/ui/select/select"
+<<<<<<< HEAD
 import React from "react"
 import { cn } from "@/lib/utils"
+=======
+  import { cn } from "@/lib/utils"
+>>>>>>> main
 
   interface Option{
     id: string,
@@ -16,9 +20,15 @@ import { cn } from "@/lib/utils"
   }
 
   interface SelectProps{
+<<<<<<< HEAD
     className: string
     placeholder: string
     label: string,
+=======
+    placeholder: string
+    label: string,
+    className: string,
+>>>>>>> main
     options: Option[],
     value: string,
     onChange: (value: string) => void
