@@ -1,9 +1,7 @@
 // Import necessary components and icons
-import Card from "@/components/ui/card";
 import { DataTable } from "@/components/ui/table/data-table"; 
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ColumnDef } from "@tanstack/react-table";
-import { CalendarRange, Users, FolderPlus } from "lucide-react"; 
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 

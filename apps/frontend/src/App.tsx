@@ -5,7 +5,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import DRRStaffRecord from "./pages/record/drr/drr-staff-record"
 import DRRResidentReport from "./pages/report/drr/drr-resident-report"
 import DRRAcknowledgementReport from "./pages/report/drr/drr-acknowledgement-report"
-import DRRMapGoogle from "./pages/report/drr/drr-map-google"
 
 // Creating routes
 const router = createBrowserRouter([
@@ -31,10 +30,6 @@ const router = createBrowserRouter([
     path: "/drr-staff",
     element: <DRRStaffRecord/>,
   },
-  {
-    path: "/drr-map-google  ",
-    element: <DRRMapGoogle/>
-  }
 ])
 
 function App() {
