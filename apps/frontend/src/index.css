@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 7px; /* Width of the scrollbar */
+  height: 7px; /* Height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Color of the track */
+  border-radius: 5px; /* Rounded corners for the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0; /* Color of the scrollbar thumb */
+  border-radius: 5px; /* Rounded corners for the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9b9b9b; /* Color of the thumb on hover */
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -59,6 +79,7 @@
   }
 }
 
+
 @layer base {
   * {
     @apply border-border;
@@ -66,4 +87,8 @@
   body {
     @apply bg-background text-foreground;
     }
+}
+
+.slope-right {
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
 }
