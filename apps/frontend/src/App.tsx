@@ -6,12 +6,11 @@ function App() {
 
   return (
     <div>
-      <AddBudgetPlan/>
+      {/* <AddBudgetPlan/> */}
       {/* <IncomeandExpenseTracking/> */}
-      {/* <ViewBudgetPlan/> */}
+      <ViewBudgetPlan/>
     </div>
   )
 }
 
-export default App
-  
+export default App;

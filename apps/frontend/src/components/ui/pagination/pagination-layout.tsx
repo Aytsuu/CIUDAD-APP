@@ -8,15 +8,15 @@ import {
     PaginationPrevious,
   } from "@/components/ui/pagination/pagination"
 
-export default function PaginationLayout(){
+export default function PaginationLayout({className} : {className: string}){
   return(
-    <Pagination>
+    <Pagination className={className}>
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious href="#" />
         </PaginationItem>
         <PaginationItem>
-          <PaginationLink href="#">1</PaginationLink>
+          <PaginationLink href="#" isActive>1</PaginationLink>
           <PaginationLink href="#">2</PaginationLink>
         </PaginationItem>
         <PaginationItem>
