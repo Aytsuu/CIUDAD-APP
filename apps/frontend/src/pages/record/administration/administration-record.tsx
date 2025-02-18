@@ -117,7 +117,7 @@ const columns: ColumnDef<Record>[] = [
     }
 ]
 
-export function AdministrativeRecord(){
+export default function AdministrationRecord(){
 
     const data = records;
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
