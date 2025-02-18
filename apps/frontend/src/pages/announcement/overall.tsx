@@ -23,14 +23,14 @@ const AnnouncementDashboard: React.FC = () => {
             time: '8:00 AM'
         },
         {
-            id: '1',
+            id: '2',
             title: 'Feeding Program',
             description: 'Description description description description description description',
             dateCreated: 'January 20, 2025',
             time: '8:00 AM'
         },
          {
-            id: '1',
+            id: '3',
             title: 'Feeding Program',
             description: 'Description description description description description description',
             dateCreated: 'January 20, 2025',

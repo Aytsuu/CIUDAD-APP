@@ -1,24 +1,27 @@
-import Viewing from "./pages/animalbites/viewing"
-//import Overall from "./pages/announcement/overall"
-//import AnimalBites from "./pages/animalbites/individual"
+import FamilyPlanningForm from "./pages/familyplanning/view";
+
 function App() {
-
   return (
-    <>
-      <div>
-        {/* <AnimalBites>
-        </AnimalBites> */}
-        <Viewing>
-          </Viewing> 
-          {/* <Overall>
-
-          </Overall>
-           */}
-        </div>
-      
-    </> 
-  )
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <FamilyPlanningForm data={{
+        clientId: "",
+        philhealthNo: "",
+        nhts: {
+          status: false,
+          pantawidStatus: false
+        },
+        personalInfo: {
+          lastName: "",
+          givenName: "",
+          middleInitial: "",
+          dateOfBirth: "",
+          age: 0,
+          educationalAttainment: "",
+          occupation: ""
+        }
+      }} />
+    </div>
+  );
 }
 
-export default App
-  
+export default App;
