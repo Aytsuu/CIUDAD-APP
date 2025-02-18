@@ -16,12 +16,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 
-interface BlotterFormProps{
-    action: React.ReactNode
-}
-
-export default function BlotterForm({ action }: BlotterFormProps){
+export default function BlotterForm(){
 
     const form = useForm<z.infer<typeof ComplaintformSchema>>({
         resolver: zodResolver(ComplaintformSchema),
@@ -155,6 +152,7 @@ export default function BlotterForm({ action }: BlotterFormProps){
                                                 options={[{id: "1", name: "bahog tae"}]}
                                                 value={field.value}
                                                 onChange={field.onChange}
+                                                className=""
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -201,7 +199,7 @@ export default function BlotterForm({ action }: BlotterFormProps){
                 </div>
 
                 <div className="w-full p-5 flex flex-row justify-end"> 
-                    {action}
+                    <Button type="submit">Submit</Button>
                 </div>
             </form>
         </Form>
