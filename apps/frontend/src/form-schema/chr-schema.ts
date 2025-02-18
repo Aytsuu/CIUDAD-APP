@@ -1,13 +1,5 @@
 import { z } from 'zod'
 
-export const VaccineSchema = z.object({
-  id: z.number(),
-  vaccineType: z.string().min(1, "Vaccine type is required"),
-  dose: z.string().min(1, "Dose is required"),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-});
-
-
 const ChildHealthFormSchema = z.object({
   familyNo: z.string().min(1, 'required'),
   ufcNo: z.string().min(1, 'required'),
@@ -30,9 +22,66 @@ const ChildHealthFormSchema = z.object({
   address: z.string().min(1, 'required'),
   landmarks: z.string().optional(),
   dateNewbornScreening: z.string().min(1, 'required'),
-  screeningStatus: z.string().min(1, 'required'), //naa sa reports but wala sa child health
-  vaccines: z.array(VaccineSchema).optional(),
-  hasDisability:z.string().optional()
+  screeningStatus: z.string().min(1, 'required'),
+  birthWeight: z.string().optional(),
+  birthLength: z.string().optional(),
+  headCircumference: z.string().optional(),
+  chestCircumference: z.string().optional(),
+  deliveryType: z.string().optional(),
+  gestationalAge: z.string().optional(),
+  complications: z.string().optional(),
+  hasDisability: z.boolean().optional(),
+  disability: z.string().optional().default('N/A'),
+  hasEdema: z.boolean().optional(),
+  edemaSeverity: z.string().optional().default('N/A'),
+  dates: z.array(z.string()).optional(),
+  vitaminRecords: z
+    .array(
+      z.object({
+        vitaminType: z.string(),
+        date: z.string()
+      })
+    )
+    .optional()
+    .default([]),
+  vaccines: z
+    .array(
+      z.object({
+        id: z.number(),
+        vaccineType: z.string(),
+        dose: z.string(),
+        date: z.string()
+      })
+    )
+    .optional()
+    .default([]),
+  isTransient: z.string().default('resident'),
+
+  ironDates: z
+    .array(
+      z.object({
+        givenDate: z.string(),
+        completedDate: z.string()
+      })
+    )
+    .optional()
+    .default([]),
+
+  vitalSigns: z
+    .array(
+      z.object({
+        age: z.string(),
+        wt: z.string(),
+        ht: z.string(),
+        temp: z.string(),
+        findings: z.string(),
+        notes: z.string(),  
+      })
+    )
+    .optional()
+    .default([])
 })
+
+export type FormData = z.infer<typeof ChildHealthFormSchema>
 
 export default ChildHealthFormSchema
