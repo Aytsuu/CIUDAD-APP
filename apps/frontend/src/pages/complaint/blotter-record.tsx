@@ -76,7 +76,7 @@ export default function BlotterRecord(){
                     <DialogLayout
                         trigger={
                             <Label className="flex items-center pt-2.5 pb-2.5 pl-4 pr-4 bg-[#2563EB] text-white rounded-lg cursor-pointer hover:bg-[#2563EB]/90">
-                                <Plus/> New Record
+                                <Plus size={20}/> New Record
                             </Label>
                         }
                         className="max-w-[50%] h-2/8"
