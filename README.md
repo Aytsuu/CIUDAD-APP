@@ -8,7 +8,7 @@
 - **Backend**: [Django](https://www.djangoproject.com/ttps://react.dev/)
 
 <br></br>
-
+ 
 ---
 
 ## Getting Started
@@ -134,6 +134,14 @@ git push origin [new-branch-name]
 git push --set-upstream origin [new-branch-name]
 ```
 
+#### Pulling main and updating branch
+```bash
+git fetch origin
+git checkout main
+git pull
+git checkout branchname_nimo
+git merge main
+```
 <br></br>
 
 ## Revert Script (If you accidentally commit on main branch)
@@ -204,5 +212,5 @@ function CategoryFilter() {
 }
 
 ```
-
+ 
 ---
