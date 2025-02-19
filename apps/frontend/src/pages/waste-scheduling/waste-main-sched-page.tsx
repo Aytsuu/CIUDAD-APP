@@ -21,7 +21,7 @@ const WasteMainScheduling = () => {
 
   return (
     <div>
-      <SelectLayout
+      <SelectLayout className=''
         label=""
         placeholder="Schedule"
         options={[
