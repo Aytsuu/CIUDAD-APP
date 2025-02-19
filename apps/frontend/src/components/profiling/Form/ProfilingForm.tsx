@@ -9,7 +9,7 @@ import {
   MotherFormData,
   FatherFormData,
   DependentFormData,
-} from "../Schema/FormDataType";
+} from "../Schema/ProfilingDataType";
 import Progress from "../progress";
 import { Link } from "react-router-dom";
 import { BsChevronLeft } from "react-icons/bs";
@@ -148,11 +148,9 @@ export function ProfilingForm() {
           })}
         </p>
       </div>
-      <hr className="text-darkGray"/>
       <div className="flex justify-center items-center pb-4 pt-4 bg-white mt-4 rounded-t-lg">
         <Progress progress={calculateProgress()} />
       </div>
-      <hr />
       <div>
         <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
           {currentStep === 1 && (

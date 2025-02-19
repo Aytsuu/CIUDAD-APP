@@ -6,7 +6,7 @@ import {
   FormControl,
   FormMessage,
 } from "../../ui/form";
-import { MotherFormData, FatherFormData } from "../Schema/FormDataType";
+import { MotherFormData, FatherFormData } from "../Schema/ProfilingDataType";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motherFormSchema, fatherFormSchema } from "../Schema/ProfilingSchema";
@@ -22,7 +22,11 @@ interface ParentsInfoFormProps {
   };
 }
 
-const ParentsForm = ({ onSubmit, onBack, initialData }: ParentsInfoFormProps) => {
+const ParentsForm = ({
+  onSubmit,
+  onBack,
+  initialData,
+}: ParentsInfoFormProps) => {
   const motherForm = useForm<MotherFormData>({
     resolver: zodResolver(motherFormSchema),
     defaultValues: initialData.motherInfo || {
@@ -65,12 +69,12 @@ const ParentsForm = ({ onSubmit, onBack, initialData }: ParentsInfoFormProps) =>
   };
 
   // Common form fields component
-  const ParentFormFields = ({ 
-    control, 
-    prefix 
-  }: { 
-    control: any; 
-    prefix: "Mother" | "Father" 
+  const ParentFormFields = ({
+    control,
+    prefix,
+  }: {
+    control: any;
+    prefix: "Mother" | "Father";
   }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-4">
@@ -209,19 +213,10 @@ const ParentsForm = ({ onSubmit, onBack, initialData }: ParentsInfoFormProps) =>
       </div>
 
       <div className="mt-8 flex justify-end space-x-4">
-        <Button 
-          variant="outline" 
-          onClick={onBack}
-          className="w-32 bg-white border-2 border-blue/50 text-black/75 hover:bg-blue hover:text-white"
-        >
+        <Button variant="outline" onClick={onBack}>
           Prev
         </Button>
-        <Button 
-          onClick={handleSubmit}
-          className="w-32 bg-blue hover:bg-darkBlue2"
-        >
-          Next
-        </Button>
+        <Button onClick={handleSubmit}>Next</Button>
       </div>
     </div>
   );

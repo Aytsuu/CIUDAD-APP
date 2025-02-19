@@ -1,14 +1,15 @@
 import { Link } from "react-router-dom";
 import { BsChevronLeft } from "react-icons/bs";
-import { useState } from "react";
 import { Button } from "../ui/button";
 
 export default function ViewInfo() {
+  {/* Sample Data */}
   const resident = { fullName: "Christian", dob: "25/01/2004" };
+
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center justify-between">
-        {/* Header */}
         <div className="flex items-center gap-x-2">
           <Link
             to="/"
@@ -27,15 +28,15 @@ export default function ViewInfo() {
           </div>
         </div>
         <div className="flex gap-x-4">
-            <Button className="w-32 bg-red-500 text-black hover:bg-red-300">Reject</Button>
-            <Button className="w-32 bg-green-500 hover:bg-green-400">Approve</Button>
+            <Button variant={"destructive"}>Reject</Button>
+            <Button className="bg-green-600 hover:bg-green-500">Approve</Button>
         </div>
       </div>
 
-      <hr className="h-4 bg-darkBlue1/75 my-4" />
+      <hr className="h-4 bg-darkBlue1 my-4" />
       {/* Sections */}
       <div className="h-auto w-full grid grid-rows-4 bg-white gap-y-2 p-2">
-        <section className="row-span-1 p-3 grid grid-cols-8 border-b-4 border-darkBlue1/25">
+        <section className="row-span-1 p-3 grid grid-cols-8 border-b-4 border-darkBlue1">
           <h2 className="font-semibold text-l text-darkBlue2 col-span-1">
             Resident Profile
           </h2>
@@ -43,7 +44,7 @@ export default function ViewInfo() {
         </section>
 
         {/* Personal Information */}
-        <section className="row-span-1 p-3 grid grid-cols-8">
+        <section className="row-span-1 p-3 grid grid-cols-8 border-b-4 border-darkBlue1">
           <h2 className="font-semibold text-l text-darkBlue2 col-span-1">
             Personal Information
           </h2>
@@ -177,7 +178,7 @@ export default function ViewInfo() {
 
         {/* Parents Information */}
 
-        <section className="row-span-1 p-3 grid grid-cols-8">
+        <section className="row-span-1 p-3 grid grid-cols-8 border-b-4 border-darkBlue1">
           {/* Father's Information */}
           <h2 className="font-semibold text-l text-darkBlue2 col-span-1">
             Father's Information
@@ -278,7 +279,7 @@ export default function ViewInfo() {
         </section>
 
         {/* Mother's Information */}
-        <section className="row-span-1 p-3 grid grid-cols-8">
+        <section className="row-span-1 p-3 grid grid-cols-8 border-b-4 border-darkBlue1">
           <h2 className="font-semibold text-l text-darkBlue2 col-span-1">
             Mother's Information
           </h2>
@@ -455,8 +456,6 @@ export default function ViewInfo() {
           </div>
         </section>
 
-        {/*Image Uploaded */}
-        <section className="flex row-span-1 items-center justify-center"></section>
       </div>
     </div>
   );

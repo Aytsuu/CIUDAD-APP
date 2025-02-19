@@ -135,11 +135,11 @@ export const reports: Report[] = [
   },
 ];
 
-export default function ProfilingMain() {
+export default function ProfilingMain() { 
   const [isModalOpen, setIsModalOpen] = useState(false); //
   const data = reports;
   return (
-    <div>
+    <div className="w-full">
       <Outlet />
       {/* Header Section */}
       <div className="flex-col items-center mb-4">
@@ -161,7 +161,7 @@ export default function ProfilingMain() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 font-normal">
+              <Button variant="outline">
                 <FaFilter />
                 Filter
               </Button>
@@ -174,7 +174,7 @@ export default function ProfilingMain() {
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 font-normal">
+              <Button variant="outline">
                 <FaSort />
                 Sort
               </Button>
@@ -200,22 +200,19 @@ export default function ProfilingMain() {
         </div>
         <div>
           <div className="flex space-x-3 h-9">
-            <Link
-              to="/profilingRequest"
-              className="flex items-center justify-center shadow-sm w-32 rounded-md"
-            >
-              Pending
+            <Link to="/profilingRequest">
+              <Button variant="outline">Pending</Button>
             </Link>
 
             {/* Registration Button */}
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex gap-x-2 shadow-sm items-center justify-center w-32 rounded-md text-white bg-blue hover:bg-sky-400"
-            >
-              <span>
-                <FaPlus />
-              </span>
-              Register
+              onClick={() => setIsModalOpen(true)}            >
+              <Button>
+                <span>
+                  <FaPlus />
+                </span>
+                Register
+              </Button>
             </button>
 
             {/* This is rendered everytime the register button is clicked */}
@@ -234,7 +231,6 @@ export default function ProfilingMain() {
                 {/* Your registration form content goes here */}
                 <div className="mb-4">
                   <div className="w-full h-[20rem] space-x-3 grid grid-cols-2">
-
                     {/* Registration Form */}
                     <Link
                       to="/residentRegistration"
@@ -286,15 +282,15 @@ export default function ProfilingMain() {
                 </div>
 
                 <div className="flex justify-end gap-2 mt-6">
-                  <button
+                  <Button
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                    variant="outline"
                   >
                     Cancel
-                  </button>
-                  <button className="px-4 py-2 bg-blue text-white rounded-md hover:bg-sky-400">
+                  </Button>
+                  <Button>
                     Submit
-                  </button>
+                  </Button>
                 </div>
               </div>
             </Modal>
@@ -315,7 +311,6 @@ export default function ProfilingMain() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex items-center justify-center w-32 p-1 rounded-md gap-x-2 font-normal"
                 >
                   <FaFileImport />
                   Export
@@ -329,7 +324,7 @@ export default function ProfilingMain() {
             </DropdownMenu>
           </div>
         </div>
-        <div className="bg-white">
+        <div className="bg-white w-full border-2">
           {/* Table Placement */}
           <DataTable columns={columns} data={data} />
         </div>

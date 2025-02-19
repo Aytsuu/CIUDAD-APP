@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from "../../ui/form";
 import { Button } from "../../ui/button";
-import { PersonalFormData } from "../Schema/FormDataType";
+import { PersonalFormData } from "../Schema/ProfilingDataType";
 import { personalFormSchema } from "../Schema/ProfilingSchema";
 import { Link } from "react-router-dom";
 
@@ -270,13 +270,10 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
           {/* Submit Button */}
           <div className="mt-auto">
             <div className="p-4 flex justify-end gap-x-4 bg-white">
-              <Link
-                to="/"
-                className="flex justify-center items-center rounded-md w-32 bg-white border-2 border-blue/50 text-black/75 hover:bg-blue hover:text-white"
-              >
-                Cancel
+              <Link to="/">
+                <Button variant="outline">Cancel</Button>
               </Link>
-              <Button type="submit" className="w-32 bg-blue hover:bg-darkBlue2">
+              <Button type="submit">
                 Next
               </Button>
             </div>

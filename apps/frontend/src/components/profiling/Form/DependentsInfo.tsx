@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFieldArray, useForm } from "react-hook-form";
-import { DependentFormData } from "../Schema/FormDataType";
+import { DependentFormData } from "../Schema/ProfilingDataType";
 import { dependentFormSchema } from "../Schema/ProfilingSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
