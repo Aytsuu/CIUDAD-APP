@@ -125,8 +125,7 @@ import ResizeImage from 'tiptap-extension-resize-image';
 import TextAlign from "@tiptap/extension-text-align";
 
 
-//components
-import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
+
 
 
 export default function Tiptap({
@@ -150,8 +149,12 @@ export default function Tiptap({
                 alignments: ["left", "center", "right", "justify"], // Supported alignments
                 defaultAlignment: "left", // Default alignment
             }),
+            OrderedList.configure({
+                HTMLAttributes: {
+                  class: "list-decimal pl-5 pr-5",
+                },
+            }),            
             BulletList,
-            OrderedList,
             ListItem,
             Image, // Add the image extension
             ResizeImage,

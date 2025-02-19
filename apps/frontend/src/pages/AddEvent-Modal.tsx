@@ -163,6 +163,7 @@ function AddEvent(){
                                             <FormLabel>Event Category</FormLabel>
                                             <FormControl>
                                                 <SelectLayout
+                                                    className={inputcss}
                                                     label="Categories"
                                                     placeholder="Select Event Category"
                                                     options={[
@@ -201,7 +202,7 @@ function AddEvent(){
                                     name="eventDescription"
                                     render={({ field }) => (
                                         <FormItem>
-                                        <FormLabel>Room / Place</FormLabel>
+                                        <FormLabel>Event Description</FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 className="w-full border border-[#B3B7BD] p-2 shadow-sm focus:outline-none h-40 mt-[12px] rounded-[5px] resize-none"

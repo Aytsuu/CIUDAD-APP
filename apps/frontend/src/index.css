@@ -166,3 +166,11 @@ font-size: 30px;
 margin-right: 130px;
 margin-bottom: 15px;
 }
+
+
+/*TIPTAP CSS*/
+.tiptap ul {
+  list-style-type: disc; /* Show bullets */
+  margin-left: 20px; /* Optional: add some left margin for indentation */
+}
+
