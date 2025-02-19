@@ -1,14 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calendar } from "lucide-react";
-import { Input } from "../../ui/input";
+import { Input } from "../../../components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select/select";
+} from "../../../components/ui/select/select";
 import {
   Form,
   FormField,
@@ -16,10 +15,10 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "../../ui/form";
-import { Button } from "../../ui/button";
-import { PersonalFormData } from "../Schema/ProfilingDataType";
-import { personalFormSchema } from "../Schema/ProfilingSchema";
+} from "../../../components/ui/form";
+import { Button } from "../../../components/ui/button";
+import { PersonalFormData } from "../../../form-schema/profiling-schema/ProfilingDataType";
+import { personalFormSchema } from "../../../form-schema/profiling-schema/ProfilingSchema";
 import { Link } from "react-router-dom";
 
 interface PersonalInfoFormProps {
@@ -46,7 +45,8 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
   });
 
   return (
-    <div className="flex flex-col h-[calc(90vh-200px)] p-4 rounded-lg">
+    <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
+      {" "}
       <div className="pb-4">
         <h2 className="text-lg font-semibold">Personal Information</h2>
         <p className="text-xs text-black/50">Fill out all necessary fields</p>
@@ -54,14 +54,15 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-4 px-2 sm:px-6 md:px-12 lg:px-24"
         >
-          <div className="grid grid-cols-12 gap-4">
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
             <FormField
               control={form.control}
               name="lastName"
               render={({ field }) => (
-                <FormItem className="col-span-4">
+                <FormItem className="lg:col-span-4">
                   <FormLabel className="font-medium text-black/65">
                     Last Name <span className="text-red-500">*</span>
                   </FormLabel>
@@ -72,12 +73,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* First Name */}
             <FormField
               control={form.control}
               name="firstName"
               render={({ field }) => (
-                <FormItem className="col-span-4">
+                <FormItem className="lg:col-span-4">
                   <FormLabel className="font-medium text-black/65">
                     First Name <span className="text-red-500">*</span>
                   </FormLabel>
@@ -88,12 +88,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* Middle Name */}
             <FormField
               control={form.control}
               name="middleName"
               render={({ field }) => (
-                <FormItem className="col-span-3">
+                <FormItem className="sm:col-span-1 lg:col-span-3">
                   <FormLabel className="font-medium text-black/65">
                     Middle Name <span className="text-red-500">*</span>
                   </FormLabel>
@@ -104,12 +103,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* Suffix */}
             <FormField
               control={form.control}
               name="suffix"
               render={({ field }) => (
-                <FormItem className="col-span-1">
+                <FormItem className="sm:col-span-1 lg:col-span-1">
                   <FormLabel className="font-medium text-black/65">
                     Suffix <span className="text-red-500">*</span>
                   </FormLabel>
@@ -122,13 +120,13 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
           </div>
 
-          <div className="grid grid-cols-12 gap-4">
-            {/* Sex */}
+          {/* Sex, Status, DOB, Birth Place */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
             <FormField
               control={form.control}
               name="sex"
               render={({ field }) => (
-                <FormItem className="col-span-2">
+                <FormItem className="sm:col-span-1 lg:col-span-2">
                   <FormLabel className="font-medium text-black/65">
                     Sex <span className="text-red-500">*</span>
                   </FormLabel>
@@ -152,12 +150,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               )}
             />
 
-            {/* Status */}
             <FormField
               control={form.control}
               name="status"
               render={({ field }) => (
-                <FormItem className="col-span-2">
+                <FormItem className="sm:col-span-1 lg:col-span-2">
                   <FormLabel className="font-medium text-black/65">
                     Marital Status <span className="text-red-500">*</span>
                   </FormLabel>
@@ -180,12 +177,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* Date of Birth */}
             <FormField
               control={form.control}
               name="dateOfBirth"
               render={({ field }) => (
-                <FormItem className="col-span-2">
+                <FormItem className="sm:col-span-1 lg:col-span-2">
                   <FormLabel className="font-medium text-black/65">
                     Date of Birth <span className="text-red-500">*</span>
                   </FormLabel>
@@ -196,12 +192,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* Place of Birth */}
             <FormField
               control={form.control}
               name="birthPlace"
               render={({ field }) => (
-                <FormItem className="col-span-6">
+                <FormItem className="sm:col-span-2 lg:col-span-6">
                   <FormLabel className="font-medium text-black/65">
                     Place of Birth <span className="text-red-500">*</span>
                   </FormLabel>
@@ -217,8 +212,8 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
           </div>
 
-          <div className="flex gap-4">
-            {/* Citizenship */}
+          {/* Citizenship, Religion, Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="citizenship"
@@ -234,7 +229,6 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* Religion */}
             <FormField
               control={form.control}
               name="religion"
@@ -250,7 +244,6 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
-            {/* Contact */}
             <FormField
               control={form.control}
               name="contact"
@@ -267,13 +260,16 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
               )}
             />
           </div>
+
           {/* Submit Button */}
-          <div className="mt-auto">
-            <div className="p-4 flex justify-end gap-x-4 bg-white">
-              <Link to="/">
-                <Button variant="outline">Cancel</Button>
+          <div className="mt-8 sm:mt-auto">
+            <div className="p-4 flex flex-col sm:flex-row justify-end gap-4 sm:gap-x-4 bg-white">
+              <Link to="/" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  Cancel
+                </Button>
               </Link>
-              <Button type="submit">
+              <Button type="submit" className="w-full sm:w-auto">
                 Next
               </Button>
             </div>

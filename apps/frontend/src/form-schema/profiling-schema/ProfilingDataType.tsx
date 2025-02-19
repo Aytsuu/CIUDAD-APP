@@ -57,14 +57,3 @@ export interface PersonalFormData {
     fatherInfo: FatherFormData;
     dependentInfo: DependentFormData
   }
-
-export type TableDataType = {
-  id: string;
-  category: string;
-  location: string;
-  description: string;
-  incidentTime: string;
-  reportedBy: string;
-  timeReported: string;
-  date: string;
-}
