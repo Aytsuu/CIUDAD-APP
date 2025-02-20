@@ -18,12 +18,12 @@ const LoginScreen = () => {
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-[#ECF8FF]"> 
+    <View className='flex items-center justify-center h-full bg-[#F5F5F5]'>
       <Image
         source={require('@/assets/images/Logo.png')}
         className="w-30 h-30 mb-7"
       />
-
+      <Text className="text-black font-extrabold text-[30px] mt-8">Login</Text> 
       <TextInput
         className="w-[355px] h-[60px] border border-gray-300 rounded-md px-4 my-3.5 bg-white text-[16px]"
         placeholder="Username/Email"
