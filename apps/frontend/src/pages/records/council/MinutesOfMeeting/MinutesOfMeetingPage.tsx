@@ -34,7 +34,7 @@ export const columns: ColumnDef<Resolution>[] = [
         header: "Action", // Column header
         cell: ({row}) => ( // Add action button to all existing rows
             // DialogLayout component to show detailed report on click
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1 pr-2 pl-2">
+            <div className="flex gap-2 mt-1 pr-2 pl-2 justify-center">
                 <TooltipLayout
                     trigger={
                         <DialogLayout
@@ -87,7 +87,7 @@ type Resolution = {
 export const resolutionRecords: Resolution[] = [
     {
         meetingDate: "02/10/24",
-        meetingTitle: "Vivamus a tellus. Pellentesque ",
+        meetingTitle: "Vivamus a tellus. Pellentesque MinutesOfMeetingPage MinutesOfMeetingPage MinutesOfMeetingPage",
         meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et"
     },
     {

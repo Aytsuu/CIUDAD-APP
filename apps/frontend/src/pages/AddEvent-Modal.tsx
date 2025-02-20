@@ -10,6 +10,7 @@ import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/com
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -19,16 +20,7 @@ import AddEventFormSchema from "@/form-schema/addevent-schema";
 
 function AddEvent(){
 
-    //css for the 1st modal of adding the event
-    const inputlabelcss = "block text-sm font-medium text-gray-700 mb-1";
-    const inputcss = "mt-[12px] w-full border border-[#B3B7BD] p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-[3px]";
-    const textbuttoncss = "text-[#394360] text-lg font-medium cursor-pointer";
-
-    //css for the checkbox part
-    const labelText = "block text-xs font-medium text-gray-700";
-    const checkboxcss = "size-5";
-    const checkboxclass = "inline-flex items-center gap-2";
-
+    const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
 
     //for the modal
     const [events, setEvents] = useState<{ start: Date; end: Date; title: string }[]>([]);
@@ -205,7 +197,7 @@ function AddEvent(){
                                         <FormLabel>Event Description</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                className="w-full border border-[#B3B7BD] p-2 shadow-sm focus:outline-none h-40 mt-[12px] rounded-[5px] resize-none"
+                                                className="w-full p-2 shadow-sm h-40 mt-[12px] rounded-[5px] resize-none"
                                                 placeholder="Enter Meeting Description"
                                                 {...field}>
                                             </Textarea>
@@ -227,7 +219,7 @@ function AddEvent(){
                                         <FormLabel></FormLabel>
                                         <FormControl>
                                             <FilterAccordion
-                                                title="BARANGAY COUNCUL"
+                                                title="BARANGAY COUNCIL"
                                                 options={CouncilCategory.map((option) => ({
                                                     ...option,
                                                     checked: field.value?.includes(option.id) || false, // Use optional chaining
@@ -303,8 +295,8 @@ function AddEvent(){
                                     )}
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <Button type="submit" className="mb-10 inline-block rounded-md border border-[#3D4C77] bg-[#3D4C77] px-8 py-2 text-sm font-medium text-white hover:bg-transparent hover:text-[#263D67] focus:outline-none focus:ring active:text-[#263D67]">
+                            <div className="flex items-center justify-end pb-10">
+                                <Button type="submit">
                                     Schedule                                                                                                                          
                                 </Button>
                             </div>                 

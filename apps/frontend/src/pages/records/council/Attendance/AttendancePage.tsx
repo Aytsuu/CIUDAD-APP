@@ -5,7 +5,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button";
 import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Stamp  } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import AddEvent from '@/pages/AddEvent-Modal';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -15,6 +15,9 @@ import { Input } from '@/components/ui/input';
 import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
+
+//file components
+import Attendees from './Attendees';
 
 export const columns: ColumnDef<Resolution>[] = [
     {
@@ -30,7 +33,7 @@ export const columns: ColumnDef<Resolution>[] = [
         header: "Action", // Column header
         cell: ({row}) => ( // Add action button to all existing rows
             // DialogLayout component to show detailed report on click
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1 pr-2 pl-2">
+            <div className="flex gap-2 mt-1 pr-2 pl-2 justify-center">
                 <TooltipLayout
                     trigger={
                         <DialogLayout
@@ -43,29 +46,17 @@ export const columns: ColumnDef<Resolution>[] = [
                     }
                     content="View"
                 />
-                <TooltipLayout
+                <TooltipLayout  
                     trigger={
                         <DialogLayout
-                            trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Pencil size={16} /></div>}
-                            className="max-w-[50%] h-2/3 flex flex-col"
-                            title="Image Details"
-                            description="Here is the image related to the report."
-                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                            trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Stamp size={16} /></div>}
+                            className="w-[600px] h-[580px] flex flex-col overflow-auto scrollbar-custom"
+                            title="Mark Attendance"
+                            description="Check the boxes below."
+                            mainContent={<Attendees/>} // Replace with actual image path
                         />
                     }
-                    content="Update"
-                />
-                <TooltipLayout
-                    trigger={
-                        <DialogLayout
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"> <Trash size={16} /></div>}
-                            className="max-w-[50%] h-2/3 flex flex-col"
-                            title="Image Details"
-                            description="Here is the image related to the report."
-                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
-                        />
-                    }
-                    content="Delete"
+                    content="Mark"
                 />
             </div>
         ),
@@ -81,7 +72,7 @@ type Resolution = {
 
 export const resolutionRecords: Resolution[] = [
     {
-        attMettingTitle: "Vivamus a tellus. Pellentesque ",
+        attMettingTitle: "Vivamus a tellus. Pellentesque Vivamus a tellus. Pellentesque Vivamus a tellus. Pellentesque Vivamus a tellus. Pellentesque Vivamus a tellus. Pellentesque Vivamus a tellus. Pellentesque",
         attMeetingDate: "02/10/24"
     },
     {
@@ -108,7 +99,7 @@ function AttendancePage() {
                 </div>
 
                 <div className="w-full bg-white border border-gray rounded-[5px]">
-                    <div className='w-full flex justify-between mb-4 p-5'>
+                    <div className='w-full mb-4 p-5'>
                         {/**FILTER (SELECT)*/}
                         <div className="flex gap-3">
                             <Input
@@ -128,15 +119,6 @@ function AttendancePage() {
                                 value=""
                                 onChange={() => { }}
                             />                                
-                        </div>
-                        <div>
-                            <DialogLayout
-                                trigger={<div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor -pointer flex items-center"> Create <Plus className="ml-2" /></div>}
-                                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                                title="Schedule Event"
-                                description="Set an upcoming event."
-                                mainContent={<AddEvent />}
-                            />
                         </div>
                     </div>                    
 
