@@ -112,9 +112,9 @@ function GADEditEntryForm() {
           )}
         />
         <br />
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-end">
           <Button type="button" onClick={() => setIsEditing(!isEditing)} 
-            className="bg-blue hover:bg-blue hover:opacity-[95%">
+            className="bg-blue hover:bg-blue hover:opacity-[95%]">
             {isEditing ? 'Save' : 'Edit'}
           </Button>
         </div>
