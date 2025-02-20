@@ -1,10 +1,10 @@
-import GADAddEntryForm from "./pages/gad-budget-tracker/budget-tracker-form";
+import BudgetTracker from "./pages/gad-budget-tracker/budget-tracker-main";
 
 function App() {
 
   return (
     <> 
-      <GADAddEntryForm/>
+      <BudgetTracker/>
     </> 
   )
 }

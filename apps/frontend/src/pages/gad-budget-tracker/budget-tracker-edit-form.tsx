@@ -1,4 +1,4 @@
-// import { useState } from 'react';
+import { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -14,11 +14,11 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import GADAddEntrySchema from "@/form-schema/gad-budget-track-form-schema";
+import GADEditEntrySchema from "@/form-schema/gad-budget-tracker-edit-form-schema";
 
-function GADAddEntryForm() {
-  const form = useForm<z.infer<typeof GADAddEntrySchema>>({
-    resolver: zodResolver(GADAddEntrySchema),
+function GADEditEntryForm() {
+  const form = useForm<z.infer<typeof GADEditEntrySchema>>({
+    resolver: zodResolver(GADEditEntrySchema),
     defaultValues: {
       entryType: "",
       additionalNotes: "",
@@ -27,9 +27,11 @@ function GADAddEntryForm() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof GADAddEntrySchema>) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const onSubmit = (values: z.infer<typeof GADEditEntrySchema>) => {
     console.log(values);
     // Handle form submission
+    setIsEditing(false);
   };
 
   return (
@@ -53,7 +55,7 @@ function GADAddEntryForm() {
                     { id: "1", name: "Entry 1" },
                     { id: "2", name: "Entry 2" },
                   ]}
-                  value={field.value}
+                  value={field.value || ""}
                   onChange={field.onChange}
                 />
               </FormControl>
@@ -70,7 +72,7 @@ function GADAddEntryForm() {
             <FormItem>
               <Label>Amount:</Label>
               <FormControl>
-                <Input type="text" {...field} />
+                <Input type="text" {...field} readOnly={!isEditing} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -85,7 +87,7 @@ function GADAddEntryForm() {
             <FormItem>
               <Label>Particulars:</Label>
               <FormControl>
-                <Input type="text" {...field} />
+                <Input type="text" {...field} readOnly={!isEditing}  />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -102,7 +104,7 @@ function GADAddEntryForm() {
               <FormControl>
                 <Textarea
                   placeholder="Enter additional notes (if there is any)"
-                  {...field}
+                  {...field} readOnly={!isEditing} 
                 />
               </FormControl>
               <FormMessage />
@@ -111,11 +113,9 @@ function GADAddEntryForm() {
         />
         <br />
         <div className="flex items-center justify-center">
-          <Button
-            type="submit"
-            className="bg-blue hover:bg-blue hover:opacity-[95%"
-          >
-            Save
+          <Button type="button" onClick={() => setIsEditing(!isEditing)} 
+            className="bg-blue hover:bg-blue hover:opacity-[95%">
+            {isEditing ? 'Save' : 'Edit'}
           </Button>
         </div>
       </form>
@@ -123,4 +123,4 @@ function GADAddEntryForm() {
   );
 }
 
-export default GADAddEntryForm;
+export default GADEditEntryForm;
