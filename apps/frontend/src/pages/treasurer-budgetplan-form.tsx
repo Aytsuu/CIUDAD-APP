@@ -52,7 +52,7 @@ function AddBudgetPlan() {
         balUnappropriated: {amount: 0.00}
     };
 
-    const createRow = ( label: string,key?: string,budgetLimit: string | JSX.Element = "",balance: string | JSX.Element = ""): JSX.Element[] => [
+    const createRow = ( label: string, key?: string,budgetLimit: string | JSX.Element = "",balance: string | JSX.Element = ""): JSX.Element[] => [
         <span className={styles.budgetDetails}>{label}</span>,
         key ? <BudgetInput placeholder="0.00" key={key} /> : <span></span>,
         typeof budgetLimit === "string" ? <span>{budgetLimit}</span> : budgetLimit,
