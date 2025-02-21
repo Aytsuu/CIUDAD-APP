@@ -9,7 +9,7 @@ function MarginSelector({ onMarginChange }: MarginSelectorProps) {
   return (
     <Select onValueChange={onMarginChange}>
       <SelectTrigger className="w-[150px]">
-        <SelectValue placeholder="Select Margin" />
+        <SelectValue placeholder="Margin" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="96px">Normal</SelectItem>
@@ -20,3 +20,4 @@ function MarginSelector({ onMarginChange }: MarginSelectorProps) {
 }
 
 export default MarginSelector;
+

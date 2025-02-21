@@ -56,61 +56,59 @@ function AddOrdinancePage(){
                         <div className="text-center font-bold text-[#394360] text-[30px] pt-10">
                             <h1>Create Ordinance</h1>
                         </div>
-                        <div className="pt-10 h-[370px] w-[1200px]">
-                            {/* <div>
-                                <FormField
-                                    control={form.control}
-                                    name="ordTitle"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Ordinance Title</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter Event Title" className={inputcss} {...field}></Input>
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                        {/* <div>
+                            <FormField
+                                control={form.control}
+                                name="ordTitle"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Ordinance Title</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter Event Title" className={inputcss} {...field}></Input>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
-                            <div className="mt-[20px]">
-                                <FormField
-                                    control={form.control}
-                                    name="ordDate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Date Approved</FormLabel>
-                                        <FormControl>
-                                            <input type="date" {...field} className="mt-[8px] w-full border border-[#B3B7BD] p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-[3px]" />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div> */}
-                            
-                            <div className="mt-[20px]">
-                                <FormField
-                                    control={form.control}
-                                    name="ordDescription"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Ordinance Details</FormLabel>
-                                        <FormControl>
-                                            <Tiptap description={field.value} onChange={field.onChange}/>
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            
-                            <div className="flex items-center justify-center mt-10">
-                                <Button type="submit" className="mb-10 inline-block rounded-md border border-[#3D4C77] bg-[#3D4C77] px-8 py-2 text-sm font-medium text-white hover:bg-transparent hover:text-[#263D67] focus:outline-none focus:ring active:text-[#263D67]">
-                                    Create                                                                                                                          
-                                </Button>
-                            </div>                 
-                        </div>                                                                      
+                        <div className="mt-[20px]">
+                            <FormField
+                                control={form.control}
+                                name="ordDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Date Approved</FormLabel>
+                                    <FormControl>
+                                        <input type="date" {...field} className="mt-[8px] w-full border border-[#B3B7BD] p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-[3px]" />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div> */}
+                        
+
+                        <FormField
+                            control={form.control}
+                            name="ordDescription"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Ordinance Details</FormLabel>
+                                <FormControl>
+                                        <Tiptap description={field.value} onChange={field.onChange}/>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        
+                        <div className="flex items-center justify-end p-[40px]">
+                            <Button type="submit" className="w-[100px]">
+                                Create                                                                                                                          
+                            </Button>
+                        </div>                                                                                
                    </form>
                 </Form>                
             </div>
