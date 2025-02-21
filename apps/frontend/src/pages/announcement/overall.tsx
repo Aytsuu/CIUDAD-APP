@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react'; 
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ChevronDown } from 'lucide-react';
+import DialogLayout from '@/components/ui/dialog/dialog-layout';
+import DeleteConfirmationModal from '@/pages/announcement/deletemodal'; // Ensure the import path is correct
 
 interface Announcement {
     id: string;
@@ -14,7 +16,7 @@ interface Announcement {
 }
 
 const AnnouncementDashboard: React.FC = () => {
-    const [announcements] = React.useState<Announcement[]>([
+    const [announcements, setAnnouncements] = useState<Announcement[]>([
         {
             id: '1',
             title: 'Feeding Program',
@@ -29,18 +31,36 @@ const AnnouncementDashboard: React.FC = () => {
             dateCreated: 'January 20, 2025',
             time: '8:00 AM'
         },
-         {
+        {
             id: '3',
             title: 'Feeding Program',
             description: 'Description description description description description description',
             dateCreated: 'January 20, 2025',
             time: '8:00 AM'
         },
-            
     ]);
 
-    const handleDelete = (id: string) => {
-        console.log('Delete announcement:', id);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
+
+    const openDeleteModal = (announcement: Announcement) => {
+        setAnnouncementToDelete(announcement);
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+        setAnnouncementToDelete(null);
+    };
+
+    const handleDelete = () => {
+        if (announcementToDelete) {
+            setAnnouncements(prevAnnouncements => 
+                prevAnnouncements.filter(announcement => announcement.id !== announcementToDelete.id)
+            );
+            console.log('Deleted announcement:', announcementToDelete.id);
+            closeDeleteModal();
+        }
     };
 
     const handleEdit = (id: string) => {
@@ -49,14 +69,13 @@ const AnnouncementDashboard: React.FC = () => {
 
     return (
         <div>
-            <div className="flex gap-8 p-10 mt-2 ">
+            <div className="flex gap-8 p-10 mt-2">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button className="w-32 mt-1 shadow-sm flex justify-between items-center bg-green-600 hover:bg-green-800">
                             Date
                             <ChevronDown className="h-4 w-4" />
                         </Button>
-
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                         <DropdownMenuItem>Daily</DropdownMenuItem>
@@ -78,50 +97,71 @@ const AnnouncementDashboard: React.FC = () => {
                 </Button>
             </div>
 
-            {/* Announcements List */}
+            {/* Announcements List or No Announcements Message */}
             <div className="space-y-4 px-10">
-                {announcements.map((announcement) => (
-                    <div key={announcement.id} className="border rounded-lg p-6 bg-white shadow-sm">
-                        <div className="flex">
-                            <div className="w-48">
-                                <div className="text-sm text-gray-500">
-                                    Date Created: Today
+                {announcements.length > 0 ? (
+                    announcements.map((announcement) => (
+                        <div key={announcement.id} className="border rounded-lg p-6 bg-white shadow-sm">
+                            <div className="flex">
+                                <div className="w-48">
+                                    <div className="text-sm text-gray-500">
+                                        Date Created:<br></br> {announcement.dateCreated}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        {announcement.time}
+                                    </div>
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                    {announcement.dateCreated}
-                                    <br />
-                                    {announcement.time}
+
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold mb-2">
+                                        {announcement.title}
+                                    </h3>
+                                    <p className="text-gray-600">
+                                        {announcement.description}
+                                    </p>
                                 </div>
-                            </div>
 
-                            <div className="flex-1">
-                                <h3 className="text-lg font-semibold mb-2">
-                                    {announcement.title}
-                                </h3>
-                                <p className="text-gray-600">
-                                    {announcement.description}
-                                </p>
-                            </div>
-
-                            <div className="flex gap-2 ml-4">
-                                <Button
-                                    variant="destructive"
-                                    className="bg-red-600 hover:bg-red-700"
-                                    onClick={() => handleDelete(announcement.id)}
-                                >
-                                    Delete
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => handleEdit(announcement.id)}
-                                >
-                                    Edit
-                                </Button>
+                                <div className="flex gap-2 ml-4">
+                                    <Button
+                                        variant="destructive"
+                                        className="bg-red-600 hover:bg-red-700"
+                                        onClick={() => openDeleteModal(announcement)}
+                                    >
+                                        Delete
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handleEdit(announcement.id)}
+                                    >
+                                        Edit
+                                    </Button>
+                                </div>
                             </div>
                         </div>
+                    ))
+                ) : (
+                    <div className="text-center text-gray-600 text-lg font-semibold py-6">
+                        No announcements
                     </div>
-                ))}
+                )}
             </div>
+
+            {/* DialogLayout with DeleteConfirmationModal as mainContent */}
+            <DialogLayout
+                isOpen={isDeleteModalOpen}
+                onClose={closeDeleteModal} // Close the modal when the user clicks outside or cancels
+                className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col"
+                title="Confirm Deletion"
+                description={`Are you sure you want to delete "${announcementToDelete ? announcementToDelete.title : ""}"? This action cannot be undone.`}
+                mainContent={
+                    <DeleteConfirmationModal 
+                        isOpen={isDeleteModalOpen}
+                        itemName={announcementToDelete ? announcementToDelete.title : ""}
+                        onCancel={closeDeleteModal}
+                        onConfirm={handleDelete}
+                    />
+                }
+            />
         </div>
     );
 };

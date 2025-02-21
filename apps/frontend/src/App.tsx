@@ -1,27 +1,18 @@
-import FamilyPlanningForm from "./pages/familyplanning/view";
+import FamilyPlanningView from "./pages/familyplanning/view";
+// import Announcements from "./pages/announcement/overall";
 
+// import AnimalBites from "./pages/animalbites/individual";
+// import Viewing from "./pages/animalbites/viewing";
+
+// import DeleteConfirmationModal from "./pages/announcement/deletemodal";
 function App() {
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <FamilyPlanningForm data={{
-        clientId: "",
-        philhealthNo: "",
-        nhts: {
-          status: false,
-          pantawidStatus: false
-        },
-        personalInfo: {
-          lastName: "",
-          givenName: "",
-          middleInitial: "",
-          dateOfBirth: "",
-          age: 0,
-          educationalAttainment: "",
-          occupation: ""
-        }
-      }} />
-    </div>
-  );
+  // <Announcements></Announcements>
+    // <Viewing></Viewing>
+    // <AnimalBites></AnimalBites>
+    <FamilyPlanningView></FamilyPlanningView>
+    
+);
 }
 
 export default App;
