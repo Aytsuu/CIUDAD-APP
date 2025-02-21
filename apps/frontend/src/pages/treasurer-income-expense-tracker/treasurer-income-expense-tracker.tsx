@@ -119,7 +119,6 @@ function IncomeandExpenseTracking() {
         {id: "1", name: "Income"},
         {id: "2", name: "Expense"   }
     ]
-    const [selectedEntry, setSelectedEntry] = useState("");
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
     const filteredData = selectedFilter === "All" 
