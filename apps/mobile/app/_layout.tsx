@@ -31,13 +31,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={LIGHT_THEME}>
+    // <ThemeProvider value={LIGHT_THEME}>
       <Stack initialRouteName='(auth)'>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-    </ThemeProvider>
+    // </ThemeProvider>
     
   );
 }
