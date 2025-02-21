@@ -9,10 +9,10 @@ function App() {
   return (
     <div>
       {/* <AddBudgetPlan/> */}
-      {/* <IncomeandExpenseTracking/> */}
+      <IncomeandExpenseTracking/>
       {/* <ViewBudgetPlan/> */}
       {/* <PersonalClearance/> */}
-      <PermitClearance/>
+      {/* <PermitClearance/> */}
     </div>
   )
 }

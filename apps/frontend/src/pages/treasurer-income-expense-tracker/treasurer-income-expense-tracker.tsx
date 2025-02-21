@@ -10,7 +10,12 @@ import { ArrowUpDown} from "lucide-react";
 import { Trash } from 'lucide-react';
 import { Pencil } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import IncomeExpenseFormSchema from "@/form-schema/income-expense-tracker-schema";
+import { Textarea } from "@/components/ui/textarea";
 
 export const columns: ColumnDef<IncomeExpense>[] = [
     { accessorKey: "serialNo",
@@ -41,6 +46,7 @@ export const columns: ColumnDef<IncomeExpense>[] = [
         ) },
     { accessorKey: "particulars", header: "Particulars" },
     { accessorKey: "amount", header: "Amount" },
+    { accessorKey: "entryType", header: "Entry Type" },
     { accessorKey: "receiver", header: "Receiver" },
     { accessorKey: "addNotes", header: "Additional Notes" },
     { accessorKey: "actions", 
@@ -75,28 +81,35 @@ export const columns: ColumnDef<IncomeExpense>[] = [
 ];
 
 type IncomeExpense ={
-    serialNo: number,
+    serialNo: string,
     date: string,
     particulars: string,
-    amount: number,
+    amount: string,
+    entryType: string,
     receiver: string,
     addNotes: string,
 }
 
 export const IncomeExpenseRecords: IncomeExpense[] = [
     {
-        serialNo: 12345,
+        serialNo: "12345",
         date: 'MM/DD/YYYY',
         particulars: 'Particulars',
-        amount: 0.00,
+        amount: "0.00",
+        entryType: "Type",
         receiver: 'Receiver',
         addNotes: 'Additional Notes',
     }
 ]
 
+function onSubmit(values: z.infer<typeof IncomeExpenseFormSchema>){
+    console.log(values)
+}
+
+
 function IncomeandExpenseTracking() {
     const data = IncomeExpenseRecords;
-    const entrytype = [
+    const entrytypeSelector = [
         { id: "0", name: "Income"},
         { id: "1", name: "Expense"}
     ];
@@ -106,10 +119,26 @@ function IncomeandExpenseTracking() {
         {id: "1", name: "Income"},
         {id: "2", name: "Expense"   }
     ]
-
     const [selectedEntry, setSelectedEntry] = useState("");
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
+    const filteredData = selectedFilter === "All" 
+    ? data 
+    : data.filter((item) => item.entryType === selectedFilter);
+
+    const form = useForm<z.infer<typeof IncomeExpenseFormSchema>>({
+        resolver: zodResolver(IncomeExpenseFormSchema),
+        defaultValues: {
+            serialNo: "",
+            entryType: "",
+            particulars: "",
+            amount: "",
+            receiver: "",
+            addNotes: ""
+        }
+    });
+
+    
 
     return (
         <div className="mx-4 mb-4 mt-10">
@@ -125,33 +154,109 @@ function IncomeandExpenseTracking() {
                         title="Add New Entry"
                         description="Fill in the details for your entry."
                         mainContent={
-                            <div>
-                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Serial No.</Label>
-                                <Input placeholder="e.g.(123456)"type="number" />
+                           <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)}>
+                                    <div>
+                                        <FormField
+                                            control={form.control}
+                                            name="serialNo"
+                                            render={({field }) =>(
+                                                <FormItem>
+                                                    <FormLabel>Serial No.</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="(e.g. 123456)" type="number"></Input>
+                                                    </FormControl>
+                                                    <FormMessage/>
+                                                </FormItem>
+                                            )}>
+                                        </FormField>
+                                    </div>
 
-                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Type of Entry</Label>
-                                <SelectLayout className="w-full" label="" placeholder="Entry Type" options={entrytype} value={selectedEntry} onChange={setSelectedEntry} />
+                                    <div>
+                                        <FormField
+                                        control={form.control}
+                                        name="entryType"
+                                        render={({field }) =>(
+                                            <FormItem>
+                                                <FormLabel>Entry Type</FormLabel>
+                                                <FormControl>
+                                                    <SelectLayout {...field} options={entrytypeSelector} value={field.value} onChange={field.onChange} label="" placeholder="Select Entry Type" className="w-full"></SelectLayout>
+                                                </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}></FormField>
+                                    </div>
 
-                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Particulars</Label>
-                                <Input placeholder="e.g.(Utilities Expense)" type="text" />
+                                    <div>
+                                        <FormField
+                                        control={form.control}
+                                        name="particulars"
+                                        render={({field }) => (
+                                            <FormItem>
+                                                <FormLabel>Particulars</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Enter particulars"></Input>
+                                                    </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}></FormField>
+                                    </div>
 
-                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Amount</Label>
-                                <Input placeholder="0.00" type="number" />
+                                    <div>
+                                        <FormField
+                                        control={form.control}
+                                        name="amount"
+                                        render={({field })=>(
+                                            <FormItem>
+                                                <FormLabel>Amount</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} type="number" placeholder="Enter amount"></Input>
+                                                    </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}></FormField>
+                                    </div>
 
-                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Receiver</Label>
-                                <Input placeholder="e.g.(Hesus Dimagiba)" type="text" />
+                                    <div>
+                                        <FormField
+                                        control={form.control}
+                                        name="receiver"
+                                        render={({field }) =>(
+                                            <FormItem>
+                                                <FormLabel>Receiver</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Enter receiver name"></Input>
+                                                    </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}></FormField>
+                                    </div>
 
-                                <Label className="block text-sm font-medium mt-[20px] mb-[5px]">Additional Notes</Label>
-                                <textarea placeholder="Optional" className="w-full border border-gray-300 p-2 rounded-md"></textarea>
+                                    <div>
+                                        <FormField
+                                        control={form.control}
+                                        name="addNotes"
+                                        render={({field}) =>(
+                                            <FormItem>
+                                                <FormLabel>Additional Notes</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea {...field} placeholder="Add more details (Optional)"></Textarea>
+                                                    </FormControl>
+                                                <FormMessage/>
+                                            </FormItem>
+                                        )}></FormField>
+                                    </div>
 
-                                <div className="flex justify-end mt-[20px]">
-                                <Button>Save Entry</Button>       
-                                </div>                   
-                            </div>
+
+                                    <div className="flex justify-end mt-[20px]">
+                                        <Button>Save Entry</Button>       
+                                    </div> 
+                                </form>
+                           </Form>
                         }
                     />
                 </div>
-                <DataTable columns={columns} data={data} />
+                <DataTable columns={columns} data={filteredData} />
             </div>
         </div>
     );
