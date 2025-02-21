@@ -112,6 +112,9 @@
 //     );
 // }
 
+
+
+
 "use client"
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -123,8 +126,7 @@ import ListItem from "@tiptap/extension-list-item";
 import Image from "@tiptap/extension-image";
 import ResizeImage from 'tiptap-extension-resize-image';
 import TextAlign from "@tiptap/extension-text-align";
-
-
+import { useState } from "react";
 
 
 
@@ -135,6 +137,8 @@ export default function Tiptap({
     description: string;
     onChange: (richText: string) => void;
 }) {
+    const [editorMargin, setEditorMargin] = useState('96px')
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -176,11 +180,24 @@ export default function Tiptap({
         editor.chain().focus().setImage({ src: imageUrl }).run();
     };
 
-    return (
+    const handleMarginChange = (margin: string) => {
+        setEditorMargin(margin);
+        console.log(margin); // Add this line
+      };
+
+      return (
         <div className="flex flex-col justify-stretch min-h-[250px]">
-            <Toolbar editor={editor} uploadImage={uploadImage} />
-            <EditorContent style={{ whiteSpace: "pre-line" }} editor={editor} className="mt-[7px]" />
+          <Toolbar editor={editor} uploadImage={uploadImage} onMarginChange={handleMarginChange} />
+          <EditorContent key={editorMargin} style={{ whiteSpace: "pre-line" }} editor={editor} className="mt-[7px]" />
+    
+          {/* Add this <style> tag */}
+          <style dangerouslySetInnerHTML={{ __html: `
+            .tiptap.ProseMirror { /* Target paragraph elements directly */
+            padding: ${editorMargin};
+            }
+        ` }} />
         </div>
-    );
+      );
 }
+
 

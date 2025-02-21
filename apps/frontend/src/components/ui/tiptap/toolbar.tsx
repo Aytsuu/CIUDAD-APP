@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from "react";
 import { type Editor } from "@tiptap/react";
@@ -16,14 +15,20 @@ import {
 import { Toggle } from "@/components/ui/toggle";
 import ReactCrop, { type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+
+//components
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
+import MarginSelector from "./MarginSelector";
+import PaperSizeSelector from "./PaperSizeSelector";
+
 
 type Props = {
   editor: Editor | null;
   uploadImage: (imageUrl: string) => void;
+  onMarginChange: (margin: string) => void;
 };
 
-export function Toolbar({ editor, uploadImage }: Props) {
+export function Toolbar({ editor, uploadImage, onMarginChange}: Props) {
   const [crop, setCrop] = useState<Crop>({
     unit: "px",
     width: 100,
@@ -110,6 +115,8 @@ export function Toolbar({ editor, uploadImage }: Props) {
 
   return (
     <div className="flex space-x-2 h-15 border border-input bg-transparent rounded-md p-2">
+        <MarginSelector onMarginChange={onMarginChange} />
+
         <TooltipLayout
             trigger={
                 <Toggle size="lg" pressed={editor.isActive("heading")} onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
@@ -285,3 +292,5 @@ export function Toolbar({ editor, uploadImage }: Props) {
     </div>
   );
 }
+
+

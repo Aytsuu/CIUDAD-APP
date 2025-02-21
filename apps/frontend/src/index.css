@@ -159,3 +159,7 @@ margin-bottom: 15px;
   margin-left: 20px; /* Optional: add some left margin for indentation */
 }
 
+
+p[data-margin] {
+  margin: var(--tiptap-margin); /* Use a CSS variable for easier customization */
+}

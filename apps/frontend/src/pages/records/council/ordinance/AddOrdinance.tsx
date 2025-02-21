@@ -56,7 +56,7 @@ function AddOrdinancePage(){
                         <div className="text-center font-bold text-[#394360] text-[30px] pt-10">
                             <h1>Create Ordinance</h1>
                         </div>
-                        <div className="p-10 h-[370px] w-[1200px]">
+                        <div className="pt-10 h-[370px] w-[1200px]">
                             {/* <div>
                                 <FormField
                                     control={form.control}
