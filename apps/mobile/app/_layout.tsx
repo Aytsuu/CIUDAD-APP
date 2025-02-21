@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { NAV_THEME } from '@/~/lib/constants';
+import { NAV_THEME } from '@/lib/constants';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
