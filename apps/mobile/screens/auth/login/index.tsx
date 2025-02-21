@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
-import { Button } from '@/~/components/ui/button';
-import { Input } from '@/~/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState('');
