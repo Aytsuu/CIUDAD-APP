@@ -242,7 +242,7 @@ function PermitClearance(){
                                                                     <FormLabel>Select a purpose:</FormLabel>
                                                                     
                                                                     {/* Border around the checkbox group */}
-                                                                    <div className="grid grid-cols-2 gap-3 border border-gray-300 p-2 w-full">
+                                                                    <div className="flex flex-col gap-3 border border-gray-300 p-2">
                                                                         {[
                                                                             "Commercial Building Permit",
                                                                             "Residential Permit",
