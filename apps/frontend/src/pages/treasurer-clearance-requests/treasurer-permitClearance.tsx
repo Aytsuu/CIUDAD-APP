@@ -116,7 +116,7 @@ function onSubmit(values: z.infer<typeof PermitClearanceFormSchema>){
 
 function PermitClearance(){
     const data = PermitClearanceRecords
-    const [selectedAnnualSales, setSelectedAnnualSales] = useState("")
+    // const [selectedAnnualSales, setSelectedAnnualSales] = useState("")
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
@@ -155,11 +155,11 @@ function PermitClearance(){
                                                         <FormField
                                                             control={form.control}
                                                             name="serialNo"
-                                                            render={({}) => (
+                                                            render={({field}) => (
                                                                 <FormItem>
                                                                     <FormLabel>Serial No.: </FormLabel>
                                                                     <FormControl>
-                                                                        <Input placeholder="e.g.(123456)"></Input>
+                                                                        <Input {...field} type="number" placeholder="e.g.(123456)"></Input>
                                                                     </FormControl>
                                                                     <FormMessage/>
                                                                 </FormItem>
@@ -172,11 +172,11 @@ function PermitClearance(){
                                                         <FormField
                                                             control={form.control}
                                                             name="businessName"
-                                                            render = {({}) =>(
+                                                            render = {({field}) =>(
                                                                 <FormItem>
                                                                     <FormLabel>Business Name</FormLabel>
                                                                     <FormControl>
-                                                                        <Input placeholder="Enter business name"></Input>
+                                                                        <Input {...field} placeholder="Enter business name"></Input>
                                                                     </FormControl>
                                                                     <FormMessage/>
                                                                 </FormItem>
@@ -188,11 +188,11 @@ function PermitClearance(){
                                                         <FormField
                                                             control={form.control}
                                                             name="address"
-                                                            render={({})=>(
+                                                            render={({field})=>(
                                                                 <FormItem>
                                                                     <FormLabel>Address</FormLabel>
                                                                     <FormControl>
-                                                                        <Input placeholder="Enter business address"></Input>
+                                                                        <Input {...field} placeholder="Enter business address"></Input>
                                                                     </FormControl>
                                                                     <FormMessage/>
                                                                 </FormItem>
@@ -204,11 +204,11 @@ function PermitClearance(){
                                                         <FormField
                                                             control={form.control}
                                                             name="grossSales"
-                                                            render={({})=> (
+                                                            render={({field})=> (
                                                                 <FormItem>
                                                                     <FormLabel>Gross Sales</FormLabel>
                                                                     <FormControl>
-                                                                        <SelectLayout className="w-full" options={annualGrossSales} label="" placeholder="Select Annual Gross Sales" value={selectedAnnualSales} onChange={setSelectedAnnualSales}></SelectLayout>
+                                                                        <SelectLayout {...field} className="w-full" options={annualGrossSales} label="" placeholder="Select Annual Gross Sales" value={field.value} onChange={field.onChange}></SelectLayout>
                                                                     </FormControl>
                                                                     <FormMessage/>
                                                                 </FormItem>
@@ -220,11 +220,11 @@ function PermitClearance(){
                                                         <FormField
                                                             control={form.control}
                                                             name="requestor"
-                                                            render={({}) =>(
+                                                            render={({field}) =>(
                                                                 <FormItem>
                                                                     <FormLabel>Requestor</FormLabel>
                                                                     <FormControl>
-                                                                        <Input placeholder="Enter requestor name"></Input>
+                                                                        <Input {...field} placeholder="Enter requestor name"></Input>
                                                                     </FormControl>
                                                                     <FormMessage/>
                                                                 </FormItem>
