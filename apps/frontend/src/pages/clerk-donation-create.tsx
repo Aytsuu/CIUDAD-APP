@@ -136,7 +136,7 @@ function ClerkDonateCreate() {
                     )}
                 /><br/>
 
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-end">
                     <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%]">Save</Button>
                 </div>
             </form>
