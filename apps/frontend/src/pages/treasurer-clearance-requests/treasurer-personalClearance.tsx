@@ -15,14 +15,37 @@ import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/com
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { ArrowUpDown } from "lucide-react";
 
 
 export const columns: ColumnDef<PersonalClearance>[] = [
     { accessorKey:"fname", header: "Firstname"},
     { accessorKey: "lname", header: "Lastname"},
     { accessorKey: "purposes", header: "Purpose"},
-    { accessorKey: "reqDate", header: "Date or Request"},
-    { accessorKey: "claimDate", header: "Date to Claim"},
+    {  accessorKey: "reqDate",
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Date Requested
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("reqDate")}</div>
+        )},
+    {  accessorKey: "claimDate",
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Date to Claim
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("claimDate")}</div>
+        )},
     { accessorKey: "payStat", header: "Payment Status"},
     { accessorKey: "action", 
       header: "Action",
@@ -211,7 +234,7 @@ function PersonalClearance(){
     
                                                 {/* Submit Button */}
                                                 <div className="flex justify-end">
-                                                    <Button type="submit">Proceed</Button>
+                                                    <Button>Proceed</Button>
                                                 </div>
                                             </form>
                                         </Form>

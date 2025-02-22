@@ -14,9 +14,9 @@ function App() {
       {/* <IncomeandExpenseTracking/> */}
       {/* <ViewBudgetPlan/> */}
       {/* <PersonalClearance/> */}
-      {/* <PermitClearance/> */}
+      <PermitClearance/>
       {/* <ServiceCharge/> */}
-      <BarangayService/>
+      {/* <BarangayService/> */}
     </div>
   )
 }

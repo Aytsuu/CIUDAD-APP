@@ -15,10 +15,22 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useForm } from "react-hook-form";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowUpDown } from "lucide-react";
 
 //table header
 export const columns: ColumnDef<PermitClearance>[] = [
-    { accessorKey: "businessName", header: "BusinessName"},
+    { accessorKey: "businessName",
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Business Name
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("businessName")}</div>
+        )},
     { accessorKey: "address", header: "Address"},
     { accessorKey: "grossSales", header: "Gross Sales"},
     {
@@ -27,8 +39,32 @@ export const columns: ColumnDef<PermitClearance>[] = [
         cell: ({ row }) => row.original.purposes.join(", ") // Convert array to string
       },
     { accessorKey: "requestor", header: "Requestor"},
-    { accessorKey: "reqDate", header: "Date Requested"},
-    { accessorKey: "claimDate", header: "Date to Claim"},
+    { accessorKey: "reqDate",
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Date Requested
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("reqDate")}</div>
+        )
+    },
+    {  accessorKey: "claimDate",
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Date to Claim
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("claimDate")}</div>
+        )
+    },
     { accessorKey: "paymentStat", header: "Payment Status"},
     { accessorKey: "action", 
       header: "Action",
