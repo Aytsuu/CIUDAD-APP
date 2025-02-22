@@ -1,15 +1,18 @@
 import "@/global.css"
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableWithoutFeedback, Image } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Eye } from '@/lib/icons/Eye';  
+import { EyeOff } from '@/lib/icons/EyeOff';
 
-const LoginScreen = () => {
+export default function LoginScreen(){
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = () => {
@@ -18,53 +21,76 @@ const LoginScreen = () => {
   };
 
   const handleSignUp = () => {
-    router.push('./registration/AgeVerification');
+    router.push('/verification');
   };
 
   return (
-    <SafeAreaView className="w-screen h-screen items-center justify-center bg-[#ECF8FF] p-[24px]"> 
-      <Image
-        source={require('@/assets/images/Logo.png')}
-        className="w-30 h-30 mb-7"
-      />
-      <View className="w-full flex flex-col items-center justify-center">
-        <Input
-          className="w-full"
-          placeholder="Username/Email"
-          value={username}
-          onChangeText={setUsername}
-        />
-        <Input
-          className="w-full" 
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+    <SafeAreaView className="flex-1 justify-between bg-lightBlue-1 p-[24px]"> 
+      <View className="flex-1 flex-col">
+        <View className="items-center justify-center mt-10">
+          <Image
+            source={require('@/assets/images/Logo.png')}
+            className="w-30 h-30"
+          />
+        </View>
+        <View className="flex-row justify-center mt-7">
+          <Text className="text-[24px] font-PoppinsMedium">Login Account</Text>
+        </View>
+        <View className="flex-grow gap-5 mt-7">
+          <Input
+            className="h-[57px] font-PoppinsRegular"
+            placeholder="Username/Email"
+            value={username}
+            onChangeText={setUsername}
+          />
+          <View className="relative">
+            <Input
+              className="h-[57px] font-PoppinsRegular"
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+
+            {
+              password.length > 0 && (
+                <TouchableWithoutFeedback
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
+                    {showPassword ? <Eye className="text-gray-700" /> : <EyeOff className="text-gray-700" />} 
+                  </View>
+                </TouchableWithoutFeedback>
+              )
+            }
+
+          </View>
+          <TouchableWithoutFeedback>
+            <View className="flex-row justify-end">
+              <Text className="text-black font-PoppinsRegular text-[16px]">Forgot Password?</Text>
+            </View>
+          </TouchableWithoutFeedback>
+          
+          <Button 
+            className="bg-primaryBlue native:h-[57px]"
+            size={'lg'}
+            onPress={handleLogin}
+          >
+            <Text className="text-white font-PoppinsSemiBold text-[16px]">Log in</Text>
+          </Button>
+        </View>
       </View>
-      <TouchableOpacity className="mt-3.5">
-        <Text className="text-black font-extrabold text-[16px]">Forgot Password?</Text>
-      </TouchableOpacity>
       
-      <Button 
-        className="bg-[#00A8F0] w-full h-[60px]"
-        onPress={handleLogin}
-      >
-        <Text className="text-white font-bold text-[23px]">Login</Text>
-      </Button>
-      
-      <Text className="mt-2">
-        <Text className="text-black font-extrabold text-[16px]">
-          Don't have an account?
-        </Text>
-      </Text>
-      <TouchableOpacity className="mt-8" onPress={handleSignUp}>
-        <Text className="text-black font-extrabold underline text-[18px]">
-          Sign Up
-        </Text>
-      </TouchableOpacity>
+      <View className="flex-row justify-center gap-2">
+          <Text className="text-black font-PoppinsRegular text-[16px] ">
+            Not registered yet?
+          </Text>
+        <TouchableWithoutFeedback onPress={handleSignUp}>
+          <Text className="text-black font-PoppinsMedium underline text-[16px]">
+            Register
+          </Text>
+        </TouchableWithoutFeedback>
+      </View>
     </SafeAreaView>
   );
 };
-
-export default LoginScreen;
