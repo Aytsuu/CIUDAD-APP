@@ -1,0 +1,219 @@
+import { DataTable } from "@/components/ui/table/data-table";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { ReceiptText } from 'lucide-react';
+import { Trash } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Button } from "@/components/ui/button";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import BarangayServiceFormSchema from "@/form-schema/barangay-service-schema";
+import { ArrowUpDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+export const columns: ColumnDef<BarangayService>[] = [
+    {accessorKey: "fname", header: "Firstname"},
+    {accessorKey: "lname", header: "Lastname"},
+    {accessorKey: "paymentMethod", header: "Payment Method"},
+    {accessorKey: "paymentStat", header: "Payment Status"},
+    {accessorKey: "reqDate",
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Date Requested
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("reqDate")}</div>
+        )
+    },
+    {accessorKey: "purpose",
+        header: "Purpose",
+        cell: ({ row }) => row.original.purposes.join(", ") // Convert array to string
+    },
+    {accessorKey: "receipt", header: "Receipt"},
+    { accessorKey: "action", 
+        header: "Action",
+        cell: ({}) =>(
+          <div className="flex justify-center gap-0.5">
+              <TooltipLayout
+              trigger={
+                  <DialogLayout
+                  trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
+                      className="max-w-[50%] h-2/3 flex flex-col"
+                      title="Image Details"
+                      description="Here is the image related to the report."
+                      mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto"/>}
+                  />
+              } content="Create Receipt">
+              </TooltipLayout>
+              <TooltipLayout 
+               trigger={
+                  <DialogLayout
+                      trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"> <Trash size={16} /></div>}
+                      className="max-w-[50%] h-2/3 flex flex-col"
+                      title="Image Details"
+                      description="Here is the image related to the report."
+                      mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} 
+                  />
+               }  content="Delete"
+               ></TooltipLayout>
+          </div>
+        )},
+];
+
+type BarangayService = {
+    fname: string,
+    lname: string,
+    paymentMethod: string,
+    paymentStat: string,
+    reqDate: string,
+    purposes: string[],
+    receipt: string,
+};
+
+export const BarangayServiceRecords: BarangayService[] = [
+    {
+        fname: "Firstname",
+        lname: "Lastname",
+        paymentMethod: "Method of Payment",
+        paymentStat: "Payment Status",
+        reqDate: "MM-DD-YYYY",
+        purposes: ["Purpose"],
+        receipt: "Receipt"
+    }
+];
+
+
+function onSubmit(values: z.infer<typeof BarangayServiceFormSchema>){
+    console.log(values)
+}
+
+function BarangayService(){
+
+    const data = BarangayServiceRecords;
+    const filter = [
+        { id: "0", name: "All" },
+        { id: "1", name: "Pending" },
+        { id: "2", name: "Paid" },
+    ];
+    const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+    const form = useForm<z.infer<typeof BarangayServiceFormSchema>>({
+        resolver: zodResolver(BarangayServiceFormSchema),
+        defaultValues: {
+            serialNo: "",
+            requestor: "",
+            purposes: []
+        },
+    });
+
+
+    return(
+        <div className="mx-4 mb-4 mt-10">
+             <div className="bg-white border border-gray-300 rounded-[5px] p-5">
+                 <div className="flex flex-col gap-5">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                         <div className="flex flex-row gap-2">
+                            <Input className="w-[20rem]" placeholder="Search" />
+                            <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                        </div>
+                        <div>
+                            <DialogLayout
+                            trigger = {<Button>+ Create Request</Button>}
+                            className=""
+                            title="Create New Request"
+                            description="Create new request for barangay service."
+                            mainContent={
+                                <Form {...form}>
+                                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                                    <div className="flex flex-col gap-5">
+                                            <FormField
+                                                control={form.control}
+                                                name="serialNo"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Receipt Serial No.:</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="e.g.(123456)" type="number" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                            control={form.control}
+                                            name="requestor"
+                                            render={({field})=> (
+                                                <FormItem>
+                                                    <FormLabel>Requestor</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Enter requestor name"></Input>
+                                                    </FormControl>
+                                                    <FormMessage/>
+                                                </FormItem>
+                                            )}></FormField>
+
+                                            <FormField
+                                                control={form.control}
+                                                name="purposes"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Select a purpose:</FormLabel>
+                                                        <div className="flex flex-col gap-3 border border-gray-300 p-2">
+                                                            {[
+                                                                "Disco",
+                                                                "Bingo",
+                                                                "Peryahan",
+                                                                "Exhibit per stall",
+                                                                "Commercial Billboards for Business",
+                                                                "Professional Billboards, Signs, Advertisements",
+                                                            ].map((purpose) => (
+                                                                <div key={purpose} className="flex items-center gap-2">
+                                                                    <Checkbox
+                                                                        checked={field.value?.includes(purpose)}
+                                                                        onCheckedChange={(checked: boolean) => {
+                                                                            field.onChange(
+                                                                                checked
+                                                                                    ? [...field.value, purpose] // Add selected purpose
+                                                                                    : field.value.filter((p: string) => p !== purpose) // Remove unselected purpose
+                                                                            );
+                                                                        }}
+                                                                    />
+                                                                    <FormLabel>{purpose}</FormLabel>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <FormMessage/>
+                                                    </FormItem>
+                                                )}
+                                            ></FormField>     
+                                    </div>
+
+                                    <div className="flex justify-end mt-[2rem]">
+                                        <Button>Proceed</Button>
+                                    </div>
+
+                                    </form>
+                                </Form>
+                            }></DialogLayout>
+                        </div>
+                    </div>
+                    <DataTable columns={columns} data={data}></DataTable>
+                 </div>
+             </div>
+        </div>
+    )
+
+    
+
+}
+
+export default BarangayService;

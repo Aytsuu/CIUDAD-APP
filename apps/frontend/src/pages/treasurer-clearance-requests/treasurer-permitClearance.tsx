@@ -115,8 +115,7 @@ function onSubmit(values: z.infer<typeof PermitClearanceFormSchema>){
 
 
 function PermitClearance(){
-    const data = PermitClearanceRecords
-    // const [selectedAnnualSales, setSelectedAnnualSales] = useState("")
+    const data = PermitClearanceRecords;
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
     const form = useForm<z.infer<typeof PermitClearanceFormSchema>>({
