@@ -259,7 +259,7 @@ function DonationTracker() {
                     <PaginationLayout className="" />
                 </div>
             </div>
-        </div>
+        </div> 
     );
 }
 
