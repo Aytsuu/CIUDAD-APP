@@ -5,6 +5,7 @@ import PersonalClearance from "./pages/treasurer-clearance-requests/treasurer-pe
 import PermitClearance from "./pages/treasurer-clearance-requests/treasurer-permitClearance"
 import ServiceCharge from "./pages/treasurer-clearance-requests/treasurer-serviceCharge"
 import BarangayService from "./pages/treasurer-clearance-requests/treasurer-barangayService"
+import IncomeandDisbursementView from "./pages/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-view"
 
 function App() {
 
@@ -15,8 +16,9 @@ function App() {
       {/* <ViewBudgetPlan/> */}
       {/* <PersonalClearance/> */}
       {/* <PermitClearance/> */}
-      <ServiceCharge/>
+      {/* <ServiceCharge/> */}
       {/* <BarangayService/> */}
+      <IncomeandDisbursementView/>
     </div>
   )
 }
