@@ -1,5 +1,5 @@
 import AddBudgetPlan from "./pages/treasurer-budgetplan/treasurer-budgetplan-form"
-import IncomeandExpenseTracking from "./pages/treasurer-income-expense-tracker/treasurer-income-expense-tracker"
+import IncomeandExpenseTracking from "./pages/treasurer-income-expense-tracker/treasurer-income-expense-tracker-main"
 import ViewBudgetPlan from "./pages/treasurer-budgetplan/treasurer-budgetplan-view"
 import PersonalClearance from "./pages/treasurer-clearance-requests/treasurer-personalClearance"
 import PermitClearance from "./pages/treasurer-clearance-requests/treasurer-permitClearance"
@@ -11,9 +11,9 @@ function App() {
   return (
     <div>
       {/* <AddBudgetPlan/> */}
-      {/* <IncomeandExpenseTracking/> */}
+      <IncomeandExpenseTracking/>
       {/* <ViewBudgetPlan/> */}
-      <PersonalClearance/>
+      {/* <PersonalClearance/> */}
       {/* <PermitClearance/> */}
       {/* <ServiceCharge/> */}
       {/* <BarangayService/> */}
