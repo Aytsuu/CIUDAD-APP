@@ -1,8 +1,12 @@
+import AppointmentTable from "./pages/APPOINTMENTS/appoinmentTable";
+
+
+
 function App() {
 
   return (
     <> 
-      
+      <AppointmentTable/>
     </> 
   )
 }
