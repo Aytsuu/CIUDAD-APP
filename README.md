@@ -46,6 +46,8 @@
    ```bash
    cd barangay-mobile
    npm install
+   npx expo install nativewind tailwindcss react-native-reanimated@3.16.2 react-native-safe-area-context
+   npx expo install tailwindcss-animate class-variance-authority clsx tailwind-merge
    ```
    
 ### Running the Project
