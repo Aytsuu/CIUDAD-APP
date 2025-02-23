@@ -13,8 +13,8 @@ function App() {
       {/* <AddBudgetPlan/> */}
       {/* <IncomeandExpenseTracking/> */}
       {/* <ViewBudgetPlan/> */}
-      {/* <PersonalClearance/> */}
-      <PermitClearance/>
+      <PersonalClearance/>
+      {/* <PermitClearance/> */}
       {/* <ServiceCharge/> */}
       {/* <BarangayService/> */}
     </div>

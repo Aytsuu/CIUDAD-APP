@@ -16,6 +16,14 @@ import { useForm } from "react-hook-form";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown } from "lucide-react";
+import { Label } from "@/components/ui/label";
+
+
+
+const styles = {
+    ViewFormLabelStyle: "font-semibold text-blue",
+    ViewFormDataStyle: "font-medium text-darkGray"
+}
 
 //table header
 export const columns: ColumnDef<PermitClearance>[] = [
@@ -75,10 +83,52 @@ export const columns: ColumnDef<PermitClearance>[] = [
                 <DialogLayout
                 trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Eye size={16} /></div>}
                 className="max-w-[50%] h-2/3 flex flex-col"
-                title="Image Details"
-                description="Here is the image related to the report."
-                mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
+                title="Request Details"
+                description="Detailed overview of the request."
+                mainContent={
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-3">
+                        <Label className={styles.ViewFormLabelStyle}>Business Name:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
 
+                        <Label className={styles.ViewFormLabelStyle}>Address:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Annual Gross Sales:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Supporting Document:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Purpose:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+                    </div>
+
+                    {/* Divider */}
+                    {/* <div className="border border-gray-300"></div> */}
+
+                    {/* Request Details */}
+                    <div className="flex flex-col gap-3">
+                        <Label className={styles.ViewFormLabelStyle}>Requestor:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Date Requested:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Date to Claim:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Payment Method:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Payment Status:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+
+                        <Label className={styles.ViewFormLabelStyle}>Attached Receipt:</Label>
+                        <Label className={styles.ViewFormDataStyle}>Lorem Ipsum</Label>
+                    </div>
+                </div>
+                } 
                 />
             } content="View">
             </TooltipLayout>
