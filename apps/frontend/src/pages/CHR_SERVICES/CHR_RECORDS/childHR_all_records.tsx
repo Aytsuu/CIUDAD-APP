@@ -20,7 +20,6 @@ type ChrRecords = {
   address: string;
   purok: string;
   type: string;
-  createdAt: string;
 };
 const columns: ColumnDef<ChrRecords>[] = [
   {
@@ -28,7 +27,7 @@ const columns: ColumnDef<ChrRecords>[] = [
     header: "#",
     cell: ({ row }) => (
       <div className="flex justify-center">
-        <div className="bg-lightBlue px-3 py-1 rounded-md w-8 text-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
           {row.original.id}
         </div>
       </div>
@@ -42,7 +41,7 @@ const columns: ColumnDef<ChrRecords>[] = [
       const fullName = `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
       
       return (
-        <div className="flex justify-start w-[250px] px-2">
+        <div className="flex justify-start min-w-[200px] px-2">
           <div className="flex flex-col w-full">
             <div className="font-medium truncate">
               {fullName}
@@ -59,8 +58,8 @@ const columns: ColumnDef<ChrRecords>[] = [
     accessorKey: "address",
     header: "Address",
     cell: ({ row }) => (
-      <div className="flex justify-start w-[200px] px-2">
-        <div className="truncate">
+      <div className="flex justify-start min-w-[200px] px-2">
+        <div className="w-full truncate">
           {row.original.address}
         </div>
       </div>
@@ -70,8 +69,8 @@ const columns: ColumnDef<ChrRecords>[] = [
     accessorKey: "purok",
     header: "Purok",
     cell: ({ row }) => (
-      <div className="flex justify-start w-[120px] px-2">
-        <div className="truncate">
+      <div className="flex justify-center min-w-[120px] px-2">
+        <div className="text-center w-full">
           {row.original.purok}
         </div>
       </div>
@@ -81,41 +80,30 @@ const columns: ColumnDef<ChrRecords>[] = [
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
-      <div className="flex justify-start w-[100px] px-2">
-        <div className="truncate">
+      <div className="flex justify-center min-w-[100px] px-2">
+        <div className="text-center w-full">
           {row.original.type}
         </div>
       </div>
     )
   },
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
-    cell: ({ row }) => (
-      <div className="flex justify-start w-[100px] px-2">
-        <div className="truncate">
-          {row.original.createdAt}
-        </div>
-      </div>
-    )
-  },
+  
   {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex gap-2 justify-center">
+      <div className="flex gap-2 justify-center min-w-[120px]">
         <Button
           variant="outline"
           className="hover:bg-blue-50"
           onClick={() => console.log("View record:", row.original.id)}
         >
-          View Details
+          View 
         </Button>
       </div>
     ),
   },
 ];
-
 
 export const sampleData: ChrRecords[] = [
   {
@@ -131,12 +119,11 @@ export const sampleData: ChrRecords[] = [
     },
     address: "BOnsai Bolinawan Carcar City",
     purok: "Bolinawan",
-    type: "transient",
-    createdAt: "2024-02-21",
+    type: "transient"
   },
 
   {
-    id: 1,
+    id: 2,
 
     patient: {
       lastName: "Caballes",
@@ -148,13 +135,12 @@ export const sampleData: ChrRecords[] = [
     },
     address: "BOnsai Bolinawan Carcar City",
     purok: "Bolinawan",
-    type: "transient",
-    createdAt: "2024-02-21",
+    type: "transient"
     
   },
 
   {
-    id: 1,
+    id: 3,
 
     patient: {
       lastName: "Caballes",
@@ -166,8 +152,7 @@ export const sampleData: ChrRecords[] = [
     },
     address: "BOnsai Bolinawan Carcar City",
     purok: "Bolinawan",
-    type: "transient",
-    createdAt: "2024-02-21",
+    type: "transient"
   },
 ];
 
@@ -204,7 +189,7 @@ function CategoryFilter() {
   );
 }
 
-export default function ChildHealthRecords() {
+export default function InvChildHealthRecords() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const data = sampleData;
@@ -216,7 +201,7 @@ export default function ChildHealthRecords() {
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-bold">
-            Child Health Records
+        Child Health Records
           </CardTitle>
 
             <Button className="text-blue italic underline px-4 py-2 bg-transparent border-none shadow-none hover:bg-transparent hover:text-gray">
