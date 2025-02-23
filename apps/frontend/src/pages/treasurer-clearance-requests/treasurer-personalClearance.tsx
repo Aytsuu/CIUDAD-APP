@@ -9,36 +9,16 @@ import { ReceiptText } from 'lucide-react';
 import { Trash } from 'lucide-react';
 import { useState } from "react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import PersonalClearanceFormSchema from "@/form-schema/personalClearance-schema";
-// import ReceiptSchema from "@/form-schema/receipt-schema";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
 import { ArrowUpDown } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import PersonalClearanceForm from "./treasurer-personalClearance-form";
+import ReceiptForm from "./treasurer-create-receipt-form";
 
 
 const styles = {
     ViewFormLabelStyle: "font-semibold text-blue",
     ViewFormDataStyle: "font-medium text-darkGray"
 }
-
-// Receipt Area
-// function ReceiptForm(){
-    
-// }
-// export const receiptForm = useForm<z.infer<typeof ReceiptSchema>>({
-//     resolver: zodResolver(ReceiptSchema),
-//     defaultValues: {
-//         serialNo: ""
-//     }
-// });
-
-// export const onSubmitReceipt = (data: any) => {
-//     console.log("Form Data:", data);
-// };
 
 export const columns: ColumnDef<PersonalClearance>[] = [
     { accessorKey:"fname", header: "Firstname"},
@@ -113,29 +93,13 @@ export const columns: ColumnDef<PersonalClearance>[] = [
             <TooltipLayout
             trigger={
                 <DialogLayout
-                trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
-                    className="max-w-[50%] h-2/3 flex flex-col"
+                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
+                    className="flex flex-col"
                     title="Create Receipt"
                     description="Enter the serial number to generate a receipt."
                     mainContent={
-                       <img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />
-                        // <Form {...receiptForm} >
-                        //     <form onSubmit={receiptForm.handleSubmit(onSubmitReceipt)}>
-                        //         <FormField
-                        //         control={receiptForm.control}
-                        //         name="serialNo"
-                        //         render={({field})=>(
-                        //             <FormItem>
-                        //                 <FormLabel>Serial No.</FormLabel>
-                        //                 <FormControl>
-                        //                     <Input {...field} placeholder="Enter receipt serial number"></Input>
-                        //                 </FormControl>
-                        //                 <FormMessage/>
-                        //             </FormItem>
-                        //         )}></FormField>
-                        //     </form>
-                        // </Form>
-                    }
+                        <ReceiptForm/>
+                    } 
                 />
             } content="Create Receipt">
             </TooltipLayout>
@@ -165,7 +129,6 @@ type PersonalClearance = {
     payStat: string
 }
 
-// Validation Schema
 
    export const PersonalClearanceRecords: PersonalClearance[] = [
         {
@@ -178,11 +141,6 @@ type PersonalClearance = {
         },
     ];
 
-    const onSubmit = (data: any) => {
-        console.log("Form Data:", data);
-    };
-
-
 
 
 function PersonalClearance(){
@@ -194,16 +152,7 @@ function PersonalClearance(){
     ];
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-    const form = useForm<z.infer<typeof PersonalClearanceFormSchema>>({
-        resolver: zodResolver(PersonalClearanceFormSchema),
-            defaultValues: {
-                serialNo: "",
-                requester: "",
-                purposes: [], 
-            },
-        });
-
-        return (
+    return (
             <div className="mx-4 mb-4 mt-10">
                 <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                     <div className="flex flex-col gap-5">
@@ -219,93 +168,13 @@ function PersonalClearance(){
                                     title="Create New Request"
                                     description="Create a new request for personal clearance."
                                     mainContent={
-                                        <Form {...form}>
-                                            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-7">
-                                                
-                                                <div className="flex flex-col gap-5">
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="serialNo"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>Receipt Serial No.:</FormLabel>
-                                                                <FormControl>
-                                                                    <Input placeholder="e.g.(123456)" type="number" {...field} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-    
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="requester"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>Requester:</FormLabel>
-                                                                <FormControl>
-                                                                    <Input placeholder="e.g.(Juan Dela Cruz)" type="text" {...field} />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
-    
-                                                <div>
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="purposes"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>Select a purpose:</FormLabel>
-
-                                                                {/* Bordered box for checkboxes */}
-                                                                <div className="flex flex-col gap-3 border border-gray-300 p-2">
-                                                                    {[
-                                                                        "Employment",
-                                                                        "NSO/SSS/GSIS",
-                                                                        "Hospitalization/ CHAMP",
-                                                                        "Birth Certificate",
-                                                                        "Medical Assistance",
-                                                                        "Residency",
-                                                                    ].map((purpose) => (
-                                                                        <div key={purpose} className="flex items-center gap-2">
-                                                                            <Checkbox
-                                                                                checked={field.value?.includes(purpose)}
-                                                                                onCheckedChange={(checked: boolean) => {
-                                                                                    field.onChange(
-                                                                                        checked
-                                                                                            ? [...field.value, purpose] // Add selected purpose
-                                                                                            : field.value.filter((p: string) => p !== purpose) // Remove unselected purpose
-                                                                                    );
-                                                                                }}
-                                                                            />
-                                                                            <FormLabel>{purpose}</FormLabel>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-
-                                                                {/* Form message appears below the border */}
-                                                                <FormMessage className="mt-2" />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
-
-    
-                                                {/* Submit Button */}
-                                                <div className="flex justify-end">
-                                                    <Button>Proceed</Button>
-                                                </div>
-                                            </form>
-                                        </Form>
+                                       <div className="w-full h-full">
+                                          <PersonalClearanceForm/>
+                                       </div>
                                     }
                                 />
                             </div>
                         </div>
-    
-                        {/* Data Table */}
                         <DataTable columns={columns} data={data} />
                     </div>
                 </div>

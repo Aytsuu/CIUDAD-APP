@@ -6,6 +6,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import ReceiptForm from "./treasurer-create-receipt-form";
 
 
 export const columns: ColumnDef<ServiceCharge>[] = [
@@ -45,15 +46,17 @@ export const columns: ColumnDef<ServiceCharge>[] = [
     { accessorKey: "action", 
         header: "Action",
         cell: ({}) =>(
-          <div className="flex justify-center gap-0.5">
+          <div className="flex justify-center gap-1">
               <TooltipLayout
               trigger={
                   <DialogLayout
-                  trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
-                      className="max-w-[50%] h-2/3 flex flex-col"
-                      title="Image Details"
-                      description="Here is the image related to the report."
-                      mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto"/>}
+                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
+                    className="flex flex-col"
+                    title="Create Receipt"
+                    description="Enter the serial number to generate a receipt."
+                    mainContent={
+                        <ReceiptForm/>
+                    } 
                   />
               } content="Create Receipt">
               </TooltipLayout>

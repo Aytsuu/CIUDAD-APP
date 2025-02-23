@@ -11,11 +11,11 @@ function App() {
   return (
     <div>
       {/* <AddBudgetPlan/> */}
-      <IncomeandExpenseTracking/>
+      {/* <IncomeandExpenseTracking/> */}
       {/* <ViewBudgetPlan/> */}
       {/* <PersonalClearance/> */}
       {/* <PermitClearance/> */}
-      {/* <ServiceCharge/> */}
+      <ServiceCharge/>
       {/* <BarangayService/> */}
     </div>
   )
