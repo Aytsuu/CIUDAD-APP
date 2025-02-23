@@ -1,4 +1,4 @@
-import AppointmentTable from "./pages/APPOINTMENTS/appoinmentTable";
+import AppointmentTable from "./pages/APPOINTMENTS/appointmentTable";
 
 
 
