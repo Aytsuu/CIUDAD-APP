@@ -1,63 +1,50 @@
 import { useState } from "react";
-import ChildHRPageLast from "./childHR_pagelast";
+import { FormData } from "@/form-schema/chr-schema";
 import ChildHRPage1 from "./childHR_page1";
 import ChildHRPage2 from "./childHR_page2";
 import ChildHRPage3 from "./childHR_page3";
 import ChildHRPage4 from "./childHR_page4";
-import { FormData } from "@/form-schema/chr-schema"; // Import the FormData type
+import LastPage from "./childHR_pagelast";
+
+// Define initial form data
+const initialFormData: FormData = {
+  familyNo: "",
+  ufcNo: "",
+  childFname: "",
+  childLname: "",
+  childMname: "",
+  childSex: "",
+  childDob: "",
+  childPob: "",
+  motherFname: "",
+  motherLname: "",
+  motherMname: "",
+  motherAge: "",
+  motherOccupation: "",
+  fatherFname: "",
+  fatherLname: "",
+  fatherMname: "",
+  fatherAge: "",
+  fatherOccupation: "",
+  address: "",
+  landmarks: "",
+  isTransient: "Resident",
+  hasDisability: false,
+  disabilityTypes: [],
+  hasEdema: false,
+  edemaSeverity: "N/A",
+  BFdates: [],
+  ironDates: [],
+  vaccines: [],
+  vitaminRecords: [],
+  vitalSigns: [],
+};
 
 export default function ChildHealthForm() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
-    familyNo: "",
-    ufcNo: "",
-    childFname: "",
-    childLname: "",
-    childMname: "",
-    childSex: "",
-    childDob: "",
-    childPob: "",
-    motherFname: "",
-    motherLname: "",
-    motherMname: "",
-    motherAge: "",
-    motherOccupation: "",
-    fatherFname: "",
-    fatherLname: "",
-    fatherMname: "",
-    fatherAge: "",
-    fatherOccupation: "",
-    address: "",
-    landmarks: "",
-    dateNewbornScreening: "",
-    screeningStatus: "",
-    birthWeight: "",
-    birthLength: "",
-    headCircumference: "",
-    chestCircumference: "",
-    deliveryType: "",
-    gestationalAge: "",
-    complications: "",
-    hasDisability: false,
-    disability: "",
-    hasEdema: false,
-    edemaSeverity: "",
-    isTransient: "Resident",
-    // ironDateCompleted: "",
-    // ironDateGiven: "",
-    ironDates: [],
-    vaccines: [],
-    vitaminRecords: [],
-    vitalSigns: [],
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
-    // age: "",
-    // wt: "",
-    // ht: "",
-    // findings: "",
-    // notes: "",
-    // temp: "",
-  });
-
+  // Navigation handlers
   const handleNext = () => {
     setCurrentPage((prev) => prev + 1);
   };
@@ -66,15 +53,16 @@ export default function ChildHealthForm() {
     setCurrentPage((prev) => prev - 1);
   };
 
-  const updateFormData = (newData: Partial<FormData>) => {
-    setFormData((prev) => ({ ...prev, ...newData }));
+  const updateFormData = (data: Partial<FormData>) => {
+    setFormData((prev) => ({ ...prev, ...data }));
   };
-
+  // Form submission handler
   const handleSubmit = () => {
     console.log("Submitting Data:", formData);
-    // Send data to API
+    // Add your submission logic here (e.g., API call)
   };
 
+  // Render the current page based on the currentPage state
   return (
     <>
       {currentPage === 1 && (
@@ -108,15 +96,12 @@ export default function ChildHealthForm() {
           formData={formData}
         />
       )}
-
       {currentPage === 5 && (
-        <ChildHRPageLast
+        <LastPage
           onPrevious4={handlePrevious}
-          onSubmitForm={handleSubmit}
+          onSubmit={handleSubmit}
           updateFormData={updateFormData}
           formData={formData}
-
-          // formData={formData}
         />
       )}
     </>
