@@ -4,6 +4,7 @@ import PersonalClearance from "@/pages/treasurer-clearance-requests/treasurer-pe
 import PermitClearance from "@/pages/treasurer-clearance-requests/treasurer-permitClearance";
 import ServiceCharge from "@/pages/treasurer-clearance-requests/treasurer-serviceCharge";
 import BarangayService from "@/pages/treasurer-clearance-requests/treasurer-barangayService";
+// import TreasurerDashboard from "@/pages/treasurer-dashboard/sample";
 
 
 export const treasurer_router = [
@@ -18,20 +19,17 @@ export const treasurer_router = [
     {
         path: '/treasurer-clearance-and-certification',
         element: <PersonalClearance/>,
-        children: [
-            {
-                path: 'treasurer-permit',
-                element: <PermitClearance/>
-            },
-            {
-                path: 'treasurer-service-charge',
-                element: <ServiceCharge/>
-            },
-            {
-                path: 'treasurer-barangay-service',
-                element: <BarangayService/>
-            }
-        ]
+    },
+    {
+        path: '/treasurer-permit',
+        element: <PermitClearance/>
+    },
+    {
+        path: '/treasurer-service-charge',
+        element: <ServiceCharge/>
+    },
+    {
+        path: '/treasurer-barangay-service',
+        element: <BarangayService/>
     }
-
 ]
