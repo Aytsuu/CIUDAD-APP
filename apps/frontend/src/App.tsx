@@ -1,10 +1,7 @@
-function App() {
+import Announcements from "./pages/announcement/announcement";
 
-  return (
-    <> 
-      
-    </> 
-  )
+function App() {
+  return <Announcements />;
 }
 
 export default App;
