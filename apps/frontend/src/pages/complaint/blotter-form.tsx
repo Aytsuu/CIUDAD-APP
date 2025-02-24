@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import ComplaintformSchema from "@/form-schema/complaint-schema";
-
 import {
     Form,
     FormControl,
@@ -41,13 +40,13 @@ export default function BlotterForm(){
 
     return(
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full h-2/8 rounded-[10px] p-5 overflow-auto">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full rounded-[10px] p-2 md:p-5 overflow-auto">
 
-                <div className="flex flex-row gap-4">
+                <div className="flex flex-col lg:flex-row gap-4">
 
                     {/* Accused's Details */}
 
-                    <div className="w-full flex flex-col gap-10 p-5">
+                    <div className="w-full flex flex-col gap-6 md:gap-10 p-2 md:p-5">
                         <div className="w-full flex flex-col gap-4">
                             <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Accused</Label>
                             <div className="w-full grid grid-cols-1 gap-3"> 
@@ -119,15 +118,15 @@ export default function BlotterForm(){
 
                     {/* Complaint Details */}
 
-                    <div className="w-full flex flex-col gap-4 p-5">
+                    <div className="w-full flex flex-col gap-4 p-2 md:p-5">
                         <Label className="w-full text-center font-semibold text-[16px] text-darkBlue1">Incident Details</Label>
                         <div className="w-full h-full grid grid-cols-1 gap-3">
-                            <div className="w-full flex flex-row gap-3">
+                            <div className="w-full flex flex-col sm:flex-row gap-3">
                                 <FormField
                                     control={form.control}
                                     name="complaintDate"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="w-full sm:w-1/2">
                                         <FormLabel>Date</FormLabel>
                                         <FormControl>
                                             <Input type="date" {...field} />
@@ -141,7 +140,7 @@ export default function BlotterForm(){
                                     control={form.control}
                                     name="complaintType"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="w-full sm:w-1/2">
                                         <FormLabel>Type</FormLabel> 
                                         <FormControl>
                                             <SelectLayout
@@ -150,7 +149,7 @@ export default function BlotterForm(){
                                                 options={[{id: "1", name: "bahog tae"}]}
                                                 value={field.value}
                                                 onChange={field.onChange}
-                                                className=""
+                                                className="w-full"
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -165,7 +164,7 @@ export default function BlotterForm(){
                                     <FormItem>
                                     <FormLabel>Allegation</FormLabel>
                                     <FormControl>
-                                        <Textarea className="h-[11.5rem]" placeholder="Please enter your allegations." {...field}/>
+                                        <Textarea className="h-32 md:h-40 lg:h-[11.5rem]" placeholder="Please enter your allegations." {...field}/>
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -196,7 +195,7 @@ export default function BlotterForm(){
                     </div>
                 </div>
 
-                <div className="w-full p-5 flex flex-row justify-end"> 
+                <div className="w-full p-2 md:p-5 flex flex-row justify-end"> 
                     <Button type="submit">Submit</Button>
                 </div>
             </form>

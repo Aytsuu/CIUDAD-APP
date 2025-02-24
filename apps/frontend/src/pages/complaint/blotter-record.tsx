@@ -79,7 +79,7 @@ export default function BlotterRecord(){
                                 <Plus size={20}/> New Record
                             </Label>
                         }
-                        className="max-w-[50%] h-2/8"
+                        className="max-w-[50%] h-[90%]"
                         title="Complaint Record"
                         description="Please fill all required fields (Type N/A if the information is not available for the specific field)"
                         mainContent={<BlotterForm/>}
