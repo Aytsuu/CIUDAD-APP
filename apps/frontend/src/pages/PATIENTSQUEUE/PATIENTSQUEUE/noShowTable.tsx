@@ -9,7 +9,7 @@ import PatientQueueForm from "./patientQueueForm";
 import { Check, TimerOff } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
-type PatQueueRec = {
+type noShowRec = {
     id: string;
     // patientName: string;
     patient: {
@@ -21,15 +21,13 @@ type PatQueueRec = {
         ageTime: string;
         category: string
     };
-
     address: string;
-    purok: string;
     service: string
     mode: string;
     time: string
 
 };
-const columns: ColumnDef<PatQueueRec>[] = [
+const columns: ColumnDef<noShowRec>[] = [
     {
         accessorKey: "id",
         header: "#",
@@ -76,17 +74,6 @@ const columns: ColumnDef<PatQueueRec>[] = [
         )
     },
 
-    {
-        accessorKey: "purok",
-        header: "Purok",
-        cell: ({ row }) => (
-            <div className="flex justify-center px-2">
-                <div className="text-center w-full">
-                    {row.original.purok}
-                </div>
-            </div>
-        )
-    },
 
 
     {
@@ -122,51 +109,10 @@ const columns: ColumnDef<PatQueueRec>[] = [
             </div>
         )
     },
-    {
-        accessorKey: "action",
-        header: "Action",
-        cell: ({ row }) => (
-            <div className="flex gap-2 justify-center min-w-[120px] px-2">
-                <TooltipLayout
-                    trigger={
 
-                        <Button
-                            variant="outline"
-                            className=" border-green-600 text-green-700"
-                            onClick={() => console.log("View record:", row.original.id)}
-                            style={{ pointerEvents: 'none' }}
-
-                        >
-                            <Check />
-                        </Button>
-
-                    }
-                    content="Assess"
-
-                />
-
-
-                <TooltipLayout
-                    trigger={
-                        <Button
-                            variant="outline"
-                            className="border-red-600 text-red-400"
-                            onClick={() => console.log("View record:", row.original.id)}
-                            style={{ pointerEvents: 'none' }}
-                        >
-                            <TimerOff />
-                        </Button>
-                    }
-
-                    content="Not Arrived"
-                />
-            </div>
-
-        )
-    },
 ];
 
-export const sampleData: PatQueueRec[] = [
+export const sampleData: noShowRec[] = [
 
     {
         id: "S11",
@@ -182,7 +128,7 @@ export const sampleData: PatQueueRec[] = [
 
         },
         address: "BOnsai  Carcar City",
-        purok: "Bolinawan",
+
         service: "Prenatal",
         mode: "Walkin",
         time: "AM"
@@ -202,7 +148,7 @@ export const sampleData: PatQueueRec[] = [
             category: "Senior"
         },
         address: "BOnsai Bolinawan Carcar City",
-        purok: "Bolinawan",
+
         service: "Prenatal",
 
         mode: "Walkin",
@@ -224,7 +170,7 @@ export const sampleData: PatQueueRec[] = [
         },
 
         address: "BOnsai Bolinawan Carcar City",
-        purok: "Bolinawan",
+
         service: "Prenatal",
 
         mode: "Walkin",
@@ -268,7 +214,7 @@ function CategoryFilter() {
     );
 }
 
-export default function PatientsQueueTable() {
+export default function NoShowTable() {
     const [searchTerm, setSearchTerm] = useState("");
 
     const data = sampleData;

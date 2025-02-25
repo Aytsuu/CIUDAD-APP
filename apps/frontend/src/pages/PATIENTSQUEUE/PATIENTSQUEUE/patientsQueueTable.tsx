@@ -9,7 +9,7 @@ import PatientQueueForm from "./patientQueueForm";
 import { Check, TimerOff } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
-type NotArriveRec = {
+type PatQueueRec = {
     id: string;
     // patientName: string;
     patient: {
@@ -23,13 +23,13 @@ type NotArriveRec = {
     };
 
     address: string;
-    purok: string;
+   
     service: string
     mode: string;
     time: string
 
 };
-const columns: ColumnDef<NotArriveRec>[] = [
+const columns: ColumnDef<PatQueueRec>[] = [
     {
         accessorKey: "id",
         header: "#",
@@ -71,18 +71,6 @@ const columns: ColumnDef<NotArriveRec>[] = [
             <div className="flex justify-start w-[180px] ">
                 <div className="w-full whitespace-pre-wrap break-words">
                     {row.original.address}
-                </div>
-            </div>
-        )
-    },
-
-    {
-        accessorKey: "purok",
-        header: "Purok",
-        cell: ({ row }) => (
-            <div className="flex justify-center px-2">
-                <div className="text-center w-full">
-                    {row.original.purok}
                 </div>
             </div>
         )
@@ -145,13 +133,28 @@ const columns: ColumnDef<NotArriveRec>[] = [
 
                 />
 
+
+                <TooltipLayout
+                    trigger={
+                        <Button
+                            variant="outline"
+                            className="border-red-600 text-red-400"
+                            onClick={() => console.log("View record:", row.original.id)}
+                            style={{ pointerEvents: 'none' }}
+                        >
+                            <TimerOff />
+                        </Button>
+                    }
+
+                    content="Not Arrived"
+                />
             </div>
 
         )
     },
 ];
 
-export const sampleData: NotArriveRec[] = [
+export const sampleData: PatQueueRec[] = [
 
     {
         id: "S11",
@@ -167,7 +170,7 @@ export const sampleData: NotArriveRec[] = [
 
         },
         address: "BOnsai  Carcar City",
-        purok: "Bolinawan",
+   
         service: "Prenatal",
         mode: "Walkin",
         time: "AM"
@@ -187,7 +190,6 @@ export const sampleData: NotArriveRec[] = [
             category: "Senior"
         },
         address: "BOnsai Bolinawan Carcar City",
-        purok: "Bolinawan",
         service: "Prenatal",
 
         mode: "Walkin",
@@ -209,7 +211,7 @@ export const sampleData: NotArriveRec[] = [
         },
 
         address: "BOnsai Bolinawan Carcar City",
-        purok: "Bolinawan",
+       
         service: "Prenatal",
 
         mode: "Walkin",
@@ -253,7 +255,7 @@ function CategoryFilter() {
     );
 }
 
-export default function NotArriveTable() {
+export default function PatientsQueueTable() {
     const [searchTerm, setSearchTerm] = useState("");
 
     const data = sampleData;

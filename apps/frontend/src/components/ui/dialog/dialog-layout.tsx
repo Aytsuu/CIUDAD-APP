@@ -1,5 +1,5 @@
 // components/DialogLayout.tsx
-import React from "react";
+import React, { useState } from "react";
 import {
     Dialog,
     DialogHeader,
@@ -15,8 +15,8 @@ interface DialogProps {
     title?: string;
     description?: string;
     mainContent: React.ReactNode;
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
+    isOpen?: boolean; // Make optional
+    onOpenChange?: (open: boolean) => void; // Make optional
 }
 
 export default function DialogLayout({
@@ -25,9 +25,16 @@ export default function DialogLayout({
     title = "",
     description = "",
     mainContent,
-    isOpen,
-    onOpenChange,
+    isOpen: externalIsOpen, // Optional prop
+    onOpenChange: externalOnOpenChange, // Optional prop
 }: DialogProps) {
+    // Internal state for managing dialog open/close
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+    // Use external state if provided, otherwise use internal state
+    const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+    const onOpenChange = externalOnOpenChange !== undefined ? externalOnOpenChange : setInternalIsOpen;
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
