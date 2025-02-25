@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";
+import { CardTitle,CardHeader } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router";
 
 type Page1FormData = z.infer<typeof ChildHealthFormSchema>;
 type Page1Props = {
@@ -77,10 +80,20 @@ export default function ChildHRPage1({
   ];
 
   return (
-    <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
-      <h1 className="w-full text-center font-bold text-2xl">
-        CHILD HEALTH RECORD
-      </h1>
+    <div className="w-full  max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
+      <Link to="/allChildHRTable">
+        {" "}
+        <div className="mb-8">
+          <ArrowLeft />
+        </div>
+      </Link>
+
+      <CardHeader className="border-b">
+
+      <CardTitle className="text-2xl font-semibold pl-4 border-l-8 border-blue">
+        Child Health Record
+      </CardTitle>
+</CardHeader>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onsubmitForm, (errors) => {
@@ -137,7 +150,11 @@ export default function ChildHRPage1({
                   <FormItem className="flex-1 min-w-[200px]">
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
-                      <Input {...field} type={type} value={String(field.value)} />
+                      <Input
+                        {...field}
+                        type={type}
+                        value={String(field.value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -225,13 +242,13 @@ export default function ChildHRPage1({
                   render={({ field }) => (
                     <FormItem className="flex-1 min-w-[200px]">
                       <FormLabel>{label}</FormLabel>
-                        <FormControl>
+                      <FormControl>
                         <Input
                           {...field}
                           type={type}
                           value={String(field.value)}
                         />
-                        </FormControl>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -323,9 +340,9 @@ export default function ChildHRPage1({
                     <FormLabel>{label}</FormLabel>
                     <FormControl>
                       <Input
-                      {...field}
-                      type={type}
-                      value={String(field.value)}
+                        {...field}
+                        type={type}
+                        value={String(field.value)}
                       />
                     </FormControl>
                     <FormMessage />

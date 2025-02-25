@@ -82,11 +82,6 @@ export default function LastPage({
     updateFormData({ vitalSigns: updatedVitalSigns }); // Update parent state
   };
 
-  const handleFinalSubmit = (data: FormData) => {
-    console.log("Submitting final form data:", data);
-    onSubmit(data);
-  };
-
   const columns = useMemo<
     ColumnDef<NonNullable<FormData["vitalSigns"]>[number]>[]
   >(
@@ -156,6 +151,11 @@ export default function LastPage({
     ],
     []
   );
+
+  const handleFinalSubmit = (data: FormData) => {
+    console.log("Submitting final form data:", data);
+    onSubmit(data);
+  };
 
   return (
     <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">

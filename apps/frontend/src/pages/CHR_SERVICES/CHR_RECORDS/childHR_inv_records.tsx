@@ -5,239 +5,250 @@ import { Input } from "@/components/ui/input";
 import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router";
+import { ArrowLeft
 
-type ChrRecords = {
-  id: number;
-  // motherName: string;
-  mother: {
-    firstName: string;
-    lastName: string;
-    middleName: string;
-    gender: string;
-    age: number;
-    ageTime: string;
-  };
-
-  child: {
-    firstName: string;
-    lastName: string;
-    middleName: string;
-    gender: string;
-    age: number;
-    ageTime: string;
-  };
-
-  address: string;
-  purok: string;
-  createdAt: string;
-};
-const columns: ColumnDef<ChrRecords>[] = [
-  {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-          {row.original.id}
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "mother",
-    header: "Mother",
-    cell: ({ row }) => {
-      const mother = row.original.mother;
-      const fullName =
-        `${mother.lastName}, ${mother.firstName} ${mother.middleName}`.trim();
-
-      return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {mother.gender}, {mother.age} {mother.ageTime} old
-            </div>
-          </div>
-        </div>
-      );
-    },
-  },
-
-  {
-    accessorKey: "child",
-    header: "Child",
-    cell: ({ row }) => {
-      const child = row.original.mother;
-      const fullName =
-        `${child.lastName}, ${child.firstName} ${child.middleName}`.trim();
-
-      return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {child.gender}, {child.age} {child.ageTime} old
-            </div>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "address",
-    header: "Address",
-    cell: ({ row }) => (
-      <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.address}</div>
-      </div>
-    ),
-  },
- 
- 
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.createdAt}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    cell: ({ row }) => (
-      <div className="flex gap-2 justify-center min-w-[120px]">
-        <Button
-          variant="outline"
-          className="hover:bg-blue-50"
-          onClick={() => console.log("View record:", row.original.id)}
-        >
-          View 
-        </Button>
-      </div>
-    ),
-  },
-];
-
-export const sampleData: ChrRecords[] = [
-  {
-    id: 1,
-
-    mother: {
-      lastName: "Caballes",
-      firstName: "Katrina Shin",
-      middleName: "Dayuja",
-      gender: "Female",
-      age: 10,
-      ageTime: "yr",
-    },
-    child: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-    address: "BOnsai Bolinawan Carcar City",
-    purok: "Bolinawan",
-    createdAt: "2024-02-21",
-  },
-
-  {
-    id: 2,
-
-    mother: {
-      lastName: "Caballes",
-      firstName: "Katrina",
-      middleName: "Dayuja",
-      gender: "Female",
-      age: 10,
-      ageTime: "yr",
-    },
-    child: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-    address: "BOnsai Bolinawan Carcar City",
-    purok: "Bolinawan",
-    createdAt: "2024-02-21",
-  },
-
-  {
-    id: 3,
-
-    mother: {
-      lastName: "Caballes",
-      firstName: "Katrina",
-      middleName: "Dayuja",
-      gender: "Female",
-      age: 10,
-      ageTime: "yr",
-    },
-    child: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-    address: "BOnsai Bolinawan Carcar City",
-    purok: "Bolinawan",
-    createdAt: "2024-02-21",
-  },
-];
-
-const categoryOptions = [
-  { id: "electronics", label: "Electronics", checked: false },
-  { id: "fashion", label: "Fashion", checked: false },
-  { id: "home", label: "Home", checked: false },
-];
-
-function CategoryFilter() {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  const handleCategoryChange = (id: string, checked: boolean) => {
-    setSelectedCategories((prev) =>
-      checked ? [...prev, id] : prev.filter((category) => category !== id)
-    );
-  };
-
-  const handleReset = () => {
-    setSelectedCategories([]);
-  };
-
-  return (
-    <FilterAccordion
-      title="Categories"
-      options={categoryOptions.map((option) => ({
-        ...option,
-        checked: selectedCategories.includes(option.id),
-      }))}
-      selectedCount={selectedCategories.length}
-      onChange={handleCategoryChange}
-      onReset={handleReset}
-    />
-  );
-}
-
+ } from "lucide-react";
 export default function InvChildHealthRecords() {
+  type ChrRecords = {
+    id: number;
+    // motherName: string;
+    mother: {
+      firstName: string;
+      lastName: string;
+      middleName: string;
+      gender: string;
+      age: number;
+      ageTime: string;
+    };
+
+    child: {
+      firstName: string;
+      lastName: string;
+      middleName: string;
+      gender: string;
+      age: number;
+      ageTime: string;
+    };
+
+    address: string;
+    purok: string;
+    createdAt: string;
+  };
+  const columns: ColumnDef<ChrRecords>[] = [
+    {
+      accessorKey: "id",
+      header: "#",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+            {row.original.id}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "mother",
+      header: "Mother",
+      cell: ({ row }) => {
+        const mother = row.original.mother;
+        const fullName =
+          `${mother.lastName}, ${mother.firstName} ${mother.middleName}`.trim();
+
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {mother.gender}, {mother.age} {mother.ageTime} old
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+
+    {
+      accessorKey: "child",
+      header: "Child",
+      cell: ({ row }) => {
+        const child = row.original.mother;
+        const fullName =
+          `${child.lastName}, ${child.firstName} ${child.middleName}`.trim();
+
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {child.gender}, {child.age} {child.ageTime} old
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "address",
+      header: "Address",
+      cell: ({ row }) => (
+        <div className="flex justify-start min-w-[200px] px-2">
+          <div className="w-full truncate">{row.original.address}</div>
+        </div>
+      ),
+    },
+
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.createdAt}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex gap-2 justify-center min-w-[120px]">
+          <Button
+            variant="outline"
+            className="hover:bg-blue-50"
+            onClick={() => console.log("View record:", row.original.id)}
+          >
+            View
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const sampleData: ChrRecords[] = [
+    {
+      id: 1,
+
+      mother: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      child: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      purok: "Bolinawan",
+      createdAt: "2024-02-21",
+    },
+
+    {
+      id: 2,
+
+      mother: {
+        lastName: "Caballes",
+        firstName: "Katrina",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      child: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      purok: "Bolinawan",
+      createdAt: "2024-02-21",
+    },
+
+    {
+      id: 3,
+
+      mother: {
+        lastName: "Caballes",
+        firstName: "Katrina",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      child: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      purok: "Bolinawan",
+      createdAt: "2024-02-21",
+    },
+  ];
+
+  const categoryOptions = [
+    { id: "electronics", label: "Electronics", checked: false },
+    { id: "fashion", label: "Fashion", checked: false },
+    { id: "home", label: "Home", checked: false },
+  ];
+
+  function CategoryFilter() {
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+    const handleCategoryChange = (id: string, checked: boolean) => {
+      setSelectedCategories((prev) =>
+        checked ? [...prev, id] : prev.filter((category) => category !== id)
+      );
+    };
+
+    const handleReset = () => {
+      setSelectedCategories([]);
+    };
+
+    return (
+      <FilterAccordion
+        title="Categories"
+        options={categoryOptions.map((option) => ({
+          ...option,
+          checked: selectedCategories.includes(option.id),
+        }))}
+        selectedCount={selectedCategories.length}
+        onChange={handleCategoryChange}
+        onReset={handleReset}
+      />
+    );
+  }
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const data = sampleData;
 
   return (
     <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
+      <Link to="/allChildHRTable">
+        {" "}
+        <div className="mb-8">
+          <ArrowLeft />
+        </div>
+      </Link>
+
+   
       <CardHeader className="border-b">
+
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold">Records</CardTitle>
+        <CardTitle className="text-2xl font-semibold pl-4 border-l-8 border-blue">Records</CardTitle>
 
           <Button className="text-blue italic underline px-4 py-2 bg-transparent border-none shadow-none hover:bg-transparent hover:text-gray">
             Go to Maternal Record {">"}
