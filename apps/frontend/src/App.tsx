@@ -1,10 +1,12 @@
-import PrenatalViewing from './pages/prenatal/prenatal-viewing';
+import PrenatalViewingOne from "./pages/prenatal/prenatal-viewing";
+// import PostpartumViewing from './pages/postpartum/pospartum-viewing';
 
 function App() {
 
   return (
     <> 
-      <PrenatalViewing />
+      <PrenatalViewingOne />
+      {/* <PostpartumViewing /> */}
     </> 
   )
 }
