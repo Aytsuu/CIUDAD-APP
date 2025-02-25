@@ -4,10 +4,22 @@ import PersonalClearance from "@/pages/treasurer-clearance-requests/treasurer-pe
 import PermitClearance from "@/pages/treasurer-clearance-requests/treasurer-permitClearance";
 import ServiceCharge from "@/pages/treasurer-clearance-requests/treasurer-serviceCharge";
 import BarangayService from "@/pages/treasurer-clearance-requests/treasurer-barangayService";
+import BudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budget-plan-main";
+// import AddBudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budgetplan-form";
 // import TreasurerDashboard from "@/pages/treasurer-dashboard/sample";
 
 
 export const treasurer_router = [
+    {
+        path: "/treasurer-budget-plan",
+        element: <BudgetPlan/>,
+        // children: [
+        //     {
+        //         path: 'add-new-plan',
+        //         element: <AddBudgetPlan/>
+        //     }
+        // ]
+    },
     {
         path: "/treasurer-income-and-expense-tracking",
         element: <IncomeandExpenseTracking/>
