@@ -56,7 +56,7 @@ function WasteHotSched() {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 max-w-4xl mx-auto">
-                <Label className="block text-center text-[30px] font-medium text-[#263D67]">WATCHMAN FOR HOTSPOTS</Label>
+                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">WATCHMAN FOR HOTSPOT</Label>
 
                 <FormField
                     control={form.control}

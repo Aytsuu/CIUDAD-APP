@@ -11,7 +11,6 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 
-// Define the options for sitios, collectors, and announcements
 const sitioOptions = [
     { id: "sitio1", label: "Sitio 1" },
     { id: "sitio2", label: "Sitio 2" },
@@ -66,7 +65,7 @@ function WasteColSched() {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 max-w-4xl mx-auto">
-                <Label className="block text-center text-[30px] font-medium text-[#263D67]">SCHEDULE WASTE COLLECTION</Label>
+                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">SCHEDULE WASTE COLLECTION</Label>
 
                 <FormField
                     control={form.control}

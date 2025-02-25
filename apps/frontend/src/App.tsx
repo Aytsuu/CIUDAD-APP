@@ -1,12 +1,8 @@
-// import WasteIllegalDumping from "./pages/report/waste/waste-illegal-dumping";
-import WasteMainScheduling from "./pages/waste-scheduling/waste-main-sched-page"
 import {createBrowserRouter, RouterProvider} from 'react-router'
+import { waste_router } from "./routes/waste-router";
 
-
-const router = createBrowserRouter([{
-  path: '/',
-  element: <WasteMainScheduling/>,
-},
+const router = createBrowserRouter([
+...waste_router
 ]);
 
 function App() {
@@ -18,5 +14,4 @@ function App() {
   )
 }
 
-export default App
-  
+export default App;
