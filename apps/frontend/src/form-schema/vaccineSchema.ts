@@ -24,6 +24,8 @@ export const VaccineSchema = z.object({
   barangay: z.string().min(1, "Barangay is required"),
   province: z.string().optional(),
   city: z.string().optional(),
+  managedby: z.string().min(1,"choose a person to do the vitalsigns")
+
 });
 
 // Combine the main schema with the vital signs schema
