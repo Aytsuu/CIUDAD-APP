@@ -8,7 +8,7 @@ export const VitalSignsSchema = z.object({
   o2: z.string().min(1, "O2 is required"),
 });
 
-// Main schema without vital signs
+// Schema for vaccine details
 export const VaccineSchema = z.object({
   vaccinetype: z.string().min(1, "Vaccine is required"),
   datevaccinated: z.string().min(1, "Date is required"),
@@ -24,11 +24,16 @@ export const VaccineSchema = z.object({
   barangay: z.string().min(1, "Barangay is required"),
   province: z.string().optional(),
   city: z.string().optional(),
-  assignto: z.string().min(1,"choose a person to do the vitalsigns")
-
+  assignto: z.string().min(1,"choose a person  to do the vitalsigns"),
+  signature: z.string().min(1, "signature is required"),
 });
 
-// Combine the main schema with the vital signs schema
+// Merge schemas
 export const CombinedSchema = VaccineSchema.merge(VitalSignsSchema);
+
+// Define TypeScript types from schemas
+export type VaccineSchemaType = z.infer<typeof VaccineSchema>;
+export type VitalSignsType = z.infer<typeof VitalSignsSchema>; // ✅ Added type for vital signs
+export type CombinedSchemaType = z.infer<typeof CombinedSchema>;
 
 export default CombinedSchema;
