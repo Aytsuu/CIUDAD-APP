@@ -5,6 +5,7 @@ import PermitClearance from "@/pages/treasurer-clearance-requests/treasurer-perm
 import ServiceCharge from "@/pages/treasurer-clearance-requests/treasurer-serviceCharge";
 import BarangayService from "@/pages/treasurer-clearance-requests/treasurer-barangayService";
 import BudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budget-plan-main";
+import TreasurerDonationTable from "@/pages/treasurer-donation/treasurer-donation-main";
 // import AddBudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budgetplan-form";
 // import TreasurerDashboard from "@/pages/treasurer-dashboard/sample";
 
@@ -19,6 +20,10 @@ export const treasurer_router = [
         //         element: <AddBudgetPlan/>
         //     }
         // ]
+    },
+    {
+        path: "/treasurer-donation",
+        element: <TreasurerDonationTable/>
     },
     {
         path: "/treasurer-income-and-expense-tracking",
