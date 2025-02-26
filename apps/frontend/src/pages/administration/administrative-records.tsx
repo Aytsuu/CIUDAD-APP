@@ -1,13 +1,12 @@
-import { useState } from "react";
-
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Plus } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Pen } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router";
+import { ArrowUpDown, Plus, Pen, UserRoundCog, Filter } from "lucide-react";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 type Record = {
     id: string
@@ -119,13 +118,28 @@ export default function AdministrativeRecords(){
             <div className="w-[80%] h-4/5 flex flex-col">
                 <div className="w-full h-full bg-white border border-gray rounded-[5px] flex flex-col">
                     <div className="w-full flex justify-between p-5">
-                        <div className="w-1/4 flex">
+                        <div className="w-1/3 flex gap-2">
                             <Input type="text" placeholder="Search..."/>
+                            <SelectLayout 
+                                label=""
+                                placeholder="Filter by"
+                                className=""
+                                options={[]}
+                                value=""
+                                onChange={() => {}} 
+                            />
                         </div>
-                        <Button 
-                        > 
-                            <Plus /> Register a Staff
-                        </Button>
+                        
+                        <div className="flex gap-2">
+                            <Link to="/role">
+                                <Button > 
+                                    <UserRoundCog /> Role
+                                </Button>
+                            </Link>
+                            <Button > 
+                                <Plus /> Register a Staff
+                            </Button>
+                        </div>
                     </div>
                     <DataTable columns={columns} data={data}/>
                 </div>
