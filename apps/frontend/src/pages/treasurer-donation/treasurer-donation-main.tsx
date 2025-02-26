@@ -4,6 +4,8 @@ import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 
 export const columns: ColumnDef<TreasurerDonation>[] = [
@@ -70,9 +72,10 @@ export const TreasurerDonationRecords: TreasurerDonation[]=[
 
 function TreasurerDonationTable(){
 
+    let accumulatedCash = 0.00
     const data = TreasurerDonationRecords;
     const filter = [
-        {id: "0", name: "All"},
+        {id: "0", name: "All Donation Category"},
         {id: "1", name: "Monetary Donations"},
         {id: "2", name: "Essential Goods"},
         {id: "3", name: "Medical Supplies"},
@@ -86,18 +89,27 @@ function TreasurerDonationTable(){
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-    const filteredData = selectedFilter === "All" ? data 
+    const filteredData = selectedFilter === "All Donation Category" ? data 
     : data.filter((item) => item.category === selectedFilter);
     
 
     return(
         <div className="mx-4 mb-4 mt-10">
+            <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>DONATIONS</p><br></br>
+            </div>   
              <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                 <div className="mb-[1rem] flex flex-row items-center justify-between gap-2">
-                        <div className="flex flex-row gap-2">
+                        <div className="flex flex-row gap-7">
                             <Input className="w-[20rem]"placeholder="Search"></Input>
-                            <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            <div className="flex flex-row gap-2 justify-center items-center">
+                                <Label>Filter: </Label>
+                                <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            </div>
                         </div>
+                </div>
+                <div className="p-2">
+                    <Label className="text-darkBlue2 text-md">Accumulated Cash Donations: Php {accumulatedCash.toFixed(2)}</Label>
                 </div>
                 <DataTable columns={columns} data={filteredData} />
              </div>
