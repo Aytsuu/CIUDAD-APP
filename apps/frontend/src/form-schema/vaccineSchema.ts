@@ -24,7 +24,7 @@ export const VaccineSchema = z.object({
   barangay: z.string().min(1, "Barangay is required"),
   province: z.string().optional(),
   city: z.string().optional(),
-  managedby: z.string().min(1,"choose a person to do the vitalsigns")
+  assignto: z.string().min(1,"choose a person to do the vitalsigns")
 
 });
 
