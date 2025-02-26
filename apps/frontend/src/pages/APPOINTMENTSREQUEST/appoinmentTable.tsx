@@ -19,8 +19,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import FeedbackForm from "./rejectModal";
-
+import FeedbackForm from "./apprejectModal";
 export default function AppointmentTable() {
   type AppointmentRecords = {
     id: string;
@@ -254,14 +253,9 @@ export default function AppointmentTable() {
   const data = sampleData;
 
   return (
-    <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
-      <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold">Appointment</CardTitle>
-        </div>
-      </CardHeader>
+     
 
-      <CardContent className="pt-6">
+  
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="flex flex-col md:flex-row gap-4 w-full relative">
@@ -292,7 +286,6 @@ export default function AppointmentTable() {
             </div>
           )}
         </div>
-      </CardContent>
-    </div>
+    
   );
 }

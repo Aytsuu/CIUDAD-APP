@@ -1,4 +1,4 @@
-import AppointmentTable from "./pages/APPOINTMENTS/appoinmentTable";
+import AppointmentTable from "./pages/APPOINTMENTSREQUEST/appoinmentTable";
 import { healthAppointment } from "./routes/sample";
 import { createBrowserRouter, RouterProvider } from "react-router";
 
