@@ -42,6 +42,7 @@ export default function VaccinationForm() {
       temp: "",
       bp: "",
       o2: "",
+      assignto:"",
     },
   });
 
