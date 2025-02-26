@@ -69,8 +69,10 @@ export default function SettingPermissions({id, feature, permissions, setPermiss
                                     id={key} // Unique ID for the checkbox
                                     checked={value} // Checked state from permissions state
                                     onCheckedChange={() =>
-                                    handleCheckboxChange(id, key as PermissionKey) // Handle change
-                                } 
+                                        handleCheckboxChange(id, key as PermissionKey) // Handle change
+                                    } 
+
+                                    disabled={key === "view" && true}
                                 />
 
                                 <Label
