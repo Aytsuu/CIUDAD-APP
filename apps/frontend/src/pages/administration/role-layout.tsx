@@ -8,9 +8,56 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Permissions } from "./_types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+const features: Record<string, string> = {
+    profiling: "Profiling",
+    blotter: "Blotter Complaint",
+    drrReport: "Incident Report",
+    clearance: "Clearance",
+    summon: "Summon",
+    sessionSched: "Session Scheduling",
+    budgetPlan: "Budget Plan",
+    eduGrant: "Educational Grants",
+    wasteSched: "Waste Scheduling",
+    wasteReport: "Waste Report",
+    ordRes: "Ordinance & Resolution",
+    incomeExpense: "Income and Expense",
+    developmentPlan: "Annual Development Plan",
+    projectProposal: "Project Proposal",
+    disbursement: "Disbursement and Monitoring",
+    donation: "Donation",
+    announcement: "Announcement",
+};
+  
 
 export default function RoleLayout() {
-    const [addClicked, setAddClicked] = React.useState(false);
+    const [addClicked, setAddClicked] = React.useState<boolean>(false);
+    const [selectedPosition, setSelectedPosition] = React.useState<string>('');
+
+    // State to track selected features
+    const [selectedFeatures, setSelectedFeatures] = React.useState<Record<string, boolean>>(
+    Object.keys(features).reduce((acc, feature) => {
+        acc[feature] = false; // Initialize all checkboxes as unchecked
+        return acc;
+    }, {} as Record<string, boolean>)
+    );
+
+    const [permissions, setPermissions] = React.useState<Permissions>(()=> {
+    const initialPermissions: Permissions = {}
+    Object.keys(selectedFeatures).map((key) => (
+        initialPermissions[key] = {
+            view: true,
+            create: false,
+            update: false,
+            delete: false
+        }
+    ))
+    return initialPermissions
+    })
+
+    const hasSelectedFeature = Object.values(selectedFeatures).some((value) => value === true);
 
     return (
         <div className="w-screen h-screen bg-snow flex justify-center items-center">
@@ -24,9 +71,11 @@ export default function RoleLayout() {
                             </Button>
                         )}
                     </div>
-                    {/* Input container with Tailwind transition */}
+
+                    <Separator />
+
                     <div
-                        className={`transition-all duration-300 ease-in-out ${
+                        className={`transition-all duration-300 ease-in-out  ${
                             addClicked ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 h-0"}`}
                     >
                         {addClicked && (
@@ -46,21 +95,56 @@ export default function RoleLayout() {
                             </div>
                         )}
                     </div>
-                    <Separator />
-                    <AdministrativePositions />
+                    
+                    <AdministrativePositions 
+                        selectedPosition={selectedPosition} 
+                        setSelectedPosition={setSelectedPosition}
+                    />
                 </div>
                 <div className="w-1/2 h-full border-l border-gray p-5 flex flex-col gap-4">
                     <div className="w-full">
                         <Label>Mark the features to be assigned</Label>
                     </div>
-                    <FeatureSelection />
+                    {
+                        selectedPosition ? 
+                        (<FeatureSelection 
+                            features={features}
+                            selectedFeatures={selectedFeatures} 
+                            setSelectedFeatures={setSelectedFeatures}
+                        />) :
+                        (<Label className="text-[15px] text-black/60">No position selected</Label>)
+                    }
                 </div>
-                <div className="w-full h-full border-l border-gray p-5 flex flex-col gap-4">
-                    <div className="w-full">
+                <div className="w-full h-full border-l border-gray flex flex-col gap-4">
+                    <div className="w-full px-5 pt-5">
                         <Label>Set feature permissions</Label>
                     </div>
-                    <SettingPermissions />
-                </div>
+                    <ScrollArea className="w-full h-full px-5">
+                        {
+                            !selectedPosition ? 
+                            (<Label className="text-[15px] text-black/60">No position selected</Label>) :
+                            !hasSelectedFeature ? 
+                            (<Label className="text-[15px] text-black/60">No feature selected</Label>) :
+                            (
+                                <>
+                                <Separator />
+                                {Object.entries(selectedFeatures).map(([key,value]) => (
+                                    (value && 
+                                    <SettingPermissions 
+                                        key={key} 
+                                        id={key}
+                                        feature={features[key]}
+                                        permissions={permissions[key]} 
+                                        setPermissions={setPermissions}
+                                    />)
+                                ))}
+                                </>
+                            )
+                        }   
+                    </ScrollArea><div className="w-full flex justify-end px-5 pb-5">
+                        {hasSelectedFeature && <Button>Save</Button>}
+                    </div>
+                </div>  
             </div>
         </div>
     );

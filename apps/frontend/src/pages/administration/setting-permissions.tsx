@@ -1,4 +1,3 @@
-import React from "react";
 import {
     Accordion,
     AccordionContent,
@@ -7,55 +6,15 @@ import {
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { PermissionKey, Permissions } from "./_types";
 
-// Define the type for permission keys
-type PermissionKey = "view" | "create" | "update" | "delete";
-
-// Define the type for the permissions state
-type Permissions = {
-    [featureId: string]: {
-        // Each feature has its own set of permissions
-        view: boolean;
-        create: boolean;
-        update: boolean;
-        delete: boolean;
-    };
-};
-
-// Mock data for features
-const features: { id: string; name: string }[] = [
-    { id: "profiling", name: "Profiling" },
-    { id: "blotter", name: "Blotter Complaint" },
-    { id: "drr-report", name: "Incident Report" },
-    { id: "clearance", name: "Clearance" },
-    { id: "summon", name: "Summon" },
-];
-
-// Mock data for category options (permissions)
-const categoryOptions: { id: PermissionKey; label: string }[] = [
-    // Permission key (e.g., "view", "create")
-    { id: "view", label: "View" },
-    { id: "create", label: "Create" },
-    { id: "update", label: "Update" },
-    { id: "delete", label: "Delete" },
-];
-
-export default function SettingPermissions() {
-    // State to manage permissions for each feature
-    const [permissions, setPermissions] = React.useState<Permissions>(() => {
-        // Initialize permissions state with default values (all permissions unchecked)
-        const initialPermissions: Permissions = {};
-        features.forEach((feature) => {
-        initialPermissions[feature.id] = {
-            view: false,
-            create: false,
-            update: false,
-            delete: false,
-        };
-        });
-        return initialPermissions;
-    });
+export default function SettingPermissions({id, feature, permissions, setPermissions} : 
+    { 
+        id: string
+        feature: string
+        permissions: Record<string, boolean>, 
+        setPermissions: (value: Permissions | ((prev: Permissions) => Permissions)) => void}
+) {
 
   // Handle checkbox change for a specific feature and permission
     const handleCheckboxChange = (featureId: string, optionId: PermissionKey) => {
@@ -70,37 +29,61 @@ export default function SettingPermissions() {
 
     return (
         <Accordion type="single" collapsible className="w-full">
-            <Separator />
-            {features.map((feature) => (
-                <AccordionItem key={feature.id} value={feature.id}>
-                    <AccordionTrigger>{feature.name}</AccordionTrigger>
-                    <AccordionContent className="flex flex-col gap-3">
-                        {/* Map through each permission option for the feature */}
-                        {categoryOptions.map((option) => (
-                        <div
-                            key={`${feature.id}-${option.id}`}
-                            className="flex items-center gap-3"
-                        >
-                            {/* Checkbox for the permission */}
-                            <Checkbox
-                                id={`${feature.id}-${option.id}`} // Unique ID for the checkbox
-                                checked={permissions[feature.id][option.id]} // Checked state from permissions state
-                                onCheckedChange={() =>
-                                handleCheckboxChange(feature.id, option.id) // Handle change
-                            } 
-                            />
+            <AccordionItem value={id}>
+                <AccordionTrigger className="hover:no-underline">
+                    <div className="flex gap-4">
+                        {feature} 
+                        <div className="flex gap-1 items-center text-black/50">
+                            
+                                { 
+                                    Object.entries(permissions)
+                                    .filter(([_, value]) => value) // Filter only truthy values
+                                    .reduce((acc, [key], index, array) => {
+                                    acc.push(<Label className="text-black/50 italic">{key}</Label>);
 
-                            <Label
-                            htmlFor={`${feature.id}-${option.id}`}
-                            className="cursor-pointer"
-                            >
-                            {option.label}
-                            </Label>
+                                    // Add separator if the next item exists and has a truthy value
+                                    if (index < array.length - 1 && array[index + 1][1]) {
+                                        acc.push(
+                                        <Label className="text-black/50 italic">
+                                            {index === array.length - 2 ? " and " : ", "}
+                                        </Label>
+                                        );
+                                    }
+                                    return acc;
+                                    }, [] as JSX.Element[])
+                                }
+                            
                         </div>
-                        ))}
-                    </AccordionContent>
-                </AccordionItem>
-            ))}
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="flex flex-col gap-3">
+                    {/* Map through each permission option for the feature */}
+                    {
+                        Object.entries(permissions).map(([key, value]) => (
+                            <div
+                                key={key}
+                                className="flex items-center gap-3"
+                            >
+                                {/* Checkbox for the permission */}
+                                <Checkbox
+                                    id={key} // Unique ID for the checkbox
+                                    checked={value} // Checked state from permissions state
+                                    onCheckedChange={() =>
+                                    handleCheckboxChange(id, key as PermissionKey) // Handle change
+                                } 
+                                />
+
+                                <Label
+                                    htmlFor={key}
+                                    className="cursor-pointer"
+                                >
+                                    {key}
+                                </Label>
+                            </div>
+                        ))
+                    }
+                </AccordionContent>
+            </AccordionItem>
         </Accordion>
     );
 }

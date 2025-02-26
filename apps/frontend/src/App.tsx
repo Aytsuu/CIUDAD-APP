@@ -1,12 +1,15 @@
+import { administration_router } from "./routes/administration-router";
+import { createBrowserRouter, RouterProvider } from 'react-router'
 
-import  AdministrativeRecords from "./pages/administration/administrative-records"
-import RoleLayout from "./pages/administration/role-layout";
+const router = createBrowserRouter([
+  ...administration_router
+])
 
 function App() {
 
   return (
     <>
-      <RoleLayout/>
+      <RouterProvider router={router}/>
     </> 
   )
 }
