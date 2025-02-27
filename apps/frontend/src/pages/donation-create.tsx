@@ -8,9 +8,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import ClerkDonateCreateSchema from '@/form-schema/clerk-donate-create-form-schema';
+import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
 
-function ClerkDonateEdit() {
+function ClerkDonateCreate() {
 
     const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
         resolver: zodResolver(ClerkDonateCreateSchema),
@@ -143,4 +143,4 @@ function ClerkDonateEdit() {
         </Form>
     );
 }
-export default ClerkDonateEdit;
+export default ClerkDonateCreate;

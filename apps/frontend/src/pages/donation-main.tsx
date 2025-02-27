@@ -4,9 +4,9 @@ import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Trash, Eye, Plus } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout';
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import ClerkDonateCreate from './clerk-donation-create';
-import ClerkDonateDeleteConf from "./clerk-donation-delete-conf";
-import ClerkDonateView from "./clerk-donation-view";
+import ClerkDonateCreate from './donation-create';
+import ClerkDonateDeleteConf from "./donation-delete-conf";
+import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 

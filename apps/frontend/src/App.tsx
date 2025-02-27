@@ -1,10 +1,8 @@
 import {createBrowserRouter, RouterProvider} from 'react-router'
-import DonationTracker from './pages/clerk-donation-main';
+import { donation_router } from './routes/donation-router';
 
-const router = createBrowserRouter([{
-  path: '/',
-  element: <DonationTracker/>,
-},
+const router = createBrowserRouter([
+  ...donation_router
 ]);
 
 function App() {

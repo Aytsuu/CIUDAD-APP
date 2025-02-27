@@ -158,7 +158,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import ClerkDonateViewSchema from '@/form-schema/clerk-donate-view-schema';
+import ClerkDonateViewSchema from '@/form-schema/donate-view-schema';
 
 function ClerkDonateView() {
     const [isEditing, setIsEditing] = useState(false); // State to track edit mode
