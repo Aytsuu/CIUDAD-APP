@@ -168,9 +168,9 @@ function DonationTracker() {
             <div>
               <DialogLayout
                 trigger={
-                  <div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
+                  <div className="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
                     {" "}
-                    Create <Plus className="ml-2" />
+                    <Plus/> Create
                   </div>
                 }
                 className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
