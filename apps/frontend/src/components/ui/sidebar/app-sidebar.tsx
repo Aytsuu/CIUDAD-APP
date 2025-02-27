@@ -10,12 +10,12 @@ import {
   SidebarMenuItem,
 } from "./sidebar";
 
-interface SubMenuItem {
+type SubMenuItem = {
   title: string;
   url: string;
 }
 
-interface MenuItem {
+type MenuItem = {
   title: string;
   url?: string;
   subItems?: boolean;

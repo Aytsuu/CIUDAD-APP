@@ -2,37 +2,35 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "./card";
 import { cn } from "@/lib/utils";
 
 type CardProps = {
-  cardHeader: string;
-  cardDescription?: string;
+  cardTitle?: string;
+  cardDescription?: React.ReactNode;
   cardContent: React.ReactNode;
-  cardFooter?: string;
   cardClassName?: string;
+  cardContentClassName?: string;
 };
 
 export default function CardLayout({
-  cardHeader,
+  cardTitle,
   cardDescription,
   cardContent,
-  cardFooter,
   cardClassName,
+  cardContentClassName
 }: CardProps) {
   return (
     <Card className={cn("", cardClassName)}>
       <CardHeader>
-        <CardTitle>{cardHeader}</CardTitle>
-      </CardHeader>
-      <CardContent>
+        <CardTitle>{cardTitle}</CardTitle>
         <CardDescription>{cardDescription}</CardDescription>
+      </CardHeader>
+      <CardContent className={cn("", cardContentClassName)}>
         {cardContent}
       </CardContent>
-      {cardFooter && <CardFooter>{cardFooter}</CardFooter>}
     </Card>
   );
 }
