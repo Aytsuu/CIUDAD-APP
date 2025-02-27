@@ -15,6 +15,85 @@ const NHTS = [
   { name: "Pantawid Pamilya Pilipino (4Ps):", value: "", className: "w-12" },
 ];
 
+const ClientType = [
+  { name: "New Acceptor", value: "", classname: "w-12" },
+  { name: "Current User", value: "", classname: "w-12" },
+];
+
+const CurrentUserType = [
+  { name: "Changing Method", value: "", classname: "w-12" },
+  { name: "Changing Clinic", value: "", classname: "w-12" },
+  { name: "Dropout/Restart", value: "", classname: "w-12" }
+];
+
+const ReasonFP = [
+  { name: "spacing", value: "", classname: "w-12" },
+  { name: "limiting", value: "", classname: "w-12" },
+  { name: "others", value: "", classname: "w-12" }
+];
+
+const Reason = [
+  { name: "medical condition", value: "", classname: "w-12" },
+  { name: "side-effects", value: "", classname: "w-12" },
+];
+
+const MethodsCurrentlyUsed = [
+  { name: "COC", value: "", classname: "w-12" },
+  { name: "IUD", value: "", classname: "w-12" },
+  { name: "BOM/CMM", value: "", classname: "w-12" },
+  { name: "LAM", value: "", classname: "w-12" },
+  { name: "POP", value: "", classname: "w-12" },
+  { name: "Interval", value: "", classname: "w-12" },
+  { name: "BBT", value: "", classname: "w-12" },
+  { name: "Others", value: "", classname: "w-12" },
+  { name: "Injectable", value: "", classname: "w-12" },
+  { name: "Post Partum", value: "", classname: "w-12" },
+  { name: "STM", value: "", classname: "w-12" },
+  { name: "Implant", value: "", classname: "w-12" },
+  { name: "Condom", value: "", classname: "w-12" },
+  { name: "SDM", value: "", classname: "w-12" }
+];
+
+// Medical History questions
+const MedicalHistoryQuestions = [
+  { name: "severe headaches / migraine", value: "" },
+  { name: "history of stroke / heart attack / hypertension", value: "" },
+  { name: "non-traumatic hematoma / frequent bruising or gum bleeding", value: "" },
+  { name: "current or history of breast cancer / breast mass", value: "" },
+  { name: "severe chest pain", value: "" },
+  { name: "cough for more than 14 days", value: "" },
+  { name: "jaundice", value: "" },
+  { name: "unexplained vaginal bleeding", value: "" },
+  { name: "abnormal vaginal discharge", value: "" },
+  { name: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", value: "" },
+  { name: "Is this client a SMOKER?", value: "" },
+  { name: "With Disability?", value: "" }
+];
+
+// VAW Risk Assessment items
+const VAWRiskItems = [
+  { name: "unpleasant relationship with partner", value: "" },
+  { name: "partner does not approved of the visit to FP clinic", value: "" },
+  { name: "history of domestic violence or VAW", value: "" }
+];
+
+// Referral options
+const ReferralOptions = [
+  { name: "DSWD", value: "" },
+  { name: "WCPU", value: "" },
+  { name: "NGOs", value: "" },
+  { name: "Others", value: "", hasSpecify: true }
+];
+const Obstetrical = [
+  { name: "G", value: "" },
+  { name: "P", value: "" },
+  { name: "Full term", value: "" },
+  { name: "Abortion", value: ""},
+  { name: "Premature", value: "" },
+  { name: "Living Children", value: ""},
+];
+
+
 interface InputLineProps {
   className?: string;
   value: string;
@@ -45,7 +124,7 @@ const FamilyPlanningView: React.FC = () => {
         {/* Top Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 bg-gray p-2 border border-black">
             <Label className="font-bold block mb-2">
               FAMILY PLANNING CLIENT ASSESSMENT RECORD
             </Label>
@@ -62,32 +141,32 @@ const FamilyPlanningView: React.FC = () => {
           </div>
 
           {/* Right Section */}
-          <div className="border border-black p-4">
+          <div className="border flex-grow border-black p-4 bg-gray overflow-hidden">
             {Header.map((field, index) => (
-              <div className="flex items-center mb-2" key={index}>
+              <div className="flex items-center mb-2 w-full" key={index}>
                 <Label className="text-sm font-bold whitespace-nowrap mr-2">
                   {field.name}
                 </Label>
-                <div className="flex-grow">
-                  <InputLine className={field.className} value={field.value} />
+                <div className="w-full">
+                  <InputLine className="w-full box-border" value={field.value} />
                 </div>
               </div>
             ))}
             <div className="flex flex-col space-y-2">
-            {NHTS.map((field, index) => (
-              <div className="flex items-center gap-2" key={index}>
-                <Label className="text-sm font-bold whitespace-nowrap">
-                  {field.name}
-                </Label>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Checkbox checked={field.value === "Yes"} disabled />
-                    <Label className="text-sm">Yes</Label>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Checkbox checked={field.value === "No"} disabled />
-                    <Label className="text-sm">No</Label>
-                  </div>
+              {NHTS.map((field, index) => (
+                <div className="flex items-center gap-2" key={index}>
+                  <Label className="text-sm font-bold whitespace-nowrap">
+                    {field.name}
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <Checkbox checked={field.value === "Yes"} disabled />
+                      <Label className="text-sm">Yes</Label>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Checkbox checked={field.value === "No"} disabled />
+                      <Label className="text-sm">No</Label>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -104,7 +183,7 @@ const FamilyPlanningView: React.FC = () => {
                 <Label className="text-xs text-center block">Last Name</Label>
               </div>
 
-              
+
               <div className="col-span-5 space-y-1">
                 <InputLine value="" />
                 <Label className="text-xs text-center block">Given Name</Label>
@@ -207,7 +286,7 @@ const FamilyPlanningView: React.FC = () => {
         </div>
 
         {/* Bottom Row */}
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-4 mt-5">
           <div className="col-span-3">
             <div className="flex items-center gap-2">
               <Label className="text-sm font-bold whitespace-nowrap">NO. OF LIVING CHILDREN:</Label>
@@ -218,14 +297,14 @@ const FamilyPlanningView: React.FC = () => {
           </div>
           <div className="col-span-4">
             <div className="flex items-center gap-2">
-              <Label className="text-sm font-bold whitespace-nowrap">PLAN TO HAVE MORE CHILDREN?</Label>
+              <Label className="text-sm font-bold whitespace-nowrap mt-2">PLAN TO HAVE MORE CHILDREN?</Label>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 mt-2">
                   <Checkbox id="plan-more-yes" disabled />
                   <Label htmlFor="plan-more-yes" className="text-sm">Yes</Label>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Checkbox id="plan-more-no" disabled/>
+                <div className="flex items-center gap-1 mt-2">
+                  <Checkbox id="plan-more-no" disabled />
                   <Label htmlFor="plan-more-no" className="text-sm">No</Label>
                 </div>
               </div>
@@ -241,11 +320,260 @@ const FamilyPlanningView: React.FC = () => {
           </div>
         </div>
       </div>
-    
-    
+
+      {/* Type of Client Section */}
+      <div className="border border-black grid ">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap">
+          {/* Left side - Type of Client */}
+          <div>
+            <div className="font-bold text-md mb-4 grid">Type of Client</div>
+            <div className="space-y-2">
+              {ClientType.map((field, index) => (
+                <div className="flex items-center grid-col" key={index}>
+                  <Checkbox checked={field.value === "Yes"} disabled className="mr-2" />
+                  <Label className="text-sm whitespace-nowrap">{field.name}</Label>
+                  
+                </div>
+              ))}
+               <div className="mt-4">
+              <div className="font-bold text-md mb-2 grid grid-cols-4">Reason for FP:</div>
+              <div className="flex flex-wrap gap-4">
+                {ReasonFP.map((field, index) => (
+                  <div className="flex items-center" key={index}>
+                    <Checkbox checked={field.value === "Yes"} disabled className="mr-2" />
+                    <Label className="text-sm whitespace-nowrap">{field.name}</Label>
+                    {field.name === "others" && 
+                      <div className="ml-2 w-32">
+                        <InputLine value="" />
+                      </div>
+                    }
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+              
+              
+              <div className="ml-6 space-y-2">
+                {CurrentUserType.map((field, index) => (
+                  <div className="flex items-center" key={index}>
+                    <Checkbox checked={field.value === "Yes"} disabled className="mr-2" />
+                    <Label className="text-sm whitespace-nowrap">{field.name}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+           
+            <div className="mt-4">
+              <div className="flex items-center">
+                <Label className="text-sm font-bold whitespace-nowrap mr-2">Reason:</Label>
+                <div className="flex flex-wrap gap-4">
+                  {Reason.map((field, index) => (
+                    <div className="flex items-center" key={index}>
+                      <Checkbox checked={field.value === "Yes"} disabled className="mr-2" />
+                      <Label className="text-sm whitespace-nowrap">{field.name}</Label>
+                    </div>
+                  ))}
+                  <div className="ml-2 w-32">
+                    <InputLine value="" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Right side - Method currently used */}
+          <div>
+            <div className="font-bold text-md mb-4">Method currently used (for Changing Method):</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {MethodsCurrentlyUsed.map((field, index) => (
+                <div className="flex items-center grid-col" key={index}>
+                  <Checkbox checked={field.value === "Yes"} disabled className="mr-2" />
+                  <Label className="text-sm whitespace-nowrap">{field.name}</Label>
+                  
+                </div>
+            ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Medical History and VAW Risk Assessment Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        {/* I. MEDICAL HISTORY */}
+        <div className="border border-black">
+          {/* Header */}
+          <div className="bg-gray-100 border-b border-black p-2">
+            <Label className="font-bold">I. MEDICAL HISTORY</Label>
+          </div>
+          
+          {/* Content */}
+          <div className="p-4">
+            <div className="mb-2">
+              <Label className="text-sm">Does the client have any of the following?</Label>
+            </div>
+            
+            <div className="space-y-1">
+              {MedicalHistoryQuestions.map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="mr-2">■</div>
+                    <Label className="text-sm">{item.name}</Label>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <Checkbox id={`med-yes-${index}`} disabled />
+                      <Label htmlFor={`med-yes-${index}`} className="text-sm">Yes</Label>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Checkbox id={`med-no-${index}`} disabled />
+                      <Label htmlFor={`med-no-${index}`} className="text-sm">No</Label>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Special case for "With Disability?" */}
+              <div className="flex items-start">
+                <div className="flex-1">
+                  <div className="flex">
+                    <Label className="text-sm ml-4">If YES please specify:</Label>
+                  </div>
+                  <div className="mt-1 ml-4">
+                    <InputLine value="" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW) */}
+        <div className="border border-black">
+          {/* Header */}
+          <div className="bg-gray-100 border-b border-black p-2">
+            <Label className="font-bold">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</Label>
+          </div>
+          
+          {/* Content */}
+          <div className="p-4">
+            <div className="space-y-1">
+              {VAWRiskItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="mr-2">■</div>
+                    <Label className="text-sm">{item.name}</Label>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <Checkbox id={`vaw-yes-${index}`} disabled />
+                      <Label htmlFor={`vaw-yes-${index}`} className="text-sm">Yes</Label>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Checkbox id={`vaw-no-${index}`} disabled />
+                      <Label htmlFor={`vaw-no-${index}`} className="text-sm">No</Label>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Referred to section */}
+              <div className="mt-4">
+                <div className="flex items-center">
+                  <div className="">
+                  <Label className="text-sm font-bold  whitespace-nowrap ml-4 p-3 mr-4">Referred to:</Label>
+                    {ReferralOptions.map((option, index) => (
+                      <div key={index} className="p-2 flex items-center ">
+                        <Checkbox id={`referral-${index}`} disabled className="mr-1" />
+                        <Label htmlFor={`referral-${index}`} className="text-sm">{option.name}</Label>
+                        {option.hasSpecify && (
+                          <div className="ml-2 flex-1">
+                            <InputLine value="" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* V. PHYSICAL EXAMINATION */}
+      <div className="border border-black">
+        {/* Header */}
+        <div className="bg-gray-100 border-b border-black p-2">
+          <Label className="font-bold">II. OBSTETRICAL HISTORY</Label>
+        </div>
+        
+        {/* Content */}
+        <div className="p-4">
+          <div className="grid grid-cols-2 gap-4">
+            {/* Left Column */}
+            <div>
+              <div className="flex items-center mb-2">
+                <Label className="text-sm whitespace-nowrap mr-2">Weight:</Label>
+                <div className="border-b border-black flex-1"></div>
+                <Label className="text-sm ml-2">kg</Label>
+              </div>
+              
+              <div className="flex items-center mb-4">
+                <Label className="text-sm whitespace-nowrap mr-2">Height:</Label>
+                <div className="border-b border-black flex-1"></div>
+                <Label className="text-sm ml-2">m</Label>
+              </div>
+              
+              <div className="mb-2">
+                <Label className="text-sm font-bold">SKIN:</Label>
+                <div className="ml-4 mt-1">
+                  <div className="flex items-center gap-1">
+                    <Checkbox id="skin-normal" disabled />
+                    <Label htmlFor="skin-normal" className="text-sm">normal</Label>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Checkbox id="skin-pale" disabled />
+                    <Label htmlFor="skin-pale" className="text-sm">pale</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Right Column */}
+            <div>
+              <div className="flex items-center mb-2">
+                <Label className="text-sm whitespace-nowrap mr-2">Blood pressure:</Label>
+                <div className="border-b border-black flex-1"></div>
+                <Label className="text-sm ml-2">mmHg</Label>
+              </div>
+              
+              <div className="flex items-center mb-4">
+                <Label className="text-sm whitespace-nowrap mr-2">Pulse rate:</Label>
+                <div className="border-b border-black flex-1"></div>
+                <Label className="text-sm ml-2">/min</Label>
+              </div>
+              
+              <div className="mb-2">
+                <Label className="text-sm font-bold">EXTREMITIES</Label>
+                <div className="ml-4 mt-1">
+                  <div className="flex items-center gap-1">
+                    <Checkbox id="extremities-normal" disabled />
+                    <Label htmlFor="extremities-normal" className="text-sm">normal</Label>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Checkbox id="extremities-edema" disabled />
+                    <Label htmlFor="extremities-edema" className="text-sm">edema</Label>
+                  </div>
+      </div>
+
+      
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-
   );
 };
 

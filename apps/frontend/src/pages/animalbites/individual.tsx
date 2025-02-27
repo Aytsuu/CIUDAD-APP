@@ -65,7 +65,8 @@ function AnimalBites() {
   const [patients, setPatients] = useState<Patient[]>(samplePatients); // State for patient data
 
   const handleAddPatient = (newPatient: Patient) => {
-    setPatients((prevPatients) => [...prevPatients, newPatient]); 
+    console.log("Received new patient in parent:", newPatient); // Debugging log
+    setPatients((prevPatients) => [...prevPatients, newPatient]);
   };
 
   return (
@@ -82,13 +83,15 @@ function AnimalBites() {
                 New Record
               </Button>}
               className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
-
-
-              mainContent={<ReferralFormModal
-                onAddPatient={handleAddPatient} // Handle new patient addition
-                onClose={function (): void {
-                  throw new Error("Function not implemented.");
-                } } />} title={""} description={""}            />
+              mainContent={
+                <ReferralFormModal
+                  onAddPatient={handleAddPatient}
+                  onClose={() => console.log("Closing modal")} // Ensure modal closes
+                />
+              }
+              title={""}
+              description={""}
+            />
           </div>
 
           {/* Data Table */}

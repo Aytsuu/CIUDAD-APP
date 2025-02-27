@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const ReferralFormSchema = z.object({
+export const ReferralFormSchema = z.object({
     receiver: z.string().nonempty("Receiver is required"),
     sender: z.string().nonempty("Sender is required"),
     date: z.string().nonempty("Date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),

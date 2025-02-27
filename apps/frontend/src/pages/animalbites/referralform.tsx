@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { zodResolver } from "@hookform/resolvers/zod";
+// import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -14,6 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import ReferralFormSchema from "@/form-schema/ReferralFormSchema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+
 
 type ReferralFormModalProps = {
   onClose: () => void;
@@ -23,11 +25,31 @@ type ReferralFormModalProps = {
 export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFormModalProps) {
   function onSubmit(values: z.infer<typeof ReferralFormSchema>) {
     console.log("Form submitted:", values);
-    if (onAddPatient) onAddPatient(values); // Ensure patient data is sent
+
+    if (onAddPatient) {
+      const newPatient = {
+        id: Date.now(), // Generate a unique ID
+        lname: values.p_lname,
+        fname: values.p_fname,
+        age: values.p_age.toString(), // Convert to string (to match `Patient` type)
+        gender: values.p_gender,
+        date: values.date,
+        exposure: values.p_exposure,
+        siteOfExposure: values.p_siteofexposure,
+        bitingAnimal: values.p_bitinganimal,
+        actions: values.p_actions || "No actions recorded",
+      };
+
+      console.log("👨‍⚕️ Adding new patient:", newPatient);
+    onAddPatient(newPatient);
+    
     onClose();
+  } else {
+    console.log("❌ onAddPatient function is missing!");
   }
+}
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
-    resolver: zodResolver(ReferralFormSchema),
+    // resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
       receiver: "",
       sender: "",
@@ -47,6 +69,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_referred: "",
     },
   });
+  console.log("❌ Validation errors:", form.formState.errors);
 
   return (
     <div className="p-6">
@@ -119,7 +142,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
           {/* 🔹 Patient Information */}
           <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900">Patient Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-2">Patient Information</h3>
 
             {/* Last Name */}
             <FormField
@@ -196,7 +219,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               )}
             />
 
-            {/* Gender */}
             <FormField
               control={form.control}
               name="p_gender"
@@ -204,7 +226,16 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                 <FormItem>
                   <Label>Gender:</Label>
                   <FormControl>
-                    <Input placeholder="Enter gender" {...field} />
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -214,7 +245,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
           {/* 🔹 Animal Bite Details */}
           <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900">Animal Bite Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Animal Bite Details</h3>
 
             {/* Exposure Type */}
             <FormField
@@ -224,7 +255,16 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                 <FormItem>
                   <Label>Type of Exposure:</Label>
                   <FormControl>
-                    <Input placeholder="Enter exposure type (e.g., Bite, Scratch)" {...field} />
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Bite</SelectItem>
+                        <SelectItem value="female">Non-bite</SelectItem>
+
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -283,10 +323,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               Cancel
             </Button>
             <Button type="submit" className="bg-green-600 hover:bg-green-800 text-white">
-              Save
+              Add
             </Button>
+    
           </div>
         </form>
+   
       </Form>
     </div>
   );
