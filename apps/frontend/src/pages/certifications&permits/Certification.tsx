@@ -1,12 +1,7 @@
-import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button";
-import TableLayout from '@/components/ui/table/table-layout.tsx';
-import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus } from 'lucide-react';
-import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
+import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
 import { DataTable } from "@/components/ui/table/data-table"
@@ -43,11 +38,29 @@ export const columns: ColumnDef<Certificate>[] = [
     },
     {
         accessorKey: "firstname",
-        header: "First Name",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                First Name
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("firstname")}</div>
     },
     {
         accessorKey: "lastname",
-        header: "Last Name",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Last Name
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("lastname")}</div>
     },
     {
         accessorKey: "paymentMethod",
@@ -79,31 +92,31 @@ export const columns: ColumnDef<Certificate>[] = [
 
 export const certificateRecords: Certificate[] = [
     {
-        requestNo: "CERT-001",
+        requestNo: "001",
         firstname: "John",
         lastname: "Doe",
         paymentMethod: "Cash",
         dateRequested: "2024-02-23",
         dateClaim: "2024-02-25",
-        purpose: ["Employment", "Loan Application"]
+        purpose: ["NBI", "Medical Assistance"]
     },
     {
-        requestNo: "CERT-002",
+        requestNo: "002",
         firstname: "Jane",
         lastname: "Smith",
         paymentMethod: "GCash",
         dateRequested: "2024-02-23",
         dateClaim: "2024-02-26",
-        purpose: ["Business", "Bank Requirement"]
+        purpose: ["NBI", "Employment"]
     },
     {
-        requestNo: "CERT-003",
+        requestNo: "003",
         firstname: "Mike",
         lastname: "Johnson",
         paymentMethod: "Cash",
         dateRequested: "2024-02-24",
         dateClaim: "2024-02-27",
-        purpose: ["Residential", "Permit Application", "Legal Requirement"]
+        purpose: ["First Time Job Seeker", "Medical Assistance"]
     },
 ]
 
@@ -113,7 +126,7 @@ function CertificatePage() {
     return (
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
-                <div className="text-center font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
+                <div className="text-left font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
                     <h1>CERTIFICATION REQUEST</h1>
                 </div>
 
@@ -121,10 +134,13 @@ function CertificatePage() {
                     <div className='w-full flex justify-between mb-4 p-5'>
                         {/* Filter Section */}
                         <div className="flex gap-3">
-                            <Input
-                                placeholder="Filter by search..."
-                                className="max-w-sm"
-                            />
+                            <div className="relative flex items-center">
+                                <Search className="absolute left-3 text-gray-500" size={18} />
+                                <Input
+                                    placeholder="Search..."
+                                    className="pl-10 max-w-sm"
+                                />
+                            </div>
 
                             <SelectLayout
                                 className={''}
@@ -151,10 +167,21 @@ function CertificatePage() {
                                 mainContent={<AddCertificate />}
                             />
                         </div>
-                    </div>                    
-
+                    </div>
+                    
+                    {/*Table Section */}
                     <DataTable columns={columns} data={data} />
-                </div>                
+                </div>
+                <div className="flex justify-between items-center p-5 border-t border-gray-200">
+                        <span className="text-gray-500 text-[14px]">Showing 1-10 of 150 rows</span>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" className="text-gray-600"> <ChevronLeft className="w-4 h-4 mr-2" /> Previous  </Button>
+                            <Button variant="outline" className="px-3">1</Button>
+                            <span className="text-gray-600">2</span>
+                            <span className="text-gray-600">...</span>
+                            <Button variant="ghost" className="text-gray-600">Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
+                        </div>
+                    </div>
             </div>
         </div>
     );

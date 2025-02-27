@@ -50,9 +50,9 @@ function CreateCertificate() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
-            {/* Left Column */}
+            
             <div>
-              {/* Requested By Input Field */}
+              {/* Request Name */}
               <div className="flex items-center gap-2">
                 <UserRound className="w-12 h-12 text-gray-500" />
                 <div className="flex flex-col w-full">
@@ -72,7 +72,7 @@ function CreateCertificate() {
                 </div>
               </div>
 
-              {/* Purpose Radio Buttons */}
+              {/* Purpose */}
               <div className="mt-4">
                 <FormField
                   control={form.control}
@@ -101,7 +101,7 @@ function CreateCertificate() {
               </div>
             </div>
 
-            {/* Right Column */}
+            {/* Types of Clearance */}
             <div>
               <FormField
                 control={form.control}

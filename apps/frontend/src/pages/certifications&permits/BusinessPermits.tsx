@@ -1,10 +1,11 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+// import { Button } from "@/components/ui/button";
+// import TableLayout from '@/components/ui/table/table-layout.tsx';
+// import PaginationLayout from '@/components/ui/pagination/pagination-layout';
+import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import TableLayout from '@/components/ui/table/table-layout.tsx';
-import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus } from 'lucide-react';
-import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
+// import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -44,7 +45,16 @@ export const columns: ColumnDef<BusinessDocument>[] = [
     },
     {
         accessorKey: "businessname",
-        header: "Business Name",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Business Name
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("businessname")}</div>
     },
     {
         accessorKey: "address",
@@ -52,7 +62,16 @@ export const columns: ColumnDef<BusinessDocument>[] = [
     },
     {
         accessorKey: "gross",
-        header: "Gross Sales",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Gross Sales
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("gross")}</div>
     },
     {
         accessorKey: "paymentMethod",
@@ -60,17 +79,35 @@ export const columns: ColumnDef<BusinessDocument>[] = [
     },
     {
         accessorKey: "dateRequested",
-        header: "Date Requested",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Date Requested
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("dateRequested")}</div>
     },
     {
         accessorKey: "dateClaim",
-        header: "Date to Claim",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Date to Claim
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("dateClaim")}</div>
     },
 ];
 
 export const BusinessDocumentRecords: BusinessDocument[] = [
     {
-        requestNo: "CERT-001",
+        requestNo: "001",
         businessname: "John's Bakery",
         address: "123 Main St, Cityville",
         gross: "$50,000",
@@ -79,7 +116,7 @@ export const BusinessDocumentRecords: BusinessDocument[] = [
         dateClaim: "2024-02-25",
     },
     {
-        requestNo: "CERT-002",
+        requestNo: "002",
         businessname: "Jane's Cafe",
         address: "456 Elm St, Townsville",
         gross: "$30,000",
@@ -88,7 +125,7 @@ export const BusinessDocumentRecords: BusinessDocument[] = [
         dateClaim: "2024-02-26",
     },
     {
-        requestNo: "CERT-003",
+        requestNo: "003",
         businessname: "Mike's Auto Shop",
         address: "789 Oak St, Villagetown",
         gross: "$75,000",
@@ -104,7 +141,7 @@ function BusinessDocumentPage() {
     return (
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
-                <div className="text-center font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
+                <div className="text-left font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
                     <h1>BUSINESS PERMIT REQUEST</h1>
                 </div>
 
@@ -112,10 +149,13 @@ function BusinessDocumentPage() {
                     <div className='w-full flex justify-between mb-4 p-5'>
                         {/* Filter Section */}
                         <div className="flex gap-3">
-                            <Input
-                                placeholder="Filter by search..."
-                                className="max-w-sm"
-                            />
+                            <div className="relative flex items-center">
+                                <Search className="absolute left-3 text-gray-500" size={18} />
+                                <Input
+                                    placeholder="Search..."
+                                    className="pl-10 max-w-sm"
+                                />
+                            </div>
 
                             <SelectLayout
                                 className={''}
@@ -146,6 +186,16 @@ function BusinessDocumentPage() {
 
                     <DataTable columns={columns} data={data} />
                 </div>
+                <div className="flex justify-between items-center p-5 border-t border-gray-200">
+                        <span className="text-gray-500 text-[14px]">Showing 1-10 of 150 rows</span>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" className="text-gray-600"> <ChevronLeft className="w-4 h-4 mr-2" /> Previous  </Button>
+                            <Button variant="outline" className="px-3">1</Button>
+                            <span className="text-gray-600">2</span>
+                            <span className="text-gray-600">...</span>
+                            <Button variant="ghost" className="text-gray-600">Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
+                        </div>
+                    </div>
             </div>
         </div>
     );

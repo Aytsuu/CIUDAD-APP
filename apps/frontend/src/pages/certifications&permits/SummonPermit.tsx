@@ -1,12 +1,13 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+// import { Button } from "@/components/ui/button";
+// import TableLayout from '@/components/ui/table/table-layout.tsx';
+// import PaginationLayout from '@/components/ui/pagination/pagination-layout';
+import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import TableLayout from '@/components/ui/table/table-layout.tsx';
-import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus } from 'lucide-react';
-import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
+// import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
 import { DataTable } from "@/components/ui/table/data-table"
@@ -44,7 +45,16 @@ export const columns: ColumnDef<Permit>[] = [
     },
     {
         accessorKey: "name",
-        header: "Name",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Name
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>
     },
     {
         accessorKey: "address",
@@ -52,7 +62,16 @@ export const columns: ColumnDef<Permit>[] = [
     },
     {
         accessorKey: "respondentName",
-        header: "Respondent Name",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Respondent Name
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("respondentName")}</div>
     },
     {
         accessorKey: "respon_address",
@@ -64,13 +83,22 @@ export const columns: ColumnDef<Permit>[] = [
     },
     {
         accessorKey: "dateRequested",
-        header: "Date Requested",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Date Requested
+                <ArrowUpDown size={15} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="capitalize">{row.getValue("dateRequested")}</div>
     },
 ];
 
 export const PermitRecords: Permit[] = [
     {
-        CaseNo: "CASE-001",
+        CaseNo: "001",
         name: "John Doe",
         address: "123 Main St, Cityville",
         respondentName: "Jane Smith",
@@ -79,7 +107,7 @@ export const PermitRecords: Permit[] = [
         dateRequested: "2024-02-23",
     },
     {
-        CaseNo: "CASE-002",
+        CaseNo: "002",
         name: "Mike Johnson",
         address: "789 Oak St, Villagetown",
         respondentName: "Sarah Lee",
@@ -88,7 +116,7 @@ export const PermitRecords: Permit[] = [
         dateRequested: "2024-02-24",
     },
     {
-        CaseNo: "CASE-003",
+        CaseNo: "003",
         name: "Emily Davis",
         address: "654 Birch St, Forestville",
         respondentName: "Chris Brown",
@@ -104,7 +132,7 @@ function PermitPage() {
     return (
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
-                <div className="text-center font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
+                <div className="text-left font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
                     <h1>PERMIT REQUESTS</h1>
                 </div>
 
@@ -112,10 +140,13 @@ function PermitPage() {
                     <div className='w-full flex justify-between mb-4 p-5'>
                         {/* Filter Section */}
                         <div className="flex gap-3">
-                            <Input
-                                placeholder="Filter by search..."
-                                className="max-w-sm"
-                            />
+                            <div className="relative flex items-center">
+                                <Search className="absolute left-3 text-gray-500" size={18} />
+                                <Input
+                                    placeholder="Search..."
+                                    className="pl-10 max-w-sm"
+                                />
+                            </div>
 
                             <SelectLayout
                                 className={''}
@@ -146,6 +177,16 @@ function PermitPage() {
 
                     <DataTable columns={columns} data={data} />
                 </div>
+                <div className="flex justify-between items-center p-5 border-t border-gray-200">
+                        <span className="text-gray-500 text-[14px]">Showing 1-10 of 150 rows</span>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" className="text-gray-600"> <ChevronLeft className="w-4 h-4 mr-2" /> Previous  </Button>
+                            <Button variant="outline" className="px-3">1</Button>
+                            <span className="text-gray-600">2</span>
+                            <span className="text-gray-600">...</span>
+                            <Button variant="ghost" className="text-gray-600">Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
+                        </div>
+                    </div>
             </div>
         </div>
     );
