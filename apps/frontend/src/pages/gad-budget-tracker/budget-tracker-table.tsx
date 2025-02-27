@@ -178,7 +178,7 @@ function BudgetTracker() {
                 <div className="">
                       <DialogLayout
                       trigger={
-                      <Button>+ New Entry</Button>
+                      <div className="bg-primary text-white rounded-md p-3 text-sm font-semibold drop-shadow-sm">+ New Entry</div>
                       }
                       className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
                       title="Add New Entry"
