@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown/dropdown-menu"
  
 type Checked = DropdownMenuCheckboxItemProps["checked"]
  
