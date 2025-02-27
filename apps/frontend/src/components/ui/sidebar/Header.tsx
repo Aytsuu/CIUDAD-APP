@@ -9,7 +9,6 @@ import CardLayout from "../card/card-layout";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 
 export function Navbar() {
-
   const profileOptions = [
     {
       title: "View Profile",
@@ -29,7 +28,7 @@ export function Navbar() {
     <div>
       <div className="flex items-center">
         <div className="flex space-y-1 items-center gap-x-4">
-          <div className="w-10 h-10 rounded-full bg-black"></div>
+          <img src={sanRoqueLogo} alt="Barangay Logo" />
           <div>
             <p className="flex text-sm font-medium leading-none items-center gap-x-4">
               Sef{" "}
@@ -62,11 +61,11 @@ export function Navbar() {
       ))}
     </div>
   );
-  
+
   const profilePopOverHeaderDesc = (
     <div>
       <div className="flex items-center gap-x-2">
-        <div className="w-9 h-9 bg-black rounded-full"></div>
+        <img src={sanRoqueLogo} alt="Barangay Logo" />
         <div className="flex flex-col">
           <p className="text-lg font-medium text-black">Paolo Araneta</p>
           <p>paoloAraneta@gmail.com</p>
@@ -79,7 +78,7 @@ export function Navbar() {
     <header className="h-14 bg-white text-[#263D67] flex items-center justify-between px-6 w-full drop-shadow-md">
       <div className="flex items-center space-x-4 text-lg font-semibold cursor-pointer">
         <div className="h-[30px] w-[30px] rounded-full">
-          <img src={sanRoqueLogo} alt="Barangay Logo" />{" "}
+          <img src={sanRoqueLogo} alt="Barangay Logo" />
         </div>
         <p>CIUDAD</p>
       </div>
@@ -104,8 +103,8 @@ export function Navbar() {
         {/*  Profile Popover */}
         <Popover>
           <PopoverTrigger className="flex items-center space-x-2">
-            <div className="h-6 w-6 rounded-full bg-black"></div>
-            <h2 className="text-sm font-medium">paoloAraneta@gmail.com</h2>
+            <img src={sanRoqueLogo} alt="Barangay Logo" />
+            <h2 className="hidden sm:block text-sm font-medium">paoloAraneta@gmail.com</h2>
           </PopoverTrigger>
           <PopoverContent className="absolute right-0 top-2">
             <CardLayout
