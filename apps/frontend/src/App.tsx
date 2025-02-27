@@ -1,13 +1,16 @@
-import BudgetTracker from "./pages/gad-budget-tracker/budget-tracker-table";
-import GADBudgetTrackerMain from "./pages/gad-budget-tracker/budget-tracker-main";
+import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import { gad_router } from './routes/gad-router';
+
+const router = createBrowserRouter([
+  ...gad_router
+])
 
 function App() {
 
   return (
-    <> 
-      {/* <BudgetTracker/> */}
-      <GADBudgetTrackerMain/>
-    </> 
+    <>
+      <RouterProvider router={router}/>
+   </>
   )
 }
 
