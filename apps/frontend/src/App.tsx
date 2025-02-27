@@ -1,4 +1,4 @@
-import BudgetTracker from "./pages/gad-budget-tracker/budget-tracker-main";
+import BudgetTracker from "./pages/gad-budget-tracker/budget-tracker-table";
 
 function App() {
 
