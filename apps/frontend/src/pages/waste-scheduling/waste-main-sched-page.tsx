@@ -5,6 +5,7 @@ import WasteEventSched from "@/pages/waste-scheduling/waste-event-sched";
 import WasteColSched from "@/pages/waste-scheduling/waste-col-sched";
 import WasteHotSched from "@/pages/waste-scheduling/waste-hotspot-sched";
 import CalendarComp from "@/components/event-calendar";
+import { Plus } from "lucide-react";
 
 const scheduleComponents: Record<string, React.ReactNode> = {
   SchedEvent: <WasteEventSched />,
@@ -42,8 +43,9 @@ const WasteMainScheduling = () => {
             />
             <DialogLayout
               trigger={
-                <div className="w-[50px] h-[35px] border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-                  Create
+                <div className="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
+                  {" "}
+                  <Plus/> Create
                 </div>
               }
               className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
