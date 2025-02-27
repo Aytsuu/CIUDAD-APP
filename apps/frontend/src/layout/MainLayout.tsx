@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/ui/sidebar/Navbar";
 import { AppSidebar } from "@/components/ui/sidebar/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar/sidebar";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 export function MainLayout() {
   return (
     <div className="flex flex-col w- h-screen bg-none">

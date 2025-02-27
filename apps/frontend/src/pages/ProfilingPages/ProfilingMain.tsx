@@ -1,38 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  FaPlus,
-  FaFilter,
-  FaFileImport,
-  FaSort,
-  FaEllipsisV,
-} from "react-icons/fa";
-import { BsSearch } from "react-icons/bs";
+import { Plus, ClockArrowUp, FileInput, ArrowUpDown, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "../../components/ui/pagination/pagination";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
-import { Link } from "react-router-dom";
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router";
 import { Input } from "../../components/ui/input";
-
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "../../components/ui/table/data-table";
-import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import Modal from "../../components/profiling/FormTypeModal";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import RegistrationOptions from "./RegistrationOptions";
 
 // Define the type for the Report object
 type Report = {
@@ -108,7 +91,7 @@ export const columns: ColumnDef<Report>[] = [
     cell: ({ row }) => (
       <DialogLayout
         trigger={
-          <div className="w-[50px] h-[35px] border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
+          <div className="w-[50px] h-[35px] border flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
             View
           </div>
         }
@@ -145,56 +128,9 @@ export const reports: Report[] = [
     timeReported: "Lorem",
     date: "Lorem",
   },
-  {
-    id: "Lorem",
-    category: "Aorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
-  },{
-    id: "Lorem",
-    category: "Aorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
-  },{
-    id: "Lorem",
-    category: "Aorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
-  },{
-    id: "Lorem",
-    category: "Aorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
-  },{
-    id: "Lorem",
-    category: "Aorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
-  },
 ];
 
 export default function ProfilingMain() { 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const data = reports;
   
   return (
@@ -211,195 +147,46 @@ export default function ProfilingMain() {
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
 
-      <div className="flex flex-col gap-4 lg:hidden mb-4">
-        <div className="relative w-full">
-          <BsSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
-          <Input placeholder="Search..." className="pl-10 w-full" />
-        </div>
-        
-        <div className="flex justify-between gap-2">
-          <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FaFilter className="mr-1" />
-                <span className="hidden xs:inline">Filter</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>By Date</DropdownMenuItem>
-              <DropdownMenuItem>By Status</DropdownMenuItem>
-              <DropdownMenuItem>By Location</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <FaSort className="mr-1" />
-                  <span className="hidden xs:inline">Sort</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Name (A-Z)</DropdownMenuItem>
-                <DropdownMenuItem>Date (Newest)</DropdownMenuItem>
-                <DropdownMenuItem>Location</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          
-          <div className="flex gap-2">
-            <Link to="/profilingRequest">
-              <Button variant="outline" size="sm">Pending</Button>
-            </Link>
-            <Button size="sm" onClick={() => setIsModalOpen(true)}>
-              <FaPlus className="mr-1" />
-              <span className="hidden xs:inline">Register</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* The Header is hidden on small screens */}
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex gap-x-2">
           <div className="relative flex-1">
-            <BsSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
-            <Input placeholder="Search..." className="pl-10 w-72" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FaFilter className="mr-1" />
-                Filter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>By Date</DropdownMenuItem>
-              <DropdownMenuItem>By Status</DropdownMenuItem>
-              <DropdownMenuItem>By Location</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FaSort className="mr-1" />
-                Sort
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Name (A-Z)</DropdownMenuItem>
-              <DropdownMenuItem>Date (Newest)</DropdownMenuItem>
-              <DropdownMenuItem>Location</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <FaEllipsisV />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>...</DropdownMenuItem>
-              <DropdownMenuItem>...</DropdownMenuItem>
-              <DropdownMenuItem>...</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <SelectLayout 
+                placeholder="Filter by"
+                label=""
+                className="bg-white"
+                options={[]}
+                value=""
+                onChange={() => {}}
+            />
         </div>
         <div>
-          <div className="flex space-x-3 h-9">
+          <div className="flex gap-2">
             <Link to="/profilingRequest">
-              <Button variant="outline">Pending</Button>
+              <Button variant="outline">
+                <ClockArrowUp />
+                Pending
+              </Button>
             </Link>
 
             {/* Registration Button */}
-            <Button onClick={() => setIsModalOpen(true)}>
-              <FaPlus className="mr-1" />
-              Register
-            </Button>
+            <DialogLayout 
+              trigger={
+                <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90"> 
+                  <Plus size={15}/> Register
+                </div>
+              }
+              className=""
+              title=""
+              description=""
+              mainContent={<RegistrationOptions />}
+            />
           </div>
         </div>
       </div>
-
-      {/* Registration Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="p-4 sm:p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold">Register Resident</h2>
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Registration form content */}
-          <div className="mb-4">
-            <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Registration Form */}
-              <Link
-                to="/residentRegistration"
-                className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
-              >
-                {/* Background image */}
-                <div
-                  className="absolute inset-0 bg-[url('../assets/images/sanRoqueLogo.svg')] bg-cover bg-center 
-                      blur-sm group-hover:blur-none transition-all duration-300"
-                ></div>
-
-                {/* Overlay for better text visibility */}
-                <div
-                  className="absolute inset-0 bg-black/40 group-hover:bg-black/30 
-                      transition-all duration-300"
-                ></div>
-
-                {/* Text content */}
-                <div className="relative flex items-center justify-center h-full">
-                  <span className="text-white font-medium">
-                    Registration Form
-                  </span>
-                </div>
-              </Link>
-              <Link
-                to="/residentRegistration"
-                className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
-              >
-                {/* Background image */}
-                <div
-                  className="absolute inset-0 bg-[url('../assets/images/sanRoqueLogo.svg')] bg-cover bg-center 
-                      blur-sm group-hover:blur-none transition-all duration-300"
-                ></div>
-
-                {/* Overlay for better text visibility */}
-                <div
-                  className="absolute inset-0 bg-black/40 group-hover:bg-black/30 
-                      transition-all duration-300"
-                ></div>
-
-                {/* Text content */}
-                <div className="relative flex items-center justify-center h-full">
-                  <span className="text-white font-medium">
-                    Household Form
-                  </span>
-                </div>
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-4 sm:mt-6">
-            <Button
-              onClick={() => setIsModalOpen(false)}
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button>
-              Submit
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
@@ -412,13 +199,9 @@ export default function ProfilingMain() {
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="sm:text-base"
-                >
-                  <FaFileImport className="mr-1" />
-                  <span className="hidden xs:inline">Export</span>
+                <Button variant="outline">
+                  <FileInput />
+                  Export
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -441,49 +224,7 @@ export default function ProfilingMain() {
 
           {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <Pagination className="flex items-center gap-1 sm:gap-2">
-              <PaginationContent className="flex items-center gap-1">
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                  />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    href="#"
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                  >
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    href="#"
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                  >
-                    2
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem className="hidden xs:block">
-                  <PaginationLink
-                    href="#"
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                  >
-                    3
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem className="hidden xs:block">
-                  <PaginationEllipsis className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm" />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/20 font-normal text-xs sm:text-sm"
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <PaginationLayout />
           </div>
         </div>
       </div>

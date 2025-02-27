@@ -19,7 +19,7 @@ import {
 import { Button } from "../../../components/ui/button";
 import { PersonalFormData } from "../../../form-schema/profiling-schema/ProfilingDataType";
 import { personalFormSchema } from "../../../form-schema/profiling-schema/ProfilingSchema";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: PersonalFormData) => void;

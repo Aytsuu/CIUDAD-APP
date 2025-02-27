@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "../../components/ui/button";
 

@@ -1,18 +1,10 @@
 import { BsChevronLeft } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { BsSearch } from "react-icons/bs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FaFilter, FaSort } from "react-icons/fa";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "../../components/ui/pagination/pagination";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -149,7 +141,7 @@ export default function ProfilingRequest() {
           <p className="text-xs sm:text-sm text-darkGray">
             Submissions under review and pending authorization
           </p>
-        </div>
+        </div>  
       </div>
 
       <hr className="text-darkGray mt-2 mb-4 sm:mt-4 sm:mb-8" />
@@ -215,49 +207,7 @@ export default function ProfilingRequest() {
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
-              <Pagination className="flex items-center gap-1 sm:gap-2">
-                <PaginationContent className="flex items-center gap-1">
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                    />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink
-                      href="#"
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                    >
-                      1
-                    </PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink
-                      href="#"
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                    >
-                      2
-                    </PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem className="hidden xs:block">
-                    <PaginationLink
-                      href="#"
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/25 font-normal text-xs sm:text-sm"
-                    >
-                      3
-                    </PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem className="hidden xs:block">
-                    <PaginationEllipsis className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm" />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-gray/20 font-normal text-xs sm:text-sm"
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              <PaginationLayout />
             </div>
           </div>
         </div>

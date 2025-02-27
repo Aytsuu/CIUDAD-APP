@@ -11,7 +11,7 @@ import {
   DependentFormData,
 } from "../../../form-schema/profiling-schema/ProfilingDataType";
 import Progress from "../../../components/progress";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { BsChevronLeft } from "react-icons/bs";
 
 export function ProfilingForm() {

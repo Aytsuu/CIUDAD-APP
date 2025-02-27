@@ -1,6 +1,6 @@
 import ProfilingMain from "./pages/ProfilingPages/ProfilingMain";
 import { MainLayout } from "./layout/MainLayout";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import { ProfilingForm } from "./pages/ProfilingPages/FormPage/ProfilingForm";
 import ProfilingRequest from "./pages/ProfilingPages/ProfilingRequests";
 import ViewInfo from "./pages/ProfilingPages/ProfilingViewInfo";
