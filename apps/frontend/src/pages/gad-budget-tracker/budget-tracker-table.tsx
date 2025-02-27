@@ -12,6 +12,7 @@ import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { Calendar } from 'lucide-react';
 
 
 type header = {
@@ -144,9 +145,10 @@ function BudgetTracker() {
   return (
     <div className="w-full h-full bg-snow">
         <div className="mx-4 mb-4 mt-10 gap-4 flex flex-col p-5">
-          <div className="flex-col items-center mb-4">
-                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                    {year}
+          <div className="flex flex-col gap-3 mb-4">
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
+                    <div className="rounded-full border-2 border-solid border-darkBlue2 p-2 flex items-center"><Calendar></Calendar> </div>
+                    <div className="ml-2">{year}</div>
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
                     Manage and view income and expense records for year {year}.
