@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 
 function IncomeandDisbursementView(){
     const filter = [
-        { id: "0", name:"All"},
+        { id: "0", name:"All Supporting Documents"},
         { id: "1", name: "Income Supporting Documents"},
         { id: "2", name: "Disbursement Supporting Documents"}
     ];
@@ -18,6 +18,9 @@ function IncomeandDisbursementView(){
 
     return(
         <div className="mx-4 mb-4 mt-10">
+            <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>INCOME AND DISBURSEMENT MONITORING</p><br></br>
+            </div> 
              <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                 <div className="mb-[1rem] flex flex-col justify-between gap-2">
                     <div className="flex flex-row gap-5">

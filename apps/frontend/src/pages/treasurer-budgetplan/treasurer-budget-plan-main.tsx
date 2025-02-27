@@ -7,7 +7,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// import { Navigate } from "react-router";
+import { Link } from "react-router";
 
 
 export const columns: ColumnDef<BudgetPlan>[] = [
@@ -78,7 +78,7 @@ function BudgetPlan(){
                 <div className="mb-[1rem] flex flex-col justify-between gap-5">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <Input placeholder="Search" className="w-[20rem]"></Input>
-                        <Button>+ Add New</Button>
+                        <Link to="/treasurer-budgetplan-form"><Button>+ Add New</Button></Link>
                     </div>
                     <div>
                        <DataTable columns={columns} data={data}></DataTable>

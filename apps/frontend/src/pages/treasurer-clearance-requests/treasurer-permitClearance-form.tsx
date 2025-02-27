@@ -43,7 +43,7 @@ function PermitClearanceForm(){
                                 name="serialNo"
                                 render={({field}) => (
                                     <FormItem>
-                                        <FormLabel>Serial No.: </FormLabel>
+                                        <FormLabel>Serial No. </FormLabel>
                                         <FormControl>
                                             <Input {...field} type="number" placeholder="e.g.(123456)"></Input>
                                         </FormControl>

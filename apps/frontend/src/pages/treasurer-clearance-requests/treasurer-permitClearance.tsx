@@ -155,13 +155,6 @@ export const columns: ColumnDef<PermitClearance>[] = [
       )},
 ];
 
-//Dropdown Contents
-const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Pending" },
-    { id: "2", name: "Paid" },
-];
-
 
 type PermitClearance = {
     businessName: string,
@@ -171,7 +164,7 @@ type PermitClearance = {
     requestor: string,
     reqDate: string,
     claimDate: string,
-    paymentStat: string
+    paymentStat: "Paid" | "Pending"
 }
 
 export const PermitClearanceRecords: PermitClearance[] = [
@@ -183,7 +176,7 @@ export const PermitClearanceRecords: PermitClearance[] = [
         requestor: "Requestor",
         reqDate: "MM-DD-YYYY",
         claimDate: "MM-DD-YYYY",
-        paymentStat: "Status"
+        paymentStat: "Pending"
     },
 
 ]
@@ -191,11 +184,24 @@ export const PermitClearanceRecords: PermitClearance[] = [
 
 function PermitClearance(){
     const data = PermitClearanceRecords;
+    const filter = [
+        { id: "0", name: "All Payment Status" },
+        { id: "1", name: "Pending" },
+        { id: "2", name: "Paid" },
+    ];
+
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
+
+    const filteredData = selectedFilter === "All Payment Status" ? data 
+    : data.filter((item) => item.paymentStat === selectedFilter);
+    
 
     
     return(
         <div className="mx-4 mb-4 mt-10">
+            <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>CLEARANCE FOR PERMIT REQUESTS</p><br></br>
+            </div> 
              <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                 <div className="flex flex-col gap-5">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -217,7 +223,7 @@ function PermitClearance(){
                             </DialogLayout>
                         </div>
                     </div>
-                     <DataTable columns={columns} data={data}/>
+                     <DataTable columns={columns} data={filteredData}/>
                 </div>
              </div>
         </div>

@@ -48,7 +48,7 @@ export const columns: ColumnDef<PersonalClearance>[] = [
         cell: ({row}) => (
             <div className="">{row.getValue("claimDate")}</div>
         )},
-    { accessorKey: "payStat", header: "Payment Status"},
+    { accessorKey: "paymentStat", header: "Payment Status"},
     { accessorKey: "action", 
       header: "Action",
       cell: ({}) => (
@@ -126,7 +126,7 @@ type PersonalClearance = {
     purposes: string[],
     reqDate: string,
     claimDate: string,
-    payStat: string
+    paymentStat: "Paid" | "Pending"
 }
 
 
@@ -137,7 +137,7 @@ type PersonalClearance = {
             purposes: ["Purpose"],
             reqDate: "MM-DD-YYYY",
             claimDate: "MM-DD-YYYY",
-            payStat: "Status",
+            paymentStat: "Paid",
         },
     ];
 
@@ -146,20 +146,29 @@ type PersonalClearance = {
 function PersonalClearance(){
     const data = PersonalClearanceRecords;
     const filter = [
-        { id: "0", name: "All" },
+        { id: "0", name: "All Payment Status" },
         { id: "1", name: "Pending" },
         { id: "2", name: "Paid" },
     ];
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
+    const filteredData = selectedFilter === "All Payment Status" ? data 
+    : data.filter((item) => item.paymentStat === selectedFilter);
+    
     return (
             <div className="mx-4 mb-4 mt-10">
+                 <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>CLEARANCE FOR PERSONAL AND OTHER PURPOSES REQUESTS</p><br></br>
+            </div>
                 <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                     <div className="flex flex-col gap-5">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="flex flex-row gap-2">
+                            <div className="flex flex-row gap-7">
                                 <Input className="w-[20rem]" placeholder="Search" />
-                                <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                                <div className="flex flex-row gap-2 justify-center items-center">
+                                    <Label>Filter: </Label>
+                                    <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                                </div>                            
                             </div>
                             <div>
                                 <DialogLayout
@@ -175,7 +184,7 @@ function PersonalClearance(){
                                 />
                             </div>
                         </div>
-                        <DataTable columns={columns} data={data} />
+                        <DataTable columns={columns} data={filteredData} />
                     </div>
                 </div>
             </div>

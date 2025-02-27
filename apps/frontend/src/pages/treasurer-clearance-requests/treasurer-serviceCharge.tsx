@@ -105,6 +105,9 @@ function ServiceCharge(){
 
     return(
         <div className="mx-4 mb-4 mt-10">
+            <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>SERVICE CHARGE REQUESTS</p><br></br>
+            </div> 
             <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                 <div className="flex flex-col gap-5">
                     <div className="flex flex-row gap-2">

@@ -11,6 +11,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import BarangayServiceForm from "./treasurer-barangayService-form";
 import { ArrowUpDown } from "lucide-react";
 import ReceiptForm from "./treasurer-create-receipt-form";
+import { Label } from "@/components/ui/label";
 
 export const columns: ColumnDef<BarangayService>[] = [
     {accessorKey: "fname", header: "Firstname"},
@@ -71,7 +72,7 @@ type BarangayService = {
     fname: string,
     lname: string,
     paymentMethod: string,
-    paymentStat: string,
+    paymentStat: "Paid" | "Pending",
     reqDate: string,
     purposes: string[],
     receipt: string,
@@ -82,7 +83,7 @@ export const BarangayServiceRecords: BarangayService[] = [
         fname: "Firstname",
         lname: "Lastname",
         paymentMethod: "Method of Payment",
-        paymentStat: "Payment Status",
+        paymentStat: "Paid",
         reqDate: "MM-DD-YYYY",
         purposes: ["Purpose"],
         receipt: "Receipt"
@@ -95,20 +96,30 @@ function BarangayService(){
 
     const data = BarangayServiceRecords;
     const filter = [
-        { id: "0", name: "All" },
+        { id: "0", name: "All Payment Status" },
         { id: "1", name: "Pending" },
         { id: "2", name: "Paid" },
     ];
+
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+    const filteredData = selectedFilter === "All Payment Status" ? data 
+    : data.filter((item) => item.paymentStat === selectedFilter);
+    
 
     return(
         <div className="mx-4 mb-4 mt-10">
+            <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>BARANGAY SERVICE REQUESTS</p><br></br>
+            </div>  
              <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                  <div className="flex flex-col gap-5">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                          <div className="flex flex-row gap-2">
                             <Input className="w-[20rem]" placeholder="Search" />
-                            <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            <div className="flex flex-row gap-2 justify-center items-center">
+                                <Label>Filter: </Label>
+                                <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            </div>                        
                         </div>
                         <div>
                             <DialogLayout
@@ -123,7 +134,7 @@ function BarangayService(){
                             }></DialogLayout>
                         </div>
                     </div>
-                    <DataTable columns={columns} data={data}></DataTable>
+                    <DataTable columns={columns} data={filteredData}></DataTable>
                  </div>
              </div>
         </div>

@@ -7,7 +7,8 @@
     import { ColumnDef } from "@tanstack/react-table";
     import { ArrowUpDown} from "lucide-react";
     import { Trash } from 'lucide-react';
-    import { Pencil } from 'lucide-react';
+    import { Eye } from 'lucide-react';
+    import { Label } from "@/components/ui/label";
     import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
     import IncomeandExpenseCreateForm from "./treasurer-income-expense-tracker-create";
     import IncomeandExpenseEditForm from "./treasurer-income-expense-tracker-edit";
@@ -51,7 +52,7 @@
                 <TooltipLayout
                 trigger={
                     <DialogLayout
-                                trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Pencil size={16} /></div>}
+                                trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Eye size={16} /></div>}
                                 className="max-w-[50%] h-2/3 flex flex-col"
                                 title="Edit Entry"
                                 description="Update income or expense details to keep records accurate."
@@ -61,7 +62,7 @@
                                     </div>
                                 }
                     />
-                }  content="Update">
+                }  content="View">
                 </TooltipLayout>
                 <TooltipLayout 
                 trigger={
@@ -84,7 +85,7 @@
         date: string,
         particulars: string,
         amount: string,
-        entryType: string,
+        entryType: "Income" | "Expense",
         receiver: string,
         addNotes: string,
     }
@@ -95,7 +96,7 @@
             date: 'MM/DD/YYYY',
             particulars: 'Particulars',
             amount: "0.00",
-            entryType: "Type",
+            entryType: "Income",
             receiver: 'Receiver',
             addNotes: 'Additional Notes',
         }
@@ -106,25 +107,30 @@
         
         const data = IncomeExpenseRecords;
         const filter = [
-            {id: "0", name: "All"},
+            {id: "0", name: "All Entry Types"},
             {id: "1", name: "Income"},
             {id: "2", name: "Expense"   }
         ]
         const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-        const filteredData = selectedFilter === "All" 
+        const filteredData = selectedFilter === "All Entry Types" 
         ? data 
         : data.filter((item) => item.entryType === selectedFilter);
         
 
         return (
             <div className="mx-4 mb-4 mt-10">
+                <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
+                    <p>INCOME & EXPENSE TRACKER</p><br></br>
+                </div> 
                 <div className="bg-white border border-gray-300 rounded-[5px] p-5">
                     <div className="mb-[1rem] flex flex-row items-center justify-between gap-2">
                         <div className="flex flex-row gap-2">
                             <Input className="w-[20rem]"placeholder="Search"></Input>
-                            <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
-                        </div>
+                            <div className="flex flex-row gap-2 justify-center items-center">
+                                <Label>Filter: </Label>
+                                <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            </div>                        </div>
                         <DialogLayout
                             trigger={<Button>+ New Entry</Button>}
                             className="max-w-md"
