@@ -5,7 +5,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button";
 import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-import { Pencil, Trash, Eye, Plus } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Search } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import AddEvent from '@/pages/AddEvent-Modal';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -17,18 +17,44 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 
-export const columns: ColumnDef<Resolution>[] = [
+export const columns: ColumnDef<Meeting>[] = [
     {
         accessorKey: "meetingDate", // Key for location data
         header: "Date", // Column header
+        cell: ({ row }) => (
+            <div className="w-[100px]">
+                {row.getValue("meetingDate")}
+            </div>
+        ),
     },    
     {
         accessorKey: "meetingAgenda",
         header: "Meeting Agenda",
+        cell: ({ row }) => (
+            <div className="w-[450px]">
+                {row.getValue("meetingAgenda")}
+            </div>
+        ),
     },
     {
         accessorKey: "meetingTitle",
         header: "Meeting Title",
+        cell: ({ row }) => (
+            <div className="w-[150px]">
+                {row.getValue("meetingTitle")}
+            </div>
+        ),
+    },
+    {
+        accessorKey: "meetingAreaOfFocus",
+        header: "Area of Focus",
+        cell: ({ row }) => (
+            <div className="text-center space-y-1 w-[150px]"> {/* Add text-left and space-y-1 for spacing */}
+                {row.original.meetingAreaOfFocus.join("\n").split("\n").map((line, index) => (
+                    <div key={index} className="text-sm">{line}</div>
+                ))}
+            </div>
+        )
     },
     {
         accessorKey: "action", // Key for action data
@@ -79,27 +105,31 @@ export const columns: ColumnDef<Resolution>[] = [
     },
 ]
 
-type Resolution = {
+type Meeting = {
     meetingDate: string
     meetingTitle: string
     meetingAgenda: string
+    meetingAreaOfFocus: string[]
 }
 
-export const resolutionRecords: Resolution[] = [
+export const meetingRecords: Meeting[] = [
     {
         meetingDate: "02/10/24",
-        meetingTitle: "Vivamus a tellus. Pellentesque MinutesOfMeetingPage MinutesOfMeetingPage MinutesOfMeetingPage",
-        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et"
+        meetingTitle: "Budget Plan Meeting",
+        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et",
+        meetingAreaOfFocus: ["GAD", "Council"]
     },
     {
         meetingDate: "02/13/24",
-        meetingTitle: "Escuchas a tellus. Pellentesque ",
-                meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et"
+        meetingTitle: "Escuchas a tellus Hectesus ",
+        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et",
+        meetingAreaOfFocus: ["GAD"]
     },
     {
         meetingDate: "02/15/24",
         meetingTitle: "Las Palabras Pellentesque ",
-        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et"
+        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et",
+        meetingAreaOfFocus: ["GAD", "Waste Committee"]
     },
 ]
 
@@ -107,43 +137,59 @@ export const resolutionRecords: Resolution[] = [
 
 function MinutesOfMeetingPage() {
 
-    const data = resolutionRecords;
+    const data = meetingRecords;
+
+    const filterOptions = [
+        { id: "all", name: "All" }, // Use "all" instead of an empty string
+        { id: "Council", name: "Council" },
+        { id: "Waste Committee", name: "Waste Committee" },
+        { id: "GAD", name: "GAD" }
+    ];
+
+    const [filter, setFilter] = useState<string>("all"); // Default to "all"
+
+    const filteredData = filter === "all"
+        ? meetingRecords
+        : meetingRecords.filter(record => record.meetingAreaOfFocus.includes(filter));
 
     return (
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
-                <div className="text-lg font-semibold leading-non tracking-tight pb-3 text-[#394360]">
-                    <h1>Minutes of Meeting</h1>
+                <div className="flex-col items-center mb-4">
+                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                        Minutes Of Meeting
+                    </h1>
+                    <p className="text-xs sm:text-sm text-darkGray">
+                        Manage and view documentation information
+                    </p>
                 </div>
+                <hr className="border-gray mb-6 sm:mb-10" /> 
 
-                <div className="w-full bg-white border border-gray rounded-[5px]">
-                    <div className='w-full flex justify-between mb-4 p-5'>
-                        {/**FILTER (SELECT)*/}
-                        <div className="flex gap-3">
-                            <Input
-                                placeholder="Filter by search..."
-                                className="max-w-sm"
-                            />
-
-                            <SelectLayout
-                                className = {''}
-                                label=""
-                                placeholder="Filter"
-                                options={[
-                                    { id: "Council", name: "Council" },
-                                    { id: "Waste", name: "Waste" },
-                                    { id: "GAD", name: "GAD" }
-                                ]}
-                                value=""
-                                onChange={() => { }}
-                            />                                
+                <div className='w-full flex justify-between mb-4'>
+                    {/**FILTER (SELECT)*/}
+                    <div className="flex gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                            <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
                         </div>
-                        <div>
-                            <Link to=""><Button>Create<Plus className="ml-2" /></Button></Link>
-                        </div>
-                    </div>                    
 
-                    <DataTable columns={columns} data={data} />
+                        <SelectLayout
+                            className={''}
+                            label=""
+                            placeholder="Filter"
+                            options={filterOptions}
+                            value={filter}
+                            onChange={(value) => setFilter(value)} // Update the filter state
+                        />                            
+                    </div>
+                    <div>
+                        <Link to=""><Button>Create<Plus className="ml-2" /></Button></Link>
+                    </div>
+                </div>                    
+
+                <div className="w-full bg-white border border-gray rounded-[5px]">                
+
+                    <DataTable columns={columns} data={filteredData} />
                 </div>                
             </div>
         </div>

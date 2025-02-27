@@ -136,7 +136,7 @@ function AttendancePage() {
                         Attendance Record
                     </h1>
                     <p className="text-xs sm:text-sm text-darkGray">
-                        Manage and view attendance information
+                        Mark and view attendance information
                     </p>
                 </div>
                 <hr className="border-gray mb-6 sm:mb-10" />       
