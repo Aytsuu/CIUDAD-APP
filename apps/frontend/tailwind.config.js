@@ -66,6 +66,7 @@ module.exports = {
     				border: 'hsl(var(--sidebar-border))',
     				ring: 'hsl(var(--sidebar-ring))'
     			},
+				buttonBlue: '#2563EB',
     			snow: '#F3F4F8',
     			blue: '#1273B8',
     			lightBlue: '#EFF6FE',
