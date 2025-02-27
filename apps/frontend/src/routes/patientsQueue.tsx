@@ -7,7 +7,7 @@ import ProcessingQueueTable from "@/pages/PATIENTSQUEUE/PROCESSINGQUEUE/processi
             element: <MainPatientQueueTable/>
           },
           {
-            path: '/processingQueue',
+            path: '/processingQueue', 
             element: <ProcessingQueueTable/>
           }
 

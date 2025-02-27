@@ -14,54 +14,45 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
-import CombinedSchema from "@/form-schema/vaccineSchema";
+import { VitalSignsSchema, VitalSignsType } from "@/form-schema/vaccineSchema";
 import { Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function VaccinationForm() {
-  type VaccineSchema = z.infer<typeof CombinedSchema>;
-
   // Form handling
-  const form = useForm<VaccineSchema>({
-    resolver: zodResolver(CombinedSchema),
+  const form = useForm<VitalSignsType>({
+    resolver: zodResolver(VitalSignsSchema),
     defaultValues: {
-      vaccinetype: "",
-      datevaccinated: "",
-      lname: "",
-      fname: "",
-      mname: "",
-      age: "",
-      sex: "",
-      dob: "",
-      houseno: "",
-      street: "",
-      sitio: "",
-      barangay: "",
-      province: "",
-      city: "",
       pr: "",
       temp: "",
       bp: "",
       o2: "",
-      assignto:"",
-       isTransient: "Resident",
     },
   });
 
-  // Text fields configuration
-  const nameFields = [
-    { name: "fname", label: "First Name", placeholder: "First Name" },
-    { name: "mname", label: "Middle Name", placeholder: "Middle Name" },
-    { name: "lname", label: "Last Name", placeholder: "Last Name" },
-  ];
-
-  const addressFields = [
-    { name: "houseno", label: "House No.", placeholder: "Enter house number" },
-    { name: "street", label: "Street", placeholder: "Enter street" },
-    { name: "sitio", label: "Sitio", placeholder: "Enter sitio" },
-    { name: "barangay", label: "Barangay", placeholder: "Enter barangay" },
-    { name: "city", label: "City", placeholder: "Enter city" },
-    { name: "province", label: "Province", placeholder: "Enter province" },
-  ];
+  // Static values for read-only fields
+  const isTransient = "transient"; // Example value
+  const vaccineType = "Flu"; // Example value
+  const dateVaccinated = "2023-10-05"; // Example value
+  const nameValues = {
+    FirstName: "John",
+    LastName: "Doe",
+    MiddleName: "Smith",
+  }; // Example values
+  const age = 30; // Example value
+  const sex = "Male"; // Example value
+  const dob = "1993-10-05"; // Example value
+  const addressValues = {
+    HouseNo: "12",
+    Street: "123 Main St",
+    Sitio: "New York",
+    Barangay: "NY",
+    City: "NY",
+    Province: "NY",
+  }; // Example values
+  const signature = "https://via.placeholder.com/150"; // Example value
+  const assignedTo = "Kenxcfdffdfdffffeme"; // Example value
 
   const vitalSignsFields = [
     { name: "pr", label: "PR", placeholder: "Enter PR" },
@@ -75,7 +66,7 @@ export default function VaccinationForm() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showSuccessfulModal, setShowSuccessfulModal] = useState(false);
 
-  const saveData = async (data: VaccineSchema) => {
+  const saveData = async (data: VitalSignsType) => {
     console.log("Form submitted", data);
     setShowSuccessfulModal(true);
     form.reset();
@@ -100,8 +91,8 @@ export default function VaccinationForm() {
       {/* Main Form Dialog */}
       <DialogLayout
         trigger={
-          <div className="border-green-600  text-green-700 border border-green h-9 px-4 py-2 rounded-md">
-            <Check size={16} />
+          <div className="border-green-600 text-green-700 border border-green h-9 px-4 py-2 rounded-md">
+           Assess
           </div>
         }
         className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
@@ -116,163 +107,130 @@ export default function VaccinationForm() {
                 })}
                 className="space-y-6"
               >
-                <h1 className="font-extrabold text-darkBlue1">STEP 1</h1>
-                {/* Vaccine Type and Date Vaccinated */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="vaccinetype"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Vaccine Type</FormLabel>
-                        <FormControl>
-                          <SelectLayout
-                            className="w-full"
-                            label="Vaccine Type"
-                            placeholder="Select"
-                            options={[
-                              { id: "flu", name: "Flu" },
-                              { id: "covid", name: "Covid" },
-                            ]}
-                            value={String(field.value)}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div>
+                  {/* Transient Checkbox (Read-Only) */}
+                  <div className="flex justify-end w-full sm:w-auto sm:ml-auto py-2">
+                    <div className="flex flex-row items-center space-x-3 space-y-0">
+                      <Checkbox
+                        checked={isTransient?.toLowerCase() === "transient"}
+                        disabled
+                      />
+                      <Label className="leading-none">Transient</Label>
+                    </div>
+                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="datevaccinated"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date Vaccinated</FormLabel>
-                        <FormControl>
-                          <Input type="date" className="w-full" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <h1 className="font-extrabold text-darkBlue1">STEP 1</h1>
+
+                  {/* Vaccine Type and Date Vaccinated (Read-Only) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Vaccine Type</Label>
+                      <Input
+                        value={vaccineType}
+                        readOnly
+                        className="w-full mt-2 bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Date Vaccinated</Label>
+                      <Input
+                        type="date"
+                        value={dateVaccinated}
+                        readOnly
+                        className="w-full mt-2   bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Name Fields (Read-Only) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 mb-4">
+                    {Object.entries(nameValues).map(([name, value]) => (
+                      <div key={name}>
+                        <Label>{name}</Label>
+                        <Input
+                          value={value}
+                          readOnly
+                          className="bg-gray-100 mt-2  cursor-not-allowed"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Age and Sex Fields (Read-Only) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+                    <div>
+                      <Label>Age</Label>
+                      <Input
+                        value={age}
+                        readOnly
+                        type="number"
+                        className="bg-gray-100 mt-2 cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Sex</Label>
+                      <Input
+                        value={sex}
+                        readOnly
+                        className="bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Date of Birth</Label>
+                      <Input
+                        type="date"
+                        value={dob}
+                        readOnly
+                        className="w-full bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  <h2 className="font-bold">Address</h2>
+
+                  {/* Address Fields (Read-Only) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    {Object.entries(addressValues).map(([name, value]) => (
+                      <div key={name}>
+                        <Label>{name}</Label>
+                        <Input
+                          value={value}
+                          readOnly
+                          className="bg-gray-100 mt-2 cursor-not-allowed"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Signature and Assigned Step 2 (Read-Only) */}
+                  <div className="pt-5 flex flex-col sm:flex-row w-full justify-between gap-4 sm:gap-6">
+                    {/* Signature Section (Read-Only) */}
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                      <Label className="text-sm sm:text-base">Signature:</Label>
+                      <img
+                        src={signature}
+                        alt="Signature"
+                        className="w-20 h-20  sm:w-24 sm:h-24 object-cover rounded-full"
+                      />
+                    </div>
+
+                    {/* Assigned Step 2 Dropdown (Read-Only) */}
+                    <div className="w-full sm:w-auto">
+                      <Label className="text-sm ">Assigned Step 2 by:</Label>
+                      <Input
+                        value={assignedTo}
+                        readOnly
+                        className="w-full sm:w-[265px]  mb-2 bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Name Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {nameFields.map(({ name, label, placeholder }) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as keyof VaccineSchema}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{label}</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="text"
-                              value={String(field.value)}
-                              placeholder={placeholder}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
+                <hr className="border-gray mb-6 sm:mb-10" />
 
-                {/* Age and Sex Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Age</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="number" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="sex"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sex</FormLabel>
-                        <FormControl>
-                          <SelectLayout
-                            className="w-full"
-                            label="Sex"
-                            placeholder="Select"
-                            options={[
-                              { id: "female", name: "Female" },
-                              { id: "male", name: "Male" },
-                            ]}
-                            value={String(field.value)}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="dob"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date of Birth</FormLabel>
-                        <FormControl>
-                          <Input type="date" className="w-full" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <h2 className="font-bold">Address</h2>
-
-                {/* Address Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {addressFields.map(({ name, label, placeholder }) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as keyof VaccineSchema}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{label}</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="text"
-                              value={String(field.value)}
-                              placeholder={placeholder}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-
-                <div className="flex justify-end items-center mt-4 gap-2">
-                  <FormLabel>Signature:</FormLabel>
-                  <img
-                    src="https://via.placeholder.com/150"
-                    alt="Sample Image"
-                    className="w-100 h-200 object-cover rounded-full"
-                  />
-                </div>
                 <h1 className="font-extrabold text-darkBlue1">STEP 2</h1>
 
                 <h2 className="font-bold">Vital Signs</h2>
@@ -283,7 +241,7 @@ export default function VaccinationForm() {
                     <FormField
                       key={name}
                       control={form.control}
-                      name={name as keyof VaccineSchema}
+                      name={name as keyof VitalSignsType}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{label}</FormLabel>
@@ -326,23 +284,26 @@ export default function VaccinationForm() {
             <div className="p-6 text-center">
               <h3 className="text-lg font-semibold">Confirmation</h3>
               <p className="mt-2 text-gray-600">
-                Are you sure you want Proceed?
+                Are you sure you want to proceed?
               </p>
-              <Button
-                variant={"outline"}
-                onClick={handleConfirmationClose}
-                className="mt-6 w-[120px]"
-              >
-                No
-              </Button>
-              <Button onClick={handleSuccessfulShow} className="mt-6 w-[120px]">
-                Yes
-              </Button>
+              <div className="flex justify-center gap-3 mt-6">
+                <Button
+                  variant={"outline"}
+                  onClick={handleConfirmationClose}
+                  className="w-[120px]"
+                >
+                  No
+                </Button>
+                <Button onClick={handleSuccessfulShow} className="w-[120px]">
+                  Yes
+                </Button>
+              </div>
             </div>
           }
         />
       )}
 
+      {/* Success Modal */}
       {showSuccessfulModal && (
         <DialogLayout
           trigger={<div />}
