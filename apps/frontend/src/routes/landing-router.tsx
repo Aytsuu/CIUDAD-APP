@@ -8,10 +8,12 @@ import Donation from '@/pages/landing/donation';
 import BarangayCouncil from '@/pages/landing/barangay-council';
 import MobileApp from '@/pages/landing/mobile-app';
 import { AppSidebar } from '@/components/ui/sidebar/app-sidebar';
+import MainLayout from '@/layout/MainLayout';
+
 export const landing_router = [
   {
     path: "/",
-    element: <AppSidebar />, // Layout will wrap all the nested routes
+    element: <MainLayout />, // Layout will wrap all the nested routes
     children: [
       {
         path: "/",

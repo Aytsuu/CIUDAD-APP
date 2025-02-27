@@ -114,10 +114,11 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
 
 export function AppSidebar() {
   return (
-    <Sidebar className="pt-14 border-none">
+    <Sidebar className="border-none">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
+            <div className='w-full h-14'></div>
             <SidebarMenu>
               {items.map((item) => (
                 <MenuItem key={item.title} item={item} />
