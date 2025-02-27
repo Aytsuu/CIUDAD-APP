@@ -1,7 +1,7 @@
 import React from "react";
-import AdministrativePositions from "./administrative-positions";
-import FeatureSelection from "./feature-selection";
-import SettingPermissions from "./setting-permissions";
+import AdministrativePositions from "./AdministrativePositions";
+import FeatureSelection from "./FeatureSelection";
+import SettingPermissions from "./SettingPermissions";
 import { Check, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Permissions } from "./_types";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router";
+import { ChevronLeft } from "lucide-react";
 
 const features: Record<string, string> = {
     profiling: "Profiling",
@@ -57,11 +59,34 @@ export default function RoleLayout() {
     return initialPermissions
     })
 
+    const navigate = useNavigate();
     const hasSelectedFeature = Object.values(selectedFeatures).some((value) => value === true);
 
     return (
-        <div className="w-screen h-screen bg-snow flex justify-center items-center">
-            <div className="w-[80%] h-4/5 bg-white border border-gray rounded-[5px] flex">
+        <div className="w-full h-full flex flex-col">
+            {/* Header Section */}
+            <div className="flex items-center mb-4 gap-3 mb-4">
+                {/* Header - Stacks vertically on mobile */}
+                <Button 
+                    className="text-black p-2 self-start"
+                    variant={"outline"}
+                    onClick={() => navigate(-1)}
+                >
+                    <ChevronLeft />
+                </Button>
+                <div className="flex flex-col">
+                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                        Roles
+                    </h1>
+                    <p className="text-xs sm:text-sm text-darkGray">
+                        Submissions under review and pending authorization
+                    </p>
+                </div>  
+            </div>
+
+            <hr className="border-gray mb-5 sm:mb-8" />
+
+            <div className="w-full h-4/5 bg-white border border-gray rounded-[5px] flex">
                 <div className="w-1/2 h-full flex flex-col gap-4 p-5">
                     <div className="w-full flex justify-between items-start">
                         <Label className="text-[22px] text-darkBlue1">Positions</Label>

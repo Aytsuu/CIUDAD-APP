@@ -7,13 +7,13 @@ import Services from '@/pages/landing/services';
 import Donation from '@/pages/landing/donation';
 import BarangayCouncil from '@/pages/landing/barangay-council';
 import MobileApp from '@/pages/landing/mobile-app';
-import { AppSidebar } from '@/components/ui/sidebar/app-sidebar';
-import MainLayout from '@/layout/MainLayout';
+import { RouteObject } from 'react-router';
 
-export const landing_router = [
+
+export const landing_router: RouteObject[] = [
   {
     path: "/",
-    element: <MainLayout />, // Layout will wrap all the nested routes
+    element: <LandingLayout />, // Layout will wrap all the nested routes
     children: [
       {
         path: "/",

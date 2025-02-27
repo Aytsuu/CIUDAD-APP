@@ -1,6 +1,5 @@
 import { BsChevronLeft } from "react-icons/bs";
 import { Link } from "react-router";
-import { BsSearch } from "react-icons/bs";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
@@ -10,6 +9,8 @@ import { ArrowUpDown, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import ViewInfo from "../../pages/ProfilingPages/ProfilingViewInfo";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button";
 
 // Define the type for the Report object
 type Report = {
@@ -117,16 +118,19 @@ export const reports: Report[] = [
 
 export default function ProfilingRequest() {
   const data = reports;
+  const navigate = useNavigate();
+
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-2 py-4">
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         {/* Header - Stacks vertically on mobile */}
-        <Link
-          to="/"
-          className="text-black p-2 hover:bg-darkGray/25 hover:rounded-full self-start"
+        <Button 
+          className="text-black p-2 self-start"
+          variant={"outline"}
+          onClick={() => navigate(-1)}
         >
           <BsChevronLeft />
-        </Link>
+        </Button>
         <div className="flex flex-col">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Awaiting Approval
@@ -137,7 +141,7 @@ export default function ProfilingRequest() {
         </div>  
       </div>
 
-      <hr className="text-darkGray mt-2 mb-4 sm:mt-4 sm:mb-8" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Search and filters - Stacks on mobile */}
       <div className="mb-4">
@@ -167,7 +171,7 @@ export default function ProfilingRequest() {
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-8" defaultValue="10" />
+                <Input type="number" className="w-14 h-8" defaultValue="10" />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
           </div>

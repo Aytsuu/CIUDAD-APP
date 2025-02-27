@@ -8,7 +8,7 @@ import { Button } from "../button";
 import CardLayout from "../card/card-layout";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 
-export function Navbar() {
+export function Header() {
   const profileOptions = [
     {
       title: "View Profile",
@@ -104,7 +104,7 @@ export function Navbar() {
         <Popover>
           <PopoverTrigger className="flex items-center space-x-2">
             <img src={sanRoqueLogo} alt="Barangay Logo" />
-            <h2 className="hidden sm:block text-sm font-medium">paoloAraneta@gmail.com</h2>
+            <h2 className="hidden sm:block text-sm font-medium">Mesh You</h2>
           </PopoverTrigger>
           <PopoverContent className="absolute right-0 top-2">
             <CardLayout

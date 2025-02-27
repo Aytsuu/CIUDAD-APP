@@ -5,7 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 import { Link, Outlet } from "react-router";
@@ -191,19 +191,18 @@ export default function ProfilingMain() {
   const data = reports;
   
   return (
-    <div className="w-full flex">
-      <div className="w-full px-2 sm:px-4 md:px-6">
+    <div className="w-full">
       <Outlet />
       {/* Header Section */}
-      <div className="flex-col items-center mb-4">
+      <div className="flex flex-col justify-center mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Resident Record
+          Resident Records
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
           Manage and view resident information
         </p>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* The Header is hidden on small screens */}
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
@@ -223,7 +222,7 @@ export default function ProfilingMain() {
         </div>
         <div>
           <div className="flex gap-2">
-            <Link to="/profilingRequest">
+            <Link to="/registration-request">
               <Button variant="outline">
                 <ClockArrowUp />
                 Pending
@@ -286,8 +285,6 @@ export default function ProfilingMain() {
           </div>
         </div>
       </div>
-    </div>
-    </div>
-    
+    </div> 
   );
 }

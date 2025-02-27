@@ -53,11 +53,19 @@ const RecentRecord = ({ title, status }: RecentRecordProps) => (
 // Main component for the DRR Monthly AR Report
 export default function DRRMonthlyARReport() {
     return (
-        // Main container for the page
-        <div className="w-screen h-screen bg-snow flex justify-center items-center p-4 sm:p-0">
-            {/* Container for the left and right sections */}
-            <div className="w-full sm:w-[80%] h-full sm:h-4/5 flex flex-col-reverse sm:flex-row gap-3">
+        <div className="w-full h-full flex flex-col">
+            {/* Header Section */}
+            <div className="flex-col items-center mb-4">
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                    Resident Reports
+                </h1>
+                <p className="text-xs sm:text-sm text-darkGray">
+                    Manage and view reports
+                </p>
+            </div>
+            <hr className="border-gray mb-5 sm:mb-8" />
 
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
                 {/* Left Section: Displays months as cards */}
                 <div className="w-full sm:w-full h-auto sm:h-full flex flex-col bg-white border border-gray rounded-[5px] p-3 sm:p-5 gap-3">
                     {/* Year selection dropdown */}

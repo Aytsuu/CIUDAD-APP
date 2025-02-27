@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Link } from "react-router";
+import { Search } from "lucide-react";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Button } from "@/components/ui/button";
 
 // Define the type for the record object
 type Record = {
@@ -118,22 +122,49 @@ export default function DRRStaffRecord() {
     const data = records; // Assign sample data to `data`
 
     return (
-        // Main container for the page
-        <div className="w-screen h-screen bg-snow flex justify-center items-center">
-            {/* Container for the DataTable */}
-            <div className="w-[80%] h-4/5  flex flex-col">
-                <div className="w-full h-full bg-white border border-gray rounded-[5px]">
-                    <div className="w-full flex items-center p-5">
-                        <Input
-                            placeholder="Filter by search..."
-                            className="max-w-sm"
+        <div className="w-full h-full  flex flex-col">
+            {/* Header Section */}
+            <div className="flex-col items-center mb-4">
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                    Staff Records
+                </h1>
+                <p className="text-xs sm:text-sm text-darkGray">
+                    Manage and view staff information
+                </p>
+            </div>
+            <hr className="border-gray mb-5 sm:mb-8" />
+
+            <div>  
+                <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+                    <div className="flex gap-x-2">
+                        <div className="relative flex-1 bg-white">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                            <Input placeholder="Search..." className="pl-10 w-72" />
+                        </div>
+                        <SelectLayout 
+                            placeholder="Filter by"
+                            label=""
+                            className="bg-white"
+                            options={[]}
+                            value=""
+                            onChange={() => {}}
                         />
                     </div>
-                    {/* DataTable component to display the records */}
-                    <DataTable columns={columns} data={data} />
                 </div>
-                <PaginationLayout className="justify-end h-[10%]"/>
             </div>
+
+            <div className="w-full h-full bg-white border border-gray rounded-[5px]">
+                <div className="w-full flex items-center p-3">
+                    <div className="flex gap-x-2 items-center">
+                        <p className="text-xs sm:text-sm">Show</p>
+                            <Input type="number" className="w-14 h-8" defaultValue="10" />
+                        <p className="text-xs sm:text-sm">Entries</p>
+                    </div>
+                </div>
+                {/* DataTable component to display the records */}
+                <DataTable columns={columns} data={data} />
+            </div>
+            <PaginationLayout className="justify-end h-[10%]"/>
         </div>
     );
 } 

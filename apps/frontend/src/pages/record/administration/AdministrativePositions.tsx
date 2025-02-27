@@ -25,7 +25,7 @@ export default function AdministrativePositions({selectedPosition, setSelectedPo
             {
                 positions.map((position) => (
                     <div key={position.id} 
-                        className={`w-full h-[7%] flex justify-between items-center hover:bg-lightBlue/40 p-3 rounded-md cursor-pointer 
+                        className={`w-full flex justify-between items-center hover:bg-lightBlue/40 p-3 rounded-md cursor-pointer 
                             ${position.id == selectedPosition ? "bg-lightBlue" : ""}`}
                         onClick={()=>{setSelectedPosition(position.id)}}
                     >

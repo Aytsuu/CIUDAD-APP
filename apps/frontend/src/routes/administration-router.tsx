@@ -1,13 +1,13 @@
-import RoleLayout from "@/pages/record/administration/role-layout"
-import AdministrativeRecords from "@/pages/record/administration/administrative-records"
+import RoleLayout from "@/pages/record/administration/RoleLayout"
+import AdministrativeRecords from "@/pages/record/administration/AdministrativeRecords"
 
 export const administration_router = [
     {
-        path: '/administrative',
+        path: 'administrative',
         element: <AdministrativeRecords /> 
     },
     {
-        path: '/role',
+        path: 'role',
         element: <RoleLayout /> 
     }
 ]

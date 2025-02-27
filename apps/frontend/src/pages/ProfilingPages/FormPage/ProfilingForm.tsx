@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/card/card";
 import { useState } from "react";
 import PersonalInfoForm from "./PersonalInfoForm";
 import ParentsForm from "./ParentsForm";

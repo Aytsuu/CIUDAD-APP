@@ -5,7 +5,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { ArrowUpDown, Plus, Pen, UserRoundCog, Filter } from "lucide-react";
+import { ArrowUpDown, Plus, Pen, UserRoundCog, Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 type Record = {
@@ -114,22 +114,35 @@ export default function AdministrativeRecords(){
     const data = records;
 
     return(
-        <div className="relative w-full h-[100vh] bg-snow flex flex-col justify-center items-center">
-            <div className="w-[80%] h-4/5 flex flex-col">
-                <div className="w-full h-full bg-white border border-gray rounded-[5px] flex flex-col">
-                    <div className="w-full flex justify-between p-5">
-                        <div className="w-1/3 flex gap-2">
-                            <Input type="text" placeholder="Search..."/>
-                            <SelectLayout 
-                                label=""
-                                placeholder="Filter by"
-                                className=""
-                                options={[]}
-                                value=""
-                                onChange={() => {}} 
-                            />
+        <div className="w-full h-full flex flex-col">
+            {/* Header Section */}
+            <div className="flex-col items-center mb-4">
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                    Administrative Records
+                </h1>
+                <p className="text-xs sm:text-sm text-darkGray">
+                    Manage and view staff information
+                </p>
+            </div>
+            <hr className="border-gray mb-5 sm:mb-8" />
+
+            <div>  
+                <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+                    <div className="flex gap-x-2">
+                        <div className="relative flex-1 bg-white">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                            <Input placeholder="Search..." className="pl-10 w-72" />
                         </div>
-                        
+                        <SelectLayout 
+                            placeholder="Filter by"
+                            label=""
+                            className="bg-white"
+                            options={[]}
+                            value=""
+                            onChange={() => {}}
+                        />
+                    </div>
+                    <div>
                         <div className="flex gap-2">
                             <Link to="/role">
                                 <Button > 
@@ -141,11 +154,34 @@ export default function AdministrativeRecords(){
                             </Button>
                         </div>
                     </div>
-                    <DataTable columns={columns} data={data}/>
                 </div>
-                <PaginationLayout className="justify-end h-[10%]"/>
-            </div>  
-        </div>
+            </div>
+            
+            <div className="w-full flex flex-col">
+                <div className="w-full h-auto bg-white p-3">
+                    <div className="flex gap-x-2 items-center">
+                        <p className="text-xs sm:text-sm">Show</p>
+                            <Input type="number" className="w-14 h-8" defaultValue="10" />
+                        <p className="text-xs sm:text-sm">Entries</p>
+                    </div>
+                </div>
+                <div className="bg-white w-full overflow-x-auto">
+                    {/* Table Placement */}
+                    <DataTable columns={columns} data={data} />
+                </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                {/* Showing Rows Info */}
+                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                    Showing 1-10 of 150 rows
+                </p>
+    
+                {/* Pagination */}
+                <div className="w-full sm:w-auto flex justify-center">
+                    <PaginationLayout />
+                </div>
+            </div>
+        </div>  
     )
 
 }

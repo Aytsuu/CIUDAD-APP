@@ -26,25 +26,26 @@ type MenuItem = {
 const items: MenuItem[] = [
   {
     title: "Dashboard",
-    url: "/clerkDashboard",
+    url: "/dashboard",
   },
   {
-    title: "Certification, Permit & Mediation",
-    url: "/clerkCertification",
+    title: "Resident",
+    url: "/resident-records",
   },
   {
-    title: "Record",
+    title: "Administration",
+    url: "/administrative",
+  },
+  {
+    title: "Disaster Risk Reduction",
     subItems: true,
-    url: "/record",
+    url: "/",
     items: [
-      { title: "View Records", url: "/record/view" },
-      { title: "Add Record", url: "/record/add" },
-      { title: "Archive", url: "/record/archive" }
+      { title: "Resident Report", url: "/drr-resident-report" },
+      { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
+      { title: "Monthly Report", url: "/drr-monthly-report" },
+      { title: "Staff", url: "/drr-staff" }
     ]
-  },
-  {
-    title: "Donation",
-    url: "/donation",
   },
   {
     title: "Announcement",
