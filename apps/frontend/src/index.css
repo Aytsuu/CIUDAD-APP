@@ -130,18 +130,17 @@ color: #ffffff !important;
 
 /* CURRENT DATE BOX */
 .rbc-day-bg.rbc-today {
-background-color: #f0f7ff !important; /* Your desired background color */
+background-color: #f0f7ff !important; 
 }
 
 .rbc-date-cell.rbc-now.rbc-current {
-background-color: #f0f7ff !important; /* Your desired background color */
+background-color: #f0f7ff !important;
 }
 
 
 /* OTHER MONTHS BOXES */
 .rbc-day-bg.rbc-off-range-bg {
-background-color: #eeeeee !important; /* Your desired background color */
-/* You can also add other styles if needed */
+background-color: #eeeeee !important; /* background color */
 }
 
 /* LABEL OF THE CALENDAR*/
@@ -150,6 +149,11 @@ font-weight: bold;
 font-size: 30px;
 margin-right: 130px;
 margin-bottom: 15px;
+}
+
+/*day buttons*/
+.rbc-button-link {
+  pointer-events: none;
 }
 
 
@@ -162,4 +166,17 @@ margin-bottom: 15px;
 
 p[data-margin] {
   margin: var(--tiptap-margin); /* Use a CSS variable for easier customization */
+}
+
+
+/* ---break---  */
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

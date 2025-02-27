@@ -1,17 +1,18 @@
-import CalendarPage from './pages/CalendarPage.tsx'
-import OrdinancePage from './pages/records/council/ordinance/ordinancePage.tsx'
-import ResolutionPage from './pages/records/council/resolution/resolutionPage.tsx'
-import AddOrdinancePage from './pages/records/council/ordinance/AddOrdinance.tsx'
-import AttendancePage from './pages/records/council/Attendance/AttendancePage.tsx'
-import MinutesOfMeetingPage from './pages/records/council/MinutesOfMeeting/MinutesOfMeetingPage.tsx'
 
 import {createBrowserRouter,RouterProvider} from 'react-router'
 
+import { ord_route } from './routes/ordinancePage-route.tsx'
+import { res_route } from './routes/resolutionPage-route.tsx'
+import { attendance_route } from './routes/attendacePage-route.tsx';
+import { mom_route } from './routes/MinutesOfMeetingPage-route.tsx';
+import { calendar_route } from './routes/calendarPage-route.tsx';
+
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <AddOrdinancePage/>,
-  },
+  ...calendar_route,
+  ...ord_route,
+  ...res_route,
+  ...attendance_route,
+  ...mom_route
 ]);
 
 function App() {

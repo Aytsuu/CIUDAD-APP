@@ -95,7 +95,7 @@ function AttendancePage() {
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
                 <div className="text-lg font-semibold leading-non tracking-tight pb-3 text-[#394360]">
-                    <h1>ATTENDANCE RECORDS</h1>
+                    <h1>Attendance Records</h1>
                 </div>
 
                 <div className="w-full bg-white border border-gray rounded-[5px]">

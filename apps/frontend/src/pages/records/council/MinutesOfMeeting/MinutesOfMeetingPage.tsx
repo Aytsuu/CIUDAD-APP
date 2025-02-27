@@ -11,6 +11,7 @@ import AddEvent from '@/pages/AddEvent-Modal';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router';
 
 import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
@@ -112,7 +113,7 @@ function MinutesOfMeetingPage() {
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
                 <div className="text-lg font-semibold leading-non tracking-tight pb-3 text-[#394360]">
-                    <h1>MINUTES OF MEETING</h1>
+                    <h1>Minutes of Meeting</h1>
                 </div>
 
                 <div className="w-full bg-white border border-gray rounded-[5px]">
@@ -138,13 +139,7 @@ function MinutesOfMeetingPage() {
                             />                                
                         </div>
                         <div>
-                            <DialogLayout
-                                trigger={<div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor -pointer flex items-center"> Create <Plus className="ml-2" /></div>}
-                                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                                title="Schedule Event"
-                                description="Set an upcoming event."
-                                mainContent={<AddEvent />}
-                            />
+                            <Link to=""><Button>Create<Plus className="ml-2" /></Button></Link>
                         </div>
                     </div>                    
 

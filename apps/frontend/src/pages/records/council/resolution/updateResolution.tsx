@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import {Input} from '../../../../components/ui/input.tsx';
 import {Label} from '../../../../components/ui/label.tsx';
+import {CardTitle} from "@/components/ui/card"
 import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button.tsx';
@@ -22,28 +23,29 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import ordinanceFormSchema from '@/form-schema/ordinanceForm-schema.ts';
+import updateResolutionFormSchema from '@/form-schema/updateResolutionForm-schema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 
-function AddOrdinancePage() {
-    const form = useForm<z.infer<typeof ordinanceFormSchema>>({
-        resolver: zodResolver(ordinanceFormSchema),
+
+function UpdateResolution() {
+    const form = useForm<z.infer<typeof updateResolutionFormSchema>>({
+        resolver: zodResolver(updateResolutionFormSchema),
         mode: 'onChange',
         defaultValues: {
-            ordTitle: "",        
-            ordDate: "",
-            ordDescription: "",
-            ordAreaOfFocus: [],
+            resTitle: "",        
+            resDate: "",
+            resDetails: "",
+            resAreaOfFocus: [],
         },
     });
 
-    let ordAreaOfFocus = [
+    let resAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];
 
-    function onSubmit(values: z.infer<typeof ordinanceFormSchema>) {
+    function onSubmit(values: z.infer<typeof updateResolutionFormSchema>) {
         console.log("Values", values);
     }
 
@@ -52,14 +54,16 @@ function AddOrdinancePage() {
         <div className="flex p-5 w-full mx-auto h-full justify-center">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="text-[#394360] pb-2">
-                        <Link to="/ord-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
+                    <div className="text-[#394360] pb-10">
+                        <Link to="/res-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
                     </div>
+
+                    <CardTitle>Update Resolution</CardTitle>
 
                     {/* Ordinance Description Field */}
                     <FormField
                         control={form.control}
-                        name="ordDescription"
+                        name="resDetails"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel></FormLabel>
@@ -79,8 +83,8 @@ function AddOrdinancePage() {
                                     Next
                                 </div>
                             }
-                            className="max-w-[30%] h-[460px] flex flex-col overflow-auto scrollbar-custom"
-                            title="Ordinance Details"
+                            className="max-w-[30%] max-h-[460px] flex flex-col overflow-auto scrollbar-custom"
+                            title="Resolution Details"
                             description="Add details."
                             mainContent={
                                 <div>
@@ -90,10 +94,10 @@ function AddOrdinancePage() {
                                             {/* Ordinance Title Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="ordTitle"
+                                                name="resTitle"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Ordinance Title</FormLabel>
+                                                        <FormLabel>Resolution Title</FormLabel>
                                                         <FormControl>
                                                             {/* <Input placeholder="Enter Event Title" {...field} /> */}
                                                             <Textarea
@@ -110,7 +114,7 @@ function AddOrdinancePage() {
                                             {/* Date Approved Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="ordDate"
+                                                name="resDate"
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Date Approved</FormLabel>
@@ -128,11 +132,11 @@ function AddOrdinancePage() {
                                                     <AccordionTrigger>Select Area of Focus</AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="space-y-2">
-                                                            {ordAreaOfFocus.map((area, index) => (
+                                                            {resAreaOfFocus.map((area, index) => (
                                                                 <FormField
                                                                     key={index}
                                                                     control={form.control}
-                                                                    name="ordAreaOfFocus"
+                                                                    name="resAreaOfFocus"
                                                                     render={({ field }) => {
                                                                         const selectedCategory = field.value ?? [];
                                                                         return (
@@ -186,4 +190,4 @@ function AddOrdinancePage() {
     );
 }
 
-export default AddOrdinancePage;
+export default UpdateResolution;

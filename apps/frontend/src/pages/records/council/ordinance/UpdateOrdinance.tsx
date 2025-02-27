@@ -1,10 +1,11 @@
 "use client"
 import { useState } from 'react';
-import {Input} from '../../../../components/ui/input.tsx';
-import {Label} from '../../../../components/ui/label.tsx';
-import {DatePicker} from '../../../../components/ui/datepicker.tsx';
-import {Textarea} from '../../../../components/ui/textarea.tsx';
-import {Button} from '../../../../components/ui/button.tsx';
+import {Input} from '@/components/ui/input.tsx';
+import {Label} from '@/components/ui/label.tsx';
+import {CardTitle} from "@/components/ui/card"
+import {DatePicker} from '@/components/ui/datepicker.tsx';
+import {Textarea} from '@/components/ui/textarea.tsx';
+import {Button} from '@/components/ui/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,13 +23,14 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import ordinanceFormSchema from '@/form-schema/ordinanceForm-schema.ts';
+import updateOrdinanceFormSchema from '@/form-schema/updateOrdinanceForm-schema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 
-function AddOrdinancePage() {
-    const form = useForm<z.infer<typeof ordinanceFormSchema>>({
-        resolver: zodResolver(ordinanceFormSchema),
+
+function UpdateOrdinance() {
+    const form = useForm<z.infer<typeof updateOrdinanceFormSchema>>({
+        resolver: zodResolver(updateOrdinanceFormSchema),
         mode: 'onChange',
         defaultValues: {
             ordTitle: "",        
@@ -38,12 +40,14 @@ function AddOrdinancePage() {
         },
     });
 
+
     let ordAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];
 
-    function onSubmit(values: z.infer<typeof ordinanceFormSchema>) {
+
+    function onSubmit(values: z.infer<typeof updateOrdinanceFormSchema>) {
         console.log("Values", values);
     }
 
@@ -52,9 +56,11 @@ function AddOrdinancePage() {
         <div className="flex p-5 w-full mx-auto h-full justify-center">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="text-[#394360] pb-2">
+                    <div className="text-[#394360] pb-10">
                         <Link to="/ord-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
                     </div>
+                    
+                    <CardTitle>Update Ordinance</CardTitle>
 
                     {/* Ordinance Description Field */}
                     <FormField
@@ -122,10 +128,11 @@ function AddOrdinancePage() {
                                                 )}
                                             />
 
+
                                             {/* Categories Field */}
                                             <Accordion type="single" collapsible>
                                                 <AccordionItem value="category-list">
-                                                    <AccordionTrigger>Select Area of Focus</AccordionTrigger>
+                                                    <AccordionTrigger>Select Area Of Focus</AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="space-y-2">
                                                             {ordAreaOfFocus.map((area, index) => (
@@ -166,7 +173,8 @@ function AddOrdinancePage() {
                                                         </div>
                                                     </AccordionContent>
                                                 </AccordionItem>
-                                            </Accordion>                                            
+                                            </Accordion>       
+
 
                                             {/* Submit Button (Inside Dialog) */}
                                             <div className="flex items-center justify-end pt-4">
@@ -186,4 +194,4 @@ function AddOrdinancePage() {
     );
 }
 
-export default AddOrdinancePage;
+export default UpdateOrdinance;

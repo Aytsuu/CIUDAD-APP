@@ -18,7 +18,7 @@ function CalendarPage() {
                 <div>
                     <div className="flex justify-end">
                         <DialogLayout   
-                            trigger={<div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-2 rounded cursor-pointer">Add Event</div>}
+                            trigger={<div className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded cursor-pointer"><Plus></Plus>Event </div>}
                             className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
                             title="Schedule Event"
                             description="Set an upcoming event."
@@ -30,7 +30,7 @@ function CalendarPage() {
                     <CalendarComp 
                         events={events} 
                         setEvents={setEvents} 
-                        className="w-full"
+                        className=""
                     />                        
                 </div>
             </div>
@@ -38,3 +38,12 @@ function CalendarPage() {
     );
 }
 export default CalendarPage;
+
+
+
+
+
+
+
+
+
