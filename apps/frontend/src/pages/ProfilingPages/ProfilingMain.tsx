@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ClockArrowUp, FileInput, ArrowUpDown, Search } from "lucide-react";
 import {
@@ -20,70 +19,125 @@ import RegistrationOptions from "./RegistrationOptions";
 // Define the type for the Report object
 type Report = {
   id: string;
-  category: string;
-  location: string;
-  description: string;
-  incidentTime: string;
-  reportedBy: string;
-  timeReported: string;
-  date: string;
+  householdNo: string;
+  familyNo: string;
+  sitio: string;
+  lastName: string;
+  firstName: string;
+  mi: string;
+  suffix: string;
+  dateRegistered: string;
 };
 
 // Define the columns for the data table
 export const columns: ColumnDef<Report>[] = [
   {
-    accessorKey: "category",
+    accessorKey: "id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Category
+        Resident No.
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+  },
+  {
+    accessorKey: "householdNo",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Household No.
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("category")}</div>
+      <div className="capitalize">{row.getValue("householdNo")}</div>
     ),
   },
   {
-    accessorKey: "location",
-    header: "Location",
+    accessorKey: "familyNo",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Sitio.
+        <ArrowUpDown size={14} />
+      </div>
+    ),
     cell: ({ row }) => (
-      <div className="hidden md:block">{row.getValue("location")}</div>
+      <div className="capitalize">{row.getValue("familyNo")}</div>
     ),
   },
   {
-    accessorKey: "description",
-    header: "Description",
+    accessorKey: "sitio",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Family No.  
+        <ArrowUpDown size={14} />
+      </div>
+    ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">{row.getValue("description")}</div>
+      <div className="hidden lg:block max-w-xs truncate">{row.getValue("sitio")}</div>
     ),
   },
   {
-    accessorKey: "incidentTime",
-    header: "Time of Incident",
+    accessorKey: "lastName",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Last Name  
+        <ArrowUpDown size={14} />
+      </div>
+    ),  
     cell: ({ row }) => (
-      <div className="hidden md:block">{row.getValue("incidentTime")}</div>
+      <div className="hidden lg:block max-w-xs truncate">{row.getValue("lastName")}</div>
     ),
   },
   {
-    accessorKey: "reportedBy",
-    header: "Reported By",
+    accessorKey: "firstName",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        First Name  
+        <ArrowUpDown size={14} />
+      </div>
+    ),  
     cell: ({ row }) => (
-      <div className="hidden lg:block">{row.getValue("reportedBy")}</div>
+      <div className="hidden lg:block max-w-xs truncate">{row.getValue("firstName")}</div>
     ),
   },
   {
-    accessorKey: "timeReported",
-    header: "Time Reported",
+    accessorKey: "mi",
+    header: "M.I",
     cell: ({ row }) => (
-      <div className="hidden xl:block">{row.getValue("timeReported")}</div>
+      <div className="hidden xl:block">{row.getValue("mi")}</div>
     ),
   },
   {
-    accessorKey: "date",
-    header: "Date",
+    accessorKey: "suffix",
+    header: "Suffix",
+    cell: ({ row }) => (
+      <div className="hidden xl:block">{row.getValue("suffix")}</div>
+    ),
+  },
+  {
+    accessorKey: "dateRegistered",
+    header: "Date Registered",
+    cell: ({ row }) => (
+      <div className="hidden xl:block">{row.getValue("dateRegistered")}</div>
+    ),
   },
   {
     accessorKey: "action",
@@ -106,27 +160,30 @@ export const columns: ColumnDef<Report>[] = [
   },
 ];
 
+
 // Sample data for the reports
 export const reports: Report[] = [
   {
     id: "Lorem",
-    category: "Lorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
+    householdNo: "Lorem",
+    familyNo: "Lorem",
+    sitio: "Lorem",
+    lastName: "Lorem",
+    firstName: "Lorem",
+    mi: "Lorem",
+    suffix: "Lorem",
+    dateRegistered: "Lorem",
   },
   {
     id: "Lorem",
-    category: "Aorem",
-    location: "Lorem",
-    description: "Lorem",
-    incidentTime: "Lorem",
-    reportedBy: "Lorem",
-    timeReported: "Lorem",
-    date: "Lorem",
+    householdNo: "Lorem",
+    familyNo: "Lorem",
+    sitio: "Lorem",
+    lastName: "Lorem",
+    firstName: "Lorem",
+    mi: "Lorem",
+    suffix: "Lorem",
+    dateRegistered: "Lorem",
   },
 ];
 
@@ -150,9 +207,9 @@ export default function ProfilingMain() {
       {/* The Header is hidden on small screens */}
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex gap-x-2">
-          <div className="relative flex-1">
+          <div className="relative flex-1 bg-white">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+            <Input placeholder="Search..." className="pl-10 w-72" />
           </div>
             <SelectLayout 
                 placeholder="Filter by"
@@ -204,11 +261,11 @@ export default function ProfilingMain() {
                   Export
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>

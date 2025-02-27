@@ -1,22 +1,15 @@
 import { BsChevronLeft } from "react-icons/bs";
 import { Link } from "react-router";
 import { BsSearch } from "react-icons/bs";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FaFilter, FaSort } from "react-icons/fa";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import ViewInfo from "../../pages/ProfilingPages/ProfilingViewInfo";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 // Define the type for the Report object
 type Report = {
@@ -149,45 +142,20 @@ export default function ProfilingRequest() {
       {/* Search and filters - Stacks on mobile */}
       <div className="mb-4">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-x-2">
-          <div className="relative flex w-full sm:w-auto">
-            <BsSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
+          <div className="relative flex w-full sm:w-auto bg-white">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17}/>
             <Input placeholder="Search..." className="pl-10 w-full sm:w-72" />
           </div>
 
           <div className="flex gap-2 sm:gap-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="gap-2 font-normal flex-1 sm:flex-none"
-                >
-                  <FaFilter />
-                  <span className="block">Filter</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>By Date</DropdownMenuItem>
-                <DropdownMenuItem>By Status</DropdownMenuItem>
-                <DropdownMenuItem>By Location</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="gap-2 font-normal flex-1 sm:flex-none"
-                >
-                  <FaSort />
-                  <span className="block">Sort</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Name (A-Z)</DropdownMenuItem>
-                <DropdownMenuItem>Date (Newest)</DropdownMenuItem>
-                <DropdownMenuItem>Location</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SelectLayout 
+                placeholder="Filter by"
+                label=""
+                className="bg-white"
+                options={[]}
+                value=""
+                onChange={() => {}}
+            />
           </div>
         </div>
       </div>
@@ -195,6 +163,14 @@ export default function ProfilingRequest() {
       {/* Table Layout */}
       <div>
         <div className="mt-2 sm:mt-4 overflow-x-auto">
+
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+          </div>
           {/* Wrap the DataTable in a scrollable container */}
           <div className="min-w-full overflow-hidden overflow-x-auto bg-white">
             <DataTable columns={columns} data={data} />

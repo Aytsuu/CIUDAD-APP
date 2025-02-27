@@ -1,10 +1,93 @@
 import { Link } from "react-router";
 import { BsChevronLeft } from "react-icons/bs";
-import { Button } from "../../components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Information } from "./_types";
+import { Dependent } from "./_types";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+
+const personal: Information[] = [
+  {id: "lname", label: "Last Name", value: "Lorem"},
+  {id: "fname", label: "First Name", value: "Lorem"},
+  {id: "mname", label: "Middle Name", value: "Lorem"},
+  {id: "suffix", label: "Suffix", value: "Lorem"},
+  {id: "sex", label: "Sex", value: "Lorem"},
+  {id: "dateOfBirth", label: "Date of Birth", value: "Lorem"},
+  {id: "maritalStatus", label: "Marital Status", value: "Lorem"},
+  {id: "placeOfBirth", label: "Place of Birth", value: "Lorem"},
+  {id: "citizenship", label: "Citizenship", value: "Lorem"},
+  {id: "contact", label: "Contact", value: "Lorem"},
+  {id: "religion", label: "Religion", value: "Lorem"},
+] 
+
+const father: Information[] = [
+  {id: "lname", label: "Last Name", value: "Lorem"},
+  {id: "fname", label: "First Name", value: "Lorem"},
+  {id: "mname", label: "Middle Name", value: "Lorem"},
+  {id: "suffix", label: "Suffix", value: "Lorem"},
+  {id: "dateOfBirth", label: "Date of Birth", value: "Lorem"},
+  {id: "maritalStatus", label: "Marital Status", value: "Lorem"},
+  {id: "religion", label: "Religion", value: "Lorem"},
+  {id: "education", label: "Educational Attainment", value: "Lorem"},
+] 
+
+const mother: Information[] = [
+  {id: "lname", label: "Last Name", value: "Lorem"},
+  {id: "fname", label: "First Name", value: "Lorem"},
+  {id: "mname", label: "Middle Name", value: "Lorem"},
+  {id: "suffix", label: "Suffix", value: "Lorem"},
+  {id: "dateOfBirth", label: "Date of Birth", value: "Lorem"},
+  {id: "maritalStatus", label: "Marital Status", value: "Lorem"},
+  {id: "religion", label: "Religion", value: "Lorem"},
+  {id: "education", label: "Educational Attainment", value: "Lorem"},
+] 
+
+const dependents: Dependent[] = [
+  {
+    id: "Lorem",
+    lname: "Lorem",
+    fname: "Lorem",
+    mname: "Lorem",
+    suffix: "Lorem",
+    dateOfBirth: "Lorem",
+    maritalStatus: "Lorem"
+  }
+]
+
+
+// Data Table
+const columns: ColumnDef<Dependent>[] = [
+  {
+    accessorKey: "lname",
+    header: "Last Name"
+  },
+  {
+    accessorKey: "fname",
+    header: "First Name"
+  },
+  {
+    accessorKey: "mname",
+    header: "Middle Name"
+  },
+  {
+    accessorKey: "suffix",
+    header: "Suffix"
+  },
+  {
+    accessorKey: "dateOfBirth",
+    header: "Date of Birth"
+  },
+  {
+    accessorKey: "maritalStatus",
+    header: "Marital Status"
+  },
+]
+
+
 
 export default function ViewInfo() {
   {/* Sample Data */}
-  const resident = { fullName: "Christian", dob: "25/01/2004" };
+  const data = dependents
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -20,16 +103,12 @@ export default function ViewInfo() {
           <div className="flex flex-col">
             <h1 className="font-semibold text-2xl text-darkBlue2">
               Resident Details
-            </h1>
-            <p className="text-sm text-darkGray">Uploaded via Mobile Phone</p>
+            </h1> 
+            {/* <p className="text-sm text-darkGray">Uploaded via Mobile Phone</p>
             <p className="text-sm text-darkGray">
               {new Date().toLocaleDateString("en-PH")}
-            </p>
+            </p> */}
           </div>
-        </div>
-        <div className="flex gap-x-4">
-            <Button variant={"destructive"} className="rounded-md shadow-sm">Reject</Button>
-            <Button className="bg-green-600 hover:bg-green-500 rounded-md shadow-sm">Approve</Button>
         </div>
       </div>
 
@@ -39,14 +118,14 @@ export default function ViewInfo() {
       <div className="w-full space-y-6 bg-white rounded-lg shadow-sm">
         <section className="p-4 md:p-6 border-b-2 border-darkBlue1">
           <h2 className="font-semibold text-xl text-darkBlue2 mb-4">
-            Resident Profile
+            Profile
           </h2>
           <div className="flex items-center gap-4">
             <div className="bg-gray-200 rounded-full w-24 h-24 flex items-center justify-center">
               <span className="text-sm text-gray-500">No Image</span>
             </div>
             <div>
-              <h3 className="text-lg font-medium">{resident.fullName}</h3>
+              <h3 className="text-lg font-medium">Christian</h3>
               <span className="text-sm text-gray-600">ID: RES-2023-001</span>
             </div>
           </div>
@@ -60,128 +139,20 @@ export default function ViewInfo() {
 
           {/* Form */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={resident.fullName}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Middle Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Suffix
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Sex
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Status
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Date of Birth
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Place of Birth
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Citizenship
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Contact
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Religion
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
+            {
+              personal.map((info) => (
+                <div key={info.id}>
+                  <label className="block text-sm font-medium text-darkGray mb-1">
+                    {info.label}
+                  </label>
+                  <Input
+                    type="text"
+                    value={info.value}
+                    readOnly
+                  />
+                </div>
+              ))
+            }
           </div>
         </section>
 
@@ -194,95 +165,20 @@ export default function ViewInfo() {
 
           {/* Form */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={resident.fullName}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Middle Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Suffix
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Date of Birth
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Status
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Religion
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Educational Attainment
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
+          {
+              father.map((info) => (
+                <div key={info.id}>
+                  <label className="block text-sm font-medium text-darkGray mb-1">
+                    {info.label}
+                  </label>
+                  <Input
+                    type="text"
+                    value={info.value}
+                    readOnly
+                  />
+                </div>
+              ))
+            }
           </div>
         </section>
 
@@ -294,95 +190,20 @@ export default function ViewInfo() {
 
           {/* Form */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={resident.fullName}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Middle Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Suffix
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Date of Birth
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Status
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Religion
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Educational Attainment
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
+          {
+              mother.map((info) => (
+                <div key={info.id}>
+                  <label className="block text-sm font-medium text-darkGray mb-1">
+                    {info.label}
+                  </label>
+                  <Input
+                    type="text"
+                    value={info.value}
+                    readOnly
+                  />
+                </div>
+              ))
+            }
           </div>
         </section>
 
@@ -392,75 +213,9 @@ export default function ViewInfo() {
             Dependent's Information
           </h2>
 
-          {/* Form */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={resident.fullName}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Middle Name
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Suffix
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Date of Birth
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-darkGray mb-1">
-                Status
-              </label>
-              <input
-                type="text"
-                value={new Date(resident.dob).toLocaleDateString("en-PH")}
-                readOnly
-                className="w-full p-2 border rounded-md bg-gray-100 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-              />
-            </div>
+          {/* Table */}
+          <div className="border rounded-md">
+            <DataTable columns={columns} data={data} />
           </div>
         </section>
       </div>
