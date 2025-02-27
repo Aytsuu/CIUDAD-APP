@@ -43,6 +43,7 @@ export default function VaccinationForm() {
       bp: "",
       o2: "",
       assignto:"",
+       isTransient: "Resident",
     },
   });
 
