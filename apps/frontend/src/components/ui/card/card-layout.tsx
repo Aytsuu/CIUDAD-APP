@@ -12,6 +12,7 @@ type CardProps = {
   cardDescription?: React.ReactNode;
   cardContent: React.ReactNode;
   cardClassName?: string;
+  cardHeaderClassName?: string;
   cardContentClassName?: string;
 };
 
@@ -20,11 +21,12 @@ export default function CardLayout({
   cardDescription,
   cardContent,
   cardClassName,
+  cardHeaderClassName,
   cardContentClassName
 }: CardProps) {
   return (
     <Card className={cn("", cardClassName)}>
-      <CardHeader>
+      <CardHeader className={cn("", cardHeaderClassName)}>
         <CardTitle>{cardTitle}</CardTitle>
         <CardDescription>{cardDescription}</CardDescription>
       </CardHeader>

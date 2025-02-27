@@ -13,7 +13,7 @@ export default function MainLayout() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex flex-col w- h-screen bg-none">
+    <div className="flex flex-col w-screen h-screen bg-none">
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
         <div>
@@ -30,7 +30,6 @@ export default function MainLayout() {
         <main className="px-2 py-4 overflow-y-auto flex-1 bg-[#F3F4F8]">
           <Outlet />
         </main>
-        
       </div>
     </div>
   );

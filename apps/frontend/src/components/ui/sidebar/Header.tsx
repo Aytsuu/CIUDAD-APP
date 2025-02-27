@@ -26,13 +26,14 @@ export function Navbar() {
 
   const notificationPopover = (
     <div>
-      <div className="flex items-center">
+      <hr className="pb-2"/>
+      <div className="flex items-center p-2 hover:bg-lightBlue cursor-pointer">
         <div className="flex space-y-1 items-center gap-x-4">
-          <img src={sanRoqueLogo} alt="Barangay Logo" />
+          <img src={sanRoqueLogo} alt="Barangay Logo" className="w-10 h-10"/>
           <div>
-            <p className="flex text-sm font-medium leading-none items-center gap-x-4">
-              Sef{" "}
-              <span className="flex text-sm text-muted-foreground">
+            <p className="flex text-sm font-medium leading-none items-center gap-x-2">
+              Sef
+              <span className="flex text-sm font-sans text-muted-foreground">
                 Updated his profile picture
               </span>
             </p>
@@ -49,7 +50,7 @@ export function Navbar() {
 
   const profilePopoverContent = (
     <div>
-      <hr />
+      <hr className="pb-2"/>
       {profileOptions.map((item, index) => (
         <div
           key={index}
@@ -65,7 +66,7 @@ export function Navbar() {
   const profilePopOverHeaderDesc = (
     <div>
       <div className="flex items-center gap-x-2">
-        <img src={sanRoqueLogo} alt="Barangay Logo" />
+        <img src={sanRoqueLogo} alt="Barangay Logo" className="h-12 w-12" />
         <div className="flex flex-col">
           <p className="text-lg font-medium text-black">Paolo Araneta</p>
           <p>paoloAraneta@gmail.com</p>
@@ -75,7 +76,7 @@ export function Navbar() {
   );
 
   return (
-    <header className="h-14 bg-white text-[#263D67] flex items-center justify-between px-6 w-full drop-shadow-md">
+    <header className="w-full h-14 bg-white text-[#263D67] flex items-center justify-between px-6 drop-shadow-md">
       <div className="flex items-center space-x-4 text-lg font-semibold cursor-pointer">
         <div className="h-[30px] w-[30px] rounded-full">
           <img src={sanRoqueLogo} alt="Barangay Logo" />
@@ -92,9 +93,10 @@ export function Navbar() {
           <PopoverContent className="absolute right-0 top-2">
             <CardLayout
               cardClassName="w-[25rem]"
+              cardHeaderClassName="pb-2"
               cardTitle="Notifications"
-              cardDescription="You have 3 unread messages."
-              cardContentClassName="gap-4 mt-2"
+              cardDescription="You have 1 unread message"
+              cardContentClassName="gap-4 mt-2 pb-4"
               cardContent={notificationPopover}
             />
           </PopoverContent>
@@ -104,14 +106,15 @@ export function Navbar() {
         <Popover>
           <PopoverTrigger className="flex items-center space-x-2">
             <img src={sanRoqueLogo} alt="Barangay Logo" />
-            <h2 className="hidden sm:block text-sm font-medium">paoloAraneta@gmail.com</h2>
+            <h2 className="hidden sm:block text-sm font-medium">Paolo Araneta</h2>
           </PopoverTrigger>
           <PopoverContent className="absolute right-0 top-2">
             <CardLayout
               cardClassName="w-[18rem]"
+              cardHeaderClassName="pb-2"
               cardTitle=""
               cardDescription={profilePopOverHeaderDesc}
-              cardContentClassName="gap-4 mt-2"
+              cardContentClassName="gap-4 mt-2 pb-4"
               cardContent={profilePopoverContent}
             />
           </PopoverContent>
