@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Eye, Plus } from "lucide-react";
+import { Trash, Eye } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -9,11 +9,15 @@ import { ArrowUpDown } from "lucide-react";
 import GADAddEntryForm from "./budget-tracker-create-form";
 import { Input } from "@/components/ui/input";
 import GADEditEntryForm from "./budget-tracker-edit-form";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+
 
 type header = {
   date: string;
   particulars: string;
-  type: string;
+  type: "Income" | "Expense";
   amount: number;
   remainingbal: number;
   additionalnotes: string;
@@ -22,16 +26,17 @@ type header = {
 const columns: ColumnDef<header>[] = [
   {
     accessorKey: "date",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Date
-        <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({ row }) => <div className="capitalize">{row.getValue("date")}</div>,
+        header: ({ column }) => (
+              <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              >Date
+                <ArrowUpDown size={14}/>
+              </div>
+        ),
+        cell: ({row}) => (
+            <div className="">{row.getValue("date")}</div>
+        )
   },
   {
     accessorKey: "particulars",
@@ -56,8 +61,8 @@ const columns: ColumnDef<header>[] = [
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <div className="grid grid-cols-2">
+    cell: ({ }) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <TooltipLayout
           trigger={
             <DialogLayout
@@ -68,8 +73,8 @@ const columns: ColumnDef<header>[] = [
                 </div>
               }
               className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-              title=""
-              description=""
+              title="Entry Details"
+              description="Detailed overview of the entry. Click 'Edit' to update records and ensure accuracy."
               mainContent={
                 <div className="w-full h-full">
                   <GADEditEntryForm />
@@ -101,11 +106,11 @@ const columns: ColumnDef<header>[] = [
   },
 ];
 
-const bodyData: header[] = [
+const BudgetPlanView: header[] = [
   {
     date: "10-01-25",
     particulars: "Loremifasolati",
-    type: "secret",
+    type: "Income",
     amount: 500000,
     remainingbal: 20,
     additionalnotes: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -113,7 +118,7 @@ const bodyData: header[] = [
   {
     date: "12-10-25",
     particulars: "Loremifasolati",
-    type: "ambot",
+    type: "Expense",
     amount: 190200,
     remainingbal: 50,
     additionalnotes:
@@ -122,73 +127,69 @@ const bodyData: header[] = [
 ];
 
 function BudgetTracker() {
+  const data = BudgetPlanView;
+  let remainingBal = 0.00, amtUsed = 0.00, budgetYear = "2020"; 
+  const filter = [
+    {id: "0", name: "All Entry Types"},
+    {id: "1", name: "Income"},
+    {id: "2", name: "Expense"}
+  ];
+
+  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+  const filteredData = selectedFilter === "All Entry Types" ? data 
+  : data.filter((item) => item.type === selectedFilter);
+
+
   return (
-    <div className="w-full h-full">
-      <div className="mx-4 mb-4 mt-10">
-        <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
-          <p>VIEW BUDGET</p>
-          <br></br>
-        </div>
-        <div className="bg-white border border-gray w-full rounded-[5px] p-5 table-fixed">
-          {/* Top Row: Amount Used and Remaining Balance (Left) */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-4">
-              <div className="flex gap-2">
-                <div>Amount Used:</div>
-                <div className="font-semibold">Php 65,000.00</div>
-              </div>
-              <div className="flex gap-2">
-                <div>Remaining Balance:</div>
-                <div className="font-semibold">Php 455,000.00</div>
-              </div>
+    <div className="mx-4 mb-4 mt-10">
+        <div className="text-4xl font-semibold leading-none tracking-tight text-darkBlue1">
+            <p>Budget for Year {budgetYear}</p><br></br>
+        </div>  
+        <div className="bg-white border border-gray-300 rounded-[5px] p-5">
+            <div className="flex flex-col gap-5">
+                  <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                      <div className="flex flex-row gap-7">
+                            <Input className="w-[20rem]" placeholder="Search" />
+                            <div className="flex flex-row gap-2 justify-center items-center">
+                                <Label>Filter: </Label>
+                                <SelectLayout className="" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            </div> 
+                      </div>
+                      <div className="">
+                                  <DialogLayout
+                                    trigger={
+                                    <Button>+ New Entry</Button>
+                                    }
+                                    className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                                    title="Add New Entry"
+                                    description="Fill in the details for your entry."
+                                    mainContent={
+                                      <div className="w-full h-full">
+                                        <GADAddEntryForm />
+                                      </div>
+                                    }
+                                  />
+                              </div>
+                      </div>
+             
+                <DataTable columns={columns} data={filteredData} />
+                <div>
+                  <PaginationLayout className= ""/>
+                </div>
+
             </div>
+        </div>
 
-            {/* Search Bar, Filter, and Create (Right) */}
-            <div className="flex gap-3 items-center">
-              <Input placeholder="Search" className="w-[200px]" />
-              <div>
-                <SelectLayout
-                  className="w-50"
-                  label=""
-                  placeholder="Filter"
-                  options={[
-                    { id: "Date", name: "Date" },
-                    { id: "Type", name: "Type" },
-                  ]}
-                  value=""
-                  onChange={() => {}}
-                />
-              </div>
-              <div>
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#3D4C77] hover:bg-[#4e6a9b] text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
-                      {" "}
-                      Create <Plus className="ml-2" />
-                    </div>
-                  }
-                  className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                  title=""
-                  description=""
-                  mainContent={
-                    <div className="w-full h-full">
-                      <GADAddEntryForm />
-                    </div>
-                  }
-                />
-              </div>
+        <div className="flex flex-row gap-[5rem] mt-4">
+            <div className="flex flex-row gap-2 text-red-500">
+              <Label className="w-30">Amount Used:</Label>  
+              <Label>Php {amtUsed.toFixed(2)}</Label>
             </div>
-          </div>
-
-          {/* Data Table */}
-          <DataTable columns={columns} data={bodyData} />
+            <div className="flex flex-row gap-2 text-green-700">
+              <Label className="w-30">Remaining Balance:</Label>
+              <Label>Php {remainingBal.toFixed(2)}</Label>
+            </div>
         </div>
-
-        {/* Pagination */}
-        <div>
-          <PaginationLayout className="" />
-        </div>
-      </div>
     </div>
   );
 }
