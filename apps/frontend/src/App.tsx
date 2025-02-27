@@ -1,7 +1,7 @@
-import Announcements from "./pages/announcement/announcement";
+import CreateAnnouncements from "./pages/announcement/CreateAnnouncement";
 
 function App() {
-  return <Announcements />;
+  return <CreateAnnouncements />;
 }
 
 export default App;
