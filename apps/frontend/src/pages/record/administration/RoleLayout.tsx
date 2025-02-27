@@ -65,7 +65,7 @@ export default function RoleLayout() {
     return (
         <div className="w-full h-full flex flex-col">
             {/* Header Section */}
-            <div className="flex items-center mb-4 gap-3 mb-4">
+            <div className="flex items-center mb-4 gap-3">
                 {/* Header - Stacks vertically on mobile */}
                 <Button 
                     className="text-black p-2 self-start"
@@ -79,7 +79,7 @@ export default function RoleLayout() {
                         Roles
                     </h1>
                     <p className="text-xs sm:text-sm text-darkGray">
-                        Submissions under review and pending authorization
+                        Assign features to positions
                     </p>
                 </div>  
             </div>
