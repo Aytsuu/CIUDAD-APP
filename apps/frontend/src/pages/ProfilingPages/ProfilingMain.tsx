@@ -191,7 +191,8 @@ export default function ProfilingMain() {
   const data = reports;
   
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6">
+    <div className="w-full flex">
+      <div className="w-full px-2 sm:px-4 md:px-6">
       <Outlet />
       {/* Header Section */}
       <div className="flex-col items-center mb-4">
@@ -286,5 +287,7 @@ export default function ProfilingMain() {
         </div>
       </div>
     </div>
+    </div>
+    
   );
 }

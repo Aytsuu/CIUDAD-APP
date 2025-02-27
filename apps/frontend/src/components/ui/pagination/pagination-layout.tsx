@@ -8,7 +8,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination/pagination"
 
-export default function PaginationLayout({className} : {className: string}){
+export default function PaginationLayout({className} : {className?: string}){
   return(
     <Pagination className={className}>
       <PaginationContent>
