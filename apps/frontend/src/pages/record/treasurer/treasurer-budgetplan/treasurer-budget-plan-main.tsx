@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Eye, Trash, ArrowUpDown } from 'lucide-react';
+import { Eye, Trash, ArrowUpDown, Search } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -93,7 +93,13 @@ function BudgetPlan(){
                 <hr className="border-gray mb-7 sm:mb-9" /> 
                 
                 <div className="flex flex-col md:flex-row justify-between items-center mb-5 gap-4 md:gap-0">
-                    <Input placeholder="Search" className="w-full md:w-[20rem] bg-white" />
+                <div className="relative flex-1 max-w-[20rem]"> {/* Adjust max-width as needed */}
+                    <Search
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                        size={17}
+                    />
+                    <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                </div>
                     <Link to="/treasurer-budgetplan-form">
                         <Button className="w-full md:w-auto">+ Add New</Button>
                     </Link>
