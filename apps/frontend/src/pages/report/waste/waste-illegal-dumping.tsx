@@ -70,7 +70,7 @@ const columns: ColumnDef<Report>[] = [
     cell: ({ row }) => (
       <DialogLayout
         trigger={
-          <div className="w-[35px] h-[35px] p-3 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
+          <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
             View
           </div>
         }
@@ -180,11 +180,10 @@ function WasteIllegalDumping() {
         );
 
   return (
-    <div className="w-full h-full px-4 md:px-8 lg:px-16">
-      <div className="mb-4 mt-10">
+    <div className="w-full h-full">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            ILLEGAL DUMPING REPORTS
+            Illegal Dumping Reports
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view illegal dumping reports
@@ -192,42 +191,44 @@ function WasteIllegalDumping() {
         </div>
         <hr className="border-gray mb-6 sm:mb-10" />
 
+        {/* Filter and Search Section (Right Side) */}
+        <div className="relative w-full hidden lg:flex items-center gap-2 mb-4">
+
+          {/* Search Input with Icon */}
+          <div className="relative w-full sm:w-[200px] lg:w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input placeholder="Search..." className="pl-10 w-full bg-white" />
+          </div>
+          
+          {/* Filter Dropdown */}
+          <div className="w-full sm:w-auto">
+            <SelectLayout
+              className="w-full sm:w-[200px] lg:w-[250px] bg-white"
+              placeholder="Report Matter"
+              options={filterOptions}
+              value={selectedFilterId}
+              label=""
+              onChange={(id) => {
+                setSelectedFilterId(id);
+              }}
+            />
+          </div>
+        </div>
+
         {/* Combined Search, Filter, and Show Entries Section with Table */}
-        <div className="bg-white rounded-[5px] p-5 w-full">
-          <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
+        <div className="w-full">
+          <div className="flex flex-col sm:flex-row gap-3 w-full p-3 bg-white">
             {/* Show Entries Section (Left Side) */}
             <div className="flex items-center gap-x-2">
               <p className="text-xs sm:text-sm">Show</p>
               <Input type="number" className="w-14 h-8" defaultValue="10" />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-
-            {/* Filter and Search Section (Right Side) */}
-            <div className="flex-grow flex flex-col sm:flex-row gap-2 sm:justify-end">
-              {/* Filter Dropdown */}
-              <div className="w-full sm:w-auto">
-                <SelectLayout
-                  className="w-full sm:w-[200px] lg:w-[250px]"
-                  placeholder="Report Matter"
-                  options={filterOptions}
-                  value={selectedFilterId}
-                  label=""
-                  onChange={(id) => {
-                    console.log("Selected ID:", id); // Debug the ID
-                    setSelectedFilterId(id);
-                  }}
-                />
-              </div>
-
-              {/* Search Input with Icon */}
-              <div className="relative w-full sm:w-[200px] lg:w-[300px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input placeholder="Search..." className="pl-10 w-full bg-white" />
-              </div>
-            </div>
           </div>
 
-          <DataTable columns={columns} data={filteredData} />
+          <div className="bg-white">
+            <DataTable columns={columns} data={filteredData} />
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
@@ -240,7 +241,6 @@ function WasteIllegalDumping() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 

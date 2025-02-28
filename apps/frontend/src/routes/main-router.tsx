@@ -8,7 +8,15 @@ import { administration_router } from './administration-router';
 import { profiling_router } from './profiling-router';
 import { drr_router } from "./drr-router";
 import { blotter_router } from './blotter-router';
+import { ord_router } from './ordinancePage-route';
+import { res_router } from './resolutionPage-route';
+import { attendance_router } from './attendacePage-route';
+import { mom_router } from './MinutesOfMeetingPage-route';
+import { council_calendar_router } from './calendarPage-route';
+
+
 import { donation_router } from './donation-router';
+import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
 
 export const main_router: RouteObject[] = [
@@ -28,8 +36,14 @@ export const main_router: RouteObject[] = [
             ...profiling_router,
             ...drr_router,
             ...blotter_router,
+            ...ord_router,
+            ...res_router,
+            ...attendance_router,
+            ...mom_router,
+            ...council_calendar_router,
             ...donation_router,
-            ...treasurer_router
+            ...treasurer_router,
+            ...waste_router
         ]
     }
 ]

@@ -9,15 +9,15 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useState } from "react";
 
 export default function MainLayout() {
- 
   const [isOpen, setIsOpen] = useState(false);
-
+  
   return (
-
-    <div className="flex flex-col w- h-screen bg-none">
-      <Header />
+    <div className="fixed inset-0 flex flex-col bg-none">
+      <div className="flex-shrink-0 relative z-10">
+        <Header />
+      </div>
       <div className="flex flex-1 overflow-hidden">
-        <div>
+        <div className="flex-shrink-0 h-full relative z-0">
           <SidebarProvider>
             <AppSidebar />
             <div className="bg-snow">
