@@ -14,7 +14,7 @@ import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
 import { Button } from "@/components/ui/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Baby } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
 import {
