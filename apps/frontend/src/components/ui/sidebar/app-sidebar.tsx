@@ -108,7 +108,7 @@ const items: MenuItem[] = [
   {
     title: "Illegal Dumping Reports",
     url: "/waste-illegaldumping-report",
-  },
+  },  
   {
     title: "Announcement",
     url: "/announcement",
@@ -119,11 +119,11 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       {title: "Animal Bites", url: "/Animalbite_viewing"},
-      {title: "Child Services", url: "/"},
+      {title: "Child Services", url: "/allChildHRTable"},
       {title: "Maternal Services", url:"/maternalrecords"},
       {title: "Family Planning", url: "/"},
       {title: "Medical Consultation", url: "/"},
-      {title: "Vaccination", url: "/"},
+      {title: "Vaccination", url: "/allVaccinationRecord"},
     ]
   }
 ];

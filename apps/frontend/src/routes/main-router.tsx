@@ -1,5 +1,6 @@
 import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
+import AnnouncementDashboard from '@/pages/announcement/overall';
 
 import { RouteObject} from "react-router";
 import { Navigate } from 'react-router';
@@ -19,6 +20,8 @@ import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
 import { maternal_router } from './maternal-services';
+import { vaccination } from './vaccination';
+import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
 
@@ -35,6 +38,10 @@ export const main_router: RouteObject[] = [
                 path: "dashboard",
                 element: <Dashboard/>
             },
+            {
+                path: "announcement",
+                element: <AnnouncementDashboard/>
+            },
             ...administration_router,
             ...profiling_router,
             ...drr_router,
@@ -48,6 +55,8 @@ export const main_router: RouteObject[] = [
             ...treasurer_router,
             ...waste_router,
             ...maternal_router,
+            ...vaccination,
+            ...childHealthServices,
             ...gad_router,
             ...bites_route
         ]

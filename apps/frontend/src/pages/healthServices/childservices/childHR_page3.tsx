@@ -16,7 +16,7 @@ import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Baby, Calendar } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FilterAccordion } from "@/components/ui/checkBox-with-search-add";
 

@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
 import { Calendar, Syringe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
