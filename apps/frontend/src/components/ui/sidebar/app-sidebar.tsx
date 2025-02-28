@@ -95,7 +95,7 @@ const items: MenuItem[] = [
     items: [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
       { title: "Income & Expense Tracking", url: "/treasurer-income-and-expense-tracking" },
-      { title: "Income & Disbursement Monitoring", url: "/treasurer-income-and-disbursement" },
+      { title: "Income & Disbursement", url: "/treasurer-income-and-disbursement" },
       { title: "Clearance Requests", 
         url: "/",
         anotherItems: [
@@ -143,7 +143,7 @@ const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
           className={`flex items-center justify-between px-4 py-2 text-sm rounded-md cursor-pointer ${
             isActive
               ? "bg-[#1273B2]/10 text-[#1273B8]"
-              : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+              : "text-[#2D4A72]  hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
           }`}
           onClick={() => {
             setIsThirdLevelOpen(!isThirdLevelOpen);
