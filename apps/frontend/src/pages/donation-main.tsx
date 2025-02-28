@@ -153,7 +153,7 @@ function DonationTracker() {
       <div className="mb-4 mt-10">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            DONATION TRACKER
+            DONATION RECORDS
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view donation records
@@ -162,26 +162,32 @@ function DonationTracker() {
         <hr className="border-gray mb-6 sm:mb-10" />
 
         {/* Combined Search, Filter, and Create Button Section */}
-        <div className="w-full flex justify-between mb-4 gap-2">
-          <div className="flex gap-3">
+        <div className="w-full flex flex-col sm:flex-row justify-between mb-4 gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* Search Input with Icon */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+              <Input placeholder="Search..." className="pl-10 w-full bg-white" />
             </div>
 
-            <SelectLayout
-              className=""
-              label=""
-              placeholder="Filter"
-              options={filterOptions}
-              value={selectedFilter}
-              onChange={(value) => setSelectedFilter(value)}
-            />
+            {/* Filter Dropdown */}
+            <div className="w-full sm:w-[200px]">
+              <SelectLayout
+                className="w-full"
+                label=""
+                placeholder="Filter"
+                options={filterOptions}
+                value={selectedFilter}
+                onChange={(value) => setSelectedFilter(value)}
+              />
+            </div>
           </div>
-          <div>
+
+          {/* Create Button */}
+          <div className="w-full sm:w-auto">
             <DialogLayout
               trigger={
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <Plus /> Create
                 </Button>
               }
