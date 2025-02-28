@@ -73,7 +73,13 @@ git fetch origin
 git checkout main
 git pull
 ```
+### Merging to Master Branch
 
+```bash
+git checkout master
+git pull
+git merge [yourbranchname]
+```
 ---
 
 <br></br>
