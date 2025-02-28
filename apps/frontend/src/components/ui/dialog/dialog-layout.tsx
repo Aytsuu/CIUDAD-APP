@@ -1,3 +1,5 @@
+// components/DialogLayout.tsx
+import React, { useState } from "react";
 import {
     Dialog,
     DialogHeader,
@@ -7,29 +9,44 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog/dialog";
 
-import React from "react";
-
-interface DialogProps{
-   trigger: React.ReactNode,
-   className: string,
-   title: string,
-   description: string,
-   mainContent: React.ReactNode
+interface DialogProps {
+    trigger: React.ReactNode;
+    className?: string;
+    title?: string;
+    description?: string;
+    mainContent: React.ReactNode;
+    isOpen?: boolean; // Make optional
+    onOpenChange?: (open: boolean) => void; // Make optional
 }
 
-export default function DialogLayout({trigger, className, title = "", description = "",  mainContent} : DialogProps){
-   return(
-       <Dialog>
-           <DialogTrigger>
-               {trigger}
-           </DialogTrigger>
-           <DialogContent className={className}>
-               <DialogHeader>
-                   <DialogTitle className="text-darkBlue1">{title}</DialogTitle>
-                   <DialogDescription>{description}</DialogDescription>
-               </DialogHeader> 
-               {mainContent}
-           </DialogContent>
-       </Dialog>
-   );
+export default function DialogLayout({
+    trigger,
+    className,
+    title = "",
+    description = "",
+    mainContent,
+    isOpen: externalIsOpen, // Optional prop
+    onOpenChange: externalOnOpenChange, // Optional prop
+}: DialogProps) {
+    // Internal state for managing dialog open/close
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+    // Use external state if provided, otherwise use internal state
+    const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+    const onOpenChange = externalOnOpenChange !== undefined ? externalOnOpenChange : setInternalIsOpen;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>
+                {trigger}
+            </DialogTrigger>
+            <DialogContent className={className}>
+                <DialogHeader>
+                    <DialogTitle className="text-darkBlue1">{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                {mainContent}
+            </DialogContent>
+        </Dialog>
+    );
 }

@@ -1,12 +1,13 @@
-import PrenatalViewingOne from "./pages/prenatal/prenatal-viewing";
-// import PostpartumViewing from './pages/postpartum/pospartum-viewing';
-
+import { createBrowserRouter } from "react-router";
+import { RouterProvider } from "react-router";
+import { MaternalServices } from "./routes/maternal-services";
+const router = createBrowserRouter([
+  ...MaternalServices,
+])
 function App() {
-
   return (
     <> 
-      <PrenatalViewingOne />
-      {/* <PostpartumViewing /> */}
+      <RouterProvider router={router}/>
     </> 
   )
 }
