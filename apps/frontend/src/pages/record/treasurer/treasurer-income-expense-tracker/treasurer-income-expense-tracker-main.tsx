@@ -5,7 +5,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye } from 'lucide-react';
+import { ArrowUpDown, Trash, Eye, Search } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeandExpenseCreateForm from "./treasurer-income-expense-tracker-create";
@@ -134,24 +134,30 @@ function IncomeandExpenseTracking() {
             <hr className="border-gray mb-7 sm:mb-9" /> 
 
             <div className="mb-[1rem] flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                    <Input className="w-full sm:w-[20rem] bg-white" placeholder="Search" />
-                    <div className="flex flex-row gap-2 justify-center items-center">
-                        <Label>Filter: </Label>
-                        <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
-                    </div>                        
-                </div>
-                <DialogLayout
-                    trigger={<Button className="w-full sm:w-auto">+ New Entry</Button>}
-                    className="max-w-md"
-                    title="Add New Entry"
-                    description="Fill in the details for your entry."
-                    mainContent={
-                        <div className="w-full h-full">
-                            <IncomeandExpenseCreateForm/>
+                    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                        <div className="relative flex-1"> {/* Increased max-width */}
+                            <Search
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                                size={17}
+                            />
+                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
                         </div>
-                    }
-                />
+                        <div className="flex flex-row gap-2 justify-center items-center">
+                            <Label>Filter: </Label>
+                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                        </div>                            
+                    </div>
+                    <DialogLayout
+                        trigger={<Button className="w-full sm:w-auto">+ New Entry</Button>}
+                        className="max-w-md"
+                        title="Add New Entry"
+                        description="Fill in the details for your entry."
+                        mainContent={
+                            <div className="w-full h-full">
+                                <IncomeandExpenseCreateForm/>
+                            </div>
+                        }
+                    />
             </div>
 
             <div className="bg-white mb-2">

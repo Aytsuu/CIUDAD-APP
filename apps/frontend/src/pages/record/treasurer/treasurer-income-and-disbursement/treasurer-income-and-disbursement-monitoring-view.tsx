@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Search } from 'lucide-react';
 
 function IncomeandDisbursementView() {
     const filter = [
@@ -25,20 +26,20 @@ function IncomeandDisbursementView() {
             <hr className="border-gray mb-7 sm:mb-9" /> 
 
             <div className="mb-[1rem] flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row gap-4 w-full">
-                    <Input placeholder="Search" className="w-full sm:w-[20rem] bg-white" />
-                    <div className="flex flex-row gap-3 items-center">
-                        <Label>Filter:</Label>
-                        <SelectLayout 
-                            options={filter} 
-                            value={selectedFilter} 
-                            onChange={setSelectedFilter} 
-                            placeholder="Filter" 
-                            label="" 
-                            className="bg-white w-full sm:w-[15rem]" 
+                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    <div className="relative flex-1 max-w-[20rem]"> {/* Increased max-width */}
+                        <Search
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                            size={17}
                         />
+                        <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
                     </div>
+                    <div className="flex flex-row gap-2 justify-center items-center">
+                        <Label>Filter: </Label>
+                        <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                    </div>                            
                 </div>
+
                 <div>
                     <div className="bg-white border border-gray-300 rounded-[5px] p-5 h-[20rem] flex items-center justify-center">
                         <h2 className="flex justify-center font-semibold text-lg text-darkGray items-center">No Files Uploaded.</h2>
