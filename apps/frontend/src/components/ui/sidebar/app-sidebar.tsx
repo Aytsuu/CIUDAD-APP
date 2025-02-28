@@ -102,7 +102,7 @@ const items: MenuItem[] = [
   {
     title: "Illegal Dumping Reports",
     url: "/waste-illegaldumping-report",
-  },
+  },  
   {
     title: "Announcement",
     url: "/announcement",

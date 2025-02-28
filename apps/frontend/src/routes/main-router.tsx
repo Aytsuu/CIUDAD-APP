@@ -33,6 +33,10 @@ export const main_router: RouteObject[] = [
                 path: "dashboard",
                 element: <Dashboard/>
             },
+            {
+                path: "announcement",
+                element: ""
+            },
             ...administration_router,
             ...profiling_router,
             ...drr_router,
