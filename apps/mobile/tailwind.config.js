@@ -7,6 +7,11 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        PoppinsRegular: ["PoppinsRegular", "sans-serif"],
+        PoppinsMedium: ["PoppinsMedium", "sans-serif"],
+        PoppinsSemiBold: ["PoppinsSemiBold", "sans-serif"],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -41,6 +46,13 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+
+        // Custom colors
+        primaryBlue: '#00A8F0',
+        lightBlue: {
+          1: '#ECF8FF',
+          2: '#E0F2FF'
+        }
       },
       borderWidth: {
         hairline: hairlineWidth(),
