@@ -278,7 +278,7 @@ export default function InvChildHealthRecords() {
 
         <div className="w-full md:w-auto">
           <Link to="/newAddChildHRForm">
-            <Button className=" w-full md:w-auto">Add Record</Button>
+            <Button className=" w-full md:w-auto">New Record</Button>
           </Link>
         </div>
       </div>
