@@ -143,17 +143,9 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <DialogLayout
-        trigger={
-          <div className="w-[50px] h-[35px] border flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            View
-          </div>
-        }
-        className="max-w-full sm:max-w-[95%] md:max-w-[80%] lg:max-w-[70%] xl:max-w-[50%] h-full sm:h-4/5 md:h-3/4 lg:h-2/3 flex flex-col"
-        title="Report Details"
-        description="This report was received on 9th of July, 2025. Please respond accordingly."
-        mainContent={"/"}
-      />
+      <Link to="/resident-information">
+        <Button variant="outline">View</Button>
+      </Link>
     ),
     enableSorting: false,
     enableHiding: false,
