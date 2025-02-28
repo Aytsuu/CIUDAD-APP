@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Plus, ClockArrowUp, FileInput, ArrowUpDown, Search } from "lucide-react";
+import {
+  Plus,
+  ClockArrowUp,
+  FileInput,
+  ArrowUpDown,
+  Search,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +21,7 @@ import { DataTable } from "../../../components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import RegistrationOptions from "./RegistrationOptions";
+import { useState } from "react";
 
 // Define the type for the Report object
 type Report = {
@@ -80,12 +87,14 @@ export const columns: ColumnDef<Report>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Family No.  
+        Family No.
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">{row.getValue("sitio")}</div>
+      <div className="hidden lg:block max-w-xs truncate">
+        {row.getValue("sitio")}
+      </div>
     ),
   },
   {
@@ -95,12 +104,14 @@ export const columns: ColumnDef<Report>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Last Name  
+        Last Name
         <ArrowUpDown size={14} />
       </div>
-    ),  
+    ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">{row.getValue("lastName")}</div>
+      <div className="hidden lg:block max-w-xs truncate">
+        {row.getValue("lastName")}
+      </div>
     ),
   },
   {
@@ -110,12 +121,14 @@ export const columns: ColumnDef<Report>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        First Name  
+        First Name
         <ArrowUpDown size={14} />
       </div>
-    ),  
+    ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">{row.getValue("firstName")}</div>
+      <div className="hidden lg:block max-w-xs truncate">
+        {row.getValue("firstName")}
+      </div>
     ),
   },
   {
@@ -152,7 +165,6 @@ export const columns: ColumnDef<Report>[] = [
   },
 ];
 
-
 // Sample data for the reports
 export const reports: Report[] = [
   {
@@ -179,9 +191,20 @@ export const reports: Report[] = [
   },
 ];
 
-export default function ProfilingMain() { 
+export default function ProfilingMain() {
+  const [searchQuery, setSearchQuery] = useState("");
   const data = reports;
-  
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  // const filteredPatients = patients.filter((patient) => {
+  //   const searchString =
+  //     `${patient.fname} ${patient.lname} ${patient.age} ${patient.gender} ${patient.date} ${patient.exposure} ${patient.siteOfExposure} ${patient.bitingAnimal}`.toLowerCase();
+  //   return searchString.includes(searchQuery.toLowerCase());
+  // });
+
   return (
     <div className="w-full">
       {/* Header Section */}
@@ -199,17 +222,25 @@ export default function ProfilingMain() {
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex gap-x-2">
           <div className="relative flex-1 bg-white">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search..." className="pl-10 w-72" />
-          </div>
-            <SelectLayout 
-                placeholder="Filter by"
-                label=""
-                className="bg-white"
-                options={[]}
-                value=""
-                onChange={() => {}}
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+              size={17}
             />
+            <Input
+              placeholder="Search..."
+              className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+          <SelectLayout
+            placeholder="Filter by"
+            label=""
+            className="bg-white"
+            options={[]}
+            value=""
+            onChange={() => {}}
+          />
         </div>
         <div>
           <div className="flex gap-2">
@@ -221,10 +252,10 @@ export default function ProfilingMain() {
             </Link>
 
             {/* Registration Button */}
-            <DialogLayout 
+            <DialogLayout
               trigger={
-                <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90"> 
-                  <Plus size={15}/> Register
+                <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                  <Plus size={15} /> Register
                 </div>
               }
               className=""
@@ -240,10 +271,10 @@ export default function ProfilingMain() {
       <div className="h-full w-full rounded-md">
         <div className="w-full bg-white flex flex-row justify-between p-3">
           <div className="flex gap-x-2 items-center">
-                <p className="text-xs sm:text-sm">Show</p>
-                    <Input type="number" className="w-14 h-8" defaultValue="10" />
-                <p className="text-xs sm:text-sm">Entries</p>
-            </div>
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -252,11 +283,11 @@ export default function ProfilingMain() {
                   Export
                 </Button>
               </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
@@ -276,6 +307,6 @@ export default function ProfilingMain() {
           </div>
         </div>
       </div>
-    </div> 
+    </div>
   );
 }
