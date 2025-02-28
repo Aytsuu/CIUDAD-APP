@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
 import DeleteConfirmationModal from '@/pages/announcement/deletemodal'; // Ensure the import path is correct
 import { SelectLayout } from '@/components/ui/select/select-layout';
+import { Link } from 'react-router-dom';
 
 interface Announcement {
     id: string;
@@ -115,10 +116,11 @@ const AnnouncementDashboard: React.FC = () => {
                         // onChange={() => {}} // ✅ Corrected
                     />
                 </div>
-
+                <Link to={`/createAnnouncement`}>
                 <Button className="w-full sm:w-auto mt-1 p-2 text-sm shadow-sm">
                     <Label>Add Announcement</Label>
                 </Button>
+                </Link>
             </div>
 
             {/* Announcements List - Responsive */}

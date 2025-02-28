@@ -4,6 +4,7 @@ import html2canvas from "html2canvas";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const Viewing = () => {
     const pdfRef = useRef<HTMLDivElement>(null);
@@ -15,23 +16,22 @@ const Viewing = () => {
         const imgData = canvas.toDataURL("image/png");
 
         const pdf = new jsPDF("p", "mm", "a4");
-        const imgWidth = 210; // A4 width in mm
+        const imgWidth = 210; 
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
         pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        
-        // Open the PDF in a new tab instead of downloading
+
         window.open(pdf.output("bloburl"), "_blank");
     };
 
     return (
         <div>
-            <button
+            <Button
                 onClick={generatePDF}
-                className="m-4 px-6 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700"
+                className="m-4 px-6 py-2rounded-lg shadow-md"
             >
                 Generate PDF
-            </button>
+            </Button>
 
             <div ref={pdfRef} className="p-10 shadow-md bg-white">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">

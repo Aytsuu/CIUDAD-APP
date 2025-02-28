@@ -51,8 +51,8 @@ export default function FamilyPlanningForm() {
   });
 
   return (
-    <div className="flex justify-center mt-10 min-h-screen px-4">
-      <div className="p-8 max-w-full w-[90%] border border-gray-300 shadow-xl rounded-lg">
+    <div className="flex justify-center mt-10 h-full w-full px-4">
+      <div className="p-8 h-full w-full border border-gray-300 shadow-xl rounded-lg">
         <h2 className="text-3xl font-bold mb-4 border-l-4 p-4 text-center">
           Family Planning (FP) Form 1
         </h2>

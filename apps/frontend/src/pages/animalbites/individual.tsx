@@ -3,11 +3,12 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button";
-import ReferralFormModal from "@/pages/animalbites/referralform"; // Import Form Modal
+import ReferralFormModal from "@/pages/animalbites/referralform";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Link } from "react-router-dom"; 
 
 // Define Patient Type
 type Patient = {
@@ -23,19 +24,6 @@ type Patient = {
   actions: string;
 };
 
-// Define Columns for DataTable
-export const columns: ColumnDef<Patient>[] = [
-  { accessorKey: "lname", header: "Last Name" },
-  { accessorKey: "fname", header: "First Name" },
-  { accessorKey: "age", header: "Age" },
-  { accessorKey: "gender", header: "Gender" },
-  { accessorKey: "date", header: "Date" },
-  { accessorKey: "exposure", header: "Exposure" },
-  { accessorKey: "siteOfExposure", header: "Site of Exposure" },
-  { accessorKey: "bitingAnimal", header: "Biting Animal" },
-  { accessorKey: "actions", header: "Actions" },
-];
-
 // Sample Data
 const samplePatients: Patient[] = [
   {
@@ -45,10 +33,10 @@ const samplePatients: Patient[] = [
     age: "25",
     gender: "Female",
     date: "2024-02-06",
-    exposure: "Scratch",
+    exposure: "Non-bite",
     siteOfExposure: "Feet",
     bitingAnimal: "Cat",
-    actions: "Wound Cleaned, Vaccine Given",
+    actions: "Wound Cleaned",
   },
   {
     id: 2,
@@ -60,61 +48,109 @@ const samplePatients: Patient[] = [
     exposure: "Bite",
     siteOfExposure: "Hand",
     bitingAnimal: "Dog",
-    actions: "Antibiotics Given",
+    actions: "Wound Cleaned, Medicine Given",
   },
   {
-    id: 2,
-    fname: "Bane",
-    lname: "Gil",
-    age: "30",
-    gender: "Male",
-    date: "2024-02-08",
+    id: 3,
+    fname: "Lena",
+    lname: "Smith",
+    age: "28",
+    gender: "Female",
+    date: "2024-02-10",
     exposure: "Bite",
-    siteOfExposure: "Hand",
-    bitingAnimal: "Dog",
-    actions: "Antibiotics Given",
+    siteOfExposure: "Leg",
+    bitingAnimal: "Monkey",
+    actions: "Antibiotic Given",
   },
-  
 ];
 
 function AnimalBites() {
-  const [patients, setPatients] = useState<Patient[]>(samplePatients); // State for patient data
+  const [patients, setPatients] = useState<Patient[]>(samplePatients);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterValue, setFilterValue] = useState("");
+
+  // Define Columns for DataTable
+  const columns: ColumnDef<Patient>[] = [
+    {
+      accessorKey: "fullName",
+      header: "Patient",
+      cell: ({ row }) => {
+        const { fname, lname } = row.original;
+        return `${lname}, ${fname}`;
+      },
+    },
+    { accessorKey: "age", header: "Age" },
+    { accessorKey: "gender", header: "Gender" },
+    { accessorKey: "date", header: "Date" },
+    { accessorKey: "exposure", header: "Exposure" },
+    { accessorKey: "siteOfExposure", header: "Site of Exposure" },
+    { accessorKey: "bitingAnimal", header: "Biting Animal" },
+    { accessorKey: "actions",header: "Actions taken"},
+    { accessorKey: "button",
+      header: "",
+      cell: ({ }) => (
+        <div className="flex justify-center">
+          <Link to={`/Animalbite_individual/`}>
+            <Button variant="outline" className="">
+              View details
+            </Button>
+          </Link>
+        </div>
+      ),
+    },
+  ];
 
   // Function to add a new patient
   const handleAddPatient = (newPatient: Patient) => {
-    console.log("Received new patient in parent:", newPatient); // Debugging log
     setPatients((prevPatients) => [...prevPatients, newPatient]);
   };
 
+  // Function to handle search input change
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredPatients = patients.filter((patient) => {
+    const searchString = `${patient.fname} ${patient.lname} ${patient.age} ${patient.gender} ${patient.date} ${patient.exposure} ${patient.siteOfExposure} ${patient.bitingAnimal}`.toLowerCase();
+    return searchString.includes(searchQuery.toLowerCase());
+  });
+
   return (
-    <div className="w-full h-full bg-gray-100 flex flex-col justify-center items-center">
-      {/* Container */}
+    <div className="w-full h-full flex flex-col justify-center items-center">
       <div className="w-full h-full flex flex-col">
-        <div className="w-full h-full bg-white border border-gray-300 rounded-lg p-5 shadow-md">
-          
+        <div className="w-full h-full border border-gray-300 rounded-lg p-5 shadow-md">
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Animal Bites Records</h1>
-          </div> 
-          
+          </div>
+
           {/* Search, Filter & Button Section */}
           <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
             <div className="flex flex-1 gap-4 w-full">
               {/* Search Input */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input placeholder="Search..." className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                />
               </div>
 
               {/* Filter Dropdown */}
               <div className="w-48">
-                <SelectLayout 
-                  placeholder="Filter by"
+                <SelectLayout
+                  placeholder="Filter by Exposure"
                   label=""
                   className="bg-white border-gray-300 w-full"
-                  options={[]}
-                  value=""
-                  onChange={() => {}}
+                  options={[
+                    { id: "All", name: "All" },
+                    { id: "Bite", name: "Bite" },
+                    { id: "Scratch", name: "Scratch" },
+                  ]}
+                  value={filterValue}
+                  onChange={(value) => setFilterValue(value)}
                 />
               </div>
             </div>
@@ -124,30 +160,40 @@ function AnimalBites() {
               <DialogLayout
                 trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
                 className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
-                mainContent={
-                  <ReferralFormModal
-                    onAddPatient={handleAddPatient}
-                    onClose={() => console.log("Closing modal")} // Ensure modal closes
-                  />
-                }
-                title={""}
-                description={""}
-              />
+                mainContent={<ReferralFormModal
+                  onAddPatient={handleAddPatient}
+                  onClose={() => console.log("Closing modal")} />} title={""} description={""}              />
             </div>
           </div>
 
-          {/* Data Table */}
-          <div className="overflow-x-auto">
-            <DataTable columns={columns} data={patients} /> {/* Use the state variable */}
+         {/* Table Container */}
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+          
+        </div>
+        <div className="bg-white w-full overflow-x-auto">
+          {/* Table Placement */}
+          <DataTable columns={columns} data={filteredPatients} />
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          {/* Showing Rows Info */}
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing 1-10 of 150 rows
+          </p>
+
+          {/* Pagination */}
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout className="" />
           </div>
         </div>
-
-        {/* Pagination */}
-        
-          <PaginationLayout className="text-sm mt-4 justify-end" />
-        
       </div>
     </div>
+    </div></div>
   );
 }
 

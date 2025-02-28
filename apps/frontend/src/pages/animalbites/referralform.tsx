@@ -294,7 +294,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                 <FormItem>
                   <Label>Biting Animal:</Label>
                   <FormControl>
-                    <Input placeholder="Enter animal type (e.g., Dog, Cat)" {...field} />
+                    <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -322,7 +322,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-green-600 hover:bg-green-800 text-white">
+            <Button type="submit" className="">
               Add
             </Button>
     
