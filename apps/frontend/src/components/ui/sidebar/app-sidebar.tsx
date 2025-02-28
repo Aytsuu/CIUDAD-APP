@@ -56,13 +56,19 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      {
-        title: "Resident Report",
-        url: "/drr-resident-report",
-      },
+      { title: "Resident Report", url: "/drr-resident-report"},
       { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
       { title: "Monthly Report", url: "/drr-monthly-report" },
       { title: "Staff", url: "/drr-staff" },
+    ],
+  },
+
+  {
+    title: "GAD",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
     ],
   },
   {
@@ -113,11 +119,11 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       {title: "Animal Bites", url: "/"},
-      {title: "Child Services", url: "/"},
+      {title: "Child Services", url: "/allChildHRTable"},
       {title: "Maternal Services", url:"/maternalrecords"},
       {title: "Family Planning", url: "/"},
       {title: "Medical Consultation", url: "/"},
-      {title: "Vaccination", url: "/"},
+      {title: "Vaccination", url: "/allVaccinationRecord"},
     ]
   }
 ];

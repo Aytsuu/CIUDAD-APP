@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Eye } from "lucide-react";
+import { Trash, Eye, Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -9,7 +9,6 @@ import { ArrowUpDown } from "lucide-react";
 import GADAddEntryForm from "./budget-tracker-create-form";
 import { Input } from "@/components/ui/input";
 import GADEditEntryForm from "./budget-tracker-edit-form";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Calendar } from 'lucide-react';
@@ -63,7 +62,7 @@ const columns: ColumnDef<header>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ }) => (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="flex justify-center gap-1">
         <TooltipLayout
           trigger={
             <DialogLayout
@@ -132,9 +131,9 @@ function BudgetTracker() {
   let remainingBal = 0.00, amtUsed = 0.00, year = "2020"; 
    
   const filter = [
-    {id: "0", name: "All Entry Types"},
-    {id: "1", name: "Income"},
-    {id: "2", name: "Expense"}
+    {id: "All Entry Types", name: "All Entry Types"},
+    {id: "Income", name: "Income"},
+    {id: "Expense", name: "Expense"}
   ];
 
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
@@ -143,8 +142,7 @@ function BudgetTracker() {
 
 
   return (
-    <div className="w-full h-full bg-snow">
-        <div className="mx-4 mb-4 mt-10 gap-4 flex flex-col p-5">
+    <div className="w-full h-full">
           <div className="flex flex-col gap-3 mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
                     <div className="rounded-full border-2 border-solid border-darkBlue2 p-2 flex items-center"><Calendar></Calendar> </div>
@@ -168,13 +166,19 @@ function BudgetTracker() {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4"> 
-                <div className="flex flex-row gap-7">
-                      <Input className="w-[20rem] bg-white" placeholder="Search" />
-                      <div className="flex flex-row gap-2 justify-center items-center">
-                          <Label>Filter: </Label>
-                          <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
-                      </div> 
-                </div>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                        <div className="relative flex-1"> {/* Increased max-width */}
+                            <Search
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                                size={17}
+                            />
+                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                        </div>
+                        <div className="flex flex-row gap-2 justify-center items-center">
+                            <Label>Filter: </Label>
+                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                        </div>                            
+                  </div>
                 <div className="">
                       <DialogLayout
                       trigger={
@@ -214,7 +218,6 @@ function BudgetTracker() {
                   <PaginationLayout className="" />
                 </div>
           </div>
-        </div>
     </div>
   );
 }
