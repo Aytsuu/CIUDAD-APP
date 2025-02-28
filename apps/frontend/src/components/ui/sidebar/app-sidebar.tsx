@@ -71,7 +71,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
           className="w-full cursor-pointer"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <div className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 rounded-md text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]">
+          <div className="flex items-center justify-between px-4 py-2 rounded-md text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]">
             <span>{item.title}</span>
             {isOpen ? (
               <ChevronDown className="h-4 w-4" />
@@ -90,8 +90,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
               >
                 <a 
                   href={subItem.url}
-                  className="flex items-center px-4 py-2 text-sm hover:bg-gray-100 rounded-md"
-                  
+                  className="flex items-center px-4 py-2 text-sm rounded-md"
                 >
                   <span>{subItem.title}</span>
                 </a>
@@ -108,7 +107,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
       <SidebarMenuButton asChild>
         <a 
           href={item.url}
-          className="flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"
+          className="flex items-center px-4 py-2 rounded-md"
         >
           <span>{item.title}</span>
         </a>

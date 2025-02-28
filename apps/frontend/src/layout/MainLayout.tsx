@@ -31,7 +31,6 @@ export default function MainLayout() {
         <main className="py-10 pl-8 pr-14 overflow-y-auto flex-1 bg-[#F3F4F8]">
           <Outlet />
         </main>
-        
       </div>
     </div>
   );
