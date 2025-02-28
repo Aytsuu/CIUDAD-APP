@@ -59,18 +59,6 @@ const items: MenuItem[] = [
       {
         title: "Resident Report",
         url: "/drr-resident-report",
-        anotherItems: [
-          {
-            title: "Resident Report",
-            url: "/drr-resident-report",
-          },
-          {
-            title: "Acknowledgement Report",
-            url: "/drr-acknowledgement-report",
-          },
-          { title: "Monthly Report", url: "/drr-monthly-report" },
-          { title: "Staff", url: "/drr-staff" },
-        ],
       },
       { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
       { title: "Monthly Report", url: "/drr-monthly-report" },
@@ -94,18 +82,25 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      { title: "Income & Expense Tracking", url: "/treasurer-income-and-expense-tracking" },
-      { title: "Income & Disbursement Monitoring", url: "/treasurer-income-and-disbursement" },
-      { title: "Clearance Requests", 
+      {
+        title: "Income & Expense Tracking",
+        url: "/treasurer-income-and-expense-tracking",
+      },
+      {
+        title: "Income & Disbursement Monitoring",
+        url: "/treasurer-income-and-disbursement",
+      },
+      {
+        title: "Clearance Requests",
         url: "/",
         anotherItems: [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Barangay Service", url: "/treasurer-barangay-service" }
-        ]
-      }
-    ]
+          { title: "Barangay Service", url: "/treasurer-barangay-service" },
+        ],
+      },
+    ],
   },
   {
     title: "Donation",
@@ -156,7 +151,7 @@ const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
           className={`flex items-center justify-between px-4 py-2 text-sm rounded-md cursor-pointer ${
             isActive
               ? "bg-[#1273B2]/10 text-[#1273B8]"
-              : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+              : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
           }`}
           onClick={() => {
             setIsThirdLevelOpen(!isThirdLevelOpen);
@@ -173,7 +168,11 @@ const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
         {isThirdLevelOpen && (
           <div className="ml-4 mt-1 space-y-1">
             {item.anotherItems?.map((thirdItem) => (
-              <SidebarMenuButton key={thirdItem.title} asChild className="w-full">
+              <SidebarMenuButton
+                key={thirdItem.title}
+                asChild
+                className="w-full"
+              >
                 <Link
                   to={thirdItem.url}
                   className={`flex items-center px-4 py-2 text-sm rounded-md ${

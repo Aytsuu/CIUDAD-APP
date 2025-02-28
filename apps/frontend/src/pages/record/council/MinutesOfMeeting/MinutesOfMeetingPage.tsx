@@ -86,7 +86,7 @@ export const columns: ColumnDef<Meeting>[] = [
         accessorKey: "action",
         header: "Action",
         cell: () => (
-            <div className="flex flex-wrap justify-center gap-1">
+            <div className="flex flex-wrap justify-center gap-1 pr-2">
                 <TooltipLayout
                     trigger={
                         <DialogLayout
