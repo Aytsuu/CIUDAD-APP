@@ -142,7 +142,7 @@ export function Header() {
         <Popover>
           <PopoverTrigger className="flex items-center space-x-2">
             <img src={sanRoqueLogo} alt="Barangay Logo" />
-            <h2 className="hidden sm:block text-sm font-medium">Mesh You</h2>
+            <h2 className="hidden sm:block text-sm font-medium">Sef Jo</h2>
           </PopoverTrigger>
           <PopoverContent className="absolute right-0 top-2 p-0">
             <CardLayout

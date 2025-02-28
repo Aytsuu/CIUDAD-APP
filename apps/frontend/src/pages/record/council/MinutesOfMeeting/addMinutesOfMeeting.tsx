@@ -14,7 +14,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 import { Link } from 'react-router';
 
@@ -54,7 +54,14 @@ function AddMinutesOfMeeting() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="text-[#394360] pb-2">
-                        <Link to="/mom-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
+                        <Link to="/mom-page">
+                            <Button 
+                                className="text-black p-2 self-start"
+                                variant={"outline"}
+                            >
+                                <ChevronLeft />
+                            </Button>                              
+                        </Link>
                     </div>
 
                     {/* Ordinance Description Field */}

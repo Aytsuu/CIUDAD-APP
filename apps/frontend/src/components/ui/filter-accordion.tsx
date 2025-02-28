@@ -57,7 +57,7 @@ interface FilterAccordionProps {
                     type="checkbox"
                     id={option.id}
                     checked={option.checked}
-                    onChange={(e) => onChange(option.id, e.target.checked)}
+                    on={(e) => onChange(option.id, e.target.checked)}
                     className="size-5 rounded border-gray-300"
                   />
                   <span className="text-sm font-medium text-gray-700">

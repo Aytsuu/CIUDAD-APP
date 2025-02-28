@@ -21,6 +21,7 @@ import { treasurer_router } from './treasurer-router';
 import { maternal_router } from './maternal-services';
 import { vaccination } from './vaccination';
 import { childHealthServices } from './childHealthServices';
+import { gad_router } from './gad-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -50,6 +51,7 @@ export const main_router: RouteObject[] = [
             ...maternal_router,
             ...vaccination,
             ...childHealthServices
+            ...gad_router,
         ]
     }
 ]

@@ -238,7 +238,7 @@ export const columns: ColumnDef<Attendance>[] = [
                     trigger={
                         <DialogLayout
                             trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Stamp size={16} /></div>}
-                            className="max-w-[700px] h-[400px] flex flex-col overflow-auto scrollbar-custom"
+                            className="max-w-[700px] h-[400px] flex flex-col overflow-auto"
                             title="Mark Attendance"
                             description="Confirm participant attendance."
                             mainContent={<Attendees/>} // Replace with actual image path
