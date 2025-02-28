@@ -212,7 +212,6 @@ function WasteIllegalDumping() {
                   value={selectedFilterId}
                   label=""
                   onChange={(id) => {
-                    console.log("Selected ID:", id); // Debug the ID
                     setSelectedFilterId(id);
                   }}
                 />
