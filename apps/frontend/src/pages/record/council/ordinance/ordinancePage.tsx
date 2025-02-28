@@ -160,7 +160,7 @@ function OrdinancePage() {
                     </div>
 
                     <SelectLayout
-                        className={''}
+                        className="bg-white"
                         label=""
                         placeholder="Filter"
                         options={filterOptions}

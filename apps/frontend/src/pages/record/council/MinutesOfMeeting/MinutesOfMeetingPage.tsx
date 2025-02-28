@@ -86,7 +86,7 @@ export const columns: ColumnDef<Meeting>[] = [
         accessorKey: "action",
         header: "Action",
         cell: () => (
-            <div className="flex flex-wrap justify-center gap-1">
+            <div className="flex flex-wrap justify-center gap-1 pr-2">
                 <TooltipLayout
                     trigger={
                         <DialogLayout
@@ -166,7 +166,7 @@ function MinutesOfMeetingPage() {
                     </div>
 
                     <SelectLayout
-                        className="min-w-[150px]"
+                        className="min-w-[150px] bg-white"
                         label=""
                         placeholder="Filter"
                         options={filterOptions}

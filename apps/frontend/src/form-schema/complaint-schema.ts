@@ -4,6 +4,7 @@ import { z } from "zod"
 
 const ComplaintformSchema = z.object({
     
+
     accusedName: z.string().min(1, 'Accused name is required'),
     accusedAddress: z.string().min(1, 'Accused address is required'),
     complainantName: z.string().min(1, 'Complainant name is required'),

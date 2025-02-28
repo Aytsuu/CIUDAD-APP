@@ -177,6 +177,10 @@ margin-bottom: 15px;
   pointer-events: none;
 }
 
+.rbc-day-bg{
+  background-color: #fffefe !important; 
+}
+
 
 /*TIPTAP CSS*/
 .tiptap ul {

@@ -25,8 +25,26 @@ function Attendees() {
     let attendees = [
         "Hon. Katty Sheen", "Hon. Lewdie Pie Kewpie",
         "Hon. Sem Luiz Warain", "Hon. Helow World Lorem Ipsum",
-        "Hon. Warrior Hannah Sheen", "Hon. Castor Troy Bower"
+        "Hon. Las Palabras Sheen", "Hon. Denise Troy Bower",
+        "Hon. Lorem Eschu Sheen", "Hon. Jar Hertz Layne",
+        "Hon. Hinge Ipsum Sheen", "Hon. Former Bayne Lanie",
+        "Hon. How Are You", "Hon. Castor Troy Bower",        
     ];
+
+    // Handle "Select All" checkbox
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            form.setValue("attendees", attendees); // Select all attendees
+        } else {
+            form.setValue("attendees", []); // Deselect all attendees
+        }
+    };
+
+    // Check if all attendees are selected
+    const selectedAttendees = form.watch("attendees") ?? [];
+    const isAllSelected = selectedAttendees.length === attendees.length;
+
+
 
     return (
         <div className="w-full h-screen flex flex-col">
@@ -34,6 +52,19 @@ function Attendees() {
             <div className="p-4 flex-grow">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+                        <div className="flex items-center space-x-3 border border-gray-opacity p-1.5 rounded-sm">
+                            <Checkbox
+                                id="select-all"
+                                className="h-5 w-5"
+                                checked={isAllSelected}
+                                onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                            />
+                            <Label htmlFor="select-all" className="cursor-pointer">
+                                Select All
+                            </Label>
+                        </div>
+                                                
                         <div className="grid grid-cols-2 gap-4 pt-3">
                             {attendees.map((attendee, index) => (
                                 <FormField
@@ -43,7 +74,7 @@ function Attendees() {
                                     render={({ field }) => {
                                         const selectedAttendees = field.value ?? [];
                                         return (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0.5">
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0.5 border border-gray-opacity p-1.5 rounded-sm">
                                                 <FormControl>
                                                     <Checkbox
                                                         id={`attendee-${index}`}
@@ -73,7 +104,7 @@ function Attendees() {
                         </div>
 
                         {/* Save Button */}
-                        <div className="flex justify-end pt-10 pb-10">
+                        <div className="flex justify-end pt-10">
                             <Button type="submit" className="w-20">Save</Button>
                         </div>
                     </form>
