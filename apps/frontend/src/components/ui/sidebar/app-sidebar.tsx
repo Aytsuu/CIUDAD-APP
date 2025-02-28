@@ -23,7 +23,7 @@ type MenuItem = {
   items?: SubMenuItem[];
 }
 
-//Menu items with dropdown support
+// Menu items with dropdown support
 const items: MenuItem[] = [
   {
     title: "Dashboard",
@@ -55,19 +55,25 @@ const items: MenuItem[] = [
 
 interface MenuItemProps {
   item: MenuItem;
+  activeItem: string;
+  setActiveItem: (title: string) => void;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
+const MenuItem: React.FC<MenuItemProps> = ({ item, activeItem, setActiveItem }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isActive = activeItem === item.title; // Check if this item is active
 
   if (item.subItems && item.items) {
     return (
       <SidebarMenuItem>
         <div 
-          className="w-full cursor-pointer"
-          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full cursor-pointer ${isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"}`}
+          onClick={() => {
+            setIsOpen(!isOpen);
+            setActiveItem(item.title);
+          }}
         >
-          <div className="flex items-center justify-between px-4 py-2 rounded-md text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]">
+          <div className="flex items-center justify-between px-4 py-2 rounded-md">
             <span>{item.title}</span>
             {isOpen ? (
               <ChevronDown className="h-4 w-4" />
@@ -86,7 +92,10 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
               >
                 <Link 
                   to={subItem.url}
-                  className="flex items-center px-4 py-2 text-sm rounded-md"
+                  className={`flex items-center px-4 py-2 text-sm rounded-md ${
+                    activeItem === subItem.title ? "bg-[#1273B2]/10 text-[#1273B8]" : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+                  }`}
+                  onClick={() => setActiveItem(subItem.title)}
                 >
                   <span>{subItem.title}</span>
                 </Link>
@@ -104,7 +113,10 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
         {item.url && (
           <Link
             to={item.url}
-            className="flex items-center px-4 py-2 rounded-md"
+            className={`flex items-center px-4 py-2 rounded-md ${
+              isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+            }`}
+            onClick={() => setActiveItem(item.title)}
           >
             <span>{item.title}</span>
           </Link>
@@ -115,6 +127,8 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
 };
 
 export function AppSidebar() {
+  const [activeItem, setActiveItem] = useState<string>("");
+
   return (
     <Sidebar className="border-none">
       <SidebarContent>
@@ -123,7 +137,7 @@ export function AppSidebar() {
             <div className='w-full h-14'></div>
             <SidebarMenu>
               {items.map((item) => (
-                <MenuItem key={item.title} item={item} />
+                <MenuItem key={item.title} item={item} activeItem={activeItem} setActiveItem={setActiveItem} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>

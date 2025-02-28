@@ -143,7 +143,7 @@ export function Navbar() {
           <PopoverTrigger className="flex items-center space-x-2">
             <img src={sanRoqueLogo} alt="Barangay Logo" />
             <h2 className="hidden sm:block text-sm font-medium">
-              Paolo Araneta
+              Paolo Araneta gwapa
             </h2>
           </PopoverTrigger>
           <PopoverContent className="absolute right-0 top-2 p-0">
