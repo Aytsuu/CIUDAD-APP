@@ -1,8 +1,9 @@
 import { Label } from "@/components/ui/label";
 import { Calendar } from 'lucide-react';
 import { Progress } from "@/components/ui/progress"; 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import CreateGADBudgetTracker from "./budget-tracker-create-tracker-form";
 
 function GADBudgetTrackerMain(){
 
@@ -27,10 +28,19 @@ function GADBudgetTrackerMain(){
                             <hr className="border-gray mb-5 sm:mb-4" />   
                         </div>
 
-                        <div className="flex justify-end gap-5 m-5">
-                            <Button> + Create New</Button>
-                            <Input className="w-[20rem] bg-white" placeholder="Search"></Input>
-                        </div>
+                            <div className="flex justify-end gap-5 m-5">
+                                <DialogLayout
+                                trigger={ <div className="bg-primary text-white rounded-md p-3 text-sm font-semibold drop-shadow-sm">+ Create New</div>}
+                                className="max-w-md"
+                                title="Create New Budget Tracker"
+                                description="Fill out the form below to create a new budget tracker for a specific year."
+                                mainContent={
+                                    <div>
+                                    <CreateGADBudgetTracker/>
+                                    </div>
+                                }></DialogLayout>
+                                <Input className="w-[20rem] bg-white" placeholder="Search"></Input>
+                            </div>
                     </div>
 
 
