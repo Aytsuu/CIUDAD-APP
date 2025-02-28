@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Eye, Plus } from "lucide-react";
+import { Trash, Eye, Plus, Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import ClerkDonateCreate from "./donation-create";
@@ -10,6 +10,8 @@ import ClerkDonateDeleteConf from "./donation-delete-conf";
 import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type Donation = {
   refNo: string;
@@ -126,7 +128,7 @@ const bodyData: Donation[] = [
 
 function DonationTracker() {
   const data = bodyData;
-  const filter = [
+  const filterOptions = [
     { id: "0", name: "All Donation Category" },
     { id: "1", name: "Monetary Donations" },
     { id: "2", name: "Essential Goods" },
@@ -135,11 +137,11 @@ function DonationTracker() {
     { id: "5", name: "Educational Supplies" },
     { id: "6", name: "Baby & Childcare Items" },
     { id: "7", name: "Animal Welfare Items" },
-    { id: "8", name: "Shelter & Homeless Aid " },
+    { id: "8", name: "Shelter & Homeless Aid" },
     { id: "9", name: "Disaster Relief Supplies" },
   ];
 
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+  const [selectedFilter, setSelectedFilter] = useState(filterOptions[0].name);
 
   const filteredData =
     selectedFilter === "All Donation Category"
@@ -147,48 +149,74 @@ function DonationTracker() {
       : data.filter((item) => item.itemCat === selectedFilter);
 
   return (
-    <div className="w-full h-full">
-      <div className="mx-4 mb-4 mt-10">
-        <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
-          <p>DONATIONS</p>
-          <br></br>
+    <div className="w-full h-full px-4 md:px-8 lg:px-16">
+      <div className="mb-4 mt-10">
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            DONATION TRACKER
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view donation records
+          </p>
         </div>
-        <div className="bg-white border border-gray w-full rounded-[5px] p-5 table-fixed">
-          <div className="flex justify-end mb-4 gap-3">
-            <div>
-              <SelectLayout
-                className=""
-                options={filter}
-                placeholder="Filter"
-                value={selectedFilter}
-                label=""
-                onChange={setSelectedFilter}
-              ></SelectLayout>
+        <hr className="border-gray mb-6 sm:mb-10" />
+
+        {/* Combined Search, Filter, and Create Button Section */}
+        <div className="w-full flex justify-between mb-4 gap-2">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
             </div>
-            <div>
-              <DialogLayout
-                trigger={
-                  <div className="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
-                    {" "}
-                    <Plus/> Create
-                  </div>
-                }
-                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                title=""
-                description=""
-                mainContent={
-                  <div className="w-full h-full">
-                    <ClerkDonateCreate />
-                  </div>
-                }
-              />
-            </div>
+
+            <SelectLayout
+              className=""
+              label=""
+              placeholder="Filter"
+              options={filterOptions}
+              value={selectedFilter}
+              onChange={(value) => setSelectedFilter(value)}
+            />
           </div>
+          <div>
+            <DialogLayout
+              trigger={
+                <Button>
+                  <Plus /> Create
+                </Button>
+              }
+              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+              title=""
+              description=""
+              mainContent={
+                <div className="w-full h-full">
+                  <ClerkDonateCreate />
+                </div>
+              }
+            />
+          </div>
+        </div>
+
+        {/* Table Section */}
+        <div className="w-full border-none bg-white rounded-[5px] p-5">
+          <div className="flex gap-x-2 items-center p-4">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+
           <DataTable columns={columns} data={filteredData} />
         </div>
 
-        <div>
-          <PaginationLayout className="" />
+        {/* Pagination Section */}
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing 1-10 of {filteredData.length} rows
+          </p>
+
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout className="" />
+          </div>
         </div>
       </div>
     </div>
