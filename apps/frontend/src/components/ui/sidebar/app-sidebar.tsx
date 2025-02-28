@@ -82,16 +82,9 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      {
-        title: "Income & Expense Tracking",
-        url: "/treasurer-income-and-expense-tracking",
-      },
-      {
-        title: "Income & Disbursement Monitoring",
-        url: "/treasurer-income-and-disbursement",
-      },
-      {
-        title: "Clearance Requests",
+      { title: "Income & Expense Tracking", url: "/treasurer-income-and-expense-tracking" },
+      { title: "Income & Disbursement", url: "/treasurer-income-and-disbursement" },
+      { title: "Clearance Requests", 
         url: "/",
         anotherItems: [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
