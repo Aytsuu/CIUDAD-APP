@@ -44,7 +44,8 @@ export const main_router: RouteObject[] = [
             ...council_calendar_router,
             ...donation_router,
             ...treasurer_router,
-            ...waste_router
+            ...waste_router,
+            ...maternal_router,
         ]
     }
 ]
