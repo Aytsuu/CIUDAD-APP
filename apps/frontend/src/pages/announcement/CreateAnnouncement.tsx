@@ -22,6 +22,8 @@ export default function CreateAnnouncement() {
   return (
     <div className="max-w-[600px] mx-auto p-4 mb-4">
       <h2 className="font-bold text-[#263D67] text-2xl mb-4 text-center">Create Announcement</h2>
+
+      {/* Header */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit((data) => console.log("Announcement Data:", data))} className="space-y-4 flex flex-col">
           <FormField control={form.control} name="header" render={({ field }) => (
@@ -34,6 +36,8 @@ export default function CreateAnnouncement() {
             </FormItem>
           )} />
 
+
+          {/* Details */}
           <FormField control={form.control} name="details" render={({ field }) => (
             <FormItem>
               <FormLabel className="font-bold text-sm">Announcement Details</FormLabel>
@@ -45,6 +49,7 @@ export default function CreateAnnouncement() {
             </FormItem>
           )} />
 
+          {/*Add Image*/}
           <FormField control={form.control} name="image" render={({ field }) => (
             <FormItem>
               <FormLabel className="font-bold text-sm">Add Image</FormLabel>
@@ -78,6 +83,7 @@ export default function CreateAnnouncement() {
             )} />
           ))}
 
+          {/* Post Button */}
           <div className="mt-4 flex justify-end">
             <Button type="submit" className="text-sm px-6 py-2">POST</Button>
           </div>
