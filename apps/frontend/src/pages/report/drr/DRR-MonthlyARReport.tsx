@@ -57,7 +57,7 @@ export default function DRRMonthlyARReport() {
             {/* Header Section */}
             <div className="flex-col items-center mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                    Resident Reports
+                    Monthly Acknowledgement Reports
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
                     Manage and view reports

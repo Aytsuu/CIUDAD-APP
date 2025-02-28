@@ -37,6 +37,10 @@ const items: MenuItem[] = [
     url: "/administrative",
   },
   {
+    title: "Blotter",
+    url: "/blotter-record",
+  },
+  {
     title: "Disaster Risk Reduction",
     subItems: true,
     url: "/",

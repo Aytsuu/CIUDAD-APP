@@ -192,7 +192,6 @@ export default function ProfilingMain() {
   
   return (
     <div className="w-full">
-      <Outlet />
       {/* Header Section */}
       <div className="flex flex-col justify-center mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
@@ -247,12 +246,12 @@ export default function ProfilingMain() {
 
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
+        <div className="w-full bg-white flex flex-row justify-between p-3">
+            <div className="flex gap-x-2 items-center">
+                <p className="text-xs sm:text-sm">Show</p>
+                    <Input type="number" className="w-14 h-8" defaultValue="10" />
+                <p className="text-xs sm:text-sm">Entries</p>
+            </div>
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

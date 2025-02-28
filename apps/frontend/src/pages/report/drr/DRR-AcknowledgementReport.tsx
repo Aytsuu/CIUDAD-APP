@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Define the type for the Report object
 type Report = {
@@ -40,7 +41,10 @@ export const columns: ColumnDef<Report>[] = [
     },
     {
         accessorKey: "action", // Key for action column (empty for now)
-        header: "Action", // Column header
+        header: 'Action',
+        cell: ({row}) => (
+            <Button variant={"outline"}>View</Button>
+        )
     },
 ];
 
@@ -90,31 +94,28 @@ export default function DRRAcknowledgementReport() {
                 </div>
             </div>
 
-            {/* Left Section: Contains the table and year dropdown */}
-            <div className="flex flex-col">
-                <div className="bg-white p-3">
+            <div className="w-full flex flex-col">
+                <div className="w-full h-auto bg-white flex p-3">
                     <div className="flex gap-x-2 items-center">
                         <p className="text-xs sm:text-sm">Show</p>
                             <Input type="number" className="w-14 h-8" defaultValue="10" />
                         <p className="text-xs sm:text-sm">Entries</p>
                     </div>
                 </div>
-
-                {/* DataTable component to display the reports */}
+                
                 <div className="bg-white">
                     <DataTable columns={columns} data={data} />
                 </div>
             </div>
-
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                 {/* Showing Rows Info */}
                 <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing 1-10 of 150 rows
+                Showing 1-10 of 150 rows
                 </p>
     
                 {/* Pagination */}
                 <div className="w-full sm:w-auto flex justify-center">
-                    <PaginationLayout />
+                <PaginationLayout />
                 </div>
             </div>
         </div>

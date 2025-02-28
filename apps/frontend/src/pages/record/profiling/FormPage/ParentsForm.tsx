@@ -5,14 +5,14 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "../../../components/ui/form";
+} from "@/components/ui/form";
 import { MotherFormData, FatherFormData } from "../_types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motherFormSchema, fatherFormSchema } from "../../../form-schema/ProfilingSchema";
-import { Input } from "../../../components/ui/input";
-import { Button } from "../../../components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select/select";
+import { motherFormSchema, fatherFormSchema } from "@/form-schema/ProfilingSchema";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 
 interface ParentsInfoFormProps {
   onSubmit: (motherData: MotherFormData, fatherData: FatherFormData) => void;

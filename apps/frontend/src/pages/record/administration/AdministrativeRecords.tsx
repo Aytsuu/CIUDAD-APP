@@ -126,33 +126,31 @@ export default function AdministrativeRecords(){
             </div>
             <hr className="border-gray mb-5 sm:mb-8" />
 
-            <div>  
-                <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-                    <div className="flex gap-x-2">
-                        <div className="relative flex-1 bg-white">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                            <Input placeholder="Search..." className="pl-10 w-72" />
-                        </div>
-                        <SelectLayout 
-                            placeholder="Filter by"
-                            label=""
-                            className="bg-white"
-                            options={[]}
-                            value=""
-                            onChange={() => {}}
-                        />
+            <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+                <div className="flex gap-x-2">
+                    <div className="relative flex-1 bg-white">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                        <Input placeholder="Search..." className="pl-10 w-72" />
                     </div>
-                    <div>
-                        <div className="flex gap-2">
-                            <Link to="/role">
-                                <Button > 
-                                    <UserRoundCog /> Role
-                                </Button>
-                            </Link>
+                    <SelectLayout 
+                        placeholder="Filter by"
+                        label=""
+                        className="bg-white"
+                        options={[]}
+                        value=""
+                        onChange={() => {}}
+                    />
+                </div>
+                <div>
+                    <div className="flex gap-2">
+                        <Link to="/role">
                             <Button > 
-                                <Plus /> Register a Staff
+                                <UserRoundCog /> Role
                             </Button>
-                        </div>
+                        </Link>
+                        <Button > 
+                            <Plus /> Register a Staff
+                        </Button>
                     </div>
                 </div>
             </div>

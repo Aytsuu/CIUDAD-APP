@@ -88,6 +88,9 @@ export const columns: ColumnDef<Record>[] = [
     {
         accessorKey: "action", // Key for action column (empty for now)
         header: "Action", // Column header
+        cell: ({row}) => (
+            <Button variant={"outline"}>View</Button>
+        ),
         enableSorting: false,
         enableHiding: false
     },
@@ -153,18 +156,29 @@ export default function DRRStaffRecord() {
                 </div>
             </div>
 
-            <div className="w-full h-full bg-white border border-gray rounded-[5px]">
-                <div className="w-full flex items-center p-3">
+            <div className="w-full flex flex-col">
+                <div className="w-full flex items-center p-3 bg-white">
                     <div className="flex gap-x-2 items-center">
                         <p className="text-xs sm:text-sm">Show</p>
                             <Input type="number" className="w-14 h-8" defaultValue="10" />
                         <p className="text-xs sm:text-sm">Entries</p>
                     </div>
                 </div>
-                {/* DataTable component to display the records */}
-                <DataTable columns={columns} data={data} />
+                <div className="bg-white">
+                    <DataTable columns={columns} data={data} />
+                </div>
             </div>
-            <PaginationLayout className="justify-end h-[10%]"/>
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                {/* Showing Rows Info */}
+                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                Showing 1-10 of 150 rows
+                </p>
+    
+                {/* Pagination */}
+                <div className="w-full sm:w-auto flex justify-center">
+                <PaginationLayout />
+                </div>
+            </div>
         </div>
     );
 } 

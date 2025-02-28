@@ -144,51 +144,48 @@ export default function ProfilingRequest() {
       <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Search and filters - Stacks on mobile */}
-      <div className="mb-4">
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-x-2">
-          <div className="relative flex w-full sm:w-auto bg-white">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17}/>
-            <Input placeholder="Search..." className="pl-10 w-full sm:w-72" />
-          </div>
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-x-2 mb-4">
+        <div className="relative flex w-full sm:w-auto bg-white">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17}/>
+          <Input placeholder="Search..." className="pl-10 w-full sm:w-72" />
+        </div>
 
-          <div className="flex gap-2 sm:gap-x-2">
-            <SelectLayout 
-                placeholder="Filter by"
-                label=""
-                className="bg-white"
-                options={[]}
-                value=""
-                onChange={() => {}}
-            />
-          </div>
+        <div className="flex gap-2 sm:gap-x-2">
+          <SelectLayout 
+              placeholder="Filter by"
+              label=""
+              className="bg-white"
+              options={[]}
+              value=""
+              onChange={() => {}}
+          />
         </div>
       </div>
 
       {/* Table Layout */}
-      <div>
-        <div className="mt-2 sm:mt-4 overflow-x-auto">
-
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+      <div className="mt-2 sm:mt-4 overflow-x-auto">
+        <div className="w-full h-auto bg-white p-3">
             <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-                <Input type="number" className="w-14 h-8" defaultValue="10" />
-              <p className="text-xs sm:text-sm">Entries</p>
+                <p className="text-xs sm:text-sm">Show</p>
+                    <Input type="number" className="w-14 h-8" defaultValue="10" />
+                <p className="text-xs sm:text-sm">Entries</p>
             </div>
-          </div>
-          {/* Wrap the DataTable in a scrollable container */}
-          <div className="min-w-full overflow-hidden overflow-x-auto bg-white">
-            <DataTable columns={columns} data={data} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            {/* Showing Rows Info */}
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing 1-10 of 150 rows
-            </p>
+        </div>
 
-            {/* Pagination */}
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout />
-            </div>
+        {/* Wrap the DataTable in a scrollable container */}
+        <div className="min-w-full overflow-hidden overflow-x-auto bg-white">
+          <DataTable columns={columns} data={data} />
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          {/* Showing Rows Info */}
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing 1-10 of 150 rows
+          </p>
+
+          {/* Pagination */}
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout />
           </div>
         </div>
       </div>

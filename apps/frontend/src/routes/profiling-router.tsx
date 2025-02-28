@@ -1,5 +1,5 @@
 import ProfilingMain from "@/pages/record/profiling/ProfilingMain";
-import { ProfilingForm } from "@/pages/ProfilingPages/FormPage/ProfilingForm";
+import { ProfilingForm } from "@/pages/record/profiling/FormPage/ProfilingForm";
 import ProfilingRequest from "@/pages/record/profiling/ProfilingRequests";
 import ViewInfo from "@/pages/record/profiling/ProfilingViewInfo";
 
