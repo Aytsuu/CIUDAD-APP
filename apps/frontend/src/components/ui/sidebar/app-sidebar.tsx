@@ -76,7 +76,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, activeItem, setActiveItem }) 
     return (
       <SidebarMenuItem>
         <div 
-          className={`w-full cursor-pointer ${isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"}`}
+          className={`w-full cursor-pointer rounded-md ${isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"}`}
           onClick={() => {
             setIsOpen(!isOpen);
             setActiveItem(item.title);
