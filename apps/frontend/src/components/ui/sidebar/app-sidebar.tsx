@@ -119,6 +119,19 @@ const items: MenuItem[] = [
     title: "Announcement",
     url: "/announcement",
   },
+  {
+    title: "Services",
+    subItems: true,
+    url: "/",
+    items: [
+      {title: "Animal Bites", url: "/"},
+      {title: "Child Services", url: "/"},
+      {title: "Maternal Services", url:"/maternalrecords"},
+      {title: "Family Planning", url: "/"},
+      {title: "Medical Consultation", url: "/"},
+      {title: "Vaccination", url: "/"},
+    ]
+  }
 ];
 
 interface SubMenuItemProps {

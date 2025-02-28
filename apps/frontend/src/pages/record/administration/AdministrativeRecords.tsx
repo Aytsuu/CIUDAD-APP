@@ -104,7 +104,7 @@ const columns: ColumnDef<Record>[] = [
         accessorKey: 'action',
         header: 'Action',
         cell: ({row}) => (
-            <Button variant={"outline"}><Pen/></Button>
+            <Button variant={"outline"}>View</Button>
         )
     }
 ]
