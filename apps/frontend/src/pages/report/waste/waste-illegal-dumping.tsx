@@ -1,75 +1,4 @@
-// import TableLayout from "@/components/ui/table/table-layout";
-// import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import PaginationLayout from '@/components/ui/pagination/pagination-layout';
-// import { Trash } from "lucide-react";
-// import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-
-// const headerProp = ["Report No.", "Report Matter", "Location", "Report Details", "Violator", "Reported By", "Contact No.", "Date and Time", "Image", "Action" ];
-
-// const bodyProp = [[ "0001", "Lorem Ipsum", "Sitio 1", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", "Unknown",
-//     "Anonymous", "09xxxxxxxx", "01/11/25 05:00PM",
-//     (<DialogLayout
-//             trigger={<div className="w-[35px] h-[35px] p-5 border bordery-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]"> View </div>}
-//             className="max-w-[50%] h-2/3 flex flex-col"
-//             title="Image Details"
-//             description="Here is the image related to the report."
-//             mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} // Replace with actual image path
-//         />
-//         ),
-//     (<TooltipLayout
-//         trigger={<div className="w-[35px] h-[35px] border bordery-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]"> <Trash/> </div>}
-//         content="Delete"
-//         />)
-// ]];
-
-// function WasteIllegalDumping() {
-//     return (
-//         <div className="mx-4 mb-4 mt-10">
-//             <div className='flex justify-end mb-4'>
-//                 <div className="relative w-1/3 mb-4">
-//                     <label className="sr-only">Search</label>
-//                     <input
-//                         type="text"
-//                         id="Search"
-//                         placeholder="Search"
-//                         className="rounded-md border-gray-200 py-2.5 pe-10 shadow-sm sm:text-sm w-full"
-//                     />
-//                     <span className="absolute inset-y-0 right-0 grid w-10 place-content-center">
-//                         <button type="button" className="text-gray-600 hover:text-gray-700">
-//                             <span className="sr-only">Search</span>
-//                             <svg
-//                                 xmlns="http://www.w3.org/2000/svg"
-//                                 fill="none"
-//                                 viewBox="0 0 24 24"
-//                                 strokeWidth="1.5"
-//                                 stroke="currentColor"
-//                                 className="size-4"
-//                             >
-//                                 <path
-//                                     strokeLinecap="round"
-//                                     strokeLinejoin="round"
-//                                     d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-//                                 />
-//                             </svg>
-//                         </button>
-//                     </span>
-//                 </div>
-//             </div>
-
-//             {/* Table for Report Details */}
-//             <div className="bg-white border border-gray rounded-[5px] p-5">
-//                 <TableLayout header={headerProp} rows={bodyProp} />
-//             </div>
-
-//             <div>
-//                 <PaginationLayout />
-//             </div>
-//         </div>
-//     );
-// }
-
-// export default WasteIllegalDumping;
-
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -142,8 +71,7 @@ const columns: ColumnDef<Report>[] = [
       <DialogLayout
         trigger={
           <div className="w-[35px] h-[35px] p-3 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            {" "}
-            View{" "}
+            View
           </div>
         }
         className="max-w-[50%] h-2/3 flex flex-col"
@@ -155,7 +83,7 @@ const columns: ColumnDef<Report>[] = [
             alt="Report Image"
             className="w-full h-auto"
           />
-        } // Replace with actual image path
+        }
       />
     ),
   },
@@ -166,8 +94,7 @@ const columns: ColumnDef<Report>[] = [
       <TooltipLayout
         trigger={
           <div className="w-[35px] h-[35px] bg-[#ff2c2c] text-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            {" "}
-            <Trash size={16} />{" "}
+            <Trash size={16} />
           </div>
         }
         content="Delete"
@@ -179,7 +106,7 @@ const columns: ColumnDef<Report>[] = [
 const bodyData: Report[] = [
   {
     reportNo: "0001",
-    reportMatter: "Lorem Ipsum",
+    reportMatter: "Littering, Illegal dumping, Illegal disposal of garbage",
     location: "Sitio 1",
     reportDetails:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -190,7 +117,7 @@ const bodyData: Report[] = [
   },
   {
     reportNo: "0002",
-    reportMatter: "Lorem Ipsum",
+    reportMatter: "Urinating, defecating, spitting in a public place",
     location: "Sitio 1",
     reportDetails:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -202,37 +129,105 @@ const bodyData: Report[] = [
 ];
 
 function WasteIllegalDumping() {
-  return (
-    <div className="mx-4 mb-4 mt-10">
-      <div className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">
-        <p>ILLEGAL DUMPING REPORTS</p>
-        <br></br>
-      </div>
-      {/* Table for Report Details */}
-      <div className="bg-white border border-gray rounded-[5px] p-5">
-        <div className="flex gap-3 w-full justify-end">
-          <div>
-            <SelectLayout
-              className="w-50"
-              label=""
-              placeholder="Filter"
-              options={[
-                { id: "Date", name: "Date" },
-                { id: "Report Matter", name: "Report Matter" },
-                { id: "Location", name: "Location" },
-              ]}
-              value=""
-              onChange={() => {}}
-            />
-          </div>
-          <Input placeholder="Search" className="w-[400px]" />
-        </div>{" "}
-        <br />
-        <DataTable columns={columns} data={bodyData} />
-      </div>
+  const data = bodyData;
+  const filterOptions = [
+    { id: "0", name: "All Report Matter" }, // Added "All Report Category" option
+    {
+      id: "1",
+      name: "Littering, Illegal dumping, Illegal disposal of garbage",
+    },
+    { id: "2", name: "Urinating, defecating, spitting in a public place" },
+    {
+      id: "3",
+      name: "Dirty frontage and immediate surroundings for establishment owners",
+    },
+    {
+      id: "4",
+      name: "Improper and untimely stacking of garbage outside residences or establishment",
+    },
+    {
+      id: "5",
+      name: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)",
+    },
+    {
+      id: "6",
+      name: "Dirty public utility vehicles, or no trash can or receptacle",
+    },
+    {
+      id: "7",
+      name: "Spilling, scattering, littering of wastes by public utility vehicles",
+    },
+    {
+      id: "8",
+      name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.",
+    },
+  ];
 
-      <div>
-        <PaginationLayout className="" />
+  const [selectedFilterId, setSelectedFilterId] = useState("0"); // Default to "All Report Category"
+
+  // Map the selected `id` to the corresponding `name`
+  const selectedFilterName =
+    filterOptions.find((option) => option.id === selectedFilterId)?.name || "";
+
+  // Filter the data using the mapped `name`
+  const filteredData =
+    selectedFilterId === "0" // Check if "All Report Category" is selected
+      ? data // Return all data
+      : data.filter(
+          (item) =>
+            item.reportMatter.trim().toLowerCase() ===
+            selectedFilterName.trim().toLowerCase()
+        );
+
+  return (
+    <div className="w-full h-full px-4 md:px-8 lg:px-16">
+      <div className="mb-4 mt-10">
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            ILLEGAL DUMPING REPORTS
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view illegal dumping reports
+          </p>
+        </div>
+        <hr className="border-gray mb-6 sm:mb-10" />
+
+        {/* Combined Search, Filter, and Show Entries Section with Table */}
+        <div className="bg-white rounded-[5px] p-5 w-full">
+          <div className="flex gap-3 w-full mb-4">
+            <div className="flex items-center gap-x-2">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div className="flex-grow flex justify-end gap-2">
+              <SelectLayout
+                className="flex-initial w-[335px]"
+                placeholder="Report Matter"
+                options={filterOptions}
+                value={selectedFilterId}
+                label=""
+                onChange={(id) => {
+                  console.log("Selected ID:", id); // Debug the ID
+                  setSelectedFilterId(id);
+                }}
+              />
+              <Input placeholder="Search" className="w-[400px]" />
+            </div>
+          </div>
+
+          <DataTable columns={columns} data={filteredData} />
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing 1-10 of {filteredData.length} rows
+          </p>
+
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout className="" />
+          </div>
+        </div>
       </div>
     </div>
   );
