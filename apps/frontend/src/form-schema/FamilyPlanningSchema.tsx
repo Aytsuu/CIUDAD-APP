@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const FamilyPlanning1 = z.object({
+export const FamilyPlanning1 = z.object({
   clientID: z.string().nonempty("Client ID is required"),
   philhealthNo: z.string().nonempty("Philhealth # is required"),
   nhts_status: z.boolean(),
@@ -22,24 +22,24 @@ const FamilyPlanning1 = z.object({
   }),
 
   spouse: z.object({
-    lastName: z.string().nonempty("Last name is required"),
-    givenName: z.string().nonempty("Given name is required"),
-    middleInitial: z.string().max(1).optional(),
-    dateOfBirth: z.string().nonempty("Birthdate is required"),
-    age: z.number().min(0, "Age is required and must be a positive number"),
-    occupation: z.string().optional(),
+    s_lastName: z.string().nonempty("Last name is required"),
+    s_givenName: z.string().nonempty("Given name is required"),
+    s_middleInitial: z.string().max(1).optional(),
+    s_dateOfBirth: z.string().nonempty("Birthdate is required"),
+    s_age: z.number().min(0, "Age is required and must be a positive number"),
+    s_occupation: z.string().optional(),
   }),
 
   numOfLivingChildren: z.number().min(0, "Number of living children is required"),
   planToHaveMoreChildren: z.boolean(),
   averageMonthlyIncome: z.string().optional(),
 
-  typeOfClient: z
-    .array(z.enum(["New Acceptor", "Current User", "Changing Method", "Changing Clinic", "Dropout/Restart"]))
-    .optional(),
-
+  typeOfClient: z.array(
+    z.enum(["New Acceptor", "Current User"])
+  ),
+  subTypeOfClient: z.enum(["Changing Method", "Changing Clinic", "Dropout/Restart"]).optional(),
   reasonForFP: z.array(z.enum(["Spacing", "Limiting", "Others"])).optional(),
-  otherReasonForFP: z.string().optional(), // For 'Others' input field
+  otherReasonForFP: z.string().optional(), 
 
   reason: z.array(z.enum(["Medical Condition", "Side Effects"])).optional(),
 
@@ -64,10 +64,7 @@ const FamilyPlanning1 = z.object({
     )
     .optional(),
   otherMethod: z.string().optional(), // For 'Others' input field
-});
 
-const FamilyPlanning2 = z.object({
-  // Medical History - Yes/No Checkboxes
   medicalHistory: z.object({
     severeHeadaches: z.boolean(),
     strokeHeartAttackHypertension: z.boolean(),
@@ -92,11 +89,11 @@ const FamilyPlanning2 = z.object({
     abortion: z.number().min(0, "Number of abortions is required"),
     livingChildren: z.number().min(0, "Number of living children is required"),
 
-    lastDeliveryDate: z.string().optional(), // Can validate date format further
+    lastDeliveryDate: z.string().optional(), 
     typeOfLastDelivery: z.enum(["Vaginal", "Cesarean"]).optional(),
 
-    lastMenstrualPeriod: z.string().optional(), // Can validate date format further
-    previousMenstrualPeriod: z.string().optional(), // Can validate date format further
+    lastMenstrualPeriod: z.string().optional(), 
+    previousMenstrualPeriod: z.string().optional(),
 
     // Menstrual Flow & Conditions
     menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]).optional(),
@@ -107,5 +104,5 @@ const FamilyPlanning2 = z.object({
 });
 
 // Exporting the schemas properly
-export { FamilyPlanning1, FamilyPlanning2 };
+export default FamilyPlanning1;
   

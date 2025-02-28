@@ -322,7 +322,7 @@ const FamilyPlanningView: React.FC = () => {
       </div>
 
       {/* Type of Client Section */}
-      <div className="border border-black grid ">
+      <div className="border border-black grid p-4 ">
         <div className="grid grid-cols-1 md:grid-cols-2 gap">
           {/* Left side - Type of Client */}
           <div>

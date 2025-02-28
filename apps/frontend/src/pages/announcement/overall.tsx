@@ -89,13 +89,13 @@ const AnnouncementDashboard: React.FC = () => {
     // );
 
     return (
-        <div className="p-4 sm:p-10">
+        <div className="w-full h-full">
             {/* Filters & Actions - Now Responsive */}
             <div className="flex flex-wrap  gap-4 sm:gap-8 p-4 sm:p-10">
                 <SelectLayout
                     placeholder="Filter"
                     label=""
-                    className="custom-class"
+                    className="custom-class border-gray mt-1"
                     options={[
                         { id: "all", name: "All" },
                         { id: "today", name: "Today" },
@@ -110,7 +110,7 @@ const AnnouncementDashboard: React.FC = () => {
                     <Input
                         type="text"
                         placeholder="Search"
-                        className="w-full rounded-lg border-gray-200 text-sm shadow-sm"
+                        className="w-full rounded-lg border-gray text-sm shadow-sm"
                         value={""}
                         // onChange={() => {}} // ✅ Corrected
                     />
