@@ -8,7 +8,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Link } from "react-router-dom"; 
+import { Link } from "react-router-dom";
 
 // Define Patient Type
 type Patient = {
@@ -85,8 +85,9 @@ function AnimalBites() {
     { accessorKey: "exposure", header: "Exposure" },
     { accessorKey: "siteOfExposure", header: "Site of Exposure" },
     { accessorKey: "bitingAnimal", header: "Biting Animal" },
-    { accessorKey: "actions",header: "Actions taken"},
-    { accessorKey: "button",
+    { accessorKey: "actions", header: "Actions taken" },
+    {
+      accessorKey: "button",
       header: "",
       cell: ({ }) => (
         <div className="flex justify-center">
@@ -116,57 +117,63 @@ function AnimalBites() {
   });
 
   return (
-    <div className="w-full h-full flex flex-col justify-center items-center">
-      <div className="w-full h-full flex flex-col">
-        <div className="w-full h-full border border-gray-300 rounded-lg p-5 shadow-md">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Animal Bites Records</h1>
+    <div className="w-full h-full flex flex-col ">
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Animal Bite Records
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view animal bites information
+          </p>
+        </div>
+      </div>
+      <hr className="border-gray mb-6 sm:mb-10" />
+
+      {/* Search, Filter & Button Section */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
+        <div className="flex flex-1 gap-4 w-full">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input
+              placeholder="Search..."
+              className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </div>
 
-          {/* Search, Filter & Button Section */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
-            <div className="flex flex-1 gap-4 w-full">
-              {/* Search Input */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                />
-              </div>
-
-              {/* Filter Dropdown */}
-              <div className="w-48">
-                <SelectLayout
-                  placeholder="Filter by Exposure"
-                  label=""
-                  className="bg-white border-gray-300 w-full"
-                  options={[
-                    { id: "All", name: "All" },
-                    { id: "Bite", name: "Bite" },
-                    { id: "Scratch", name: "Scratch" },
-                  ]}
-                  value={filterValue}
-                  onChange={(value) => setFilterValue(value)}
-                />
-              </div>
-            </div>
-
-            {/* New Record Button */}
-            <div className="flex justify-end w-full sm:w-auto">
-              <DialogLayout
-                trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
-                className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
-                mainContent={<ReferralFormModal
-                  onAddPatient={handleAddPatient}
-                  onClose={() => console.log("Closing modal")} />} title={""} description={""}              />
-            </div>
+          {/* Filter Dropdown */}
+          <div className="w-48">
+            <SelectLayout
+              placeholder="Filter by Exposure"
+              label=""
+              className="bg-white border-gray-300 w-full"
+              options={[
+                { id: "All", name: "All" },
+                { id: "Bite", name: "Bite" },
+                { id: "Scratch", name: "Scratch" },
+              ]}
+              value={filterValue}
+              onChange={(value) => setFilterValue(value)}
+            />
           </div>
+        </div>
 
-         {/* Table Container */}
+        {/* New Record Button */}
+        <div className="flex justify-end w-full sm:w-auto">
+          <DialogLayout
+            trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
+            className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
+            mainContent={<ReferralFormModal
+              onAddPatient={handleAddPatient}
+              onClose={() => console.log("Closing modal")} />} title={""} description={""} />
+        </div>
+      </div>
+
+      {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
@@ -174,7 +181,7 @@ function AnimalBites() {
             <Input type="number" className="w-14 h-8" defaultValue="10" />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          
+
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
@@ -193,7 +200,7 @@ function AnimalBites() {
         </div>
       </div>
     </div>
-    </div></div>
+    
   );
 }
 
