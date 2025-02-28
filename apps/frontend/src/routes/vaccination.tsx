@@ -1,6 +1,6 @@
 import path from "path";
-import IndivVaccinationRecords from "@/pages/VACCINATION/RECORDS/indivVaccinationRecords";
-import AllVaccinationRecords from "@/pages/VACCINATION/RECORDS/allVaccinationRecord";
+import IndivVaccinationRecords from "@/pages/vaccination/RECORDS/indivVaccinationRecords";
+import AllVaccinationRecords from "@/pages/vaccination/RECORDS/allVaccinationRecord";
 
 export const vaccination = [
   {
