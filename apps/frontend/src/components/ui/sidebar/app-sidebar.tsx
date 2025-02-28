@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
+import { Link } from 'react-router';
 
 type SubMenuItem = {
   title: string;
@@ -88,12 +89,12 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
                 asChild
                 className="w-full"
               >
-                <a 
-                  href={subItem.url}
+                <Link 
+                  to={subItem.url}
                   className="flex items-center px-4 py-2 text-sm rounded-md"
                 >
                   <span>{subItem.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             ))}
           </div>
@@ -105,12 +106,14 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild>
-        <a 
-          href={item.url}
-          className="flex items-center px-4 py-2 rounded-md"
-        >
-          <span>{item.title}</span>
-        </a>
+        {item.url && (
+          <Link
+            to={item.url}
+            className="flex items-center px-4 py-2 rounded-md"
+          >
+            <span>{item.title}</span>
+          </Link>
+        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
