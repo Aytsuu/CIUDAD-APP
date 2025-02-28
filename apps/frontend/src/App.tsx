@@ -1,3 +1,5 @@
+import CreateAnnouncements from "./pages/announcement/CreateAnnouncement";
+
 
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { landing_router } from './routes/landing-router';
