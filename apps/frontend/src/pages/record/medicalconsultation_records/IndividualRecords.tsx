@@ -1,24 +1,25 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search } from "lucide-react";
-import FeedbackForm from "./reqrejectModal";
+import { Link, useNavigate } from "react-router-dom";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { FileInput } from "lucide-react";
-import MedicineSummary from "./medicineSummary";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { FileInput, Search, Trash, Eye, ArrowLeft } from "lucide-react";
 
-export default function RequestTable() {
-  type requestRecord = {
-    id: string;
+export default function InvMedicalConRecords() {
+  type medConRecord = {
+    id: number;
+    // patientName: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -28,49 +29,18 @@ export default function RequestTable() {
       ageTime: string;
     };
     address: string;
-
-    dateRequested: string;
-    status: string;
+    bp: string;
+    hr: string;
+    rr: string;
+    temp: string;
   };
-
-  const sampleData: requestRecord[] = [
-    {
-      id: "S133",
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      dateRequested: "23 bpm",
-      status: "Pending",
-    },
-    {
-      id: "P2",
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      dateRequested: "23 bpm",
-      status: "Pending",
-    },
-  ];
-
-  const columns: ColumnDef<requestRecord>[] = [
+  const columns: ColumnDef<medConRecord>[] = [
     {
       accessorKey: "id",
       header: "#",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 w-full p-1 rounded-md text-center font-semibold">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
             {row.original.id}
           </div>
         </div>
@@ -107,47 +77,101 @@ export default function RequestTable() {
     },
 
     {
-      accessorKey: "dateRequested",
-      header: "Date Requested",
+      accessorKey: "bp",
+      header: "BP",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <div className="w-[50px]">{row.original.dateRequested}</div>
+          <div className="w-[90px]">{row.original.bp}</div>
         </div>
       ),
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: "hr",
+      header: "HR",
       cell: ({ row }) => (
-        <div className="flex justify-center ">
-          <div className="w-[80px] bg-green-100 rounded-md py-1 text-green-700 font-medium ">
-            {row.original.status}
-          </div>
+        <div className="flex justify-center">
+          <div className="w-[50px]">{row.original.hr}</div>
         </div>
       ),
     },
 
     {
+      accessorKey: "rr",
+      header: "RR",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="w-[50px]">{row.original.rr}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "temp",
+      header: "Temp.",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="w-[50px]">{row.original.temp}</div>
+        </div>
+      ),
+    },
+    {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
-        <div>
-          <div className="flex gap-2 justify-center min-w-[120px]">
-            <div>
-              <MedicineSummary />
-            </div>
-            <div>
-              <FeedbackForm />
-            </div>
+      cell: ({  }) => (
+        <>
+          <div className="flex justify-center gap-2 ">
+            <TooltipLayout
+              trigger={
+                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                  <Eye size={15} />
+                </div>
+              }
+              content="View"
+            />
+
+            <TooltipLayout
+              trigger={
+                <DialogLayout
+                  trigger={
+                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                      {" "}
+                      <Trash size={16} />
+                    </div>
+                  }
+                  title=""
+                  description=""
+                  className=""
+                  mainContent={<></>}
+                />
+              }
+              content="Delete"
+            />
           </div>
-        </div>
+        </>
       ),
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const data = sampleData;
+  const sampleData: medConRecord[] = [
+    {
+      id: 1,
 
+      patient: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      bp: "123/45 mmhg",
+      hr: "23 bpm",
+      rr: "34 cpm",
+      temp: "34 C",
+    },
+  ];
+
+ 
   const filter = [
     { id: "0", name: "All" },
     { id: "1", name: "Transient" },
@@ -155,16 +179,37 @@ export default function RequestTable() {
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
+  const data = sampleData;
+
   const filteredData =
     selectedFilter === "All"
       ? data
-      : data.filter(
-          (item) =>
-            item.status === selectedFilter || item.address === selectedFilter
-        );
+      : data.filter((item) => item.bp === selectedFilter);
+
+  const navigate = useNavigate();
+  function toMedicalForm() {
+    navigate("/medicalForm", { state: { recordType: "existingPatient" } });
+  }
 
   return (
-    <div className=" bg-snow w-full h-full">
+    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
+      <Link to="/allMedRecords">
+        {" "}
+        <div className="mb-4 text-darkBlue2">
+          <ArrowLeft />
+        </div>
+      </Link>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Records
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Vaccination History
+          </p>
+        </div>
+      </div>
+      <hr className="border-gray mb-6 sm:mb-10" />
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -186,8 +231,13 @@ export default function RequestTable() {
             />
           </div>
         </div>
-      </div>
 
+        <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto">
+            <Button onClick={toMedicalForm}>Add Record</Button>
+          </div>
+        </div>
+      </div>
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -227,7 +277,7 @@ export default function RequestTable() {
             <PaginationLayout className="" />
           </div>
         </div>
-      </div>
+      </div>{" "}
     </div>
   );
 }

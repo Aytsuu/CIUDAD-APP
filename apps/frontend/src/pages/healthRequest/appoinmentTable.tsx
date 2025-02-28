@@ -1,24 +1,10 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Check, X } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Form,
-  FormField,
-  FormControl,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+
 import FeedbackForm from "./apprejectModal";
 
 import {
@@ -26,7 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput, Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -211,7 +197,6 @@ export default function AppointmentTable() {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
 
   const filter = [

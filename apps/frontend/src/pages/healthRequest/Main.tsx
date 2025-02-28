@@ -1,4 +1,3 @@
-import { CardTitle, CardHeader, CardContent } from "@/components/ui/card";
 import AppointmentTable from "./appoinmentTable";
 import RequestTable from "./medrequestTable";
 import MedicineRequestStatusTable from "./toReceivedMedicineTable";

@@ -1,7 +1,7 @@
 import path from "path";
-import AllMedicalConRecords from "@/pages/MEDICAL_CONSULTATION_SERVICES/MEDICAL_RECORDS/medCon_AllRecords";
-import InvMedicalConRecords from "@/pages/MEDICAL_CONSULTATION_SERVICES/MEDICAL_RECORDS/medCon_InvRecords";
-import MedicalForm from "@/pages/MEDICAL_CONSULTATION_SERVICES/medForm";
+import AllMedicalConRecords from "@/pages/record/medicalconsultation_records/AllRecords";
+import InvMedicalConRecords from "@/pages/record/medicalconsultation_records/IndividualRecords";
+import MedicalForm from "@/pages/healthServices/medicalconsultation_services/medForm";
 
 export const medicalConsultation = [
   {

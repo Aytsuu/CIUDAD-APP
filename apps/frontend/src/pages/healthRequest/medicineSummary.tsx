@@ -1,32 +1,13 @@
-import React, { useState } from "react";
-import { DataTable } from "@/components/ui/table/data-table";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
-import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Check, X, Search, Pill } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Form,
-  FormField,
-  FormControl,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import FeedbackForm from "./reqrejectModal";
+
 import { Label } from "@radix-ui/react-label";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export default function MedicineSummary() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showSuccessfulModal, setIsSuccessfulModal] = useState(false);
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const handeleClose = () => {
     setIsDialogOpen(false);

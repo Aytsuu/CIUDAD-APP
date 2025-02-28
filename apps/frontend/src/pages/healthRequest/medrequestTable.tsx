@@ -2,12 +2,9 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import MedicalForm from "../medForm";
-import { Link, useNavigate } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Search } from "lucide-react";
+import FeedbackForm from "../healthServices/reqrejectModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   DropdownMenu,
@@ -16,13 +13,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { FileInput, Search, Trash, Eye, ArrowLeft } from "lucide-react";
+import { FileInput } from "lucide-react";
+import MedicineSummary from "./medicineSummary";
 
-export default function InvMedicalConRecords() {
-  type medConRecord = {
-    id: number;
-    // patientName: string;
+export default function RequestTable() {
+  type requestRecord = {
+    id: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -32,18 +28,49 @@ export default function InvMedicalConRecords() {
       ageTime: string;
     };
     address: string;
-    bp: string;
-    hr: string;
-    rr: string;
-    temp: string;
+
+    dateRequested: string;
+    status: string;
   };
-  const columns: ColumnDef<medConRecord>[] = [
+
+  const sampleData: requestRecord[] = [
+    {
+      id: "S133",
+      patient: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      dateRequested: "23 bpm",
+      status: "Pending",
+    },
+    {
+      id: "P2",
+      patient: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      dateRequested: "23 bpm",
+      status: "Pending",
+    },
+  ];
+
+  const columns: ColumnDef<requestRecord>[] = [
     {
       accessorKey: "id",
       header: "#",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+          <div className="bg-lightBlue text-darkBlue1 w-full p-1 rounded-md text-center font-semibold">
             {row.original.id}
           </div>
         </div>
@@ -80,132 +107,46 @@ export default function InvMedicalConRecords() {
     },
 
     {
-      accessorKey: "bp",
-      header: "BP",
+      accessorKey: "dateRequested",
+      header: "Date Requested",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <div className="w-[90px]">{row.original.bp}</div>
+          <div className="w-[50px]">{row.original.dateRequested}</div>
         </div>
       ),
     },
     {
-      accessorKey: "hr",
-      header: "HR",
+      accessorKey: "status",
+      header: "Status",
       cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="w-[50px]">{row.original.hr}</div>
+        <div className="flex justify-center ">
+          <div className="w-[80px] bg-green-100 rounded-md py-1 text-green-700 font-medium ">
+            {row.original.status}
+          </div>
         </div>
       ),
     },
 
-    {
-      accessorKey: "rr",
-      header: "RR",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="w-[50px]">{row.original.rr}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "temp",
-      header: "Temp.",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="w-[50px]">{row.original.temp}</div>
-        </div>
-      ),
-    },
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <>
-          <div className="flex justify-center gap-2 ">
-            <TooltipLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Eye size={15} />
-                </div>
-              }
-              content="View"
-            />
-
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                      {" "}
-                      <Trash size={16} />
-                    </div>
-                  }
-                  title=""
-                  description=""
-                  className=""
-                  mainContent={<></>}
-                />
-              }
-              content="Delete"
-            />
+      cell: ({}) => (
+        <div>
+          <div className="flex gap-2 justify-center min-w-[120px]">
+            <div>
+              <MedicineSummary />
+            </div>
+            <div>
+              <FeedbackForm />
+            </div>
           </div>
-        </>
+        </div>
       ),
     },
   ];
 
-  const sampleData: medConRecord[] = [
-    {
-      id: 1,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      bp: "123/45 mmhg",
-      hr: "23 bpm",
-      rr: "34 cpm",
-      temp: "34 C",
-    },
-  ];
-
-  const categoryOptions = [
-    { id: "electronics", label: "Electronics", checked: false },
-    { id: "fashion", label: "Fashion", checked: false },
-    { id: "home", label: "Home", checked: false },
-  ];
-
-  function CategoryFilter() {
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-    const handleCategoryChange = (id: string, checked: boolean) => {
-      setSelectedCategories((prev) =>
-        checked ? [...prev, id] : prev.filter((category) => category !== id)
-      );
-    };
-
-    const handleReset = () => {
-      setSelectedCategories([]);
-    };
-
-    return (
-      <FilterAccordion
-        title="Categories"
-        options={categoryOptions.map((option) => ({
-          ...option,
-          checked: selectedCategories.includes(option.id),
-        }))}
-        selectedCount={selectedCategories.length}
-        onChange={handleCategoryChange}
-        onReset={handleReset}
-      />
-    );
-  }
+  const [searchTerm, setSearchTerm] = useState("");
+  const data = sampleData;
 
   const filter = [
     { id: "0", name: "All" },
@@ -214,38 +155,16 @@ export default function InvMedicalConRecords() {
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const data = sampleData;
-
   const filteredData =
     selectedFilter === "All"
       ? data
-      : data.filter((item) => item.bp === selectedFilter);
-
-  const navigate = useNavigate();
-  function toMedicalForm() {
-    navigate("/medicalForm", { state: { recordType: "existingPatient" } });
-  }
+      : data.filter(
+          (item) =>
+            item.status === selectedFilter || item.address === selectedFilter
+        );
 
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-      <Link to="/allMedRecords">
-        {" "}
-        <div className="mb-4 text-darkBlue2">
-          <ArrowLeft />
-        </div>
-      </Link>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Vaccination History
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+    <div className=" bg-snow w-full h-full">
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -267,13 +186,8 @@ export default function InvMedicalConRecords() {
             />
           </div>
         </div>
-
-        <div className="w-full sm:w-auto">
-          <div className="w-full sm:w-auto">
-            <Button onClick={toMedicalForm}>Add Record</Button>
-          </div>
-        </div>
       </div>
+
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -313,7 +227,7 @@ export default function InvMedicalConRecords() {
             <PaginationLayout className="" />
           </div>
         </div>
-      </div>{" "}
+      </div>
     </div>
   );
 }

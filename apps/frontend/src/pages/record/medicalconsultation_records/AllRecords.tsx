@@ -1,11 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import MedicalForm from "../medForm";
 import { Link, useNavigate } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -14,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FileInput, Search, Trash, Eye } from "lucide-react";
@@ -185,7 +182,6 @@ export default function AllMedicalConRecords() {
     },
   ];
 
-  const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
 
   const filter = [
