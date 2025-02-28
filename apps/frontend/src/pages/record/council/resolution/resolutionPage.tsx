@@ -375,7 +375,7 @@ function ResolutionPage() {
                     Resolution Record
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
-                    Manage and view ordinance information
+                    Manage and view resolution information
                 </p>
             </div>
             <hr className="border-gray mb-6 sm:mb-10" />        
@@ -389,7 +389,7 @@ function ResolutionPage() {
                     </div>
 
                     <SelectLayout
-                        className={''}
+                        className="bg-white"
                         label=""
                         placeholder="Filter"
                         options={filterOptions}
