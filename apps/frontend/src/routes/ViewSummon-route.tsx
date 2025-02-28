@@ -1,4 +1,4 @@
-import PermitPage from "@/pages/certifications&permits/SummonPermit";
+import PermitPage from "@/pages/clerk/certifications&permits/SummonPermit";
 
 export const summon_route = [
     {

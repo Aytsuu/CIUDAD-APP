@@ -1,4 +1,4 @@
-import BusinessDocumentPage from "@/pages/certifications&permits/BusinessPermits";
+import BusinessDocumentPage from "@/pages/clerk/certifications&permits/BusinessPermits";
 
 export const business_route = [
     {
