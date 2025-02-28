@@ -8,6 +8,7 @@ import { administration_router } from './administration-router';
 import { profiling_router } from './profiling-router';
 import { drr_router } from "./drr-router";
 import { blotter_router } from './blotter-router';
+import { donation_router } from './donation-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -25,7 +26,8 @@ export const main_router: RouteObject[] = [
             ...administration_router,
             ...profiling_router,
             ...drr_router,
-            ...blotter_router
+            ...blotter_router,
+            ...donation_router
         ]
     }
 ]

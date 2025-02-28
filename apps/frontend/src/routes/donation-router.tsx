@@ -1,4 +1,4 @@
-import DonationTracker from "@/pages/donation-main"
+import DonationTracker from "@/pages/record/donation/donation-main"
 
 // Creating routes
 export const donation_router = [

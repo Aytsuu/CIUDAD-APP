@@ -53,6 +53,10 @@ const items: MenuItem[] = [
     ]
   },
   {
+    title: "Donation",
+    url: "/donation",
+  },
+  {
     title: "Announcement",
     url: "/announcement",
   },

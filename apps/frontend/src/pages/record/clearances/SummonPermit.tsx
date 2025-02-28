@@ -14,7 +14,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 
-import AddPermit from '@/pages/CreateDocumentModal';
+import AddPermit from '@/pages/record/clearances/CreateDocumentModal';
 
 // Updated Permit type
 type Permit = {
