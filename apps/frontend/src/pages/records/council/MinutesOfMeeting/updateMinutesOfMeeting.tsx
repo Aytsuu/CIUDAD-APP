@@ -73,7 +73,7 @@ function UpdateMinutesOfMeeting() {
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />
+                    />         
 
                     <div className="flex items-center justify-end p-[40px]">
                         {/* Dialog with Form Inside */}
