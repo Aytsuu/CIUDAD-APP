@@ -20,6 +20,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import FeedbackForm from "./apprejectModal";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { FileInput, Search } from "lucide-react";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+
 export default function AppointmentTable() {
   type AppointmentRecords = {
     id: string;
@@ -159,133 +170,149 @@ export default function AppointmentTable() {
       cell: ({}) => (
         <div>
           <div className="flex gap-2 justify-center min-w-[120px]">
-            <TooltipLayout
+            <DialogLayout
               trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-white hover:bg-[#f3f2f2]  text-green-600 border border-green-700 px-4 py-2 rounded cursor-pointer">
-                      <Check size={16} />
-                    </div>
-                  }
-                  mainContent={
-                    <>
-                      <div className="p-6 text-center">
-                        <h3 className="text-lg font-semibold">Confirmation</h3>
-                        <p className="mt-2 text-gray-600">
-                          Are you sure you want to proceed?
-                        </p>
-                        <div className="flex  gap-2 justify-center">
-                          <Button
-                            variant={"outline"}
-                            onClick={handeleClose}
-                            className="mt-6 w-[120px]"
-                          >
-                            No
-                          </Button>
-                          <Button
-                            onClick={handeSave}
-                            className="mt-6 w-[120px]"
-                          >
-                            Yes
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  }
-                  isOpen={isDialogOpen}
-                  onOpenChange={setIsDialogOpen}
-                />
-              }
-              content="Confirm"
-            />
-
-            <TooltipLayout
-              trigger={
-                <div>
-                  {/* <X size={16} /> */}
-
-                  <FeedbackForm />
+                <div className="bg-white hover:bg-[#f3f2f2]  text-green-600 border border-green-700 px-4 py-2 rounded cursor-pointer">
+                  Approve
                 </div>
               }
-              content="Reject"
+              mainContent={
+                <>
+                  <div className="p-6 text-center">
+                    <h3 className="text-lg font-semibold">Confirmation</h3>
+                    <p className="mt-2 text-gray-600">
+                      Are you sure you want to proceed?
+                    </p>
+                    <div className="flex  gap-2 justify-center">
+                      <Button
+                        variant={"outline"}
+                        onClick={handeleClose}
+                        className="mt-6 w-[120px]"
+                      >
+                        No
+                      </Button>
+                      <Button onClick={handeSave} className="mt-6 w-[120px]">
+                        Yes
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              }
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
             />
+
+            <div>
+              <FeedbackForm />
+            </div>
           </div>
         </div>
       ),
     },
   ];
 
-  const categoryOptions = [
-    { id: "electronics", label: "Electronics", checked: false },
-    { id: "fashion", label: "Fashion", checked: false },
-    { id: "home", label: "Home", checked: false },
-  ];
-
-  function CategoryFilter() {
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-    const handleCategoryChange = (id: string, checked: boolean) => {
-      setSelectedCategories((prev) =>
-        checked ? [...prev, id] : prev.filter((category) => category !== id)
-      );
-    };
-
-    const handleReset = () => {
-      setSelectedCategories([]);
-    };
-
-    return (
-      <FilterAccordion
-        title="Categories"
-        options={categoryOptions.map((option) => ({
-          ...option,
-          checked: selectedCategories.includes(option.id),
-        }))}
-        selectedCount={selectedCategories.length}
-        onChange={handleCategoryChange}
-        onReset={handleReset}
-      />
-    );
-  }
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const data = sampleData;
 
-  return (
-     
+  const filter = [
+    { id: "0", name: "All" },
+    { id: "1", name: "Transient" },
+    { id: "2", name: "Logarta" },
+  ];
+  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-  
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="flex flex-col md:flex-row gap-4 w-full relative">
-              <div className="w-full md:w-1/3">
+  const filteredData =
+    selectedFilter === "All"
+      ? data
+      : data.filter(
+          (item) =>
+            item.appointment === selectedFilter ||
+            item.dateAppointed === selectedFilter
+        );
+
+  return (
+    <>
+      <div className="bg-snow w-full h-full">
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+          {/* Search Input and Filter Dropdown */}
+          <div className="flex flex-col md:flex-row gap-4 w-full">
+            <div className="flex gap-x-2">
+              <div className="relative flex-1">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                  size={17}
+                />
                 <Input
                   placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-72 bg-white"
                 />
               </div>
-              <div className="w-full md:w-auto md:absolute md:left-1/3 md:ml-4 z-20">
-                <CategoryFilter />
-              </div>
+              <SelectLayout
+                className="w-full md:w-[200px] bg-white"
+                label=""
+                placeholder="Select"
+                options={filter}
+                value={selectedFilter}
+                onChange={setSelectedFilter}
+              />
             </div>
           </div>
-
-          <DataTable columns={columns} data={data} />
-
-          {/* Success Modal as a Div at the Top */}
-          {showSuccessfulModal && (
-            <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 transition-all duration-300 ease-out transform translate-y-0 opacity-100">
-              <div className="bg-snow border border-blue p-4 sm:p-6 rounded-lg text-center mx-4 sm:mx-auto w-full sm:w-auto sm:min-w-[320px] max-w-md">
-                <h3 className="text-lg font-semibold">Feedback Saved</h3>
-                <p className="mt-2 text-sm sm:text-base text-gray-600">
-                  Your feedback has been successfully saved.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
-    
+        {/*  */}
+
+        {/* Table Container */}
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileInput />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto">
+            {/* Table Placement */}
+            <DataTable columns={columns} data={filteredData} />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            {/* Showing Rows Info */}
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing 1-10 of 150 rows
+            </p>
+
+            {/* Pagination */}
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout className="" />
+            </div>
+          </div>
+        </div>
+
+        {/* Success Modal as a Div at the Top */}
+        {showSuccessfulModal && (
+          <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 transition-all duration-300 ease-out transform translate-y-0 opacity-100">
+            <div className="bg-snow border border-blue p-4 sm:p-6 rounded-lg text-center mx-4 sm:mx-auto w-full sm:w-auto sm:min-w-[320px] max-w-md">
+              <h3 className="text-lg font-semibold">Feedback Saved</h3>
+              <p className="mt-2 text-sm sm:text-base text-gray-600">
+                Your feedback has been successfully saved.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -15,20 +14,21 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
-// Define the feedback schema
-const FeedbackSchema = z.object({
-  feedback: z.string().nonempty("Feedback is required"),
+// Define the messsage schema
+const NotifyResidentSchema = z.object({
+  messsage: z.string().nonempty("messsage is required"),
 });
 
-export default function FeedbackForm() {
-  type FeedbackSchemaType = z.infer<typeof FeedbackSchema>;
+export default function NotifyResident() {
+  type messsageSchemaType = z.infer<typeof NotifyResidentSchema>;
 
   // Form handling
-  const form = useForm<FeedbackSchemaType>({
-    resolver: zodResolver(FeedbackSchema),
+  const form = useForm<messsageSchemaType>({
+    resolver: zodResolver(NotifyResidentSchema),
     defaultValues: {
-      feedback: "",
+      messsage: "Kindly mark as received after receiving the requested medicine",
     },
   });
 
@@ -37,7 +37,7 @@ export default function FeedbackForm() {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [showSuccessfulModal, setShowSuccessfulModal] = useState(false);
 
-  const saveData = async (data: FeedbackSchemaType) => {
+  const saveData = async (data: messsageSchemaType) => {
     console.log("Form submitted", data);
     setShowSuccessfulModal(true);
     form.reset();
@@ -63,11 +63,11 @@ export default function FeedbackForm() {
       <DialogLayout
         trigger={
             <div className="bg-white hover:bg-[#f3f2f2]  text-red-600 border border-red-700 px-4 py-2 rounded cursor-pointer">
-         Reject
+       Notify
           </div>
         }
         className=""
-        title="Feedback Form"
+        title="Notify Resident"
         description=""
         mainContent={
           <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
@@ -79,18 +79,18 @@ export default function FeedbackForm() {
                 })}
                 className="space-y-6"
               >
-                {/* Feedback Field */}
+                {/* messsage Field */}
                 <FormField
                   control={form.control}
-                  name="feedback"
+                  name="messsage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Feedback</FormLabel>
+                      <FormLabel>Message</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
                           value={String(field.value)}
-                          placeholder="Enter your feedback"
+                          placeholder="Enter your messsage"
                           className="h-24 resize-none"
                         />
                       </FormControl>
@@ -102,7 +102,7 @@ export default function FeedbackForm() {
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
                   <Button type="submit" className="w-[120px]">
-                    Save
+                    Notify
                   </Button>
                 </div>
               </form>
@@ -149,9 +149,9 @@ export default function FeedbackForm() {
       {showSuccessfulModal && (
         <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 transition-all duration-300 ease-out transform translate-y-0 opacity-100">
           <div className="bg-snow border border-blue p-6 rounded-lg text-center mx-auto">
-            <h3 className="text-lg font-semibold">Feedback Saved</h3>
+            <h3 className="text-lg font-semibold">messsage Saved</h3>
             <p className="mt-2 text-gray-600">
-              Your feedback has been successfully saved.
+              Your messsage has been successfully saved.
             </p>
           </div>
         </div>

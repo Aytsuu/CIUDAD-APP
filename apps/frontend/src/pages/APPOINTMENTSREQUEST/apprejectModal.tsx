@@ -63,7 +63,7 @@ export default function FeedbackForm() {
       <DialogLayout
         trigger={
             <div className="bg-white hover:bg-[#f3f2f2]  text-red-600 border border-red-700 px-4 py-2 rounded cursor-pointer">
-            <X size={16} />
+           Reject
           </div>
         }
         className=""

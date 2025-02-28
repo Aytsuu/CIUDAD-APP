@@ -1,11 +1,11 @@
 import path from "path";
 import AppointmentTable from "@/pages/APPOINTMENTSREQUEST/appoinmentTable";
-import RequestTable from "@/pages/APPOINTMENTSREQUEST/requestTable";
-import AppRequestMain from "@/pages/APPOINTMENTSREQUEST/appreqMain";
+import RequestTable from "@/pages/APPOINTMENTSREQUEST/medrequestTable";
+import Main from "@/pages/APPOINTMENTSREQUEST/Main";
 export const healthAppointment = [
   {
-    path: "/",
-    element: <AppRequestMain />,
+    path: "/mainAppRequestTable",
+    element: <Main />,
   },
   {
     path: "/appointmentTable",
