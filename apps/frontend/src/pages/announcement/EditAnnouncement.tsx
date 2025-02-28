@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import addImage from "/src/assets/images/addimage.png";
 
-export default function CreateAnnouncement() {
+export default function EditAnnouncement() {
   const [header, setHeader] = useState("");
   const [details, setDetails] = useState("");
   const [image, setImage] = useState(null);
