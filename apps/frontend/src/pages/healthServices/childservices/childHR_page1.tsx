@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";
-import { CardTitle,CardHeader } from "@/components/ui/card";
+import { CardTitle, CardHeader } from "@/components/ui/card/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router";
 
@@ -89,11 +89,10 @@ export default function ChildHRPage1({
       </Link>
 
       <CardHeader className="border-b">
-
-      <CardTitle className="text-2xl font-semibold pl-4 border-l-8 border-blue">
-        Child Health Record
-      </CardTitle>
-</CardHeader>
+        <CardTitle className="text-2xl font-semibold pl-4 border-l-8 border-blue">
+          Child Health Record
+        </CardTitle>
+      </CardHeader>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onsubmitForm, (errors) => {
