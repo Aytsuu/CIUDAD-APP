@@ -7,7 +7,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import ViewInfo from "../../pages/ProfilingPages/ProfilingViewInfo";
+import ViewInfo from "./ProfilingViewInfo";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";

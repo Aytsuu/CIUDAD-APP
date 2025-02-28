@@ -1,7 +1,7 @@
-import ProfilingMain from "@/pages/ProfilingPages/ProfilingMain";
+import ProfilingMain from "@/pages/record/profiling/ProfilingMain";
 import { ProfilingForm } from "@/pages/ProfilingPages/FormPage/ProfilingForm";
-import ProfilingRequest from "@/pages/ProfilingPages/ProfilingRequests";
-import ViewInfo from "@/pages/ProfilingPages/ProfilingViewInfo";
+import ProfilingRequest from "@/pages/record/profiling/ProfilingRequests";
+import ViewInfo from "@/pages/record/profiling/ProfilingViewInfo";
 
 export const profiling_router = [
     {

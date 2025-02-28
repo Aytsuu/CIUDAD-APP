@@ -9,9 +9,9 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 import { Link, Outlet } from "react-router";
-import { Input } from "../../components/ui/input";
+import { Input } from "../../../components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { DataTable } from "../../components/ui/table/data-table";
+import { DataTable } from "../../../components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import RegistrationOptions from "./RegistrationOptions";
