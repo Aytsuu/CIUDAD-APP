@@ -10,7 +10,7 @@ import {
   FatherFormData,
   DependentFormData,
 } from "../_types";
-import Progress from "@/components/ui/progress";
+import Progress from "@/components/ui/progressWithIcon";
 import { Link } from "react-router";
 import { BsChevronLeft } from "react-icons/bs";
 
