@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import WasteEventSched from "@/pages/waste-scheduling/waste-event-sched";
-import WasteColSched from "@/pages/waste-scheduling/waste-col-sched";
-import WasteHotSched from "@/pages/waste-scheduling/waste-hotspot-sched";
+import WasteEventSched from "@/pages/record/waste-scheduling/waste-event-sched";
+import WasteColSched from "@/pages/record/waste-scheduling/waste-col-sched";
+import WasteHotSched from "@/pages/record/waste-scheduling/waste-hotspot-sched";
 import CalendarComp from "@/components/event-calendar";
 import { Plus } from "lucide-react";
 
@@ -33,7 +33,7 @@ const WasteMainScheduling = () => {
           {/* Select Dropdown */}
           <div className="w-full sm:w-[200px]">
             <SelectLayout
-              className="w-full"
+              className="w-full bg-white"
               label=""
               placeholder="Schedule"
               options={[
