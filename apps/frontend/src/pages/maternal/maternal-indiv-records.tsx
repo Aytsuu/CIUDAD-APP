@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,13 +123,16 @@ export default function MaternalIndivRecords() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
-        <>
+      cell: ({ row }) => {
+        const recordType = row.original.recordType;
+        const viewPath = recordType === "Prenatal" ? "/prenatalviewing" : "/postpartumviewing";
+
+        return(
           <div className="flex justify-center gap-2 ">
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/prenatalviewing">
+                  <Link to={viewPath}>
                     <Eye size={15} />
                   </Link>
                 </div>
@@ -155,8 +158,8 @@ export default function MaternalIndivRecords() {
               content="Delete"
             />
           </div>
-        </>
-      ),
+        )
+      },
     },
   ];
 
@@ -172,7 +175,7 @@ export default function MaternalIndivRecords() {
         age: 10,
         ageTime: "yr",
       },
-      address: "BOnsai Bolinawan Carcar City",
+      address: "Bonsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       type: "Transient",
       recordType: "Prenatal",
@@ -189,7 +192,7 @@ export default function MaternalIndivRecords() {
         age: 10,
         ageTime: "yr",
       },
-      address: "BOnsai Bolinawan Carcar City",
+      address: "Bonsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       type: "Transient",
       recordType: "Prenatal",
@@ -206,7 +209,7 @@ export default function MaternalIndivRecords() {
         age: 10,
         ageTime: "yr",
       },
-      address: "BOnsai Bolinawan Carcar City",
+      address: "Bonsai Bolinawan Carcar City",
       sitio: "Logarta",
       type: "Resident",
       recordType: "Postpartum",

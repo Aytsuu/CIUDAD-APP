@@ -10,11 +10,14 @@ import {
   FatherFormData,
   DependentFormData,
 } from "../_types";
-import Progress from "@/components/ui/progress";
+import Progress from "@/components/ui/progressWithIcon";
 import { Link } from "react-router";
 import { BsChevronLeft } from "react-icons/bs";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router";
 
 export function ProfilingForm() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     personalInfo: {
@@ -123,23 +126,25 @@ export function ProfilingForm() {
   return (
     <div>
       <div className="flex gap-2 justify-between pb-4">
-        <div className="flex items-center gap-x-2">
-          {/* Header */}
-          <Link
-            to="/"
-            className="text-black p-2 hover:bg-darkGray/25 hover:rounded-full"
-          >
-            <BsChevronLeft />
-          </Link>
-          <div className="flex flex-col">
-            <h1 className="font-semibold text-2xl text-darkBlue2">
-              Resident Registration Form 
-            </h1>
-            <p className="text-sm text-darkGray">
-              Provide your details to complete the registration process.
-            </p>
-          </div>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        {/* Header - Stacks vertically on mobile */}
+        <Button 
+          className="text-black p-2 self-start"
+          variant={"outline"}
+          onClick={() => navigate(-1)}
+        >
+          <BsChevronLeft />
+        </Button>
+        <div className="flex flex-col">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Registration Form
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Provide your details to complete the registration process.
+          </p>
+        </div>  
+      </div>
+      
         {/* <p className="text-sm text-gray-500">
           {new Date().toLocaleDateString(undefined, {
             month: "short",
