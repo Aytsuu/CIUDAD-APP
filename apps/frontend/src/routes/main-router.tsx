@@ -15,6 +15,8 @@ import { mom_router } from './MinutesOfMeetingPage-route';
 import { council_calendar_router } from './calendarPage-route';
 
 
+import { donation_router } from './donation-router';
+import { waste_router } from './waste-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -38,6 +40,8 @@ export const main_router: RouteObject[] = [
             ...attendance_router,
             ...mom_router,
             ...council_calendar_router,
+            ...donation_router,
+            ...waste_router
         ]
     }
 ]

@@ -127,31 +127,31 @@ const bodyData: Donation[] = [
 function DonationTracker() {
   const data = bodyData;
   const filterOptions = [
-    { id: "0", name: "All Donation Category" },
-    { id: "1", name: "Monetary Donations" },
-    { id: "2", name: "Essential Goods" },
-    { id: "3", name: "Medical Supplies" },
-    { id: "4", name: "Household Items" },
-    { id: "5", name: "Educational Supplies" },
-    { id: "6", name: "Baby & Childcare Items" },
-    { id: "7", name: "Animal Welfare Items" },
-    { id: "8", name: "Shelter & Homeless Aid" },
-    { id: "9", name: "Disaster Relief Supplies" },
+    { id: "All Donation Category", name: "All Donation Category" },
+    { id: "Monetary Donations", name: "Monetary Donations" },
+    { id: "Essential Goods", name: "Essential Goods" },
+    { id: "Medical Supplies", name: "Medical Supplies" },
+    { id: "Household Items", name: "Household Items" },
+    { id: "Educational Supplies", name: "Educational Supplies" },
+    { id: "Baby & Childcare Items", name: "Baby & Childcare Items" },
+    { id: "Animal Welfare Items", name: "Animal Welfare Items" },
+    { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid" },
+    { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies" },
   ];
 
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0].name);
 
+  
   const filteredData =
     selectedFilter === "All Donation Category"
       ? data
       : data.filter((item) => item.itemCat === selectedFilter);
 
   return (
-    <div className="w-full h-full px-4 md:px-8 lg:px-16">
-      <div className="mb-4 mt-10">
+    <div className="w-full h-full">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            DONATION RECORDS
+            Donation Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view donation records
@@ -171,9 +171,9 @@ function DonationTracker() {
             {/* Filter Dropdown */}
             <div className="w-full sm:w-[200px]">
               <SelectLayout
-                className="w-full"
+                className="w-full bg-white"
                 label=""
-                placeholder="Filter"
+                placeholder="Filter by"
                 options={filterOptions}
                 value={selectedFilter}
                 onChange={(value) => setSelectedFilter(value)}
@@ -223,7 +223,6 @@ function DonationTracker() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 

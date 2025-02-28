@@ -8,7 +8,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 
-import AddCertificate from '@/pages/CreateDocumentModal';
+import AddCertificate from '@/pages/record/clearances/CreateDocumentModal';
 
 type Certificate = {
     requestNo: string

@@ -14,7 +14,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 
-import AddBusinessDocument from '@/pages/CreateDocumentModal';
+import AddBusinessDocument from '@/pages/record/clearances/CreateDocumentModal';
 
 // Updated BusinessDocument type
 type BusinessDocument = {
