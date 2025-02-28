@@ -30,6 +30,10 @@ const items: MenuItem[] = [
     url: "/dashboard",
   },
   {
+    title: "Calendar",
+    url: "/waste-calendar-scheduling",
+  },
+  {
     title: "Resident",
     url: "/resident-records",
   },
@@ -53,8 +57,23 @@ const items: MenuItem[] = [
     ]
   },
   {
+    title: "Council",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Ordinance", url: "/ord-page" },
+      { title: "Resolution", url: "/res-page" },
+      { title: "Minutes of Meeting", url: "/mom-page" },
+      { title: "Attendance", url: "/attendance-page" }
+    ]
+  },
+  {
     title: "Donation",
     url: "/donation",
+  },
+  {
+    title: "Illegal Dumping Reports",
+    url: "/waste-illegaldumping-report",
   },
   {
     title: "Announcement",

@@ -1,5 +1,5 @@
 import WasteIllegalDumping from "@/pages/report/waste/waste-illegal-dumping";
-import WasteMainScheduling from "@/pages/waste-scheduling/waste-main-sched-page";
+import WasteMainScheduling from "@/pages/record/waste-scheduling/waste-main-sched-page";
 
 // Creating routes
 export const waste_router = [
