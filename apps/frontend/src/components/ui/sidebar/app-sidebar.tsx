@@ -118,7 +118,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      {title: "Animal Bites", url: "/"},
+      {title: "Animal Bites", url: "/Animalbite_viewing"},
       {title: "Child Services", url: "/"},
       {title: "Maternal Services", url:"/maternalrecords"},
       {title: "Family Planning", url: "/"},

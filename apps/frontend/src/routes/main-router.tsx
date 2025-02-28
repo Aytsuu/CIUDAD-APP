@@ -20,6 +20,7 @@ import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
 import { maternal_router } from './maternal-services';
 import { gad_router } from './gad-router';
+import { bites_route } from './AnimalBite-route';
 
 export const main_router: RouteObject[] = [
     {
@@ -48,6 +49,7 @@ export const main_router: RouteObject[] = [
             ...waste_router,
             ...maternal_router,
             ...gad_router,
+            ...bites_route
         ]
     }
 ]
