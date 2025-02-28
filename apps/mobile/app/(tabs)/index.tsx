@@ -8,3 +8,7 @@ export default function HomeScreen() {
       </View>
   );
 }
+<<<<<<< HEAD
+
+=======
+>>>>>>> a714a38646b0d831e881489b691cc925e7a3dcdd
