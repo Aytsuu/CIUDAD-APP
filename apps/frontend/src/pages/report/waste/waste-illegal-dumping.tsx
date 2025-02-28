@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash } from "lucide-react";
+import { Trash, Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -194,25 +194,36 @@ function WasteIllegalDumping() {
 
         {/* Combined Search, Filter, and Show Entries Section with Table */}
         <div className="bg-white rounded-[5px] p-5 w-full">
-          <div className="flex gap-3 w-full mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
+            {/* Show Entries Section (Left Side) */}
             <div className="flex items-center gap-x-2">
               <p className="text-xs sm:text-sm">Show</p>
               <Input type="number" className="w-14 h-8" defaultValue="10" />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-            <div className="flex-grow flex justify-end gap-2">
-              <SelectLayout
-                className="flex-initial w-[335px]"
-                placeholder="Report Matter"
-                options={filterOptions}
-                value={selectedFilterId}
-                label=""
-                onChange={(id) => {
-                  console.log("Selected ID:", id); // Debug the ID
-                  setSelectedFilterId(id);
-                }}
-              />
-              <Input placeholder="Search" className="w-[400px]" />
+
+            {/* Filter and Search Section (Right Side) */}
+            <div className="flex-grow flex flex-col sm:flex-row gap-2 sm:justify-end">
+              {/* Filter Dropdown */}
+              <div className="w-full sm:w-auto">
+                <SelectLayout
+                  className="w-full sm:w-[200px] lg:w-[250px]"
+                  placeholder="Report Matter"
+                  options={filterOptions}
+                  value={selectedFilterId}
+                  label=""
+                  onChange={(id) => {
+                    console.log("Selected ID:", id); // Debug the ID
+                    setSelectedFilterId(id);
+                  }}
+                />
+              </div>
+
+              {/* Search Input with Icon */}
+              <div className="relative w-full sm:w-[200px] lg:w-[300px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                <Input placeholder="Search..." className="pl-10 w-full bg-white" />
+              </div>
             </div>
           </div>
 
@@ -234,3 +245,4 @@ function WasteIllegalDumping() {
 }
 
 export default WasteIllegalDumping;
+
