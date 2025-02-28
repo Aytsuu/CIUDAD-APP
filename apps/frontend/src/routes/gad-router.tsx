@@ -1,5 +1,5 @@
-import BudgetTracker from "@/pages/gad-budget-tracker/budget-tracker-table";
-import GADBudgetTrackerMain from "@/pages/gad-budget-tracker/budget-tracker-main";
+import BudgetTracker from "@/pages/record/gad-budget-tracker/budget-tracker-table";
+import GADBudgetTrackerMain from "@/pages/record/gad-budget-tracker/budget-tracker-main";
 
 
 export const gad_router = [
