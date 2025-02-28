@@ -1,9 +1,9 @@
 import path from "path";
-import MainPatientQueueTable from "@/pages/PATIENTSQUEUE/PATIENTSQUEUE/mainPatientsQueue";
-import ProcessingQueueTable from "@/pages/PATIENTSQUEUE/PROCESSINGQUEUE/processingQueueTable";
+import MainPatientQueueTable from "@/pages/healthQueueing/patientsQueue/mainPatientsQueue";
+import ProcessingQueueTable from "@/pages/healthQueueing/processingQueue/processingQueueTable";
     export const patientQueue=[
         {
-            path: '/',
+            path: '/healthQueueing',
             element: <MainPatientQueueTable/>
           },
           {
