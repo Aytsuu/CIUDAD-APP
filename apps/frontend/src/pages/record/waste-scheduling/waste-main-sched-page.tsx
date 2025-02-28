@@ -33,7 +33,7 @@ const WasteMainScheduling = () => {
           {/* Select Dropdown */}
           <div className="w-full sm:w-[200px]">
             <SelectLayout
-              className="w-full"
+              className="w-full bg-white"
               label=""
               placeholder="Schedule"
               options={[

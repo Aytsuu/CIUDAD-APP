@@ -166,7 +166,7 @@ function MinutesOfMeetingPage() {
                     </div>
 
                     <SelectLayout
-                        className="min-w-[150px]"
+                        className="min-w-[150px] bg-white"
                         label=""
                         placeholder="Filter"
                         options={filterOptions}

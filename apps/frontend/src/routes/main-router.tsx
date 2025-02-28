@@ -17,6 +17,8 @@ import { council_calendar_router } from './calendarPage-route';
 
 import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
+import { treasurer_router } from './treasurer-router';
+import { maternal_router } from './maternal-services';
 
 export const main_router: RouteObject[] = [
     {
@@ -41,7 +43,9 @@ export const main_router: RouteObject[] = [
             ...mom_router,
             ...council_calendar_router,
             ...donation_router,
-            ...waste_router
+            ...treasurer_router,
+            ...waste_router,
+            ...maternal_router,
         ]
     }
 ]

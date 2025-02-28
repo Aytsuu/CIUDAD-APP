@@ -13,11 +13,11 @@ export default function MainLayout() {
   
   return (
     <div className="fixed inset-0 flex flex-col bg-none">
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 relative z-10">
         <Header />
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-shrink-0 h-full">
+        <div className="flex-shrink-0 h-full relative z-0">
           <SidebarProvider>
             <AppSidebar />
             <div className="bg-snow">
