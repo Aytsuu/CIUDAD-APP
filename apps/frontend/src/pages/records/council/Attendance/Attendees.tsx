@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import MarkAttendeesSchema from "@/form-schema/mark-attendees";
+import MarkAttendeesSchema from "@/form-schema/markAttendees";
 
 function Attendees() {
     const form = useForm<z.infer<typeof MarkAttendeesSchema>>({

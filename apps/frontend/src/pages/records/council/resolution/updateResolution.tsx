@@ -23,7 +23,7 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import updateResolutionFormSchema from '@/form-schema/updateResolutionForm-schema.ts';
+import updateResolutionFormSchema from '@/form-schema/updateResolutionFormSchema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 

@@ -22,7 +22,7 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import ordinanceFormSchema from '@/form-schema/ordinanceForm-schema.ts';
+import ordinanceFormSchema from '@/form-schema/ordinanceFormSchema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 
