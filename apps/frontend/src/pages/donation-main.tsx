@@ -62,15 +62,14 @@ const columns: ColumnDef<Donation>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="grid grid-cols-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <TooltipLayout
           trigger={
             <DialogLayout
               trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  {" "}
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <Eye size={16} />
-                </div>
+                </Button>
               }
               className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
               title=""
@@ -88,10 +87,9 @@ const columns: ColumnDef<Donation>[] = [
           trigger={
             <DialogLayout
               trigger={
-                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                  {" "}
+                <Button variant="destructive" size="sm" className="w-full sm:w-auto">
                   <Trash size={16} />
-                </div>
+                </Button>
               }
               className="max-w-[30%] h-1/3 flex flex-col"
               title="Delete Record"
