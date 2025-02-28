@@ -1,4 +1,3 @@
-// import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SelectLayout } from '@/components/ui/select/select-layout';
@@ -64,14 +63,15 @@ function WasteColSched() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 max-w-4xl mx-auto">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 max-w-4xl mx-auto">
                 <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">SCHEDULE WASTE COLLECTION</Label>
 
+                {/* Sitio Selection */}
                 <FormField
                     control={form.control}
                     name="selectedSitios"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Sitio:</Label>
                             <FilterAccordion
                                 title="Select Sitio"
@@ -91,13 +91,14 @@ function WasteColSched() {
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
+                {/* Collectors Selection */}
                 <FormField
                     control={form.control}
                     name="selectedCollectors"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Collectors:</Label>
                             <FilterAccordion
                                 title="Select Collectors"
@@ -117,16 +118,18 @@ function WasteColSched() {
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
+                {/* Driver Selection */}
                 <FormField
                     control={form.control}
                     name="driver"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Driver:</Label>
                             <FormControl>
-                                <SelectLayout className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                <SelectLayout
+                                    className="w-full"
                                     label="Select Driver"
                                     placeholder="Select Driver"
                                     options={[
@@ -140,9 +143,10 @@ function WasteColSched() {
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* Date and Time */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <FormField
                         control={form.control}
                         name="date"
@@ -150,7 +154,7 @@ function WasteColSched() {
                             <FormItem>
                                 <Label>Date:</Label>
                                 <FormControl>
-                                    <Input type="date" {...field} />
+                                    <Input type="date" {...field} className="w-full" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -164,33 +168,35 @@ function WasteColSched() {
                             <FormItem>
                                 <Label>Time:</Label>
                                 <FormControl>
-                                    <Input type="time" {...field} />
+                                    <Input type="time" {...field} className="w-full" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div><br/>
+                </div>
 
+                {/* Additional Instructions */}
                 <FormField
                     control={form.control}
                     name="additionalInstructions"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Additional Instructions:</Label>
                             <FormControl>
-                                <Textarea placeholder='Enter additional instructions (if there is any)' {...field} />
+                                <Textarea placeholder="Enter additional instructions (if there is any)" {...field} className="w-full" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
+                {/* Announcement Audience Selection */}
                 <FormField
                     control={form.control}
                     name="selectedAnnouncements"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
                             <FilterAccordion
                                 title="Select Audience"
@@ -210,10 +216,13 @@ function WasteColSched() {
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
-                <div className="flex items-center justify-end">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%">Schedule</Button>
+                {/* Submit Button */}
+                <div className="flex items-center justify-end mt-6">
+                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
+                        Schedule
+                    </Button>
                 </div>
             </form>
         </Form>

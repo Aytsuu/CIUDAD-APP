@@ -27,10 +27,13 @@ const WasteMainScheduling = () => {
 
   return (
     <div className="w-full">
-      <div className="p-10">
-          <div className="flex justify-end gap-2">
+      <div className="p-4 sm:p-10">
+        {/* Select Dropdown and Create Button Section */}
+        <div className="flex flex-col sm:flex-row justify-end gap-2 mb-4">
+          {/* Select Dropdown */}
+          <div className="w-full sm:w-[200px]">
             <SelectLayout
-              className=""
+              className="w-full"
               label=""
               placeholder="Schedule"
               options={[
@@ -41,11 +44,14 @@ const WasteMainScheduling = () => {
               value={selectedValue}
               onChange={handleChange}
             />
+          </div>
+
+          {/* Create Button */}
+          <div className="w-full sm:w-auto">
             <DialogLayout
               trigger={
-                <div className="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded cursor-pointer flex items-center">
-                  {" "}
-                  <Plus/> Create
+                <div className="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded cursor-pointer flex items-center justify-center w-full sm:w-auto">
+                  <Plus /> Create
                 </div>
               }
               className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
@@ -58,13 +64,18 @@ const WasteMainScheduling = () => {
               }
             />
           </div>
+        </div>
+
+        {/* Calendar Component */}
+        <div className="w-full">
           <CalendarComp
-              events={events}
-              setEvents={setEvents}
-              className="w-full"
-            />
+            events={events}
+            setEvents={setEvents}
+            className="w-full"
+          />
         </div>
       </div>
+    </div>
   );
 };
 

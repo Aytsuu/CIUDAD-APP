@@ -1,4 +1,3 @@
-// import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SelectLayout } from '@/components/ui/select/select-layout';
@@ -55,43 +54,46 @@ function WasteHotSched() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 max-w-4xl mx-auto">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 max-w-4xl mx-auto">
                 <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">WATCHMAN FOR HOTSPOT</Label>
 
+                {/* Sitio Selection */}
                 <FormField
                     control={form.control}
                     name="selectedSitios"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Sitio:</Label>
                             <FilterAccordion
                                 title="Select Sitio"
                                 options={sitioOptions.map((option) => ({
                                     ...option,
-                                    checked: field.value?.includes(option.id) || false, // Use optional chaining
+                                    checked: field.value?.includes(option.id) || false,
                                 }))}
-                                selectedCount={field.value?.length || 0} // Use optional chaining
+                                selectedCount={field.value?.length || 0}
                                 onChange={(id: string, checked: boolean) => {
                                     const newSelected = checked
-                                        ? [...(field.value || []), id] // Provide a fallback
-                                        : (field.value || []).filter((category) => category !== id); // Provide a fallback
+                                        ? [...(field.value || []), id]
+                                        : (field.value || []).filter((category) => category !== id);
                                     field.onChange(newSelected);
                                 }}
-                                onReset={handleResetSitios} // Pass the reset function here
+                                onReset={handleResetSitios}
                             />
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
+                {/* Watchman Selection */}
                 <FormField
                     control={form.control}
                     name="watchman"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Watchman:</Label>
                             <FormControl>
-                                <SelectLayout className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                <SelectLayout
+                                    className="w-full"
                                     label="Watchman"
                                     placeholder="Assign Watchman"
                                     options={[
@@ -105,9 +107,10 @@ function WasteHotSched() {
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* Date and Time */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <FormField
                         control={form.control}
                         name="date"
@@ -115,7 +118,7 @@ function WasteHotSched() {
                             <FormItem>
                                 <Label>Date:</Label>
                                 <FormControl>
-                                    <Input type="date" {...field} />
+                                    <Input type="date" {...field} className="w-full" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -129,55 +132,61 @@ function WasteHotSched() {
                             <FormItem>
                                 <Label>Time:</Label>
                                 <FormControl>
-                                    <Input type="time" {...field} />
+                                    <Input type="time" {...field} className="w-full" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                </div><br/>
+                </div>
 
+                {/* Additional Instructions */}
                 <FormField
                     control={form.control}
                     name="additionalInstructions"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Additional Instructions:</Label>
                             <FormControl>
-                                <Textarea placeholder='Enter additional instructions (if there is any)' {...field} />
+                                <Textarea placeholder="Enter additional instructions (if there is any)" {...field} className="w-full" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
-                /><br/>
+                />
 
+                {/* Announcement Audience Selection */}
                 <FormField
                     control={form.control}
                     name="selectedAnnouncements"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="mt-4">
                             <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
                             <FilterAccordion
                                 title="Select Audience"
                                 options={announcementOptions.map((option) => ({
                                     ...option,
-                                    checked: field.value?.includes(option.id) || false, // Use optional chaining
+                                    checked: field.value?.includes(option.id) || false,
                                 }))}
-                                selectedCount={field.value?.length || 0} // Use optional chaining
+                                selectedCount={field.value?.length || 0}
                                 onChange={(id: string, checked: boolean) => {
                                     const newSelected = checked
-                                        ? [...(field.value || []), id] // Provide a fallback
-                                        : (field.value || []).filter((category) => category !== id); // Provide a fallback
+                                        ? [...(field.value || []), id]
+                                        : (field.value || []).filter((category) => category !== id);
                                     field.onChange(newSelected);
                                 }}
-                                onReset={handleResetAnnouncements} // Pass the reset function here
+                                onReset={handleResetAnnouncements}
                             />
                             <FormMessage />
                         </FormItem>
                     )}
-                /> <br/>
-                <div className="flex items-center justify-end">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%">Schedule</Button>
+                />
+
+                {/* Submit Button */}
+                <div className="flex items-center justify-end mt-6">
+                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
+                        Schedule
+                    </Button>
                 </div>
             </form>
         </Form>
