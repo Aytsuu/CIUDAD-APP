@@ -117,19 +117,17 @@ function AnimalBites() {
   });
 
   return (
-    <div className="w-full h-full flex flex-col ">
-
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Animal Bite Records
+              Animal Bite Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view animal bites information
+              Manage and view patients information
           </p>
-        </div>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Search, Filter & Button Section */}
       <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
