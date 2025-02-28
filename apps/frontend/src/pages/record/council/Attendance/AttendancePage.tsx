@@ -7,7 +7,7 @@ import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Pencil, Trash, Eye, Plus, Stamp, Search } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
-import AddEvent from '@/pages/AddEvent-Modal';
+import AddEvent from '@/pages/record/council/Calendar/AddEvent-Modal';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -129,59 +129,57 @@ function AttendancePage() {
         : attendanceRecords.filter(record => record.attAreaOfFocus.includes(filter)); // Filter based on the selected value    
 
     return (
-        <div className="w-full h-full px-4 md:px-8 lg:px-16">
-            <div className="mb-4 mt-10">
-                <div className="flex-col items-center mb-4">
-                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                        Attendance Record
-                    </h1>
-                    <p className="text-xs sm:text-sm text-darkGray">
-                        Mark and view attendance information
-                    </p>
-                </div>
-                <hr className="border-gray mb-6 sm:mb-10" />       
-
-                <div className='w-full mb-4'>
-                    {/**FILTER (SELECT)*/}
-                    <div className="flex gap-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                            <Input placeholder="Search" className="pl-10 w-[500px] bg-white" />
-                        </div>
-
-                        <SelectLayout
-                            className={''}
-                            label=""
-                            placeholder="Filter"
-                            options={filterOptions}
-                            value={filter}
-                            onChange={(value) => setFilter(value)} // Update the filter state
-                        />                              
-                    </div>
-                </div>   
-
-                <div className="w-full bg-white border border-none">
-                    <div className="flex gap-x-2 items-center p-4">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input type="number" className="w-14 h-8" defaultValue="10" />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>                                     
-
-                    <DataTable columns={columns} data={filteredData} />
-                </div>     
-
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-                    {/* Showing Rows Info */}
-                    <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing 1-10 of 150 rows
-                    </p>
-
-                    {/* Pagination */}
-                    <div className="w-full sm:w-auto flex justify-center">
-                        <PaginationLayout className="" />
-                    </div>
-                </div>                                
+        <div className="w-full h-full">
+            <div className="flex-col items-center mb-4">
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                    Attendance Record
+                </h1>
+                <p className="text-xs sm:text-sm text-darkGray">
+                    Mark and view attendance information
+                </p>
             </div>
+            <hr className="border-gray mb-6 sm:mb-10" />       
+
+            <div className='w-full mb-4'>
+                {/**FILTER (SELECT)*/}
+                <div className="flex justify-start gap-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                        <Input placeholder="Search" className="pl-10 bg-white w-[400px]" />
+                    </div>
+
+                    <SelectLayout
+                        className={''}
+                        label=""
+                        placeholder="Filter"
+                        options={filterOptions}
+                        value={filter}
+                        onChange={(value) => setFilter(value)} // Update the filter state
+                    />                              
+                </div>
+            </div>   
+
+            <div className="w-full bg-white border border-none">
+                <div className="flex gap-x-2 items-center p-4">
+                    <p className="text-xs sm:text-sm">Show</p>
+                    <Input type="number" className="w-14 h-8" defaultValue="10" />
+                    <p className="text-xs sm:text-sm">Entries</p>
+                </div>                                     
+
+                <DataTable columns={columns} data={filteredData} />
+            </div>     
+
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                {/* Showing Rows Info */}
+                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                    Showing 1-10 of 150 rows
+                </p>
+
+                {/* Pagination */}
+                <div className="w-full sm:w-auto flex justify-center">
+                    <PaginationLayout className="" />
+                </div>
+            </div>                                
         </div>
     );
 }

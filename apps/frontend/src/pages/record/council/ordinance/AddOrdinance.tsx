@@ -7,7 +7,7 @@ import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { CardTitle } from '@/components/ui/card.tsx';
+import { ChevronLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Accordion,
@@ -23,29 +23,28 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import updateMinutesOfMeetingFormSchema from '@/form-schema/updateMinutesOfMeetinSchema.ts';
+import ordinanceFormSchema from '@/form-schema/ordinanceFormSchema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 
-function UpdateMinutesOfMeeting() {
-    const form = useForm<z.infer<typeof updateMinutesOfMeetingFormSchema>>({
-        resolver: zodResolver(updateMinutesOfMeetingFormSchema),
+function AddOrdinancePage() {
+    const form = useForm<z.infer<typeof ordinanceFormSchema>>({
+        resolver: zodResolver(ordinanceFormSchema),
         mode: 'onChange',
         defaultValues: {
-            meetingTitle: "",        
-            meetingAgenda: "",
-            meetingDate: "",
-            meetingDescription: "",
-            meetingAreaOfFocus: [],
+            ordTitle: "",        
+            ordDate: "",
+            ordDescription: "",
+            ordAreaOfFocus: [],
         },
     });
 
-    let meetingAreaOfFocus = [
+    let ordAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];
 
-    function onSubmit(values: z.infer<typeof updateMinutesOfMeetingFormSchema>) {
+    function onSubmit(values: z.infer<typeof ordinanceFormSchema>) {
         console.log("Values", values);
     }
 
@@ -54,16 +53,22 @@ function UpdateMinutesOfMeeting() {
         <div className="flex p-5 w-full mx-auto h-full justify-center">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="text-[#394360] pb-10">
-                        <Link to="/mom-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
+                    <div className="text-[#394360] pb-2">
+                        {/* <Link to="/ord-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link> */}
+                        <Link to="/ord-page">
+                            <Button 
+                                className="text-black p-2 self-start"
+                                variant={"outline"}
+                            >
+                                <ChevronLeft />
+                            </Button>                        
+                        </Link>
                     </div>
-
-                    <CardTitle>Update Minutes of Meeting</CardTitle>
 
                     {/* Ordinance Description Field */}
                     <FormField
                         control={form.control}
-                        name="meetingDescription"
+                        name="ordDescription"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel></FormLabel>
@@ -73,7 +78,7 @@ function UpdateMinutesOfMeeting() {
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />         
+                    />
 
                     <div className="flex items-center justify-end p-[40px]">
                         {/* Dialog with Form Inside */}
@@ -84,7 +89,7 @@ function UpdateMinutesOfMeeting() {
                                 </div>
                             }
                             className="max-w-[30%] h-[460px] flex flex-col overflow-auto scrollbar-custom"
-                            title="Meeting Details"
+                            title="Ordinance Details"
                             description="Add details."
                             mainContent={
                                 <div>
@@ -94,10 +99,10 @@ function UpdateMinutesOfMeeting() {
                                             {/* Ordinance Title Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="meetingTitle"
+                                                name="ordTitle"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Meeting Title</FormLabel>
+                                                        <FormLabel>Ordinance Title</FormLabel>
                                                         <FormControl>
                                                             {/* <Input placeholder="Enter Event Title" {...field} /> */}
                                                             <Textarea
@@ -111,33 +116,13 @@ function UpdateMinutesOfMeeting() {
                                                 )}
                                             />
 
-                                            {/* Ordinance Meeting Agenda */}
-                                            <FormField
-                                                control={form.control}
-                                                name="meetingAgenda"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Meeting Agenda</FormLabel>
-                                                        <FormControl>
-                                                            {/* <Input placeholder="Enter Event Title" {...field} /> */}
-                                                            <Textarea
-                                                                className="w-full p-2 shadow-sm h-20 mt-[12px] rounded-[5px] resize-none"
-                                                                placeholder="Enter Meeting Agenda"
-                                                                {...field}>
-                                                            </Textarea>                                                            
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />                                            
-
                                             {/* Date Approved Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="meetingDate"
+                                                name="ordDate"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Date</FormLabel>
+                                                        <FormLabel>Date Approved</FormLabel>
                                                         <FormControl>
                                                             <input type="date" {...field} className="mt-[8px] w-full border border-[#B3B7BD] p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-[3px]" />
                                                         </FormControl>
@@ -152,11 +137,11 @@ function UpdateMinutesOfMeeting() {
                                                     <AccordionTrigger>Select Area of Focus</AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="space-y-2">
-                                                            {meetingAreaOfFocus.map((area, index) => (
+                                                            {ordAreaOfFocus.map((area, index) => (
                                                                 <FormField
                                                                     key={index}
                                                                     control={form.control}
-                                                                    name="meetingAreaOfFocus"
+                                                                    name="ordAreaOfFocus"
                                                                     render={({ field }) => {
                                                                         const selectedCategory = field.value ?? [];
                                                                         return (
@@ -210,4 +195,4 @@ function UpdateMinutesOfMeeting() {
     );
 }
 
-export default UpdateMinutesOfMeeting;
+export default AddOrdinancePage;

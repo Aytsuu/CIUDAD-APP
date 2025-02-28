@@ -53,6 +53,17 @@ const items: MenuItem[] = [
     ]
   },
   {
+    title: "Council",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Ordinance", url: "/ord-page" },
+      { title: "Resolution", url: "/res-page" },
+      { title: "Minutes of Meeting", url: "/mom-page" },
+      { title: "Attendance", url: "/attendance-page" }
+    ]
+  },
+  {
     title: "Announcement",
     url: "/announcement",
   },

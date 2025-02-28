@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import {Input} from '../../../../components/ui/input.tsx';
 import {Label} from '../../../../components/ui/label.tsx';
-import {CardTitle} from "@/components/ui/card"
 import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { CardTitle } from '@/components/ui/card/card.tsx';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Accordion,
@@ -23,29 +23,29 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import updateResolutionFormSchema from '@/form-schema/updateResolutionFormSchema.ts';
+import updateMinutesOfMeetingFormSchema from '@/form-schema/updateMinutesOfMeetinSchema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 
-
-function UpdateResolution() {
-    const form = useForm<z.infer<typeof updateResolutionFormSchema>>({
-        resolver: zodResolver(updateResolutionFormSchema),
+function UpdateMinutesOfMeeting() {
+    const form = useForm<z.infer<typeof updateMinutesOfMeetingFormSchema>>({
+        resolver: zodResolver(updateMinutesOfMeetingFormSchema),
         mode: 'onChange',
         defaultValues: {
-            resTitle: "",        
-            resDate: "",
-            resDetails: "",
-            resAreaOfFocus: [],
+            meetingTitle: "",        
+            meetingAgenda: "",
+            meetingDate: "",
+            meetingDescription: "",
+            meetingAreaOfFocus: [],
         },
     });
 
-    let resAreaOfFocus = [
+    let meetingAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];
 
-    function onSubmit(values: z.infer<typeof updateResolutionFormSchema>) {
+    function onSubmit(values: z.infer<typeof updateMinutesOfMeetingFormSchema>) {
         console.log("Values", values);
     }
 
@@ -55,15 +55,15 @@ function UpdateResolution() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="text-[#394360] pb-10">
-                        <Link to="/res-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
+                        <Link to="/mom-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
                     </div>
 
-                    <CardTitle>Update Resolution</CardTitle>
+                    <CardTitle>Update Minutes of Meeting</CardTitle>
 
                     {/* Ordinance Description Field */}
                     <FormField
                         control={form.control}
-                        name="resDetails"
+                        name="meetingDescription"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel></FormLabel>
@@ -73,7 +73,7 @@ function UpdateResolution() {
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />
+                    />         
 
                     <div className="flex items-center justify-end p-[40px]">
                         {/* Dialog with Form Inside */}
@@ -83,8 +83,8 @@ function UpdateResolution() {
                                     Next
                                 </div>
                             }
-                            className="max-w-[30%] max-h-[460px] flex flex-col overflow-auto scrollbar-custom"
-                            title="Resolution Details"
+                            className="max-w-[30%] h-[460px] flex flex-col overflow-auto scrollbar-custom"
+                            title="Meeting Details"
                             description="Add details."
                             mainContent={
                                 <div>
@@ -94,10 +94,10 @@ function UpdateResolution() {
                                             {/* Ordinance Title Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="resTitle"
+                                                name="meetingTitle"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Resolution Title</FormLabel>
+                                                        <FormLabel>Meeting Title</FormLabel>
                                                         <FormControl>
                                                             {/* <Input placeholder="Enter Event Title" {...field} /> */}
                                                             <Textarea
@@ -111,13 +111,33 @@ function UpdateResolution() {
                                                 )}
                                             />
 
+                                            {/* Ordinance Meeting Agenda */}
+                                            <FormField
+                                                control={form.control}
+                                                name="meetingAgenda"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Meeting Agenda</FormLabel>
+                                                        <FormControl>
+                                                            {/* <Input placeholder="Enter Event Title" {...field} /> */}
+                                                            <Textarea
+                                                                className="w-full p-2 shadow-sm h-20 mt-[12px] rounded-[5px] resize-none"
+                                                                placeholder="Enter Meeting Agenda"
+                                                                {...field}>
+                                                            </Textarea>                                                            
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />                                            
+
                                             {/* Date Approved Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="resDate"
+                                                name="meetingDate"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Date Approved</FormLabel>
+                                                        <FormLabel>Date</FormLabel>
                                                         <FormControl>
                                                             <input type="date" {...field} className="mt-[8px] w-full border border-[#B3B7BD] p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-[3px]" />
                                                         </FormControl>
@@ -132,11 +152,11 @@ function UpdateResolution() {
                                                     <AccordionTrigger>Select Area of Focus</AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="space-y-2">
-                                                            {resAreaOfFocus.map((area, index) => (
+                                                            {meetingAreaOfFocus.map((area, index) => (
                                                                 <FormField
                                                                     key={index}
                                                                     control={form.control}
-                                                                    name="resAreaOfFocus"
+                                                                    name="meetingAreaOfFocus"
                                                                     render={({ field }) => {
                                                                         const selectedCategory = field.value ?? [];
                                                                         return (
@@ -190,4 +210,4 @@ function UpdateResolution() {
     );
 }
 
-export default UpdateResolution;
+export default UpdateMinutesOfMeeting;

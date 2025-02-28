@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import {Input} from '@/components/ui/input.tsx';
 import {Label} from '@/components/ui/label.tsx';
-import {CardTitle} from "@/components/ui/card"
+import { CardTitle } from '@/components/ui/card/card.tsx';
 import {DatePicker} from '@/components/ui/datepicker.tsx';
 import {Textarea} from '@/components/ui/textarea.tsx';
 import {Button} from '@/components/ui/button.tsx';
+import { ChevronLeft } from "lucide-react";
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,7 +58,14 @@ function UpdateOrdinance() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="text-[#394360] pb-10">
-                        <Link to="/ord-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
+                        <Link to="/ord-page">
+                            <Button 
+                                className="text-black p-2 self-start"
+                                variant={"outline"}
+                            >
+                                <ChevronLeft />
+                            </Button>                              
+                        </Link>
                     </div>
                     
                     <CardTitle>Update Ordinance</CardTitle>

@@ -1,7 +1,7 @@
 // Dashboard.tsx
 import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
-import CalendarComp from '../components/ui/event-calendar.tsx';
+import CalendarComp from '../../../../components/ui/event-calendar.tsx';
 import AddEvent from './AddEvent-Modal.tsx';
 import { Plus } from 'lucide-react';
 

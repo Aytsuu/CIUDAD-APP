@@ -1,7 +1,7 @@
-import CalendarPage from "@/pages/CalendarPage"
-import AddEvent from "@/pages/AddEvent-Modal"
+import CalendarPage from "@/pages/record/council/Calendar/CalendarPage"
+import AddEvent from "@/pages/record/council/Calendar/AddEvent-Modal"
 
-export const calendar_route = [
+export const council_calendar_router = [
     {
         path: '/calendar-page',
         element: <CalendarPage/>

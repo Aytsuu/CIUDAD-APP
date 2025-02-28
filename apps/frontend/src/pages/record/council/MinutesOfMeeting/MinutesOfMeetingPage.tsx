@@ -150,64 +150,62 @@ function MinutesOfMeetingPage() {
         filter === "all" ? meetingRecords : meetingRecords.filter((record) => record.meetingAreaOfFocus.includes(filter));
 
     return (
-        <div className="w-full h-full px-4 md:px-8 lg:px-16">
-            <div className="mb-4 mt-10">
-                <div className="flex flex-col mb-4">
-                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Minutes Of Meeting</h1>
-                    <p className="text-xs sm:text-sm text-darkGray">Manage and view documentation information</p>
-                </div>
-                <hr className="border-gray mb-6 sm:mb-10" />
-
-                {/* Filter & Search */}
-                <div className="w-full flex flex-wrap gap-3 justify-between items-center mb-4">
-                    <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 min-w-[200px]">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                            <Input placeholder="Search..." className="pl-10 w-full md:w-72 bg-white" />
-                        </div>
-
-                        <SelectLayout
-                            className="min-w-[150px]"
-                            label=""
-                            placeholder="Filter"
-                            options={filterOptions}
-                            value={filter}
-                            onChange={(value) => setFilter(value)}
-                        />
-                    </div>
-
-                    <div className="w-full md:w-auto">
-                        <Link to="/add-mom">
-                            <Button className="w-full md:w-auto">
-                                Create <Plus className="ml-2" />
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Table */}
-                <div className="w-full bg-white border border-none"> 
-                    <div className="flex gap-x-2 items-center p-4">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input type="number" className="w-14 h-8" defaultValue="10" />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>                              
-
-                    <DataTable columns={columns} data={filteredData} />
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-                    {/* Showing Rows Info */}
-                    <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                        Showing 1-10 of 150 rows
-                    </p>
-
-                    {/* Pagination */}
-                    <div className="w-full sm:w-auto flex justify-center">
-                        <PaginationLayout className="" />
-                    </div>
-                </div>                    
+        <div className="w-full h-full">
+            <div className="flex flex-col mb-4">
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Minutes Of Meeting</h1>
+                <p className="text-xs sm:text-sm text-darkGray">Manage and view documentation information</p>
             </div>
+            <hr className="border-gray mb-6 sm:mb-10" />
+
+            {/* Filter & Search */}
+            <div className="w-full flex flex-wrap gap-3 justify-between items-center mb-4">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                        <Input placeholder="Search..." className="pl-10 w-full md:w-72 bg-white" />
+                    </div>
+
+                    <SelectLayout
+                        className="min-w-[150px]"
+                        label=""
+                        placeholder="Filter"
+                        options={filterOptions}
+                        value={filter}
+                        onChange={(value) => setFilter(value)}
+                    />
+                </div>
+
+                <div className="w-full md:w-auto">
+                    <Link to="/add-mom">
+                        <Button className="w-full md:w-auto">
+                            Create <Plus className="ml-2" />
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="w-full bg-white border border-none"> 
+                <div className="flex gap-x-2 items-center p-4">
+                    <p className="text-xs sm:text-sm">Show</p>
+                    <Input type="number" className="w-14 h-8" defaultValue="10" />
+                    <p className="text-xs sm:text-sm">Entries</p>
+                </div>                              
+
+                <DataTable columns={columns} data={filteredData} />
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                {/* Showing Rows Info */}
+                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                    Showing 1-10 of 150 rows
+                </p>
+
+                {/* Pagination */}
+                <div className="w-full sm:w-auto flex justify-center">
+                    <PaginationLayout className="" />
+                </div>
+            </div>                    
         </div>
     );
 }

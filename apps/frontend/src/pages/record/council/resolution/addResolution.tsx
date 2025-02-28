@@ -1,3 +1,4 @@
+
 "use client"
 import { useState } from 'react';
 import {Input} from '../../../../components/ui/input.tsx';
@@ -6,7 +7,9 @@ import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Button} from '../../../../components/ui/button.tsx';
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
+import { ChevronLeft } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { ArrowLeft } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Accordion,
@@ -14,7 +17,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowLeft } from 'lucide-react';
 
 import { Link } from 'react-router';
 
@@ -22,44 +24,49 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import ordinanceFormSchema from '@/form-schema/ordinanceFormSchema.ts';
+import resolutionFormSchema from '@/form-schema/resolutionFormSchema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
-
-function AddOrdinancePage() {
-    const form = useForm<z.infer<typeof ordinanceFormSchema>>({
-        resolver: zodResolver(ordinanceFormSchema),
+function AddResolution() {
+    const form = useForm<z.infer<typeof resolutionFormSchema>>({
+        resolver: zodResolver(resolutionFormSchema),
         mode: 'onChange',
         defaultValues: {
-            ordTitle: "",        
-            ordDate: "",
-            ordDescription: "",
-            ordAreaOfFocus: [],
+            resTitle: "",        
+            resDate: "",
+            resDetails: "",
+            resAreaOfFocus: [],
         },
     });
 
-    let ordAreaOfFocus = [
+    let resAreaOfFocus = [
         "Council", "GAD", 
         "Waste Committee", "Finance"
     ];
 
-    function onSubmit(values: z.infer<typeof ordinanceFormSchema>) {
+    function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
         console.log("Values", values);
     }
 
-
     return (
-        <div className="flex p-5 w-full mx-auto h-full justify-center">
+        <div className="flex w-full mx-auto h-full justify-center">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="text-[#394360] pb-2">
-                        <Link to="/ord-page"><button className="flex items-center gap-2 text-md font-semibold"><ArrowLeft/>Back</button></Link>
+                        <Link to="/res-page">
+                            <Button 
+                                className="text-black p-2 self-start"
+                                variant={"outline"}
+                            >
+                                <ChevronLeft />
+                            </Button>                     
+                        </Link>
                     </div>
 
                     {/* Ordinance Description Field */}
                     <FormField
                         control={form.control}
-                        name="ordDescription"
+                        name="resDetails"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel></FormLabel>
@@ -79,8 +86,8 @@ function AddOrdinancePage() {
                                     Next
                                 </div>
                             }
-                            className="max-w-[30%] h-[460px] flex flex-col overflow-auto scrollbar-custom"
-                            title="Ordinance Details"
+                            className="max-w-[30%] max-h-[460px] flex flex-col overflow-auto scrollbar-custom"
+                            title="Resolution Details"
                             description="Add details."
                             mainContent={
                                 <div>
@@ -90,12 +97,11 @@ function AddOrdinancePage() {
                                             {/* Ordinance Title Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="ordTitle"
+                                                name="resTitle"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Ordinance Title</FormLabel>
+                                                        <FormLabel>Resolution Title</FormLabel>
                                                         <FormControl>
-                                                            {/* <Input placeholder="Enter Event Title" {...field} /> */}
                                                             <Textarea
                                                                 className="w-full p-2 shadow-sm h-20 mt-[12px] rounded-[5px] resize-none"
                                                                 placeholder="Enter Ordinance Title"
@@ -110,7 +116,7 @@ function AddOrdinancePage() {
                                             {/* Date Approved Field */}
                                             <FormField
                                                 control={form.control}
-                                                name="ordDate"
+                                                name="resDate"
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>Date Approved</FormLabel>
@@ -125,14 +131,14 @@ function AddOrdinancePage() {
                                             {/* Categories Field */}
                                             <Accordion type="single" collapsible>
                                                 <AccordionItem value="category-list">
-                                                    <AccordionTrigger>Select Area of Focus</AccordionTrigger>
+                                                    <AccordionTrigger>Select Categories</AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="space-y-2">
-                                                            {ordAreaOfFocus.map((area, index) => (
+                                                            {resAreaOfFocus.map((area, index) => (
                                                                 <FormField
                                                                     key={index}
                                                                     control={form.control}
-                                                                    name="ordAreaOfFocus"
+                                                                    name="resAreaOfFocus"
                                                                     render={({ field }) => {
                                                                         const selectedCategory = field.value ?? [];
                                                                         return (
@@ -152,7 +158,7 @@ function AddOrdinancePage() {
                                                                                     />
                                                                                 </FormControl>
                                                                                 <FormLabel
-                                                                                    htmlFor={`area-${index}`}
+                                                                                    htmlFor={`category-${index}`}
                                                                                     className="cursor-pointer whitespace-normal break-words flex-1"
                                                                                     style={{ wordBreak: "break-all" }} // Ensures long words break
                                                                                 >
@@ -166,10 +172,10 @@ function AddOrdinancePage() {
                                                         </div>
                                                     </AccordionContent>
                                                 </AccordionItem>
-                                            </Accordion>                                            
+                                            </Accordion>
 
                                             {/* Submit Button (Inside Dialog) */}
-                                            <div className="flex items-center justify-end pt-4">
+                                            <div className="flex items-center justify-end pt-6">
                                                 <Button type="submit" className="w-[100px]">
                                                     Create
                                                 </Button>
@@ -186,4 +192,4 @@ function AddOrdinancePage() {
     );
 }
 
-export default AddOrdinancePage;
+export default AddResolution;
