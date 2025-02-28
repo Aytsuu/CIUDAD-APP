@@ -108,25 +108,6 @@ const items: MenuItem[] = [
     ]
   },
   {
-    title: "Finance",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      { title: "Income & Expense Tracking", url: "/treasurer-income-and-expense-tracking" },
-      { title: "Income & Disbursement Monitoring", url: "/treasurer-income-and-disbursement" },
-      { title: "Clearance Requests", 
-        url: "/",
-        anotherItems: [
-          { title: "Personal & Others", url: "/treasurer-personal-and-others" },
-          { title: "Permit", url: "/treasurer-permit" },
-          { title: "Service Charge", url: "/treasurer-service-charge" },
-          { title: "Barangay Service", url: "/treasurer-barangay-service" }
-        ]
-      }
-    ]
-  },
-  {
     title: "Donation",
     url: "/donation",
   },
