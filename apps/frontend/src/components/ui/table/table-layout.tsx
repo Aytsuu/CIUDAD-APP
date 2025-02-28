@@ -7,7 +7,7 @@ import {
     TableCell 
 } from "@/components/ui/table/table";
 
-interface TableProps{
+type TableProps = {     
     header: React.ReactNode[]
     rows: React.ReactNode[][]
 }
@@ -22,7 +22,7 @@ export default function TableLayout({ header, rows }: TableProps){
                     }             
                 </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="">
                     {
                         rows.map((row, index) => (
                         <TableRow key={`row-${index}`}> 
@@ -31,7 +31,7 @@ export default function TableLayout({ header, rows }: TableProps){
                                 ))}
                         </TableRow>))
                     }
-            </TableBody>
+            </TableBody> 
         </Table>
 
     );

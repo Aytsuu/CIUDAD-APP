@@ -1,10 +1,14 @@
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { main_router } from './routes/main-router';
+
+const router = createBrowserRouter([
+  ...main_router,
+  { path: "*", element: ""}
+])
+
 function App() {
 
-  return (
-    <> 
-      
-    </> 
-  )
-}
+  return <RouterProvider router={router} />
 
+}
 export default App;
