@@ -1,5 +1,6 @@
 import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
+import AnnouncementDashboard from '@/pages/announcement/overall';
 
 import { RouteObject} from "react-router";
 import { Navigate } from 'react-router';
@@ -38,7 +39,7 @@ export const main_router: RouteObject[] = [
             },
             {
                 path: "announcement",
-                element: ""
+                element: <AnnouncementDashboard/>
             },
             ...administration_router,
             ...profiling_router,
@@ -54,7 +55,7 @@ export const main_router: RouteObject[] = [
             ...waste_router,
             ...maternal_router,
             ...vaccination,
-            ...childHealthServices
+            ...childHealthServices,
             ...gad_router,
         ]
     }
