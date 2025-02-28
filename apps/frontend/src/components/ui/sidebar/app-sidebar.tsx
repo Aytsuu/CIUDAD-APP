@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,19 +9,25 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-import { Link } from 'react-router';
+import { Link } from "react-router";
+
+type AnotherSubMenuItem = {
+  title: string;
+  url: string;
+};
 
 type SubMenuItem = {
   title: string;
   url: string;
-}
+  anotherItems?: AnotherSubMenuItem[];
+};
 
 type MenuItem = {
   title: string;
   url?: string;
   subItems?: boolean;
   items?: SubMenuItem[];
-}
+};
 
 // Menu items with dropdown support
 const items: MenuItem[] = [
@@ -50,11 +56,26 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Resident Report", url: "/drr-resident-report" },
+      {
+        title: "Resident Report",
+        url: "/drr-resident-report",
+        anotherItems: [
+          {
+            title: "Resident Report",
+            url: "/drr-resident-report",
+          },
+          {
+            title: "Acknowledgement Report",
+            url: "/drr-acknowledgement-report",
+          },
+          { title: "Monthly Report", url: "/drr-monthly-report" },
+          { title: "Staff", url: "/drr-staff" },
+        ],
+      },
       { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
       { title: "Monthly Report", url: "/drr-monthly-report" },
-      { title: "Staff", url: "/drr-staff" }
-    ]
+      { title: "Staff", url: "/drr-staff" },
+    ],
   },
   {
     title: "Council",
@@ -64,8 +85,8 @@ const items: MenuItem[] = [
       { title: "Ordinance", url: "/ord-page" },
       { title: "Resolution", url: "/res-page" },
       { title: "Minutes of Meeting", url: "/mom-page" },
-      { title: "Attendance", url: "/attendance-page" }
-    ]
+      { title: "Attendance", url: "/attendance-page" },
+    ],
   },
   {
     title: "Donation",
@@ -81,21 +102,105 @@ const items: MenuItem[] = [
   },
 ];
 
+interface SubMenuItemProps {
+  item: SubMenuItem;
+  activeItem: string;
+  setActiveItem: (title: string) => void;
+}
+
+const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
+  item,
+  activeItem,
+  setActiveItem,
+}) => {
+  const [isThirdLevelOpen, setIsThirdLevelOpen] = useState(false);
+  const hasThirdLevel = item.anotherItems && item.anotherItems.length > 0;
+  const isActive = activeItem === item.title;
+
+  if (hasThirdLevel) {
+    return (
+      <div className="w-full">
+        <div
+          className={`flex items-center justify-between px-4 py-2 text-sm rounded-md cursor-pointer ${
+            isActive
+              ? "bg-[#1273B2]/10 text-[#1273B8]"
+              : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+          }`}
+          onClick={() => {
+            setIsThirdLevelOpen(!isThirdLevelOpen);
+            setActiveItem(item.title);
+          }}
+        >
+          <span>{item.title}</span>
+          {isThirdLevelOpen ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </div>
+        {isThirdLevelOpen && (
+          <div className="ml-4 mt-1 space-y-1">
+            {item.anotherItems?.map((thirdItem) => (
+              <SidebarMenuButton key={thirdItem.title} asChild className="w-full">
+                <Link
+                  to={thirdItem.url}
+                  className={`flex items-center px-4 py-2 text-sm rounded-md ${
+                    activeItem === thirdItem.title
+                      ? "bg-[#1273B2]/10 text-[#1273B8]"
+                      : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+                  }`}
+                  onClick={() => setActiveItem(thirdItem.title)}
+                >
+                  <span>{thirdItem.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <SidebarMenuButton asChild className="w-full">
+      <Link
+        to={item.url}
+        className={`flex items-center px-4 py-2 text-sm rounded-md ${
+          isActive
+            ? "bg-[#1273B2]/10 text-[#1273B8]"
+            : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+        }`}
+        onClick={() => setActiveItem(item.title)}
+      >
+        <span>{item.title}</span>
+      </Link>
+    </SidebarMenuButton>
+  );
+};
+
 interface MenuItemProps {
   item: MenuItem;
   activeItem: string;
   setActiveItem: (title: string) => void;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ item, activeItem, setActiveItem }) => {
+const MenuItem: React.FC<MenuItemProps> = ({
+  item,
+  activeItem,
+  setActiveItem,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const isActive = activeItem === item.title; // Check if this item is active
+  const isActive = activeItem === item.title;
 
   if (item.subItems && item.items) {
     return (
       <SidebarMenuItem>
-        <div 
-          className={`w-full cursor-pointer rounded-md ${isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"}`}
+        <div
+          className={`w-full cursor-pointer rounded-md ${
+            isActive
+              ? "bg-[#1273B2]/10 text-[#1273B8]"
+              : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+          }`}
           onClick={() => {
             setIsOpen(!isOpen);
             setActiveItem(item.title);
@@ -113,21 +218,12 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, activeItem, setActiveItem }) 
         {isOpen && (
           <div className="ml-4 mt-1 space-y-1">
             {item.items.map((subItem) => (
-              <SidebarMenuButton 
-                key={subItem.title} 
-                asChild
-                className="w-full"
-              >
-                <Link 
-                  to={subItem.url}
-                  className={`flex items-center px-4 py-2 text-sm rounded-md ${
-                    activeItem === subItem.title ? "bg-[#1273B2]/10 text-[#1273B8]" : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
-                  }`}
-                  onClick={() => setActiveItem(subItem.title)}
-                >
-                  <span>{subItem.title}</span>
-                </Link>
-              </SidebarMenuButton>
+              <SubMenuItemComponent
+                key={subItem.title}
+                item={subItem}
+                activeItem={activeItem}
+                setActiveItem={setActiveItem}
+              />
             ))}
           </div>
         )}
@@ -142,7 +238,9 @@ const MenuItem: React.FC<MenuItemProps> = ({ item, activeItem, setActiveItem }) 
           <Link
             to={item.url}
             className={`flex items-center px-4 py-2 rounded-md ${
-              isActive ? "bg-[#1273B2]/10 text-[#1273B8]" : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+              isActive
+                ? "bg-[#1273B2]/10 text-[#1273B8]"
+                : "hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
             }`}
             onClick={() => setActiveItem(item.title)}
           >
@@ -162,10 +260,15 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <div className='w-full h-14'></div>
+            <div className="w-full h-14"></div>
             <SidebarMenu>
               {items.map((item) => (
-                <MenuItem key={item.title} item={item} activeItem={activeItem} setActiveItem={setActiveItem} />
+                <MenuItem
+                  key={item.title}
+                  item={item}
+                  activeItem={activeItem}
+                  setActiveItem={setActiveItem}
+                />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
