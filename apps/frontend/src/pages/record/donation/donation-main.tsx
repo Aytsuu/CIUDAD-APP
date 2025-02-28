@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Eye, Plus, Search } from "lucide-react";
+import { Trash, Plus, Search, Eye } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import ClerkDonateCreate from "./donation-create";
@@ -56,7 +56,7 @@ const columns: ColumnDef<Donation>[] = [
   },
   {
     accessorKey: "datelisted",
-    header: "Date ",
+    header: "Date",
   },
   {
     accessorKey: "action",
@@ -67,7 +67,11 @@ const columns: ColumnDef<Donation>[] = [
           trigger={
             <DialogLayout
               trigger={
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
                   <Eye size={16} />
                 </Button>
               }
@@ -87,7 +91,11 @@ const columns: ColumnDef<Donation>[] = [
           trigger={
             <DialogLayout
               trigger={
-                <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
                   <Trash size={16} />
                 </Button>
               }
@@ -141,7 +149,6 @@ function DonationTracker() {
 
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0].name);
 
-  
   const filteredData =
     selectedFilter === "All Donation Category"
       ? data
@@ -149,80 +156,79 @@ function DonationTracker() {
 
   return (
     <div className="w-full h-full">
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Donation Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view donation records
-          </p>
-        </div>
-        <hr className="border-gray mb-6 sm:mb-10" />
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Donation Records
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view donation records
+        </p>
+      </div>
+      <hr className="border-gray mb-6 sm:mb-10" />
 
-        {/* Combined Search, Filter, and Create Button Section */}
-        <div className="w-full flex flex-col sm:flex-row justify-between mb-4 gap-3">
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {/* Search Input with Icon */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-              <Input placeholder="Search..." className="pl-10 w-full bg-white" />
-            </div>
-
-            {/* Filter Dropdown */}
-            <div className="w-full sm:w-[200px]">
-              <SelectLayout
-                className="w-full bg-white"
-                label=""
-                placeholder="Filter by"
-                options={filterOptions}
-                value={selectedFilter}
-                onChange={(value) => setSelectedFilter(value)}
-              />
-            </div>
+      {/* Combined Search, Filter, and Create Button Section */}
+      <div className="relative w-full hidden lg:flex items-center gap-2 mb-4 justify-between">
+        {/* Search Input with Icon */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input placeholder="Search..." className="pl-10 w-full bg-white" />
           </div>
 
-          {/* Create Button */}
-          <div className="w-full sm:w-auto">
-            <DialogLayout
-              trigger={
-                <Button className="w-full sm:w-auto">
-                  <Plus /> Create
-                </Button>
-              }
-              className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-              title=""
-              description=""
-              mainContent={
-                <div className="w-full h-full">
-                  <ClerkDonateCreate />
-                </div>
-              }
+          {/* Filter Dropdown */}
+          <div className="w-full sm:w-[200px]">
+            <SelectLayout
+              className="w-full bg-white"
+              label=""
+              placeholder="Filter by"
+              options={filterOptions}
+              value={selectedFilter}
+              onChange={(value) => setSelectedFilter(value)}
             />
           </div>
         </div>
+        <DialogLayout
+          trigger={
+            <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+              <Plus size={15} /> Create
+            </div>
+          }
+          className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+          title=""
+          description=""
+          mainContent={
+            <div className="w-full h-full">
+              <ClerkDonateCreate />
+            </div>
+          }
+        />
+      </div>
 
-        {/* Table Section */}
-        <div className="w-full border-none bg-white rounded-[5px] p-5">
-          <div className="flex gap-x-2 items-center p-4">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
-
-          <DataTable columns={columns} data={filteredData} />
+      {/* Table Section */}
+      <div className="w-full border-none bg-white rounded-[5px]">
+        <div className="flex gap-x-2 items-center p-3">
+          <p className="text-xs sm:text-sm">Show</p>
+          <Input type="number" className="w-14 h-8" defaultValue="10" />
+          <p className="text-xs sm:text-sm">Entries</p>
         </div>
 
-        {/* Pagination Section */}
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of {filteredData.length} rows
-          </p>
+        <DataTable columns={columns} data={filteredData} />
+      </div>
 
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
-          </div>
+      {/* Pagination Section */}
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          Showing 1-10 of {filteredData.length} rows
+        </p>
+
+        <div className="w-full sm:w-auto flex justify-center">
+          <PaginationLayout className="" />
         </div>
       </div>
+    </div>
   );
 }
 
