@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import VaccinationForm from "./vaccinationModal";
@@ -17,7 +16,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 
@@ -199,18 +198,14 @@ export default function AllVaccinationRecords() {
       type: "Resident",
     },
   ];
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
-
   const filter = [
     { id: "0", name: "All" },
     { id: "1", name: "Transient" },
     { id: "2", name: "Logarta" },
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
   const filteredData =
     selectedFilter === "All"
       ? data
@@ -218,7 +213,6 @@ export default function AllVaccinationRecords() {
           (item) =>
             item.type === selectedFilter || item.sitio === selectedFilter
         );
-
   const [value, setValue] = useState("");
   return (
     <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
