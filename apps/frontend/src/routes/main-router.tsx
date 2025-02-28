@@ -19,6 +19,7 @@ import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
 import { maternal_router } from './maternal-services';
+import { gad_router } from './gad-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -46,6 +47,7 @@ export const main_router: RouteObject[] = [
             ...treasurer_router,
             ...waste_router,
             ...maternal_router,
+            ...gad_router,
         ]
     }
 ]

@@ -56,13 +56,19 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      {
-        title: "Resident Report",
-        url: "/drr-resident-report",
-      },
+      { title: "Resident Report", url: "/drr-resident-report"},
       { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
       { title: "Monthly Report", url: "/drr-monthly-report" },
       { title: "Staff", url: "/drr-staff" },
+    ],
+  },
+
+  {
+    title: "GAD",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
     ],
   },
   {
