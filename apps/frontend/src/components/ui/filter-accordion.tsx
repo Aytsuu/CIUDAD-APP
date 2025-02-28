@@ -14,7 +14,7 @@ interface FilterAccordionProps {
     onChange,
   }: FilterAccordionProps) {
     return (
-      <details className="overflow-hidden rounded border border-gray-300 [&_summary::-webkit-details-marker]:hidden">
+      <details className="overflow-hidden rounded-[10px] border border-gray-300 [&_summary::-webkit-details-marker]:hidden">
         <summary className="flex cursor-pointer items-center justify-between gap-2 bg-white p-4 text-gray-900 transition">
           <span className="text-sm font-medium">{title}</span>
   

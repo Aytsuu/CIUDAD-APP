@@ -247,7 +247,7 @@ export default function ProfilingMain() {
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full bg-white flex flex-row justify-between p-3">
-            <div className="flex gap-x-2 items-center">
+          <div className="flex gap-x-2 items-center">
                 <p className="text-xs sm:text-sm">Show</p>
                     <Input type="number" className="w-14 h-8" defaultValue="10" />
                 <p className="text-xs sm:text-sm">Entries</p>
