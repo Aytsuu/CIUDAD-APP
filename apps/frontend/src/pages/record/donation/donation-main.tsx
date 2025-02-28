@@ -127,20 +127,21 @@ const bodyData: Donation[] = [
 function DonationTracker() {
   const data = bodyData;
   const filterOptions = [
-    { id: "0", name: "All Donation Category" },
-    { id: "1", name: "Monetary Donations" },
-    { id: "2", name: "Essential Goods" },
-    { id: "3", name: "Medical Supplies" },
-    { id: "4", name: "Household Items" },
-    { id: "5", name: "Educational Supplies" },
-    { id: "6", name: "Baby & Childcare Items" },
-    { id: "7", name: "Animal Welfare Items" },
-    { id: "8", name: "Shelter & Homeless Aid" },
-    { id: "9", name: "Disaster Relief Supplies" },
+    { id: "All Donation Category", name: "All Donation Category" },
+    { id: "Monetary Donations", name: "Monetary Donations" },
+    { id: "Essential Goods", name: "Essential Goods" },
+    { id: "Medical Supplies", name: "Medical Supplies" },
+    { id: "Household Items", name: "Household Items" },
+    { id: "Educational Supplies", name: "Educational Supplies" },
+    { id: "Baby & Childcare Items", name: "Baby & Childcare Items" },
+    { id: "Animal Welfare Items", name: "Animal Welfare Items" },
+    { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid" },
+    { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies" },
   ];
 
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0].name);
 
+  
   const filteredData =
     selectedFilter === "All Donation Category"
       ? data
@@ -170,10 +171,10 @@ function DonationTracker() {
             {/* Filter Dropdown */}
             <div className="w-full sm:w-[200px]">
               <SelectLayout
-                className="w-full"
+                className="w-full bg-white"
                 label=""
                 placeholder="Filter by"
-                options={filterOptions ||  { id: '', name: "Filter by" }}
+                options={filterOptions}
                 value={selectedFilter}
                 onChange={(value) => setSelectedFilter(value)}
               />

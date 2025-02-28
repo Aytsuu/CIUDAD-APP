@@ -30,6 +30,10 @@ const items: MenuItem[] = [
     url: "/dashboard",
   },
   {
+    title: "Calendar",
+    url: "/waste-calendar-scheduling",
+  },
+  {
     title: "Resident",
     url: "/resident-records",
   },
@@ -55,6 +59,10 @@ const items: MenuItem[] = [
   {
     title: "Donation",
     url: "/donation",
+  },
+  {
+    title: "Illegal Dumping Reports",
+    url: "/waste-illegaldumping-report",
   },
   {
     title: "Announcement",

@@ -180,11 +180,10 @@ function WasteIllegalDumping() {
         );
 
   return (
-    <div className="w-full h-full px-4 md:px-8 lg:px-16">
-      <div className="mb-4 mt-10">
+    <div className="w-full h-full">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            ILLEGAL DUMPING REPORTS
+            Illegal Dumping Reports
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view illegal dumping reports
@@ -240,7 +239,6 @@ function WasteIllegalDumping() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 

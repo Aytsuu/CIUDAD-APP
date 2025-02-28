@@ -9,6 +9,7 @@ import { profiling_router } from './profiling-router';
 import { drr_router } from "./drr-router";
 import { blotter_router } from './blotter-router';
 import { donation_router } from './donation-router';
+import { waste_router } from './waste-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -27,7 +28,8 @@ export const main_router: RouteObject[] = [
             ...profiling_router,
             ...drr_router,
             ...blotter_router,
-            ...donation_router
+            ...donation_router,
+            ...waste_router
         ]
     }
 ]
