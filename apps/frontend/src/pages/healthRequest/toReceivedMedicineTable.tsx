@@ -1,28 +1,28 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import MedicalForm from "../medForm";
-import { Link, useNavigate } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Search } from "lucide-react";
+
+import { Label } from "@radix-ui/react-label";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { FileInput, Search, Trash, Eye } from "lucide-react";
+import { FileInput } from "lucide-react";
+import NotifyResident from "./notifyUserReceiveMed";
+import { Pill } from "lucide-react";
 
-export default function AllMedicalConRecords() {
-  type medConRecord = {
-    id: number;
-    // patientName: string;
+export default function MedicineRequestStatusTable() {
+  type requestRecord = {
+    id: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -32,16 +32,63 @@ export default function AllMedicalConRecords() {
       ageTime: string;
     };
     address: string;
-    purok: string;
-    type: string;
+    dateRequested: string;
+    status: string;
   };
-  const columns: ColumnDef<medConRecord>[] = [
+
+  const sampleData: requestRecord[] = [
+    {
+      id: "S133",
+      patient: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      dateRequested: "23 bpm",
+      status: "Pending Receipt",
+    },
+    {
+      id: "P2",
+      patient: {
+        lastName: "Caballes",
+        firstName: "Katrina Shin",
+        middleName: "Dayuja",
+        gender: "Female",
+        age: 10,
+        ageTime: "yr",
+      },
+      address: "BOnsai Bolinawan Carcar City",
+      dateRequested: "23 bpm",
+      status: "Pending Receipt",
+    },
+  ];
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showSuccessfulModal, setIsSuccessfulModal] = useState(false);
+
+  const handeleClose = () => {
+    setIsDialogOpen(false);
+  };
+  const handeSave = () => {
+    setIsDialogOpen(false);
+    setIsSuccessfulModal(true);
+
+    setTimeout(() => {
+      setIsSuccessfulModal(false);
+    }, 800);
+  };
+
+  const columns: ColumnDef<requestRecord>[] = [
     {
       accessorKey: "id",
       header: "#",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+          <div className="bg-lightBlue text-darkBlue1 w-full p-1 rounded-md text-center font-semibold">
             {row.original.id}
           </div>
         </div>
@@ -76,21 +123,25 @@ export default function AllMedicalConRecords() {
         </div>
       ),
     },
+
     {
-      accessorKey: "purok",
-      header: "Purok",
+      accessorKey: "dateRequested",
+      header: "Date Requested",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.purok}</div>
+        <div className="flex justify-center">
+          <div className="w-[50px]">{row.original.dateRequested}</div>
         </div>
       ),
     },
+
     {
-      accessorKey: "type",
-      header: "Type",
+      accessorKey: "status",
+      header: "Status",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
+        <div className="flex justify-center ">
+          <div className="w-[125px] bg-red-100 rounded-md py-1 text-red-500 font-medium ">
+            {row.original.status}
+          </div>
         </div>
       ),
     },
@@ -99,93 +150,59 @@ export default function AllMedicalConRecords() {
       accessorKey: "action",
       header: "Action",
       cell: ({}) => (
-        <>
-          <div className="flex justify-center gap-2 ">
-            <TooltipLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/invMedRecords">
-                    <Eye size={15} />
-                  </Link>
-                </div>
-              }
-              content="View"
-            />
+        <div>
+          <div className="flex gap-2 justify-center min-w-[120px]">
+            <div>
+              <DialogLayout
+                trigger={
+                  <div className="bg-white hover:bg-[#f3f2f2]  text-green-600 border border-green-700 px-4 py-2 rounded cursor-pointer">
+                    View
+                  </div>
+                }
+                title="Medicine Request Summary"
+                description="medicine Request Summary"
+                mainContent={
+                  <>
+                    <div className="h-[200px]  max-h-[calc(100vh-7rem)] overflow-y-auto px-1">
+                      <div className="flex flex-col gap-2 w-full">
+                        <div className="flex flex-col gap-2 p-2 rounded-md border border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                            <Pill className="h-5 w-5 text-blue flex-shrink-0" />
 
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                      {" "}
-                      <Trash size={16} />
+                            <Label className="font-medium">
+                              Medicine: <span className="ml-1">Keneme</span>
+                            </Label>
+                          </div>
+                          <div className="flex gap-3 ml-8">
+                            <Label className="text-sm text-gray-600">
+                              Qty: <span className="font-medium">12</span>
+                            </Label>
+                            <Label className="text-sm text-red-600">
+                              Expiry Date:{" "}
+                              <span className="font-medium">12-12-23</span>
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  }
-                  title=""
-                  description=""
-                  className=""
-                  mainContent={<></>}
-                />
-              }
-              content="Delete"
-            />
+                  </>
+                }
+                isOpen={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+              />
+            </div>
+
+            <div>
+              {/* <X size={16} /> */}
+
+              <NotifyResident />
+            </div>
           </div>
-        </>
+        </div>
       ),
     },
   ];
 
-  const sampleData: medConRecord[] = [
-    {
-      id: 1,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      purok: "Bolinawan",
-      type: "transient",
-    },
-
-    {
-      id: 2,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      purok: "Bolinawan",
-      type: "transient",
-    },
-
-    {
-      id: 3,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      purok: "Bolinawan",
-      type: "transient",
-    },
-  ];
-
-  const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
 
   const filter = [
@@ -198,27 +215,13 @@ export default function AllMedicalConRecords() {
   const filteredData =
     selectedFilter === "All"
       ? data
-      : data.filter((item) => item.type === selectedFilter);
-
-  const navigate = useNavigate();
-  function toMedicalForm() {
-    navigate("/medicalForm", { state: { recordType: "nonexistingPatient" } });
-  }
+      : data.filter(
+          (item) =>
+            item.status === selectedFilter || item.address === selectedFilter
+        );
 
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Medical Consultation Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
-        </div>
-      </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
-
+    <div className=" bg-snow w-full h-full">
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -240,15 +243,7 @@ export default function AllMedicalConRecords() {
             />
           </div>
         </div>
-
-        <div className="w-full sm:w-auto">
-          <div className="w-full sm:w-auto">
-            <Button onClick={toMedicalForm}>New Record</Button>
-          </div>
-        </div>
       </div>
-
-      {/*  */}
 
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
