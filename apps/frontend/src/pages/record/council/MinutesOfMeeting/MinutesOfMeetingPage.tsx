@@ -106,9 +106,9 @@ export const columns: ColumnDef<Meeting>[] = [
                 <TooltipLayout
                     trigger={
                         <Link to="/update-mom">
-                            <Button className="bg-white hover:bg-gray-200 border text-black h-[32px] rounded cursor-pointer shadow-none flex items-center">
+                            <div className="bg-white hover:bg-gray-200 border text-black h-[32px] px-4 py-2 rounded cursor-pointer shadow-none flex items-center">
                                 <Pencil size={16} />
-                            </Button>
+                            </div>
                         </Link>
                     }
                     content="Update"

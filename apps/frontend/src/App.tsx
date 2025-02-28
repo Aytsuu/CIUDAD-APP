@@ -1,6 +1,4 @@
-
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { landing_router } from './routes/landing-router';
 import { main_router } from './routes/main-router';
 
 const router = createBrowserRouter([

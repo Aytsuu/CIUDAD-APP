@@ -7,7 +7,7 @@ export default function RegistrationOptions(){
             <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Registration Form */}
                 <Link
-                    to="/residentRegistration"
+                    to="/resident-registration"
                     className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
                 >
                     {/* Background image */}

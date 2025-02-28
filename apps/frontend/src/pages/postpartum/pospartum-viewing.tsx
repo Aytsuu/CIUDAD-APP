@@ -95,7 +95,7 @@ export const InputLine = ({className}: {className: string}) => (
 
 export default function PostpartumViewing() {
     return(
-        <div className="max-w-5xl mx-auto m-5 p-5 border border-gray-300">
+        <div className="max-w-5xl h-full mx-auto m-5 p-5 border border-gray-300">
             <div>
                 <h4 className="text-center text-2xl m-4 pb-3"> <b>POSTPARTUM RECORD</b> </h4>
             </div>

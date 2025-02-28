@@ -5,6 +5,8 @@ import { Information } from "./_types";
 import { Dependent } from "./_types";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router";
 
 const personal: Information[] = [
   {id: "lname", label: "Last Name", value: "Lorem"},
@@ -85,31 +87,33 @@ const columns: ColumnDef<Dependent>[] = [
 
 
 
-export default function ViewInfo() {
+export default function ProfileViewInfo() {
   {/* Sample Data */}
-  const data = dependents
+  const data = dependents;
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-x-3">
-          <Link
-            to="/"
-            className="text-black p-2 hover:bg-gray-200 rounded-full transition-colors"
-          >
-            <BsChevronLeft />
-          </Link>
-          <div className="flex flex-col">
-            <h1 className="font-semibold text-2xl text-darkBlue2">
-              Resident Details
-            </h1> 
-            {/* <p className="text-sm text-darkGray">Uploaded via Mobile Phone</p>
-            <p className="text-sm text-darkGray">
-              {new Date().toLocaleDateString("en-PH")}
-            </p> */}
+      <div className="w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+            {/* Header - Stacks vertically on mobile */}
+            <Button 
+              className="text-black p-2 self-start"
+              variant={"outline"}
+              onClick={() => navigate(-1)}
+            >
+              <BsChevronLeft />
+            </Button>
+            <div className="flex flex-col">
+              <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                Resident Details
+              </h1>
+              <p className="text-xs sm:text-sm text-darkGray">
+                View resident information
+              </p>
+            </div>  
           </div>
-        </div>
       </div>
 
       <hr className="h-2 bg-darkBlue1 my-6 rounded-full" />
