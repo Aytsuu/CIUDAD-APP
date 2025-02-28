@@ -14,6 +14,7 @@ import { Link } from 'react-router';
 type SubMenuItem = {
   title: string;
   url: string;
+  anotherItems?: anotherItem[];
 }
 
 type MenuItem = {
@@ -50,6 +51,25 @@ const items: MenuItem[] = [
       { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
       { title: "Monthly Report", url: "/drr-monthly-report" },
       { title: "Staff", url: "/drr-staff" }
+    ]
+  },
+  {
+    title: "Finance",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Budget Plan", url: "/treasurer-budget-plan" },
+      { title: "Income & Expense Tracking", url: "/treasurer-income-and-expense-tracking" },
+      { title: "Income & Disbursement Monitoring", url: "/treasurer-income-and-disbursement" },
+      { title: "Clearance Requests", 
+        url: "/",
+        anotherItems: [
+          { title: "Personal & Others", url: "/treasurer-personal-and-others" },
+          { title: "Permit", url: "/treasurer-permit" },
+          { title: "Service Charge", url: "/treasurer-service-charge" },
+          { title: "Barangay Service", url: "/treasurer-barangay-service" }
+        ]
+      }
     ]
   },
   {

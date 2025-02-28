@@ -1,12 +1,12 @@
-import IncomeandExpenseTracking from "@/pages/treasurer-income-expense-tracker/treasurer-income-expense-tracker-main";
-import IncomeandDisbursementView from "@/pages/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-view";
-import PersonalClearance from "@/pages/treasurer-clearance-requests/treasurer-personalClearance";
-import PermitClearance from "@/pages/treasurer-clearance-requests/treasurer-permitClearance";
-import ServiceCharge from "@/pages/treasurer-clearance-requests/treasurer-serviceCharge";
-import BarangayService from "@/pages/treasurer-clearance-requests/treasurer-barangayService";
-import BudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budget-plan-main";
-import TreasurerDonationTable from "@/pages/treasurer-donation/treasurer-donation-main";
-import AddBudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budgetplan-form";
+import IncomeandExpenseTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-tracker-main";
+import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-view";
+import PersonalClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-personalClearance";
+import PermitClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permitClearance";
+import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-serviceCharge";
+import BarangayService from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-barangayService";
+import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budget-plan-main";
+import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
+import AddBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-form";
 // import AddBudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budgetplan-form";
 // import TreasurerDashboard from "@/pages/treasurer-dashboard/sample";
 
