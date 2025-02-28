@@ -16,17 +16,8 @@ import FamillyPlanningSchema from "@/form-schema/FamilyPlanningSchema";
 export default function FamilyPlanningForm() {
   const form = useForm<z.infer<typeof FamillyPlanningSchema>>({
     defaultValues: {
-      clientID: "",
-      philhealthNo: "",
-      nhts_status: false,
-      pantawid_4ps: false,
-      lastName: "",
-      givenName: "",
-      middleInitial: "",
-      dateOfBirth: "",
-      age: 0,
-      educationalAttainment: "",
-      occupation: "",
+      clientID: "", philhealthNo: "", nhts_status: false, pantawid_4ps: false, lastName: "", givenName: "",
+      middleInitial: "", dateOfBirth: "", age: 0, educationalAttainment: "", occupation: "",
       address: {
         houseNumber: "",
         street: "",
@@ -47,8 +38,14 @@ export default function FamilyPlanningForm() {
       averageMonthlyIncome: "",
       typeOfClient: [],
       subTypeOfClient: undefined,
-    },
+    }
   });
+  const methodCurrentlyUsed = [
+    { id: "COC", name: "COC" }, { id: "IUD", name: "IUD" },
+    { id: "BOM/CMM", name: "BOM/CMM" }, { id: "LAM", name: "LAM" }, { id: "POP", name: "POP" }, { id: "Interval", name: "Interval" }, { id: "BBT", name: "BBT" },
+    { id: "SDM", name: "SDM" }, { id: "Injectable", name: "Injectable" }, { id: "Post Partum", name: "Post Partum" },
+    { id: "STM", name: "STM" }, { id: "Implant", name: "Implant" }, { id: "Condom", name: "Condom" },
+  ];
 
   return (
     <div className="flex justify-center mt-10 h-full w-full px-4">
@@ -72,7 +69,7 @@ export default function FamilyPlanningForm() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 w sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {/* Client Information */}
               <FormField
                 control={form.control} name="clientID" render={({ field }) => (
@@ -152,7 +149,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>NAME OF CLIENT</Label>
                     <FormControl>
-                      <Input {...field} placeholder="Last name" className="border-black w-[250px]" />
+                      <Input {...field} placeholder="Last name" className=" border-black w-[300px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -164,7 +161,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Given name" className="border-black w-[250px] mt-8" />
+                      <Input {...field} placeholder="Given name" className="border-black w-[300px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -281,7 +278,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Barangay" className="border-black w-[250px] mt-8" />
+                      <Input {...field} placeholder="Barangay" className="border-black w-[300px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -459,69 +456,183 @@ export default function FamilyPlanningForm() {
               />
             </div>
 
-            <div className="font-semibold mt-10">Type of Client</div>
-
-            {["New Acceptor", "Current User"].map((type) => (
-              <FormField
-                key={type}
-                control={form.control}
-                name="typeOfClient"
-                render={({ field }) => {
-                  return (
-                    <FormItem className="flex items-center space-x-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value === type}
-                          onCheckedChange={() => {
-                            // Set only the selected type, removing others
-                            field.onChange(field.value === type ? "" : type);
-
-                            // If "Current User" is deselected, reset subTypeOfClient
-                            if (type === "Current User" && field.value !== type) {
-                              form.setValue("subTypeOfClient", undefined);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <Label>{type}</Label>
-                    </FormItem>
-                  );
-                }}
-              />
-            ))}
-
-            {/* Conditional Radio Buttons for "Current User" */}
-            {form.watch("typeOfClient").includes("Current User") && (
-              <div className="ml-6">
-                {["Changing Method", "Changing Clinic", "Dropout/Restart"].map((subType) => (
+            <div className="border border-t-black grid grid-cols-3 p-4 rounded-md">
+              <div>
+                <h3 className="font-semibold">Type of Client</h3>
+                {['New Acceptor', 'Current User'].map((type) => (
                   <FormField
-                    key={subType}
+                    key={type}
                     control={form.control}
-                    name="subTypeOfClient"
+                    name="typeOfClient"
                     render={({ field }) => (
-                      <FormItem className="flex items-center space-x-1">
+                      <FormItem className="flex items-center space-x-2">
                         <FormControl>
                           <input
                             type="radio"
-                            value={subType}
-                            checked={field.value === subType}
-                            onChange={() => field.onChange(subType)}
+                            value={type}
+                            checked={field.value === type}
+                            onChange={() => {
+                              field.onChange(type);
+                              if (type !== "Current User") {
+                                form.setValue("subTypeOfClient", "");
+                              }
+                            }}
                           />
                         </FormControl>
-                        <Label>{subType}</Label>
-
+                        <Label>{type}</Label>
                       </FormItem>
                     )}
                   />
-
                 ))}
+                {form.watch("typeOfClient") === "Current User" && (
+                  <div className="ml-6">
+                    {['Changing Method', 'Changing Clinic', 'Dropout/Restart'].map((subType) => (
+                      <FormField
+                        key={subType}
+                        control={form.control}
+                        name="subTypeOfClient"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <input
+                                type="radio"
+                                value={subType}
+                                checked={field.value === subType}
+                                onChange={() => field.onChange(subType)}
+                              />
+                            </FormControl>
+                            <Label>{subType}</Label>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+
+                  </div>
+                )}
+
               </div>
-            )}
+              <div className=" grid-rows-2">
+                <FormField control={form.control} name="reasonFP" render={({ field }) => (
+                  <FormItem className="w-full flex items-center space-x-2">
+                    <Label className="mt-2 w-full">Reason for FP</Label>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={() => field.onChange(true)}
+                      />
+                    </FormControl>
+                    <Label>Spacing</Label>
+                    <FormControl>
+                      <Checkbox
+                        checked={!field.value}
+                        onCheckedChange={() => field.onChange(false)}
+                      />
+                    </FormControl>
+                    <Label>Limiting</Label>
 
 
+                    <FormControl>
+                      <Checkbox
+                        checked={!field.value}
+                        onCheckedChange={() => field.onChange(false)}
+                      />
+                    </FormControl>
+                    <Label>Others</Label>
+                    <Input className="border border-b-black"></Input>
+                    <FormMessage />
+                  </FormItem>
+
+
+
+                )}
+
+                />
+
+                <FormField control={form.control} name="reasonFP" render={({ field }) => (
+                  <FormItem className="w-full flex items-center space-x-2">
+                    <Label className="mt-2 mr-10">Reason</Label>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={() => field.onChange(true)}
+                      />
+                    </FormControl>
+                    <Label>Medical condition</Label>
+
+
+                    <FormControl>
+                      <Checkbox
+                        checked={!field.value}
+                        onCheckedChange={() => field.onChange(false)}
+                      />
+                    </FormControl>
+                    <Label>side-effects</Label>
+                    <Input className="border border-b-black w-[20%]"></Input>
+                    <FormMessage />
+                  </FormItem>
+                )}
+
+                />
+              </div>
+              <div className="ml-4">
+                <h3 className="font-semibold text-sm w-full mb-2">
+                  Method currently used (for Changing Method):
+                </h3>
+
+                <div className="grid grid-cols-4 gap-x-6 gap-y-2">
+                  {methodCurrentlyUsed.map((method) => (
+                    <FormField
+                      key={method.id}
+                      control={form.control}
+                      name={`methodCurrentlyUsed.${method.id}`}
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => field.onChange(checked)}
+                            />
+                          </FormControl>
+                          <Label className="text-sm whitespace-nowrap">{method.name}</Label>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+
+              
+                  <div className="col-span-4 flex items-center space-x-2 mt-2">
+                    <FormField
+                      control={form.control}
+                      name="methodCurrentlyUsed.others"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => field.onChange(checked)}
+                            />
+                          </FormControl>
+                          <Label className="text-sm">Others</Label>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm">Specify:</span>
+                    <Input
+                      type="text"
+                      className="border-black w-40"
+                      {...form.register("methodCurrentlyUsed.specify")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+           
           </form>
         </Form>
       </div>
+      
     </div>
+
   );
 }
