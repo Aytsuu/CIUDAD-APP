@@ -1,105 +1,88 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import addImage from "/src/assets/images/addimage.png";
+import { announcementFormSchema } from "../../form-schema/AnnouncementSchema";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+
+const options = {
+  modes: ["ALL", "SMS", "EMAIL", "APP"],
+  recipients: ["STAFF", "RESIDENTS"],
+};
 
 export default function EditAnnouncement() {
-  const [header, setHeader] = useState("");
-  const [details, setDetails] = useState("");
-  const [image, setImage] = useState(null);
-  const [modes, setModes] = useState(["SMS", "EMAIL", "APP"]);
-  const [recipients, setRecipients] = useState(["STAFF", "RESIDENTS"]);
+  const form = useForm({
+    resolver: zodResolver(announcementFormSchema),
+    defaultValues: { header: "", details: "", image: "", modes: [], recipients: [] },
+  });
 
   return (
-    <div className="max-w-2xl mx-auto bg-[#f5f5f5] p-6 shadow-md">
-      <h2 className="font-bold text-[#263D67]">Edit Announcement</h2>
+    <div className="max-w-[600px] mx-auto p-4 mb-4">
+      <h2 className="font-bold text-[#263D67] text-2xl mb-4 text-center">Edit Announcement</h2>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit((data) => console.log("Announcement Data:", data))} className="space-y-4 flex flex-col">
+          <FormField control={form.control} name="header" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-bold text-sm">Announcement Header</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Edit Header" className="border-[#2e2e2e] p-2 rounded-md w-full text-sm h-12" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-      <h2 className="font-bold mt-4">Announcement Header</h2>
-      <div className="mt-4">
-        <Input
-          type="text"
-          placeholder="Header"
-          value={header}
-          onChange={(e) => setHeader(e.target.value)}
-          className="w-full border-[#3F3F3F] p-2 rounded-md bg- h-12"
-        />
-      </div>
-      
-      <h2 className="font-bold mt-4">Announcement Details</h2>
-      <div className="mt-4">
-        <Textarea
-          placeholder="Edit Announcement details...."
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-          className="w-full border-[#3F3F3F] p-2 rounded-md h-48 resize-none bg-white"
-        />
-        <p className="text-right text-gray-500 text-xs mt-1">{details.length}/200</p>
-      </div>
-      
-      <h2 className="font-bold mt-4">Add Image</h2>
-      <div className="w-full border border-[#3F3F3F] p-2 rounded-md h-48 mt-4 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden bg-white">
-      {image ? (
-          <img src={URL.createObjectURL(image)} alt="Preview" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex flex-col items-center justify-center">
-            <img src={addImage} alt="Upload" className="w-16 h-16" />
-            <p className="text-gray-500">Upload your Image here</p>
+          <FormField control={form.control} name="details" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-bold text-sm">Announcement Details</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder=" Edit Announcement details..." className="border border-[#2e2e2e] p-2 rounded-md w-full text-sm h-48" maxLength={200} onChange={(e) => field.onChange(e.target.value.slice(0, 200))} />
+              </FormControl>
+              <FormMessage />
+              <p className="text-right text-gray-500 text-xs mt-1">{field.value.length}/200</p>
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="image" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-bold text-sm">Add Image</FormLabel>
+              <div className="w-full border border-[#2e2e2e] p-2 rounded-md h-48 flex items-center justify-center cursor-pointer relative bg-white">
+                {field.value ? <img src={field.value} alt="Preview" className="h-full w-full object-cover" /> : (
+                  <div className="flex flex-col items-center justify-center">
+                    <img src={addImage} alt="Upload" className="w-10 h-10" />
+                    <p className="text-gray-500 text-xs">Upload Image</p>
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files?.[0] ? URL.createObjectURL(e.target.files[0]) : "")} className="absolute inset-0 opacity-0 cursor-pointer" />
+              </div>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          {Object.entries(options).map(([key, values]) => (
+            <FormField key={key} control={form.control} name={key as "modes" | "recipients"} render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-bold text-sm">{key.toUpperCase()}</FormLabel>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {values.map((value) => (
+                    <label key={value} className="flex items-center space-x-1 border border-[#cccbcb] p-2 rounded-md text-sm w-full">
+                      <Checkbox checked={field.value.includes(value)} onCheckedChange={(checked) => field.onChange(checked ? [...field.value, value] : field.value.filter((v: string) => v !== value))} />
+                      <span>{value}</span>
+                    </label>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )} />
+          ))}
+
+          <div className="mt-4 flex justify-end">
+            <Button type="submit" className="text-sm px-6 py-2">POST</Button>
           </div>
-        )}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImage(e.target.files?.[0] || null)}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-        />
-      </div>
-      
-      <div className="mt-4">
-        <Label className="font-bold">MODE</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {["ALL", "SMS", "EMAIL", "APP"].map((mode) => (
-            <label key={mode} className="flex items-center space-x-2">
-              <Checkbox
-                id={mode}
-                checked={modes.includes(mode)}
-                onCheckedChange={() =>
-                  setModes((prev) =>
-                    prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
-                  )
-                }
-              />
-              <span>{mode}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-      
-      <div className="mt-4">
-        <Label className="font-bold">RECIPIENT</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {["STAFF", "RESIDENTS"].map((recipient) => (
-            <label key={recipient} className="flex items-center space-x-2">
-              <Checkbox
-                id={recipient}
-                checked={recipients.includes(recipient)}
-                onCheckedChange={() =>
-                  setRecipients((prev) =>
-                    prev.includes(recipient) ? prev.filter((r) => r !== recipient) : [...prev, recipient]
-                  )
-                }
-              />
-              <span>{recipient}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-      
-      <div className="mt-6 text-right">
-        <Button>EDIT</Button>
-      </div>
+        </form>
+      </Form>
     </div>
   );
 }
