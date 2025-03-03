@@ -1,5 +1,3 @@
-# Web App
-
 # Logs
 logs
 *.log
@@ -18,22 +16,14 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-
-# Mobile App
-
-# dependencies
-node_modules/
-
 # Expo
 .expo/
-dist/
 web-build/
 expo-env.d.ts
 
@@ -47,11 +37,6 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
 
 # macOS
 .DS_Store
