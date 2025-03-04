@@ -3,8 +3,8 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link } from "react-router";
-import { Search ,Trash,Eye} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -198,16 +198,22 @@ export default function AllChildHealthRecords() {
             item.type === selectedFilter || item.sitio === selectedFilter
         );
 
+  const navigate = useNavigate();
+  function toChildHealthForm() {
+    navigate("/newAddChildHRForm", { state: { recordType: "nonexistingPatient" } });
+  }
+
   return (
-    <div className="w-full">
-      {/* Header Section */}
-      <div className="flex-col items-center mb-4">
+    <div className="w-full bg-snow">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Child Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
               Manage and view child's information
           </p>
+      </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
@@ -234,9 +240,8 @@ export default function AllChildHealthRecords() {
         </div>
 
         <div className="w-full md:w-auto">
-          <Link to="/newAddChildHRForm">
-            <Button className=" w-full md:w-auto">New Record</Button>
-          </Link>
+        <Button onClick={toChildHealthForm}>New Record</Button>
+
         </div>
       </div>
 

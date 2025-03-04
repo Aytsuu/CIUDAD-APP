@@ -19,6 +19,9 @@ import { Baby, Calendar } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { FilterAccordion } from "@/components/ui/checkBox-with-search-add";
+import { ChevronLeft } from "lucide-react";
+import { Link } from "react-router";
+
 
 type Page1FormData = z.infer<typeof ChildHealthFormSchema> & {
   dates?: string[];
@@ -146,7 +149,26 @@ export default function ChildHRPage3({
   };
 
   return (
-    <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
+    <>
+    <div className="flex flex-col sm:flex-row  gap-4 mb-8">
+      <Link to="/invtablechr">
+        <Button
+          className="text-black p-2 mb-2 self-start"
+          variant={"outline"}
+        >
+          <ChevronLeft />
+        </Button>
+      </Link>
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Child Health Record
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view patients information
+        </p>
+      </div>
+    </div>
+    <div className=" bg-white rounded-lg shadow ">
       <Form {...form}>
         <form
           onSubmit={handleSubmit(onSubmitForm)}
@@ -352,5 +374,6 @@ export default function ChildHRPage3({
         </form>
       </Form>
     </div>
+    </>
   );
 }

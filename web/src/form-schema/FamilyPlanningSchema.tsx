@@ -1,10 +1,11 @@
 import { z } from "zod";
 
-export const FamilyPlanning1 = z.object({
+export const FamilyPlanningSchema = z.object({
   clientID: z.string().nonempty("Client ID is required"),
   philhealthNo: z.string().nonempty("Philhealth # is required"),
   nhts_status: z.boolean(),
   pantawid_4ps: z.boolean(),
+
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),
   middleInitial: z.string().max(1).optional(),
@@ -12,7 +13,7 @@ export const FamilyPlanning1 = z.object({
   age: z.number().min(0, "Age is required and must be a positive number"),
   educationalAttainment: z.string().nonempty("Educational Attainment is required"),
   occupation: z.string().optional(),
-
+  
   address: z.object({
     houseNumber: z.string().optional(),
     street: z.string().optional(),
@@ -34,36 +35,19 @@ export const FamilyPlanning1 = z.object({
   planToHaveMoreChildren: z.boolean(),
   averageMonthlyIncome: z.string().optional(),
 
-  typeOfClient: z.array(
-    z.enum(["New Acceptor", "Current User"])
-  ),
-  subTypeOfClient: z.enum(["Changing Method", "Changing Clinic", "Dropout/Restart"]).optional(),
-  reasonForFP: z.array(z.enum(["Spacing", "Limiting", "Others"])).optional(),
+  typeOfClient: z.array(z.enum(["New Acceptor", "Current User"])),
+  subTypeOfClient: z.array(z.enum(["Changing Method", "Changing Clinic", "Dropout/Restart"])).optional(),
+  
+  reasonForFP: z.array(z.enum(["Spacing", "Limiting", "Others"])),
   otherReasonForFP: z.string().optional(), 
 
   reason: z.array(z.enum(["Medical Condition", "Side Effects"])).optional(),
 
-  methodCurrentlyUsed: z
-    .array(
-      z.enum([
-        "COC",
-        "POP",
-        "Injectable",
-        "Implant",
-        "IUD",
-        "Interval",
-        "Post Partum",
-        "Condom",
-        "BOM/CMM",
-        "BBT",
-        "STM",
-        "SDM",
-        "LAM",
-        "Others",
-      ])
-    )
-    .optional(),
-  otherMethod: z.string().optional(), // For 'Others' input field
+  methodCurrentlyUsed: z.array(z.enum([
+        "COC","POP","Injectable","Implant","IUD","Interval","Post Partum","Condom","BOM/CMM",
+        "BBT","STM","SDM","LAM","Others",])).optional(),
+  
+        otherMethod: z.string().optional(), // For 'Others' input field
 
   medicalHistory: z.object({
     severeHeadaches: z.boolean(),
@@ -78,12 +62,13 @@ export const FamilyPlanning1 = z.object({
     phenobarbitalOrRifampicin: z.boolean(),
     smoker: z.boolean(),
     disability: z.boolean(),
-    disabilityDetails: z.string().optional(), // Only required if "disability" is true
+    disabilityDetails: z.string().optional(), 
   }),
 
   // Obstetrical History
   obstetricalHistory: z.object({
-    pregnancies: z.number().min(0, "Number of pregnancies is required"), // G
+    g_pregnancies: z.number().min(0, "Number of pregnancies is required").default(0),
+    p_pregnancies: z.number().min(0, "Number of pregnancies is required").default(0),
     fullTerm: z.number().min(0, "Number of full-term pregnancies is required"),
     premature: z.number().min(0, "Number of premature births is required"),
     abortion: z.number().min(0, "Number of abortions is required"),
@@ -96,7 +81,7 @@ export const FamilyPlanning1 = z.object({
     previousMenstrualPeriod: z.string().optional(),
 
     // Menstrual Flow & Conditions
-    menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]).optional(),
+    menstrualFlow: z.array(z.enum(["Scanty", "Moderate", "Heavy"])).optional(),
     dysmenorrhea: z.boolean(),
     hydatidiformMole: z.boolean(),
     ectopicPregnancyHistory: z.boolean(),
@@ -104,5 +89,6 @@ export const FamilyPlanning1 = z.object({
 });
 
 // Exporting the schemas properly
-export default FamilyPlanning1;
+export default FamilyPlanningSchema;
+export type FormData = z.infer<typeof FamilyPlanningSchema>;
   

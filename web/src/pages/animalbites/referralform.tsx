@@ -41,13 +41,13 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       };
 
       console.log("👨‍⚕️ Adding new patient:", newPatient);
-    onAddPatient(newPatient);
-    
-    onClose();
-  } else {
-    console.log("❌ onAddPatient function is missing!");
+      onAddPatient(newPatient);
+
+      onClose();
+    } else {
+      console.log("❌ onAddPatient function is missing!");
+    }
   }
-}
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
     // resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
@@ -80,255 +80,254 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4">
-          {/* Receiver */}
-          <FormField
-            control={form.control}
-            name="receiver"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Receiver:</Label>
-                <FormControl>
-                  <Input placeholder="Enter recipient" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Sender */}
-          <FormField
-            control={form.control}
-            name="sender"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Sender:</Label>
-                <FormControl>
-                  <Input placeholder="Enter sender" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Date */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Date:</Label>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Transient Checkbox */}
-          <FormField
-            control={form.control}
-            name="transient"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
-                <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-                <Label>Transient</Label>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* 🔹 Patient Information */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-2">Patient Information</h3>
-
-            {/* Last Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Receiver */}
             <FormField
               control={form.control}
-              name="p_lname"
+              name="receiver"
               render={({ field }) => (
                 <FormItem>
-                  <Label>Last Name:</Label>
+                  <Label>Receiver:</Label>
                   <FormControl>
-                    <Input placeholder="Enter last name" {...field} />
+                    <Input placeholder="Enter recipient" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* First Name */}
+            {/* Sender */}
             <FormField
               control={form.control}
-              name="p_fname"
+              name="sender"
               render={({ field }) => (
                 <FormItem>
-                  <Label>First Name:</Label>
+                  <Label>Sender:</Label>
                   <FormControl>
-                    <Input placeholder="Enter first name" {...field} />
+                    <Input placeholder="Enter sender" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Middle Name */}
+            {/* Date */}
             <FormField
               control={form.control}
-              name="p_mname"
+              name="date"
               render={({ field }) => (
                 <FormItem>
-                  <Label>Middle Name:</Label>
+                  <Label>Date:</Label>
                   <FormControl>
-                    <Input placeholder="Enter middle name" {...field} />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Address */}
+            {/* Transient Checkbox */}
             <FormField
               control={form.control}
-              name="p_address"
+              name="transient"
               render={({ field }) => (
-                <FormItem>
-                  <Label>Address:</Label>
+                <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <Textarea placeholder="Enter address" {...field} />
+                    <Checkbox className="mt-3 border border-black" checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Age */}
-            <FormField
-              control={form.control}
-              name="p_age"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Age:</Label>
-                  <FormControl>
-                    <Input type="number" placeholder="Enter age" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="p_gender"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Gender:</Label>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                  <Label>Transient</Label>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          {/* 🔹 Animal Bite Details */}
-          <div className="border-t pt-4">
+          {/* Patient Information Section */}
+          <div className="col-span-2 border-t pt-4 mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Last Name */}
+              <FormField
+                control={form.control}
+                name="p_lname"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Last Name:</Label>
+                    <FormControl>
+                      <Input placeholder="Enter last name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* First Name */}
+              <FormField
+                control={form.control}
+                name="p_fname"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>First Name:</Label>
+                    <FormControl>
+                      <Input placeholder="Enter first name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Middle Name */}
+              <FormField
+                control={form.control}
+                name="p_mname"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Middle Name:</Label>
+                    <FormControl>
+                      <Input placeholder="Enter middle name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Address */}
+              <FormField
+                control={form.control}
+                name="p_address"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Address:</Label>
+                    <FormControl>
+                      <Textarea placeholder="Enter address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Age */}
+              <FormField
+                control={form.control}
+                name="p_age"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Age:</Label>
+                    <FormControl>
+                      <Input type="number" placeholder="Enter age" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="p_gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Gender:</Label>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Animal Bite Details Section */}
+          <div className="col-span-2 border-t pt-4 mt-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Animal Bite Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Exposure Type */}
+              <FormField
+                control={form.control}
+                name="p_exposure"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Type of Exposure:</Label>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="bite">Bite</SelectItem>
+                          <SelectItem value="non-bite">Non-bite</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Exposure Type */}
-            <FormField
-              control={form.control}
-              name="p_exposure"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Type of Exposure:</Label>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Bite</SelectItem>
-                        <SelectItem value="female">Non-bite</SelectItem>
+              {/* Site of Exposure */}
+              <FormField
+                control={form.control}
+                name="p_siteofexposure"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Site of Exposure:</Label>
+                    <FormControl>
+                      <Input placeholder="Enter body part affected" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Biting Animal */}
+              <FormField
+                control={form.control}
+                name="p_bitinganimal"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Biting Animal:</Label>
+                    <FormControl>
+                      <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Site of Exposure */}
-            <FormField
-              control={form.control}
-              name="p_siteofexposure"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Site of Exposure:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter body part affected" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Biting Animal */}
-            <FormField
-              control={form.control}
-              name="p_bitinganimal"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Biting Animal:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Actions Taken */}
+              <FormField
+                control={form.control}
+                name="p_actions"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <Label>Actions Taken:</Label>
+                    <FormControl>
+                      <Textarea placeholder="Describe the required actions..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-
-          {/* 🔹 Additional Actions */}
-          <FormField
-            control={form.control}
-            name="p_actions"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Actions Taken:</Label>
-                <FormControl>
-                  <Textarea placeholder="Describe the required actions..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           {/* Buttons */}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-6">
             <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="">
-              Add
-            </Button>
-    
+            <Button type="submit">Add</Button>
           </div>
         </form>
-   
       </Form>
     </div>
   );
