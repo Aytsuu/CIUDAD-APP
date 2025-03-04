@@ -3,8 +3,8 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link } from "react-router";
-import { Search ,Trash,Eye} from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Search, Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,23 +16,22 @@ import { FileInput } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Label } from "@/components/ui/label";
+import CardLayout from "@/components/ui/card/card-layout";
+import { ChevronLeft } from "lucide-react";
+import ChildInfo from "./ChildsInformation";
 
-export default function AllChildHealthRecords() {
+export default function InvChildHealthRecords() {
   type ChrRecords = {
     id: number;
-    // patientName: string;
-    patient: {
-      firstName: string;
-      lastName: string;
-      middleName: string;
-      gender: string;
-      age: number;
-      ageTime: string;
-    };
-    address: string;
-    sitio: string;
-    type: string;
+    age: string;
+    wt: number;
+    ht: number;
+    vaccineStat: String;
+    nutritionStat: String;
+    updatedAt: string;
   };
+
   const columns: ColumnDef<ChrRecords>[] = [
     {
       accessorKey: "id",
@@ -45,54 +44,48 @@ export default function AllChildHealthRecords() {
         </div>
       ),
     },
-    {
-      accessorKey: "patient",
-      header: "Patient",
-      cell: ({ row }) => {
-        const patient = row.original.patient;
-        const fullName =
-          `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
 
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {patient.gender}, {patient.age} {patient.ageTime} old
-              </div>
-            </div>
-          </div>
-        );
-      },
+    {
+      accessorKey: "age",
+      header: "Age",
     },
     {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "sitio",
-      header: "sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
+      accessorKey: "wt",
+      header: "WT",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "ht",
+      header: "HT",
+    },
+
+    {
+      accessorKey: "vaccineStat",
+      header: "Immunization Status",
+    },
+    {
+      accessorKey: "nutritionStat",
+      header: "Nutrtion Status",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
         </div>
       ),
     },
 
+    {
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+        </div>
+      ),
+    },
     {
       accessorKey: "action",
       header: "Action",
@@ -102,9 +95,7 @@ export default function AllChildHealthRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/invtablechr">
-                    <Eye size={15} />
-                  </Link>
+                  <Eye size={15} />
                 </div>
               }
               content="View"
@@ -134,114 +125,47 @@ export default function AllChildHealthRecords() {
   const sampleData: ChrRecords[] = [
     {
       id: 1,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "transient",
-    },
-
-    {
-      id: 2,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "transient",
-    },
-
-    {
-      id: 3,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "transient",
+      age: "4 days",
+      wt: 12,
+      ht: 34,
+      vaccineStat: "Not FIC",
+      nutritionStat: "Not FIC",
+      updatedAt: "2024-02-21",
     },
   ];
 
   const data = sampleData;
 
-  const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.type === selectedFilter || item.sitio === selectedFilter
-        );
+  const navigate = useNavigate();
+  function toChildHealthForm() {
+    navigate("/newAddChildHRForm", { state: { recordType: "existingPatient" } });
+  }
 
   return (
-    <div className="w-full">
-      {/* Header Section */}
-      <div className="flex-col items-center mb-4">
+    <div className="w-full   bg-snow">
+      <Link to="/allChildHRTable">
+        <Button className="text-black p-2 mb-2 self-start" variant={"outline"}>
+          <ChevronLeft />
+        </Button>
+      </Link>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Child Health Records
+            Individual Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view child's information
+            Manage and view childs information
           </p>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
-            </div>
-            <SelectLayout
-              className="w-full md:w-[200px] bg-white"
-              label=""
-              placeholder="Select"
-              options={filter}
-              value={selectedFilter}
-              onChange={setSelectedFilter}
-            />
-          </div>
-        </div>
-
-        <div className="w-full md:w-auto">
-          <Link to="/newAddChildHRForm">
-            <Button className=" w-full md:w-auto">New Record</Button>
-          </Link>
         </div>
       </div>
+      <hr className="border-gray mb-6 " />
 
-      {/*  */}
-
+      <div className="mb-5">
+        <ChildInfo />
+      </div>
+      <div className="w-full md:w-auto flex justify-end mb-2">
+        <Button onClick={toChildHealthForm}>Update Record</Button>
+      </div>
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -268,7 +192,7 @@ export default function AllChildHealthRecords() {
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
-          <DataTable columns={columns} data={filteredData} />
+          <DataTable columns={columns} data={data} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
