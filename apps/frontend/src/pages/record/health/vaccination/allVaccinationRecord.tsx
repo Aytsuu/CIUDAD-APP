@@ -198,6 +198,8 @@ export default function AllVaccinationRecords() {
       type: "Resident",
     },
   ];
+
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const data = sampleData;
   const filter = [
@@ -213,6 +215,7 @@ export default function AllVaccinationRecords() {
           (item) =>
             item.type === selectedFilter || item.sitio === selectedFilter
         );
+
   const [value, setValue] = useState("");
   return (
     <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">

@@ -50,7 +50,7 @@ export const main_router: RouteObject[] = [
             ...waste_router,
             ...maternal_router,
             ...vaccination,
-            ...childHealthServices
+            ...childHealthServices,
             ...gad_router,
         ]
     }
