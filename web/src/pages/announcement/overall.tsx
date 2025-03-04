@@ -90,9 +90,9 @@ const AnnouncementDashboard: React.FC = () => {
     // );
 
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full flex flex-col gap-4">
             {/* Filters & Actions - Now Responsive */}
-            <div className="flex flex-wrap  gap-4 sm:gap-8 p-4 sm:p-10">
+            <div className="flex flex-row  gap-4">
                 <SelectLayout
                     placeholder="Filter"
                     label=""
@@ -124,7 +124,7 @@ const AnnouncementDashboard: React.FC = () => {
             </div>
 
             {/* Announcements List - Responsive */}
-            <div className="space-y-4 px-4 sm:px-10">
+            <div className="space-y-4">
                 {announcements.length > 0 ? (
                     announcements.map((announcement) => (
                         <div key={announcement.id} className="border rounded-lg p-4 sm:p-6 bg-white shadow-sm">

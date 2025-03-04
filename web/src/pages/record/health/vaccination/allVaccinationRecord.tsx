@@ -1,14 +1,13 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { FilterAccordion } from "@/components/ui/filter-accordion";
+import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
 // import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import PrenatalForm from "../prenatal/prenatal-form";
+import VaccinationForm from "./vaccinationModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
 import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -21,8 +20,8 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 
-export default function MaternalAllRecords() {
-  type maternalRecords = {
+export default function AllVaccinationRecords() {
+  type vacRecords = {
     id: number;
     // patientName: string;
     patient: {
@@ -37,7 +36,7 @@ export default function MaternalAllRecords() {
     sitio: "Logarta" | "Bolinawan";
     type: "Transient" | "Resident";
   };
-  const columns: ColumnDef<maternalRecords>[] = [
+  const columns: ColumnDef<vacRecords>[] = [
     {
       accessorKey: "id",
       header: "#",
@@ -121,7 +120,7 @@ export default function MaternalAllRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/maternalindividualrecords">
+                  <Link to="/invVaccinationRecord">
                     <Eye size={15} />
                   </Link>
                 </div>
@@ -139,8 +138,6 @@ export default function MaternalAllRecords() {
                     </div>
                   }
                   className=""
-                  title="Delete Record"
-                  description="Are you sure you want to delete this record?"
                   mainContent={<></>}
                 />
               }
@@ -152,7 +149,7 @@ export default function MaternalAllRecords() {
     },
   ];
 
-  const sampleData: maternalRecords[] = [
+  const sampleData: vacRecords[] = [
     {
       id: 1,
 
@@ -161,10 +158,10 @@ export default function MaternalAllRecords() {
         firstName: "Katrina Shin",
         middleName: "Dayuja",
         gender: "Female",
-        age: 20,
-        ageTime: "yrs",
+        age: 10,
+        ageTime: "yr",
       },
-      address: "Bonsai Bolinawan Carcar City",
+      address: "BOnsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       type: "Transient",
     },
@@ -173,14 +170,14 @@ export default function MaternalAllRecords() {
       id: 2,
 
       patient: {
-        lastName: "Siddiqui",
+        lastName: "Caballes",
         firstName: "Katrina",
-        middleName: "Sheen",
+        middleName: "Dayuja",
         gender: "Female",
-        age: 25,
-        ageTime: "yrs",
+        age: 10,
+        ageTime: "yr",
       },
-      address: "Bonsai Bolinawan Carcar City",
+      address: "BOnsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       type: "Transient",
     },
@@ -189,30 +186,28 @@ export default function MaternalAllRecords() {
       id: 3,
 
       patient: {
-        lastName: "Smith",
-        firstName: "Loewe",
+        lastName: "Caballes",
+        firstName: "Katrina",
         middleName: "Dayuja",
         gender: "Female",
-        age: 16,
-        ageTime: "yrs",
+        age: 10,
+        ageTime: "yr",
       },
-      address: "Bonsai Bolinawan Carcar City",
+      address: "BOnsai Bolinawan Carcar City",
       sitio: "Logarta",
       type: "Resident",
     },
   ];
 
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
-
   const filter = [
     { id: "0", name: "All" },
     { id: "1", name: "Transient" },
     { id: "2", name: "Logarta" },
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
   const filteredData =
     selectedFilter === "All"
       ? data
@@ -221,20 +216,19 @@ export default function MaternalAllRecords() {
             item.type === selectedFilter || item.sitio === selectedFilter
         );
 
-  // const [value, setValue] = useState("");
+  const [value, setValue] = useState("");
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Maternal Records
+              Vaccination Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
+              Manage and view patients information
           </p>
-        </div>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
@@ -259,19 +253,25 @@ export default function MaternalAllRecords() {
         </div>
 
         <div className="w-full sm:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="default">New Record</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>
-                <Link to="/prenatalform">Prenatal</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="">Postpartum</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DialogLayout
+            trigger={
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => setValue("nonExistingPatient")}
+              >
+                New Record
+              </Button>
+            }
+            className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
+            title="Vaccination"
+            mainContent={
+              <div>
+                <VaccinationForm recordType={value} />
+              </div>
+            }
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+          />
         </div>
       </div>
 

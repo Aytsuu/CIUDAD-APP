@@ -2,15 +2,9 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-// import { Link } from "react-router";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./vaccinationModal";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
-import { Link } from "react-router";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Link, useNavigate } from "react-router";
+import { Search, Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,24 +13,26 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Label } from "@/components/ui/label";
+import CardLayout from "@/components/ui/card/card-layout";
+import { ChevronLeft } from "lucide-react";
+import ChildInfo from "./ChildsInformation";
 
-export default function AllVaccinationRecords() {
-  type vacRecords = {
+export default function InvChildHealthRecords() {
+  type ChrRecords = {
     id: number;
-    // patientName: string;
-    patient: {
-      firstName: string;
-      lastName: string;
-      middleName: string;
-      gender: string;
-      age: number;
-      ageTime: string;
-    };
-    address: string;
-    sitio: "Logarta" | "Bolinawan";
-    type: "Transient" | "Resident";
+    age: string;
+    wt: number;
+    ht: number;
+    vaccineStat: String;
+    nutritionStat: String;
+    updatedAt: string;
   };
-  const columns: ColumnDef<vacRecords>[] = [
+
+  const columns: ColumnDef<ChrRecords>[] = [
     {
       accessorKey: "id",
       header: "#",
@@ -48,69 +44,48 @@ export default function AllVaccinationRecords() {
         </div>
       ),
     },
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Patient <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const patient = row.original.patient;
-        const fullName =
-          `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
-
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {patient.gender}, {patient.age} {patient.ageTime} old
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "address",
-      header: ({ column }) => (
-        <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Address <ArrowUpDown size={15} />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-        </div>
-      ),
-    },
 
     {
-      accessorKey: "sitio",
-      header: "Sitio",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
-      ),
+      accessorKey: "age",
+      header: "Age",
     },
     {
-      accessorKey: "type",
-      header: "Type",
+      accessorKey: "wt",
+      header: "WT",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "ht",
+      header: "HT",
+    },
+
+    {
+      accessorKey: "vaccineStat",
+      header: "Immunization Status",
+    },
+    {
+      accessorKey: "nutritionStat",
+      header: "Nutrtion Status",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
         </div>
       ),
     },
 
+    {
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+        </div>
+      ),
+    },
     {
       accessorKey: "action",
       header: "Action",
@@ -120,9 +95,7 @@ export default function AllVaccinationRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/invVaccinationRecord">
-                    <Eye size={15} />
-                  </Link>
+                  <Eye size={15} />
                 </div>
               }
               content="View"
@@ -149,88 +122,51 @@ export default function AllVaccinationRecords() {
     },
   ];
 
-  const sampleData: vacRecords[] = [
+  const sampleData: ChrRecords[] = [
     {
       id: 1,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Transient",
-    },
-
-    {
-      id: 2,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "Transient",
-    },
-
-    {
-      id: 3,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Logarta",
-      type: "Resident",
+      age: "4 days",
+      wt: 12,
+      ht: 34,
+      vaccineStat: "Not FIC",
+      nutritionStat: "Not FIC",
+      updatedAt: "2024-02-21",
     },
   ];
 
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const data = sampleData;
-  const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.type === selectedFilter || item.sitio === selectedFilter
-        );
 
-  const [value, setValue] = useState("");
+  const navigate = useNavigate();
+  function toChildHealthForm() {
+    navigate("/newAddChildHRForm", { state: { recordType: "existingPatient" } });
+  }
+
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
+    <div className="w-full   bg-snow">
+      <Link to="/allChildHRTable">
+        <Button className="text-black p-2 mb-2 self-start" variant={"outline"}>
+          <ChevronLeft />
+        </Button>
+      </Link>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Vaccination Records
+            Individual Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
+            Manage and view childs information
           </p>
         </div>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-6 " />
 
+<<<<<<< HEAD:apps/frontend/src/pages/record/health/childhealth/childHR_inv_records.tsx
+      <div className="mb-5">
+        <ChildInfo />
+      </div>
+      <div className="w-full md:w-auto flex justify-end mb-2">
+        <Button onClick={toChildHealthForm}>Update Record</Button>
+=======
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -253,31 +189,13 @@ export default function AllVaccinationRecords() {
           </div>
         </div>
 
-        <div className="w-full sm:w-auto">
-          <DialogLayout
-            trigger={
-              <Button
-                className="w-full sm:w-auto"
-                onClick={() => setValue("nonExistingPatient")}
-              >
-                New Record
-              </Button>
-            }
-            className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
-            title="Vaccination"
-            mainContent={
-              <div>
-                <VaccinationForm recordType={value} />
-              </div>
-            }
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-          />
+        <div className="w-full md:w-auto">
+          <Link to="/newAddChildHRForm">
+            <Button className=" w-full md:w-auto">New Record</Button>
+          </Link>
         </div>
+>>>>>>> 4d0d0c735422622c1d6ee33aa4b97cc61c8471f9:web/src/pages/record/health/childhealth/childHR_inv_records.tsx
       </div>
-
-      {/*  */}
-
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -304,7 +222,7 @@ export default function AllVaccinationRecords() {
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
-          <DataTable columns={columns} data={filteredData} />
+          <DataTable columns={columns} data={data} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}

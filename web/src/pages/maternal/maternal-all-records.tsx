@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+// import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Trash, Eye } from "lucide-react";
+// import { Link } from "react-router";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+// import PrenatalForm from "../prenatal/prenatal-form";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
+import { Link } from "react-router";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,12 +20,9 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
-export default function AllChildHealthRecords() {
-  type ChrRecords = {
+export default function MaternalAllRecords() {
+  type maternalRecords = {
     id: number;
     // patientName: string;
     patient: {
@@ -30,10 +34,10 @@ export default function AllChildHealthRecords() {
       ageTime: string;
     };
     address: string;
-    sitio: string;
-    type: string;
+    sitio: "Logarta" | "Bolinawan";
+    type: "Transient" | "Resident";
   };
-  const columns: ColumnDef<ChrRecords>[] = [
+  const columns: ColumnDef<maternalRecords>[] = [
     {
       accessorKey: "id",
       header: "#",
@@ -47,7 +51,14 @@ export default function AllChildHealthRecords() {
     },
     {
       accessorKey: "patient",
-      header: "Patient",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Patient <ArrowUpDown size={15} />
+        </div>
+      ),
       cell: ({ row }) => {
         const patient = row.original.patient;
         const fullName =
@@ -67,16 +78,24 @@ export default function AllChildHealthRecords() {
     },
     {
       accessorKey: "address",
-      header: "Address",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Address <ArrowUpDown size={15} />
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="w-full truncate">{row.original.address}</div>
         </div>
       ),
     },
+
     {
       accessorKey: "sitio",
-      header: "sitio",
+      header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
           <div className="text-center w-full">{row.original.sitio}</div>
@@ -102,7 +121,7 @@ export default function AllChildHealthRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Link to="/invtablechr">
+                  <Link to="/maternalindividualrecords">
                     <Eye size={15} />
                   </Link>
                 </div>
@@ -120,6 +139,8 @@ export default function AllChildHealthRecords() {
                     </div>
                   }
                   className=""
+                  title="Delete Record"
+                  description="Are you sure you want to delete this record?"
                   mainContent={<></>}
                 />
               }
@@ -131,7 +152,7 @@ export default function AllChildHealthRecords() {
     },
   ];
 
-  const sampleData: ChrRecords[] = [
+  const sampleData: maternalRecords[] = [
     {
       id: 1,
 
@@ -140,47 +161,49 @@ export default function AllChildHealthRecords() {
         firstName: "Katrina Shin",
         middleName: "Dayuja",
         gender: "Female",
-        age: 10,
-        ageTime: "yr",
+        age: 20,
+        ageTime: "yrs",
       },
-      address: "BOnsai Bolinawan Carcar City",
+      address: "Bonsai Bolinawan Carcar City",
       sitio: "Bolinawan",
-      type: "transient",
+      type: "Transient",
     },
 
     {
       id: 2,
 
       patient: {
-        lastName: "Caballes",
+        lastName: "Siddiqui",
         firstName: "Katrina",
-        middleName: "Dayuja",
+        middleName: "Sheen",
         gender: "Female",
-        age: 10,
-        ageTime: "yr",
+        age: 25,
+        ageTime: "yrs",
       },
-      address: "BOnsai Bolinawan Carcar City",
+      address: "Bonsai Bolinawan Carcar City",
       sitio: "Bolinawan",
-      type: "transient",
+      type: "Transient",
     },
 
     {
       id: 3,
 
       patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
+        lastName: "Smith",
+        firstName: "Loewe",
         middleName: "Dayuja",
         gender: "Female",
-        age: 10,
-        ageTime: "yr",
+        age: 16,
+        ageTime: "yrs",
       },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      type: "transient",
+      address: "Bonsai Bolinawan Carcar City",
+      sitio: "Logarta",
+      type: "Resident",
     },
   ];
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
 
   const filter = [
@@ -198,24 +221,19 @@ export default function AllChildHealthRecords() {
             item.type === selectedFilter || item.sitio === selectedFilter
         );
 
-  const navigate = useNavigate();
-  function toChildHealthForm() {
-    navigate("/newAddChildHRForm", { state: { recordType: "nonexistingPatient" } });
-  }
-
+  // const [value, setValue] = useState("");
   return (
-    <div className="w-full bg-snow">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Records
+              Maternal Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view childs information
+              Manage and view patients information
           </p>
-        </div>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
@@ -239,9 +257,20 @@ export default function AllChildHealthRecords() {
           </div>
         </div>
 
-        <div className="w-full md:w-auto">
-        <Button onClick={toChildHealthForm}>New Record</Button>
-
+        <div className="w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default">New Record</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>
+                <Link to="/prenatalform">Prenatal</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="">Postpartum</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
