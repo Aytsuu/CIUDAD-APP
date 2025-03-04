@@ -8,7 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type CardProps = {
-  cardTitle?: string;
+  cardTitle?: React.ReactNode;
   cardDescription?: React.ReactNode;
   cardContent: React.ReactNode;
   cardClassName?: string;

@@ -19,7 +19,7 @@ import AddBusinessDocument from '@/pages/record/clearances/CreateDocumentModal';
 // Updated BusinessDocument type
 type BusinessDocument = {
     requestNo: string;
-    businessname: string;
+    businessname: string,
     address: string;
     gross: string;
     paymentMethod: string;

@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import CreateGADBudgetTracker from "./budget-tracker-create-tracker-form";
+import CardLayout from "@/components/ui/card/card-layout";
 
 function GADBudgetTrackerMain() {
     let year = "2020", remainingBal = 850000.00, budget = 1000000.00, income = 150000.00, expenses = 300000.00;
@@ -11,6 +12,7 @@ function GADBudgetTrackerMain() {
     let styles = {
         budgetLabel: "w-[12rem]",
     };
+
 
     return (
         <div className="w-full h-full">
@@ -47,43 +49,45 @@ function GADBudgetTrackerMain() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 m-5">
-                <div className="border-2 border-solid border-gray-300 bg-white rounded-2xl p-8 w-full mb-4 min-h-[300px]">
-                    <div className="flex flex-col gap-6">
-                        <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
-                            <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
-                                <Calendar />
-                            </div>
-                            <div>{year} Budget Overview</div>
-                        </h1>
+            <div>
+                <CardLayout
+                cardTitle={
+                    <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
+                        <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
+                            <Calendar />
+                        </div>
+                        <div>{year} Budget Overview</div>
+                    </h1>
+                }
+                cardDescription=""
+                cardContent={
+                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row">
+                        <Label className={styles.budgetLabel}>Total Budget:</Label>
+                        <Label className="text-blue">Php {budget.toFixed(2)}</Label>
+                    </div>
+                    <div className="flex flex-col sm:flex-row">
+                        <Label className={styles.budgetLabel}>Total Income:</Label>
+                        <Label className="text-green-600">Php {income.toFixed(2)}</Label>
+                    </div>
+                    <div className="flex flex-col sm:flex-row">
+                        <Label className="w-[12rem]">Total Expenses:</Label>
+                        <Label className="text-red-600">Php {expenses.toFixed(2)}</Label>
+                    </div>
+                    <div className="flex flex-col sm:flex-row">
+                        <Label className="w-[12rem]">Remaining Balance:</Label>
+                        <Label className="text-yellow-600">Php {remainingBal.toFixed(2)}</Label>
+                    </div>
 
-                        <div className="flex flex-col gap-4">
-                            <div className="flex flex-col sm:flex-row">
-                                <Label className={styles.budgetLabel}>Total Budget:</Label>
-                                <Label className="text-blue">Php {budget.toFixed(2)}</Label>
-                            </div>
-                            <div className="flex flex-col sm:flex-row">
-                                <Label className={styles.budgetLabel}>Total Income:</Label>
-                                <Label className="text-green-600">Php {income.toFixed(2)}</Label>
-                            </div>
-                            <div className="flex flex-col sm:flex-row">
-                                <Label className="w-[12rem]">Total Expenses:</Label>
-                                <Label className="text-red-600">Php {expenses.toFixed(2)}</Label>
-                            </div>
-                            <div className="flex flex-col sm:flex-row">
-                                <Label className="w-[12rem]">Remaining Balance:</Label>
-                                <Label className="text-yellow-600">Php {remainingBal.toFixed(2)}</Label>
-                            </div>
-
-                            <div className="mt-4">
-                                <Progress value={progress} className="w-full h-4 bg-gray-300" />
-                                <div className="text-sm text-gray-600 text-center mt-2">
-                                    {progress.toFixed(2)}% of budget spent
-                                </div>
-                            </div>
+                    <div className="mt-4">
+                        <Progress value={progress} className="w-full h-4 bg-gray-300" />
+                        <div className="text-sm text-gray-600 text-center mt-2">
+                            {progress.toFixed(2)}% of budget spent
                         </div>
                     </div>
                 </div>
+                }>
+                </CardLayout>
             </div>
         </div>
     );
