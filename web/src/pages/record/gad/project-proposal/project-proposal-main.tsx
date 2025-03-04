@@ -12,7 +12,9 @@ function GADProjectProposal(){
     var projectStat = 'Pending', dateofApproval = 'MM-DD-YYYY', dateofRejection = 'MM-DD-YYYY', reason = 'Lorem Ipsum Dolor Sit';
 
     const style = {
-      projStat: ""
+      projStat: {
+        pending: "text-blue"
+      }
     }
 
     const filter = [
@@ -61,9 +63,9 @@ function GADProjectProposal(){
                 cardTitle={projectTitle}
                 cardDescription={projectDesc}
                 cardContent={
-                  <div>
+                  <div className="flex flex-col gap-2">
                     <div className="flex flex-row items-center gap-4">
-                      <Label>Status: </Label><Label>{projectStat}</Label>
+                      <Label>Status: </Label><Label className={style.projStat.pending}>{projectStat}</Label>
                     </div>
                     <div className="flex flex-row items-center gap-4">
                       <Label>Date of Approval: </Label><p>{dateofApproval}</p>
