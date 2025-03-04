@@ -19,7 +19,7 @@ type ProjectProposal = {
 
 export const ProjectProposals: ProjectProposal[] = [
   {
-    projectId: "0915",
+    projectId: "0001",
     projectTitle: "Lorem Ipsum Dolor Sit",
     projectDesc: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est.",
     projectStat: "Pending",
@@ -29,7 +29,7 @@ export const ProjectProposals: ProjectProposal[] = [
     reason: "None"
   },
   {
-    projectId: "0915",
+    projectId: "0002",
     projectTitle: "Lorem Ipsum Dolor Sit",
     projectDesc: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porttitor congue massa. Fusce posuere, magna sed pulvinar ultricies, purus lectus malesuada libero, sit amet commodo magna eros quis urna. Nunc viverra imperdiet enim. Fusce est.",
     projectStat: "Approved",
@@ -70,7 +70,7 @@ function GADProjectProposal() {
                     <div>GAD Project Proposal</div>
                   </h1>
                   <p className="text-xs sm:text-sm text-darkGray">
-                    Track and manage your income and expenses with real-time insights.
+                    Create, track, and manage project proposals with ease, ensuring clear objectives and streamlined approval processes.
                   </p>
               </div>
               <hr className="border-gray mb-5 sm:mb-4" />
