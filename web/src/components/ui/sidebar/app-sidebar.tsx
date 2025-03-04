@@ -124,6 +124,8 @@ const items: MenuItem[] = [
       {title: "Family Planning", url: "/"},
       {title: "Medical Consultation", url: "/"},
       {title: "Vaccination", url: "/allVaccinationRecord"},
+      {title: "Family Profile Form", url: "/family-profile-form"},
+
     ]
   }
 ];

@@ -24,6 +24,7 @@ import { vaccination } from './vaccination';
 import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
+import { familyProfilingRoute } from './family-profiling-route';
 
 export const main_router: RouteObject[] = [
     {
@@ -58,6 +59,7 @@ export const main_router: RouteObject[] = [
             ...vaccination,
             ...childHealthServices,
             ...gad_router,
+            ...familyProfilingRoute,
             ...bites_route
         ]
     }
