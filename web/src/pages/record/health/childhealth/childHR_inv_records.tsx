@@ -160,41 +160,11 @@ export default function InvChildHealthRecords() {
       </div>
       <hr className="border-gray mb-6 " />
 
-<<<<<<< HEAD:apps/frontend/src/pages/record/health/childhealth/childHR_inv_records.tsx
       <div className="mb-5">
         <ChildInfo />
       </div>
       <div className="w-full md:w-auto flex justify-end mb-2">
         <Button onClick={toChildHealthForm}>Update Record</Button>
-=======
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
-            </div>
-            <SelectLayout
-              className="w-full md:w-[200px] bg-white"
-              label=""
-              placeholder="Select"
-              options={filter}
-              value={selectedFilter}
-              onChange={setSelectedFilter}
-            />
-          </div>
-        </div>
-
-        <div className="w-full md:w-auto">
-          <Link to="/newAddChildHRForm">
-            <Button className=" w-full md:w-auto">New Record</Button>
-          </Link>
-        </div>
->>>>>>> 4d0d0c735422622c1d6ee33aa4b97cc61c8471f9:web/src/pages/record/health/childhealth/childHR_inv_records.tsx
       </div>
       {/* Table Container */}
       <div className="h-full w-full rounded-md">

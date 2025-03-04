@@ -204,21 +204,16 @@ export default function AllChildHealthRecords() {
   }
 
   return (
-<<<<<<< HEAD:apps/frontend/src/pages/record/health/childhealth/childHR_all_records.tsx
     <div className="w-full bg-snow">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
-=======
-    <div className="w-full">
-      {/* Header Section */}
-      <div className="flex-col items-center mb-4">
->>>>>>> 4d0d0c735422622c1d6ee33aa4b97cc61c8471f9:web/src/pages/record/health/childhealth/childHR_all_records.tsx
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Child Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
               Manage and view child's information
           </p>
+      </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
@@ -245,14 +240,8 @@ export default function AllChildHealthRecords() {
         </div>
 
         <div className="w-full md:w-auto">
-<<<<<<< HEAD:apps/frontend/src/pages/record/health/childhealth/childHR_all_records.tsx
         <Button onClick={toChildHealthForm}>New Record</Button>
 
-=======
-          <Link to="/newAddChildHRForm">
-            <Button className=" w-full md:w-auto">New Record</Button>
-          </Link>
->>>>>>> 4d0d0c735422622c1d6ee33aa4b97cc61c8471f9:web/src/pages/record/health/childhealth/childHR_all_records.tsx
         </div>
       </div>
 
