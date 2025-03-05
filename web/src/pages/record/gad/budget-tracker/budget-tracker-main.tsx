@@ -6,6 +6,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import CreateGADBudgetTracker from "./budget-tracker-create-tracker-form";
 import CardLayout from "@/components/ui/card/card-layout";
 
+
 function GADBudgetTrackerMain() {
     let year = "2020", remainingBal = 850000.00, budget = 1000000.00, income = 150000.00, expenses = 300000.00;
     const progress = budget > 0 ? (expenses / budget) * 100 : 0;
@@ -15,7 +16,7 @@ function GADBudgetTrackerMain() {
 
 
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full bg-snow">
             <div className="flex flex-col gap-3 mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
                     <div>GAD Budget Tracker</div>
@@ -33,7 +34,7 @@ function GADBudgetTrackerMain() {
                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                             size={17}
                         />
-                        <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                        <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
                     </div>                               
                 </div>
                 <DialogLayout
