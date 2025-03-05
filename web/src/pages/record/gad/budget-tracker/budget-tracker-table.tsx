@@ -12,7 +12,8 @@ import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Calendar } from 'lucide-react';
-
+import { ChevronLeft } from 'lucide-react';
+import { Link } from "react-router";
 
 type header = {
   date: string;
@@ -145,6 +146,7 @@ function BudgetTracker() {
     <div className="w-full h-full">
           <div className="flex flex-col gap-3 mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
+                    <Link to="/gad-budget-tracker-main"><div><ChevronLeft/></div></Link>
                     <div className="rounded-full border-2 border-solid border-darkBlue2 p-2 flex items-center"><Calendar></Calendar> </div>
                     <div className="ml-2">{year}</div>
                 </h1>

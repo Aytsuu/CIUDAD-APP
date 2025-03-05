@@ -1,19 +1,32 @@
 import { Label } from "@/components/ui/label";
-import { Calendar, Search } from 'lucide-react';
+import { Calendar, Search, X } from 'lucide-react'; // Import X icon
 import { Progress } from "@/components/ui/progress"; 
 import { Input } from "@/components/ui/input";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import CreateGADBudgetTracker from "./budget-tracker-create-tracker-form";
 import CardLayout from "@/components/ui/card/card-layout";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
 
+export const BudgetTracker = [
+    {
+        year: "2020",
+        budget: 500000.00,
+        income: 150000.00,
+        expenses: 300000.00,
+        remainingBal: 350000.00,
+    },
+    {
+        year: "2021",
+        budget: 650000.00,
+        income: 150000.00,
+        expenses: 300000.00,
+        remainingBal: 350000.00,
+    }
+]
 
 function GADBudgetTrackerMain() {
-    let year = "2020", remainingBal = 850000.00, budget = 1000000.00, income = 150000.00, expenses = 300000.00;
-    const progress = budget > 0 ? (expenses / budget) * 100 : 0;
     let styles = {
         budgetLabel: "w-[12rem]",
     };
-
 
     return (
         <div className="w-full h-full bg-snow">
@@ -37,58 +50,60 @@ function GADBudgetTrackerMain() {
                         <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
                     </div>                               
                 </div>
-                <DialogLayout
-                    trigger={<div className="bg-primary text-white rounded-md p-3 text-sm font-semibold drop-shadow-sm w-full sm:w-auto text-center">+ Create New</div>}
-                    className="max-w-md"
-                    title="Create New Budget Tracker"
-                    description="Fill out the form below to create a new budget tracker for a specific year."
-                    mainContent={
-                        <div>
-                            <CreateGADBudgetTracker/>
-                        </div>
-                    }
-                />
+                <Link to="/gad-budget-tracker-table"><Button>+ Create New</Button></Link>
             </div>
 
-            <div>
-                <CardLayout
-                cardTitle={
-                    <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
-                        <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
-                            <Calendar />
-                        </div>
-                        <div>{year} Budget Overview</div>
-                    </h1>
-                }
-                cardDescription=""
-                cardContent={
-                    <div className="flex flex-col gap-4">
-                    <div className="flex flex-col sm:flex-row">
-                        <Label className={styles.budgetLabel}>Total Budget:</Label>
-                        <Label className="text-blue">Php {budget.toFixed(2)}</Label>
-                    </div>
-                    <div className="flex flex-col sm:flex-row">
-                        <Label className={styles.budgetLabel}>Total Income:</Label>
-                        <Label className="text-green-600">Php {income.toFixed(2)}</Label>
-                    </div>
-                    <div className="flex flex-col sm:flex-row">
-                        <Label className="w-[12rem]">Total Expenses:</Label>
-                        <Label className="text-red-600">Php {expenses.toFixed(2)}</Label>
-                    </div>
-                    <div className="flex flex-col sm:flex-row">
-                        <Label className="w-[12rem]">Remaining Balance:</Label>
-                        <Label className="text-yellow-600">Php {remainingBal.toFixed(2)}</Label>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
+                {BudgetTracker.map((tracker, index) => {
+                    const progress = tracker.budget > 0 ? (tracker.expenses / tracker.budget) * 100 : 0;
 
-                    <div className="mt-4">
-                        <Progress value={progress} className="w-full h-4 bg-gray-300" />
-                        <div className="text-sm text-gray-600 text-center mt-2">
-                            {progress.toFixed(2)}% of budget spent
-                        </div>
-                    </div>
-                </div>
-                }>
-                </CardLayout>
+                    return (
+                        <CardLayout
+                            key={index}
+                            cardTitle={
+                                <div className="flex flex-row">
+                                    <div className="flex justify-between items-center w-full">
+                                        <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
+                                            <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
+                                                <Calendar />
+                                            </div>
+                                            <div>{tracker.year} Budget Overview</div>
+                                        </h1>
+                                    </div>
+                                    <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
+                                </div>
+                            }
+                            cardDescription=""
+                            cardContent={
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col sm:flex-row">
+                                        <Label className={styles.budgetLabel}>Total Budget:</Label>
+                                        <Label className="text-blue">Php {tracker.budget.toFixed(2)}</Label>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row">
+                                        <Label className={styles.budgetLabel}>Total Income:</Label>
+                                        <Label className="text-green-600">Php {tracker.income.toFixed(2)}</Label>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row">
+                                        <Label className="w-[12rem]">Total Expenses:</Label>
+                                        <Label className="text-red-600">Php {tracker.expenses.toFixed(2)}</Label>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row">
+                                        <Label className="w-[12rem]">Remaining Balance:</Label>
+                                        <Label className="text-yellow-600">Php {tracker.remainingBal.toFixed(2)}</Label>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <Progress value={progress} className="w-full h-4 bg-gray-300" />
+                                        <div className="text-sm text-gray-600 text-center mt-2">
+                                            {progress.toFixed(2)}% of budget spent
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        />
+                    );
+                })}
             </div>
         </div>
     );

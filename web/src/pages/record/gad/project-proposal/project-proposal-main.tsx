@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { X } from 'lucide-react';
 
 // Define the type for project proposals
 type ProjectProposal = {
@@ -105,7 +106,13 @@ function GADProjectProposal() {
                       return (
                         <CardLayout
                           key={project.projectId}
-                          cardTitle={project.projectTitle}
+                          cardTitle={
+                            <div className="flex flex-row">
+                              <div className="w-full">
+                                {project.projectTitle}
+                              </div>
+                              <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
+                            </div>}
                           cardDescription={project.projectDesc}
                           cardContent={
                             <div>
