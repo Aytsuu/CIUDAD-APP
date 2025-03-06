@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 export default function AllChildHealthRecords() {
   type ChrRecords = {
     id: number;
-    // patientName: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -33,6 +32,7 @@ export default function AllChildHealthRecords() {
     sitio: string;
     type: string;
   };
+
   const columns: ColumnDef<ChrRecords>[] = [
     {
       accessorKey: "id",
@@ -92,7 +92,6 @@ export default function AllChildHealthRecords() {
         </div>
       ),
     },
-
     {
       accessorKey: "action",
       header: "Action",
@@ -134,7 +133,6 @@ export default function AllChildHealthRecords() {
   const sampleData: ChrRecords[] = [
     {
       id: 1,
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina Shin",
@@ -147,10 +145,8 @@ export default function AllChildHealthRecords() {
       sitio: "Bolinawan",
       type: "transient",
     },
-
     {
       id: 2,
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina",
@@ -163,10 +159,8 @@ export default function AllChildHealthRecords() {
       sitio: "Bolinawan",
       type: "transient",
     },
-
     {
       id: 3,
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina",
@@ -179,9 +173,15 @@ export default function AllChildHealthRecords() {
       sitio: "Bolinawan",
       type: "transient",
     },
+    // Add more sample data as needed
   ];
 
-  const data = sampleData;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState<ChrRecords[]>(sampleData);
+  const [currentData, setCurrentData] = useState<ChrRecords[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
 
   const filter = [
     { id: "0", name: "All" },
@@ -190,13 +190,48 @@ export default function AllChildHealthRecords() {
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.type === selectedFilter || item.sitio === selectedFilter
-        );
+  // Filter data based on search query and selected filter
+  useEffect(() => {
+    const filtered = sampleData.filter((item) => {
+      const matchesFilter =
+        selectedFilter === "All" ||
+        item.type === selectedFilter ||
+        item.sitio === selectedFilter;
+      const matchesSearch = `${item.patient.firstName} ${item.patient.lastName} ${item.patient.middleName} ${item.address} ${item.sitio} ${item.type}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
+    setFilteredData(filtered);
+    setTotalPages(Math.ceil(filtered.length / pageSize));
+    setCurrentPage(1); // Reset to first page when search or filter changes
+  }, [searchQuery, selectedFilter, pageSize]);
+
+  // Update data based on page and page size
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setCurrentData(filteredData.slice(startIndex, endIndex));
+  }, [currentPage, pageSize, filteredData]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value);
+    if (!isNaN(value) && value > 0) {
+      setPageSize(value);
+    } else {
+      setPageSize(10); // Default to 10 if invalid input
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const navigate = useNavigate();
   function toChildHealthForm() {
@@ -208,12 +243,12 @@ export default function AllChildHealthRecords() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Child Health Records
+            Child Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view child's information
+            Manage and view child's information
           </p>
-      </div>
+        </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
@@ -226,7 +261,12 @@ export default function AllChildHealthRecords() {
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                 size={17}
               />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
             </div>
             <SelectLayout
               className="w-full md:w-[200px] bg-white"
@@ -240,19 +280,22 @@ export default function AllChildHealthRecords() {
         </div>
 
         <div className="w-full md:w-auto">
-        <Button onClick={toChildHealthForm}>New Record</Button>
-
+          <Button onClick={toChildHealthForm}>New Record</Button>
         </div>
       </div>
-
-      {/*  */}
 
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <Input
+              type="number"
+              className="w-14 h-8"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              min="1"
+            />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
@@ -273,17 +316,22 @@ export default function AllChildHealthRecords() {
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
-          <DataTable columns={columns} data={filteredData} />
+          <DataTable columns={columns} data={currentData} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of 150 rows
+            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
           </p>
 
           {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       </div>

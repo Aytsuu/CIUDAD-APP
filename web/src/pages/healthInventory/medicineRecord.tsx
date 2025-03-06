@@ -17,11 +17,9 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Label } from "@/components/ui/label";
-import CardLayout from "@/components/ui/card/card-layout";
-import { ChevronLeft } from "lucide-react";
-import ChildInfo from "./ChildsInformation";
+import { ChevronLeft, Plus } from "lucide-react";
 
-export default function InvChildHealthRecords() {
+export default function MedicineRecord() {
   type ChrRecords = {
     id: number;
     age: string;
@@ -142,9 +140,10 @@ export default function InvChildHealthRecords() {
   // Filter data based on search query
   useEffect(() => {
     const filtered = sampleData.filter((item) => {
-      const matchesSearch = `${item.age} ${item.wt} ${item.ht} ${item.vaccineStat} ${item.nutritionStat} ${item.updatedAt}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        `${item.age} ${item.wt} ${item.ht} ${item.vaccineStat} ${item.nutritionStat} ${item.updatedAt}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
     setFilteredData(filtered);
@@ -180,7 +179,9 @@ export default function InvChildHealthRecords() {
 
   const navigate = useNavigate();
   function toChildHealthForm() {
-    navigate("/newAddChildHRForm", { state: { recordType: "existingPatient" } });
+    navigate("/newAddChildHRForm", {
+      state: { recordType: "existingPatient" },
+    });
   }
 
   return (
@@ -202,14 +203,23 @@ export default function InvChildHealthRecords() {
       </div>
       <hr className="border-gray mb-6 " />
 
-      <div className="mb-5">
-        <ChildInfo />
-      </div>
       <div className="w-full md:w-auto flex justify-end mb-2">
         <Button onClick={toChildHealthForm}>Update Record</Button>
       </div>
 
-      {/* Table Container */}
+      {/* <div>
+        <DialogLayout
+          trigger={
+            <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+              <Plus size={15} /> Register
+            </div>
+          }
+          className=""
+          description="Add Medicine"
+          mainContent={<div></div>}
+        />
+      </div> */}
+
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
@@ -246,8 +256,10 @@ export default function InvChildHealthRecords() {
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
+            Showing{" "}
+            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
           </p>
 
           {/* Pagination */}

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card";
 import { Button } from "@/components/ui/button";
 import PatientsQueueTable from "./patientsQueueTable";
 import NoShowTable from "./noShowTable";

@@ -406,7 +406,7 @@ export default function ProfilingMain() {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
-            />
+            />        
           </div>
         </div>
       </div>

@@ -3,7 +3,6 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate } from "react-router";
 import { Search, Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
@@ -13,26 +12,22 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Label } from "@/components/ui/label";
-import CardLayout from "@/components/ui/card/card-layout";
-import { ChevronLeft } from "lucide-react";
-import ChildInfo from "./ChildsInformation";
+import { Plus } from "lucide-react";
+import CommodityModal from "../inventoryModal/CommodityModal";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
-export default function InvChildHealthRecords() {
-  type ChrRecords = {
+export default function CommodityList() {
+  type CommodityRecords = {
     id: number;
-    age: string;
-    wt: number;
-    ht: number;
-    vaccineStat: String;
-    nutritionStat: String;
-    updatedAt: string;
+    commodityName: string;
+    category: string;
   };
 
-  const columns: ColumnDef<ChrRecords>[] = [
+
+  // Define columns for the data table
+  const columns: ColumnDef<CommodityRecords>[] = [
     {
       accessorKey: "id",
       header: "#",
@@ -45,120 +40,89 @@ export default function InvChildHealthRecords() {
       ),
     },
     {
-      accessorKey: "age",
-      header: "Age",
+      accessorKey: "commodityName",
+      header: "Commodity Name",
     },
     {
-      accessorKey: "wt",
-      header: "WT",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.updatedAt}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "ht",
-      header: "HT",
-    },
-    {
-      accessorKey: "vaccineStat",
-      header: "Immunization Status",
-    },
-    {
-      accessorKey: "nutritionStat",
-      header: "Nutrtion Status",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.updatedAt}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated At",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.updatedAt}</div>
-        </div>
-      ),
+      accessorKey: "category",
+      header: "Category",
     },
     {
       accessorKey: "action",
       header: "Action",
       cell: ({}) => (
-        <>
-          <div className="flex justify-center gap-2 ">
-            <TooltipLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Eye size={15} />
-                </div>
-              }
-              content="View"
-            />
-
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                      {" "}
-                      <Trash size={16} />
-                    </div>
-                  }
-                  className=""
-                  mainContent={<></>}
-                />
-              }
-              content="Delete"
-            />
-          </div>
-        </>
+        <div className="flex justify-center gap-2 ">
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                    <Trash size={16} />
+                  </div>
+                }
+                className=""
+                mainContent={<></>}
+              />
+            }
+            content="Delete"
+          />
+        </div>
       ),
     },
   ];
 
-  const sampleData: ChrRecords[] = [
-    {
-      id: 1,
-      age: "4 days",
-      wt: 12,
-      ht: 34,
-      vaccineStat: "Not FIC",
-      nutritionStat: "Not FIC",
-      updatedAt: "2024-02-21",
-    },
-    // Add more sample data as needed
+
+  // Sample data
+  const sampleData: CommodityRecords[] = [
+    { id: 1, commodityName: "Paracetamol", category: "Condom" },
+    { id: 2, commodityName: "Amoxicillin", category: "IUD" },
   ];
 
+  const filterOptions = [
+    { id: "0", name: "All" },
+    { id: "1", name: "Condom" },
+    { id: "2", name: "IUD" },
+  ];
+
+  // Fixed state initialization
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("All"); // Added missing state
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<ChrRecords[]>(sampleData);
-  const [currentData, setCurrentData] = useState<ChrRecords[]>([]);
+  const [filteredData, setFilteredData] = useState<CommodityRecords[]>(sampleData); // Fixed type
+  const [currentData, setCurrentData] = useState<CommodityRecords[]>([]); // Fixed type
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filter data based on search query
+  // Combined filter effect for search and category
   useEffect(() => {
-    const filtered = sampleData.filter((item) => {
-      const matchesSearch = `${item.age} ${item.wt} ${item.ht} ${item.vaccineStat} ${item.nutritionStat} ${item.updatedAt}`
+    const filtered = sampleData.filter(item => {
+      const searchMatch = `${item.id} ${item.commodityName} ${item.category}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
-      return matchesSearch;
+      
+      const categoryMatch = selectedFilter === "All" || item.category === selectedFilter;
+      
+      return searchMatch && categoryMatch;
     });
+    
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1); // Reset to first page when search changes
-  }, [searchQuery, pageSize]);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [searchQuery, selectedFilter, pageSize]); // Added selectedFilter to dependencies
 
-  // Update data based on page and page size
+  // Pagination effect
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     setCurrentData(filteredData.slice(startIndex, endIndex));
   }, [currentPage, pageSize, filteredData]);
 
+  // Fixed handler for filter change
+  const handleFilterChange = (selectedValue: string) => {
+    setSelectedFilter(selectedValue);
+  };
+
+  // Fixed search input binding
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
   };
@@ -172,51 +136,71 @@ export default function InvChildHealthRecords() {
     }
   };
 
+  // Handle page change from the PaginationLayout component
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-  const navigate = useNavigate();
-  function toChildHealthForm() {
-    navigate("/newAddChildHRForm", { state: { recordType: "existingPatient" } });
-  }
-
   return (
-    <div className="w-full bg-snow">
-      <Link to="/allChildHRTable">
-        <Button className="text-black p-2 mb-2 self-start" variant={"outline"}>
-          <ChevronLeft />
-        </Button>
-      </Link>
+    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Individual Records
+            Commodity List
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view child's information
+            Manage and view patients information
           </p>
         </div>
       </div>
-      <hr className="border-gray mb-6 " />
+      <hr className="border-gray mb-6 sm:mb-10" />
 
-      <div className="mb-5">
-        <ChildInfo />
-      </div>
-      <div className="w-full md:w-auto flex justify-end mb-2">
-        <Button onClick={toChildHealthForm}>Update Record</Button>
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex gap-x-2">
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchQuery} // Fixed: Changed searchTerm to searchQuery
+                onChange={handleSearchChange}
+              />
+            </div>
+            <SelectLayout
+              className="w-full md:w-[200px] bg-white text-black"
+              label="Select Category"
+              placeholder="All"
+              options={filterOptions}
+              value={selectedFilter}
+              onChange={handleFilterChange}
+            />
+          </div>
+        </div>
+        <DialogLayout
+          trigger={
+            <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+              <Plus size={15} /> Add
+            </div>
+          }
+          title="Commodity List"
+          description="Add New Commodity"
+          mainContent={<CommodityModal />}
+        />
       </div>
 
-      {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-8"
+            <Input 
+              type="number" 
+              className="w-14 h-6" 
               value={pageSize}
               onChange={handlePageSizeChange}
               min="1"
@@ -239,18 +223,19 @@ export default function InvChildHealthRecords() {
             </DropdownMenu>
           </div>
         </div>
+
         <div className="bg-white w-full overflow-x-auto">
-          {/* Table Placement */}
           <DataTable columns={columns} data={currentData} />
         </div>
+
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
+            Showing{" "}
+            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of
+            {filteredData.length} rows
           </p>
 
-          {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
             <PaginationLayout
               currentPage={currentPage}

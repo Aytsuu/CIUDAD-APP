@@ -14,8 +14,8 @@ import { res_router } from './resolutionPage-route';
 import { attendance_router } from './attendacePage-route';
 import { mom_router } from './MinutesOfMeetingPage-route';
 import { council_calendar_router } from './calendarPage-route';
-
-
+import { patientQueue } from './patientsQueue';
+import { healthinventory } from './inventory';
 import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
@@ -26,7 +26,7 @@ import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
 import { announcement_route } from './Announcement-route';
 import { famplanning_route } from './FamilyPlanning-route';
-
+import { medicalConsultation } from './medConsultation';
 export const main_router: RouteObject[] = [
     {
         path: "/",
@@ -63,6 +63,9 @@ export const main_router: RouteObject[] = [
             ...bites_route,
             ...announcement_route,
             ...famplanning_route,
+            ...healthinventory,
+            ...medicalConsultation,
+            ...patientQueue
         ]
     }
 ]
