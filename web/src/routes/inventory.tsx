@@ -1,9 +1,16 @@
-import MedicineRecord from "@/pages/healthInventory/medicineRecord";
-import MedicineList from "@/pages/healthInventory/InventoryList/inventoryRecord/MedicineList";
-import CommodityList from "@/pages/healthInventory/InventoryList/inventoryRecord/CommodityList";
-import VaccinationList from "@/pages/healthInventory/InventoryList/inventoryRecord/VaccineList";
-import FirstAidList from "@/pages/healthInventory/InventoryList/inventoryRecord/FirstAidList";
+import MedicineRecord from "@/pages/healthInventory/inventoryStocks/stocksRecord/VaccineStocks";
+import MedicineList from "@/pages/healthInventory/InventoryList/listRecord/MedicineList";
+import CommodityList from "@/pages/healthInventory/InventoryList/listRecord/CommodityList";
+import VaccinationList from "@/pages/healthInventory/InventoryList/listRecord/VaccineList";
+import FirstAidList from "@/pages/healthInventory/InventoryList/listRecord/FirstAidList";
+import MainInventoryList from "@/pages/healthInventory/InventoryList/listRecord/MainInventoryList";
+
+
 export const healthinventory = [
+  {
+    path: "/mainInventoryList",
+    element: <MainInventoryList />,
+  },
   {
     path: "/medicineStocks",
     element: <MedicineRecord />,

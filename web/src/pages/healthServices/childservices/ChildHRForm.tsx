@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { FormData } from "@/form-schema/chr-schema";
-import ChildHRPage1 from "./childHR_page1";
-import ChildHRPage2 from "./childHR_page2";
-import ChildHRPage3 from "./childHR_page3";
-import ChildHRPage4 from "./childHR_page4";
-import LastPage from "./childHR_pagelast";
+import ChildHRPage1 from "./ChildHRPage1";
+import ChildHRPage2 from "./ChildHRPage2";
+import ChildHRPage3 from "./ChildHRPage3";
+import ChildHRPage4 from "./ChildHRPage4";
+import LastPage from "./ChildHRPagelast";
 
 // Define initial form data
 const initialFormData: FormData = {

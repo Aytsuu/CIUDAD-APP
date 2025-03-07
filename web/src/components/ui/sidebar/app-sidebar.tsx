@@ -133,12 +133,15 @@ const items: MenuItem[] = [
         title: "Inventory",
         url: "/",
         anotherItems: [
-          { title: "Medicine List", url: "/medicineList" },
-          { title: "Commodity List", url: "/commodityList" },
-          { title: "Vaccination List", url: "/vaccinationList" },
-          { title: "FirstAid List", url: "/firstAidList" },
+          { title: "Inventory List", url: "/mainInventoryList" },
 
+          { title: "Inventory Stocks", url: "/medicineStocks" },
           { title: "Medicine Stocks", url: "/medicineStocks" },
+          { title: "Vaccine Stocks", url: "/vaccineStocks" },
+          { title: "Commodity Stocks", url: "/commodityStocks" },
+          { title: "FirstAid Stocks", url: "/firstAidStocks" },
+
+
         ],
       },
       {

@@ -121,32 +121,32 @@ export default function PatientsQueueTable() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
+      cell: ({  }) => (
         <div className="flex gap-2 justify-center min-w-[120px] px-2">
           <TooltipLayout
             trigger={
-              <Button
-                variant="outline"
-                className="border-green-600 text-green-700"
-                onClick={() => console.log("View record:", row.original.id)}
-                style={{ pointerEvents: "none" }}
-              >
-                <Check />
-              </Button>
+              <div 
+              className="inline-flex items-center justify-center p-2 px-3 rounded-md border border-green-600 text-green-700 pointer-events-none"
+              role="presentation"
+              aria-hidden="true"
+            >
+              <Check />
+            </div>
             }
             content="Assess"
           />
 
           <TooltipLayout
             trigger={
-              <Button
-                variant="outline"
-                className="border-red-600 text-red-400"
-                onClick={() => console.log("View record:", row.original.id)}
-                style={{ pointerEvents: "none" }}
-              >
-                <TimerOff />
-              </Button>
+              <div 
+              className="inline-flex items-center justify-center p-2 px-3 rounded-md border border-red-600 text-red-400 pointer-events-none"
+              role="presentation"
+              aria-hidden="true"
+            >
+              <TimerOff />
+            </div>
+
+              
             }
             content="Not Arrived"
           />

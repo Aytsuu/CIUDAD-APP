@@ -6,7 +6,7 @@ import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
 // import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./vaccinationModal";
+import VaccinationForm from "./VaccinationModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
 import { Link } from "react-router";

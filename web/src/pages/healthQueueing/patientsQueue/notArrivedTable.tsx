@@ -120,18 +120,17 @@ export default function NotArriveTable() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
+      cell: ({  }) => (
         <div className="flex gap-2 justify-center min-w-[120px] px-2">
           <TooltipLayout
             trigger={
-              <Button
-                variant="outline"
-                className="border-green-600 text-green-700"
-                onClick={() => console.log("View record:", row.original.id)}
-                style={{ pointerEvents: "none" }}
+              <div
+                className="inline-flex items-center justify-center px-3 p-2 rounded-md border border-green-600 text-green-700 text-sm font-medium pointer-events-none"
+                role="presentation"
+                aria-hidden="true"
               >
                 Assess
-              </Button>
+              </div>
             }
             content="Assess"
           />
@@ -213,9 +212,10 @@ export default function NotArriveTable() {
         selectedFilter === "All" ||
         item.service === selectedFilter ||
         item.mode === selectedFilter;
-      const matchesSearch = `${item.patient.firstName} ${item.patient.lastName} ${item.patient.middleName} ${item.address} ${item.service} ${item.mode} ${item.time}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      const matchesSearch =
+        `${item.patient.firstName} ${item.patient.lastName} ${item.patient.middleName} ${item.address} ${item.service} ${item.mode} ${item.time}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
       return matchesFilter && matchesSearch;
     });
     setFilteredData(filtered);
@@ -320,8 +320,10 @@ export default function NotArriveTable() {
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
+            Showing{" "}
+            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
           </p>
 
           {/* Pagination */}

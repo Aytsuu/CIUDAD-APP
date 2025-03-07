@@ -1,6 +1,6 @@
-import AllChildHealthRecords from "@/pages/record/health/childhealth/childHR_all_records"
-import InvChildHealthRecords from "@/pages/record/health/childhealth/childHR_inv_records"
-import ChildHealthForm from "@/pages/healthServices/childservices/childHR_Form";
+import AllChildHealthRecords from "@/pages/record/health/childhealth/ChildHR_all_records"
+import InvChildHealthRecords from "@/pages/record/health/childhealth/ChildHR_inv_records"
+import ChildHealthForm from "@/pages/healthServices/childservices/ChildHRForm";
 export const childHealthServices = [
     
     { 

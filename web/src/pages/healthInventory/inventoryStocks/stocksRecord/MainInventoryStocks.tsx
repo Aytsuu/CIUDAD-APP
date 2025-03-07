@@ -1,35 +1,38 @@
 import { useState } from "react";
-import PatientsQueueTable from "./patientsQueueTable";
-import NoShowTable from "./noShowTable";
-import NotArrivedTable from "./notArrivedTable";
+import VaccinationList from "./VaccineList";
+import FirstAidList from "./FirstAidList";
+import MedicineList from "./MedicineList";
+import CommodityList from "./CommodityList";
 import { Button } from "@/components/ui/button";
 
-export default function MainPatientQueueTable() {
-  const [selectedView, setSelectedView] = useState("queue");
+export default function MainInventoryList() {
+  const [selectedView, setSelectedView] = useState("medicine");
 
   const renderContent = () => {
     switch (selectedView) {
-      case "queue":
-        return <PatientsQueueTable />;
-      case "notArrived":
-        return <NotArrivedTable />;
-      case "noShow":
-        return <NoShowTable />;
-      default:
-        return <PatientsQueueTable />;
+      case "medicine":
+        return <MedicineList />;
+      case "vaccine":
+        return <VaccinationList />;
+      case "commodity":
+        return <CommodityList />;
+      case "firstaid":
+        return <FirstAidList />;
     }
   };
 
   const getTitle = () => {
     switch (selectedView) {
-      case "queue":
-        return "Patients Queue";
-      case "notArrived":
-        return "Not Arrived Patients";
-      case "noShow":
-        return "No Show Patients";
+      case "medicine":
+        return "Medicine List";
+      case "vaccine":
+        return "Vaccine List";
+      case "commodity":
+        return "Commodity List";
+      case "firstaid":
+        return "First Aid List";
       default:
-        return "Patients Queue";
+        return "Medicine List";
     }
   };
 
@@ -42,7 +45,7 @@ export default function MainPatientQueueTable() {
             {getTitle()}
           </h1>
           <p className="text-xs sm:text-sm text-darkGray mt-1">
-            Manage and view patients information
+            Manage and view inventory information
           </p>
         </div>
       </div>
@@ -51,23 +54,21 @@ export default function MainPatientQueueTable() {
       {/* Navigation Tabs */}
       <div className="overflow-x-auto pb-2 -mx-2 sm:mx-0">
         <div className="min-w-max sm:min-w-0 px-2 sm:px-0">
-          <div className="flex w-full justify-evenly bg-white p-1 rounded-md border-gray">
-            {["queue", "notArrived", "noShow"].map((view) => (
+          <div className="flex w-full justify-evenly bg-white p-1 rounded-md border-gray ">
+            {["medicine", "vaccine", "commodity", "firstaid"].map((view) => (
               <Button
                 key={view}
                 variant="ghost"
                 onClick={() => setSelectedView(view)}
                 className={`px-3 py-1.5 md:px-4 md:py-2 rounded-none transition-all duration-200 flex-shrink-0 ${
                   selectedView === view
-                    ? "border-b-2 border-b-blue text-blue font-semibold text-sm md:text-base hover:bg-transparent"
-                    : "border-b-2 border-transparent text-gray-600 text-sm md:text-base hover:bg-transparent hover:text-blue"
+                    ? "border-b-2 border-b-blue text-blue font-semibold text-sm  md:text-base hover:bg-transparent"
+                    : "border-b-2 border-transparent text-gray-600  text-sm md:text-base hover:bg-transparent hover:text-blue"
                 }`}
               >
-                {view === "notArrived"
-                  ? "Not Arrived"
-                  : view === "noShow"
-                  ? "No Show"
-                  : "Patient Queue"}
+                {view === "firstaid"
+                  ? "First Aid"
+                  : view.charAt(0).toUpperCase() + view.slice(1)}
               </Button>
             ))}
           </div>
