@@ -384,7 +384,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
 
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Household Head</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="householdHead.lastName"
@@ -424,8 +424,6 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="max-w-xs">
               <FormField
                 control={form.control}
                 name="householdHead.gender"
@@ -498,7 +496,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="father.birthYear"
@@ -549,8 +547,6 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="father.educationalAttainment"
@@ -575,6 +571,9 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              
               <FormField
                 control={form.control}
                 name="father.religion"
@@ -588,8 +587,6 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="father.bloodType"
@@ -652,6 +649,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 )}
               />
             </div>
+
           </div>
 
           <Separator className="my-4" />
@@ -699,7 +697,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="mother.birthYear"
@@ -750,8 +748,6 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="mother.educationalAttainment"
@@ -776,6 +772,9 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              
               <FormField
                 control={form.control}
                 name="mother.religion"
@@ -789,8 +788,6 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="mother.bloodType"

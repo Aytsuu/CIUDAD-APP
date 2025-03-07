@@ -3,11 +3,11 @@
 import { useState } from "react"
 import { Card } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button"
-import { DemographicData } from "./demographic-data"
-import DependentsForm from "./dependents-form"
-import EnvironmentalForm from "./environmental-form"
-import NonCommunicableDiseaseForm from "./non-communicable-disease"
-import SurveyIdentificationForm from "./survey-identification-form"
+import { DemographicData } from "./DemographicData"
+import DependentsForm from "./DependentsInfo"
+import EnvironmentalForm from "./EnvironmentalForm"
+import NonCommunicableDiseaseForm from "./NonCommunicableDisease"
+import SurveyIdentificationForm from "./SurveyIdentificationForm"
 import { Progress } from "@/components/ui/progress"
 
 import type {
