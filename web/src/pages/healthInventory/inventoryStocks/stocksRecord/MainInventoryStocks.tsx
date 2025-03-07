@@ -1,38 +1,37 @@
 import { useState } from "react";
-import VaccinationList from "./VaccineList";
-import FirstAidList from "./FirstAidList";
-import MedicineList from "./MedicineList";
-import CommodityList from "./CommodityList";
 import { Button } from "@/components/ui/button";
-
-export default function MainInventoryList() {
+import MedicineStocks
+ from "./MedicineStocks";
+import VaccineStocks from "./VaccineStocks";
+ 
+export default function MainInventoryStocks() {
   const [selectedView, setSelectedView] = useState("medicine");
 
   const renderContent = () => {
     switch (selectedView) {
       case "medicine":
-        return <MedicineList />;
+        return <MedicineStocks/>;
       case "vaccine":
-        return <VaccinationList />;
-      case "commodity":
-        return <CommodityList />;
-      case "firstaid":
-        return <FirstAidList />;
+        return <VaccineStocks/>;
+    //   case "commodity":
+    //     return < />;
+    //   case "firstaid":
+    //     return < />;
     }
   };
 
   const getTitle = () => {
     switch (selectedView) {
       case "medicine":
-        return "Medicine List";
+        return "Medicine Stocks";
       case "vaccine":
-        return "Vaccine List";
+        return "Vaccine Stocks";
       case "commodity":
-        return "Commodity List";
+        return "Commodity Stocks";
       case "firstaid":
-        return "First Aid List";
+        return "First Aid Stocks";
       default:
-        return "Medicine List";
+        return "Medicine Stocks";
     }
   };
 

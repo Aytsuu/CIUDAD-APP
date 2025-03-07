@@ -95,7 +95,7 @@ export default function MedicalForm() {
   const currentDate = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
   return (
-    <div className="w-full h-full  mx-auto bg-white rounded-lg shadow  md:p-2 lg:p-8">
+    <div className=" bg-white rounded-lg shadow  md:p-2 lg:p-8">
       <Link to="/allMedRecords">
         {" "}
         <div className="mb-4 text-darkBlue2">

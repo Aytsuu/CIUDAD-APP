@@ -13,8 +13,7 @@ import {
   VitalSignFormData,
 } from "@/form-schema/chr-schema";
 import { VitalSignsDialogForm } from "./VitalSignsDialogForm";
-import { UpdateVitalSigns } from "./updateVitalSigns";
-
+import { UpdateVitalSigns } from "./UpdateVitalSigns";
 
 export default function LastPage({
   onPrevious4,
@@ -135,12 +134,26 @@ export default function LastPage({
             />
             <TooltipLayout
               trigger={
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteVitalSign(row.index)}
-                >
-                  <Trash size={16} />
-                </Button>
+                <div
+                role="button"
+                tabIndex={0}
+                className="destructive-button-style" // Add your CSS class here
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  // Add hover styles if needed
+                }}
+                onClick={() => handleDeleteVitalSign(row.index)}
+              >
+                <Trash size={16} />
+              </div>
               }
               content="Delete"
             />

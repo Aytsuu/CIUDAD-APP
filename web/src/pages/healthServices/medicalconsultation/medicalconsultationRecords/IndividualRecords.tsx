@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ import { FileInput, Search, Trash, Eye, ArrowLeft } from "lucide-react";
 export default function InvMedicalConRecords() {
   type medConRecord = {
     id: number;
-    // patientName: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -34,6 +33,7 @@ export default function InvMedicalConRecords() {
     rr: string;
     temp: string;
   };
+
   const columns: ColumnDef<medConRecord>[] = [
     {
       accessorKey: "id",
@@ -75,7 +75,6 @@ export default function InvMedicalConRecords() {
         </div>
       ),
     },
-
     {
       accessorKey: "bp",
       header: "BP",
@@ -94,7 +93,6 @@ export default function InvMedicalConRecords() {
         </div>
       ),
     },
-
     {
       accessorKey: "rr",
       header: "RR",
@@ -116,37 +114,34 @@ export default function InvMedicalConRecords() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({  }) => (
-        <>
-          <div className="flex justify-center gap-2 ">
-            <TooltipLayout
-              trigger={
-                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                  <Eye size={15} />
-                </div>
-              }
-              content="View"
-            />
+      cell: ({ }) => (
+        <div className="flex justify-center gap-2 ">
+          <TooltipLayout
+            trigger={
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Eye size={15} />
+              </div>
+            }
+            content="View"
+          />
 
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                      {" "}
-                      <Trash size={16} />
-                    </div>
-                  }
-                  title=""
-                  description=""
-                  className=""
-                  mainContent={<></>}
-                />
-              }
-              content="Delete"
-            />
-          </div>
-        </>
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                    <Trash size={16} />
+                  </div>
+                }
+                title=""
+                description=""
+                className=""
+                mainContent={<></>}
+              />
+            }
+            content="Delete"
+          />
+        </div>
       ),
     },
   ];
@@ -154,7 +149,6 @@ export default function InvMedicalConRecords() {
   const sampleData: medConRecord[] = [
     {
       id: 1,
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina Shin",
@@ -171,30 +165,57 @@ export default function InvMedicalConRecords() {
     },
   ];
 
- 
-  const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
-  const data = sampleData;
-
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter((item) => item.bp === selectedFilter);
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState<medConRecord[]>(sampleData);
+  const [currentData, setCurrentData] = useState<medConRecord[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
-  function toMedicalForm() {
-    navigate("/medicalForm", { state: { recordType: "existingPatient" } });
-  }
+
+  useEffect(() => {
+    const filtered = sampleData.filter((record) => {
+      const searchText = `${record.id} 
+        ${record.patient.firstName} 
+        ${record.patient.lastName} 
+        ${record.address} 
+        ${record.bp} 
+        ${record.hr}`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
+    setFilteredData(filtered);
+    setTotalPages(Math.ceil(filtered.length / pageSize));
+    setCurrentPage(1);
+  }, [searchQuery, pageSize]);
+
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setCurrentData(filteredData.slice(startIndex, endIndex));
+  }, [currentPage, pageSize, filteredData]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value);
+    setPageSize(!isNaN(value) && value > 0 ? value : 10);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const toMedicalForm = () => {
+    navigate("/medical-form-path"); // Update with your actual path
+  };
 
   return (
     <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
       <Link to="/allMedRecords">
-        {" "}
         <div className="mb-4 text-darkBlue2">
           <ArrowLeft />
         </div>
@@ -205,13 +226,12 @@ export default function InvMedicalConRecords() {
             Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Vaccination History
+            Medical Consultation History
           </p>
         </div>
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="flex gap-x-2">
             <div className="relative flex-1">
@@ -219,31 +239,43 @@ export default function InvMedicalConRecords() {
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                 size={17}
               />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
             </div>
             <SelectLayout
-              className="w-full md:w-[200px] bg-white"
+              placeholder="Filter records"
               label=""
-              placeholder="Select"
-              options={filter}
-              value={selectedFilter}
-              onChange={setSelectedFilter}
+              className="bg-white"
+              options={[
+                { id: "1", name: "All Types" },
+                { id: "2", name: "Recent" },
+                { id: "3", name: "Archived" },
+              ]}
+              value=""
+              onChange={() => {}}
             />
           </div>
         </div>
 
         <div className="w-full sm:w-auto">
-          <div className="w-full sm:w-auto">
-            <Button onClick={toMedicalForm}>Add Record</Button>
-          </div>
+          <Button onClick={toMedicalForm}>Add Record</Button>
         </div>
       </div>
-      {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <Input
+              type="number"
+              className="w-14 h-8"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              min="1"
+            />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
@@ -263,21 +295,25 @@ export default function InvMedicalConRecords() {
           </div>
         </div>
         <div className="bg-white w-full overflow-x-auto">
-          {/* Table Placement */}
-          <DataTable columns={columns} data={filteredData} />
+          <DataTable columns={columns} data={currentData} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of 150 rows
+            Showing{" "}
+            {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
           </p>
 
-          {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
-      </div>{" "}
+      </div>
     </div>
   );
 }

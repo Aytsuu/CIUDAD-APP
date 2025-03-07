@@ -3,8 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Trash, Eye } from "lucide-react";
+import { Search, Trash, Plus, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,19 +11,36 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { FileInput } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Label } from "@/components/ui/label";
-import { ChevronLeft, Plus } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import MedicineModal from "../inventoryModal/MedicineModal";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
     id: number;
-    medicineName: string;
+    batchNumber: string;
+    medicineInfo: {
+      medicineName: string;
+      dosage: number;
+      dsgUnit: string;
+      form: string;
+
+    };
+    expiryDate: string;
     category: string;
+    qty: {
+      box: number;
+      pcs: number;
+    };
+    availQty: {
+      box: number;
+      pcs: number;
+    };
+    distributedQty: {
+      box: number;
+      pcs: number;
+    };
+     
   };
 
   const columns: ColumnDef<MedicineStocksRecord>[] = [
@@ -40,9 +56,31 @@ export default function MedicineStocks() {
       ),
     },
     {
-      accessorKey: "medicineName",
-      header: "Medicine Name",
+      accessorKey: "batchNumber",
+      header: "Batch No.",
     },
+    {
+      accessorKey: "medicineInfo",
+      header: "Medicine ",
+      cell: ({ row }) => {
+        const medicine = row.original.medicineInfo;
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{medicine.medicineName}</span>
+
+            <div>
+                ' <span className="text-sm text-gray-600">
+              {medicine.dosage} {medicine.dsgUnit}
+            </span>, <span className="text-sm text-gray-600 capitalize">
+             {medicine.form}
+            </span>
+            </div>
+            
+          </div>
+        );
+      },
+    },
+   
     {
       accessorKey: "category",
       header: "Category",
@@ -53,10 +91,47 @@ export default function MedicineStocks() {
       ),
     },
     {
+      accessorKey: "qty",
+      header: "Total Quantity",
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.qty.box} boxes / {row.original.qty.pcs} pcs
+        </div>
+      )
+    },
+    {
+      accessorKey: "availQty",
+      header: "Available",
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.availQty.box} boxes / {row.original.availQty.pcs} pcs
+        </div>
+      )
+    },
+    {
+      accessorKey: "distributedQty",
+      header: "Distributed",
+      cell: ({ row }) => (
+        <div className="text-center text-red-600">
+          {row.original.distributedQty.box} boxes / {row.original.distributedQty.pcs} pcs
+        </div>
+      )
+    },
+  
+    {
+      accessorKey: "expiryDate",
+      header: "Expiry Date",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.expiryDate}</div>
+        </div>
+      ),
+    },
+    {
       accessorKey: "action",
       header: "Action",
       cell: ({}) => (
-        <div className="flex justify-center gap-2 ">
+        <div className="flex justify-center gap-2">
           <TooltipLayout
             trigger={
               <DialogLayout
@@ -65,7 +140,6 @@ export default function MedicineStocks() {
                     <Trash size={16} />
                   </div>
                 }
-                className=""
                 mainContent={<></>}
               />
             }
@@ -79,30 +153,77 @@ export default function MedicineStocks() {
   const sampleData: MedicineStocksRecord[] = [
     {
       id: 1,
-      medicineName: "Paracetamol",
+      batchNumber: "122A",
+      medicineInfo: {
+        medicineName: "Paracetamol",
+        dosage: 500,
+        dsgUnit: "mg",
+        form: "tablet",
+      },
+     
+      expiryDate: "2025-12-31",
       category: "Analgesic",
+      qty: {
+        box: 10,
+        pcs: 50
+      },
+      availQty: {
+        box: 7,
+        pcs: 30
+      },
+      distributedQty: {
+        box: 3,
+        pcs: 20
+      },
+    
     },
     {
       id: 2,
-      medicineName: "Amoxicillin",
+      batchNumber: "12S2A",
+      medicineInfo: {
+        medicineName: "Amoxicillin",
+        dosage: 250,
+        dsgUnit: "mg",
+        form: "capsule",
+      },
+     
+      expiryDate: "2024-06-30",
       category: "Antibiotic",
-    },
+      qty: {
+        box: 5,
+        pcs: 20
+      },
+      availQty: {
+        box: 2,
+        pcs: 15
+      },
+      distributedQty: {
+        box: 3,
+        pcs: 5
+      },
+    
+    }
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<MedicineStocksRecord[]>(sampleData);
+  const [filteredData, setFilteredData] = useState<MedicineStocksRecord[]>(sampleData);
   const [currentData, setCurrentData] = useState<MedicineStocksRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const filtered = sampleData.filter((medicine) => {
-      const searchText =
-        `${medicine.id} ${medicine.medicineName} ${medicine.category}`.toLowerCase();
+      const searchText = `${medicine.id} ${medicine.batchNumber} ${
+        medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${
+        medicine.medicineInfo.dsgUnit}  ${medicine.expiryDate} ${
+        medicine.category} ${medicine.qty.box} ${medicine.qty.pcs} ${
+        medicine.availQty.box} ${medicine.availQty.pcs} ${
+        medicine.distributedQty.box} ${medicine.distributedQty.pcs}`.toLowerCase();
+      
       return searchText.includes(searchQuery.toLowerCase());
     });
+    
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
     setCurrentPage(1);
@@ -163,12 +284,12 @@ export default function MedicineStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> Add
+              <Plus size={15} /> New 
             </div>
           }
           title="Medicine List"
           description="Add New Medicine"
-          mainContent={<MedicineModal />}
+          mainContent={<></>}
         />
       </div>
 
