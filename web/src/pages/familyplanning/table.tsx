@@ -47,9 +47,19 @@ function FamPlanningTable() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Table Columns
-  const columns: ColumnDef<FamPlanningPatient>[] = [
-    {
-      accessorKey: "fullName",
+  const columns: ColumnDef<FamPlanningPatient>[] = [  
+      {accessorKey: "id",
+        header: "#",
+        cell: ({ row }) => (
+          <div className="flex justify-center">
+            <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+              {row.original.id}
+            </div>
+          </div>
+        ),
+      },
+  
+      {accessorKey: "fullName",
       header: "Patient",
       cell: ({ row }) => {
         const { fname, lname } = row.original;
@@ -122,14 +132,21 @@ function FamPlanningTable() {
 
         {/* New Record Button */}
         <div className="flex justify-end">
-        <Link to={`/FamPlanning_form/`}>
+        <Link to={`/FamPlanning_main/`}>
             <Button variant="default">New record</Button>
           </Link>
         </div>
       </div>
 
       {/* Table Section */}
-      <div className="h-full w-full rounded-md bg-white p-4">
+      <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+
+        </div>
         {/* Table */}
         <div className="bg-white w-full overflow-x-auto">
           <DataTable columns={columns} data={filteredPatients} />
@@ -147,7 +164,7 @@ function FamPlanningTable() {
             
           </div>
         </div>
-      </div>
+   
     </div>
   );
 }

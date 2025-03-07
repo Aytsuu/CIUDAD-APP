@@ -13,7 +13,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import ReferralFormSchema from "@/form-schema/ReferralFormSchema";
+import ReferralFormSchema from "@/form-schema/Animalbite_ReferralSchema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 
 
@@ -28,19 +28,25 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
     if (onAddPatient) {
       const newPatient = {
-        id: Date.now(), // Generate a unique ID
+        id: Date.now(),
+        receiver: values.receiver,
+        sender: values.sender,
+        transient: values.transient,
         lname: values.p_lname,
         fname: values.p_fname,
-        age: values.p_age.toString(), // Convert to string (to match `Patient` type)
+        midname: values.p_mname,
+        address: values.p_address,
+        age: values.p_age.toString(),
         gender: values.p_gender,
         date: values.date,
         exposure: values.p_exposure,
         siteOfExposure: values.p_siteofexposure,
         bitingAnimal: values.p_bitinganimal,
         actions: values.p_actions || "No actions recorded",
+        referred: values.p_referred
       };
 
-      console.log("👨‍⚕️ Adding new patient:", newPatient);
+      console.log("Adding new patient:", newPatient);
       onAddPatient(newPatient);
 
       onClose();
@@ -312,6 +318,20 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                     <Label>Actions Taken:</Label>
                     <FormControl>
                       <Textarea placeholder="Describe the required actions..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="p_referred"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Referred by:</Label>
+                    <FormControl>
+                      <Input placeholder="" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

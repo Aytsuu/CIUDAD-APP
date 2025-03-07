@@ -10,7 +10,7 @@ import { Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router-dom";
 
-// Define Patient Type
+// Define Patient Type 
 type Patient = {
   id: number;
   fname: string;
