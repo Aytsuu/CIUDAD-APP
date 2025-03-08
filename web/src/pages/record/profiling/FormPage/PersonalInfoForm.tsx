@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PersonalFormData } from "../_types";
 import { personalFormSchema } from "@/form-schema/ProfilingSchema";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: PersonalFormData) => void;
@@ -27,6 +27,8 @@ interface PersonalInfoFormProps {
 }
 
 const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
+
+  const navigate = useNavigate();
   const form = useForm<PersonalFormData>({
     resolver: zodResolver(personalFormSchema),
     defaultValues: initialData || {
@@ -263,12 +265,10 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
 
           {/* Submit Button */}
           <div className="mt-8 sm:mt-auto">
-            <div className="p-4 flex flex-col sm:flex-row justify-end gap-4 sm:gap-x-4 bg-white">
-              <Link to="/" className="w-full sm:w-auto">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Cancel
-                </Button>
-              </Link>
+            <div className="p-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-x-2 bg-white">
+              <Button variant="outline" className="w-full sm:w-auto" onClick={()=> navigate(-1)}>
+                Cancel
+              </Button>
               <Button type="submit" className="w-full sm:w-auto">
                 Next
               </Button>
