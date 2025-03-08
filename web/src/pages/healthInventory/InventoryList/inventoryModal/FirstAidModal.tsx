@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import {
   FirstAidType,
   FirstAidSchema,
-} from "@/form-schema/inventoryListSchema";
+} from "@/form-schema/inventory/inventoryListSchema";
 
 interface Option {
   id: string;
@@ -51,7 +51,7 @@ export default function FirstAidModal() {
     fieldOnChange(selectedValue);
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: FirstAidType) => {
     console.log(data);
   };
 

@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import MedicineStocks
  from "./MedicineStocks";
 import VaccineStocks from "./VaccineStocks";
- 
+import FirstAidStocks from "./FirstAidStocks";
+import CommodityStocks from "./CommodityStocks";
+
 export default function MainInventoryStocks() {
   const [selectedView, setSelectedView] = useState("medicine");
 
@@ -13,10 +15,10 @@ export default function MainInventoryStocks() {
         return <MedicineStocks/>;
       case "vaccine":
         return <VaccineStocks/>;
-    //   case "commodity":
-    //     return < />;
-    //   case "firstaid":
-    //     return < />;
+      case "commodity":
+        return <CommodityStocks/>;
+      case "firstaid":
+        return <FirstAidStocks/>;
     }
   };
 

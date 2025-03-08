@@ -18,7 +18,7 @@ import {
 } from "@/form-schema/inventory/inventoryListSchema"; // Adjust the import path as needed
 import { Label } from "@/components/ui/label";
 
-export default function VaccinationModal() {
+export default function EditVAccineListModal() {
   const form = useForm({
     resolver: zodResolver(VaccineListSchema),
     defaultValues: {

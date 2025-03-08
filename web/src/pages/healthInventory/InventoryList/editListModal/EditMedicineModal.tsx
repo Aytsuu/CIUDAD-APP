@@ -30,7 +30,7 @@ const initialCategories: Option[] = [
   { id: "injection", name: "Injection" },
 ];
 
-export default function MedicineModal() {
+export default function MedicineListEdit() {
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: {

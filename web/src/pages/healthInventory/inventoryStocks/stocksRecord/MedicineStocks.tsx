@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput } from "lucide-react";
+import { Search, Trash, Plus, FileInput,Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,8 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import MedicineStockForm from "../addstocksModal/MedStockModal";
+
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
@@ -24,23 +26,12 @@ export default function MedicineStocks() {
       dosage: number;
       dsgUnit: string;
       form: string;
-
     };
     expiryDate: string;
     category: string;
-    qty: {
-      box: number;
-      pcs: number;
-    };
-    availQty: {
-      box: number;
-      pcs: number;
-    };
-    distributedQty: {
-      box: number;
-      pcs: number;
-    };
-     
+    qty: string;
+    availQty: string;
+    distributed: string;
   };
 
   const columns: ColumnDef<MedicineStocksRecord>[] = [
@@ -67,20 +58,14 @@ export default function MedicineStocks() {
         return (
           <div className="flex flex-col">
             <span className="font-medium">{medicine.medicineName}</span>
-
-            <div>
-                ' <span className="text-sm text-gray-600">
-              {medicine.dosage} {medicine.dsgUnit}
-            </span>, <span className="text-sm text-gray-600 capitalize">
-             {medicine.form}
-            </span>
+            <div className="text-sm text-gray-600">
+              {medicine.dosage} {medicine.dsgUnit}, 
+              <span className="capitalize italic text-darkGray"> {medicine.form}</span>
             </div>
-            
           </div>
         );
       },
     },
-   
     {
       accessorKey: "category",
       header: "Category",
@@ -92,32 +77,25 @@ export default function MedicineStocks() {
     },
     {
       accessorKey: "qty",
-      header: "Total Quantity",
+      header: "Stocks",
       cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.qty.box} boxes / {row.original.qty.pcs} pcs
-        </div>
+        <div className="text-center">{row.original.qty}</div>
+      )
+    },
+    {
+      accessorKey: "distributed",
+      header: "Distributed",
+      cell: ({ row }) => (
+        <div className="text-red-700">{row.original.distributed}</div>
       )
     },
     {
       accessorKey: "availQty",
       header: "Available",
       cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.availQty.box} boxes / {row.original.availQty.pcs} pcs
-        </div>
+        <div className=" text-green-700">{row.original.availQty}</div>
       )
     },
-    {
-      accessorKey: "distributedQty",
-      header: "Distributed",
-      cell: ({ row }) => (
-        <div className="text-center text-red-600">
-          {row.original.distributedQty.box} boxes / {row.original.distributedQty.pcs} pcs
-        </div>
-      )
-    },
-  
     {
       accessorKey: "expiryDate",
       header: "Expiry Date",
@@ -145,6 +123,7 @@ export default function MedicineStocks() {
             }
             content="Delete"
           />
+          
         </div>
       ),
     },
@@ -160,22 +139,11 @@ export default function MedicineStocks() {
         dsgUnit: "mg",
         form: "tablet",
       },
-     
       expiryDate: "2025-12-31",
       category: "Analgesic",
-      qty: {
-        box: 10,
-        pcs: 50
-      },
-      availQty: {
-        box: 7,
-        pcs: 30
-      },
-      distributedQty: {
-        box: 3,
-        pcs: 20
-      },
-    
+      qty: "10 boxes (50 pcs)",
+      distributed: "7 boxes (30 pcs)",
+      availQty: "7 boxes (30 pcs)"
     },
     {
       id: 2,
@@ -186,24 +154,15 @@ export default function MedicineStocks() {
         dsgUnit: "mg",
         form: "capsule",
       },
-     
       expiryDate: "2024-06-30",
       category: "Antibiotic",
-      qty: {
-        box: 5,
-        pcs: 20
-      },
-      availQty: {
-        box: 2,
-        pcs: 15
-      },
-      distributedQty: {
-        box: 3,
-        pcs: 5
-      },
-    
+      qty: "5 bot",
+      distributed: "0",
+      availQty: "5 bot"
     }
   ];
+
+  // ... rest of the component (state, effects, handlers, JSX) remains the same ...
 
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -217,9 +176,9 @@ export default function MedicineStocks() {
       const searchText = `${medicine.id} ${medicine.batchNumber} ${
         medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${
         medicine.medicineInfo.dsgUnit}  ${medicine.expiryDate} ${
-        medicine.category} ${medicine.qty.box} ${medicine.qty.pcs} ${
-        medicine.availQty.box} ${medicine.availQty.pcs} ${
-        medicine.distributedQty.box} ${medicine.distributedQty.pcs}`.toLowerCase();
+        medicine.category}  
+        
+        `.toLowerCase();
       
       return searchText.includes(searchQuery.toLowerCase());
     });
@@ -289,7 +248,7 @@ export default function MedicineStocks() {
           }
           title="Medicine List"
           description="Add New Medicine"
-          mainContent={<></>}
+          mainContent={<MedicineStockForm/>}
         />
       </div>
 

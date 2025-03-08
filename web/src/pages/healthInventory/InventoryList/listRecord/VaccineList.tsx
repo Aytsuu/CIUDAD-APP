@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus } from "lucide-react";
+import { Search, Trash, Plus, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import VaccinationModal from "../inventoryModal/VaccineModal";
 import { FileInput } from "lucide-react";
+import EditVAccineListModal from "../editListModal/EditVaccineModal";
 
 export default function VaccinationList() {
   type VaccinationRecords = {
@@ -88,18 +89,22 @@ export default function VaccinationList() {
       header: "Action",
       cell: () => (
         <div className="flex justify-center gap-2">
-          <TooltipLayout
+            <DialogLayout
             trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                mainContent={<></>}
-              />
+              <div className=" border  px-3 py-2 rounded cursor-pointer">
+                <Edit size={16} />
+              </div>
             }
-            content="Delete"
+            mainContent={<EditVAccineListModal/>}
+          />
+
+          <DialogLayout
+            trigger={
+              <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                <Trash size={16} />
+              </div>
+            }
+            mainContent={<></>}
           />
         </div>
       ),
@@ -180,7 +185,7 @@ export default function VaccinationList() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> Add
+              <Plus size={15} /> New
             </div>
           }
           title="Vaccination List"

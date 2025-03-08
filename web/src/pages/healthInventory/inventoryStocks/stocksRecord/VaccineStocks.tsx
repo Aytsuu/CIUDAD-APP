@@ -14,6 +14,9 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import WastedDoseForm from "../addstocksModal/WastedDoseModal";
+import VaccineStockForm from "../addstocksModal/VacStockModal";
+
 
 export default function VaccineStocks() {
   type VaccineStocksRecord = {
@@ -24,18 +27,10 @@ export default function VaccineStocks() {
       dosage: number;
       dsgUnit: string;
     };
-    qty: {
-      vialCount: number;
-      dosesCount: number;
-    };
-    administered: {
-      vialCount: number;
-      dosesCount: number;
-    };
-    availableVaccine: {
-      vialCount: number;
-      dosesCount: number;
-    };
+    qty: string;
+    administered: string;
+    wastedDose: string;
+    availableVaccine: string;
     expiryDate: string;
   };
 
@@ -72,42 +67,47 @@ export default function VaccineStocks() {
     },
     {
       accessorKey: "qty",
-      header: "Initial Stock",
-      cell: ({ row }) => {
-        const qty = row.original.qty;
-        return (
-          <div className="flex flex-col">
-            <div className="text-center">{qty.vialCount} vials</div>
-            <div className="text-center">{qty.dosesCount} doses</div>
-          </div>
-        );
-      },
+      header: "Stocks",
+      cell: ({ row }) => <div className="text-center">{row.original.qty}</div>,
     },
     {
       accessorKey: "administered",
       header: "Administered",
-      cell: ({ row }) => {
-        const administered = row.original.administered;
-        return (
-          <div className="flex flex-col text-red-600">
-            <div className="text-center">{administered.vialCount} vials</div>
-            <div className="text-center">{administered.dosesCount} doses</div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-center text-red-600">
+          {row.original.administered}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "wastedDose",
+      header: "Wasted Dose",
+      cell: ({ row }) => (
+        <>
+          <DialogLayout
+            trigger={
+              <div className="text-center text-red-700 px-2 py-1 cursor-pointer border border-red-700 bg-red-200 rounded-md">
+                {row.original.wastedDose}
+              </div>
+            }
+            title="Wasted Dose"
+            mainContent={
+              <>
+                <WastedDoseForm />
+              </>
+            }
+          />
+        </>
+      ),
     },
     {
       accessorKey: "availableVaccine",
-      header: "Available Stock",
-      cell: ({ row }) => {
-        const available = row.original.availableVaccine;
-        return (
-          <div className="flex flex-col text-green-600">
-            <div className="text-center">{available.vialCount} vials</div>
-            <div className="text-center">{available.dosesCount} doses</div>
-          </div>
-        );
-      },
+      header: "Available ",
+      cell: ({ row }) => (
+        <div className="text-center text-green-600">
+          {row.original.availableVaccine}
+        </div>
+      ),
     },
     {
       accessorKey: "expiryDate",
@@ -121,7 +121,7 @@ export default function VaccineStocks() {
     {
       accessorKey: "action",
       header: "Actions",
-      cell: ({ row }) => (
+      cell: ({  }) => (
         <div className="flex justify-center gap-2">
           <TooltipLayout
             trigger={
@@ -150,18 +150,11 @@ export default function VaccineStocks() {
         dosage: 0.5,
         dsgUnit: "ml",
       },
-      qty: {
-        vialCount: 100,
-        dosesCount: 200,
-      },
-      administered: {
-        vialCount: 20,
-        dosesCount: 40,
-      },
-      availableVaccine: {
-        vialCount: 80,
-        dosesCount: 160,
-      },
+      qty: "100 vials (200 doses)",
+
+      administered: "20 vials (40 doses)",
+      wastedDose: "20",
+      availableVaccine: "80 vials (160 doses)",
       expiryDate: "2025-12-31",
     },
     {
@@ -172,34 +165,27 @@ export default function VaccineStocks() {
         dosage: 0.5,
         dsgUnit: "ml",
       },
-      qty: {
-        vialCount: 50,
-        dosesCount: 100,
-      },
-      administered: {
-        vialCount: 10,
-        dosesCount: 20,
-      },
-      availableVaccine: {
-        vialCount: 40,
-        dosesCount: 80,
-      },
+      qty: "50 vials (100 doses)",
+
+      administered: "10 vials (20 doses)",
+      wastedDose: "0",
+      availableVaccine: "40 vials (80 doses)",
       expiryDate: "2024-06-30",
     },
   ];
 
-  // ... rest of the component remains the same
-
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<VaccineStocksRecord[]>(sampleData);
+  const [filteredData, setFilteredData] =
+    useState<VaccineStocksRecord[]>(sampleData);
   const [currentData, setCurrentData] = useState<VaccineStocksRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const filtered = sampleData.filter((record) => {
-      const searchText = `${record.id} ${record.batchNumber} ${record.vaccine.vaccineName} ${record.vaccine.dosage}${record.vaccine.dsgUnit} ${record.expiryDate}`.toLowerCase();
+      const searchText =
+        `${record.id} ${record.batchNumber} ${record.vaccine.vaccineName} ${record.vaccine.dosage}${record.vaccine.dsgUnit} ${record.expiryDate} ${record.qty} ${record.administered} ${record.availableVaccine}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
     setFilteredData(filtered);
@@ -263,12 +249,12 @@ export default function VaccineStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New 
+              <Plus size={15} /> New
             </div>
           }
           title="Vaccine Stock Management"
           description="Add new vaccine batch to inventory"
-          mainContent={<></>}
+          mainContent={<VaccineStockForm/>}
         />
       </div>
 

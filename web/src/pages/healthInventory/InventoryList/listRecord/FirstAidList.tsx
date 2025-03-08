@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput } from "lucide-react";
+import { Search, Trash, Plus, FileInput,Edit } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import EditFirstAidModal from "../editListModal/EditFirstAidModal";
 
 export default function FirstAidList() {
   type FirstAidRecords = {
@@ -48,8 +49,16 @@ export default function FirstAidList() {
       header: "Action",
       cell: () => (
         <div className="flex justify-center gap-2">
-          <TooltipLayout
+         
+         <DialogLayout
             trigger={
+              <div className=" border  px-3 py-2 rounded cursor-pointer">
+                <Edit size={16} />
+              </div>
+            }
+            mainContent={<EditFirstAidModal />}
+          />
+
               <DialogLayout
                 trigger={
                   <div className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer">
@@ -58,9 +67,7 @@ export default function FirstAidList() {
                 }
                 mainContent={<></>}
               />
-            }
-            content="Delete"
-          />
+          
         </div>
       ),
     },
@@ -145,7 +152,7 @@ export default function FirstAidList() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> Add
+              <Plus size={15} /> New
             </div>
           }
           title="First Aid "

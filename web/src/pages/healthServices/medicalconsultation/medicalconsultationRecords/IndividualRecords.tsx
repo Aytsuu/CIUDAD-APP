@@ -210,7 +210,7 @@ export default function InvMedicalConRecords() {
   };
 
   const toMedicalForm = () => {
-    navigate("/medical-form-path"); // Update with your actual path
+    navigate("/medicalForm"); // Update with your actual path
   };
 
   return (

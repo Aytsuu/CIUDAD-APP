@@ -28,7 +28,7 @@ const initialCategories: Option[] = [
   { id: "injection", name: "Injection" },
 ];
 
-export default function CommodityModal() {
+export default function EditCommodityModal() {
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {

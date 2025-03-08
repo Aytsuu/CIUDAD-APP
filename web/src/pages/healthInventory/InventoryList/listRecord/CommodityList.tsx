@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus } from "lucide-react";
+import { Search, Trash, Plus,Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,8 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import CommodityModal from "../inventoryModal/CommodityModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import EditCommodityModal from "../editListModal/EditCommodityModal";
+
 
 export default function CommodityList() {
   type CommodityRecords = {
@@ -49,8 +51,15 @@ export default function CommodityList() {
       header: "Action",
       cell: () => (
         <div className="flex justify-center gap-2 ">
-          <TooltipLayout
+           <DialogLayout
             trigger={
+              <div className=" border  px-3 py-2 rounded cursor-pointer">
+                <Edit size={16} />
+              </div>
+            }
+            mainContent={<EditCommodityModal />}
+          />
+
               <DialogLayout
                 trigger={
                   <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
@@ -59,9 +68,7 @@ export default function CommodityList() {
                 }
                 mainContent={<></>}
               />
-            }
-            content="Delete"
-          />
+           
         </div>
       ),
     },
@@ -146,7 +153,7 @@ export default function CommodityList() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> Add
+              <Plus size={15} /> New
             </div>
           }
           title="Commodity List"
