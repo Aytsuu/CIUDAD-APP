@@ -13,8 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { DatePickerWithRange, DateRange } from "@/components/ui/datepicker";
 
-import { Link, Outlet } from "react-router";
+import { data, Link, Outlet } from "react-router";
 import { Input } from "../../../components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "../../../components/ui/table/data-table";
@@ -22,9 +23,10 @@ import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import RegistrationOptions from "./RegistrationOptions";
 import { useState, useEffect } from "react";
+import { exportToCSV, exportToPDF, exportToExcel } from "./ExportFunctions";
 
 // Define the type for the Report object
-type Report = {
+export type Report = {
   id: string;
   householdNo: string;
   familyNo: string;
@@ -165,7 +167,7 @@ export const columns: ColumnDef<Report>[] = [
   },
 ];
 
-// Sample data 
+// Sample data
 export const reports: Report[] = [
   {
     id: "001",
@@ -230,10 +232,10 @@ const generateMoreData = (): Report[] => {
   const moreData: Report[] = [];
   for (let i = 6; i <= 150; i++) {
     moreData.push({
-      id: `${i.toString().padStart(3, '0')}`,
-      householdNo: `H-${Math.floor((i-1)/2) + 3}`,
-      familyNo: `F-${Math.floor((i-1)/2) + 3}`,
-      sitio: `Sitio ${String.fromCharCode(67 + Math.floor((i-1)/2))}`,
+      id: `${i.toString().padStart(3, "0")}`,
+      householdNo: `H-${Math.floor((i - 1) / 2) + 3}`,
+      familyNo: `F-${Math.floor((i - 1) / 2) + 3}`,
+      sitio: `Sitio ${String.fromCharCode(67 + Math.floor((i - 1) / 2))}`,
       lastName: `LastName${i}`,
       firstName: `FirstName${i}`,
       mi: String.fromCharCode(65 + (i % 26)),
@@ -247,6 +249,52 @@ const generateMoreData = (): Report[] => {
 // Complete dataset combining initial and generated data
 const fullDataset: Report[] = [...reports, ...generateMoreData()];
 
+const FilterComponent = ({ onFilterChange }: { onFilterChange: (filter: { type: string; dateRange: DateRange | null }) => void }) => {
+  const [filterType, setFilterType] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+  // Handle filter type change
+  const handleFilterTypeChange = (value: string) => {
+    setFilterType(value);
+    
+    // Reset date range when switching away from date filter
+    if (value !== "2" && dateRange) {
+      setDateRange(undefined);
+    }
+    
+    onFilterChange({ type: value, dateRange: value === "2" ? dateRange : null });
+  };
+
+  return (
+    <div className="flex gap-2 items-start">
+      <SelectLayout
+        placeholder="Filter by"
+        label=""
+        className="bg-white"
+        options={[
+          { id: "1", name: "Sitio" },
+          { id: "2", name: "By date" },
+          { id: "3", name: "By location" },
+        ]}
+        value={filterType}
+        onChange={handleFilterTypeChange}
+      />
+      
+      {filterType === "2" && (
+        <div className="inline-block">
+          <DatePickerWithRange
+            value={dateRange}
+            onChange={(newDateRange) => {
+              setDateRange(newDateRange);
+              onFilterChange({ type: "2", dateRange: newDateRange });
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ProfilingMain() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -254,17 +302,56 @@ export default function ProfilingMain() {
   const [filteredData, setFilteredData] = useState<Report[]>(fullDataset);
   const [currentData, setCurrentData] = useState<Report[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
+  
+  // Active filter
+  const [activeFilter, setActiveFilter] = useState<{
+    type: string | null;
+    dateRange: DateRange | null;
+  }>({
+    type: null,
+    dateRange: null,
+  });
 
-  // Filter data based on search query
   useEffect(() => {
-    const filtered = fullDataset.filter(report => {
-      const searchText = `${report.id} ${report.householdNo} ${report.familyNo} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.suffix} ${report.dateRegistered}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
+    let filtered = fullDataset;
+    
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter((report) => {
+        const searchText = `${report.id} ${report.householdNo} ${report.familyNo} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.suffix} ${report.dateRegistered}`.toLowerCase();
+        return searchText.includes(searchQuery.toLowerCase());
+      });
+    }
+    
+    // Applies date filter if its active
+    if (activeFilter.type === "2" && activeFilter.dateRange?.from) {
+      filtered = filtered.filter((report) => {
+        const reportDate = new Date(report.dateRegistered);
+        const from = activeFilter.dateRange!.from!;
+        const to = activeFilter.dateRange!.to || activeFilter.dateRange!.from!;
+        
+        // Comparison of dates 
+        const reportDateStr = reportDate.toISOString().split('T')[0];
+        const fromStr = from.toISOString().split('T')[0];
+        const toStr = to.toISOString().split('T')[0];
+        
+        return reportDateStr >= fromStr && reportDateStr <= toStr;
+      });
+    }
+    
+    // Apply other filters if needed
+    if (activeFilter.type === "1") {
+      // Filter by Sitio (implement your logic here)
+      // Example: filtered = filtered.filter(report => report.sitio === selectedSitio);
+    } else if (activeFilter.type === "3") {
+      // to be continued...
+    }
+    
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1); // Reset to first page when search changes
-  }, [searchQuery, pageSize]);
+    setCurrentPage(1); // Reset to first page when filter changes
+  }, [searchQuery, pageSize, activeFilter]);
 
   // Update data based on page and page size
   useEffect(() => {
@@ -290,6 +377,38 @@ export default function ProfilingMain() {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+    }
+  };
+
+  // Handle filter changes
+  const handleFilterChange = ({ type, dateRange }: { type: string; dateRange: DateRange | null }) => {
+    setActiveFilter({
+      type,
+      dateRange,
+    });
+  };
+
+  const handleExport = async (format: "csv" | "excel" | "pdf") => {
+    try {
+      setIsExporting(true);
+
+      const dataToExport = filteredData;
+
+      switch (format) {
+        case "csv":
+          exportToCSV(dataToExport);
+          break;
+        case "excel":
+          exportToExcel(dataToExport);
+          break;
+        case "pdf":
+          exportToPDF(dataToExport);
+          break;
+      }
+    } catch (error) {
+      console.error(`Error exporting to ${format}:`, error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -321,18 +440,9 @@ export default function ProfilingMain() {
               onChange={handleSearchChange}
             />
           </div>
-          <SelectLayout
-            placeholder="Filter by"
-            label=""
-            className="bg-white"
-            options={[
-              {id: "1", name: ""},
-              {id: "2", name: "By date"},
-              {id: "3", name: "By location"}, 
-            ]}
-            value=""
-            onChange={() => {}}
-          />
+          
+          {/* Replace the SelectLayout with our FilterComponent */}
+          <FilterComponent onFilterChange={handleFilterChange} />
         </div>
         <div>
           <div className="flex gap-2">
@@ -364,9 +474,9 @@ export default function ProfilingMain() {
         <div className="w-full bg-white flex flex-row justify-between p-3">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input 
-              type="number" 
-              className="w-14 h-6" 
+            <Input
+              type="number"
+              className="w-14 h-6"
               value={pageSize}
               onChange={handlePageSizeChange}
               min="1"
@@ -376,15 +486,21 @@ export default function ProfilingMain() {
           <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export
+                <Button variant="outline" disabled={isExporting}>
+                  <FileInput className="mr-2" />
+                  {isExporting ? "Exporting..." : "Export"}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("csv")}>
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("excel")}>
+                  Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                  Export as PDF
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -396,13 +512,14 @@ export default function ProfilingMain() {
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
+            Showing{" "}
+            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
           </p>
 
-          {/* Pagination - using the PaginationLayout component */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout 
+            <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
