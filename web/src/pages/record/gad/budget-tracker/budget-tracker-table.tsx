@@ -140,6 +140,13 @@ function BudgetTracker() {
   const filteredData = selectedFilter === "All Entry Types" ? data 
   : data.filter((item) => item.type === selectedFilter);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 10; // Example total number of pages
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
   return (
     <div className="bg-snow w-full h-full">
           <div className="flex flex-col gap-3 mb-4">
@@ -232,7 +239,7 @@ function BudgetTracker() {
 
                 {/* Pagination */}
                 <div className="w-full sm:w-auto flex justify-center">
-                  <PaginationLayout className="" />
+                <PaginationLayout className="" totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange}/>                
                 </div>
           </div>
     </div>

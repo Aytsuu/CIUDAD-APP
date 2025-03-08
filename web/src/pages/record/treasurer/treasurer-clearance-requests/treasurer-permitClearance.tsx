@@ -271,7 +271,7 @@ function PermitClearance(){
                     </p>
 
                     <div className="w-full sm:w-auto flex justify-center">
-                        <PaginationLayout className="" />
+                        {/* <PaginationLayout className="" /> */}
                     </div>
                 </div>  
             </div>

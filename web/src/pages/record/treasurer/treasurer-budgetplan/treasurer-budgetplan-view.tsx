@@ -1,70 +1,181 @@
 import TableLayout from "@/components/ui/table/table-layout";
 import { Label } from "@/components/ui/label";
-import { Leaf } from "lucide-react";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useState } from "react";
+
+
+
+const styles = {
+    header: "font-bold text-lg text-blue-600",
+    total: "font-bold text-blue",
+    mainCategory: "font-bold text-[19px]",
+    subCategory: "font-semibold text-[16px] text-sky-500",
+    budgetDetails: "flex text-left text-[15px]",
+    indent: "ml-4",
+    labelInputGroup: "flex flex-row gap-4",
+    colDesign: "flex flex-col gap-4",
+    inputField: "w-[15rem] text-right", 
+    labelDesign: "w-1/2 text-left",
+    budgetValue: "font-semibold"
+};
+
+
+export const budgetHeader = {
+    availableResources: 0.0,
+    actualIncome: 0.0,
+    year: 2020,
+    actualRpt: 0.0,
+    totalBudget: 0.0,
+    balanceUnappropriated: 0.0,
+};
+
+
+const BudgetData = {
+    honorariaOfficials: {proposedBudget: 0.00},
+    cashGiftOfficials: {proposedBudget: 0.00 },
+    midYearOfficials: {proposedBudget: 0.00},
+    yearEndOfficials: {proposedBudget: 0.00 },
+    honorariaTanods: {proposedBudget: 0.00},
+    honorariaLupon: {proposedBudget: 0.00 },
+    honorariaBarangayWorkers: {proposedBudget: 0.00},
+    productivityEnhancement: {proposedBudget: 0.00 },
+    leaveCredits: {proposedBudget: 0.00},
+    personalService: {total: 0.00, budgetLimit: 0.00, balance: 0.00},
+    travelExpense: {proposedBudget: 0.00},
+    trainingExpense: {proposedBudget: 0.00 },
+    officeSupplyExpense: {proposedBudget: 0.00},
+    formsExpense: {proposedBudget: 0.00 },
+    medicineExpense: {proposedBudget: 0.00},
+    waterExpense: {proposedBudget: 0.00 },
+    electricityExpense: {proposedBudget: 0.00},
+    telephoneExpense: {proposedBudget: 0.00 },
+    memeDue: {proposedBudget: 0.00, budgetLimit: 0.00, balance: 0.00},
+    equipmentmaintenance: {proposedBudget: 0.00 },
+    vehiclemaintenance: {proposedBudget: 0.00 },
+    fidelityBond: {proposedBudget: 0.00},
+    insuranceExpense: {proposedBudget: 0.00 },
+    gadProgram: {proposedBudget: 0.00},
+    seniorPwd: {proposedBudget: 0.00 },
+    bcpc: {proposedBudget: 0.00},
+    badac: {proposedBudget: 0.00 },
+    nutrition: {proposedBudget: 0.00},
+    aidsProgram: {proposedBudget: 0.00 },
+    assemblyExpense: {proposedBudget: 0.00 },
+    disasterProgram: {proposedBudget: 0.00},
+    miscExpense: {proposedBudget: 0.00, budgetLimit: 0.00, balance: 0.00},
+    maintExpenses: {total: 0.00},
+    capitalOutlays: {total: 0.00, proposedBudget: 0.00},
+    cleanGreen: {proposedBudget: 0.00 },
+    streetLighting: {proposedBudget: 0.00},
+    rehabofMultPurpose: {proposedBudget: 0.00},
+    localDev: {total: 0.00, budgetLimit: 0.00, balance: 0.00},
+    skFund: {proposedBudget: 0.00, budgetLimit: 0.00, balance: 0.00},
+    quickResponseFund: {proposedBudget: 0.00 },
+    disasterTraining: {proposedBudget: 0.00 },
+    disasterSupplies: {proposedBudget: 0.00 },
+    calamityFund: {total: 0.00, budgetLimit: 0.00, balance: 0.00}
+}
+
+
+const headerProp = ["", "Per Proposed Budget", "Budgetary Limitation", "Balance"].map(
+    (text) => <span className={styles.header}>{text}</span>
+);
+
+
+
+export const rowsProp = [
+    [<span className={styles.mainCategory}>CURRENT OPERATING EXPENDITURES</span>],
+    [<span className={styles.subCategory}>Personal Services</span>],
+    ['Honoraria for Officials', BudgetData.honorariaOfficials.proposedBudget.toFixed(2)],
+    ['Cash Gift for Officials', BudgetData.cashGiftOfficials.proposedBudget.toFixed(2)],
+    ['Mid-Year Bonus for Officials', BudgetData.midYearOfficials.proposedBudget.toFixed(2)],
+    ['Year-End Bonus for Officials', BudgetData.yearEndOfficials.proposedBudget.toFixed(2)],
+    ['Honoraria for Tanods', BudgetData.honorariaTanods.proposedBudget.toFixed(2)],
+    ['Honoraria for Lupon Members', BudgetData.honorariaLupon.proposedBudget.toFixed(2)],
+    ['Honoraria for Barangay Workers', BudgetData.honorariaBarangayWorkers.proposedBudget.toFixed(2)],
+    ['Productivity Enhancement Incentive', BudgetData.productivityEnhancement.proposedBudget.toFixed(2)],
+    ['Commutation of Leave Credits', BudgetData.leaveCredits.proposedBudget.toFixed(2)],
+    ['', <div className={styles.total}>Total: Php {BudgetData.personalService.total.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.personalService.budgetLimit.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.personalService.balance.toFixed(2)}</div>],
+
+
+    [<span className={styles.subCategory}>Maint. & Other Operating Expenses</span>],
+    ['Traveling Expenses', BudgetData.travelExpense.proposedBudget.toFixed(2)],
+    ['Training Expense', BudgetData.trainingExpense.proposedBudget.toFixed(2)],
+    ['Office Supply Expenses', BudgetData.officeSupplyExpense.proposedBudget.toFixed(2)],
+    ['Accountable Forms Expenses', BudgetData.formsExpense.proposedBudget.toFixed(2)],
+    ['Drugs and Medicince Expenses', BudgetData.medicineExpense.proposedBudget.toFixed(2)],
+    ['Water Expenses', BudgetData.waterExpense.proposedBudget.toFixed(2)],
+    ['Electricity Expenses', BudgetData.electricityExpense.proposedBudget.toFixed(2)],
+    ['Telephone Expenses', BudgetData.telephoneExpense.proposedBudget.toFixed(2)],
+    ['Membership Dues/ Contribution to Organizaation', BudgetData.memeDue.proposedBudget.toFixed(2), BudgetData.memeDue.budgetLimit.toFixed(2), BudgetData.memeDue.balance.toFixed(2)],
+    ['Repair and Maintenance of Office Equipment', BudgetData.equipmentmaintenance.proposedBudget.toFixed(2)],
+    ['Repair and Maintenance of Office Vehicle', BudgetData.vehiclemaintenance.proposedBudget.toFixed(2)],
+    ['Fidelity Bond Premiums', BudgetData.fidelityBond.proposedBudget.toFixed(2)],
+
+
+    ['Other Maint. and Operating Expenses',],
+    ['GAD Program', BudgetData.gadProgram.proposedBudget.toFixed(2)],
+    ['Senior Citizen/ PWD Program', BudgetData.seniorPwd.proposedBudget.toFixed(2)],
+    ['BCPC (Juvenille Justice System)', BudgetData.bcpc.proposedBudget.toFixed(2)],
+    ['BADAC Program', BudgetData.badac.proposedBudget.toFixed(2)],
+    ['Nutrition Program', BudgetData.nutrition.proposedBudget.toFixed(2)],
+    ['Combating Aids Program', BudgetData.aidsProgram.proposedBudget.toFixed(2)],
+    ['Barangay Assembly Expenses', BudgetData.assemblyExpense.proposedBudget.toFixed(2)],
+    ['Disaster Response Program', BudgetData.disasterProgram.proposedBudget.toFixed(2)],
+    ['Extraordinary & Miscellaneous Expenses', BudgetData.miscExpense.proposedBudget.toFixed(2), BudgetData.miscExpense.budgetLimit.toFixed(2), BudgetData.miscExpense.balance.toFixed(2)],
+    ['', <div className={styles.total}>Total: Php {BudgetData.maintExpenses.total.toFixed(2)}</div>],
+
+    [<span className={styles.mainCategory}>CAPITAL OUTLAYS</span>],
+    ['Total Capital Outlays', BudgetData.capitalOutlays.proposedBudget.toFixed(2)],
+    ['', <div className={styles.total}>Total: Php {BudgetData.capitalOutlays.total.toFixed(2)}</div>],
+
+
+    [<span className={styles.mainCategory}>NON-OFFICE</span>],
+    [<span className={styles.subCategory}>Local Development Fund</span>],
+    ['Clean & Green Environmental', BudgetData.cleanGreen.proposedBudget.toFixed(2)],
+    ['Street Lighting Project', BudgetData.streetLighting.proposedBudget.toFixed(2)],
+    ['Rehabilitation of Multi-Purpose', BudgetData.rehabofMultPurpose.proposedBudget.toFixed(2)],
+    ['', <div className={styles.total}>Total: Php {BudgetData.localDev.total.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.localDev.budgetLimit.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.localDev.balance.toFixed(2)}</div>],
+
+    [<span className={styles.subCategory}>Sangguniang Kabataan Fund</span>],
+    ['Subsidy to Sangguniang Kabataan (SK) FUnd', <div className={styles.total}>Total: Php {BudgetData.skFund.proposedBudget.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.skFund.budgetLimit.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.skFund.balance.toFixed(2)}</div>],
+
+    ['', ],
+
+    [<span className={styles.subCategory}>LDRRM Fund (Calamity Fund)</span>],
+    ['Quick Response Fund (QRF)', BudgetData.quickResponseFund.proposedBudget.toFixed(2)],
+    ['Disaster Training', BudgetData.disasterTraining.proposedBudget.toFixed(2)],
+    ['Disaster Supplies', BudgetData.disasterSupplies.proposedBudget.toFixed(2)],
+    ['', <div className={styles.total}>Total: Php {BudgetData.calamityFund.total.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.calamityFund.budgetLimit.toFixed(2)}</div>, <div className={styles.budgetValue}>{BudgetData.calamityFund.balance.toFixed(2)}</div>],
+
+
+]
+
 
 function ViewBudgetPlan(){
-    const styles = {
-        header: "font-bold text-lg text-blue-600",
-        mainheaderStyle: "text-white text-[17px]",
-        table1LabelStyle: "font-semibold text-darkGray text-[15px]",
-        table1AmountStyle: "text-black font-semibold text-[15px]",
-        budgetDetails: "flex text-left text-[15px]",
-        mainCategory: "font-bold text-[19px]",
-        subCategory: "font-semibold text-[16px] text-sky-500",
-    }
 
-    const budgetData = {
-        personalServices: { total: 0.0, budgetLimit: 0.0, balance: 0.0 },
-        memDue: { budgetLimit: 0.0, balance: 0.0 },
-        miscExpense: { budgetLimit: 0.0, balance: 0.0 },
-        maintExpense: { total: 0.0 },
-        capitalOutlays: { total: 0.0 },
-        localDev: { total: 0.0, budgetLimit: 0.0, balance: 0.0 },
-        skFund: { budgetLimit: 0.0, balance: 0.0 },
-        calamityFund: { total: 0.0, budgetLimit: 0.0, balance: 0.0 },
-        netAvailable: {amount: 0.00},
-        totalBudgetObligation: {amount: 0.00},
-        balUnappropriated: {amount:0.00},
-        actualIncome: {amount: 0.00},
-        actualRPT: {amount: 0.00}
-    }
-    const headerProp1 = [<div className="bg-blue p-4"><Label className={styles.mainheaderStyle}>YEAR 2023</Label></div>];
-    const rowsProp1 = [
-        [<span><Label className={styles.table1LabelStyle}>NET AVAILABLE RESOURCES: </Label> <Label><div>PHP {budgetData.netAvailable.amount.toFixed(2)}</div></Label></span>],
-        [<span><Label className={styles.table1LabelStyle}>TOTAL BUDGET OBLIGATIONS: </Label> <Label><div>PHP {budgetData.totalBudgetObligation.amount.toFixed(2)}</div></Label></span>],
-        [<span><Label className={styles.table1LabelStyle}>BALANCE UNAPPROPRIATED: </Label> <Label><div>PHP {budgetData.balUnappropriated.amount.toFixed(2)}</div></Label></span>],
-        [<span><Label className={styles.table1LabelStyle}>ACTUAL INCOME: </Label> <Label><div>PHP {budgetData.actualIncome.amount.toFixed(2)}</div></Label></span>],
-        [<span><Label className={styles.table1LabelStyle}>ACTUAL RPT INCOME: </Label> <Label><div>PHP {budgetData.actualRPT.amount.toFixed(2)}</div></Label></span>],
-    ]
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(rowsProp.length / 12);
 
-    const headerProp2 = [["", "Per Proposed Budget", "Budgetary Limitation", "Balance"].map(
-        (text) => <span className={styles.header}>{text}</span>)]
+    const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    };
 
-    // const createRow = (label: string, key? : string, budgetLimit: string | JSX.Element = "" , balance: string | JSX.Element = ""): JSX.Element[] => [
-    //     <div className={styles.budgetDetails}>{label}</div>,
-    //     <
-    // ]
+    const startIndex = (currentPage - 1) * 12;
+    const endIndex = startIndex + 12;
+    const currentRows = rowsProp.slice(startIndex, endIndex);
 
-
-    const rowsProp2 = [
-        [<div className={styles.mainCategory}>"CURRENT OPERATING EXPENDITURES"</div>], 
-        [<div className={styles.subCategory}>Personal Services</div>],
-        ["Honoraria for Officials", <div>budgetData.</div>]
-    ]
 
     return(
-        <div>
-            <div className="mb-4 mt-10">
-                {/* Table 1 */}
-                <div className="bg-gray ishWhite border border-gray rounded-[5px] mx-4">
-                    <TableLayout header={headerProp1} rows={rowsProp1}/>
-                </div>
-                {/* Table 2 */}
-                <div>
-                    {/* <TableLayout header={headerProp2} rows={}/> */}
-                </div>
+        <div className="w-full h-full bg-snow flex flex-col gap-5">
+            <div className="bg-white p-5">
+                <TableLayout header={headerProp} rows={currentRows} />
+            </div>
+            <div>
+                <PaginationLayout className="" totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange}/>
             </div>
         </div>
     )
 }
+
 export default ViewBudgetPlan

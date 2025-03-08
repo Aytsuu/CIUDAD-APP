@@ -6,6 +6,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
+import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 export const columns: ColumnDef<BudgetPlan>[] = [
@@ -37,15 +38,7 @@ export const columns: ColumnDef<BudgetPlan>[] = [
         cell: ({}) => (
             <div className="flex justify-center gap-2">
                 <TooltipLayout
-                    trigger={
-                        <DialogLayout
-                            trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Eye size={16}/></div>}
-                            className="flex flex-col"
-                            title=""
-                            description=""
-                            mainContent={<div></div>} 
-                        />
-                    } 
+                    trigger={<Link to='/treasurer-budgetplan-view' ><div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Eye size={16}/></div></Link>}
                     content="View"
                 />
                 <TooltipLayout 
@@ -79,6 +72,13 @@ export const BudgetPlanRecords: BudgetPlan[] = [
 
 function BudgetPlan(){
     const data = BudgetPlanRecords;
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = 10; // Example total number of pages
+
+    const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    };
 
     return(
         <div className="w-full h-full">
@@ -123,7 +123,7 @@ function BudgetPlan(){
 
                     {/* Pagination */}
                     <div className="w-full sm:w-auto flex justify-center">
-                        <PaginationLayout className="" />
+                <PaginationLayout className="" totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange}/>                
                     </div>
                 </div>  
         </div>

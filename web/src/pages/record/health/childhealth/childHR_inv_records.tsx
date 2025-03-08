@@ -3,11 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-<<<<<<< HEAD
-import { Link } from "react-router";
-=======
 import { Link, useNavigate } from "react-router";
->>>>>>> master
 import { Search, Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,42 +16,14 @@ import { FileInput } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-<<<<<<< HEAD
-=======
 import { Label } from "@/components/ui/label";
 import CardLayout from "@/components/ui/card/card-layout";
 import { ChevronLeft } from "lucide-react";
 import ChildInfo from "./ChildsInformation";
->>>>>>> master
 
 export default function InvChildHealthRecords() {
   type ChrRecords = {
     id: number;
-<<<<<<< HEAD
-    // motherName: string;
-    mother: {
-      firstName: string;
-      lastName: string;
-      middleName: string;
-      gender: string;
-      age: number;
-      ageTime: string;
-    };
-
-    child: {
-      firstName: string;
-      lastName: string;
-      middleName: string;
-      gender: string;
-      age: number;
-      ageTime: string;
-    };
-
-    address: string;
-    sitio: string;
-    createdAt: string;
-  };
-=======
     age: string;
     wt: number;
     ht: number;
@@ -64,7 +32,6 @@ export default function InvChildHealthRecords() {
     updatedAt: string;
   };
 
->>>>>>> master
   const columns: ColumnDef<ChrRecords>[] = [
     {
       accessorKey: "id",
@@ -77,55 +44,6 @@ export default function InvChildHealthRecords() {
         </div>
       ),
     },
-<<<<<<< HEAD
-    {
-      accessorKey: "mother",
-      header: "Mother",
-      cell: ({ row }) => {
-        const mother = row.original.mother;
-        const fullName =
-          `${mother.lastName}, ${mother.firstName} ${mother.middleName}`.trim();
-
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {mother.gender}, {mother.age} {mother.ageTime} old
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-
-    {
-      accessorKey: "child",
-      header: "Child",
-      cell: ({ row }) => {
-        const child = row.original.mother;
-        const fullName =
-          `${child.lastName}, ${child.firstName} ${child.middleName}`.trim();
-
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {child.gender}, {child.age} {child.ageTime} old
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full truncate">{row.original.address}</div>
-=======
 
     {
       accessorKey: "age",
@@ -155,25 +73,16 @@ export default function InvChildHealthRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.updatedAt}</div>
->>>>>>> master
         </div>
       ),
     },
 
     {
-<<<<<<< HEAD
-      accessorKey: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.createdAt}</div>
-=======
       accessorKey: "updatedAt",
       header: "Updated At",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.updatedAt}</div>
->>>>>>> master
         </div>
       ),
     },
@@ -186,12 +95,7 @@ export default function InvChildHealthRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-<<<<<<< HEAD
-                    <Eye size={15} />
-             
-=======
                   <Eye size={15} />
->>>>>>> master
                 </div>
               }
               content="View"
@@ -221,108 +125,17 @@ export default function InvChildHealthRecords() {
   const sampleData: ChrRecords[] = [
     {
       id: 1,
-<<<<<<< HEAD
-
-      mother: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      child: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      createdAt: "2024-02-21",
-    },
-
-    {
-      id: 2,
-
-      mother: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      child: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      createdAt: "2024-02-21",
-    },
-
-    {
-      id: 3,
-
-      mother: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      child: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
-      address: "BOnsai Bolinawan Carcar City",
-      sitio: "Bolinawan",
-      createdAt: "2024-02-21",
-=======
       age: "4 days",
       wt: 12,
       ht: 34,
       vaccineStat: "Not FIC",
       nutritionStat: "Not FIC",
       updatedAt: "2024-02-21",
->>>>>>> master
     },
   ];
 
   const data = sampleData;
 
-<<<<<<< HEAD
-  const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter((item) => item.sitio === selectedFilter);
-
-  return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Records
-=======
   const navigate = useNavigate();
   function toChildHealthForm() {
     navigate("/newAddChildHRForm", { state: { recordType: "existingPatient" } });
@@ -339,48 +152,12 @@ export default function InvChildHealthRecords() {
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Individual Records
->>>>>>> master
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view childs information
           </p>
         </div>
       </div>
-<<<<<<< HEAD
-      <hr className="border-gray mb-6 sm:mb-10" />
-
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
-            </div>
-            <SelectLayout
-              className="w-full md:w-[200px] bg-white"
-              label=""
-              placeholder="Select"
-              options={filter}
-              value={selectedFilter}
-              onChange={setSelectedFilter}
-            />
-          </div>
-        </div>
-
-        <div className="w-full md:w-auto">
-          <Link to="/newAddChildHRForm">
-            <Button className=" w-full md:w-auto">New Record</Button>
-          </Link>
-        </div>
-      </div>
-
-      {/*  */}
-
-=======
       <hr className="border-gray mb-6 " />
 
       <div className="mb-5">
@@ -389,7 +166,6 @@ export default function InvChildHealthRecords() {
       <div className="w-full md:w-auto flex justify-end mb-2">
         <Button onClick={toChildHealthForm}>Update Record</Button>
       </div>
->>>>>>> master
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -416,11 +192,7 @@ export default function InvChildHealthRecords() {
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
-<<<<<<< HEAD
-          <DataTable columns={columns} data={filteredData} />
-=======
           <DataTable columns={columns} data={data} />
->>>>>>> master
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
@@ -430,7 +202,7 @@ export default function InvChildHealthRecords() {
 
           {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
+            {/* <PaginationLayout className="" /> */}
           </div>
         </div>
       </div>
