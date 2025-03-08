@@ -292,9 +292,9 @@ export const columns: ColumnDef<Resolution>[] = [
                     trigger={
                         <div className="flex items-center h-10">
                             <Link to="/update-res">
-                                <Button className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center">
+                                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center">
                                     <Pencil size={16} />
-                                </Button>
+                                </div>
                             </Link>
                         </div>
                     }
