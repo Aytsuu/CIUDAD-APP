@@ -23,7 +23,6 @@ interface DatePickerProps {
   startYear?: number;
   endYear?: number;
 }
-
 export function DatePicker({
   startYear = getYear(new Date()) - 100,
   endYear = getYear(new Date()) + 100,
