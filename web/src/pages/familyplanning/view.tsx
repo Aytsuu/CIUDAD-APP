@@ -500,8 +500,8 @@ const FamilyPlanningView: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* V. PHYSICAL EXAMINATION */}
-      <div className="border border-black">
+       
+       <div className="border border-black">
         {/* Header */}
         <div className="bg-gray-100 border-b border-black p-2">
           <Label className="font-bold">II. OBSTETRICAL HISTORY</Label>
@@ -509,70 +509,69 @@ const FamilyPlanningView: React.FC = () => {
         
         {/* Content */}
         <div className="p-4">
+        <Label>Number of pregnancies:</Label> G: <InputLine value="" />
           <div className="grid grid-cols-2 gap-4">
             {/* Left Column */}
             <div>
               <div className="flex items-center mb-2">
-                <Label className="text-sm whitespace-nowrap mr-2">Weight:</Label>
+                <Label className="text-sm whitespace-nowrap mr-2">Full term</Label>
                 <div className="border-b border-black flex-1"></div>
-                <Label className="text-sm ml-2">kg</Label>
-              </div>
+                </div>
               
               <div className="flex items-center mb-4">
-                <Label className="text-sm whitespace-nowrap mr-2">Height:</Label>
+                <Label className="text-sm whitespace-nowrap mr-2">Abortion</Label>
                 <div className="border-b border-black flex-1"></div>
-                <Label className="text-sm ml-2">m</Label>
-              </div>
-              
-              <div className="mb-2">
-                <Label className="text-sm font-bold">SKIN:</Label>
-                <div className="ml-4 mt-1">
-                  <div className="flex items-center gap-1">
-                    <Checkbox id="skin-normal" disabled />
-                    <Label htmlFor="skin-normal" className="text-sm">normal</Label>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Checkbox id="skin-pale" disabled />
-                    <Label htmlFor="skin-pale" className="text-sm">pale</Label>
-                  </div>
-                </div>
               </div>
             </div>
-            
+          
             {/* Right Column */}
             <div>
               <div className="flex items-center mb-2">
-                <Label className="text-sm whitespace-nowrap mr-2">Blood pressure:</Label>
+                <Label className="text-sm whitespace-nowrap mr-2">Premature</Label>
                 <div className="border-b border-black flex-1"></div>
-                <Label className="text-sm ml-2">mmHg</Label>
               </div>
               
               <div className="flex items-center mb-4">
-                <Label className="text-sm whitespace-nowrap mr-2">Pulse rate:</Label>
+                <Label className="text-sm whitespace-nowrap mr-2">Living Children</Label>
                 <div className="border-b border-black flex-1"></div>
-                <Label className="text-sm ml-2">/min</Label>
+
+
+              </div>
+
+
+              <div className="flex items-center mb-2">
+                
+              <div className="ml-6 space-y-2">
+                
               </div>
               
-              <div className="mb-2">
-                <Label className="text-sm font-bold">EXTREMITIES</Label>
-                <div className="ml-4 mt-1">
-                  <div className="flex items-center gap-1">
-                    <Checkbox id="extremities-normal" disabled />
-                    <Label htmlFor="extremities-normal" className="text-sm">normal</Label>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Checkbox id="extremities-edema" disabled />
-                    <Label htmlFor="extremities-edema" className="text-sm">edema</Label>
-                  </div>
-      </div>
+              <div className="mt-">
+                  <Label>Menstrual Flow</Label>
+                        <div className="ml-10">
+                          {["Scanty", "Moderate", "Heavy"].map((flow) => (
+                            <div key={flow} className="flex items-center space-x-2 mb-2">
+                                <input
+                                  type="radio"
+                                  id={`flow-${flow.toLowerCase()}`}
+                                  className="w-4 h-4"
+                                />
+                              <Label htmlFor={`flow-${flow.toLowerCase()}`}>
+                                {flow} {flow === "Scanty" && "(1-2 pads per day)"}
+                                {flow === "Moderate" && "(3-5 pads per day)"}
+                                {flow === "Heavy" && "(more than 5 pads per day)"}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
 
-      
                 </div>
+            
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

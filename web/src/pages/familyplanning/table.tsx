@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Eye, Search, Trash } from "lucide-react";
 import { Link } from "react-router-dom";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 type FamPlanningPatient = {
   id: number;
@@ -47,19 +48,20 @@ function FamPlanningTable() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Table Columns
-  const columns: ColumnDef<FamPlanningPatient>[] = [  
-      {accessorKey: "id",
-        header: "#",
-        cell: ({ row }) => (
-          <div className="flex justify-center">
-            <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-              {row.original.id}
-            </div>
+  const columns: ColumnDef<FamPlanningPatient>[] = [
+    {
+      accessorKey: "id",
+      header: "#",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+            {row.original.id}
           </div>
-        ),
-      },
-  
-      {accessorKey: "fullName",
+        </div>
+      ),
+    },
+    {
+      accessorKey: "fullName",
       header: "Patient",
       cell: ({ row }) => {
         const { fname, lname } = row.original;
@@ -72,13 +74,33 @@ function FamPlanningTable() {
     { accessorKey: "type", header: "Type" },
     { accessorKey: "createdAt", header: "Created At" },
     {
-      accessorKey: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <Link to={`/FamPlanning_view/${row.original.id}`}>
-            <Button variant="outline">View</Button>
-          </Link>
+      accessorKey: "action",
+      header: "Action",
+      cell: () => (
+        <div className="flex justify-center gap-2">
+          <TooltipLayout
+            trigger={
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Eye size={15} />
+              </div>
+            }
+            content="View"
+          />
+
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                    <Trash size={16} />
+                  </div>
+                }
+                className=""
+                mainContent={<></>}
+              />
+            }
+            content="Delete"
+          />
         </div>
       ),
     },
@@ -125,14 +147,14 @@ function FamPlanningTable() {
               placeholder="Search..."
               className="pl-10 w-72 bg-white"
               value={searchQuery}
-              onChangeCapture={handleSearchChange}
+              onChange={handleSearchChange} // Fixed from onChangeCapture
             />
           </div>
         </div>
 
         {/* New Record Button */}
         <div className="flex justify-end">
-        <Link to={`/FamPlanning_main/`}>
+          <Link to={`/FamPlanning_main/`}>
             <Button variant="default">New record</Button>
           </Link>
         </div>
@@ -140,31 +162,28 @@ function FamPlanningTable() {
 
       {/* Table Section */}
       <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
-
+        <div className="flex gap-x-2 items-center">
+          <p className="text-xs sm:text-sm">Show</p>
+          <Input type="number" className="w-14 h-8" defaultValue="10" />
+          <p className="text-xs sm:text-sm">Entries</p>
         </div>
-        {/* Table */}
-        <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={filteredPatients} />
-        </div>
+      </div>
 
-        {/* Pagination & Info */}
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-{filteredPatients.length} of {patients.length} records
-          </p>
+      {/* Table */}
+      <div className="bg-white w-full overflow-x-auto">
+        <DataTable columns={columns} data={filteredPatients} />
+      </div>
 
-          {/* Pagination */}
-          <div className="w-full sm:w-auto flex justify-center">
-            
-          </div>
-        </div>
-   
+      {/* Pagination & Info */}
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+        {/* Showing Rows Info */}
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          Showing 1-{filteredPatients.length} of {patients.length} records
+        </p>
+
+        {/* Pagination */}
+        <div className="w-full sm:w-auto flex justify-center"></div>
+      </div>
     </div>
   );
 }

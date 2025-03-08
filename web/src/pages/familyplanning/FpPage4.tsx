@@ -2,12 +2,13 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button"
-import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { type FormData, page4Schema } from "@/form-schema/FamilyPlanningSchema"
+import { useEffect } from "react"
 
 // Add props type to the component
 type Page4Props = {
@@ -20,82 +21,68 @@ type Page4Props = {
 const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }: Page4Props) => {
   // Initialize form with formData values
   const form = useForm<FormData>({
-    resolver: zodResolver(FamilyPlanningSchema),
-    defaultValues: formData || {
-      weight: "",
-      height: "",
-      bloodPressure: "",
-      pulseRate: "",
-
-      skinNormal: false,
-      skinPale: false,
-      skinYellowish: false,
-      skinHematoma: false,
-      conjunctivaNormal: false,
-      conjunctivaPale: false,
-      neckNormal: false,
-      neckMass: false,
-      neckEnlargedLymphNodes: false,
-      breastNormal: false,
-      breastMass: false,
-      abdomenNormal: false,
-      abdomenVaricosities: false,
-
-      extremitiesNormal: false,
-      extremitiesEdema: false,
-      extremitiesVaricosities: false,
-      pelvicNormal: false,
-      pelvicMass: false,
-      pelvicAbnormalDischarge: false,
-      pelvicCervicalAbnormalities: false,
-      pelvicWarts: false,
-      pelvicPolypOrCyst: false,
-      pelvicInflammationOrErosion: false,
-      pelvicBloodyDischarge: false,
-      cervicalConsistencyFirm: false,
-      cervicalConsistencySoft: false,
-      cervicalTenderness: false,
-      cervicalAdnexalMassTenderness: false,
-
-      uterinePositionMid: false,
-      uterinePositionAnteflexed: false,
-      uterinePositionRetroflexed: false,
-      uterineDepth: "",
-    },
+    resolver: zodResolver(page4Schema),
+    defaultValues: formData,
+    values: formData,
+    mode: "onChange",
   })
 
+  // Check if user selected IUD in page 1
+  const isIUDSelected =
+    formData.methodCurrentlyUsed === "IUD" ||
+    (formData.typeOfClient === "New Acceptor" && formData.acknowledgement?.selectedMethod === "iud")
+
   // Add form submission handler to update parent form data
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log("Form Submitted", data)
     updateFormData(data)
     onNext5()
   }
 
-  // Helper function to render checkbox group
-  const renderCheckboxGroup = (label: string, options: { name: string; label: string }[], className?: string) => (
+  // Helper function to render radio group
+  const renderRadioGroup = (
+    label: string,
+    name: string,
+    options: { value: string; label: string }[],
+    className?: string,
+  ) => (
     <div className={`mb-4 ${className}`}>
       <p className="font-semibold mb-2">{label}</p>
-      <div className="space-y-2">
-        {options.map((option) => (
-          <FormField
-            key={option.name}
-            control={form.control}
-            name={option.name as keyof FormData}
-            render={({ field }) => (
-              <FormItem className="flex items-center space-x-2">
-                <FormControl>
-                  <Checkbox checked={field.value as boolean} onCheckedChange={field.onChange} id={option.name} />
-                </FormControl>
-                <FormLabel htmlFor={option.name} className="text-sm">
-                  {option.label}
-                </FormLabel>
-              </FormItem>
-            )}
-          />
-        ))}
-      </div>
+      <FormField
+        control={form.control}
+        name={name as any}
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <RadioGroup value={field.value as string} onValueChange={field.onChange} className="space-y-1">
+                {options.map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option.value} id={`${name}-${option.value}`} />
+                    <FormLabel htmlFor={`${name}-${option.value}`} className="text-sm font-normal">
+                      {option.label}
+                    </FormLabel>
+                  </div>
+                ))}
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   )
+
+  // Reset pelvic examination fields when IUD is not selected
+  useEffect(() => {
+    if (!isIUDSelected) {
+      form.setValue("pelvicExamination", "not_applicable")
+      form.setValue("cervicalConsistency", "not_applicable")
+      form.setValue("cervicalTenderness", false)
+      form.setValue("cervicalAdnexalMassTenderness", false)
+      form.setValue("uterinePosition", "not_applicable")
+      form.setValue("uterineDepth", "")
+    }
+  }, [isIUDSelected, form])
 
   return (
     <Card className="w-full">
@@ -116,6 +103,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     <FormControl>
                       <Input type="text" placeholder="Enter weight" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -128,6 +116,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     <FormControl>
                       <Input type="text" placeholder="Enter height" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -140,6 +129,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     <FormControl>
                       <Input type="text" placeholder="Enter BP" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -152,6 +142,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     <FormControl>
                       <Input type="text" placeholder="Enter pulse rate" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -159,172 +150,195 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
 
             <div className="grid md:grid-cols-3 gap-6 mt-6">
               {/* Skin Examination */}
-              {renderCheckboxGroup("SKIN", [
-                { name: "skinNormal", label: "normal" },
-                { name: "skinPale", label: "pale" },
-                { name: "skinYellowish", label: "yellowish" },
-                { name: "skinHematoma", label: "hematoma" },
+              {renderRadioGroup("SKIN", "skinExamination", [
+                { value: "normal", label: "Normal" },
+                { value: "pale", label: "Pale" },
+                { value: "yellowish", label: "Yellowish" },
+                { value: "hematoma", label: "Hematoma" },
               ])}
 
               {/* Conjunctiva Examination */}
-              {renderCheckboxGroup("CONJUNCTIVA", [
-                { name: "conjunctivaNormal", label: "normal" },
-                { name: "conjunctivaPale", label: "pale" },
-                { name: "conjunctivaYellowish", label: "yellowish" },
+              {renderRadioGroup("CONJUNCTIVA", "conjunctivaExamination", [
+                { value: "normal", label: "Normal" },
+                { value: "pale", label: "Pale" },
+                { value: "yellowish", label: "Yellowish" },
               ])}
 
               {/* Neck Examination */}
-              {renderCheckboxGroup("NECK", [
-                { name: "neckNormal", label: "normal" },
-                { name: "neckMass", label: "neck mass" },
-                { name: "neckEnlargedLymphNodes", label: "enlarged lymph nodes" },
+              {renderRadioGroup("NECK", "neckExamination", [
+                { value: "normal", label: "Normal" },
+                { value: "neck_mass", label: "Neck mass" },
+                { value: "enlarged_lymph_nodes", label: "Enlarged lymph nodes" },
               ])}
 
               {/* Breast Examination */}
-              {renderCheckboxGroup("BREAST", [
-                { name: "breastNormal", label: "normal" },
-                { name: "breastMass", label: "mass" },
-                { name: "breastNippleDischarge", label: "nipple discharge" },
+              {renderRadioGroup("BREAST", "breastExamination", [
+                { value: "normal", label: "Normal" },
+                { value: "mass", label: "Mass" },
+                { value: "nipple_discharge", label: "Nipple discharge" },
               ])}
 
               {/* Abdomen Examination */}
-              {renderCheckboxGroup("ABDOMEN", [
-                { name: "abdomenNormal", label: "normal" },
-                { name: "abdomenMass", label: "abdominal mass" },
-                { name: "abdomenVaricosities", label: "varicosities" },
+              {renderRadioGroup("ABDOMEN", "abdomenExamination", [
+                { value: "normal", label: "Normal" },
+                { value: "abdominal_mass", label: "Abdominal mass" },
+                { value: "varicosities", label: "Varicosities" },
               ])}
 
               {/* Extremities Examination */}
-              {renderCheckboxGroup("EXTREMITIES", [
-                { name: "extremitiesNormal", label: "normal" },
-                { name: "extremitiesEdema", label: "edema" },
-                { name: "extremitiesVaricosities", label: "varicosities" },
+              {renderRadioGroup("EXTREMITIES", "extremitiesExamination", [
+                { value: "normal", label: "Normal" },
+                { value: "edema", label: "Edema" },
+                { value: "varicosities", label: "Varicosities" },
               ])}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mt-6">
-              {/* Pelvic Examination */}
-              <div>
-                <h4 className="font-semibold mb-4">PELVIC EXAMINATION (For IUD Acceptors)</h4>
-                {renderCheckboxGroup("", [
-                  { name: "pelvicNormal", label: "normal" },
-                  { name: "pelvicMass", label: "mass" },
-                  { name: "pelvicAbnormalDischarge", label: "abnormal discharge" },
-                  { name: "pelvicCervicalAbnormalities", label: "cervical abnormalities" },
-                  { name: "pelvicWarts", label: "warts" },
-                  { name: "pelvicPolypOrCyst", label: "polyp or cyst" },
-                  { name: "pelvicInflammationOrErosion", label: "inflammation or erosion" },
-                  { name: "pelvicBloodyDischarge", label: "bloody discharge" },
+              {/* Pelvic Examination - Only enabled for IUD acceptors */}
+              <div className={isIUDSelected ? "" : "opacity-50 pointer-events-none"}>
+                <h4 className="font-semibold mb-4">
+                  PELVIC EXAMINATION (For IUD Acceptors)
+                  {!isIUDSelected && <span className="text-sm text-red-500 ml-2">(Disabled - IUD not selected)</span>}
+                </h4>
+
+                {renderRadioGroup("", "pelvicExamination", [
+                  { value: "normal", label: "Normal" },
+                  { value: "mass", label: "Mass" },
+                  { value: "abnormal_discharge", label: "Abnormal discharge" },
+                  { value: "cervical_abnormalities", label: "Cervical abnormalities" },
+                  { value: "warts", label: "Warts" },
+                  { value: "polyp_or_cyst", label: "Polyp or cyst" },
+                  { value: "inflammation_or_erosion", label: "Inflammation or erosion" },
+                  { value: "bloody_discharge", label: "Bloody discharge" },
                 ])}
               </div>
 
-              {/* Cervical and Uterine Examination */}
-              <div>
+              {/* Cervical and Uterine Examination - Only enabled for IUD acceptors */}
+              <div className={isIUDSelected ? "" : "opacity-50 pointer-events-none"}>
                 <div className="mb-4">
                   <p className="font-semibold mb-2">CERVICAL CONSISTENCY</p>
-                  <div className="flex space-x-4">
-                    <FormField
-                      control={form.control}
-                      name="cervicalConsistencyFirm"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              id="cervicalConsistencyFirm"
-                            />
-                          </FormControl>
-                          <FormLabel htmlFor="cervicalConsistencyFirm" className="text-sm">
-                            Firm
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cervicalConsistencySoft"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              id="cervicalConsistencySoft"
-                            />
-                          </FormControl>
-                          <FormLabel htmlFor="cervicalConsistencySoft" className="text-sm">
-                            Soft
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="cervicalConsistency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <RadioGroup
+                            value={field.value as string}
+                            onValueChange={field.onChange}
+                            className="flex space-x-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="firm" id="cervicalConsistency-firm" disabled={!isIUDSelected} />
+                              <FormLabel htmlFor="cervicalConsistency-firm" className="text-sm font-normal">
+                                Firm
+                              </FormLabel>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="soft" id="cervicalConsistency-soft" disabled={!isIUDSelected} />
+                              <FormLabel htmlFor="cervicalConsistency-soft" className="text-sm font-normal">
+                                Soft
+                              </FormLabel>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
-                {renderCheckboxGroup("", [
-                  { name: "cervicalTenderness", label: "cervical tenderness" },
-                  { name: "cervicalAdnexalMassTenderness", label: "adnexal mass/tenderness" },
-                ])}
+                <div className="space-y-2 mt-4">
+                  <FormField
+                    control={form.control}
+                    name="cervicalTenderness"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value as boolean}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            id="cervicalTenderness"
+                            disabled={!isIUDSelected}
+                            className="h-4 w-4"
+                          />
+                        </FormControl>
+                        <FormLabel htmlFor="cervicalTenderness" className="text-sm font-normal">
+                          Cervical tenderness
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="cervicalAdnexalMassTenderness"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value as boolean}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            id="cervicalAdnexalMassTenderness"
+                            disabled={!isIUDSelected}
+                            className="h-4 w-4"
+                          />
+                        </FormControl>
+                        <FormLabel htmlFor="cervicalAdnexalMassTenderness" className="text-sm font-normal">
+                          Adnexal mass/tenderness
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="mb-4 mt-4">
                   <p className="font-semibold mb-2">UTERINE POSITION</p>
-                  <div className="flex space-x-4">
-                    <FormField
-                      control={form.control}
-                      name="uterinePositionMid"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              id="uterinePositionMid"
-                            />
-                          </FormControl>
-                          <FormLabel htmlFor="uterinePositionMid" className="text-sm">
-                            Mid
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="uterinePositionAnteflexed"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              id="uterinePositionAnteflexed"
-                            />
-                          </FormControl>
-                          <FormLabel htmlFor="uterinePositionAnteflexed" className="text-sm">
-                            Anteflexed
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="uterinePositionRetroflexed"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value as boolean}
-                              onCheckedChange={field.onChange}
-                              id="uterinePositionRetroflexed"
-                            />
-                          </FormControl>
-                          <FormLabel htmlFor="uterinePositionRetroflexed" className="text-sm">
-                            Retroflexed
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="uterinePosition"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <RadioGroup
+                            value={field.value as string}
+                            onValueChange={field.onChange}
+                            className="flex flex-wrap gap-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="mid" id="uterinePosition-mid" disabled={!isIUDSelected} />
+                              <FormLabel htmlFor="uterinePosition-mid" className="text-sm font-normal">
+                                Mid
+                              </FormLabel>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="anteflexed"
+                                id="uterinePosition-anteflexed"
+                                disabled={!isIUDSelected}
+                              />
+                              <FormLabel htmlFor="uterinePosition-anteflexed" className="text-sm font-normal">
+                                Anteflexed
+                              </FormLabel>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value="retroflexed"
+                                id="uterinePosition-retroflexed"
+                                disabled={!isIUDSelected}
+                              />
+                              <FormLabel htmlFor="uterinePosition-retroflexed" className="text-sm font-normal">
+                                Retroflexed
+                              </FormLabel>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <FormField
@@ -334,8 +348,9 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     <FormItem>
                       <FormLabel>Uterine Depth</FormLabel>
                       <FormControl>
-                        <Input type="text" placeholder="cm" {...field} />
+                        <Input type="text" placeholder="cm" {...field} disabled={!isIUDSelected} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -347,7 +362,23 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
               <Button variant="outline" type="button" onClick={onPrevious3}>
                 Previous
               </Button>
-              <Button type="submit">Next</Button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  // Validate the form
+                  const isValid = await form.trigger()
+                  if (isValid) {
+                    // If valid, save data and proceed
+                    const currentValues = form.getValues()
+                    updateFormData(currentValues)
+                    onNext5()
+                  } else {
+                    console.error("Please fill in all required fields")
+                  }
+                }}
+              >
+                Next
+              </Button>
             </div>
           </form>
         </Form>

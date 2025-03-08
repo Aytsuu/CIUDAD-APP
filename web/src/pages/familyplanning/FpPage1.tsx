@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Button } from "@/components/ui/button"
-import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { type FormData, page1Schema } from "@/form-schema/FamilyPlanningSchema"
 
 // Ensure the component is properly typed
 type Page1Props = {
@@ -20,10 +20,10 @@ type Page1Props = {
 
 export default function FamilyPlanningForm({ onNext2, updateFormData, formData }: Page1Props) {
   const form = useForm<FormData>({
-    resolver: zodResolver(FamilyPlanningSchema),
+    resolver: zodResolver(page1Schema), // Use page-specific schema
     defaultValues: formData,
-   
     values: formData,
+    mode: "onChange", // Validate on change for better user experience
   })
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     console.log("FamilyPlanningForm received formData:", formData)
   }, [formData])
 
-  const onSubmitForm = (data: FormData) => {
+  const onSubmitForm = async (data: FormData) => {
     console.log("PAGE 1 Submitted Data:", data)
     // Update the parent component's state with the form data
     updateFormData(data)
@@ -65,6 +65,35 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     { id: "Implant", name: "Implant" },
     { id: "Condom", name: "Condom" },
   ]
+
+  // Get current values for conditional rendering
+  const typeOfClient = form.watch("typeOfClient")
+  const subTypeOfClient = form.watch("subTypeOfClient")
+
+  // Determine which sections should be enabled
+  const isNewAcceptor = typeOfClient === "New Acceptor"
+  const isCurrentUserChangingMethod = typeOfClient === "Current User" && subTypeOfClient === "Changing Method"
+  const isCurrentUserNotChangingMethod =
+    typeOfClient === "Current User" && subTypeOfClient !== "Changing Method" && subTypeOfClient !== ""
+
+  // Reset fields when type of client changes
+  useEffect(() => {
+    if (isNewAcceptor) {
+      // Reset reason field for New Acceptor
+      form.setValue("reason", "")
+      form.setValue("methodCurrentlyUsed", undefined)
+      form.setValue("otherMethod", "")
+    } else if (isCurrentUserChangingMethod) {
+      // Reset reasonForFP field for Current User with Changing Method
+      form.setValue("reasonForFP", "")
+      form.setValue("otherReasonForFP", "")
+    } else if (isCurrentUserNotChangingMethod) {
+      // Reset reason and methodCurrentlyUsed for Current User not Changing Method
+      form.setValue("reason", "")
+      form.setValue("methodCurrentlyUsed", undefined)
+      form.setValue("otherMethod", "")
+    }
+  }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUserChangingMethod, isCurrentUserNotChangingMethod])
 
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
@@ -514,9 +543,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
 
             {/* Client Type and Methods Section */}
             <div className="border border-t-black w-full p-4 rounded-md mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Type of Client Section */}
-                <div>
+              <div className="grid grid-cols-12 gap-6">
+                {/* Type of Client Section - Left Column */}
+                <div className="col-span-3">
                   <h3 className="font-semibold mb-3">Type of Client</h3>
                   {["New Acceptor", "Current User"].map((type) => (
                     <FormField
@@ -569,68 +598,92 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   )}
                 </div>
 
-                {/* Reason for FP Section */}
-                <div>
+                {/* Middle Column - Reasons */}
+                <div className="col-span-4 space-y-6">
+                  {/* Reason for FP Section */}
                   <FormField
                     control={form.control}
                     name="reasonForFP"
                     render={({ field }) => (
-                      <FormItem className="w-full flex flex-col space-y-2">
-                        <Label className="font-semibold">Reason for FP</Label>
-                        {["Spacing", "Limiting", "Others"].map((option) => (
-                          <div key={option} className="flex items-center space-x-2 mb-2">
-                            <FormControl>
-                              <input
-                                type="radio"
-                                value={option}
-                                checked={field.value === option}
-                                onChange={() => field.onChange(option)}
-                              />
-                            </FormControl>
-                            <Label>{option}</Label>
-                            {option === "Others" && field.value === "Others" && (
-                              <FormField
-                                control={form.control}
-                                name="otherReasonForFP"
-                                render={({ field: otherField }) => <Input className="w-full" {...otherField} />}
-                              />
-                            )}
-                          </div>
-                        ))}
+                      <FormItem className="w-full">
+                        <Label className={`font-semibold ${isCurrentUserChangingMethod ? "text-gray-400" : ""}`}>
+                          Reason for FP
+                        </Label>
+                        <div className="space-y-2 mt-2">
+                          {["Spacing", "Limiting", "Others"].map((option) => (
+                            <div key={option} className="flex items-center space-x-2">
+                              <FormControl>
+                                <input
+                                  type="radio"
+                                  value={option}
+                                  checked={field.value === option}
+                                  onChange={() => field.onChange(option)}
+                                  disabled={isCurrentUserChangingMethod}
+                                  className={isCurrentUserChangingMethod ? "opacity-50 cursor-not-allowed" : ""}
+                                />
+                              </FormControl>
+                              <Label className={isCurrentUserChangingMethod ? "text-gray-400" : ""}>{option}</Label>
+                              {option === "Others" && field.value === "Others" && !isCurrentUserChangingMethod && (
+                                <FormField
+                                  control={form.control}
+                                  name="otherReasonForFP"
+                                  render={({ field: otherField }) => (
+                                    <Input className="w-32" {...otherField} disabled={isCurrentUserChangingMethod} />
+                                  )}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
+                  {/* Reason Section */}
                   <FormField
                     control={form.control}
                     name="reason"
                     render={({ field }) => (
-                      <FormItem className="w-full flex flex-col space-y-2 mt-4">
-                        <Label className="font-semibold">Reason</Label>
-                        {["Medical Condition", "Side Effects"].map((reasonOption) => (
-                          <div key={reasonOption} className="flex items-center space-x-2 mb-2">
-                            <FormControl>
-                              <input
-                                type="radio"
-                                value={reasonOption}
-                                checked={field.value === reasonOption}
-                                onChange={() => field.onChange(reasonOption)}
-                              />
-                            </FormControl>
-                            <Label>{reasonOption}</Label>
-                          </div>
-                        ))}
+                      <FormItem className="w-full">
+                        <Label
+                          className={`font-semibold ${isNewAcceptor || isCurrentUserNotChangingMethod ? "text-gray-400" : ""}`}
+                        >
+                          Reason
+                        </Label>
+                        <div className="space-y-2 mt-2">
+                          {["Medical Condition", "Side Effects"].map((reasonOption) => (
+                            <div key={reasonOption} className="flex items-center space-x-2">
+                              <FormControl>
+                                <input
+                                  type="radio"
+                                  value={reasonOption}
+                                  checked={field.value === reasonOption}
+                                  onChange={() => field.onChange(reasonOption)}
+                                  disabled={isNewAcceptor || isCurrentUserNotChangingMethod}
+                                  className={
+                                    isNewAcceptor || isCurrentUserNotChangingMethod
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }
+                                />
+                              </FormControl>
+                              <Label className={isNewAcceptor || isCurrentUserNotChangingMethod ? "text-gray-400" : ""}>
+                                {reasonOption}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
 
-                {/* Method Currently Used Section */}
-                <div>
-                  <h3 className="font-semibold text-sm w-full mb-3">Method currently used (for Changing Method):</h3>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {/* Right Column - Method Currently Used */}
+                <div className="col-span-5">
+                  <h3 className="font-semibold text-sm mb-3">Method currently used (for Changing Method):</h3>
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2">
                     {methodCurrentlyUsed.map((method) => (
                       <FormField
                         key={method.id}
@@ -644,78 +697,85 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                 value={method.name}
                                 checked={field.value === method.name}
                                 onChange={() => field.onChange(method.name)}
-                                disabled={
-                                  !(
-                                    form.watch("typeOfClient") === "Current User" &&
-                                    form.watch("subTypeOfClient") === "Changing Method"
-                                  )
-                                }
+                                disabled={!isCurrentUserChangingMethod}
+                                className={!isCurrentUserChangingMethod ? "opacity-50 cursor-not-allowed" : ""}
                               />
                             </FormControl>
-                            <Label className="text-sm whitespace-nowrap ml-2">{method.name}</Label>
+                            <Label
+                              className={`text-sm whitespace-nowrap ml-2 ${!isCurrentUserChangingMethod ? "text-gray-400" : ""}`}
+                            >
+                              {method.name}
+                            </Label>
                           </FormItem>
                         )}
                       />
                     ))}
+                  </div>
 
-                    <div className="col-span-2 flex items-center space-x-2 mt-2">
-                      <FormField
-                        control={form.control}
-                        name="methodCurrentlyUsed"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <input
-                                type="radio"
-                                value="Others"
-                                checked={field.value === "Others"}
-                                onChange={() => {
-                                  field.onChange("Others")
-                                  if (field.value !== "Others") {
-                                    form.setValue("otherMethod", "")
-                                  }
-                                }}
-                                disabled={
-                                  !(
-                                    form.watch("typeOfClient") === "Current User" &&
-                                    form.watch("subTypeOfClient") === "Changing Method"
-                                  )
+                  <div className="flex items-center space-x-2 mt-2">
+                    <FormField
+                      control={form.control}
+                      name="methodCurrentlyUsed"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl>
+                            <input
+                              type="radio"
+                              value="Others"
+                              checked={field.value === "Others"}
+                              onChange={() => {
+                                field.onChange("Others")
+                                if (field.value !== "Others") {
+                                  form.setValue("otherMethod", "")
                                 }
-                              />
-                            </FormControl>
-                            <Label className="text-sm">Others</Label>
-                          </FormItem>
-                        )}
-                      />
-                      {form.watch("methodCurrentlyUsed") === "Others" && (
-                        <>
-                          <span className="text-sm">Specify:</span>
-                          <FormField
-                            control={form.control}
-                            name="otherMethod"
-                            render={({ field }) => (
-                              <Input
-                                type="text"
-                                className="w-full"
-                                {...field}
-                                disabled={
-                                  !(
-                                    form.watch("typeOfClient") === "Current User" &&
-                                    form.watch("subTypeOfClient") === "Changing Method"
-                                  )
-                                }
-                              />
-                            )}
-                          />
-                        </>
+                              }}
+                              disabled={!isCurrentUserChangingMethod}
+                              className={!isCurrentUserChangingMethod ? "opacity-50 cursor-not-allowed" : ""}
+                            />
+                          </FormControl>
+                          <Label className={`text-sm ${!isCurrentUserChangingMethod ? "text-gray-400" : ""}`}>
+                            Others
+                          </Label>
+                        </FormItem>
                       )}
-                    </div>
+                    />
+                    {form.watch("methodCurrentlyUsed") === "Others" && (
+                      <>
+                        <span className={`text-sm ${!isCurrentUserChangingMethod ? "text-gray-400" : ""}`}>
+                          specify:
+                        </span>
+                        <FormField
+                          control={form.control}
+                          name="otherMethod"
+                          render={({ field }) => (
+                            <Input type="text" className="w-32" {...field} disabled={!isCurrentUserChangingMethod} />
+                          )}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex justify-end space-x-4">
-              <Button type="submit">Next</Button>
+              <Button
+                type="submit"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  // Validate the form
+                  const isValid = await form.trigger()
+                  if (isValid) {
+                    // If valid, save data and proceed
+                    const currentValues = form.getValues()
+                    updateFormData(currentValues)
+                    onNext2()
+                  } else {
+                    console.error("Please fill in all required fields")
+                  }
+                }}
+              >
+                Next
+              </Button>
             </div>
           </form>
         </Form>
@@ -723,3 +783,4 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     </div>
   )
 }
+

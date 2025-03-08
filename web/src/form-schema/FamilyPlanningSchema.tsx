@@ -14,6 +14,7 @@ const ServiceProvisionRecordSchema = z.object({
 })
 
 export const FamilyPlanningSchema = z.object({
+  // Page 1 fields
   clientID: z.string().nonempty("Client ID is required"),
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean(),
@@ -21,7 +22,7 @@ export const FamilyPlanningSchema = z.object({
 
   lastName: z.string().nonempty("Last name is required"),
   givenName: z.string().nonempty("Given name is required"),
-  middleInitial: z.string().max(1, "Middle Initial must be 1 character only ").optional(),
+  middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
   dateOfBirth: z.string().nonempty("Birthdate is required"),
   age: z.number().min(0, "Age is required and must be a positive number"),
   educationalAttainment: z.string().nonempty("Educational Attainment is required"),
@@ -38,7 +39,7 @@ export const FamilyPlanningSchema = z.object({
   spouse: z.object({
     s_lastName: z.string().nonempty("Last name is required"),
     s_givenName: z.string().nonempty("Given name is required"),
-    s_middleInitial: z.string().max(1, "Middle Initial must be 1 character only ").optional(),
+    s_middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
     s_dateOfBirth: z.string().nonempty("Birthdate is required"),
     s_age: z.number().min(0, "Age is required and must be a positive number"),
     s_occupation: z.string().optional(),
@@ -48,13 +49,13 @@ export const FamilyPlanningSchema = z.object({
   planToHaveMoreChildren: z.boolean(),
   averageMonthlyIncome: z.string().optional(),
 
-  typeOfClient: z.string().nonempty("Required"),
-  subTypeOfClient: z.string().nonempty("Required"),
+  typeOfClient: z.string().nonempty("Type of client is required"),
+  subTypeOfClient: z.string().nonempty("Sub-type of client is required"),
 
-  reasonForFP: z.string().nonempty("Required"),
+  reasonForFP: z.string().optional(),
   otherReasonForFP: z.string().optional(),
 
-  reason: z.string().nonempty("Required"),
+  reason: z.string().optional(),
 
   methodCurrentlyUsed: z
     .enum([
@@ -77,6 +78,7 @@ export const FamilyPlanningSchema = z.object({
 
   otherMethod: z.string().optional(), // For 'Others' input field
 
+  // Page 2 fields
   medicalHistory: z.object({
     severeHeadaches: z.boolean(),
     strokeHeartAttackHypertension: z.boolean(),
@@ -108,14 +110,14 @@ export const FamilyPlanningSchema = z.object({
     lastMenstrualPeriod: z.string().optional(),
     previousMenstrualPeriod: z.string().optional(),
 
-    // Menstrual Flow & Conditions
-    menstrualFlow: z.array(z.enum(["Scanty", "Moderate", "Heavy"])).optional(),
-    dysmenorrhea: z.boolean(),
-    hydatidiformMole: z.boolean(),
-    ectopicPregnancyHistory: z.boolean(),
+    // Changed from array to string for radio button selection
+    menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]).optional(),
+    dysmenorrhea: z.boolean().default(false),
+    hydatidiformMole: z.boolean().default(false),
+    ectopicPregnancyHistory: z.boolean().default(false),
   }),
 
-  // **Newly Added Section: Risks for Sexually Transmitted Infections**
+  // Page 3 fields
   sexuallyTransmittedInfections: z.object({
     abnormalDischarge: z.boolean(),
     dischargeFrom: z.array(z.enum(["Vagina", "Penis"])).optional(),
@@ -125,7 +127,6 @@ export const FamilyPlanningSchema = z.object({
     hiv: z.boolean(),
   }),
 
-  // **Newly Added Section: Risks for Violence Against Women (VAW)**
   violenceAgainstWomen: z.object({
     unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
@@ -133,10 +134,12 @@ export const FamilyPlanningSchema = z.object({
     referredTo: z.array(z.enum(["DSWD", "WCPU", "NGOs", "Others"])).optional(),
     otherReferral: z.string().optional().nullable(),
   }),
-  weight: z.string().optional(),
-  height: z.string().optional(),
-  bloodPressure: z.string().optional(),
-  pulseRate: z.string().optional(),
+
+  // Page 4 fields
+  weight: z.string().nonempty("Weight is required"),
+  height: z.string().nonempty("Height is required"),
+  bloodPressure: z.string().nonempty("Blood pressure is required"),
+  pulseRate: z.string().nonempty("Pulse rate is required"),
 
   // Skin Examination
   skinNormal: z.boolean().optional(),
@@ -191,7 +194,7 @@ export const FamilyPlanningSchema = z.object({
   uterinePositionRetroflexed: z.boolean().optional(),
   uterineDepth: z.string().optional(),
 
-  // Acknowledgement Form
+  // Page 5 fields
   acknowledgement: z.object({
     selectedMethod: z.enum([
       "coc",
@@ -210,14 +213,101 @@ export const FamilyPlanningSchema = z.object({
       "others",
     ]),
     clientSignature: z.string().optional(), // Base64 string of signature
-    clientSignatureDate: z.string().optional(),
+    clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().optional(),
     guardianSignature: z.string().optional(), // Base64 string of signature
     guardianSignatureDate: z.string().optional(),
   }),
 
-  // Service Provision Records array
+  // Page 6 fields
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
+})
+
+// Create page-specific schemas for validation
+export const page1Schema = FamilyPlanningSchema.pick({
+  clientID: true,
+  philhealthNo: true,
+  nhts_status: true,
+  pantawid_4ps: true,
+  lastName: true,
+  givenName: true,
+  middleInitial: true,
+  dateOfBirth: true,
+  age: true,
+  educationalAttainment: true,
+  occupation: true,
+  address: true,
+  spouse: true,
+  numOfLivingChildren: true,
+  planToHaveMoreChildren: true,
+  averageMonthlyIncome: true,
+  typeOfClient: true,
+  subTypeOfClient: true,
+  reasonForFP: true,
+  otherReasonForFP: true,
+  reason: true,
+  methodCurrentlyUsed: true,
+  otherMethod: true,
+})
+
+export const page2Schema = FamilyPlanningSchema.pick({
+  medicalHistory: true,
+  obstetricalHistory: true,
+})
+
+export const page3Schema = FamilyPlanningSchema.pick({
+  sexuallyTransmittedInfections: true,
+  violenceAgainstWomen: true,
+})
+
+export const page4Schema = FamilyPlanningSchema.pick({
+  weight: true,
+  height: true,
+  bloodPressure: true,
+  pulseRate: true,
+  skinNormal: true,
+  skinPale: true,
+  skinYellowish: true,
+  skinHematoma: true,
+  conjunctivaNormal: true,
+  conjunctivaPale: true,
+  conjunctivaYellowish: true,
+  neckNormal: true,
+  neckMass: true,
+  neckEnlargedLymphNodes: true,
+  breastNormal: true,
+  breastMass: true,
+  breastNippleDischarge: true,
+  abdomenNormal: true,
+  abdomenMass: true,
+  abdomenVaricosities: true,
+  extremitiesNormal: true,
+  extremitiesEdema: true,
+  extremitiesVaricosities: true,
+  pelvicNormal: true,
+  pelvicMass: true,
+  pelvicAbnormalDischarge: true,
+  pelvicCervicalAbnormalities: true,
+  pelvicWarts: true,
+  pelvicPolypOrCyst: true,
+  pelvicInflammationOrErosion: true,
+  pelvicBloodyDischarge: true,
+  cervicalConsistencyFirm: true,
+  cervicalConsistencySoft: true,
+  cervicalTenderness: true,
+  cervicalAdnexalMassTenderness: true,
+  uterinePositionMid: true,
+  uterinePositionAnteflexed: true,
+  uterinePositionRetroflexed: true,
+  uterineDepth: true,
+})
+
+export const page5Schema = FamilyPlanningSchema.pick({
+  acknowledgement: true,
+})
+
+export const page6Schema = FamilyPlanningSchema.pick({
+  serviceProvisionRecords: true,
 })
 
 // Exporting the schemas properly

@@ -1,12 +1,12 @@
-import FamPlanning_table from "@/pages/FamilyPlanning/Table";
-import FamilyPlanningView from "@/pages/FamilyPlanning/view";
+import FamPlanning_table from "@/pages/familyplanning/Table";
+import FamilyPlanningView from "@/pages/familyplanning/view";
 // import FamilyPlanningForm from "@/pages/familyplanning/FP-page1";
 // import FamilyPlanningForm2 from "@/pages/familyplanning/FP-page2";
 // import FamilyPlanningForm3 from "@/pages/familyplanning/FP-page3";
 // import FamilyPlanning_form4 from "@/pages/familyplanning/FP-page4";
 // import FamilyPlanningForm5 from "@/pages/familyplanning/FP-page5";
 // import FamilyPlanningForm6 from "@/pages/familyplanning/FP-page6";
-import FamilyPlanningMain from "@/pages/FamilyPlanning/Main";
+import FamilyPlanningMain from "@/pages/familyplanning/Main";
 
 export const famplanning_route = [
     {

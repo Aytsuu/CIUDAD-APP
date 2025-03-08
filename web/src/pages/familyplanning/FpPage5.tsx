@@ -60,7 +60,7 @@ export default function FamilyPlanningForm5({
   const form = useForm({
     defaultValues: {
       acknowledgement: formData?.acknowledgement || {
-        selectedMethod: "coc",
+        selectedMethod: "",
         clientSignatureDate: new Date().toISOString().split("T")[0],
         guardianName: "",
         guardianSignatureDate: new Date().toISOString().split("T")[0],
@@ -359,9 +359,28 @@ export default function FamilyPlanningForm5({
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
-              <Button type="submit">Next</Button>
-            </div>
+            <div className="flex justify-end mt-6 space-x-4">
+                          <Button variant="outline" type="button" onClick={onPrevious4}>
+                            Previous
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={async () => {
+                              // Validate the form
+                              const isValid = await form.trigger()
+                              if (isValid) {
+                                // If valid, save data and proceed
+                                const currentValues = form.getValues()
+                                updateFormData(currentValues)
+                                onNext6()
+                              } else {
+                                console.error("Please fill in all required fields")
+                              }
+                            }}
+                          >
+                            Next
+                          </Button>
+                        </div>
           </form>
         </Form>
       </CardContent>

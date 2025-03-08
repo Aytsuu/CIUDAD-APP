@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { type FormData, page2Schema } from "@/form-schema/FamilyPlanningSchema"
 
 // Fix the props type to use FormData from the schema
 type Page2Props = {
@@ -21,9 +21,10 @@ type Page2Props = {
 // Fix the component props to match the expected props
 export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormData, formData }: Page2Props) {
   const form = useForm<FormData>({
-    resolver: zodResolver(FamilyPlanningSchema),
+    resolver: zodResolver(page2Schema), // Use page-specific schema
     defaultValues: formData,
     values: formData,
+    mode: "onChange", // Validate on change for better user experience
   })
 
   // This effect will update the form values whenever formData changes
@@ -47,7 +48,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
     { name: "disability", label: "With Disability?" },
   ]
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log("PAGE 2 Data:", data)
     updateFormData(data) // Save form data
     onNext3() // Move to the next page
@@ -129,10 +130,10 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label className="flex w-[150px] mb-4">Number of pregnancies</Label>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="G" 
-                            className="w-[90px]" 
+                          <Input
+                            {...field}
+                            placeholder="G"
+                            className="w-[90px]"
                             type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
@@ -149,10 +150,10 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="P" 
-                            className=" w-20 mt-8" 
+                          <Input
+                            {...field}
+                            placeholder="P"
+                            className=" w-20 mt-8"
                             type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
@@ -170,10 +171,10 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Full term</Label>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            type="number" 
-                            className=" w-[90px]" 
+                          <Input
+                            {...field}
+                            type="number"
+                            className=" w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                           />
@@ -190,10 +191,10 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Premature</Label>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            type="number" 
-                            className=" w-[90px]" 
+                          <Input
+                            {...field}
+                            type="number"
+                            className=" w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                           />
@@ -210,10 +211,10 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Abortion</Label>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            type="number" 
-                            className="w-[90px]" 
+                          <Input
+                            {...field}
+                            type="number"
+                            className="w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                           />
@@ -230,10 +231,10 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label>Living Children</Label>
                         <FormControl>
-                          <Input 
-                            {...field} 
-                            type="number" 
-                            className="w-[90px]" 
+                          <Input
+                            {...field}
+                            type="number"
+                            className="w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                           />
@@ -320,7 +321,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   />
                 </div>
 
-                {/* Menstrual Flow */}
+                {/* Menstrual Flow - Fixed for Radio Buttons */}
                 <div className="mt-5">
                   <Label>Menstrual Flow</Label>
                   <FormField
@@ -332,19 +333,19 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                           {["Scanty", "Moderate", "Heavy"].map((flow) => (
                             <div key={flow} className="flex items-center space-x-2 mb-2">
                               <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(flow)}
-                                  onCheckedChange={(checked) => {
-                                    const currentValues = field.value || [];
-                                    if (checked) {
-                                      field.onChange([...currentValues, flow]);
-                                    } else {
-                                      field.onChange(currentValues.filter(v => v !== flow));
-                                    }
-                                  }}
+                                <input
+                                  type="radio"
+                                  id={`flow-${flow.toLowerCase()}`}
+                                  checked={field.value === flow}
+                                  onChange={() => field.onChange(flow)}
+                                  className="w-4 h-4"
                                 />
                               </FormControl>
-                              <Label>{flow} {flow === "Scanty" && "(1-2 pads per day)"} {flow === "Moderate" && "(3-5 pads per day)"} {flow === "Heavy" && "(more than 5 pads per day)"}</Label>
+                              <Label htmlFor={`flow-${flow.toLowerCase()}`}>
+                                {flow} {flow === "Scanty" && "(1-2 pads per day)"}
+                                {flow === "Moderate" && "(3-5 pads per day)"}
+                                {flow === "Heavy" && "(more than 5 pads per day)"}
+                              </Label>
                             </div>
                           ))}
                         </div>
@@ -359,11 +360,11 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   control={form.control}
                   name="obstetricalHistory.dysmenorrhea"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mt-4">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <Label>Dysmenorrhea</Label>
+                      <Label className="ml-2">Dysmenorrhea</Label>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -373,11 +374,11 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   control={form.control}
                   name="obstetricalHistory.hydatidiformMole"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mt-2">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <Label>Hydatidiform mole (within the last 12 months)</Label>
+                      <Label className="ml-2">Hydatidiform mole (within the last 12 months)</Label>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -387,11 +388,11 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   control={form.control}
                   name="obstetricalHistory.ectopicPregnancyHistory"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mt-2">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <Label>History of ectopic pregnancy</Label>
+                      <Label className="ml-2">History of ectopic pregnancy</Label>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -401,13 +402,32 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
 
             {/* Navigation Buttons */}
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => {
-                saveFormData();
-                onPrevious1();
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  saveFormData()
+                  onPrevious1()
+                }}
+              >
                 Previous
               </Button>
-              <Button type="submit">Next</Button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  // Validate the form
+                  const isValid = await form.trigger()
+                  if (isValid) {
+                    // If valid, save data and proceed
+                    const currentValues = form.getValues()
+                    updateFormData(currentValues)
+                    onNext3()
+                  } else {
+                    console.error("Please fill in all required fields")
+                  }
+                }}
+              >
+                Next
+              </Button>
             </div>
           </form>
         </Form>
@@ -415,3 +435,4 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
     </div>
   )
 }
+; 

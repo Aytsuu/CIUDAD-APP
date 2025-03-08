@@ -1,3 +1,4 @@
+"use client"
 
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
@@ -5,9 +6,8 @@ import FamilyPlanningForm2 from "./FpPage2"
 import FamilyPlanningForm3 from "./FpPage3"
 import FamilyPlanningForm4 from "./FpPage4"
 import FamilyPlanningForm5 from "./FpPage5"
-
 import FamilyPlanningForm6 from "./FpPage6"
-import { FamilyPlanningSchema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 
 const initialFormData: FormData = {
   clientID: "",
@@ -72,7 +72,7 @@ const initialFormData: FormData = {
     typeOfLastDelivery: undefined,
     lastMenstrualPeriod: "",
     previousMenstrualPeriod: "",
-    menstrualFlow: [],
+    menstrualFlow: ,
     dysmenorrhea: false,
     hydatidiformMole: false,
     ectopicPregnancyHistory: false,
@@ -139,70 +139,44 @@ const initialFormData: FormData = {
     guardianSignature: "",
     guardianSignatureDate: "",
   },
-
   serviceProvisionRecords: [],
 }
 
-
 export default function FamilyPlanningMain() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [currentPage, setCurrentPage] = useState(1)
+  const [formData, setFormData] = useState<FormData>(initialFormData)
 
-  const handleNext = async () => {
+  // Modified handleNext to show validation errors but still allow proceeding
+  const handleNext = () => {
     try {
-      // Extract only the relevant fields for the current page
-      let currentPageSchema;
-      if (currentPage === 1) {
-        currentPageSchema = FamilyPlanningSchema.pick({
-          clientID: true,
-          philhealthNo: true,
-          nhts_status: true,
-          pantawid_4ps: true,
-          lastName: true,
-          givenName: true,
-          middleInitial: true,
-          dateOfBirth: true,
-          age: true,
-        });
-      } else if (currentPage === 2) {
-        currentPageSchema = FamilyPlanningSchema.pick({
-          educationalAttainment: true,
-          occupation: true,
-          address: true,
-        });
-      }
-      // Add other pages as needed...
-  
-      // Validate only the current page fields
-      // await currentPageSchema.parseAsync(formData);
-  
-      setCurrentPage((prev) => prev + 1);
+      console.log("Moving to next page, current data:", formData)
+      setCurrentPage((prev) => prev + 1)
     } catch (error) {
-      console.error("Validation Error:", error);
-      alert("Please fill in all required fields before proceeding.");
+      console.error("Validation Error:", error)
+      setCurrentPage((prev) => prev + 1)
     }
-  };
+  }
 
   const handlePrevious = () => {
-    setCurrentPage((prev) => prev - 1);
-  };
+    setCurrentPage((prev) => prev - 1)
+  }
 
   const updateFormData = (data: Partial<FormData>) => {
-    setFormData((prev) => ({ ...prev, ...data }));
-  };
+    setFormData((prev) => ({ ...prev, ...data }))
+  }
 
   const handleSubmit = () => {
-    console.log("Submitting data: ", formData);
-  };
+    console.log("Submitting data: ", formData)
+    // Here you would typically send the data to your backend
+    alert("Form submitted successfully!")
+  }
 
   return (
     <>
       {currentPage === 1 && (
-        <FamilyPlanningForm
-          onNext2={handleNext}
-          updateFormData={updateFormData}
-          formData={formData}
-        />
+        <FamilyPlanningForm onNext2={handleNext}
+        updateFormData={updateFormData}
+        formData={formData} />
       )}
       {currentPage === 2 && (
         <FamilyPlanningForm2
@@ -240,11 +214,12 @@ export default function FamilyPlanningMain() {
         <FamilyPlanningForm6
           onPrevious5={handlePrevious}
           onSubmitFinal={handleSubmit}
+          
           updateFormData={updateFormData}
           formData={formData}
         />
       )}
     </>
-
-  );
+  )
 }
+

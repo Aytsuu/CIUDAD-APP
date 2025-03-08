@@ -205,6 +205,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
               <TableRow>
                 <TableHead>Date of Visit</TableHead>
                 <TableHead>Method Accepted</TableHead>
+                <TableHead>Quantity</TableHead>
                 <TableHead>Medical Findings</TableHead>
                 <TableHead>Service Provider</TableHead>
                 <TableHead>Follow-up Date</TableHead>
@@ -222,6 +223,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   <TableRow key={index}>
                     <TableCell>{item.dateOfVisit}</TableCell>
                     <TableCell>{item.methodAccepted}</TableCell>
+                    <TableCell>{item.methodQuantity} {item.methodUnit} </TableCell>
                     <TableCell>{item.medicalFindings || "-"}</TableCell>
                     <TableCell>{item.nameOfServiceProvider}</TableCell>
                     <TableCell>{item.dateOfFollowUp}</TableCell>
