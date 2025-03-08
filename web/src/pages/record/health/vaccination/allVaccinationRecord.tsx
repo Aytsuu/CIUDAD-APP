@@ -198,6 +198,8 @@ export default function AllVaccinationRecords() {
       type: "Resident",
     },
   ];
+
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const data = sampleData;
   const filter = [
@@ -213,20 +215,20 @@ export default function AllVaccinationRecords() {
           (item) =>
             item.type === selectedFilter || item.sitio === selectedFilter
         );
+
   const [value, setValue] = useState("");
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Vaccination Records
+              Vaccination Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
+              Manage and view patients information
           </p>
-        </div>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}

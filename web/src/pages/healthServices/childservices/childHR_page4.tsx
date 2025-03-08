@@ -28,6 +28,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ChevronLeft, Search } from "lucide-react";
+
 
 type Page1FormData = z.infer<typeof ChildHealthFormSchema>;
 
@@ -156,7 +158,8 @@ export default function ChildHRPage4({
   const isVitaminAddButtonDisabled = !selectedVitaminType || !currentVitaminDate || !Date.parse(currentVitaminDate);
 
   return (
-    <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
+    
+    <div className=" bg-white rounded-lg shadow  md:p-4 lg:p-8">
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
           {/* Iron Given Section */}

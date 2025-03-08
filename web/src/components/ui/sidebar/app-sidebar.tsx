@@ -123,7 +123,7 @@ const items: MenuItem[] = [
       {title: "Animal Bites", url: "/Animalbite_viewing"},
       {title: "Child Services", url: "/allChildHRTable"},
       {title: "Maternal Services", url:"/maternalrecords"},
-      {title: "Family Planning", url: "/"},
+      {title: "Family Planning", url: "/FamPlanning_table"},
       {title: "Medical Consultation", url: "/"},
       {title: "Vaccination", url: "/allVaccinationRecord"},
     ]

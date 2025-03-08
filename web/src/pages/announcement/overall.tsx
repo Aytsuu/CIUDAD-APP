@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
-import DeleteConfirmationModal from '@/pages/announcement/deletemodal'; // Ensure the import path is correct
+import DeleteConfirmationModal from '@/pages/announcement/deletemodal';
 import { SelectLayout } from '@/components/ui/select/select-layout';
 import { Link } from 'react-router-dom';
+import { Search } from 'lucide-react';
 
 interface Announcement {
     id: string;
@@ -40,10 +41,14 @@ const AnnouncementDashboard: React.FC = () => {
         }
     ]);
 
-    // const [selectedFilter, setSelectedFilter] = useState<string>("all");
-    // const [searchQuery, setSearchQuery] = useState<string>("");
-    const [, setIsDeleteModalOpen] = useState(false);
+    const [selectedFilter, setSelectedFilter] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(event.target.value);
+    };
 
     const openDeleteModal = (announcement: Announcement) => {
         setAnnouncementToDelete(announcement);
@@ -63,75 +68,57 @@ const AnnouncementDashboard: React.FC = () => {
         }
     };
 
-    // // Filter announcements based on the selected filter
-    // const filteredAnnouncements = announcements.filter((announcement) => {
-    //     if (selectedFilter === "all") return true;
-
-    //     const announcementDate = new Date(announcement.dateCreated);
-    //     const today = new Date();
-    //     const startOfWeek = new Date();
-    //     startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week
-    //     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // Start of month
-
-    //     if (selectedFilter === "today") {
-    //         return announcementDate.toDateString() === today.toDateString();
-    //     }
-    //     if (selectedFilter === "thisweek") {
-    //         return announcementDate >= startOfWeek;
-    //     }
-    //     if (selectedFilter === "thismonth") {
-    //         return announcementDate >= startOfMonth;
-    //     }
-
-    //     return true;
-    // }).filter((announcement) =>
-    //     announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    //     announcement.description.toLowerCase().includes(searchQuery.toLowerCase())
-    // );
+    // Filter announcements based on searchQuery
+    const filteredAnnouncements = announcements.filter(announcement =>
+        announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        announcement.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full flex flex-col gap-4">
             {/* Filters & Actions - Now Responsive */}
-            <div className="flex flex-wrap  gap-4 sm:gap-8 p-4 sm:p-10">
+            <div className="flex flex-row gap-4">
                 <SelectLayout
-                    placeholder="Filter"
+                    placeholder="Filter by"
                     label=""
-                    className="custom-class border-gray mt-1"
+                    className="bg-white"
                     options={[
                         { id: "all", name: "All" },
                         { id: "today", name: "Today" },
                         { id: "thisweek", name: "This Week" },
                         { id: "thismonth", name: "This Month" }
                     ]}
-                    value={""}
-                    onChange={() => { }}
+                    value={selectedFilter}
+                    onChange={(selected) => setSelectedFilter(selected)}
                 />
 
-                <div className="flex-1 mt-1">
+                {/* Search Bar */}
+                <div className="relative flex-1">
                     <Input
                         type="text"
-                        placeholder="Search"
-                        className="w-full rounded-lg border-gray text-sm shadow-sm"
-                        value={""}
-                        // onChange={() => {}} // ✅ Corrected
+                        placeholder="Search Announcements"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="pr-10"
                     />
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 </div>
+
                 <Link to={`/createAnnouncement`}>
-                <Button className="w-full sm:w-auto mt-1 p-2 text-sm shadow-sm">
-                    <Label>Add Announcement</Label>
-                </Button>
+                    <Button className="w-full sm:w-auto mt-1 p-2 text-sm shadow-sm">
+                        <Label>Add Announcement</Label>
+                    </Button>
                 </Link>
             </div>
 
-            {/* Announcements List - Responsive */}
-            <div className="space-y-4 px-4 sm:px-10">
-                {announcements.length > 0 ? (
-                    announcements.map((announcement) => (
-                        <div key={announcement.id} className="border rounded-lg p-4 sm:p-6 bg-white shadow-sm">
-                            <div className="grid grid-cols-1 sm:grid-cols-[1fr_4fr_auto] items-center gap-4">
+            <div className="space-y-4">
+                {filteredAnnouncements.length > 0 ? (
+                    filteredAnnouncements.map((announcement) => (
+                        <div key={announcement.id} className="border rounded-lg w-full p-4 sm:p-6 bg-white shadow-sm">
+                            <div className="grid grid-cols-1 w-full sm:grid-cols-[1fr_4fr_auto] items-center gap-4">
                                 {/* Announcement Info */}
                                 <div className='mr-5'>
-                                    <p className='text-sm'>Date created:</p>
+                                    <p className='text-sm font-semibold'>Date created:</p>
                                     <p className="text-darkGray">{announcement.dateCreated}</p>
                                 </div>
                                 <div className="flex-1">
@@ -144,34 +131,20 @@ const AnnouncementDashboard: React.FC = () => {
                                     {/* Edit button */}
                                     <Button
                                         variant="secondary"
-                                        className="border border-gray-400 text-gray-700 hover:bg-gray-200 "
+                                        className="border border-gray-400 text-gray-700 hover:bg-gray-200"
                                         onClick={() => console.log("Edit announcement:", announcement.id)}
                                     >
                                         Edit
                                     </Button>
 
                                     {/* Delete Button & Modal */}
-                                    <DialogLayout
-                                        trigger={
-                                            <Button
-                                                variant="destructive"
-                                                className="bg-red-600 hover:bg-red-700"
-                                                onClick={() => openDeleteModal(announcement)}
-                                            >
-                                                Delete
-                                            </Button>
-                                        }
-                                        className="sm:max-w-[50%]"
-                                        title="Confirm Deletion"
-                                        description=""
-                                        mainContent={
-                                            <DeleteConfirmationModal
-                                                announcement={announcement}
-                                                onCancel={closeDeleteModal}
-                                                onConfirm={handleDelete}
-                                            />
-                                        }
-                                    />
+                                    <Button
+                                        variant="destructive"
+                                        className="bg-red-600 hover:bg-red-700"
+                                        onClick={() => openDeleteModal(announcement)}
+                                    >
+                                        Delete
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -182,7 +155,21 @@ const AnnouncementDashboard: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div >
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && announcementToDelete && (
+                <DialogLayout
+                    isOpen={isDeleteModalOpen}
+                    onOpenChange={setIsDeleteModalOpen}
+                    className="sm:max-w-[50%]"
+                    title="Confirm Deletion"
+                    description=""
+                    mainContent={<DeleteConfirmationModal
+                        announcement={announcementToDelete}
+                        onCancel={closeDeleteModal}
+                        onConfirm={handleDelete} />} trigger={undefined}                />
+            )}
+        </div>
     );
 };
 

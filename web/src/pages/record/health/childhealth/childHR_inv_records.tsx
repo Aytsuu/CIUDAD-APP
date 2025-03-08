@@ -3,7 +3,11 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
+<<<<<<< HEAD
 import { Link } from "react-router";
+=======
+import { Link, useNavigate } from "react-router";
+>>>>>>> master
 import { Search, Trash, Eye } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,10 +20,18 @@ import { FileInput } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+<<<<<<< HEAD
+=======
+import { Label } from "@/components/ui/label";
+import CardLayout from "@/components/ui/card/card-layout";
+import { ChevronLeft } from "lucide-react";
+import ChildInfo from "./ChildsInformation";
+>>>>>>> master
 
 export default function InvChildHealthRecords() {
   type ChrRecords = {
     id: number;
+<<<<<<< HEAD
     // motherName: string;
     mother: {
       firstName: string;
@@ -43,6 +55,16 @@ export default function InvChildHealthRecords() {
     sitio: string;
     createdAt: string;
   };
+=======
+    age: string;
+    wt: number;
+    ht: number;
+    vaccineStat: String;
+    nutritionStat: String;
+    updatedAt: string;
+  };
+
+>>>>>>> master
   const columns: ColumnDef<ChrRecords>[] = [
     {
       accessorKey: "id",
@@ -55,6 +77,7 @@ export default function InvChildHealthRecords() {
         </div>
       ),
     },
+<<<<<<< HEAD
     {
       accessorKey: "mother",
       header: "Mother",
@@ -102,16 +125,55 @@ export default function InvChildHealthRecords() {
       cell: ({ row }) => (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="w-full truncate">{row.original.address}</div>
+=======
+
+    {
+      accessorKey: "age",
+      header: "Age",
+    },
+    {
+      accessorKey: "wt",
+      header: "WT",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "ht",
+      header: "HT",
+    },
+
+    {
+      accessorKey: "vaccineStat",
+      header: "Immunization Status",
+    },
+    {
+      accessorKey: "nutritionStat",
+      header: "Nutrtion Status",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+>>>>>>> master
         </div>
       ),
     },
 
     {
+<<<<<<< HEAD
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.createdAt}</div>
+=======
+      accessorKey: "updatedAt",
+      header: "Updated At",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.updatedAt}</div>
+>>>>>>> master
         </div>
       ),
     },
@@ -124,8 +186,12 @@ export default function InvChildHealthRecords() {
             <TooltipLayout
               trigger={
                 <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+<<<<<<< HEAD
                     <Eye size={15} />
              
+=======
+                  <Eye size={15} />
+>>>>>>> master
                 </div>
               }
               content="View"
@@ -155,6 +221,7 @@ export default function InvChildHealthRecords() {
   const sampleData: ChrRecords[] = [
     {
       id: 1,
+<<<<<<< HEAD
 
       mother: {
         lastName: "Caballes",
@@ -223,11 +290,20 @@ export default function InvChildHealthRecords() {
       address: "BOnsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       createdAt: "2024-02-21",
+=======
+      age: "4 days",
+      wt: 12,
+      ht: 34,
+      vaccineStat: "Not FIC",
+      nutritionStat: "Not FIC",
+      updatedAt: "2024-02-21",
+>>>>>>> master
     },
   ];
 
   const data = sampleData;
 
+<<<<<<< HEAD
   const filter = [
     { id: "0", name: "All" },
     { id: "1", name: "Transient" },
@@ -246,12 +322,31 @@ export default function InvChildHealthRecords() {
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Records
+=======
+  const navigate = useNavigate();
+  function toChildHealthForm() {
+    navigate("/newAddChildHRForm", { state: { recordType: "existingPatient" } });
+  }
+
+  return (
+    <div className="w-full   bg-snow">
+      <Link to="/allChildHRTable">
+        <Button className="text-black p-2 mb-2 self-start" variant={"outline"}>
+          <ChevronLeft />
+        </Button>
+      </Link>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Individual Records
+>>>>>>> master
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view childs information
           </p>
         </div>
       </div>
+<<<<<<< HEAD
       <hr className="border-gray mb-6 sm:mb-10" />
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
@@ -285,6 +380,16 @@ export default function InvChildHealthRecords() {
 
       {/*  */}
 
+=======
+      <hr className="border-gray mb-6 " />
+
+      <div className="mb-5">
+        <ChildInfo />
+      </div>
+      <div className="w-full md:w-auto flex justify-end mb-2">
+        <Button onClick={toChildHealthForm}>Update Record</Button>
+      </div>
+>>>>>>> master
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
@@ -311,7 +416,11 @@ export default function InvChildHealthRecords() {
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
+<<<<<<< HEAD
           <DataTable columns={columns} data={filteredData} />
+=======
+          <DataTable columns={columns} data={data} />
+>>>>>>> master
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
