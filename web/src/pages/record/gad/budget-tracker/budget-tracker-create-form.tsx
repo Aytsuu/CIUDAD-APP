@@ -50,8 +50,8 @@ function GADAddEntryForm() {
                   label="Entry Type"
                   placeholder="Select Type"
                   options={[
-                    { id: "1", name: "Entry 1" },
-                    { id: "2", name: "Entry 2" },
+                    { id: "Income", name: "Income" },
+                    { id: "Expense", name: "Expense" },
                   ]}
                   value={field.value}
                   onChange={field.onChange}

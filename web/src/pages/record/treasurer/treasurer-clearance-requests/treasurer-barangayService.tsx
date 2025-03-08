@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { ReceiptText, Trash, ArrowUpDown, Search } from 'lucide-react';
+import { ReceiptText, Trash, ArrowUpDown, Search, FileInput  } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import BarangayServiceForm from "./treasurer-barangayService-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import { Label } from "@/components/ui/label";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem} from "@/components/ui/dropdown/dropdown-menu";
 
 export const columns: ColumnDef<BarangayService>[] = [
     { accessorKey: "fname", header: "Firstname" },
@@ -97,13 +98,13 @@ export const BarangayServiceRecords: BarangayService[] = [
 function BarangayService() {
     const data = BarangayServiceRecords;
     const filter = [
-        { id: "All Payment Status", name: "All Payment Status" },
+        { id: "All", name: "All" },
         { id: "Pending", name: "Pending" },
         { id: "Paid", name: "Paid" },
     ];
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-    const filteredData = selectedFilter === "All Payment Status" ? data 
+    const filteredData = selectedFilter === "All" ? data 
     : data.filter((item) => item.paymentStat === selectedFilter);
 
     return (
@@ -130,7 +131,7 @@ function BarangayService() {
                         </div>
                         <div className="flex flex-row gap-2 justify-center items-center">
                             <Label>Filter: </Label>
-                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="Payment Status" onChange={setSelectedFilter}></SelectLayout>
                         </div>                            
                     </div>
 
@@ -150,11 +151,29 @@ function BarangayService() {
                 </div>
 
                 <div className="bg-white">
-                    <div className="flex flex-col sm:flex-row gap-2 items-center p-4">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input type="number" className="w-14 h-8" defaultValue="10" />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>        
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
+                        <div className="flex gap-x-2 items-center">
+                            <p className="text-xs sm:text-sm">Show</p>
+                            <Input type="number" className="w-14 h-8" defaultValue="10" />
+                            <p className="text-xs sm:text-sm">Entries</p>
+                        </div>
+
+                        <div>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                <FileInput />
+                                Export
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>                    
+                        </div>
+                    </div>
 
                     <DataTable columns={columns} data={filteredData}></DataTable>
                 </div>

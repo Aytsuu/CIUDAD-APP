@@ -88,7 +88,7 @@ function GADBudgetTrackerMain() {
                                         <Label className="w-[12rem]">Total Expenses:</Label>
                                         <Label className="text-red-600">Php {tracker.expenses.toFixed(2)}</Label>
                                     </div>
-                                    <div className="flex flex-col sm:flex-row">
+                                    <div className="flex flex-col sm:flex-row"> 
                                         <Label className="w-[12rem]">Remaining Balance:</Label>
                                         <Label className="text-yellow-600">Php {tracker.remainingBal.toFixed(2)}</Label>
                                     </div>
