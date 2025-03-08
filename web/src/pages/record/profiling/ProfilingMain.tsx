@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { DatePickerWithRange, DateRange } from "@/components/ui/datepicker";
+import { DatePickerWithRange } from "@/components/ui/datepicker";
 
 import { data, Link, Outlet } from "react-router";
 import { Input } from "../../../components/ui/input";
