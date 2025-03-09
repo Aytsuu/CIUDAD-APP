@@ -13,25 +13,25 @@ export type PersonalFormData = {
   }
 
   export type MotherFormData = {
-    MotherLName: string,
-    MotherFName: string,
-    MotherMName: string,
-    MotherSuffix: string,
-    MotherDateOfBirth: string,
-    MotherStatus: string,
-    MotherReligion: string,
-    MotherEdAttainment: string,
+    motherLName: string,
+    motherFName: string,
+    motherMName: string,
+    motherSuffix: string,
+    motherDateOfBirth: string,
+    motherStatus: string,
+    motherReligion: string,
+    motherEdAttainment: string,
   }
 
   export type FatherFormData ={
-    FatherLName: string,
-    FatherFName: string,
-    FatherMName: string,
-    FatherSuffix: string,
-    FatherDateOfBirth: string,
-    FatherStatus: string,
-    FatherReligion: string,
-    FatherEdAttainment: string,
+    fatherLName: string,
+    fatherFName: string,
+    fatherMName: string,
+    fatherSuffix: string,
+    fatherDateOfBirth: string,
+    fatherStatus: string,
+    fatherReligion: string,
+    fatherEdAttainment: string,
   }
 
   export type DependentFormData = {

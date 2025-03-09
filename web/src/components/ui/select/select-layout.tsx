@@ -16,8 +16,8 @@ import {
 
   interface SelectProps{
     placeholder: string
-    label: string,
-    className: string,
+    label?: string,
+    className?: string,
     options: Option[],
     value: string,
     onChange: (value: string) => void

@@ -1,13 +1,7 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/select";
+import { profilingFormSchema } from "@/form-schema/profiling-schema";
 import {
   Form,
   FormField,
@@ -17,56 +11,46 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { PersonalFormData } from "../_types";
-import { personalFormSchema } from "@/form-schema/ProfilingSchema";
-import { Link, useNavigate } from "react-router";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
-interface PersonalInfoFormProps {
-  onSubmit: (data: PersonalFormData) => void;
-  initialData?: PersonalFormData;
-}
+export default function PersonalInfoForm(
+  {form, onSubmit, back}: {
+    form: UseFormReturn<z.infer<typeof profilingFormSchema>>,
+    onSubmit: () => void,
+    back: () => void
+}){
 
-const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
-
-  const navigate = useNavigate();
-  const form = useForm<PersonalFormData>({
-    resolver: zodResolver(personalFormSchema),
-    defaultValues: initialData || {
-      lastName: "",
-      firstName: "",
-      middleName: "",
-      suffix: "",
-      sex: "",
-      status: "",
-      dateOfBirth: "",
-      birthPlace: "",
-      citizenship: "",
-      religion: "",
-      contact: "",
-    },
-  });
+  const submit = () => {
+    // Validate personal information fields
+    form.trigger("personalInfo").then((isValid) => {
+      if(isValid) onSubmit(); // Proceed next process if true
+    })
+    
+  }
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
-      {" "}
       <div className="pb-4">
         <h2 className="text-lg font-semibold">Personal Information</h2>
         <p className="text-xs text-black/50">Fill out all necessary fields</p>
       </div>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={(e) => {
+            e.preventDefault()
+            submit()
+          }}
           className="flex flex-col gap-4 px-2 sm:px-6 md:px-12 lg:px-24"
         >
           {/* Name Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
             <FormField
               control={form.control}
-              name="lastName"
+              name="personalInfo.lastName"
               render={({ field }) => (
                 <FormItem className="lg:col-span-4">
                   <FormLabel className="font-medium text-black/65">
-                    Last Name <span className="text-red-500">*</span>
+                    Last Name
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Last Name" {...field} />
@@ -77,11 +61,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
             <FormField
               control={form.control}
-              name="firstName"
+              name="personalInfo.firstName"
               render={({ field }) => (
                 <FormItem className="lg:col-span-4">
                   <FormLabel className="font-medium text-black/65">
-                    First Name <span className="text-red-500">*</span>
+                    First Name
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter First Name" {...field} />
@@ -92,11 +76,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
             <FormField
               control={form.control}
-              name="middleName"
+              name="personalInfo.middleName"
               render={({ field }) => (
                 <FormItem className="sm:col-span-1 lg:col-span-3">
                   <FormLabel className="font-medium text-black/65">
-                    Middle Name <span className="text-red-500">*</span>
+                    Middle Name
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Middle Name" {...field} />
@@ -107,11 +91,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
             <FormField
               control={form.control}
-              name="suffix"
+              name="personalInfo.suffix"
               render={({ field }) => (
                 <FormItem className="sm:col-span-1 lg:col-span-1">
                   <FormLabel className="font-medium text-black/65">
-                    Suffix <span className="text-red-500">*</span>
+                    Suffix
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Sfx." {...field} />
@@ -126,26 +110,23 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
             <FormField
               control={form.control}
-              name="sex"
+              name="personalInfo.sex"
               render={({ field }) => (
                 <FormItem className="sm:col-span-1 lg:col-span-2">
                   <FormLabel className="font-medium text-black/65">
-                    Sex <span className="text-red-500">*</span>
+                    Sex
                   </FormLabel>
                   <FormControl>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <SelectLayout
+                      placeholder='Select'
+                      className="w-full"
+                      options={[
+                        {id: "0", name: "Female"},
+                        {id: "1", name: "Male"},
+                      ]}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,38 +135,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
 
             <FormField
               control={form.control}
-              name="status"
+              name="personalInfo.dateOfBirth"
               render={({ field }) => (
                 <FormItem className="sm:col-span-1 lg:col-span-2">
                   <FormLabel className="font-medium text-black/65">
-                    Marital Status <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married">Married</SelectItem>
-                        <SelectItem value="Widowed">Widowed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dateOfBirth"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-1 lg:col-span-2">
-                  <FormLabel className="font-medium text-black/65">
-                    Date of Birth <span className="text-red-500">*</span>
+                    Date of Birth
                   </FormLabel>
                   <FormControl>
                     <Input type="Date" {...field} />
@@ -194,35 +148,60 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
-              name="birthPlace"
+              name="personalInfo.status"
               render={({ field }) => (
-                <FormItem className="sm:col-span-2 lg:col-span-6">
+                <FormItem className="sm:col-span-1 lg:col-span-2">
                   <FormLabel className="font-medium text-black/65">
-                    Place of Birth <span className="text-red-500">*</span>
+                    Marital Status
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Street/Barangay/Municipality/Province/City"
-                      {...field}
+                    <SelectLayout
+                      placeholder='Select'
+                      className="w-full"
+                      options={[
+                        {id: "0", name: "Single"},
+                        {id: "1", name: "Married"},
+                        {id: "2", name: "Divorced"},
+                        {id: "3", name: "Widowed"},
+                      ]}
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name='personalInfo.completeAddress'
+              render={({field}) => (
+                  <FormItem className='col-span-6'>
+                  <FormLabel className="font-medium text-black/65">
+                      Complete Address
+                  </FormLabel>
+                  <FormControl>
+                      <Input placeholder='' {...field}/>
+                  </FormControl>
+                  <FormMessage/>
+                  </FormItem>
+              )}
+          />
           </div>
 
           {/* Citizenship, Religion, Contact */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField
               control={form.control}
-              name="citizenship"
+              name="personalInfo.citizenship"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium text-black/65">
-                    Citizenship <span className="text-red-500">*</span>
+                    Citizenship
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Citizenship" {...field} />
@@ -233,11 +212,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
             <FormField
               control={form.control}
-              name="religion"
+              name="personalInfo.religion"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium text-black/65">
-                    Religion <span className="text-red-500">*</span>
+                    Religion
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Religion" {...field} />
@@ -248,11 +227,11 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
             />
             <FormField
               control={form.control}
-              name="contact"
+              name="personalInfo.contact"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium text-black/65">
-                    Contact# <span className="text-red-500">*</span>
+                    Contact#
                   </FormLabel>
                   <FormControl>
                     <Input placeholder="Contact" {...field} />
@@ -264,15 +243,13 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
           </div>
 
           {/* Submit Button */}
-          <div className="mt-8 sm:mt-auto">
-            <div className="p-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-x-2 bg-white">
-              <Button variant="outline" className="w-full sm:w-auto" onClick={()=> navigate(-1)}>
-                Cancel
+          <div className="mt-8 flex justify-end gap-3">
+              <Button variant="outline" className="w-full sm:w-32" onClick={back}>
+                Prev
               </Button>
-              <Button type="submit" className="w-full sm:w-auto">
+              <Button type="submit" className="w-full sm:w-32" onClick={onSubmit}> 
                 Next
               </Button>
-            </div>
           </div>
         </form>
       </Form>
@@ -280,4 +257,3 @@ const PersonalInfoForm = ({ onSubmit, initialData }: PersonalInfoFormProps) => {
   );
 };
 
-export default PersonalInfoForm;

@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import addImage from "/src/assets/images/addimage.png";
-import { announcementFormSchema } from "../../form-schema/Announcement/AnnouncementSchema";
+import { announcementFormSchema } from "../../form-schema/AnnouncementSchema";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 
 const options = {

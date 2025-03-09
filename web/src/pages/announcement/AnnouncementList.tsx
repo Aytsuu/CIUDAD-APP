@@ -16,7 +16,7 @@ interface Announcement {
     time: string;
 }
 
-const AnnouncementDashboard: React.FC = () => {
+export default function AnnouncementList(){
     const [announcements, setAnnouncements] = useState<Announcement[]>([
         {
             id: '1',
@@ -172,5 +172,3 @@ const AnnouncementDashboard: React.FC = () => {
         </div>
     );
 };
-
-export default AnnouncementDashboard;
