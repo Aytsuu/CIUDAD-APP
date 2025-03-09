@@ -19,7 +19,6 @@ import FirstAidStockForm from "../addstocksModal/FirstAidStockModal";
 
 export default function FirstAidStocks() {
   type FirstAidStocksRecord = {
-    id: number;
     batchNumber: string;
     itemName: string;
     category: string;
@@ -30,17 +29,7 @@ export default function FirstAidStocks() {
   };
 
   const columns: ColumnDef<FirstAidStocksRecord>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
+  
     {
       accessorKey: "batchNumber",
       header: "Batch No.",
@@ -114,7 +103,6 @@ export default function FirstAidStocks() {
 
   const sampleData: FirstAidStocksRecord[] = [
     {
-      id: 1,
       batchNumber: "122A",
       itemName: "Sterile Gauze Pads",
       category: "Dressings",
@@ -124,7 +112,6 @@ export default function FirstAidStocks() {
       expiryDate: "2025-12-31"
     },
     {
-      id: 2,
       batchNumber: "12S2A",
       itemName: "Adhesive Bandages",
       category: "Wound Care",
@@ -134,7 +121,6 @@ export default function FirstAidStocks() {
       expiryDate: "2024-06-30"
     },
     {
-      id: 3,
       batchNumber: "45B7C",
       itemName: "Antiseptic Solution",
       category: "Cleaning Supplies",
@@ -154,7 +140,7 @@ export default function FirstAidStocks() {
 
   useEffect(() => {
     const filtered = sampleData.filter((item) => {
-      const searchText = `${item.id} ${item.batchNumber} ${item.itemName} ${item.category} ${item.qty} ${item.availQty} ${item.usedItem} ${item.expiryDate}`.toLowerCase();
+      const searchText = `${item.batchNumber} ${item.itemName} ${item.category} ${item.qty} ${item.availQty} ${item.usedItem} ${item.expiryDate}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
     

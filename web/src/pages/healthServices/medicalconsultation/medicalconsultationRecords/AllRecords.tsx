@@ -31,9 +31,11 @@ export default function AllMedicalConRecords() {
     purok: string;
     type: string;
     date: Date;
-    status: "active" | "archived";
+    noOfRecords: number;
+    
   };
 
+  // Table columns configuration
   const columns: ColumnDef<medConRecord>[] = [
     {
       accessorKey: "id",
@@ -75,6 +77,7 @@ export default function AllMedicalConRecords() {
         </div>
       ),
     },
+    
     {
       accessorKey: "purok",
       header: "Purok",
@@ -92,6 +95,11 @@ export default function AllMedicalConRecords() {
           <div className="text-center w-full">{row.original.type}</div>
         </div>
       ),
+    },
+    {
+      accessorKey: "noOfRecords",
+      header: "No. of records",
+    
     },
     {
       accessorKey: "action",
@@ -129,6 +137,7 @@ export default function AllMedicalConRecords() {
     },
   ];
 
+  // Sample data
   const sampleData: medConRecord[] = [
     {
       id: 1,
@@ -144,7 +153,7 @@ export default function AllMedicalConRecords() {
       purok: "Bolinawan",
       type: "transient",
       date: new Date("2024-03-15"),
-      status: "active",
+      noOfRecords: 2,
     },
     {
       id: 2,
@@ -160,26 +169,12 @@ export default function AllMedicalConRecords() {
       purok: "Central",
       type: "resident",
       date: new Date("2024-03-20"),
-      status: "active",
+      noOfRecords: 1,
     },
-    {
-      id: 3,
-      patient: {
-        lastName: "Smith",
-        firstName: "Jane",
-        middleName: "L",
-        gender: "Female",
-        age: 28,
-        ageTime: "yr",
-      },
-      address: "456 Oak Avenue",
-      purok: "Northside",
-      type: "transient",
-      date: new Date("2023-12-01"),
-      status: "archived",
-    },
+  
   ];
 
+  // State management
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -187,6 +182,17 @@ export default function AllMedicalConRecords() {
   const [currentData, setCurrentData] = useState<medConRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
+
+  // Navigation handlers
+  const toPhilHealth = () => {
+    navigate("/PHmedicalForm", { state: { recordType: "nonExistingPatient" } });
+  };
+
+  const toNonPhilHealth = () => {
+    navigate("/nonPHmedicalForm", {
+      state: { recordType: "nonExistingPatient" },
+    });
+  };
 
   useEffect(() => {
     const filtered = sampleData.filter((record) => {
@@ -222,12 +228,6 @@ export default function AllMedicalConRecords() {
       setCurrentPage(page);
     }
   };
-
-  const toMedicalForm = () => {
-    navigate("/medicalForm"); // Update with your actual path
-  };
-
-
 
   return (
     <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
@@ -274,7 +274,19 @@ export default function AllMedicalConRecords() {
         </div>
 
         <div className="w-full sm:w-auto">
-          <Button onClick={toMedicalForm}>New Record</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>New Record</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={toNonPhilHealth}>
+                Non-PhilHealth
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={toPhilHealth}>
+                PhilHealth
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

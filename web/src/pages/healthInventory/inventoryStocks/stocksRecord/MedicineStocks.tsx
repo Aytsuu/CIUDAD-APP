@@ -1,9 +1,10 @@
+// MedicineStocks.tsx
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput,Edit } from "lucide-react";
+import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +16,10 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import MedicineStockForm from "../addstocksModal/MedStockModal";
-
+import EditMedicineForm from "../editModal/EditMedStockModal";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
-    id: number;
     batchNumber: string;
     medicineInfo: {
       medicineName: string;
@@ -34,18 +34,61 @@ export default function MedicineStocks() {
     distributed: string;
   };
 
-  const columns: ColumnDef<MedicineStocksRecord>[] = [
+  const sampleData: MedicineStocksRecord[] = [
     {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
+      batchNumber: "122A",
+      medicineInfo: {
+        medicineName: "Paracetamol",
+        dosage: 500,
+        dsgUnit: "mg",
+        form: "tablet",
+      },
+      expiryDate: "2025-12-31",
+      category: "Analgesic",
+      qty: "10 boxes (50 pcs)",
+      distributed: "7 boxes (30 pcs)",
+      availQty: "7 boxes (30 pcs)",
     },
+    {
+      batchNumber: "12S2A",
+      medicineInfo: {
+        medicineName: "Amoxicillin",
+        dosage: 250,
+        dsgUnit: "mg",
+        form: "capsule",
+      },
+      expiryDate: "2024-06-30",
+      category: "Antibiotic",
+      qty: "5 bot",
+      distributed: "0",
+      availQty: "5 bot",
+    },
+  ];
+
+  // State management
+  const [medicines, setMedicines] =
+    useState<MedicineStocksRecord[]>(sampleData);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] =
+    useState<MedicineStocksRecord[]>(sampleData);
+  const [currentData, setCurrentData] = useState<MedicineStocksRecord[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Handle edit save
+  const handleSaveEditedMedicine = (updatedMedicine: MedicineStocksRecord) => {
+    setMedicines((prevMedicines) =>
+      prevMedicines.map((medicine) =>
+        medicine.batchNumber === updatedMedicine.batchNumber
+          ? updatedMedicine
+          : medicine
+      )
+    );
+  };
+
+  // Table columns
+  const columns: ColumnDef<MedicineStocksRecord>[] = [
     {
       accessorKey: "batchNumber",
       header: "Batch No.",
@@ -59,8 +102,11 @@ export default function MedicineStocks() {
           <div className="flex flex-col">
             <span className="font-medium">{medicine.medicineName}</span>
             <div className="text-sm text-gray-600">
-              {medicine.dosage} {medicine.dsgUnit}, 
-              <span className="capitalize italic text-darkGray"> {medicine.form}</span>
+              {medicine.dosage} {medicine.dsgUnit},
+              <span className="capitalize italic text-darkGray">
+                {" "}
+                {medicine.form}
+              </span>
             </div>
           </div>
         );
@@ -78,23 +124,21 @@ export default function MedicineStocks() {
     {
       accessorKey: "qty",
       header: "Stocks",
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.qty}</div>
-      )
+      cell: ({ row }) => <div className="text-center">{row.original.qty}</div>,
     },
     {
       accessorKey: "distributed",
       header: "Distributed",
       cell: ({ row }) => (
         <div className="text-red-700">{row.original.distributed}</div>
-      )
+      ),
     },
     {
       accessorKey: "availQty",
       header: "Available",
       cell: ({ row }) => (
-        <div className=" text-green-700">{row.original.availQty}</div>
-      )
+        <div className="text-green-700">{row.original.availQty}</div>
+      ),
     },
     {
       accessorKey: "expiryDate",
@@ -108,85 +152,64 @@ export default function MedicineStocks() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
-        <div className="flex justify-center gap-2">
-          <TooltipLayout
-            trigger={
-              <DialogLayout
+      cell: ({ row }) => (
+        <>
+          <div className="flex gap-2">
+            <div className="flex justify-center gap-2">
+              <TooltipLayout
                 trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
+                  <DialogLayout
+                    trigger={
+                      <div className=" hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                        <Edit size={16} />
+                      </div>
+                    }
+                    mainContent={
+                      <>
+                        <EditMedicineForm
+                          medicine={row.original}
+                          onSave={handleSaveEditedMedicine}
+                        />
+                      </>
+                    }
+                  />
                 }
-                mainContent={<></>}
+                content="Delete"
               />
-            }
-            content="Delete"
-          />
-          
-        </div>
+            </div>
+            <div className="flex justify-center gap-2">
+              <TooltipLayout
+                trigger={
+                  <DialogLayout
+                    trigger={
+                      <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                        <Trash size={16} />
+                      </div>
+                    }
+                    mainContent={<> </>}
+                  />
+                }
+                content="Delete"
+              />
+            </div>
+          </div>
+        </>
       ),
     },
   ];
 
-  const sampleData: MedicineStocksRecord[] = [
-    {
-      id: 1,
-      batchNumber: "122A",
-      medicineInfo: {
-        medicineName: "Paracetamol",
-        dosage: 500,
-        dsgUnit: "mg",
-        form: "tablet",
-      },
-      expiryDate: "2025-12-31",
-      category: "Analgesic",
-      qty: "10 boxes (50 pcs)",
-      distributed: "7 boxes (30 pcs)",
-      availQty: "7 boxes (30 pcs)"
-    },
-    {
-      id: 2,
-      batchNumber: "12S2A",
-      medicineInfo: {
-        medicineName: "Amoxicillin",
-        dosage: 250,
-        dsgUnit: "mg",
-        form: "capsule",
-      },
-      expiryDate: "2024-06-30",
-      category: "Antibiotic",
-      qty: "5 bot",
-      distributed: "0",
-      availQty: "5 bot"
-    }
-  ];
-
-  // ... rest of the component (state, effects, handlers, JSX) remains the same ...
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<MedicineStocksRecord[]>(sampleData);
-  const [currentData, setCurrentData] = useState<MedicineStocksRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
+  // Search and pagination effects
   useEffect(() => {
-    const filtered = sampleData.filter((medicine) => {
-      const searchText = `${medicine.id} ${medicine.batchNumber} ${
-        medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${
-        medicine.medicineInfo.dsgUnit}  ${medicine.expiryDate} ${
-        medicine.category}  
-        
-        `.toLowerCase();
-      
+    const filtered = medicines.filter((medicine) => {
+      const searchText =
+        `${medicine.batchNumber} ${medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${medicine.medicineInfo.dsgUnit} ${medicine.expiryDate} ${medicine.category}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
-    
+
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
     setCurrentPage(1);
-  }, [searchQuery, pageSize]);
+  }, [searchQuery, pageSize, medicines]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -243,12 +266,12 @@ export default function MedicineStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New 
+              <Plus size={15} /> New
             </div>
           }
           title="Medicine List"
           description="Add New Medicine"
-          mainContent={<MedicineStockForm/>}
+          mainContent={<MedicineStockForm />}
         />
       </div>
 

@@ -18,7 +18,6 @@ import CommodityStockForm from "../addstocksModal/ComStockModal";
 
 export default function CommodityStocks() {
   type CommodityStocksRecord = {
-    id: number;
     batchNumber: string;
     commodityName: string;
     category: string;
@@ -30,17 +29,7 @@ export default function CommodityStocks() {
   };
 
   const columns: ColumnDef<CommodityStocksRecord>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
+    
     {
       accessorKey: "batchNumber",
       header: "Batch No.",
@@ -121,7 +110,6 @@ export default function CommodityStocks() {
 
   const sampleData: CommodityStocksRecord[] = [
     {
-      id: 1,
       batchNumber: "122A",
       commodityName: "Condom",
       category: "Condom",
@@ -132,7 +120,6 @@ export default function CommodityStocks() {
       expiryDate: "2025-12-31"
     },
     {
-      id: 2,
       batchNumber: "12S2A",
       commodityName: "pills COC",
       category: "Pills",
@@ -155,7 +142,6 @@ export default function CommodityStocks() {
   useEffect(() => {
     const filtered = sampleData.filter((item) => {
       const searchTerms = [
-        item.id.toString(),
         item.batchNumber,
         item.commodityName,
         item.category,

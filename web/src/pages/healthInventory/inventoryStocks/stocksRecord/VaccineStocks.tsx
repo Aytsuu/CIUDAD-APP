@@ -1,9 +1,10 @@
+// VaccineStocks.tsx
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput } from "lucide-react";
+import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,97 +16,149 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WastedDoseForm from "../addstocksModal/WastedDoseModal";
+import EditVacStockForm from "../editModal/EditVacStockModal";
 import VaccineStockForm from "../addstocksModal/VacStockModal";
-
 
 export default function VaccineStocks() {
   type VaccineStocksRecord = {
-    id: number;
     batchNumber: string;
-    vaccine: {
-      vaccineName: string;
-      dosage: number;
-      dsgUnit: string;
+    category: string;
+    item: {
+      name: string;
+      dosage?: number;
+      unit?: string;
     };
     qty: string;
     administered: string;
     wastedDose: string;
-    availableVaccine: string;
+    availableStock: string;
     expiryDate: string;
   };
 
-  const columns: ColumnDef<VaccineStocksRecord>[] = [
+  const sampleData: VaccineStocksRecord[] = [
     {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
+      batchNumber: "VAX-122A",
+      category: "vaccine",
+      item: {
+        name: "COVID-19 mRNA Vaccine",
+        dosage: 0.5,
+        unit: "ml",
+      },
+      qty: "100 vials (200 doses)",
+      administered: "20 vials (40 doses)",
+      wastedDose: "20",
+      availableStock: "80 vials (160 doses)",
+      expiryDate: "2025-12-31",
     },
+    {
+      batchNumber: "MED-456B",
+      category: "medsupplies",
+      item: {
+        name: "Sterile Gloves",
+        unit: "pairs",
+      },
+      qty: "50 boxes (500 pcs)",
+      administered: "10 boxes (100 pcs)",
+      wastedDose: "5",
+      availableStock: "35 boxes (350 pcs)",
+      expiryDate: "2026-01-01",
+    },
+  ];
+
+  const [vaccines, setVaccines] = useState<VaccineStocksRecord[]>(sampleData);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState<VaccineStocksRecord[]>(sampleData);
+  const [currentData, setCurrentData] = useState<VaccineStocksRecord[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const handleSaveEditedVaccine = (updatedVaccine: VaccineStocksRecord) => {
+    setVaccines(prev => prev.map(v => 
+      v.batchNumber === updatedVaccine.batchNumber ? updatedVaccine : v
+    ));
+  };
+
+  const columns: ColumnDef<VaccineStocksRecord>[] = [
     {
       accessorKey: "batchNumber",
       header: "Batch Number",
     },
     {
-      accessorKey: "vaccine",
-      header: "Vaccine Details",
+      accessorKey: "item",
+      header: "Item Details",
       cell: ({ row }) => {
-        const vaccine = row.original.vaccine;
+        const item = row.original.item;
         return (
           <div className="flex flex-col">
-            <div className="font-medium text-center">{vaccine.vaccineName}</div>
-            <div className="text-sm text-gray-600 text-center">
-              {vaccine.dosage} {vaccine.dsgUnit}
-            </div>
+            <div className="font-medium text-center">{item.name}</div>
+            {row.original.category === "vaccine" && (
+              <div className="text-sm text-gray-600 text-center">
+                {item.dosage} {item.unit}
+              </div>
+            )}
           </div>
         );
       },
     },
     {
       accessorKey: "qty",
-      header: "Stocks",
-      cell: ({ row }) => <div className="text-center">{row.original.qty}</div>,
+      header: "Stock Quantity",
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.category === "medsupplies" 
+            ? row.original.qty.replace("vials", "boxes").replace("doses", "pcs")
+            : row.original.qty
+          }
+        </div>
+      ),
     },
     {
       accessorKey: "administered",
-      header: "Administered",
+      header: "Units Used",
       cell: ({ row }) => (
         <div className="text-center text-red-600">
-          {row.original.administered}
+          {row.original.category === "medsupplies"
+            ? row.original.administered.replace("vials", "boxes").replace("doses", "pcs")
+            : row.original.administered
+          }
         </div>
       ),
     },
     {
       accessorKey: "wastedDose",
-      header: "Wasted Dose",
+      header: "Wasted Units",
       cell: ({ row }) => (
-        <>
-          <DialogLayout
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-sm text-gray-600">
+            {row.original.wastedDose || 0}
+          </span>
+          <TooltipLayout
             trigger={
-              <div className="text-center text-red-700 px-2 py-1 cursor-pointer border border-red-700 bg-red-200 rounded-md">
-                {row.original.wastedDose}
-              </div>
+              <DialogLayout
+                trigger={
+                  <button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
+                    <Minus size={15} />
+                  </button>
+                }
+                title={row.original.category === "medsupplies" ? "Wasted Items" : "Wasted Dose"}
+                mainContent={<WastedDoseForm />}
+              />
             }
-            title="Wasted Dose"
-            mainContent={
-              <>
-                <WastedDoseForm />
-              </>
-            }
+            content={row.original.category === "medsupplies" ? "Record Wasted Items" : "Record Wasted Dose"}
           />
-        </>
+        </div>
       ),
     },
     {
-      accessorKey: "availableVaccine",
-      header: "Available ",
+      accessorKey: "availableStock",
+      header: "Available Stock",
       cell: ({ row }) => (
         <div className="text-center text-green-600">
-          {row.original.availableVaccine}
+          {row.original.category === "medsupplies"
+            ? row.original.availableStock.replace("vials", "boxes").replace("doses", "pcs")
+            : row.original.availableStock
+          }
         </div>
       ),
     },
@@ -121,8 +174,27 @@ export default function VaccineStocks() {
     {
       accessorKey: "action",
       header: "Actions",
-      cell: ({  }) => (
-        <div className="flex justify-center gap-2">
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          {/* Maintained original TooltipLayout structure */}
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                    <Edit size={16} />
+                  </div>
+                }
+                mainContent={
+                  <EditVacStockForm
+                    vaccine={row.original}
+                    onSave={handleSaveEditedVaccine}
+                  />
+                }
+              />
+            }
+            content="Edit Item"
+          />
           <TooltipLayout
             trigger={
               <DialogLayout
@@ -131,67 +203,25 @@ export default function VaccineStocks() {
                     <Trash size={16} />
                   </div>
                 }
-                mainContent={<></>}
+                mainContent={<div>Confirm deletion</div>}
               />
             }
-            content="Delete Batch"
+            content="Delete Item"
           />
         </div>
       ),
     },
   ];
-
-  const sampleData: VaccineStocksRecord[] = [
-    {
-      id: 1,
-      batchNumber: "VAX-122A",
-      vaccine: {
-        vaccineName: "COVID-19 mRNA Vaccine",
-        dosage: 0.5,
-        dsgUnit: "ml",
-      },
-      qty: "100 vials (200 doses)",
-
-      administered: "20 vials (40 doses)",
-      wastedDose: "20",
-      availableVaccine: "80 vials (160 doses)",
-      expiryDate: "2025-12-31",
-    },
-    {
-      id: 2,
-      batchNumber: "FLU-12S2A",
-      vaccine: {
-        vaccineName: "Influenza Quadrivalent",
-        dosage: 0.5,
-        dsgUnit: "ml",
-      },
-      qty: "50 vials (100 doses)",
-
-      administered: "10 vials (20 doses)",
-      wastedDose: "0",
-      availableVaccine: "40 vials (80 doses)",
-      expiryDate: "2024-06-30",
-    },
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<VaccineStocksRecord[]>(sampleData);
-  const [currentData, setCurrentData] = useState<VaccineStocksRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
+  
   useEffect(() => {
-    const filtered = sampleData.filter((record) => {
-      const searchText =
-        `${record.id} ${record.batchNumber} ${record.vaccine.vaccineName} ${record.vaccine.dosage}${record.vaccine.dsgUnit} ${record.expiryDate} ${record.qty} ${record.administered} ${record.availableVaccine}`.toLowerCase();
+    const filtered = vaccines.filter((record) => {
+      const searchText = `${record.batchNumber} ${record.item.name}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
     setCurrentPage(1);
-  }, [searchQuery, pageSize]);
+  }, [searchQuery, pageSize, vaccines]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -225,21 +255,20 @@ export default function VaccineStocks() {
                 size={17}
               />
               <Input
-                placeholder="Search vaccine batches..."
+                placeholder="Search inventory..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
                 onChange={handleSearchChange}
               />
             </div>
             <SelectLayout
-              placeholder="Filter batches"
+              placeholder="Filter items"
               label=""
               className="bg-white"
               options={[
-                { id: "1", name: "All Types" },
-                { id: "2", name: "Viral" },
-                { id: "3", name: "Bacterial" },
-                { id: "4", name: "Other" },
+                { id: "all", name: "All Items" },
+                { id: "vaccine", name: "Vaccines" },
+                { id: "medsupplies", name: "Medical Supplies" },
               ]}
               value=""
               onChange={() => {}}
@@ -249,12 +278,11 @@ export default function VaccineStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New
+              <Plus size={15} /> New Item
             </div>
           }
-          title="Vaccine Stock Management"
-          description="Add new vaccine batch to inventory"
-          mainContent={<VaccineStockForm/>}
+          title="Add Inventory Item"
+          mainContent={<VaccineStockForm />}
         />
       </div>
 
@@ -294,19 +322,15 @@ export default function VaccineStocks() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing{" "}
-            {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
+            Showing {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
             {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} batches
+            {filteredData.length} items
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </>

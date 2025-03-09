@@ -1,20 +1,11 @@
+// VaccineStockForm.tsx
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import {
-  VaccineStockType,
-  VaccineStocksSchema,
-} from "@/form-schema/inventory/inventoryStocksSchema";
+import { VaccineStockType, VaccineStocksSchema } from "@/form-schema/inventory/inventoryStocksSchema";
 
 export default function VaccineStockForm() {
   const form = useForm<VaccineStockType>({
@@ -23,23 +14,30 @@ export default function VaccineStockForm() {
       vaccineName: "",
       batchNumber: "",
       volume: 0,
-      vialCount: 0,
-      dosesCount: 0,
+      vialBoxCount: 0,
+      dosesPcsCount: 0,
       expiryDate: "",
+      category: ""
     },
   });
 
-  // Watch vial and dose counts for real-time calculation
-  const vialCount = form.watch("vialCount") || 0;
-  const dosesCount = form.watch("dosesCount") || 0;
-  const totalDoses = vialCount * dosesCount;
+  // Watch form values
+  const category = form.watch("category");
+  const vialBoxCount = form.watch("vialBoxCount") || 0;
+  const dosesPcsCount = form.watch("dosesPcsCount") || 0;
+  const totalUnits = vialBoxCount * dosesPcsCount;
+
+  // Conditional labels based on category
+  const quantityUnit = category === "medsupplies" ? "pcs" : "doses";
+  const containerLabel = category === "medsupplies" ? "Box" : "Vial";
+  const perContainerLabel = category === "medsupplies" ? "Pieces per Box" : "Doses per Vial";
 
   const onSubmit = async (data: VaccineStockType) => {
     try {
       const validatedData = VaccineStocksSchema.parse(data);
       console.log("Form submitted", validatedData);
       form.reset();
-      alert("Vaccine stock added successfully!");
+      alert("Stock added successfully!");
     } catch (error) {
       console.error("Form submission error:", error);
       alert("Submission failed. Please check the form for errors.");
@@ -50,21 +48,19 @@ export default function VaccineStockForm() {
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Main Form Content */}
           <div className="space-y-6 p-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Vaccine Name */}
               <FormField
                 control={form.control}
                 name="vaccineName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Vaccine Name</FormLabel>
+                    <FormLabel>Item Name</FormLabel>
                     <FormControl>
                       <SelectLayout
                         label=""
                         className="w-full"
-                        placeholder="Select Vaccine"
+                        placeholder="Select Item"
                         options={[
                           { id: "covaxin", name: "Covaxin" },
                           { id: "moderna", name: "Moderna" },
@@ -78,7 +74,6 @@ export default function VaccineStockForm() {
                 )}
               />
 
-              {/* Batch Number */}
               <FormField
                 control={form.control}
                 name="batchNumber"
@@ -95,48 +90,67 @@ export default function VaccineStockForm() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Volume */}
               <FormField
                 control={form.control}
-                name="volume"
+                name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Volume per Dose (ml)</FormLabel>
+                    <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
+                      <SelectLayout
+                        label=""
+                        className="w-full"
+                        placeholder="Select Category"
+                        options={[
+                          { id: "vaccine", name: "Vaccine" },
+                          { id: "medsupplies", name: "Medical Supplies" },
+                        ]}
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {category !== "medsupplies" && (
+                <FormField
+                  control={form.control}
+                  name="volume"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Volume per Dose (ml)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? undefined : Number(value));
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Vial Count */}
               <FormField
                 control={form.control}
-                name="vialCount"
+                name="vialBoxCount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Vials</FormLabel>
+                    <FormLabel>{`Number of ${containerLabel}s`}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
+                          field.onChange(value === "" ? undefined : Number(value));
                         }}
                       />
                     </FormControl>
@@ -145,22 +159,19 @@ export default function VaccineStockForm() {
                 )}
               />
 
-              {/* Doses per Vial */}
               <FormField
                 control={form.control}
-                name="dosesCount"
+                name="dosesPcsCount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Doses per Vial</FormLabel>
+                    <FormLabel>{perContainerLabel}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
+                          field.onChange(value === "" ? undefined : Number(value));
                         }}
                       />
                     </FormControl>
@@ -170,18 +181,17 @@ export default function VaccineStockForm() {
               />
             </div>
 
-            <div>
-              {/* Total Doses Display */}
-              <FormItem>
-                <FormLabel>Total Doses</FormLabel>
-                <div className="flex items-center h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalDoses.toLocaleString()} doses
-                </div>
-              </FormItem>
-            </div>
+            <FormItem>
+              <FormLabel>{`Total ${quantityUnit}`}</FormLabel>
+              <div className="flex items-center h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                {totalUnits.toLocaleString()} {quantityUnit}
+                <span className="ml-2 text-muted-foreground text-xs">
+                  ({vialBoxCount} {containerLabel.toLowerCase()}s × {dosesPcsCount} {quantityUnit}/{containerLabel.toLowerCase()})
+                </span>
+              </div>
+            </FormItem>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Expiry Date */}
               <FormField
                 control={form.control}
                 name="expiryDate"
@@ -198,7 +208,6 @@ export default function VaccineStockForm() {
             </div>
           </div>
 
-          {/* Sticky Submit Button */}
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Stock

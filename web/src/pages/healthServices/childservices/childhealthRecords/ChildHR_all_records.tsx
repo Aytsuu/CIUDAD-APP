@@ -279,6 +279,7 @@ export default function AllChildHealthRecords() {
           </div>
         </div>
 
+
         <div className="w-full md:w-auto">
           <Button onClick={toChildHealthForm}>New Record</Button>
         </div>

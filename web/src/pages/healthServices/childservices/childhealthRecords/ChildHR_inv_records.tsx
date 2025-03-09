@@ -172,6 +172,7 @@ export default function InvChildHealthRecords() {
     }
   };
 
+  
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
