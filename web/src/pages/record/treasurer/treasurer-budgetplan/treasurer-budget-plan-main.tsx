@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import CreateBudgetPlanHeader from "./treasurer_budgetplan_header_form";
 
 export const columns: ColumnDef<BudgetPlan>[] = [
     { 
@@ -100,9 +101,16 @@ function BudgetPlan(){
                     />
                     <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
                 </div>
-                    <Link to="/treasurer-budgetplan-form">
-                        <Button className="w-full md:w-auto">+ Add New</Button>
-                    </Link>
+                  
+                    <DialogLayout
+                    trigger={<div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>}
+                    className=""
+                    title="Create Budget Plan Header"
+                    description="Fill out the form to create a new budget plan header."
+                    mainContent={
+                        <CreateBudgetPlanHeader/>
+                    }
+                    />
                 </div>
 
                 <div className="w-full bg-white border border-none"> 
