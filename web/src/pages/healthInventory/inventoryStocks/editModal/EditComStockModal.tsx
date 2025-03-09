@@ -1,3 +1,4 @@
+// EditCommodityStockForm.tsx
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,46 +17,134 @@ import {
   CommodityStockType,
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
+import { useEffect } from "react";
+import { z } from "zod";
 
-export default function CommodityStockForm() {
-  const form = useForm<CommodityStockType>({
-    resolver: zodResolver(CommodityStocksSchema),
-    defaultValues: {
-      commodityName: "",
-      batchNumber: "",
-      category: "",
-      unit: "",
-      qty: 0,
-      pcs: 0,
-      expiryDate: "",
-      recevFrom: "",
-    },
-  });
+interface EditCommodityStockFormProps {
+  initialData: {
+    batchNumber: string;
+    commodityName: string;
+    category: string;
+    recevFrom: string;
+    qty: string;
+    availQty: string;
+    expiryDate: string;
+    dispensed: string;
+  };
+  onSave: (data: any) => void;
+}
 
-  const onSubmit = async (data: CommodityStockType) => {
+export default function EditCommodityStockForm({
+  initialData,
+  onSave,
+}: EditCommodityStockFormProps) {
+  const parseQuantity = (qtyString: string) => {
+    // Enhanced parsing with better error handling
     try {
-      const validatedData = CommodityStocksSchema.parse(data);
-      console.log("Form submitted", validatedData);
-      form.reset();
-      alert("Commodity stock added successfully!");
+      const boxMatch = qtyString.match(/(\d+) bx\/s \((\d+) pc\/s\)/);
+      if (boxMatch && boxMatch[1] && boxMatch[2]) {
+        return {
+          qty: parseInt(boxMatch[1]),
+          pcs: parseInt(boxMatch[2]),
+          unit: "boxes" as const
+        };
+      }
+      
+      const piecesMatch = qtyString.match(/(\d+)/);
+      return {
+        qty: piecesMatch ? parseInt(piecesMatch[0]) : 0,
+        pcs: 0,
+        unit: "pcs" as const
+      };
     } catch (error) {
-      console.error("Form submission error:", error);
-      alert("Submission failed. Please check the form for errors.");
+      console.error("Error parsing quantity:", error);
+      return { qty: 0, pcs: 0, unit: "pcs" as const };
     }
   };
 
-  // Watch relevant fields for calculation
+  const form = useForm<CommodityStockType>({
+    resolver: zodResolver(CommodityStocksSchema),
+    defaultValues: {
+      commodityName: initialData.commodityName,
+      category: initialData.category,
+      batchNumber: initialData.batchNumber,
+      recevFrom: initialData.recevFrom,
+      ...parseQuantity(initialData.qty),
+      expiryDate: initialData.expiryDate,
+    }
+  });
+
+  useEffect(() => {
+    const parsed = parseQuantity(initialData.qty);
+    form.reset({
+      commodityName: initialData.commodityName,
+      category: initialData.category,
+      batchNumber: initialData.batchNumber,
+      recevFrom: initialData.recevFrom,
+      ...parsed,
+      expiryDate: initialData.expiryDate,
+    });
+  }, [initialData, form]);
+
+  const onSubmit = async (data: CommodityStockType) => {
+    try {
+      // Validate against schema
+      const validatedData = CommodityStocksSchema.parse(data);
+      
+      // Format the output
+      const updatedCommodity = {
+        ...initialData,
+        ...validatedData,
+        qty: validatedData.unit === 'boxes' 
+          ? `${validatedData.qty} bx/s (${validatedData.pcs} pc/s)`
+          : `${validatedData.qty} pc/s`,
+        availQty: validatedData.unit === 'boxes' 
+          ? `${validatedData.qty} bx/s (${validatedData.pcs} pc/s)`
+          : `${validatedData.qty} pc/s`,
+      };
+
+      // Call parent save handler
+      onSave(updatedCommodity);
+      alert("✅ Data saved successfully!");
+    } catch (error) {
+      console.error("Submission error:", error);
+      if (error instanceof z.ZodError) {
+        // Show first validation error
+        const firstError = error.errors[0];
+        alert(`Validation error: ${firstError.message}`);
+      } else {
+        alert("❌ Save failed. Please check the form values.");
+      }
+    }
+  };
+
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
+
+  // Form options
+  const commodityOptions = [
+    { id: "Condom", name: "Condom" },
+    { id: "pills COC", name: "Pills COC" }
+  ];
+
+  const categoryOptions = [
+    { id: "Condom", name: "Condom" },
+    { id: "Pills", name: "Pills" }
+  ];
+
+  const recevFromOptions = [
+    { id: "DOH", name: "DOH" },
+    { id: "CHD", name: "CHD" },
+    { id: "OTHERS", name: "OTHERS" },
+  ];
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Commodity Name */}
             <FormField
               control={form.control}
               name="commodityName"
@@ -66,12 +155,8 @@ export default function CommodityStockForm() {
                     <SelectLayout
                       label=""
                       className="w-full"
-                      placeholder="Select Category"
-                      options={[
-                        { id: "medical", name: "Medical Supplies" },
-                        { id: "pharmaceutical", name: "Pharmaceuticals" },
-                        { id: "equipment", name: "Equipment" },
-                      ]}
+                      placeholder="Select Commodity"
+                      options={commodityOptions}
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -81,7 +166,6 @@ export default function CommodityStockForm() {
               )}
             />
 
-            {/* Category Dropdown */}
             <FormField
               control={form.control}
               name="category"
@@ -93,11 +177,7 @@ export default function CommodityStockForm() {
                       label=""
                       className="w-full"
                       placeholder="Select Category"
-                      options={[
-                        { id: "medical", name: "Medical Supplies" },
-                        { id: "pharmaceutical", name: "Pharmaceuticals" },
-                        { id: "equipment", name: "Equipment" },
-                      ]}
+                      options={categoryOptions}
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -109,7 +189,6 @@ export default function CommodityStockForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Expiry Date */}
             <FormField
               control={form.control}
               name="batchNumber"
@@ -117,13 +196,13 @@ export default function CommodityStockForm() {
                 <FormItem>
                   <FormLabel>Batch Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="Batch number " {...field} />
+                    <Input {...field} placeholder="Enter batch number" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* Expiry Date */}
+
             <FormField
               control={form.control}
               name="expiryDate"
@@ -131,30 +210,30 @@ export default function CommodityStockForm() {
                 <FormItem>
                   <FormLabel>Expiry Date</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input 
+                      type="date" 
+                      {...field} 
+                      value={field.value?.split('T')[0] || ''}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          {/* Commodity Name */}
+
           <FormField
             control={form.control}
             name="recevFrom"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Receive From</FormLabel>
+                <FormLabel>Received From</FormLabel>
                 <FormControl>
                   <SelectLayout
                     label=""
                     className="w-full"
-                    placeholder="Select Category"
-                    options={[
-                      { id: "DOH", name: "DOH" },
-                      { id: "CHD", name: "CHD" },
-                      { id: "OTHERS", name: "OTHERS" },
-                    ]}
+                    placeholder="Select Source"
+                    options={recevFromOptions}
                     value={field.value}
                     onChange={field.onChange}
                   />
@@ -165,7 +244,6 @@ export default function CommodityStockForm() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Quantity */}
             <FormField
               control={form.control}
               name="qty"
@@ -177,21 +255,15 @@ export default function CommodityStockForm() {
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Quantity"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
-                      }}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* Storage Unit */}
+
             <FormField
               control={form.control}
               name="unit"
@@ -202,11 +274,10 @@ export default function CommodityStockForm() {
                     <SelectLayout
                       label=""
                       className="w-full"
-                      placeholder="Select "
+                      placeholder="Select Unit"
                       options={[
                         { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
-                        { id: "packs", name: "Packs" },
+                        { id: "pcs", name: "Pieces" },
                       ]}
                       value={field.value}
                       onChange={field.onChange}
@@ -218,9 +289,8 @@ export default function CommodityStockForm() {
             />
           </div>
 
-          {/* Pieces per Box and Total Pieces Display */}
           {currentUnit === "boxes" && (
-            <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="pcs"
@@ -230,13 +300,8 @@ export default function CommodityStockForm() {
                     <FormControl>
                       <Input
                         type="number"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
+                        value={field.value}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -256,10 +321,9 @@ export default function CommodityStockForm() {
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
-              Save Commodity
+              Save Changes
             </Button>
           </div>
         </form>

@@ -1,12 +1,23 @@
 // EditMedicineForm.tsx
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { MedicineStocksSchema, MedicineStockType } from "@/form-schema/inventory/inventoryStocksSchema";
-import { useEffect } from "react";
+import {
+  MedicineStocksSchema,
+  MedicineStockType,
+} from "@/form-schema/inventory/inventoryStocksSchema";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 
 interface EditMedicineFormProps {
   medicine: {
@@ -26,7 +37,11 @@ interface EditMedicineFormProps {
   onSave: (data: any) => void;
 }
 
-export default function EditMedicineForm({ medicine, onSave }: EditMedicineFormProps) {
+export default function EditMedicineForm({
+  medicine,
+  onSave,
+}: EditMedicineFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
@@ -36,11 +51,13 @@ export default function EditMedicineForm({ medicine, onSave }: EditMedicineFormP
       dosage: medicine.medicineInfo.dosage,
       dsgUnit: medicine.medicineInfo.dsgUnit,
       form: medicine.medicineInfo.form,
-      qty: parseInt(medicine.qty.split(' ')[0]),
-      unit: medicine.qty.includes('boxes') ? 'boxes' : 'bottles',
-      pcs: medicine.qty.includes('boxes') ? parseInt(medicine.qty.split('(')[1]) : 0,
+      qty: parseInt(medicine.qty.split(" ")[0]) || 1,
+      unit: medicine.qty.includes("boxes") ? "boxes" : "bottles",
+      pcs: medicine.qty.includes("boxes")
+        ? parseInt(medicine.qty.split("(")[1]) || 1
+        : 0,
       expiryDate: medicine.expiryDate,
-    }
+    },
   });
 
   useEffect(() => {
@@ -51,16 +68,27 @@ export default function EditMedicineForm({ medicine, onSave }: EditMedicineFormP
       dosage: medicine.medicineInfo.dosage,
       dsgUnit: medicine.medicineInfo.dsgUnit,
       form: medicine.medicineInfo.form,
-      qty: parseInt(medicine.qty.split(' ')[0]),
-      unit: medicine.qty.includes('boxes') ? 'boxes' : 'bottles',
-      pcs: medicine.qty.includes('boxes') ? parseInt(medicine.qty.split('(')[1]) : 0,
+      qty: parseInt(medicine.qty.split(" ")[0]) || 1,
+      unit: medicine.qty.includes("boxes") ? "boxes" : "bottles",
+      pcs: medicine.qty.includes("boxes")
+        ? parseInt(medicine.qty.split("(")[1]) || 1
+        : 0,
       expiryDate: medicine.expiryDate,
     });
   }, [medicine, form]);
 
   const onSubmit = async (data: MedicineStockType) => {
+    console.log("Form submission data:", JSON.stringify(data, null, 2));
+    setIsSubmitting(true);
+
     try {
-      const validatedData = MedicineStocksSchema.parse(data);
+      const submitData = {
+        ...data,
+        pcs: data.unit === "boxes" ? data.pcs : 0,
+      };
+
+      const validatedData = MedicineStocksSchema.parse(submitData);
+
       const updatedMedicine = {
         ...medicine,
         batchNumber: validatedData.batchNumber,
@@ -72,40 +100,51 @@ export default function EditMedicineForm({ medicine, onSave }: EditMedicineFormP
         },
         expiryDate: validatedData.expiryDate,
         category: validatedData.category,
-        qty: validatedData.unit === 'boxes' 
-          ? `${validatedData.qty} boxes (${validatedData.pcs} pcs)`
-          : `${validatedData.qty} bot`,
+        qty:
+          validatedData.unit === "boxes"
+            ? `${validatedData.qty} boxes (${validatedData.pcs} pcs)`
+            : `${validatedData.qty} bottles`,
       };
-      onSave(updatedMedicine);
+
+      await onSave(updatedMedicine);
+      // Add success alert here 👇
+      alert("Medicine stock updated successfully!");
     } catch (error) {
       console.error("Form submission error:", error);
-      alert("Update failed. Please check the form.");
+      if (error instanceof z.ZodError) {
+        alert(
+          `Validation failed:\n${error.errors
+            .map((e) => `• ${e.message}`)
+            .join("\n")}`
+        );
+      } else {
+        alert("Update failed. Please check the form.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
-  // Get unique medicine options from actual data
   const medicineOptions = [
     { id: "Paracetamol", name: "Paracetamol" },
-    { id: "Amoxicillin", name: "Amoxicillin" }
+    { id: "Amoxicillin", name: "Amoxicillin" },
   ];
 
-  // Get unique category options from actual data
   const categoryOptions = [
     { id: "Analgesic", name: "Analgesic" },
-    { id: "Antibiotic", name: "Antibiotic" }
+    { id: "Antibiotic", name: "Antibiotic" },
   ];
-return (
+
+  return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Main Form Content */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Medicine Name Dropdown */}
+            {/* // Medicine Name Field */}
             <FormField
               control={form.control}
               name="medicineName"
@@ -119,15 +158,14 @@ return (
                       placeholder="Select Medicine"
                       options={medicineOptions}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value)} // Ensure this passes the `id` string
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* Category Dropdown */}
+            {/* // Category Field */}
             <FormField
               control={form.control}
               name="category"
@@ -141,7 +179,7 @@ return (
                       placeholder="Select Category"
                       options={categoryOptions}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value)} // Ensure this passes the `id` string
                     />
                   </FormControl>
                   <FormMessage />
@@ -150,9 +188,7 @@ return (
             />
           </div>
 
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Batch Number */}
             <FormField
               control={form.control}
               name="batchNumber"
@@ -167,7 +203,6 @@ return (
               )}
             />
 
-            {/* Expiry Date */}
             <FormField
               control={form.control}
               name="expiryDate"
@@ -175,7 +210,11 @@ return (
                 <FormItem>
                   <FormLabel>Expiry Date</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input
+                      type="date"
+                      min={new Date().toISOString().split("T")[0]}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -184,7 +223,6 @@ return (
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Dosage */}
             <FormField
               control={form.control}
               name="dosage"
@@ -194,12 +232,11 @@ return (
                   <FormControl>
                     <Input
                       type="number"
-                      value={field.value || ""}
+                      min={0}
+                      value={field.value}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
+                        const value = parseInt(e.target.value);
+                        field.onChange(isNaN(value) ? 0 : value);
                       }}
                     />
                   </FormControl>
@@ -208,7 +245,6 @@ return (
               )}
             />
 
-            {/* Dosage Unit */}
             <FormField
               control={form.control}
               name="dsgUnit"
@@ -233,7 +269,6 @@ return (
               )}
             />
 
-            {/* Form */}
             <FormField
               control={form.control}
               name="form"
@@ -260,7 +295,6 @@ return (
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Quantity Input */}
             <FormField
               control={form.control}
               name="qty"
@@ -272,12 +306,11 @@ return (
                   <FormControl>
                     <Input
                       type="number"
-                      value={field.value || ""}
+                      min={1}
+                      value={field.value}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
+                        const value = parseInt(e.target.value);
+                        field.onChange(isNaN(value) ? 1 : value);
                       }}
                     />
                   </FormControl>
@@ -285,7 +318,7 @@ return (
                 </FormItem>
               )}
             />
-            {/* Quantity Unit */}
+
             <FormField
               control={form.control}
               name="unit"
@@ -312,7 +345,6 @@ return (
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Pieces per Box (Conditional) */}
             {currentUnit === "boxes" && (
               <FormField
                 control={form.control}
@@ -323,12 +355,11 @@ return (
                     <FormControl>
                       <Input
                         type="number"
-                        value={field.value || ""}
+                        min={1}
+                        value={field.value}
                         onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
+                          const value = parseInt(e.target.value);
+                          field.onChange(isNaN(value) ? 1 : value);
                         }}
                       />
                     </FormControl>
@@ -338,11 +369,10 @@ return (
               />
             )}
 
-            {/* Total Pieces Display (Conditional) */}
             {currentUnit === "boxes" && (
               <FormItem className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
-                <div className="flex items-center h-10  rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
                   {totalPieces.toLocaleString()} pieces
                   <span className="ml-2 text-muted-foreground text-xs">
                     ({qty} boxes × {pcs} pieces/box)
@@ -352,10 +382,9 @@ return (
             )}
           </div>
 
-          {/* Sticky Submit Button */}
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save Stock
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Stock"}
             </Button>
           </div>
         </form>

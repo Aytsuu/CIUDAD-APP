@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput } from "lucide-react";
+import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,21 +15,20 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import FirstAidStockForm from "../addstocksModal/FirstAidStockModal";
-
+import UsedFAModal from "../addstocksModal/UsedFAModal";
+import EditFirstAidStockForm from "../editModal/EditFirstAidStockModal";
+type FirstAidStocksRecord = {
+  batchNumber: string;
+  itemName: string;
+  category: string;
+  qty: number;
+  availQty: number;
+  expiryDate: string;
+  usedItem: number;
+};
 
 export default function FirstAidStocks() {
-  type FirstAidStocksRecord = {
-    batchNumber: string;
-    itemName: string;
-    category: string;
-    qty: number;
-    availQty: number;
-    expiryDate: string;
-    usedItem: number;
-  };
-
   const columns: ColumnDef<FirstAidStocksRecord>[] = [
-  
     {
       accessorKey: "batchNumber",
       header: "Batch No.",
@@ -58,7 +57,24 @@ export default function FirstAidStocks() {
       accessorKey: "usedItem",
       header: "Used",
       cell: ({ row }) => (
-        <div className="text-center text-red-600">{row.original.usedItem}</div>
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-sm text-gray-600">
+            {row.original.usedItem || 0}
+          </span>
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
+                    <Minus size={15} />
+                  </button>
+                }
+                mainContent={<UsedFAModal />}
+              />
+            }
+            content="Used Items"
+          />
+        </div>
       )
     },
     {
@@ -68,7 +84,6 @@ export default function FirstAidStocks() {
         <div className="text-center text-green-700">{row.original.availQty}</div>
       )
     },
-   
     {
       accessorKey: "expiryDate",
       header: "Expiry Date",
@@ -81,8 +96,26 @@ export default function FirstAidStocks() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
+      cell: ({ row }) => (
         <div className="flex justify-center gap-2">
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                    <Edit size={16} />
+                  </div>
+                }
+                mainContent={
+                  <EditFirstAidStockForm
+                    initialData={row.original}
+                    onSave={handeleSaveEditModal}
+                  />
+                }
+              />
+            }
+            content="Edit" 
+          />
           <TooltipLayout
             trigger={
               <DialogLayout
@@ -168,6 +201,14 @@ export default function FirstAidStocks() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handeleSaveEditModal = (updatedData: FirstAidStocksRecord) => {
+    setFilteredData(prevData =>
+      prevData.map(item =>
+        item.batchNumber === updatedData.batchNumber ? updatedData : item
+      )
+    );
   };
 
   return (

@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput } from "lucide-react";
+import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,21 +15,21 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CommodityStockForm from "../addstocksModal/ComStockModal";
+import EditCommodityStockForm from "../editModal/EditComStockModal";
+
+type CommodityStocksRecord = {
+  batchNumber: string;
+  commodityName: string;
+  category: string;
+  recevFrom: string;
+  qty: string;
+  availQty: string;
+  expiryDate: string;
+  dispensed: string;
+};
 
 export default function CommodityStocks() {
-  type CommodityStocksRecord = {
-    batchNumber: string;
-    commodityName: string;
-    category: string;
-    recevFrom: string;
-    qty: string;
-    availQty: string;
-    expiryDate: string;
-    dispensed: string;
-  };
-
   const columns: ColumnDef<CommodityStocksRecord>[] = [
-    
     {
       accessorKey: "batchNumber",
       header: "Batch No.",
@@ -62,12 +62,12 @@ export default function CommodityStocks() {
       )
     },
     {
-        accessorKey: "dispensed",
-        header: "Dispensed",
-        cell: ({ row }) => (
-          <div className="text-center text-red-600">{row.original.dispensed}</div>
-        )
-      },
+      accessorKey: "dispensed",
+      header: "Dispensed",
+      cell: ({ row }) => (
+        <div className="text-center text-red-600">{row.original.dispensed}</div>
+      )
+    },
     {
       accessorKey: "availQty",
       header: "Available",
@@ -75,7 +75,6 @@ export default function CommodityStocks() {
         <div className="text-green-700">{row.original.availQty}</div>
       )
     },
-  
     {
       accessorKey: "expiryDate",
       header: "Expiry Date",
@@ -88,8 +87,26 @@ export default function CommodityStocks() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
+      cell: ({ row }) => (
         <div className="flex justify-center gap-2">
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                    <Edit size={16} />
+                  </div>
+                }
+                mainContent={
+                  <EditCommodityStockForm
+                    initialData={row.original}
+                    onSave={handleSaveEditedCommodity}
+                  />
+                }
+              />
+            }
+            content="Edit"
+          />
           <TooltipLayout
             trigger={
               <DialogLayout
@@ -108,7 +125,7 @@ export default function CommodityStocks() {
     },
   ];
 
-  const sampleData: CommodityStocksRecord[] = [
+  const initialData: CommodityStocksRecord[] = [
     {
       batchNumber: "122A",
       commodityName: "Condom",
@@ -129,36 +146,26 @@ export default function CommodityStocks() {
       dispensed: "10 pcs",
       expiryDate: "2024-06-30"
     },
-   
   ];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<CommodityStocksRecord[]>(sampleData);
+  const [data, setData] = useState<CommodityStocksRecord[]>(initialData);
+  const [filteredData, setFilteredData] = useState<CommodityStocksRecord[]>(initialData);
   const [currentData, setCurrentData] = useState<CommodityStocksRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const filtered = sampleData.filter((item) => {
-      const searchTerms = [
-        item.batchNumber,
-        item.commodityName,
-        item.category,
-        item.recevFrom,
-        item.qty.toString(),
-        item.availQty.toString(),
-        item.dispensed.toString(),
-        item.expiryDate
-      ].join(" ").toLowerCase();
-
-      return searchTerms.includes(searchQuery.toLowerCase());
+    const filtered = data.filter((item) => {
+      const searchText = `${item.batchNumber} ${item.commodityName} ${item.category} ${item.recevFrom} ${item.qty} ${item.availQty} ${item.dispensed} ${item.expiryDate}`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
     });
 
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
     setCurrentPage(1);
-  }, [searchQuery, pageSize]);
+  }, [searchQuery, pageSize, data]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -179,6 +186,14 @@ export default function CommodityStocks() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handleSaveEditedCommodity = (updatedData: CommodityStocksRecord) => {
+    setData(prevData =>
+      prevData.map(item =>
+        item.batchNumber === updatedData.batchNumber ? updatedData : item
+      )
+    );
   };
 
   return (
