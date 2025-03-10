@@ -67,13 +67,11 @@ const columns: ColumnDef<Donation>[] = [
           trigger={
             <DialogLayout
               trigger={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full sm:w-auto"
+                <div
+                  className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"
                 >
                   <Eye size={16} />
-                </Button>
+                </div>
               }
               className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
               title=""
@@ -91,13 +89,11 @@ const columns: ColumnDef<Donation>[] = [
           trigger={
             <DialogLayout
               trigger={
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="w-full sm:w-auto"
+                <div
+                  className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"
                 >
                   <Trash size={16} />
-                </Button>
+                </div>
               }
               className="max-w-[30%] h-1/3 flex flex-col"
               title="Delete Record"
@@ -153,6 +149,16 @@ function DonationTracker() {
     selectedFilter === "All Donation Category"
       ? data
       : data.filter((item) => item.itemCat === selectedFilter);
+
+      const [currentPage, setCurrentPage] = useState(1);
+      const totalPages = Math.ceil(filteredData.length / 12);
+      const handlePageChange = (newPage: number) => {
+      setCurrentPage(newPage);
+      };
+
+      const startIndex = (currentPage - 1) * 12;
+      const endIndex = startIndex + 12;
+      const currentRows = filteredData.slice(startIndex, endIndex);
 
   return (
     <div className="w-full h-full">
@@ -225,7 +231,9 @@ function DonationTracker() {
         </p>
 
         <div className="w-full sm:w-auto flex justify-center">
-          <PaginationLayout className="" />
+          <PaginationLayout  currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}/>
         </div>
       </div>
     </div>
