@@ -72,7 +72,7 @@ const initialFormData: FormData = {
     typeOfLastDelivery: undefined,
     lastMenstrualPeriod: "",
     previousMenstrualPeriod: "",
-    menstrualFlow: ,
+    menstrualFlow: undefined,
     dysmenorrhea: false,
     hydatidiformMole: false,
     ectopicPregnancyHistory: false,
