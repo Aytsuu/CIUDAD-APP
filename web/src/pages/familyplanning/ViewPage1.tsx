@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Link } from "react-router"
 
 interface InputLineProps {
   className?: string
@@ -13,7 +14,7 @@ interface InputLineProps {
 const Header = [
   { name: "CLIENT ID.:", value: "", className: "w-48 md:w-64" },
   { name: "PHILHEALTH NO.:", value: "", className: "w-56 md:w-72" },
-];
+]; 
 
 // NHTS details
 const NHTS = [
@@ -21,83 +22,83 @@ const NHTS = [
   { name: "Pantawid Pamilya Pilipino (4Ps):", value: "", className: "w-12" },
 ];
 
-const ClientType = [
-  { name: "New Acceptor", value: "", classname: "w-12" },
-  { name: "Current User", value: "", classname: "w-12" },
-];
+// const ClientType = [
+//   { name: "New Acceptor", value: "", classname: "w-12" },
+//   { name: "Current User", value: "", classname: "w-12" },
+// ];
 
-const CurrentUserType = [
-  { name: "Changing Method", value: "", classname: "w-12" },
-  { name: "Changing Clinic", value: "", classname: "w-12" },
-  { name: "Dropout/Restart", value: "", classname: "w-12" }
-];
+// const CurrentUserType = [
+//   { name: "Changing Method", value: "", classname: "w-12" },
+//   { name: "Changing Clinic", value: "", classname: "w-12" },
+//   { name: "Dropout/Restart", value: "", classname: "w-12" }
+// ];
 
-const ReasonFP = [
-  { name: "spacing", value: "", classname: "w-12" },
-  { name: "limiting", value: "", classname: "w-12" },
-  { name: "others", value: "", classname: "w-12" }
-];
+// const ReasonFP = [
+//   { name: "spacing", value: "", classname: "w-12" },
+//   { name: "limiting", value: "", classname: "w-12" },
+//   { name: "others", value: "", classname: "w-12" }
+// ];
 
-const Reason = [
-  { name: "medical condition", value: "", classname: "w-12" },
-  { name: "side-effects", value: "", classname: "w-12" },
-];
+// const Reason = [
+//   { name: "medical condition", value: "", classname: "w-12" },
+//   { name: "side-effects", value: "", classname: "w-12" },
+// ];
 
-const MethodsCurrentlyUsed = [
-  { name: "COC", value: "", classname: "w-12" },
-  { name: "IUD", value: "", classname: "w-12" },
-  { name: "BOM/CMM", value: "", classname: "w-12" },
-  { name: "LAM", value: "", classname: "w-12" },
-  { name: "POP", value: "", classname: "w-12" },
-  { name: "Interval", value: "", classname: "w-12" },
-  { name: "BBT", value: "", classname: "w-12" },
-  { name: "Others", value: "", classname: "w-12" },
-  { name: "Injectable", value: "", classname: "w-12" },
-  { name: "Post Partum", value: "", classname: "w-12" },
-  { name: "STM", value: "", classname: "w-12" },
-  { name: "Implant", value: "", classname: "w-12" },
-  { name: "Condom", value: "", classname: "w-12" },
-  { name: "SDM", value: "", classname: "w-12" }
-];
+// const MethodsCurrentlyUsed = [
+//   { name: "COC", value: "", classname: "w-12" },
+//   { name: "IUD", value: "", classname: "w-12" },
+//   { name: "BOM/CMM", value: "", classname: "w-12" },
+//   { name: "LAM", value: "", classname: "w-12" },
+//   { name: "POP", value: "", classname: "w-12" },
+//   { name: "Interval", value: "", classname: "w-12" },
+//   { name: "BBT", value: "", classname: "w-12" },
+//   { name: "Others", value: "", classname: "w-12" },
+//   { name: "Injectable", value: "", classname: "w-12" },
+//   { name: "Post Partum", value: "", classname: "w-12" },
+//   { name: "STM", value: "", classname: "w-12" },
+//   { name: "Implant", value: "", classname: "w-12" },
+//   { name: "Condom", value: "", classname: "w-12" },
+//   { name: "SDM", value: "", classname: "w-12" }
+// ];
 
-// Medical History questions
-const MedicalHistoryQuestions = [
-  { name: "severe headaches / migraine", value: "" },
-  { name: "history of stroke / heart attack / hypertension", value: "" },
-  { name: "non-traumatic hematoma / frequent bruising or gum bleeding", value: "" },
-  { name: "current or history of breast cancer / breast mass", value: "" },
-  { name: "severe chest pain", value: "" },
-  { name: "cough for more than 14 days", value: "" },
-  { name: "jaundice", value: "" },
-  { name: "unexplained vaginal bleeding", value: "" },
-  { name: "abnormal vaginal discharge", value: "" },
-  { name: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", value: "" },
-  { name: "Is this client a SMOKER?", value: "" },
-  { name: "With Disability?", value: "" }
-];
+// // Medical History questions
+// const MedicalHistoryQuestions = [
+//   { name: "severe headaches / migraine", value: "" },
+//   { name: "history of stroke / heart attack / hypertension", value: "" },
+//   { name: "non-traumatic hematoma / frequent bruising or gum bleeding", value: "" },
+//   { name: "current or history of breast cancer / breast mass", value: "" },
+//   { name: "severe chest pain", value: "" },
+//   { name: "cough for more than 14 days", value: "" },
+//   { name: "jaundice", value: "" },
+//   { name: "unexplained vaginal bleeding", value: "" },
+//   { name: "abnormal vaginal discharge", value: "" },
+//   { name: "intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)", value: "" },
+//   { name: "Is this client a SMOKER?", value: "" },
+//   { name: "With Disability?", value: "" }
+// ];
 
-// VAW Risk Assessment items
-const VAWRiskItems = [
-  { name: "unpleasant relationship with partner", value: "" },
-  { name: "partner does not approved of the visit to FP clinic", value: "" },
-  { name: "history of domestic violence or VAW", value: "" }
-];
+// // VAW Risk Assessment items
+// const VAWRiskItems = [
+//   { name: "unpleasant relationship with partner", value: "" },
+//   { name: "partner does not approved of the visit to FP clinic", value: "" },
+//   { name: "history of domestic violence or VAW", value: "" }
+// ];
 
-// Referral options
-const ReferralOptions = [
-  { name: "DSWD", value: "" },
-  { name: "WCPU", value: "" },
-  { name: "NGOs", value: "" },
-  { name: "Others", value: "", hasSpecify: true }
-];
-const Obstetrical = [
-  { name: "G", value: "" },
-  { name: "P", value: "" },
-  { name: "Full term", value: "" },
-  { name: "Abortion", value: ""},
-  { name: "Premature", value: "" },
-  { name: "Living Children", value: ""},
-];
+// // Referral options
+// const ReferralOptions = [
+//   { name: "DSWD", value: "" },
+//   { name: "WCPU", value: "" },
+//   { name: "NGOs", value: "" },
+//   { name: "Others", value: "", hasSpecify: true }
+// ];
+// const Obstetrical = [
+//   { name: "G", value: "" },
+//   { name: "P", value: "" },
+//   { name: "Full term", value: "" },
+//   { name: "Abortion", value: ""},
+//   { name: "Premature", value: "" },
+//   { name: "Living Children", value: ""},
+// ];
 
 
 interface InputLineProps {
@@ -181,7 +182,7 @@ const FamilyPlanningView: React.FC = () => {
             </p>
           </div>
              {/* Right Section */}
-          <div className="border border-black flex-grow pl-3">
+          <div className="border border-black flex-grow pl-3 pt-1 pr-3">
             {Header.map((field, index) => (
               <div className="flex items-center mb-2 w-full" key={index}>
                 <Label className="text-sm font-bold whitespace-nowrap mr-2">
@@ -373,7 +374,7 @@ const FamilyPlanningView: React.FC = () => {
       
 
         {/* Type of Client Section */}
-        <div className="grid grid-cols-12 p-2 border-b border-black">
+        <div className="grid grid-cols-12 p-2  border border-black">
            {/* Left Column */}
            <div className="col-span-6 p-2 ">
             <div className="font-bold mb-4">Type of Client</div>
@@ -473,7 +474,7 @@ const FamilyPlanningView: React.FC = () => {
         </div>
 
         {/* Medical History and VAW Risk Section */}
-        <div className="grid grid-cols-2 border-b border-black">
+        <div className="grid grid-cols-2 border border-black">
           {/* Medical History */}
           <div className="border-r border-black p-2">
             <div className="font-bold">I. MEDICAL HISTORY</div>
@@ -509,7 +510,7 @@ const FamilyPlanningView: React.FC = () => {
           </div>
 
           {/* VAW Risk Assessment */}
-          <div className="p-2">
+          <div className="p-2 border border-black">
             <div className="font-bold">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</div>
 
             {[
@@ -528,7 +529,7 @@ const FamilyPlanningView: React.FC = () => {
 
             <div className="mt-2">
               <Label className="font-bold text-sm">Referred to:</Label>
-              <div className="grid grid-cols-2 gap-1 mt-1">
+              <div className="grid grid-rows gap-1 mt-1">
                 {["DSWD", "WCPU", "NGOs", "Others"].map((option) => (
                   <div key={option} className="flex items-center space-x-2">
                     <input
@@ -547,7 +548,7 @@ const FamilyPlanningView: React.FC = () => {
         </div>
 
 
-        <div className="border-r border-black p-2 grid grid-cols-2">
+        <div className="border  border-black p-2 grid grid-cols-2">
           <div>
             <div className="font-bold">II. OBSTETRICAL HISTORY</div>
             <div className="flex items-center mt-2">
@@ -648,9 +649,9 @@ const FamilyPlanningView: React.FC = () => {
           </div>
 
              {/* Physical Examination Section */}
-        <div className="border-b border-black p-2">
+        <div className="border-l pl-3 border-black">
           <div className="font-bold">V. PHYSICAL EXAMINATION</div>
-          <div className="grid grid-cols-2 gap-4 mt-2">
+          <div className="grid grid-cols-2 gap-4 mt-2 ">
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <div className="flex items-center">
@@ -868,7 +869,7 @@ const FamilyPlanningView: React.FC = () => {
 
 
 
-        <div className="p-2">
+        <div className="border border-black p-2">
             <div className="font-bold">III. RISKS FOR SEXUALITY TRANSMITTED INFECTIONS</div>
             <div className="text-sm mb-2">Does the client or the client's partner have any of the following?</div>
 
@@ -908,7 +909,7 @@ const FamilyPlanningView: React.FC = () => {
                 <YesNoRadio name={`sti-${index}`} />
               </div>
             ))}
-         <div className="p-2 text-[8px] border-t border-black">
+         <div className="p-2 mt-6 text-[13px] text-center border-t border-black">
           <p>
             Implant = Progestin subdermal implant; IUD = Intrauterine device; BTL = Bilateral tubal ligation; NSV =
             No-scalpel vasectomy; COC = Combined oral contraceptives; POP = Progestin only pills; CMM = Cervical mucus
@@ -919,54 +920,57 @@ const FamilyPlanningView: React.FC = () => {
           </div>
           
 
-        {/* Acknowledgment Section */}
-        <div className="p-2">
-          <div className="font-bold">ACKNOWLEDGEMENT:</div>
-          <p className="text-sm mt-2">
-            This is to certify that the Physician/Nurse/Midwife of the clinic has fully explained to me the different
-            methods available in family planning and I freely choose the
-            <InputLine value="" className="w-32 mx-2 inline-block" />
-            method.
-          </p>
+          <div className="p-4 border border-black">
+  <div className="font-bold">ACKNOWLEDGEMENT:</div>
+  <p className="mt-2 text-md ">
+    This is to certify that the Physician/Nurse/Midwife of the clinic has fully
+    explained to me the different methods available in family planning and I
+    freely choose the <InputLine className="w-48 mx-1" value={""} /><p> method. </p>
+    
+  </p>
 
-          <div className="grid grid-cols-2 gap-6 mt-4">
-            <div>
-              <div className="h-16 border-b border-black"></div>
-              <div className="text-center text-sm">Client Signature</div>
-              <div className="flex justify-center mt-2">
-                <InputLine value="" className="w-32 inline-block" />
-              </div>
-              <div className="text-center text-sm">Date</div>
-            </div>
-            <div>
-              <p className="text-sm mb-2">For WRA below 18 yrs. Old:</p>
-              <p className="text-sm">
-                I hereby consent
-                <InputLine value="" className="w-32 mx-2 inline-block" />
-                to accept the Family Planning method.
-              </p>
-              <div className="h-8 mt-2 border-b border-black"></div>
-              <div className="text-center text-sm">Parent/Guardian Signature</div>
-              <div className="flex justify-center mt-2">
-                <InputLine value="" className="w-32 inline-block" />
-              </div>
-              <div className="text-center text-sm">Date</div>
-            </div>
-          </div>
-        </div>
-          </div>
+  <div className="flex justify-between mt-6 mb-6">
+    <div className="text-center">
+      <InputLine className="w-48" value={""} />
+      <div>Client Signature</div>
+    </div>
+    <div className="text-center">
+      <InputLine className="w-48" value={""} />
+      <div>Date</div>
+    </div>
+  </div>
+  
+  <div>
+    <p>For WEA below 18 yrs. Old:</p>
+    <p className="mt-1 flex">
+      I hereby consent <InputLine className="w-48 mx-1" value={""} /> to accept the Family Planning
+      method.
+    </p>
+  </div>
 
-        {/* Legend Section */}
-        
-      </div>
+  <div className="flex justify-between mt-6">
+    <div className="text-center">
+      <InputLine className="w-48" value={""} />
+      <div>Parent/Guardian Signature</div>
+    </div>
+    <div className="text-center">
+      <InputLine className="w-48" value={""} />
+      <div>Date</div>
+    </div>
+  </div>
+</div>
 
+   
+
+</div>
+</div>
       {/* Navigation Buttons */}
       <div className="flex justify-end space-x-4 mt-6">
-        <Button variant="destructive">CANCEL</Button>
-        <Button className="bg-green-600">NEXT</Button>
+        <Link to="/FamilyPlanning_view2">
+        <Button>Next</Button>
+        </Link>
       </div>
     </div>
-
   )
 }
 

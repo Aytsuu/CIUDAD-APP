@@ -200,7 +200,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
 
         <div className="mt-8">
           <Table>
-            <TableCaption>List of service provision records</TableCaption>
+            {/* <TableCaption>List of service provision records</TableCaption> */}
             <TableHeader>
               <TableRow>
                 <TableHead>Date of Visit</TableHead>
@@ -234,7 +234,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
           </Table>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-end mt-6 space-x-4">
         <Button variant="outline" onClick={onPrevious5}>
           Previous
         </Button>

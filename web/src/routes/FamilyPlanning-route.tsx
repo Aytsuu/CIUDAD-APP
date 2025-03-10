@@ -1,12 +1,7 @@
-import FamPlanning_table from "@/pages/familyplanning/Table";
-import FamilyPlanningView from "@/pages/familyplanning/view";
-// import FamilyPlanningForm from "@/pages/familyplanning/FP-page1";
-// import FamilyPlanningForm2 from "@/pages/familyplanning/FP-page2";
-// import FamilyPlanningForm3 from "@/pages/familyplanning/FP-page3";
-// import FamilyPlanning_form4 from "@/pages/familyplanning/FP-page4";
-// import FamilyPlanningForm5 from "@/pages/familyplanning/FP-page5";
-// import FamilyPlanningForm6 from "@/pages/familyplanning/FP-page6";
+import FamPlanning_table from "@/pages/record/health/familyplanning/OverallTable";
+import FamilyPlanningView from "@/pages/familyplanning/ViewPage1";
 import FamilyPlanningMain from "@/pages/familyplanning/Main";
+import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2";
 
 export const famplanning_route = [
     {
@@ -21,25 +16,10 @@ export const famplanning_route = [
         path: '/FamPlanning_table',
         element: <FamPlanning_table/>
     },
-    // {
-    //     path: '/FamilyPlanning_form2',
-    //     element: <FamilyPlanningForm2/>
-    // },
-    // { 
-    //     path: '/FamilyPlanning_form3',
-    //     element: <FamilyPlanningForm3/>
-    // },
-    // {
-    //     path: '/FamilyPlanning_form4',
-    //     element: <FamilyPlanning_form4/>
-    // },
-    // {
-    //     path: '/FamilyPlanning_form5',
-    //     element: <FamilyPlanningForm5/>
-    // },
-    // {
-    //     path: '/FamilyPlanning_form6',
-    //     element: <FamilyPlanningForm6/>
-    // }
+    {
+        path: '/FamilyPlanning_view2',
+        element: <FamilyPlanningView2/>
+    }
+   
     
  ]

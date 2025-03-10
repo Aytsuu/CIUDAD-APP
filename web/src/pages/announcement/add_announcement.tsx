@@ -20,7 +20,7 @@ export default function CreateAnnouncement() {
   });
 
   return (
-    <div className="max-w-[600px] mx-auto p-4 mb-4">
+    <div className="max-w-[600px] bg-white smx-auto p-4 mb-4">
       <h2 className="font-bold text-[#263D67] text-2xl mb-4 text-center">Create Announcement</h2>
 
       <Form {...form}>

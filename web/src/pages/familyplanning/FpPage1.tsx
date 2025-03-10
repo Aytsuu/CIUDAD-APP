@@ -23,7 +23,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     resolver: zodResolver(page1Schema), // Use page-specific schema
     defaultValues: formData,
     values: formData,
-    mode: "onChange", // Validate on change for better user experience
+    mode: "onTouched", 
   })
 
   useEffect(() => {
@@ -34,6 +34,35 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   useEffect(() => {
     console.log("FamilyPlanningForm received formData:", formData)
   }, [formData])
+
+  // Add this debugging function
+  const debugValidation = async () => {
+    try {
+      // Try to validate the current form values against the schema
+      const result = await page1Schema.parseAsync(form.getValues())
+      console.log("Validation succeeded:", result)
+    } catch (error) {
+      console.error("Validation failed:", error)
+    }
+  }
+
+  // Add a debug button temporarily
+  useEffect(() => {
+    // Add a debug button to the page
+    const debugButton = document.createElement("button")
+    debugButton.textContent = "Debug Validation"
+    debugButton.style.position = "fixed"
+    debugButton.style.top = "10px"
+    debugButton.style.right = "10px"
+    debugButton.style.zIndex = "9999"
+    debugButton.onclick = debugValidation
+
+    document.body.appendChild(debugButton)
+
+    return () => {
+      document.body.removeChild(debugButton)
+    }
+  }, [])
 
   const onSubmitForm = async (data: FormData) => {
     console.log("PAGE 1 Submitted Data:", data)
@@ -70,30 +99,33 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   const typeOfClient = form.watch("typeOfClient")
   const subTypeOfClient = form.watch("subTypeOfClient")
 
+  // Update the conditional variables that determine which sections should be enabled
+  // Replace the existing conditional variables (around line 60-63) with these:
+
   // Determine which sections should be enabled
   const isNewAcceptor = typeOfClient === "New Acceptor"
-  const isCurrentUserChangingMethod = typeOfClient === "Current User" && subTypeOfClient === "Changing Method"
-  const isCurrentUserNotChangingMethod =
-    typeOfClient === "Current User" && subTypeOfClient !== "Changing Method" && subTypeOfClient !== ""
+  const isCurrentUser = typeOfClient === "Current User"
 
   // Reset fields when type of client changes
   useEffect(() => {
     if (isNewAcceptor) {
-      // Reset reason field for New Acceptor
+      // For New Acceptor: Enable Reason for FP, disable Reason and Method Currently Used
       form.setValue("reason", "")
       form.setValue("methodCurrentlyUsed", undefined)
       form.setValue("otherMethod", "")
-    } else if (isCurrentUserChangingMethod) {
-      // Reset reasonForFP field for Current User with Changing Method
+    } else if (isCurrentUser) {
+      // For Current User: Disable Reason for FP, enable Reason and Method Currently Used
       form.setValue("reasonForFP", "")
       form.setValue("otherReasonForFP", "")
-    } else if (isCurrentUserNotChangingMethod) {
-      // Reset reason and methodCurrentlyUsed for Current User not Changing Method
-      form.setValue("reason", "")
-      form.setValue("methodCurrentlyUsed", undefined)
-      form.setValue("otherMethod", "")
     }
-  }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUserChangingMethod, isCurrentUserNotChangingMethod])
+  }, [typeOfClient, form, isNewAcceptor, isCurrentUser])
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      console.log("Form errors:", form.formState.errors)
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
@@ -280,11 +312,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                         label=""
                         className="custom-class w-full"
                         options={[
-                          { id: "elementary", name: "Elementary" },
-                          { id: "highschool", name: "High school" },
-                          { id: "shs", name: "Senior Highschool" },
-                          { id: "collegegrad", name: "College level" },
-                          { id: "collegelvl", name: "College Graduate" },
+                          { id: "Elementary", name: "Elementary" },
+                          { id: "HighSchool", name: "High school" },
+                          { id: "SeniorHighschool", name: "Senior Highschool" },
+                          { id: "Collegelvl", name: "College level" },
+                          { id: "Collegegrad", name: "College Graduate" },
                         ]}
                         value={field.value || ""}
                         onChange={field.onChange}
@@ -606,9 +638,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     name="reasonForFP"
                     render={({ field }) => (
                       <FormItem className="w-full">
-                        <Label className={`font-semibold ${isCurrentUserChangingMethod ? "text-gray-400" : ""}`}>
-                          Reason for FP
-                        </Label>
+                        <Label className={`font-semibold ${isCurrentUser ? "text-gray-400" : ""}`}>Reason for FP</Label>
                         <div className="space-y-2 mt-2">
                           {["Spacing", "Limiting", "Others"].map((option) => (
                             <div key={option} className="flex items-center space-x-2">
@@ -618,17 +648,18 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                   value={option}
                                   checked={field.value === option}
                                   onChange={() => field.onChange(option)}
-                                  disabled={isCurrentUserChangingMethod}
-                                  className={isCurrentUserChangingMethod ? "opacity-50 cursor-not-allowed" : ""}
+                                  disabled={isCurrentUser}
+                                  className={isCurrentUser ? "opacity-50 cursor-not-allowed" : ""}
                                 />
                               </FormControl>
-                              <Label className={isCurrentUserChangingMethod ? "text-gray-400" : ""}>{option}</Label>
-                              {option === "Others" && field.value === "Others" && !isCurrentUserChangingMethod && (
+                              <Label className={isCurrentUser ? "text-gray-400" : ""}>{option}</Label>
+                              {option === "Others" && field.value === "Others" && !isCurrentUser && (
                                 <FormField
                                   control={form.control}
                                   name="otherReasonForFP"
+                                  
                                   render={({ field: otherField }) => (
-                                    <Input className="w-32" {...otherField} disabled={isCurrentUserChangingMethod} />
+                                    <Input className="w-32" placeholder="Specify" {...otherField} disabled={isCurrentUser} />
                                   )}
                                 />
                               )}
@@ -646,11 +677,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     name="reason"
                     render={({ field }) => (
                       <FormItem className="w-full">
-                        <Label
-                          className={`font-semibold ${isNewAcceptor || isCurrentUserNotChangingMethod ? "text-gray-400" : ""}`}
-                        >
-                          Reason
-                        </Label>
+                        <Label className={`font-semibold ${isNewAcceptor ? "text-gray-400" : ""}`}>Reason</Label>
                         <div className="space-y-2 mt-2">
                           {["Medical Condition", "Side Effects"].map((reasonOption) => (
                             <div key={reasonOption} className="flex items-center space-x-2">
@@ -660,17 +687,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                   value={reasonOption}
                                   checked={field.value === reasonOption}
                                   onChange={() => field.onChange(reasonOption)}
-                                  disabled={isNewAcceptor || isCurrentUserNotChangingMethod}
-                                  className={
-                                    isNewAcceptor || isCurrentUserNotChangingMethod
-                                      ? "opacity-50 cursor-not-allowed"
-                                      : ""
-                                  }
+                                  disabled={isNewAcceptor}
+                                  className={isNewAcceptor ? "opacity-50 cursor-not-allowed" : ""}
                                 />
                               </FormControl>
-                              <Label className={isNewAcceptor || isCurrentUserNotChangingMethod ? "text-gray-400" : ""}>
-                                {reasonOption}
-                              </Label>
+                              <Label className={isNewAcceptor ? "text-gray-400" : ""}>{reasonOption}</Label>
                             </div>
                           ))}
                         </div>
@@ -697,13 +718,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                 value={method.name}
                                 checked={field.value === method.name}
                                 onChange={() => field.onChange(method.name)}
-                                disabled={!isCurrentUserChangingMethod}
-                                className={!isCurrentUserChangingMethod ? "opacity-50 cursor-not-allowed" : ""}
+                                disabled={isNewAcceptor}
+                                className={isNewAcceptor ? "opacity-50 cursor-not-allowed" : ""}
                               />
                             </FormControl>
-                            <Label
-                              className={`text-sm whitespace-nowrap ml-2 ${!isCurrentUserChangingMethod ? "text-gray-400" : ""}`}
-                            >
+                            <Label className={`text-sm whitespace-nowrap ml-2 ${isNewAcceptor ? "text-gray-400" : ""}`}>
                               {method.name}
                             </Label>
                           </FormItem>
@@ -729,26 +748,22 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                   form.setValue("otherMethod", "")
                                 }
                               }}
-                              disabled={!isCurrentUserChangingMethod}
-                              className={!isCurrentUserChangingMethod ? "opacity-50 cursor-not-allowed" : ""}
+                              disabled={isNewAcceptor}
+                              className={isNewAcceptor ? "opacity-50 cursor-not-allowed" : ""}
                             />
                           </FormControl>
-                          <Label className={`text-sm ${!isCurrentUserChangingMethod ? "text-gray-400" : ""}`}>
-                            Others
-                          </Label>
+                          <Label className={`text-sm ${isNewAcceptor ? "text-gray-400" : ""}`}>Others</Label>
                         </FormItem>
                       )}
                     />
                     {form.watch("methodCurrentlyUsed") === "Others" && (
                       <>
-                        <span className={`text-sm ${!isCurrentUserChangingMethod ? "text-gray-400" : ""}`}>
-                          specify:
-                        </span>
+                        <span className={`text-sm ${isNewAcceptor ? "text-gray-400" : ""}`}>specify:</span>
                         <FormField
                           control={form.control}
                           name="otherMethod"
                           render={({ field }) => (
-                            <Input type="text" className="w-32" {...field} disabled={!isCurrentUserChangingMethod} />
+                            <Input type="text" className="w-32" {...field} disabled={isNewAcceptor} />
                           )}
                         />
                       </>
@@ -759,20 +774,24 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
             </div>
             <div className="flex justify-end space-x-4">
               <Button
-                type="submit"
-                onClick={async (e) => {
-                  e.preventDefault()
-                  // Validate the form
-                  const isValid = await form.trigger()
-                  if (isValid) {
-                    // If valid, save data and proceed
-                    const currentValues = form.getValues()
-                    updateFormData(currentValues)
+                type="button"
+                onClick={form.handleSubmit(
+                  // Success handler
+                  (data) => {
+                    console.log("Form is valid, proceeding to next page")
+                    updateFormData(data)
                     onNext2()
-                  } else {
-                    console.error("Please fill in all required fields")
-                  }
-                }}
+                  },
+                  // Error handler
+                  (errors) => {
+                    console.error("Validation errors:", errors)
+                    // Scroll to the first error
+                    const firstError = document.querySelector(".text-destructive")
+                    if (firstError) {
+                      firstError.scrollIntoView({ behavior: "smooth", block: "center" })
+                    }
+                  },
+                )}
               >
                 Next
               </Button>

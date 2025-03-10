@@ -13,6 +13,7 @@ const ServiceProvisionRecordSchema = z.object({
   medicalFindings: z.string().optional(),
 })
 
+// Define the complete schema for all pages
 export const FamilyPlanningSchema = z.object({
   // Page 1 fields
   clientID: z.string().nonempty("Client ID is required"),
@@ -24,13 +25,13 @@ export const FamilyPlanningSchema = z.object({
   givenName: z.string().nonempty("Given name is required"),
   middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
   dateOfBirth: z.string().nonempty("Birthdate is required"),
-  age: z.number().min(0, "Age is required and must be a positive number"),
+  age: z.number().min(1, "Age is required and must be a positive number"),
   educationalAttainment: z.string().nonempty("Educational Attainment is required"),
   occupation: z.string().optional(),
 
   address: z.object({
     houseNumber: z.string().optional(),
-    street: z.string().optional(),
+    street: z.string().nonempty("Street is required"),
     barangay: z.string().nonempty("Barangay is required"),
     municipality: z.string().nonempty("Municipality/City is required"),
     province: z.string().nonempty("Province is required"),
@@ -41,16 +42,16 @@ export const FamilyPlanningSchema = z.object({
     s_givenName: z.string().nonempty("Given name is required"),
     s_middleInitial: z.string().max(1, "Middle Initial must be 1 character only").optional(),
     s_dateOfBirth: z.string().nonempty("Birthdate is required"),
-    s_age: z.number().min(0, "Age is required and must be a positive number"),
+    s_age: z.number().min(1, "Age is required and must be a positive number"),
     s_occupation: z.string().optional(),
   }),
 
-  numOfLivingChildren: z.number().min(0, "Number of living children is required"),
+  numOfLivingChildren: z.number().min(1, "Number of living children is required"),
   planToHaveMoreChildren: z.boolean(),
   averageMonthlyIncome: z.string().optional(),
 
   typeOfClient: z.string().nonempty("Type of client is required"),
-  subTypeOfClient: z.string().nonempty("Sub-type of client is required"),
+  subTypeOfClient: z.string().optional(),
 
   reasonForFP: z.string().optional(),
   otherReasonForFP: z.string().optional(),
@@ -135,44 +136,64 @@ export const FamilyPlanningSchema = z.object({
     otherReferral: z.string().optional().nullable(),
   }),
 
-  // Page 4 fields
+  // Page 4 fields - Updated for radio buttons
   weight: z.string().nonempty("Weight is required"),
   height: z.string().nonempty("Height is required"),
   bloodPressure: z.string().nonempty("Blood pressure is required"),
   pulseRate: z.string().nonempty("Pulse rate is required"),
 
-  // Skin Examination
+  // Updated examination fields to use radio buttons
+  skinExamination: z.enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"]).default("not_applicable"),
+  conjunctivaExamination: z.enum(["normal", "pale", "yellowish", "not_applicable"]).default("not_applicable"),
+  neckExamination: z.enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"]).default("not_applicable"),
+  breastExamination: z.enum(["normal", "mass", "nipple_discharge", "not_applicable"]).default("not_applicable"),
+  abdomenExamination: z.enum(["normal", "abdominal_mass", "varicosities", "not_applicable"]).default("not_applicable"),
+  extremitiesExamination: z.enum(["normal", "edema", "varicosities", "not_applicable"]).default("not_applicable"),
+
+  // Pelvic Examination (for IUD Acceptors)
+  pelvicExamination: z
+    .enum([
+      "normal",
+      "mass",
+      "abnormal_discharge",
+      "cervical_abnormalities",
+      "warts",
+      "polyp_or_cyst",
+      "inflammation_or_erosion",
+      "bloody_discharge",
+      "not_applicable",
+    ])
+    .default("not_applicable"),
+
+  // Cervical Examination
+  cervicalConsistency: z.enum(["firm", "soft", "not_applicable"]).default("not_applicable"),
+  cervicalTenderness: z.boolean().default(false),
+  cervicalAdnexalMassTenderness: z.boolean().default(false),
+
+  // Uterine Examination
+  uterinePosition: z.enum(["mid", "anteflexed", "retroflexed", "not_applicable"]).default("not_applicable"),
+  uterineDepth: z.string().optional(),
+
+  // Remove old checkbox fields that are now replaced by radio buttons
   skinNormal: z.boolean().optional(),
   skinPale: z.boolean().optional(),
   skinYellowish: z.boolean().optional(),
   skinHematoma: z.boolean().optional(),
-
-  // Conjunctiva Examination
   conjunctivaNormal: z.boolean().optional(),
   conjunctivaPale: z.boolean().optional(),
   conjunctivaYellowish: z.boolean().optional(),
-
-  // Neck Examination
   neckNormal: z.boolean().optional(),
   neckMass: z.boolean().optional(),
   neckEnlargedLymphNodes: z.boolean().optional(),
-
-  // Breast Examination
   breastNormal: z.boolean().optional(),
   breastMass: z.boolean().optional(),
   breastNippleDischarge: z.boolean().optional(),
-
-  // Abdomen Examination
   abdomenNormal: z.boolean().optional(),
   abdomenMass: z.boolean().optional(),
   abdomenVaricosities: z.boolean().optional(),
-
-  // Extremities Examination
   extremitiesNormal: z.boolean().optional(),
   extremitiesEdema: z.boolean().optional(),
   extremitiesVaricosities: z.boolean().optional(),
-
-  // Pelvic Examination (for IUD Acceptors)
   pelvicNormal: z.boolean().optional(),
   pelvicMass: z.boolean().optional(),
   pelvicAbnormalDischarge: z.boolean().optional(),
@@ -181,37 +202,33 @@ export const FamilyPlanningSchema = z.object({
   pelvicPolypOrCyst: z.boolean().optional(),
   pelvicInflammationOrErosion: z.boolean().optional(),
   pelvicBloodyDischarge: z.boolean().optional(),
-
-  // Cervical Examination
   cervicalConsistencyFirm: z.boolean().optional(),
   cervicalConsistencySoft: z.boolean().optional(),
-  cervicalTenderness: z.boolean().optional(),
-  cervicalAdnexalMassTenderness: z.boolean().optional(),
-
-  // Uterine Examination
   uterinePositionMid: z.boolean().optional(),
   uterinePositionAnteflexed: z.boolean().optional(),
   uterinePositionRetroflexed: z.boolean().optional(),
-  uterineDepth: z.string().optional(),
 
   // Page 5 fields
   acknowledgement: z.object({
-    selectedMethod: z.enum([
-      "coc",
-      "iud",
-      "bom/cmm",
-      "lam",
-      "pop",
-      "interval",
-      "bbt",
-      "sdm",
-      "injectable",
-      "postpartum",
-      "stm",
-      "implant",
-      "condom",
-      "others",
-    ]),
+    selectedMethod: z
+      .enum([
+        "coc",
+        "iud",
+        "bom/cmm",
+        "lam",
+        "pop",
+        "interval",
+        "bbt",
+        "sdm",
+        "injectable",
+        "postpartum",
+        "stm",
+        "implant",
+        "condom",
+        "others",
+      ], {
+        required_error: "Please select a method",
+      }),
     clientSignature: z.string().optional(), // Base64 string of signature
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().optional(),
@@ -223,7 +240,8 @@ export const FamilyPlanningSchema = z.object({
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
 })
 
-// Create page-specific schemas for validation
+// Create page-specific schemas by picking fields from the main schema
+// This avoids duplication of field definitions
 export const page1Schema = FamilyPlanningSchema.pick({
   clientID: true,
   philhealthNo: true,
@@ -265,40 +283,17 @@ export const page4Schema = FamilyPlanningSchema.pick({
   height: true,
   bloodPressure: true,
   pulseRate: true,
-  skinNormal: true,
-  skinPale: true,
-  skinYellowish: true,
-  skinHematoma: true,
-  conjunctivaNormal: true,
-  conjunctivaPale: true,
-  conjunctivaYellowish: true,
-  neckNormal: true,
-  neckMass: true,
-  neckEnlargedLymphNodes: true,
-  breastNormal: true,
-  breastMass: true,
-  breastNippleDischarge: true,
-  abdomenNormal: true,
-  abdomenMass: true,
-  abdomenVaricosities: true,
-  extremitiesNormal: true,
-  extremitiesEdema: true,
-  extremitiesVaricosities: true,
-  pelvicNormal: true,
-  pelvicMass: true,
-  pelvicAbnormalDischarge: true,
-  pelvicCervicalAbnormalities: true,
-  pelvicWarts: true,
-  pelvicPolypOrCyst: true,
-  pelvicInflammationOrErosion: true,
-  pelvicBloodyDischarge: true,
-  cervicalConsistencyFirm: true,
-  cervicalConsistencySoft: true,
+  skinExamination: true,
+  conjunctivaExamination: true,
+  neckExamination: true,
+  breastExamination: true,
+  abdomenExamination: true,
+  extremitiesExamination: true,
+  pelvicExamination: true,
+  cervicalConsistency: true,
   cervicalTenderness: true,
   cervicalAdnexalMassTenderness: true,
-  uterinePositionMid: true,
-  uterinePositionAnteflexed: true,
-  uterinePositionRetroflexed: true,
+  uterinePosition: true,
   uterineDepth: true,
 })
 
