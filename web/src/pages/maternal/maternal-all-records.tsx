@@ -230,7 +230,7 @@ export default function MaternalAllRecords() {
             Maternal Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
+            Manage and view mother's information
           </p>
         </div>
       </div>

@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-// import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
@@ -23,7 +22,6 @@ import { FileInput } from "lucide-react";
 export default function MaternalIndivRecords() {
   type maternalIndivRecords = {
     id: number;
-    // patientName: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -216,8 +214,8 @@ export default function MaternalIndivRecords() {
     },
   ];
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
 
   const filter = [
@@ -244,7 +242,7 @@ export default function MaternalIndivRecords() {
             Maternal Individual Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
+            Manage and view mother's information
           </p>
         </div>
       </div>
@@ -279,10 +277,10 @@ export default function MaternalIndivRecords() {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem>
-                <Link to="">Prenatal</Link>
+                <Link to="/prenatalform">Prenatal</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link to="">Postpartum</Link>
+                <Link to="/postpartumform">Postpartum</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

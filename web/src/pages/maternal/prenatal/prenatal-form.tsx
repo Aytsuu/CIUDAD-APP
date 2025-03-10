@@ -1,6 +1,6 @@
 "use client"
 
-import { PrenatalFormSchema } from "@/form-schema/prenatal-schema"
+import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-firstpg"
 import { useForm } from "react-hook-form"
 import { Form } from "@/components/ui/form"
@@ -50,9 +50,9 @@ export default function PrenatalForm(){
             historyOfDiabetes: "",
 
             prevIllness: "",
-            prevIllnessYear: undefined,
+            prevIllnessYear: 0,
             prevHospitalization: "",
-            prevHospitalizationYear: undefined,
+            prevHospitalizationYear: 0,
 
             dateOfDelivery: "",
             outcome: "",

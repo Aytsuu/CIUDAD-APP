@@ -432,7 +432,7 @@ const riskCodesFieldGroups = [
 ]
 
 
-// input line component
+// input line readOnly component
 export const InputLine = ({className}: {className: string}) => (
     <Input className={cn("w-1/2 mr-2 border-0 border-b border-black rounded-none", className)} readOnly/>
 

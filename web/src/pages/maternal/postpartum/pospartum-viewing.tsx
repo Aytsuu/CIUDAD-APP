@@ -5,20 +5,20 @@ import React from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
-import { DataTable } from "@/components/ui/table/data-table"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft } from "lucide-react";
+import { Link } from "react-router";
+
 
 const personalInfo = [
     {
-        name: "FAMILY NO.", value: "", className: "w-[150px]"
-    },
-    {
-        name: "Name:", value: "", className: "mr-10 w-[400px]"
+        name: "Name:", value: "", className: "mr-8 w-[400px]"
     },
     {
         name: "Age:", value: "", className: "w-32"
     },
     {
-        name: "Husband's Name:", value: "", className: "mr-10 w-[330px]"
+        name: "Husband's Name:", value: "", className: "mr-8 w-[330px]"
     },
     {
         name: "Address:", value: "", className: "w-[300px]"
@@ -26,22 +26,22 @@ const personalInfo = [
 ]
 
 const personalInfoFieldGroups = [
-    [personalInfo[0]], // family no.
-    [personalInfo[1], personalInfo[2]], // name. age
-    [personalInfo[3], personalInfo[4]] // husband's name, address
+    // [personalInfo[0]], // family no.
+    [personalInfo[0], personalInfo[1]], // name. age
+    [personalInfo[2], personalInfo[3]] // husband's name, address
 ]
 
 
 // delivery info
 const deliveryInfo = [
     {
-        name: "Date & Time of Delivery:", value: "", className: "mr-10 w-[286px]"
+        name: "Date & Time of Delivery:", value: "", className: "mr-8 w-[286px]"
     },
     {
         name: "Place of Delivery:", value: "", className: "w-[240px]"
     },
     {
-        name: "Attended by:", value: "", className: "mr-10 w-[360px]"
+        name: "Attended by:", value: "", className: "mr-8 w-[360px]"
     },
     {
         name: "Outcome", value: "", className: "w-[300px]"
@@ -57,19 +57,19 @@ const deliveryInfoFieldGroups = [
 // postpartum care info
 const postpartumCareInfo = [
     {
-        name: "TT Status:", value: "", className: "mr-10 w-[384px]"
+        name: "TT Status:", value: "", className: "mr-8 w-[384px]"
     },
     {
         name: "Iron Supplementation:", value: "", className: "w-[230px]"
     },
     {
-        name: "Lochial Discharges:", value: "", className: "mr-10 w-[325px]"
+        name: "Lochial Discharges:", value: "", className: "mr-8 w-[325px]"
     },
     {
         name: "Vit A Supplementation:", value: "", className: "w-[225px]"
     },
     {
-        name: "No. of pad / day:", value: "", className: "mr-10 w-[338px]"
+        name: "No. of pad / day:", value: "", className: "mr-8 w-[330px]"
     },
     {
         name: "Mebenendazole given (if not given during prenatal):", value: "", className: "w-[130px]"
@@ -93,60 +93,150 @@ export const InputLine = ({className}: {className: string}) => (
 
 )
 
-export default function PostpartumViewing() {
-    return(
-        <div className="max-w-5xl h-full mx-auto m-5 p-5 border border-gray-300">
-            <div>
-                <h4 className="text-center text-2xl m-4 pb-3"> <b>POSTPARTUM RECORD</b> </h4>
-            </div>
+const styles = {
+    tableBody: "p-2 border border-black"
+}
 
-            {/* personal info */}
-            <div className="flex flex-col">
-                {personalInfoFieldGroups.map((group, index) => (
-                    <div className="flex" key={index}>
-                        {group.map((info, i) => (
-                            <div className="flex items-center">
-                                <React.Fragment key={i}>
-                                <Label className="mt-4">{info.name}</Label>
-                                <InputLine className={info.className}></InputLine>
-                            </React.Fragment>
+
+export default function PostpartumViewing() {
+    type postpartumCare = {
+        date: string;
+        lochialDischarges: string;
+        bp: string;
+        feeding: string;
+        findings: string;
+        nursesNotes: string;
+    }
+
+    const sampleData: postpartumCare[] = [
+        {
+            date: "10/01/2025",
+            lochialDischarges: "Rubra",
+            bp: "120/80",
+            feeding: "Breastfeeding",
+            findings: "Normal",
+            nursesNotes: "None"
+        },
+        {
+            date: "12/01/2025",
+            lochialDischarges: "Rubra",
+            bp: "120/80",
+            feeding: "Breastfeeding",
+            findings: "Normal",
+            nursesNotes: "None"
+        },
+        {
+            date: "10/01/2025",
+            lochialDischarges: "Rubra",
+            bp: "120/80",
+            feeding: "Breastfeeding",
+            findings: "Normal",
+            nursesNotes: "None"
+        },
+        {
+            date: "10/01/2025",
+            lochialDischarges: "Rubra",
+            bp: "120/80",
+            feeding: "Breastfeeding",
+            findings: "Normal",
+            nursesNotes: "None"
+        },
+    ]
+
+    return(
+        <div>
+            <Link to="/maternalindividualrecords">
+                    <Button 
+                        className="text-black p-2 self-start"
+                        variant={"outline"}
+                    >
+                        <ChevronLeft />
+                    </Button>                        
+            </Link>
+            <div className="container max-w-5xl mx-auto m-3 p-5 border border-gray-300 bg-white">
+                
+                <div className="m-5">
+                    <div className="mt-[50px]">
+                        <h4 className="text-center text-2xl m-4 pb-3"> <b>POSTPARTUM RECORD</b> </h4>
+                    </div>
+
+                    {/* personal info */}
+                    <div className="flex w-full justify-end">
+                        <Label className="mt-4">FAMILY NO.</Label>
+                        <InputLine className="w-[150px]"></InputLine>
+                    </div>
+                    <div className="flex flex-col w-full">
+                        {personalInfoFieldGroups.map((group, index) => (
+                            <div className="flex" key={index}>
+                                {group.map((info, i) => (
+                                    <div className="flex items-center">
+                                        <React.Fragment key={i}>
+                                        <Label className="mt-4">{info.name}</Label>
+                                        <InputLine className={info.className}></InputLine>
+                                    </React.Fragment>
+                                    </div>
+                                ))}
                             </div>
                         ))}
                     </div>
-                ))}
-            </div>
 
-            {/* delivery info */}
-            <div className="flex flex-col">
-                {deliveryInfoFieldGroups.map((group, index) => (
-                    <div className="flex" key={index}>
-                        {group.map((info, i) => (
-                            <React.Fragment key={i}>
-                                <Label className="mt-4">{info.name}</Label>
-                                <InputLine className={info.className}></InputLine>
-                            </React.Fragment>
+                    {/* delivery info */}
+                    <div className="flex flex-col w-full">
+                        {deliveryInfoFieldGroups.map((group, index) => (
+                            <div className="flex" key={index}>
+                                {group.map((info, i) => (
+                                    <React.Fragment key={i}>
+                                        <Label className="mt-4">{info.name}</Label>
+                                        <InputLine className={info.className}></InputLine>
+                                    </React.Fragment>
+                                ))}
+                            </div>
                         ))}
                     </div>
-                ))}
-            </div>
 
-            {/* postpartum care info */}
-            <div className="flex flex-col">
-                {postpartumCareInfoFieldGroups.map((group, index) => (
-                    <div className="flex" key={index}>
-                        {group.map((info, i) => (
-                            <React.Fragment key={i}>
-                                <Label className="mt-4">{info.name}</Label>
-                                <InputLine className={info.className}></InputLine>
-                            </React.Fragment>
+                    {/* postpartum care info */}
+                    <div className="flex flex-col w-full">
+                        {postpartumCareInfoFieldGroups.map((group, index) => (
+                            <div className="flex" key={index}>
+                                {group.map((info, i) => (
+                                    <React.Fragment key={i}>
+                                        <Label className="mt-4">{info.name}</Label>
+                                        <InputLine className={info.className}></InputLine>
+                                    </React.Fragment>
+                                ))}
+                            </div>
                         ))}
                     </div>
-                ))}
-            </div>
+                </div>
+                
 
-            {/* postpartum table */}
-            <div className="flex">
-                {/* <DataTable></DataTable> */}
+                {/* postpartum table */}
+                <div className="flex mt-8 w-full">
+                    <table className="w-full m-5 border border-black">
+                        <thead>
+                            <tr className="border border-black">
+                                <th className="w-[100px] border border-black">Date</th>
+                                <th className="p-2 w-[140px] border border-black">Lochial Discharges</th>
+                                <th className="w-[100px] border border-black">B/P</th>
+                                <th className="w-[150px] border border-black">Feeding</th>
+                                <th className="w-[280px] border border-black">Findings</th>
+                                <th className="w-[200px] border border-black">Nurses Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-center">
+                            {sampleData.map((data, index) => (
+                                <tr key={index} className="border border-black">
+                                    <td className={styles.tableBody}>{data.date}</td>
+                                    <td className={styles.tableBody}>{data.lochialDischarges}</td>
+                                    <td className={styles.tableBody}>{data.bp}</td>
+                                    <td className={styles.tableBody}>{data.feeding}</td>
+                                    <td className={styles.tableBody}>{data.findings}</td>
+                                    <td className={styles.tableBody}>{data.nursesNotes}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     )
