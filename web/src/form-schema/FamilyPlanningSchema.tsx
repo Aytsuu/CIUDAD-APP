@@ -28,7 +28,8 @@ export const FamilyPlanningSchema = z.object({
   age: z.number().min(1, "Age is required and must be a positive number"),
   educationalAttainment: z.string().nonempty("Educational Attainment is required"),
   occupation: z.string().optional(),
-
+  isTransient: z.string().default('Resident'),
+  
   address: z.object({
     houseNumber: z.string().optional(),
     street: z.string().optional(),
@@ -245,6 +246,7 @@ export const page1Schema = FamilyPlanningSchema.pick({
   reason: true,
   methodCurrentlyUsed: true,
   otherMethod: true,
+  isTransient: true,
 }).refine(
   (data) => {
     // If New Acceptor, reasonForFP is required

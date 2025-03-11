@@ -13,8 +13,10 @@ type FamPlanningPatient = {
   id: number;
   fname: string;
   lname: string;
+  mname: string;
   age: string;
   address: string;
+  gender: string;
   purok: string;
   type: string;
   createdAt: string;
@@ -26,7 +28,9 @@ const samplePatients: FamPlanningPatient[] = [
     id: 1,
     fname: "Jane",
     lname: "Bil",
+    mname: "M",
     age: "25",
+    gender: "Female",
     address: "Feet",
     purok: "Cat",
     type: "Resident",
@@ -36,7 +40,9 @@ const samplePatients: FamPlanningPatient[] = [
     id: 2,
     fname: "John",
     lname: "Doe",
+    mname: "M",
     age: "30",
+    gender: "Male",
     address: "Legs",
     purok: "Sibuyas",
     type: "Non-Resident",
@@ -50,26 +56,25 @@ function FamPlanningTable() {
 
   // Table Columns
   const columns: ColumnDef<FamPlanningPatient>[] = [
+    {accessorKey: "id", header: "#"},
     {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
+      accessorKey: "fullName", header: "Patient",
+    cell: ({ row }) => {
+      const patient = row.original;
+      const fullName = `${patient.lname}, ${patient.fname}`;
+      return (
+        <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex flex-col w-full">
+            <div className="font-medium truncate">{fullName}</div>
+            <div className="text-sm text-darkGray">
+              {patient.gender}, {patient.age} years old
+            </div>
           </div>
         </div>
-      ),
+      );
     },
-    {
-      accessorKey: "fullName",
-      header: "Patient",
-      cell: ({ row }) => {
-        const { fname, lname } = row.original;
-        return `${lname}, ${fname}`;
-      },
-    },
-    { accessorKey: "age", header: "Age" },
+  },
+    
     { accessorKey: "address", header: "Address" },
     { accessorKey: "purok", header: "Purok" },
     { accessorKey: "type", header: "Type" },

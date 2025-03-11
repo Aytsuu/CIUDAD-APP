@@ -6,10 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Button } from "@/components/ui/button"
 import { type FormData, page1Schema } from "@/form-schema/FamilyPlanningSchema"
+import { ChevronLeft, Search, UserPlus } from "lucide-react"
+import { useLocation, useNavigate } from "react-router"
 
 // Ensure the component is properly typed
 type Page1Props = {
@@ -30,6 +32,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     form.reset(formData)
   }, [form, formData])
 
+  const location = useLocation();
+    const recordType = location.state?.recordType || "nonExistingPatient";
+    
   // Get current values for conditional rendering
   const typeOfClient = form.watch("typeOfClient")
   const subTypeOfClient = form.watch("subTypeOfClient")
@@ -66,6 +71,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     }
   }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUser, isChangingMethod])
 
+  const navigate = useNavigate();
   // Handle form submission
   const onSubmit = async (data: FormData) => {
     updateFormData(data)
@@ -92,7 +98,14 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
       <div className="rounded-lg w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 border-l-4 p-4 text-center">
+        <Button
+                            className="text-black p-2 self-start"
+                            variant={"outline"}
+                            onClick={() => navigate(-1)}
+                        >
+                            <ChevronLeft />
+                        </Button>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4  p-4 text-center">
           Family Planning (FP) Form 1
         </h2>
 
@@ -107,7 +120,50 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 history/findings for further medical evaluation.
               </p>
             </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
+              {recordType === "existingPatient" || (
+                <div className="flex items-center justify-between gap-3 mb-10">
+                  <div className="relative flex-1">
+                    <Search
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                      size={17}
+                    />
+                    <Input
+                      placeholder="Search..."
+                      className="pl-10 w-72 bg-white"
+                    />
+                  </div>
 
+                  <Label>or</Label>
+
+                  <button className="flex items-center gap-1 underline text-blue hover:bg-blue-600 hover:text-sky-500 transition-colors rounded-md">
+                    <UserPlus className="h-4 w-4" />
+                    Add Resident
+                  </button>
+                </div>
+              )}
+
+              <div className="flex justify-end w-full sm:w-auto sm:ml-auto">
+                <FormField
+                  control={form.control}
+                  name="isTransient"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value === "transient"}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked ? "transient" : "resident");
+                          }}
+                        />
+                      </FormControl>
+                      <FormLabel className="leading-none">Transient</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            
             {/* Client ID Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormField

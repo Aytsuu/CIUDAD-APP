@@ -1,7 +1,8 @@
 import FamPlanning_table from "@/pages/record/health/familyplanning/OverallTable";
 import FamilyPlanningView from "@/pages/familyplanning/ViewPage1";
 import FamilyPlanningMain from "@/pages/familyplanning/Main";
-import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2";
+import IndividualFamPlanningTable from "@/pages/record/health/familyplanning/Individual";
+
 
 export const famplanning_route = [
     {
@@ -17,9 +18,10 @@ export const famplanning_route = [
         element: <FamPlanning_table/>
     },
     {
-        path: '/FamilyPlanning_view2',
-        element: <FamilyPlanningView2/>
+        path: '/FamPlanning_individual',
+        element: <IndividualFamPlanningTable/>
     }
+   
    
     
  ]

@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button";
-import ReferralFormModal from "@/pages/animalbites/referralform";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Eye, Search, Trash } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Link } from "react-router-dom";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
-// Define Patient Type 
+// Define Patient Type
 type Patient = {
   id: number;
   fname: string;
   lname: string;
-  age: string;
   gender: string;
+  age: string;
   date: string;
   transient: boolean;
   exposure: string;
@@ -42,29 +40,16 @@ const samplePatients: Patient[] = [
   },
   {
     id: 2,
-    fname: "Bane",
-    lname: "Gil",
-    age: "30",
+    fname: "Kurt",
+    lname: "Cobain",
+    age: "25",
     gender: "Male",
-    date: "2024-02-08",
-    exposure: "Bite",
-    transient: false,
-    siteOfExposure: "Hand",
-    bitingAnimal: "Dog",
-    actions: "Wound Cleaned, Medicine Given",
-  },
-  {
-    id: 3,
-    fname: "Lena",
-    lname: "Smith",
-    age: "28",
-    gender: "Female",
-    date: "2024-02-10",
-    exposure: "Bite",
-    siteOfExposure: "Leg",
-    transient: false,
-    bitingAnimal: "Monkey",
-    actions: "Antibiotic Given",
+    date: "2024-02-06",
+    exposure: "Non-bite",
+    transient: true,
+    siteOfExposure: "Feet",
+    bitingAnimal: "Cat",
+    actions: "Wound Cleaned",
   },
 ];
 
@@ -75,12 +60,23 @@ function AnimalBites() {
 
   // Define Columns for DataTable
   const columns: ColumnDef<Patient>[] = [
+    { accessorKey: "id", header: "#" },
     {
       accessorKey: "fullName",
       header: "Patient",
       cell: ({ row }) => {
-        const { fname, lname } = row.original;
-        return `${lname}, ${fname}`;
+        const patient = row.original;
+        const fullName = `${patient.lname}, ${patient.fname}`;
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {patient.gender}, {patient.age} years old
+              </div>
+            </div>
+          </div>
+        );
       },
     },
     { accessorKey: "age", header: "Age" },
@@ -88,34 +84,52 @@ function AnimalBites() {
     { accessorKey: "date", header: "Date" },
     { accessorKey: "exposure", header: "Exposure" },
     { accessorKey: "siteOfExposure", header: "Site of Exposure" },
-    { accessorKey: "transient", header: "Transient", cell:({row}) => (row.original.transient? "Yes":"No")},
-    { accessorKey: "bitingAnimal", header: "Biting Animal" },
-    { accessorKey: "actions", header: "Actions taken" },
     {
-      accessorKey: "button",
-      header: "",
-      cell: ({ }) => (
-        <div className="flex justify-center">
-          <Link to={`/Animalbite_individual/`}>
-            <Button variant="outline" className="">
-              View
-            </Button>
-          </Link>
+      accessorKey: "transient",
+      header: "Transient",
+      cell: ({ row }) => (row.original.transient ? "Yes" : "No"),
+    },
+    { accessorKey: "bitingAnimal", header: "Biting Animal" },
+    { accessorKey: "actions", header: "Actions Taken" },
+    {
+      accessorKey: "actionsMenu",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <TooltipLayout
+            trigger={
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Eye size={15} />
+              </div>
+            }
+            content="View"
+          />
+
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                    <Trash size={16} />
+                  </div>
+                }
+                className=""
+                mainContent={<></>}
+              />
+            }
+            content="Delete"
+          />
         </div>
       ),
     },
   ];
-
-  // Function to add a new patient
-  const handleAddPatient = (newPatient: Patient) => {
-    setPatients((prevPatients) => [...prevPatients, newPatient]);
-  };
 
   // Function to handle search input change
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
   };
 
+  // Filtering logic
   const filteredPatients = patients.filter((patient) => {
     const searchString = `${patient.fname} ${patient.lname} ${patient.age} ${patient.gender} ${patient.date} ${patient.exposure} ${patient.siteOfExposure} ${patient.transient} ${patient.bitingAnimal}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
@@ -125,21 +139,19 @@ function AnimalBites() {
     <div className="w-full h-full flex flex-col">
       {/* Header Section */}
       <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Animal Bite Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patients information
-          </p>
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Animal Bite Records
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view patient information
+        </p>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Search, Filter & Button Section */}
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="flex gap-x-2">
-            {/* Search Input */}
             <div className="relative flex-1">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
@@ -153,7 +165,6 @@ function AnimalBites() {
               />
             </div>
 
-            {/* Filter Dropdown */}
             <SelectLayout
               placeholder="Filter by"
               label=""
@@ -171,49 +182,24 @@ function AnimalBites() {
 
         {/* New Record Button */}
         <div className="flex justify-end">
-          <DialogLayout
-            trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
-            className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
-            mainContent={
-              <ReferralFormModal
-                onAddPatient={handleAddPatient}
-                onClose={() => console.log("Closing modal")}
-              />
-            }
-            title={""}
-            description={""}
-          />
+          <Button className="font-medium py-2 px-4 rounded-md shadow-sm">
+            New Record
+          </Button>
         </div>
       </div>
 
       {/* Table Container */}
       <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
-
-        </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {/* Table Placement */}
+        <div className="w-full bg-white overflow-x-auto">
           <DataTable columns={columns} data={filteredPatients} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of 150 rows
+            Showing 1-{filteredPatients.length} of {filteredPatients.length} rows
           </p>
-
-          {/* Pagination */}
-          <div className="w-full sm:w-auto flex justify-center">
-            {/* <PaginationLayout className="" /> */}
-          </div>
         </div>
       </div>
     </div>
-
   );
 }
 

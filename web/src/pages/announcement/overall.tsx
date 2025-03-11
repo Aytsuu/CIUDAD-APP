@@ -5,8 +5,8 @@ import { Label } from '@/components/ui/label';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
 import DeleteConfirmationModal from '@/pages/announcement/deletemodal';
 import { SelectLayout } from '@/components/ui/select/select-layout';
-import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Search } from 'lucide-react';
 
 interface Announcement {
     id: string;
@@ -40,8 +40,7 @@ const AnnouncementDashboard: React.FC = () => {
             time: '10:00 AM'
         }
     ]);
-
-    const [selectedFilter, setSelectedFilter] = useState<string>("all");
+    const [filterValue, setFilterValue] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
@@ -67,7 +66,6 @@ const AnnouncementDashboard: React.FC = () => {
             closeDeleteModal();
         }
     };
-
     // Filter announcements based on searchQuery
     const filteredAnnouncements = announcements.filter(announcement =>
         announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,32 +74,53 @@ const AnnouncementDashboard: React.FC = () => {
 
     return (
         <div className="w-full h-full flex flex-col gap-4">
+            <div className="flex items-center mb-4">
+               
+
+                <div className="flex flex-col">
+                    <h1 className="font-semibold ptext-xl sm:text-2xl text-darkBlue2">
+                        Announcements
+                    </h1>
+                    <p className="text-xs sm:text-sm text-darkGray">
+                        Manage health center announcements
+                    </p>
+                </div>
+            </div>
+            <hr className="border-gray mb-5 sm:mb-8" />
+
             {/* Filters & Actions - Now Responsive */}
             <div className="flex flex-row gap-4">
-                <SelectLayout
-                    placeholder="Filter by"
-                    label=""
-                    className="bg-white"
-                    options={[
-                        { id: "all", name: "All" },
-                        { id: "today", name: "Today" },
-                        { id: "thisweek", name: "This Week" },
-                        { id: "thismonth", name: "This Month" }
-                    ]}
-                    value={selectedFilter}
-                    onChange={(selected) => setSelectedFilter(selected)}
-                />
+                <div className="flex flex-col md:flex-row gap-4 w-full">
+                    <div className="flex gap-x-2">
+                        {/* Search Input */}
+                        <div className="relative flex-1">
+                            <Search
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                                size={17}
+                            />
+                            <Input
+                                placeholder="Search..."
+                                className="pl-10 w-72 bg-white"
+                                value={searchQuery}
+                                onChangeCapture={handleSearchChange}
+                            />
+                        </div>
 
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                    <Input
-                        type="text"
-                        placeholder="Search Announcements"
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        className="pr-10"
-                    />
-                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        {/* Filter Dropdown */}
+                        <SelectLayout
+                            placeholder="Filter by"
+                            label=""
+                            className="w-full md:w-[200px] bg-white"
+                            options={[
+                                { id: "All", name: "All" },
+                                { id: "Today", name: "Today" },
+                                { id: "This week", name: "This week" },
+                                { id: "This month", name: "This month" },
+                            ]}
+                            value={filterValue}
+                            onChange={(value) => setFilterValue(value)}
+                        />
+                    </div>
                 </div>
 
                 <Link to={`/createAnnouncement`}>
@@ -167,7 +186,7 @@ const AnnouncementDashboard: React.FC = () => {
                     mainContent={<DeleteConfirmationModal
                         announcement={announcementToDelete}
                         onCancel={closeDeleteModal}
-                        onConfirm={handleDelete} />} trigger={undefined}                />
+                        onConfirm={handleDelete} />} trigger={undefined} />
             )}
         </div>
     );

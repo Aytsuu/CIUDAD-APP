@@ -99,6 +99,10 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
       setValidationError("Follow-up date is required")
       return false
     }
+    if (!record.methodQuantity){
+      setValidationError("Quantity is required")
+      return false
+    }
     return true
   }
 
