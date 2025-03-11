@@ -2,13 +2,15 @@
 
 import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import SignatureCanvas from "react-signature-canvas"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page5Schema } from "@/form-schema/FamilyPlanningSchema"
 
 type FamilyPlanningMethod =
   | "coc"
@@ -57,7 +59,8 @@ export default function FamilyPlanningForm5({
   updateFormData,
   formData,
 }: AcknowledgementFormProps) {
-  const form = useForm({
+  const form = useForm<FormData>({
+    resolver: zodResolver(page5Schema),
     defaultValues: {
       acknowledgement: formData?.acknowledgement || {
         selectedMethod: "",
@@ -66,14 +69,11 @@ export default function FamilyPlanningForm5({
         guardianSignatureDate: new Date().toISOString().split("T")[0],
       },
     },
+    mode: "onBlur", // Add validation mode
   })
 
-  const [clientSignature, setClientSignature] = useState<string | null>(
-    formData?.acknowledgement?.clientSignature || null,
-  )
-  const [guardianSignature, setGuardianSignature] = useState<string | null>(
-    formData?.acknowledgement?.guardianSignature || null,
-  )
+  const [clientSignature, setClientSignature] = useState<string>(formData?.acknowledgement?.clientSignature || "")
+  const [guardianSignature, setGuardianSignature] = useState<string>(formData?.acknowledgement?.guardianSignature || "")
 
   let clientSignatureRef: SignatureCanvas | null = null
   let guardianSignatureRef: SignatureCanvas | null = null
@@ -81,14 +81,14 @@ export default function FamilyPlanningForm5({
   const clearClientSignature = () => {
     if (clientSignatureRef) {
       clientSignatureRef.clear()
-      setClientSignature(null)
+      setClientSignature("")
 
       // Update form data to remove signature
       const updatedData = {
         ...formData,
         acknowledgement: {
           ...formData?.acknowledgement,
-          clientSignature: null,
+          clientSignature: "",
         },
       }
       updateFormData(updatedData)
@@ -98,14 +98,14 @@ export default function FamilyPlanningForm5({
   const clearGuardianSignature = () => {
     if (guardianSignatureRef) {
       guardianSignatureRef.clear()
-      setGuardianSignature(null)
+      setGuardianSignature("")
 
       // Update form data to remove signature
       const updatedData = {
         ...formData,
         acknowledgement: {
           ...formData?.acknowledgement,
-          guardianSignature: null,
+          guardianSignature: "",
         },
       }
       updateFormData(updatedData)
@@ -146,17 +146,17 @@ export default function FamilyPlanningForm5({
     }
   }
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = async (data: FormData) => {
     // Create updated form data with all acknowledgement fields
     const updatedData = {
       ...formData,
       acknowledgement: {
-        selectedMethod: data.acknowledgement.selectedMethod,
+        selectedMethod: data.acknowledgement?.selectedMethod || "",
         clientSignature: clientSignature,
-        clientSignatureDate: data.acknowledgement.clientSignatureDate,
-        guardianName: data.acknowledgement.guardianName,
+        clientSignatureDate: data.acknowledgement?.clientSignatureDate || "",
+        guardianName: data.acknowledgement?.guardianName || "",
         guardianSignature: guardianSignature,
-        guardianSignatureDate: data.acknowledgement.guardianSignatureDate,
+        guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
       },
     }
 
@@ -213,6 +213,7 @@ export default function FamilyPlanningForm5({
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -246,7 +247,9 @@ export default function FamilyPlanningForm5({
                   name="acknowledgement.clientSignatureDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date:</FormLabel>
+                      <FormLabel>
+                        Date:<span className="text-red-500 ml-1">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="date"
@@ -265,6 +268,7 @@ export default function FamilyPlanningForm5({
                           }}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -298,6 +302,7 @@ export default function FamilyPlanningForm5({
                           }}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -352,6 +357,7 @@ export default function FamilyPlanningForm5({
                             }}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -360,27 +366,11 @@ export default function FamilyPlanningForm5({
             </div>
 
             <div className="flex justify-end mt-6 space-x-4">
-                          <Button variant="outline" type="button" onClick={onPrevious4}>
-                            Previous
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={async () => {
-                              // Validate the form
-                              const isValid = await form.trigger()
-                              if (isValid) {
-                                // If valid, save data and proceed
-                                const currentValues = form.getValues()
-                                updateFormData(currentValues)
-                                onNext6()
-                              } else {
-                                console.error("Please fill in all required fields")
-                              }
-                            }}
-                          >
-                            Next
-                          </Button>
-                        </div>
+              <Button variant="outline" type="button" onClick={onPrevious4}>
+                Previous
+              </Button>
+              <Button type="submit">Next</Button>
+            </div>
           </form>
         </Form>
       </CardContent>

@@ -7,10 +7,10 @@ const ServiceProvisionRecordSchema = z.object({
   nameOfServiceProvider: z.string().nonempty("Service provider name is required"),
   dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
   // Optional fields
-  methodQuantity: z.string().optional(),
-  methodUnit: z.string().optional(),
-  serviceProviderSignature: z.string().optional(),
-  medicalFindings: z.string().optional(),
+  methodQuantity: z.string().nonempty("Method quantity is required"),
+  methodUnit: z.string().nonempty("Method unit is required"),
+  serviceProviderSignature: z.string().nonempty("Service provider signature is required"),
+  medicalFindings: z.string().nonempty("Medical findings is required"),
 })
 
 // Define the complete schema for all pages
@@ -54,10 +54,10 @@ export const FamilyPlanningSchema = z.object({
   subTypeOfClient: z.string().optional(),
 
   reasonForFP: z.string().optional(),
-  otherReasonForFP: z.string().nonempty("Specify"),
+  otherReasonForFP: z.string().optional(),
 
   reason: z.string().optional(),
-  otherReason: z.string(),
+  otherReason: z.string().optional(),
   methodCurrentlyUsed: z
     .enum([
       "COC",
@@ -98,9 +98,9 @@ export const FamilyPlanningSchema = z.object({
 
   // Obstetrical History
   obstetricalHistory: z.object({
-    g_pregnancies: z.number().min(0, "Number of pregnancies is required").default(0),
-    p_pregnancies: z.number().min(0, "Number of pregnancies is required").default(0),
-    fullTerm: z.number().min(0, "Number of full-term pregnancies is required"),
+    g_pregnancies: z.number().min(0, "Put 0 if none").default(0),
+    p_pregnancies: z.number().min(0, "Put 0 if none").default(0),
+    fullTerm: z.number().min(0, "Put 0 if none"),
     premature: z.number().min(0, "Number of premature births is required"),
     abortion: z.number().min(0, "Number of abortions is required"),
     livingChildren: z.number().min(0, "Number of living children is required"),
@@ -108,11 +108,11 @@ export const FamilyPlanningSchema = z.object({
     lastDeliveryDate: z.string().optional(),
     typeOfLastDelivery: z.enum(["Vaginal", "Cesarean"]).optional(),
 
-    lastMenstrualPeriod: z.string().optional(),
-    previousMenstrualPeriod: z.string().optional(),
+    lastMenstrualPeriod: z.string().nonempty("Enter date of last menstrual period"),
+    previousMenstrualPeriod: z.string().nonempty("Enter date of previous menstrual period"),
 
     // Changed from array to string for radio button selection
-    menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]).optional(),
+    menstrualFlow: z.enum(["Scanty", "Moderate", "Heavy"]),
     dysmenorrhea: z.boolean().default(false),
     hydatidiformMole: z.boolean().default(false),
     ectopicPregnancyHistory: z.boolean().default(false),
@@ -121,7 +121,7 @@ export const FamilyPlanningSchema = z.object({
   // Page 3 fields
   sexuallyTransmittedInfections: z.object({
     abnormalDischarge: z.boolean(),
-    dischargeFrom: z.array(z.enum(["Vagina", "Penis"])).optional(),
+    dischargeFrom: z.enum(["Vagina", "Penis"]).optional(),
     sores: z.boolean(),
     pain: z.boolean(),
     history: z.boolean(),
@@ -132,7 +132,7 @@ export const FamilyPlanningSchema = z.object({
     unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
-    referredTo: z.array(z.enum(["DSWD", "WCPU", "NGOs", "Others"])).optional(),
+    referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).refine((val) => val !== undefined, { message: "Please choose referral" }),
     otherReferral: z.string().optional().nullable(),
   }),
 
@@ -208,11 +208,11 @@ export const FamilyPlanningSchema = z.object({
         "others",
       ])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
-    clientSignature: z.string().optional(), // Base64 string of signature
+    clientSignature: z.string(), 
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
-    guardianName: z.string().optional(),
-    guardianSignature: z.string().optional(), // Base64 string of signature
-    guardianSignatureDate: z.string().optional(),
+    guardianName: z.string().nonempty("Required"),
+    guardianSignature: z.string(), 
+    guardianSignatureDate: z.string().nonempty("Required"),
   }),
 
   // Page 6 fields
@@ -267,10 +267,7 @@ export const page1Schema = FamilyPlanningSchema.pick({
 
     return true
   },
-  {
-    message: "Please fill in all required fields based on your client type",
-    path: ["typeOfClient"], // This will show the error on the typeOfClient field
-  },
+  
 )
 
 export const page2Schema = FamilyPlanningSchema.pick({

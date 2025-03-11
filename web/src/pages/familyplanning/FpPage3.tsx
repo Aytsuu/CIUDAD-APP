@@ -11,7 +11,12 @@ import { Card, CardContent } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button"
 
 // Referral options constant
-const referralOptions = ["DSWD", "WCPU", "NGOs", "Others"]
+const referralOptions = {
+  DSWD: "DSWD",
+  WCPU: "WCPU",
+  NGOs: "NGOs",
+  Others: "Others",
+};
 
 // Extract only the fields needed for this page
 const page3Schema = FamilyPlanningSchema.pick({
@@ -229,7 +234,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                         <FormLabel className="font-semibold">Referred to:</FormLabel>
                         <FormControl>
                           <div className="flex flex-col space-y-2">
-                            {referralOptions.map((option) => (
+                            {Object.values(referralOptions).map((option) => (
                               <div key={option} className="flex items-center space-x-2">
                                 <input
                                   type="radio"
@@ -257,6 +262,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                     <FormControl>
                                       <Input
                                         {...otherField}
+                                        value={otherField.value ?? ""}
                                         className="w-[50%]"
                                       />
                                     </FormControl>

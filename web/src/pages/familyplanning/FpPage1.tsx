@@ -536,13 +536,14 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                         label=""
                         className="custom-class w-full"
                         options={[
-                          { id: "5,000-10,000k", name: "5,000-10,000" },
-                          { id: "10,000k-30,000k", name: "10,000-30,000" },
+                          { id: "Lower", name: "Lower than 5,000" },
+                          { id: "5,000-10,000", name: "5,000-10,000" },
+                          { id: "10,000-30,000", name: "10,000-30,000" },
                           { id: "30,000-50,000", name: "30,000-50,000" },
                           { id: "50,000-80,000", name: "50,000-80,000" },
                           { id: "80,000-100,000", name: "80,000-100,000" },
                           { id: "100,000-200,000", name: "100,000-200,000" },
-                          { id: "Higher", name: "Higher" },
+                          { id: "Higher", name: "Higher than 200,000" },
                         ]}
                         value={field.value || ""}
                         onChange={field.onChange}
@@ -590,9 +591,6 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   ))}
                   {form.watch("typeOfClient") === "Current User" && (
                     <div className="ml-6 mt-2">
-                      <h4 className="font-medium mb-2">
-                        Subtype<span className="text-red-500 ml-1">*</span>
-                      </h4>
                       {["Changing Method", "Changing Clinic", "Dropout/Restart"].map((subType) => (
                         <FormField
                           key={subType}
@@ -832,7 +830,24 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               </div>
             </div>
             <div className="flex justify-end space-x-4">
-              <Button type="submit">Next</Button>
+
+              <Button
+                type="button"
+                onClick={async () => {
+                  // Validate the form
+                  const isValid = await form.trigger()
+                  if (isValid) {
+                    // If valid, save data and proceed
+                    const currentValues = form.getValues()
+                    updateFormData(currentValues)
+                    onNext2()
+                  } else {
+                    console.error("Please fill in all required fields")
+                  }
+                }}
+              >
+                Next
+              </Button>
             </div>
           </form>
         </Form>
