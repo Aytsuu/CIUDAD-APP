@@ -22,7 +22,6 @@ export default function MedicineStockForm() {
     defaultValues: {
       medicineName: "",
       category: "",
-      batchNumber: "",
       dosage: 0,
       dsgUnit: "",
       form: "",
@@ -40,11 +39,11 @@ export default function MedicineStockForm() {
       form.reset();
       alert("Medicine stock added successfully!");
     } catch (error) {
-      console.error("Form submission error:", error);
+      console.error("Form submission error:", form.formState.errors);
       alert("Submission failed. Please check the form for errors.");
     }
   };
-
+  
   // Watch relevant fields for calculation
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
@@ -63,7 +62,7 @@ export default function MedicineStockForm() {
               name="medicineName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Medicine Name</FormLabel>
+                  <FormLabel className="text-black/65">Medicine Name</FormLabel>
                   <FormControl>
                     <SelectLayout
                       label=""
@@ -88,7 +87,7 @@ export default function MedicineStockForm() {
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel className="text-black/65">Category</FormLabel>
                   <FormControl>
                     <SelectLayout
                       label=""
@@ -109,20 +108,7 @@ export default function MedicineStockForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Batch Number */}
-            <FormField
-              control={form.control}
-              name="batchNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter batch number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+           
 
             {/* Expiry Date */}
             <FormField
@@ -130,7 +116,7 @@ export default function MedicineStockForm() {
               name="expiryDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
+                  <FormLabel className="text-black/65">Expiry Date</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -147,7 +133,7 @@ export default function MedicineStockForm() {
               name="dosage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dosage</FormLabel>
+                  <FormLabel className="text-black/65">Dosage</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -171,7 +157,7 @@ export default function MedicineStockForm() {
               name="dsgUnit"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dosage Unit</FormLabel>
+                  <FormLabel className="text-black/65">Dosage Unit</FormLabel>
                   <FormControl>
                     <SelectLayout
                       label=""
@@ -196,7 +182,7 @@ export default function MedicineStockForm() {
               name="form"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Form</FormLabel>
+                  <FormLabel className="text-black/65">Form</FormLabel>
                   <FormControl>
                     <SelectLayout
                       label=""
@@ -223,7 +209,7 @@ export default function MedicineStockForm() {
               name="qty"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
+                  <FormLabel className="text-black/65">
                     {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
                   </FormLabel>
                   <FormControl>
@@ -248,7 +234,7 @@ export default function MedicineStockForm() {
               name="unit"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unit</FormLabel>
+                  <FormLabel className="text-black/65">Unit</FormLabel>
                   <FormControl>
                     <SelectLayout
                       label=""
@@ -276,7 +262,7 @@ export default function MedicineStockForm() {
                 name="pcs"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pieces per Box</FormLabel>
+                    <FormLabel className="text-black/65">Pieces per Box</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -298,7 +284,7 @@ export default function MedicineStockForm() {
             {/* Total Pieces Display (Conditional) */}
             {currentUnit === "boxes" && (
               <FormItem className="sm:col-span-2">
-                <FormLabel>Total Pieces</FormLabel>
+                <FormLabel className="text-black/65">Total Pieces</FormLabel>
                 <div className="flex items-center h-10  rounded-md border border-input bg-background px-3 py-2 text-sm">
                   {totalPieces.toLocaleString()} pieces
                   <span className="ml-2 text-muted-foreground text-xs">

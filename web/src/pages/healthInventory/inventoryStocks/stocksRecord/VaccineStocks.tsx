@@ -24,9 +24,9 @@ export default function VaccineStocks() {
     batchNumber: string;
     category: string;
     item: {
-      name: string;
-      dosage?: number;
-      unit?: string;
+      antigen: string;
+      dosage: number;
+      unit: string;
     };
     qty: string;
     administered: string;
@@ -40,7 +40,7 @@ export default function VaccineStocks() {
       batchNumber: "VAX-122A",
       category: "vaccine",
       item: {
-        name: "COVID-19 mRNA Vaccine",
+        antigen: "COVID-19 mRNA Vaccine",
         dosage: 0.5,
         unit: "ml",
       },
@@ -53,8 +53,9 @@ export default function VaccineStocks() {
     {
       batchNumber: "MED-456B",
       category: "medsupplies",
-      item: {
-        name: "Sterile Gloves",
+      item: {   
+        dosage: 0.5,
+     antigen: "Sterile Gloves",
         unit: "pairs",
       },
       qty: "50 boxes (500 pcs)",
@@ -69,15 +70,11 @@ export default function VaccineStocks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<VaccineStocksRecord[]>(sampleData);
+  const [filteredData, setFilteredData] =
+    useState<VaccineStocksRecord[]>(sampleData);
   const [currentData, setCurrentData] = useState<VaccineStocksRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
-  const handleSaveEditedVaccine = (updatedVaccine: VaccineStocksRecord) => {
-    setVaccines(prev => prev.map(v => 
-      v.batchNumber === updatedVaccine.batchNumber ? updatedVaccine : v
-    ));
-  };
 
   const columns: ColumnDef<VaccineStocksRecord>[] = [
     {
@@ -91,7 +88,7 @@ export default function VaccineStocks() {
         const item = row.original.item;
         return (
           <div className="flex flex-col">
-            <div className="font-medium text-center">{item.name}</div>
+            <div className="font-medium text-center">{item.antigen}</div>
             {row.original.category === "vaccine" && (
               <div className="text-sm text-gray-600 text-center">
                 {item.dosage} {item.unit}
@@ -104,26 +101,38 @@ export default function VaccineStocks() {
     {
       accessorKey: "qty",
       header: "Stock Quantity",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.category === "medsupplies" 
-            ? row.original.qty.replace("vials", "boxes").replace("doses", "pcs")
-            : row.original.qty
-          }
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isMedicalSupply = row.original.category === "medsupplies";
+        const [quantity, units] = row.original.qty.split(" (");
+        return (
+          <div className="text-center">
+            {isMedicalSupply
+              ? `${quantity.replace("vials", "boxes")} (${units.replace(
+                  "doses",
+                  "pcs"
+                )}`
+              : row.original.qty}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "administered",
       header: "Units Used",
-      cell: ({ row }) => (
-        <div className="text-center text-red-600">
-          {row.original.category === "medsupplies"
-            ? row.original.administered.replace("vials", "boxes").replace("doses", "pcs")
-            : row.original.administered
-          }
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isMedicalSupply = row.original.category === "medsupplies";
+        const [quantity, units] = row.original.administered.split(" (");
+        return (
+          <div className="text-center text-red-600">
+            {isMedicalSupply
+              ? `${quantity.replace("vials", "boxes")} (${units.replace(
+                  "doses",
+                  "pcs"
+                )}`
+              : row.original.administered}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "wastedDose",
@@ -141,11 +150,19 @@ export default function VaccineStocks() {
                     <Minus size={15} />
                   </button>
                 }
-                title={row.original.category === "medsupplies" ? "Wasted Items" : "Wasted Dose"}
+                title={
+                  row.original.category === "medsupplies"
+                    ? "Wasted Items"
+                    : "Wasted Dose"
+                }
                 mainContent={<WastedDoseForm />}
               />
             }
-            content={row.original.category === "medsupplies" ? "Record Wasted Items" : "Record Wasted Dose"}
+            content={
+              row.original.category === "medsupplies"
+                ? "Record Wasted Items"
+                : "Record Wasted Dose"
+            }
           />
         </div>
       ),
@@ -153,14 +170,20 @@ export default function VaccineStocks() {
     {
       accessorKey: "availableStock",
       header: "Available Stock",
-      cell: ({ row }) => (
-        <div className="text-center text-green-600">
-          {row.original.category === "medsupplies"
-            ? row.original.availableStock.replace("vials", "boxes").replace("doses", "pcs")
-            : row.original.availableStock
-          }
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isMedicalSupply = row.original.category === "medsupplies";
+        const [quantity, units] = row.original.availableStock.split(" (");
+        return (
+          <div className="text-center text-green-600">
+            {isMedicalSupply
+              ? `${quantity.replace("vials", "boxes")} (${units.replace(
+                  "doses",
+                  "pcs"
+                )}`
+              : row.original.availableStock}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "expiryDate",
@@ -188,7 +211,6 @@ export default function VaccineStocks() {
                 mainContent={
                   <EditVacStockForm
                     vaccine={row.original}
-                    onSave={handleSaveEditedVaccine}
                   />
                 }
               />
@@ -212,10 +234,11 @@ export default function VaccineStocks() {
       ),
     },
   ];
-  
+
   useEffect(() => {
     const filtered = vaccines.filter((record) => {
-      const searchText = `${record.batchNumber} ${record.item.name}`.toLowerCase();
+      const searchText =
+        `${record.batchNumber} ${record.item.antigen}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
     setFilteredData(filtered);
@@ -278,7 +301,7 @@ export default function VaccineStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New Item
+              <Plus size={15} /> New
             </div>
           }
           title="Add Inventory Item"
@@ -322,7 +345,8 @@ export default function VaccineStocks() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
+            Showing{" "}
+            {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
             {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
             {filteredData.length} items
           </p>

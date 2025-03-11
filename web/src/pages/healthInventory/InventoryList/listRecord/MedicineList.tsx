@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Trash, Eye } from "lucide-react";
 import {
-  DropdownMenu,
+  DropdownMenu, 
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
@@ -56,7 +56,7 @@ export default function MedicineList() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({}) => (
+      cell: ({row}) => (
         <div className="flex justify-center gap-2 ">
           <DialogLayout
             trigger={
@@ -64,7 +64,8 @@ export default function MedicineList() {
                 <Edit size={16} />
               </div>
             }
-            mainContent={<MedicineListEdit />}
+            mainContent={<MedicineListEdit
+              initialData={row.original} />}
           />
 
           <DialogLayout

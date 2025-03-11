@@ -21,30 +21,41 @@ import EditVAccineListModal from "../editListModal/EditVaccineModal";
 export default function VaccinationList() {
   type VaccinationRecords = {
     id: number;
+    category: string;
     vaccineName: string;
     ageGroup: string;
     noOfDoses: number;
-    ageForVac: string;
-    effectiveYearsMonths?: number;
-    timeUnits?: string;
+    interval: {
+      interval: number;
+      timeUnits: string;
+    };
+    specifyAge: string;
   };
 
   const sampleData: VaccinationRecords[] = [
     {
       id: 1,
       vaccineName: "COVID-19 Vaccine",
-      ageGroup: "Adults",
+      category: "MedicalSupplies",
+      ageGroup: "0-5 yrs old",
       noOfDoses: 2,
-      ageForVac: "15 wks",
-      effectiveYearsMonths: 18,
+      interval: {
+        interval: 18,
+        timeUnits: "Months",
+      },
+      specifyAge: " ",
     },
     {
       id: 2,
       vaccineName: "Influenza Vaccine",
-      ageGroup: "All Ages",
+      category: "vaccine",
+      ageGroup: "0-5 yrs old",
       noOfDoses: 1,
-      ageForVac: "6 months",
-      timeUnits: "months",
+      interval: {
+        interval: 18,
+        timeUnits: "Weeks",
+      },
+      specifyAge: "",
     },
   ];
 
@@ -64,6 +75,12 @@ export default function VaccinationList() {
       accessorKey: "vaccineName",
       header: "Vaccine Name",
     },
+
+    {
+      accessorKey:"category",
+      header:"Category"
+
+    },
     {
       accessorKey: "ageGroup",
       header: "Age Group",
@@ -73,29 +90,30 @@ export default function VaccinationList() {
       header: "Required Doses",
     },
     {
+      accessorKey: "interval",
       header: "Interval",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.effectiveYearsMonths
-            ? `${row.original.effectiveYearsMonths} ${
-                row.original.timeUnits || "months"
-              }`
-            : row.original.ageForVac}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const interval=row.original.interval
+        return(
+          <div>
+            {interval.interval} {" "} {interval.timeUnits}
+          </div>
+        )
+      }
     },
     {
       accessorKey: "action",
       header: "Action",
-      cell: () => (
+      cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-            <DialogLayout
+          <DialogLayout
             trigger={
               <div className=" border  px-3 py-2 rounded cursor-pointer">
                 <Edit size={16} />
               </div>
             }
-            mainContent={<EditVAccineListModal/>}
+            mainContent={<EditVAccineListModal 
+              initialData={row.original} />}
           />
 
           <DialogLayout

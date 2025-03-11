@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FormField,
   FormItem,
@@ -17,23 +17,31 @@ import {
   FirstAidSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
 
+interface FirstAidListProps {
+  initialData: {
+    id: number; 
+    itemName: string;
+    category: string;
+  };
+}
+
 interface Option {
   id: string;
   name: string;
 }
 
 const initialCategories: Option[] = [
-  { id: "tablet", name: "Tablet" },
-  { id: "syrup", name: "Syrup" },
-  { id: "injection", name: "Injection" },
+  { id: "Wound Care", name: "Wound Care" }, 
+  { id: "Syrup", name: "Syrup" },
+  { id: "Disinfectant", name: "Disinfectant" },
 ];
 
-export default function EditFirstAidModal() {
+export default function EditFirstAidModal({ initialData }: FirstAidListProps) {
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
-      itemName: "",
-      category: "",
+      itemName: initialData.itemName,
+      category: initialData.category,
     },
   });
 
@@ -43,6 +51,7 @@ export default function EditFirstAidModal() {
     selectedValue: string,
     fieldOnChange: (value: string) => void
   ) => {
+    console.log("Selected Value:", selectedValue);
     setCategories((prev) =>
       prev.some((opt) => opt.id === selectedValue)
         ? prev
@@ -51,8 +60,16 @@ export default function EditFirstAidModal() {
     fieldOnChange(selectedValue);
   };
 
-  const onSubmit = (data: FirstAidType) => {
+  useEffect(() => {
+    form.reset({
+      itemName: initialData.itemName,
+      category: initialData.category,
+    });
+  }, [initialData, form]);
+
+  const onSubmit = async (data: FirstAidType) => {
     console.log(data);
+    alert("success")
   };
 
   return (
@@ -60,47 +77,52 @@ export default function EditFirstAidModal() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-          <FormField
-            control={form.control}
-            name="itemName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Item Name</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    value={field.value}
-                    placeholder="Item Name"
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="itemName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      value={field.value}
+                      placeholder="Item Name"
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <SelectLayoutWithAdd
-                    className="w-full"
-                    label="Category"
-                    placeholder="Select"
-                    options={categories}
-                    value={field.value}
-                    onChange={(selectedValue) =>
-                      handleSelectChange(selectedValue, field.onChange)
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => {
+                const selectedCategoryId = categories.find(
+                  (opt) => opt.name === field.value
+                )?.id;
+                return (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        className="w-full"
+                        label="Category"
+                        placeholder="Select"
+                        options={categories}
+                        value={selectedCategoryId || field.value}
+                        onChange={(selectedValue) =>
+                          handleSelectChange(selectedValue, field.onChange)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
           </div>
 
           <div className="w-full flex justify-end mt-8">

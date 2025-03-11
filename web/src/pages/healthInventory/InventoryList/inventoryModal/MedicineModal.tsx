@@ -37,7 +37,7 @@ export default function MedicineModal() {
       medicineName: "",
       category: "",
     },
-  });
+  }); 
 
   const [categories, setCategories] = useState<Option[]>(initialCategories);
 

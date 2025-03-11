@@ -92,7 +92,7 @@ const ParentsForm = ({
             control={control}
             name={`${prefix}LName`}
             render={({ field }) => (
-              <FormItem>
+              <FormItem> 
                 <FormLabel className="text-black/65">
                   Last Name <span className="text-red-500">*</span>
                 </FormLabel>

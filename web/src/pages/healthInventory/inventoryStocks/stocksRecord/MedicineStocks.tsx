@@ -20,7 +20,7 @@ import EditMedicineForm from "../editModal/EditMedStockModal";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
-    batchNumber: string;
+    id: number;
     medicineInfo: {
       medicineName: string;
       dosage: number;
@@ -36,7 +36,7 @@ export default function MedicineStocks() {
 
   const sampleData: MedicineStocksRecord[] = [
     {
-      batchNumber: "122A",
+      id: 2323,
       medicineInfo: {
         medicineName: "Paracetamol",
         dosage: 500,
@@ -50,7 +50,7 @@ export default function MedicineStocks() {
       availQty: "7 boxes (30 pcs)",
     },
     {
-      batchNumber: "12S2A",
+      id: 1212,
       medicineInfo: {
         medicineName: "Amoxicillin",
         dosage: 250,
@@ -76,23 +76,21 @@ export default function MedicineStocks() {
   const [currentData, setCurrentData] = useState<MedicineStocksRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Handle edit save
-  const handleSaveEditedMedicine = (updatedMedicine: MedicineStocksRecord) => {
-    setMedicines((prevMedicines) =>
-      prevMedicines.map((medicine) =>
-        medicine.batchNumber === updatedMedicine.batchNumber
-          ? updatedMedicine
-          : medicine
-      )
-    );
-  };
+  // // Handle edit save
+  // const handleSaveEditedMedicine = (updatedMedicine: MedicineStocksRecord) => {
+  //   setMedicines((prevMedicines) =>
+  //     prevMedicines.map((medicine) =>
+  //       medicine.id === updatedMedicine.id
+  //         ? updatedMedicine
+  //         : medicine
+  //     )
+  //   );
+  // };
 
+  
   // Table columns
   const columns: ColumnDef<MedicineStocksRecord>[] = [
-    {
-      accessorKey: "batchNumber",
-      header: "Batch No.",
-    },
+   
     {
       accessorKey: "medicineInfo",
       header: "Medicine ",
@@ -168,7 +166,7 @@ export default function MedicineStocks() {
                       <>
                         <EditMedicineForm
                           medicine={row.original}
-                          onSave={handleSaveEditedMedicine}
+                          // onSave={handleSaveEditedMedicine}
                         />
                       </>
                     }
@@ -202,7 +200,7 @@ export default function MedicineStocks() {
   useEffect(() => {
     const filtered = medicines.filter((medicine) => {
       const searchText =
-        `${medicine.batchNumber} ${medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${medicine.medicineInfo.dsgUnit} ${medicine.expiryDate} ${medicine.category}`.toLowerCase();
+        `${medicine.id} ${medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${medicine.medicineInfo.dsgUnit} ${medicine.expiryDate} ${medicine.category}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
 

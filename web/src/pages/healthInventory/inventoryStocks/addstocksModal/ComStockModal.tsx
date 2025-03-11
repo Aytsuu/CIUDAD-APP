@@ -22,7 +22,6 @@ export default function CommodityStockForm() {
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
       commodityName: "",
-      batchNumber: "",
       category: "",
       unit: "",
       qty: 0,
@@ -109,20 +108,7 @@ export default function CommodityStockForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Expiry Date */}
-            <FormField
-              control={form.control}
-              name="batchNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Batch number " {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+           
             {/* Expiry Date */}
             <FormField
               control={form.control}
@@ -185,6 +171,7 @@ export default function CommodityStockForm() {
                           value === "" ? undefined : Number(value)
                         );
                       }}
+                      
                     />
                   </FormControl>
                   <FormMessage />

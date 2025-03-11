@@ -18,7 +18,7 @@ import CommodityStockForm from "../addstocksModal/ComStockModal";
 import EditCommodityStockForm from "../editModal/EditComStockModal";
 
 type CommodityStocksRecord = {
-  batchNumber: string;
+  id: number;
   commodityName: string;
   category: string;
   recevFrom: string;
@@ -30,10 +30,7 @@ type CommodityStocksRecord = {
 
 export default function CommodityStocks() {
   const columns: ColumnDef<CommodityStocksRecord>[] = [
-    {
-      accessorKey: "batchNumber",
-      header: "Batch No.",
-    },
+  
     {
       accessorKey: "commodityName",
       header: "Item Name",
@@ -100,7 +97,6 @@ export default function CommodityStocks() {
                 mainContent={
                   <EditCommodityStockForm
                     initialData={row.original}
-                    onSave={handleSaveEditedCommodity}
                   />
                 }
               />
@@ -127,7 +123,7 @@ export default function CommodityStocks() {
 
   const initialData: CommodityStocksRecord[] = [
     {
-      batchNumber: "122A",
+      id: 2,
       commodityName: "Condom",
       category: "Condom",
       recevFrom: "DOH",
@@ -137,7 +133,7 @@ export default function CommodityStocks() {
       expiryDate: "2025-12-31"
     },
     {
-      batchNumber: "12S2A",
+      id: 2,
       commodityName: "pills COC",
       category: "Pills",
       recevFrom: "DOH",
@@ -158,7 +154,7 @@ export default function CommodityStocks() {
 
   useEffect(() => {
     const filtered = data.filter((item) => {
-      const searchText = `${item.batchNumber} ${item.commodityName} ${item.category} ${item.recevFrom} ${item.qty} ${item.availQty} ${item.dispensed} ${item.expiryDate}`.toLowerCase();
+      const searchText = `${item.id} ${item.commodityName} ${item.category} ${item.recevFrom} ${item.qty} ${item.availQty} ${item.dispensed} ${item.expiryDate}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
 
@@ -188,13 +184,6 @@ export default function CommodityStocks() {
     }
   };
 
-  const handleSaveEditedCommodity = (updatedData: CommodityStocksRecord) => {
-    setData(prevData =>
-      prevData.map(item =>
-        item.batchNumber === updatedData.batchNumber ? updatedData : item
-      )
-    );
-  };
 
   return (
     <>

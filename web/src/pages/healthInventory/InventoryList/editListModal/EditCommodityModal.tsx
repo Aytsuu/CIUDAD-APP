@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FormField,
   FormItem,
@@ -17,33 +17,41 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 
+interface CommodityListProps {
+  initialData: {
+    id: number;
+    commodityName: string;
+    category: string;
+  };
+}
 interface Option {
   id: string;
   name: string;
 }
 
 const initialCategories: Option[] = [
-  { id: "tablet", name: "Tablet" },
-  { id: "syrup", name: "Syrup" },
-  { id: "injection", name: "Injection" },
+  { id: "Pharmaceutical", name: "Pharmaceutical" },
+  { id: "Antibiotic", name: "Antibiotic" },
 ];
 
-export default function EditCommodityModal() {
+export default function EditCommodityModal({
+  initialData,
+}: CommodityListProps) {
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
-      commodityName: "",
-      category: "",
+      commodityName: initialData.commodityName,
+      category: initialData.category,
     },
   });
+
   const [categories, setCategories] = useState<Option[]>(initialCategories);
 
-  // Fixed: Removed unused categories parameter
   const handleSelectChange = (
     selectedValue: string,
-    fieldOnChange: (value: string) => void,
-    setCategories: React.Dispatch<React.SetStateAction<Option[]>>
+    fieldOnChange: (value: string) => void
   ) => {
+    console.log("Selected Value:", selectedValue);
     setCategories((prev) =>
       prev.some((opt) => opt.id === selectedValue)
         ? prev
@@ -52,9 +60,16 @@ export default function EditCommodityModal() {
     fieldOnChange(selectedValue);
   };
 
-  const onSubmit = (data: CommodityType) => {
+  useEffect(() => {
+    form.reset({
+      commodityName: initialData.commodityName,
+      category: initialData.category,
+    });
+  });
+
+  const onSubmit = async (data: CommodityType) => {
     console.log(data);
-    // Handle form submission
+    alert("success");
   };
 
   return (
@@ -86,29 +101,30 @@ export default function EditCommodityModal() {
             <FormField
               control={form.control}
               name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <SelectLayoutWithAdd
-                      className="w-full"
-                      label="Category"
-                      placeholder="Select"
-                      options={categories}
-                      value={field.value}
-                      onChange={(selectedValue) =>
-                        handleSelectChange(
-                          selectedValue,
-                          field.onChange,
-                          setCategories,
-                       
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const selectedCategoryId = categories.find(
+                  (opt) => opt.name === field.value
+                )?.id;
+
+                return (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        className="w-full"
+                        label="Category"
+                        placeholder="Select"
+                        options={categories}
+                        value={selectedCategoryId || field.value}
+                        onChange={(selectedValue) =>
+                          handleSelectChange(selectedValue, field.onChange)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <div className="w-full flex justify-end mt-8">

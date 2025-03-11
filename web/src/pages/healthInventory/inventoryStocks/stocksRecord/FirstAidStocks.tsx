@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
-import {
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
@@ -18,7 +18,7 @@ import FirstAidStockForm from "../addstocksModal/FirstAidStockModal";
 import UsedFAModal from "../addstocksModal/UsedFAModal";
 import EditFirstAidStockForm from "../editModal/EditFirstAidStockModal";
 type FirstAidStocksRecord = {
-  batchNumber: string;
+  id: number;
   itemName: string;
   category: string;
   qty: number;
@@ -30,7 +30,7 @@ type FirstAidStocksRecord = {
 export default function FirstAidStocks() {
   const columns: ColumnDef<FirstAidStocksRecord>[] = [
     {
-      accessorKey: "batchNumber",
+      accessorKey: "id",
       header: "Batch No.",
     },
     {
@@ -109,7 +109,6 @@ export default function FirstAidStocks() {
                 mainContent={
                   <EditFirstAidStockForm
                     initialData={row.original}
-                    onSave={handeleSaveEditModal}
                   />
                 }
               />
@@ -136,7 +135,7 @@ export default function FirstAidStocks() {
 
   const sampleData: FirstAidStocksRecord[] = [
     {
-      batchNumber: "122A",
+      id: 5,
       itemName: "Sterile Gauze Pads",
       category: "Dressings",
       qty: 150,
@@ -145,7 +144,7 @@ export default function FirstAidStocks() {
       expiryDate: "2025-12-31"
     },
     {
-      batchNumber: "12S2A",
+      id: 3,
       itemName: "Adhesive Bandages",
       category: "Wound Care",
       qty: 200,
@@ -154,7 +153,7 @@ export default function FirstAidStocks() {
       expiryDate: "2024-06-30"
     },
     {
-      batchNumber: "45B7C",
+      id: 2,
       itemName: "Antiseptic Solution",
       category: "Cleaning Supplies",
       qty: 75,
@@ -173,9 +172,9 @@ export default function FirstAidStocks() {
 
   useEffect(() => {
     const filtered = sampleData.filter((item) => {
-      const searchText = `${item.batchNumber} ${item.itemName} ${item.category} ${item.qty} ${item.availQty} ${item.usedItem} ${item.expiryDate}`.toLowerCase();
+      const searchText = `${item.id} ${item.itemName} ${item.category} ${item.qty} ${item.availQty} ${item.usedItem} ${item.expiryDate}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
-    });
+    }); 
     
     setFilteredData(filtered);
     setTotalPages(Math.ceil(filtered.length / pageSize));
@@ -201,15 +200,10 @@ export default function FirstAidStocks() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
-  };
+  }; 
 
-  const handeleSaveEditModal = (updatedData: FirstAidStocksRecord) => {
-    setFilteredData(prevData =>
-      prevData.map(item =>
-        item.batchNumber === updatedData.batchNumber ? updatedData : item
-      )
-    );
-  };
+ 
+
 
   return (
     <>

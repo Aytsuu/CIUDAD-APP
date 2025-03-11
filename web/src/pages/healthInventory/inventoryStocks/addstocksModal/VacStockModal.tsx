@@ -11,7 +11,7 @@ export default function VaccineStockForm() {
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
-      vaccineName: "",
+      antigen: "",
       batchNumber: "",
       volume: 0,
       vialBoxCount: 0,
@@ -52,7 +52,7 @@ export default function VaccineStockForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="vaccineName"
+                name="antigen"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Item Name</FormLabel>

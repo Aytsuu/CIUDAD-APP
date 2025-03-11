@@ -12,14 +12,12 @@ export const CommodityListSchema = z.object({
 
 export const VaccineListSchema = z.object({
   vaccineName: z.string().min(1, "Vaccine name is required").default(""),
+  category:z.string().min(1,"category is required"),
   interval: z.number().optional(),
   timeUnits: z.string().optional().default(""),
   noOfDoses: z.number().default(0),
   ageGroup: z.string().min(1, "Age group is required").default(""),
-  years: z.number().optional(),
-  months: z.number().default(0),
-  weeks: z.number().default(0),
-  days: z.number().default(0)
+  specifyAge: z.string().default("")
 });
 
 export const FirstAidSchema = z.object({

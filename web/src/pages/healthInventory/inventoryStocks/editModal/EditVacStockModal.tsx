@@ -1,4 +1,4 @@
-// EditVacStockForm.tsx
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,129 +18,105 @@ import {
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import { useEffect } from "react";
 
-type VaccineStocksRecord = {
+interface VaccineStocksRecord {
   batchNumber: string;
   category: string;
   item: {
-    name: string;
-    dosage?: number;
-    unit?: string;
+    antigen: string; // This is the name of the antigen
+    dosage: number;
+    unit: string;
   };
   qty: string;
   administered: string;
   wastedDose: string;
   availableStock: string;
   expiryDate: string;
-};
+}
 
 interface EditVacStockFormProps {
   vaccine: VaccineStocksRecord;
-  onSave: (updatedVaccine: VaccineStocksRecord) => void;
 }
 
 export default function EditVacStockForm({
   vaccine,
-  onSave,
-}: EditVacStockFormProps) {
-  const isMedicalSupply = vaccine.category === "medsupplies";
 
-  const parseQuantity = (qty: string) => {
-    if (isMedicalSupply) {
-      const boxMatch = qty.match(/(\d+) boxes/);
-      const pcsMatch = qty.match(/(\d+) pcs/);
-      return {
-        vialBoxCount: boxMatch ? parseInt(boxMatch[1]) : 0,
-        dosesPcsCount: pcsMatch ? parseInt(pcsMatch[1]) : 0,
-      };
-    } else {
-      const vialMatch = qty.match(/(\d+) vials/);
-      const doseMatch = qty.match(/(\d+) doses/);
-      return {
-        vialBoxCount: vialMatch ? parseInt(vialMatch[1]) : 0,
-        dosesPcsCount: doseMatch ? parseInt(doseMatch[1]) : 0,
-      };
-    }
-  };
+}: EditVacStockFormProps) {
+  // List of antigens with `id` and `name`
+  const antigenlist = [
+    { id: "covid19", name: "COVID-19 mRNA Vaccine" },
+    { id: "flu", name: "Influenza Vaccine" },
+    { id: "hepb", name: "Hepatitis B Vaccine" },
+    { id: "SterileGloves", name: "Sterile Gloves" },
+    // Add more options as needed
+  ];
+
+  // Find the initial selected antigen ID based on the vaccine's antigen name
+  const initialAntigenId =
+    antigenlist.find((antigen) => antigen.name === vaccine.item.antigen)?.id ||
+    "";
 
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
-      vaccineName: vaccine.item.name,
+      antigen: initialAntigenId, // Use the ID instead of the name
       category: vaccine.category,
       batchNumber: vaccine.batchNumber,
       volume: vaccine.item.dosage || 0,
       expiryDate: vaccine.expiryDate,
-      ...parseQuantity(vaccine.qty),
+      vialBoxCount: 0,
+      dosesPcsCount: 0,
     },
   });
+
+  // Watch the category field to dynamically update the form
+  const category = form.watch("category");
+  const isMedicalSupply = category === "medsupplies";
+
+  // Conditional labels based on category
+  const quantityUnit = isMedicalSupply ? "pcs" : "doses";
+  const containerLabel = isMedicalSupply ? "Box" : "Vial";
+  const perContainerLabel = isMedicalSupply ? "Pieces per Box" : "Doses per Vial";
+
+  const parseQuantity = (qty: string) => {
+    if (isMedicalSupply) {
+      const boxMatch = qty.match(/(\d+) boxes/);
+      const pcsMatch = qty.match(/\((\d+) pcs\)/);
+      const boxCount = boxMatch ? parseInt(boxMatch[1]) : 0;
+      const totalPcs = pcsMatch ? parseInt(pcsMatch[1]) : 0;
+      const pcsPerBox = boxCount > 0 ? Math.round(totalPcs / boxCount) : 0;
+      return {
+        vialBoxCount: boxCount,
+        dosesPcsCount: pcsPerBox,
+      };
+    } else {
+      const vialMatch = qty.match(/(\d+) vials/);
+      const doseMatch = qty.match(/\((\d+) doses\)/);
+      const vialCount = vialMatch ? parseInt(vialMatch[1]) : 0;
+      const totalDoses = doseMatch ? parseInt(doseMatch[1]) : 0;
+      const dosesPerVial =
+        vialCount > 0 ? Math.round(totalDoses / vialCount) : 0;
+      return {
+        vialBoxCount: vialCount,
+        dosesPcsCount: dosesPerVial,
+      };
+    }
+  };
 
   useEffect(() => {
     const quantities = parseQuantity(vaccine.qty);
     form.reset({
-      vaccineName: vaccine.item.name,
+      antigen: initialAntigenId, // Use the ID instead of the name
       category: vaccine.category,
       batchNumber: vaccine.batchNumber,
       volume: vaccine.item.dosage || 0,
       expiryDate: vaccine.expiryDate,
       ...quantities,
     });
-  }, [vaccine, form]);
+  }, [vaccine, form, initialAntigenId]);
 
   const onSubmit = async (data: VaccineStockType) => {
-    try {
-      console.log("Form submission data:", data);
-
-      const isValid = await form.trigger();
-      if (!isValid) {
-        console.log("Form validation failed");
-        return;
-      }
-
-      // Handle empty values before validation
-      const submissionData = {
-        ...data,
-        vialBoxCount: data.vialBoxCount || 0,
-        dosesPcsCount: data.dosesPcsCount || 0,
-        volume: data.volume || 0,
-      };
-
-      console.log("Processed submission data:", submissionData);
-
-      const validatedData = VaccineStocksSchema.parse(submissionData);
-      console.log("Validated data:", validatedData);
-
-      const qty = isMedicalSupply
-        ? `${validatedData.vialBoxCount} boxes (${
-            validatedData.vialBoxCount * validatedData.dosesPcsCount
-          } pcs)`
-        : `${validatedData.vialBoxCount} vials (${
-            validatedData.vialBoxCount * validatedData.dosesPcsCount
-          } doses)`;
-
-      const updatedVaccine: VaccineStocksRecord = {
-        ...vaccine,
-        batchNumber: validatedData.batchNumber,
-        item: {
-          ...vaccine.item,
-          name: validatedData.vaccineName,
-          ...(isMedicalSupply
-            ? {}
-            : {
-                dosage: validatedData.volume,
-                unit: "ml",
-              }),
-        },
-        qty,
-        expiryDate: validatedData.expiryDate,
-      };
-
-      console.log("Saving updated vaccine:", updatedVaccine);
-      onSave(updatedVaccine);
-      alert("Successfully saved changes!"); // Success alert
-    } catch (error) {
-      console.error("Form submission error:", error);
-      alert("Update failed. Please check the form.");
-    }
+   console.log(data)
+   alert("success")
   };
 
   const vialBoxCount = form.watch("vialBoxCount") || 0;
@@ -154,18 +130,22 @@ export default function EditVacStockForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="vaccineName"
+              name="antigen"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
                     {isMedicalSupply ? "Item Name" : "Vaccine Name"}
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={`Enter ${
+                    <SelectLayout
+                      label=""
+                      className="w-full"
+                      placeholder={`Select ${
                         isMedicalSupply ? "item" : "vaccine"
                       } name`}
+                      options={antigenlist}
+                      value={field.value} // This should be the ID
+                      onChange={field.onChange} // This will update the ID in the form state
                     />
                   </FormControl>
                   <FormMessage />
@@ -186,6 +166,7 @@ export default function EditVacStockForm({
               )}
             />
           </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
@@ -246,7 +227,7 @@ export default function EditVacStockForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {isMedicalSupply ? "Number of Boxes" : "Number of Vials"}
+                    {`Number of ${containerLabel}s`}
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -272,7 +253,7 @@ export default function EditVacStockForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {isMedicalSupply ? "Units per Box (pcs)" : "Doses per Vial"}
+                    {perContainerLabel}
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -295,13 +276,13 @@ export default function EditVacStockForm({
 
           <FormItem>
             <FormLabel>
-              {isMedicalSupply ? "Total Pieces" : "Total Doses"}
+              {`Total ${quantityUnit}`}
             </FormLabel>
             <div className="flex items-center h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              {totalUnits.toLocaleString()} {isMedicalSupply ? "pcs" : "doses"}
+              {totalUnits.toLocaleString()} {quantityUnit}
               <span className="ml-2 text-muted-foreground text-xs">
-                ({vialBoxCount} {isMedicalSupply ? "boxes" : "vials"} ×{" "}
-                {dosesPcsCount} {isMedicalSupply ? "pcs/box" : "doses/vial"})
+                ({vialBoxCount} {containerLabel.toLowerCase()}s ×{" "}
+                {dosesPcsCount} {quantityUnit}/{containerLabel.toLowerCase()})
               </span>
             </div>
           </FormItem>
@@ -331,4 +312,4 @@ export default function EditVacStockForm({
       </Form>
     </div>
   );
-}
+} 

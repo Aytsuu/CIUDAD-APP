@@ -16,46 +16,62 @@ import {
   VaccineListSchema,
   VacccineType,
 } from "@/form-schema/inventory/inventoryListSchema"; // Adjust the import path as needed
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+
+interface Option {
+  id: string;
+  name: string;
+}
+
+// Initial options for the "Category" dropdown
+const initialCategories: Option[] = [
+  { id: "vaccine", name: "vaccine" },
+  { id: "MedicalSupplies", name: "MedicalSupplies" },
+];
 
 export default function VaccinationModal() {
-  const form = useForm({
+  const form = useForm<VacccineType>({
     resolver: zodResolver(VaccineListSchema),
     defaultValues: {
       vaccineName: "",
+      category: "",
       interval: 0,
       timeUnits: "",
       noOfDoses: 0,
       ageGroup: "",
-      years: 0,
-      months: 0,
-      weeks: 0,
-      days: 0,
+      specifyAge: "",
     },
   });
 
-  const onSubmit = (data: any) => {
-    // Process age fields to add suffixes
-    const processedData = {
-      ...data,
-      years: data.years ? `${data.years}yrs` : "",
-      months: data.months ? `${data.months}mos` : "",
-      weeks: data.weeks ? `${data.weeks}wks` : "",
-      days: data.days ? `${data.days}days` : "",
-    };
 
-    console.log(processedData);
-    // Handle form submission with processedData
+  const timeUnits= [
+    { id: "years", name: "Years" },
+    { id: "months", name: "Months" },
+    { id: "weeks", name: "Weeks" },
+  ]
+  const [categories, setCategories] = useState<Option[]>(initialCategories);
+
+  const handleSelectChange = (
+    selectedValue: string,
+    fieldOnChange: (value: string) => void,
+    setCategories: React.Dispatch<React.SetStateAction<Option[]>>
+  ) => {
+    setCategories((prev) =>
+      prev.some((opt) => opt.id === selectedValue)
+        ? prev
+        : [...prev, { id: selectedValue, name: selectedValue }]
+    );
+    fieldOnChange(selectedValue);
   };
 
-  const specifyAge = [
-    { name: "years", placeholder: "Years" },
-    { name: "months", placeholder: "Months" },
-    { name: "weeks", placeholder: "Weeks" },
-    { name: "days", placeholder: "Days" },
-  ];
+  const onSubmit = (data: VacccineType) => {
+    console.log(data);
+    alert("success")
+  };
 
   const selectedAgeGroup = form.watch("ageGroup"); // Watch the selected age group
+
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
@@ -66,24 +82,54 @@ export default function VaccinationModal() {
 
           {/* Main Form Content */}
           <div className="space-y-6 p-2">
-            {/* Vaccine Name Field */}
-            <FormField
-              control={form.control}
-              name="vaccineName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vaccine Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Vaccine Name"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Vaccine Name Field */}
+              <FormField
+                control={form.control}
+                name="vaccineName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vaccine Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Vaccine Name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Category Field with Dynamic Addition */}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        className="w-full"
+                        label="Category"
+                        placeholder="Select"
+                        options={categories}
+                        value={field.value}
+                        onChange={(selectedValue) =>
+                          handleSelectChange(
+                            selectedValue,
+                            field.onChange,
+                            setCategories
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Interval and Time Units */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -122,11 +168,7 @@ export default function VaccinationModal() {
                         className="w-full"
                         label="Time Units"
                         placeholder="Select"
-                        options={[
-                          { id: "years", name: "Years" },
-                          { id: "months", name: "Months" },
-                          { id: "weeks", name: "Weeks" },
-                        ]}
+                        options={timeUnits}
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -165,37 +207,19 @@ export default function VaccinationModal() {
             {/* Specify Age Fields */}
             {selectedAgeGroup === "0-5" && (
               <div className="bg-gray-50 p-3 rounded-lg">
-                <Label className="block mb-2 text-sm font-medium text-gray-700">
-                  Specify Age for Vaccination
-                </Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {specifyAge.map(({ name, placeholder }) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as keyof VacccineType}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{placeholder}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder={placeholder}
-                              value={field.value || ""}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                field.onChange(
-                                  value === "" ? undefined : Number(value)
-                                );
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
+                <FormField
+                  control={form.control}
+                  name="specifyAge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specify Age</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
 

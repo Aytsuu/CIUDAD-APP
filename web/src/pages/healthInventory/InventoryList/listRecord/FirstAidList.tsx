@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput,Edit } from "lucide-react";
+import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import EditFirstAidModal from "../editListModal/EditFirstAidModal";
+import { Row } from "react-day-picker";
 
 export default function FirstAidList() {
   type FirstAidRecords = {
@@ -47,27 +48,26 @@ export default function FirstAidList() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: () => (
+      cell: ({row}) => (
         <div className="flex justify-center gap-2">
-         
-         <DialogLayout
+          <DialogLayout
             trigger={
               <div className=" border  px-3 py-2 rounded cursor-pointer">
                 <Edit size={16} />
               </div>
             }
-            mainContent={<EditFirstAidModal />}
+            mainContent={<EditFirstAidModal
+              initialData={row.original} />}
           />
 
-              <DialogLayout
-                trigger={
-                  <div className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                mainContent={<></>}
-              />
-          
+          <DialogLayout
+            trigger={
+              <div className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer">
+                <Trash size={16} />
+              </div>
+            }
+            mainContent={<></>}
+          />
         </div>
       ),
     },

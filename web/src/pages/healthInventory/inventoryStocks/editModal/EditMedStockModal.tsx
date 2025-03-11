@@ -21,7 +21,7 @@ import { z } from "zod";
 
 interface EditMedicineFormProps {
   medicine: {
-    batchNumber: string;
+    id: number;
     medicineInfo: {
       medicineName: string;
       dosage: number;
@@ -34,20 +34,19 @@ interface EditMedicineFormProps {
     availQty: string;
     distributed: string;
   };
-  onSave: (data: any) => void;
+  // onSave: (data: any) => void;
 }
 
 export default function EditMedicineForm({
   medicine,
-  onSave,
-}: EditMedicineFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+}: // onSave,
+EditMedicineFormProps) {
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
       medicineName: medicine.medicineInfo.medicineName,
       category: medicine.category,
-      batchNumber: medicine.batchNumber,
+      // id: medicine.id,
       dosage: medicine.medicineInfo.dosage,
       dsgUnit: medicine.medicineInfo.dsgUnit,
       form: medicine.medicineInfo.form,
@@ -64,7 +63,7 @@ export default function EditMedicineForm({
     form.reset({
       medicineName: medicine.medicineInfo.medicineName,
       category: medicine.category,
-      batchNumber: medicine.batchNumber,
+      // id: medicine.id,
       dosage: medicine.medicineInfo.dosage,
       dsgUnit: medicine.medicineInfo.dsgUnit,
       form: medicine.medicineInfo.form,
@@ -78,51 +77,8 @@ export default function EditMedicineForm({
   }, [medicine, form]);
 
   const onSubmit = async (data: MedicineStockType) => {
-    console.log("Form submission data:", JSON.stringify(data, null, 2));
-    setIsSubmitting(true);
-
-    try {
-      const submitData = {
-        ...data,
-        pcs: data.unit === "boxes" ? data.pcs : 0,
-      };
-
-      const validatedData = MedicineStocksSchema.parse(submitData);
-
-      const updatedMedicine = {
-        ...medicine,
-        batchNumber: validatedData.batchNumber,
-        medicineInfo: {
-          medicineName: validatedData.medicineName,
-          dosage: validatedData.dosage,
-          dsgUnit: validatedData.dsgUnit,
-          form: validatedData.form,
-        },
-        expiryDate: validatedData.expiryDate,
-        category: validatedData.category,
-        qty:
-          validatedData.unit === "boxes"
-            ? `${validatedData.qty} boxes (${validatedData.pcs} pcs)`
-            : `${validatedData.qty} bottles`,
-      };
-
-      await onSave(updatedMedicine);
-      // Add success alert here 👇
-      alert("Medicine stock updated successfully!");
-    } catch (error) {
-      console.error("Form submission error:", error);
-      if (error instanceof z.ZodError) {
-        alert(
-          `Validation failed:\n${error.errors
-            .map((e) => `• ${e.message}`)
-            .join("\n")}`
-        );
-      } else {
-        alert("Update failed. Please check the form.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    console.log("saved data", data);
+    alert("Medicine stock updated successfully!");
   };
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
@@ -189,20 +145,6 @@ export default function EditMedicineForm({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="batchNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter batch number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="expiryDate"
@@ -383,8 +325,8 @@ export default function EditMedicineForm({
           </div>
 
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Stock"}
+            <Button type="submit" className="w-[120px]">
+              Save
             </Button>
           </div>
         </form>

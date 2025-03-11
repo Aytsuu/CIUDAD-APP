@@ -1,5 +1,5 @@
 // EditCommodityStockForm.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,12 +17,11 @@ import {
   CommodityStockType,
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
-import { useEffect } from "react";
 import { z } from "zod";
 
 interface EditCommodityStockFormProps {
   initialData: {
-    batchNumber: string;
+    id: number;
     commodityName: string;
     category: string;
     recevFrom: string;
@@ -31,30 +30,34 @@ interface EditCommodityStockFormProps {
     expiryDate: string;
     dispensed: string;
   };
-  onSave: (data: any) => void;
 }
+
 
 export default function EditCommodityStockForm({
   initialData,
-  onSave,
-}: EditCommodityStockFormProps) {
+}: 
+EditCommodityStockFormProps) {
   const parseQuantity = (qtyString: string) => {
     // Enhanced parsing with better error handling
     try {
+      if (!qtyString) {
+        return { qty: 0, pcs: 0, unit: "pcs" as const };
+      }
+
       const boxMatch = qtyString.match(/(\d+) bx\/s \((\d+) pc\/s\)/);
       if (boxMatch && boxMatch[1] && boxMatch[2]) {
         return {
           qty: parseInt(boxMatch[1]),
           pcs: parseInt(boxMatch[2]),
-          unit: "boxes" as const
+          unit: "boxes" as const,
         };
       }
-      
+
       const piecesMatch = qtyString.match(/(\d+)/);
       return {
         qty: piecesMatch ? parseInt(piecesMatch[0]) : 0,
         pcs: 0,
-        unit: "pcs" as const
+        unit: "pcs" as const,
       };
     } catch (error) {
       console.error("Error parsing quantity:", error);
@@ -65,57 +68,31 @@ export default function EditCommodityStockForm({
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
-      commodityName: initialData.commodityName,
-      category: initialData.category,
-      batchNumber: initialData.batchNumber,
-      recevFrom: initialData.recevFrom,
-      ...parseQuantity(initialData.qty),
-      expiryDate: initialData.expiryDate,
-    }
+      commodityName: initialData?.commodityName || "",
+      category: initialData?.category || "",
+      recevFrom: initialData?.recevFrom || "",
+      ...parseQuantity(initialData?.qty || ""),
+      expiryDate: initialData?.expiryDate || "",
+    },
   });
 
   useEffect(() => {
-    const parsed = parseQuantity(initialData.qty);
-    form.reset({
-      commodityName: initialData.commodityName,
-      category: initialData.category,
-      batchNumber: initialData.batchNumber,
-      recevFrom: initialData.recevFrom,
-      ...parsed,
-      expiryDate: initialData.expiryDate,
-    });
+    if (initialData) {
+      const parsed = parseQuantity(initialData.qty);
+      form.reset({
+        commodityName: initialData.commodityName,
+        category: initialData.category,
+        // id: initialData.id,
+        recevFrom: initialData.recevFrom,
+        ...parsed,
+        expiryDate: initialData.expiryDate,
+      });
+    }
   }, [initialData, form]);
 
   const onSubmit = async (data: CommodityStockType) => {
-    try {
-      // Validate against schema
-      const validatedData = CommodityStocksSchema.parse(data);
-      
-      // Format the output
-      const updatedCommodity = {
-        ...initialData,
-        ...validatedData,
-        qty: validatedData.unit === 'boxes' 
-          ? `${validatedData.qty} bx/s (${validatedData.pcs} pc/s)`
-          : `${validatedData.qty} pc/s`,
-        availQty: validatedData.unit === 'boxes' 
-          ? `${validatedData.qty} bx/s (${validatedData.pcs} pc/s)`
-          : `${validatedData.qty} pc/s`,
-      };
-
-      // Call parent save handler
-      onSave(updatedCommodity);
-      alert("✅ Data saved successfully!");
-    } catch (error) {
-      console.error("Submission error:", error);
-      if (error instanceof z.ZodError) {
-        // Show first validation error
-        const firstError = error.errors[0];
-        alert(`Validation error: ${firstError.message}`);
-      } else {
-        alert("❌ Save failed. Please check the form values.");
-      }
-    }
+    console.log(data);
+    alert("✅ Data saved successfully!");
   };
 
   const currentUnit = form.watch("unit");
@@ -126,12 +103,12 @@ export default function EditCommodityStockForm({
   // Form options
   const commodityOptions = [
     { id: "Condom", name: "Condom" },
-    { id: "pills COC", name: "Pills COC" }
+    { id: "pills COC", name: "Pills COC" },
   ];
 
   const categoryOptions = [
     { id: "Condom", name: "Condom" },
-    { id: "Pills", name: "Pills" }
+    { id: "Pills", name: "Pills" },
   ];
 
   const recevFromOptions = [
@@ -165,7 +142,6 @@ export default function EditCommodityStockForm({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="category"
@@ -191,29 +167,15 @@ export default function EditCommodityStockForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="batchNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Enter batch number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="expiryDate"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Expiry Date</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date" 
-                      {...field} 
-                      value={field.value?.split('T')[0] || ''}
+                    <Input
+                      type="date"
+                      {...field}
+                      value={field.value?.split("T")[0] || ""}
                     />
                   </FormControl>
                   <FormMessage />

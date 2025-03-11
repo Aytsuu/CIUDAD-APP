@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FormField,
   FormItem,
@@ -18,6 +18,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 
+interface MedicineListProps {
+  initialData: {
+    id: number;
+    medicineName: string;
+    category: string;
+  };
+}
 interface Option {
   id: string;
   name: string;
@@ -25,28 +32,26 @@ interface Option {
 
 // Initial options for the "Category" dropdown
 const initialCategories: Option[] = [
-  { id: "tablet", name: "Tablet" },
-  { id: "syrup", name: "Syrup" },
-  { id: "injection", name: "Injection" },
+  { id: "Analgesic", name: "Analgesic" },
+  { id: "Antibiotic", name: "Antibiotic" },
 ];
 
-export default function MedicineListEdit() {
+export default function MedicineListEdit({ initialData }: MedicineListProps) {
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: {
-      medicineName: "",
-      category: "",
+      medicineName: initialData.medicineName,
+      category: initialData.category,
     },
   });
 
   const [categories, setCategories] = useState<Option[]>(initialCategories);
 
-  // Fixed: Removed unused categories parameter
   const handleSelectChange = (
     selectedValue: string,
-    fieldOnChange: (value: string) => void,
-    setCategories: React.Dispatch<React.SetStateAction<Option[]>>
+    fieldOnChange: (value: string) => void
   ) => {
+    console.log("Selected Value:", selectedValue);
     setCategories((prev) =>
       prev.some((opt) => opt.id === selectedValue)
         ? prev
@@ -54,6 +59,13 @@ export default function MedicineListEdit() {
     );
     fieldOnChange(selectedValue);
   };
+
+  useEffect(() => {
+    form.reset({
+      medicineName: initialData.medicineName,
+      category: initialData.category,
+    });
+  });
 
   const onSubmit = (data: MedicineType) => {
     console.log(data);
@@ -65,54 +77,56 @@ export default function MedicineListEdit() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           {/* Medicine Name Field */}
-        <div className="flex flex-col gap-3">
-        <FormField
-            control={form.control}
-            name="medicineName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Medicine Name</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    value={String(field.value)}
-                    placeholder="Medicine Name"
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex flex-col gap-3">
+            <FormField
+              control={form.control}
+              name="medicineName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Medicine Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      value={String(field.value)}
+                      placeholder="Medicine Name"
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Category Field with Dynamic Addition */}
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <SelectLayoutWithAdd
-                    className="w-full"
-                    label="Category"
-                    placeholder="Select"
-                    options={categories}
-                    value={field.value}
-                    onChange={(selectedValue) =>
-                      handleSelectChange(
-                        selectedValue,
-                        field.onChange,
-                        setCategories // Removed categories parameter from call
-                      )
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          /></div> 
+            {/* Category Field with Dynamic Addition */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => {
+                const selectedCategoryId = categories.find(
+                  (opt) => opt.name === field.value
+                )?.id;
 
+                return (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        className="w-full"
+                        label="Category"
+                        placeholder="Select"
+                        options={categories}
+                        value={selectedCategoryId || field.value}
+                        onChange={(selectedValue) =>
+                          handleSelectChange(selectedValue, field.onChange)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          </div>
 
           <div className="w-full flex justify-end mt-8">
             <Button type="submit">Submit</Button>
