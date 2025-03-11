@@ -147,6 +147,7 @@ export default function FamilyPlanningMain() {
   const [formData, setFormData] = useState<FormData>(initialFormData)
 
   // Modified handleNext to show validation errors but still allow proceeding
+  
   const handleNext = () => {
     try {
       console.log("Moving to next page, current data:", formData)

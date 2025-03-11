@@ -101,37 +101,36 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                     )}
                   />
 
-                  {/* Discharge Location Conditional Rendering */}
-                  {abnormalDischarge && (
-                    <FormField
-                      control={form.control}
-                      name="sexuallyTransmittedInfections.dischargeFrom"
-                      render={({ field }) => (
-                        <FormItem className="ml-4 mb-4">
-                          <p className="italic text-sm mb-2">If "YES" please indicate if from:</p>
-                          <FormControl>
-                            <div className="flex space-x-4">
-                              {["Vagina", "Penis"].map((location) => (
-                                <div key={location} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    checked={field.value?.includes(location)}
-                                    onCheckedChange={() => {
-                                      const newValue = field.value?.includes(location)
-                                        ? field.value.filter((v) => v !== location)
-                                        : [...(field.value || []), location]
-                                      field.onChange(newValue)
-                                    }}
-                                    id={`discharge-${location.toLowerCase()}`}
-                                  />
-                                  <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
-                                </div>
-                              ))}
-                            </div>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  )}
+{abnormalDischarge && (
+  <FormField
+    control={form.control}
+    name="sexuallyTransmittedInfections.dischargeFrom"
+    render={({ field }) => (
+      <FormItem className="ml-4 mb-4">
+        <p className="italic text-sm mb-2">If "YES" please indicate if from:</p>
+        <FormControl>
+          <div className="flex space-x-4">
+            {["Vagina", "Penis"].map((location) => (
+              <div key={location} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id={`discharge-${location.toLowerCase()}`}
+                  name="dischargeFrom" // Ensure all radios belong to the same group
+                  value={location}
+                  checked={field.value === location}
+                  onChange={() => field.onChange(location)}
+                  className="cursor-pointer"
+                />
+                <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
+              </div>
+            ))}
+          </div>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)}
 
                   {/* Other STI Risks */}
                   {[
@@ -232,15 +231,14 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                           <div className="flex flex-col space-y-2">
                             {referralOptions.map((option) => (
                               <div key={option} className="flex items-center space-x-2">
-                                <Checkbox
+                                <input
+                                  type="radio"
                                   id={`referral-${option.toLowerCase().replace(/\s+/g, "-")}`}
-                                  checked={field.value?.includes(option)}
-                                  onCheckedChange={() => {
-                                    const newValue = field.value?.includes(option)
-                                      ? field.value.filter((v) => v !== option)
-                                      : [...(field.value || []), option]
-                                    field.onChange(newValue)
-                                  }}
+                                  name="referredTo"
+                                  value={option}
+                                  checked={field.value === option}
+                                  onChange={() => field.onChange(option)}
+                                  className="cursor-pointer"
                                 />
                                 <label htmlFor={`referral-${option.toLowerCase().replace(/\s+/g, "-")}`}>
                                   {option}
@@ -248,8 +246,8 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                               </div>
                             ))}
 
-                            {/* Conditional Input for Other Referral */}
-                            {field.value?.includes("Others") && (
+                            {/* Conditional Input for "Others" Option */}
+                            {field.value === "Others" && (
                               <FormField
                                 control={form.control}
                                 name="violenceAgainstWomen.otherReferral"
@@ -258,7 +256,6 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                     <FormLabel>Specify:</FormLabel>
                                     <FormControl>
                                       <Input
-                                        placeholder=""
                                         {...otherField}
                                         className="w-[50%]"
                                       />
@@ -270,6 +267,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                             )}
                           </div>
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -279,9 +277,9 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
 
             {/* Submit Button */}
             <div className="flex justify-end mt-6 space-x-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 className="w-full md:w-auto"
                 onClick={() => {
                   saveFormData();

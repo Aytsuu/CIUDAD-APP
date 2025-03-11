@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -41,7 +41,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     nameOfServiceProvider: "",
     dateOfFollowUp: "",
     methodQuantity: "",
-    methodUnit: "box/pcs",
+    methodUnit: "",
     serviceProviderSignature: "",
     medicalFindings: "",
   })
@@ -85,7 +85,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
       nameOfServiceProvider: "",
       dateOfFollowUp: "",
       methodQuantity: "",
-      methodUnit: "box/pcs",
+      methodUnit: "",
       serviceProviderSignature: "",
       medicalFindings: "",
     })

@@ -20,65 +20,59 @@ type Page1Props = {
 
 export default function FamilyPlanningForm({ onNext2, updateFormData, formData }: Page1Props) {
   const form = useForm<FormData>({
-    resolver: zodResolver(page1Schema), // Use page-specific schema
+    resolver: zodResolver(page1Schema),
     defaultValues: formData,
     values: formData,
-    mode: "onTouched", 
+    mode: "onBlur", // Changed to onBlur for better user experience
   })
 
   useEffect(() => {
     form.reset(formData)
   }, [form, formData])
 
-  // Log when the component mounts or formData changes
+  // Get current values for conditional rendering
+  const typeOfClient = form.watch("typeOfClient")
+  const subTypeOfClient = form.watch("subTypeOfClient")
+  const reasonForFP = form.watch("reasonForFP")
+  // const reason = form.watch("reason")
+  // const methodCurrentlyUsedValue = form.watch("methodCurrentlyUsed")
+
+  // Determine which sections should be enabled
+  const isNewAcceptor = typeOfClient === "New Acceptor"
+  const isCurrentUser = typeOfClient === "Current User"
+  const isChangingMethod = isCurrentUser && subTypeOfClient === "Changing Method"
+
+  // Reset fields when type of client or subtype changes
   useEffect(() => {
-    console.log("FamilyPlanningForm received formData:", formData)
-  }, [formData])
+    if (isNewAcceptor) {
+      // For New Acceptor: Enable Reason for FP, disable Reason and Method Currently Used
+      form.setValue("reason", "")
+      form.setValue("otherReason", "")
+      form.setValue("methodCurrentlyUsed", undefined)
+      form.setValue("otherMethod", "")
+    } else if (isCurrentUser) {
+      // For Current User: Disable Reason for FP
+      form.setValue("reasonForFP", "")
+      form.setValue("otherReasonForFP", "")
 
-  // Add this debugging function
-  const debugValidation = async () => {
-    try {
-      // Try to validate the current form values against the schema
-      const result = await page1Schema.parseAsync(form.getValues())
-      console.log("Validation succeeded:", result)
-    } catch (error) {
-      console.error("Validation failed:", error)
+      // Only enable Reason and Method Currently Used for Changing Method subtype
+      if (!isChangingMethod) {
+        // For Dropout/Restart or Changing Clinic: Disable Reason and Method Currently Used
+        form.setValue("reason", "")
+        form.setValue("otherReason", "")
+        form.setValue("methodCurrentlyUsed", undefined)
+        form.setValue("otherMethod", "")
+      }
     }
-  }
+  }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUser, isChangingMethod])
 
-  // Add a debug button temporarily
-  useEffect(() => {
-    // Add a debug button to the page
-    const debugButton = document.createElement("button")
-    debugButton.textContent = "Debug Validation"
-    debugButton.style.position = "fixed"
-    debugButton.style.top = "10px"
-    debugButton.style.right = "10px"
-    debugButton.style.zIndex = "9999"
-    debugButton.onclick = debugValidation
-
-    document.body.appendChild(debugButton)
-
-    return () => {
-      document.body.removeChild(debugButton)
-    }
-  }, [])
-
-  const onSubmitForm = async (data: FormData) => {
-    console.log("PAGE 1 Submitted Data:", data)
-    // Update the parent component's state with the form data
+  // Handle form submission
+  const onSubmit = async (data: FormData) => {
     updateFormData(data)
-    // Navigate to the next page
     onNext2()
   }
 
-  // Add a function to save data without navigating
-  const saveFormData = () => {
-    const currentValues = form.getValues()
-    console.log("Saving current form data:", currentValues)
-    updateFormData(currentValues)
-  }
-
+  // Method options array
   const methodCurrentlyUsed = [
     { id: "COC", name: "COC" },
     { id: "IUD", name: "IUD" },
@@ -95,46 +89,15 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     { id: "Condom", name: "Condom" },
   ]
 
-  // Get current values for conditional rendering
-  const typeOfClient = form.watch("typeOfClient")
-  const subTypeOfClient = form.watch("subTypeOfClient")
-
-  // Update the conditional variables that determine which sections should be enabled
-  // Replace the existing conditional variables (around line 60-63) with these:
-
-  // Determine which sections should be enabled
-  const isNewAcceptor = typeOfClient === "New Acceptor"
-  const isCurrentUser = typeOfClient === "Current User"
-
-  // Reset fields when type of client changes
-  useEffect(() => {
-    if (isNewAcceptor) {
-      // For New Acceptor: Enable Reason for FP, disable Reason and Method Currently Used
-      form.setValue("reason", "")
-      form.setValue("methodCurrentlyUsed", undefined)
-      form.setValue("otherMethod", "")
-    } else if (isCurrentUser) {
-      // For Current User: Disable Reason for FP, enable Reason and Method Currently Used
-      form.setValue("reasonForFP", "")
-      form.setValue("otherReasonForFP", "")
-    }
-  }, [typeOfClient, form, isNewAcceptor, isCurrentUser])
-
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      console.log("Form errors:", form.formState.errors)
-    })
-    return () => subscription.unsubscribe()
-  }, [form])
-
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
       <div className="rounded-lg w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 border-l-4 p-4 text-center">
           Family Planning (FP) Form 1
         </h2>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitForm)} className="p-4 space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-6">
             <div className="bg-gray-50 p-4 rounded-md">
               <strong className="text-lg">FAMILY PLANNING CLIENT ASSESSMENT RECORD</strong>
               <p className="mt-2">
@@ -152,7 +115,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="clientID"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>CLIENT ID:</Label>
+                    <Label>
+                      CLIENT ID:<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <Input {...field} className="w-full" />
                     </FormControl>
@@ -167,7 +132,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   <FormItem>
                     <Label>PHILHEALTH NO:</Label>
                     <FormControl>
-                      <Input {...field} className=" w-full" />
+                      <Input {...field} className="w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -182,7 +147,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   <FormItem className="ml-5 mt-2 flex flex-col">
                     <Label className="mb-2">NHTS?</Label>
                     <div className="flex items-center space-x-2">
-                      <FormControl className="">
+                      <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={() => field.onChange(true)} />
                       </FormControl>
                       <Label>Yes</Label>
@@ -209,12 +174,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     <Label className="mb-2 mt-2">Pantawid Pamilya Pilipino (4Ps)</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
-                        <Checkbox className="" checked={field.value} onCheckedChange={() => field.onChange(true)} />
+                        <Checkbox checked={field.value} onCheckedChange={() => field.onChange(true)} />
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
                         <Checkbox
-                          className=" ml-4"
+                          className="ml-4"
                           checked={!field.value}
                           onCheckedChange={() => field.onChange(false)}
                         />
@@ -234,9 +199,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="lastName"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <Label>NAME OF CLIENT</Label>
+                    <Label>
+                      NAME OF CLIENT<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
-                      <Input {...field} placeholder="Last name" className=" w-full" />
+                      <Input {...field} placeholder="Last name" className="w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -272,7 +239,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <Label>Date of Birth:</Label>
+                    <Label>
+                      Date of Birth:<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <Input type="date" {...field} className="w-full" />
                     </FormControl>
@@ -285,7 +254,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="age"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <Label>Age</Label>
+                    <Label>
+                      Age<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <Input
                         {...field}
@@ -305,18 +276,20 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="educationalAttainment"
                 render={({ field }) => (
                   <FormItem className="col-span-1 mt-2">
-                    <Label className="flex">Education Attainment</Label>
+                    <Label className="flex">
+                      Education Attainment<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <SelectLayout
                         placeholder="Choose"
                         label=""
                         className="custom-class w-full"
                         options={[
-                          { id: "Elementary", name: "Elementary" },
-                          { id: "HighSchool", name: "High school" },
-                          { id: "SeniorHighschool", name: "Senior Highschool" },
-                          { id: "Collegelvl", name: "College level" },
-                          { id: "Collegegrad", name: "College Graduate" },
+                          { id: "elementary", name: "Elementary" },
+                          { id: "highschool", name: "High school" },
+                          { id: "shs", name: "Senior Highschool" },
+                          { id: "collegegrad", name: "College level" },
+                          { id: "collegelvl", name: "College Graduate" },
                         ]}
                         value={field.value || ""}
                         onChange={field.onChange}
@@ -347,7 +320,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 control={form.control}
                 name="address.houseNumber"
                 render={({ field }) => (
-                  <FormItem className="col-span-1 ">
+                  <FormItem className="col-span-1">
                     <Label>ADDRESS</Label>
                     <FormControl>
                       <Input {...field} placeholder="No." className="w-full" />
@@ -374,7 +347,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 render={({ field }) => (
                   <FormItem className="col-span-1">
                     <FormControl>
-                      <Input {...field} placeholder="Barangay" className=" w-full mt-8" />
+                      <Input {...field} placeholder="Barangay" className="w-full mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -386,7 +359,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 render={({ field }) => (
                   <FormItem className="col-span-1">
                     <FormControl>
-                      <Input {...field} placeholder="Municipality/City" className=" w-full mt-8" />
+                      <Input {...field} placeholder="Municipality/City" className="w-full mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -413,9 +386,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="spouse.s_lastName"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <Label>NAME OF SPOUSE</Label>
+                    <Label>
+                      NAME OF SPOUSE<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
-                      <Input {...field} placeholder="Last name" className=" w-full" />
+                      <Input {...field} placeholder="Last name" className="w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -425,9 +400,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 control={form.control}
                 name="spouse.s_givenName"
                 render={({ field }) => (
-                  <FormItem className="col-span-1 ">
+                  <FormItem className="col-span-1">
                     <FormControl>
-                      <Input {...field} placeholder="Given name" className=" w-full mt-8" />
+                      <Input {...field} placeholder="Given name" className="w-full mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -450,7 +425,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="spouse.s_dateOfBirth"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <Label>Date of Birth:</Label>
+                    <Label>
+                      Date of Birth:<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <Input type="date" {...field} className="w-full" />
                     </FormControl>
@@ -463,7 +440,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="spouse.s_age"
                 render={({ field }) => (
                   <FormItem className="col-span-1">
-                    <Label>Age</Label>
+                    <Label>
+                      Age<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <Input
                         {...field}
@@ -500,13 +479,15 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 name="numOfLivingChildren"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>NO. OF LIVING CHILDREN</Label>
+                    <Label>
+                      NO. OF LIVING CHILDREN<span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <FormControl>
                       <Input
                         {...field}
                         type="number"
                         placeholder=""
-                        className=" w-full"
+                        className="w-full"
                         onChange={(e) => field.onChange(Number(e.target.value))}
                         value={field.value || ""}
                       />
@@ -519,12 +500,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 control={form.control}
                 name="planToHaveMoreChildren"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mt-3 ml-5 ">
+                  <FormItem className="flex flex-col mt-3 ml-5">
                     <Label className="mb-2">PLAN TO HAVE MORE CHILDREN?</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
                         <Checkbox
-                          className="border "
+                          className="border"
                           checked={field.value}
                           onCheckedChange={() => field.onChange(true)}
                         />
@@ -532,7 +513,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                       <Label>Yes</Label>
                       <FormControl>
                         <Checkbox
-                          className="border  ml-4"
+                          className="border ml-4"
                           checked={!field.value}
                           onCheckedChange={() => field.onChange(false)}
                         />
@@ -553,7 +534,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                       <SelectLayout
                         placeholder="Choose"
                         label=""
-                        className="custom-class  w-full"
+                        className="custom-class w-full"
                         options={[
                           { id: "5,000-10,000k", name: "5,000-10,000" },
                           { id: "10,000k-30,000k", name: "10,000-30,000" },
@@ -578,7 +559,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               <div className="grid grid-cols-12 gap-6">
                 {/* Type of Client Section - Left Column */}
                 <div className="col-span-3">
-                  <h3 className="font-semibold mb-3">Type of Client</h3>
+                  <h3 className="font-semibold mb-3">
+                    Type of Client<span className="text-red-500 ml-1">*</span>
+                  </h3>
                   {["New Acceptor", "Current User"].map((type) => (
                     <FormField
                       key={type}
@@ -600,12 +583,16 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                             />
                           </FormControl>
                           <Label>{type}</Label>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
                   ))}
                   {form.watch("typeOfClient") === "Current User" && (
                     <div className="ml-6 mt-2">
+                      <h4 className="font-medium mb-2">
+                        Subtype<span className="text-red-500 ml-1">*</span>
+                      </h4>
                       {["Changing Method", "Changing Clinic", "Dropout/Restart"].map((subType) => (
                         <FormField
                           key={subType}
@@ -622,6 +609,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                 />
                               </FormControl>
                               <Label>{subType}</Label>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -638,7 +626,10 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     name="reasonForFP"
                     render={({ field }) => (
                       <FormItem className="w-full">
-                        <Label className={`font-semibold ${isCurrentUser ? "text-gray-400" : ""}`}>Reason for FP</Label>
+                        <Label className={`font-semibold ${isCurrentUser ? "text-gray-400" : ""}`}>
+                          Reason for FP
+                          {isNewAcceptor && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
                         <div className="space-y-2 mt-2">
                           {["Spacing", "Limiting", "Others"].map((option) => (
                             <div key={option} className="flex items-center space-x-2">
@@ -653,20 +644,30 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                 />
                               </FormControl>
                               <Label className={isCurrentUser ? "text-gray-400" : ""}>{option}</Label>
-                              {option === "Others" && field.value === "Others" && !isCurrentUser && (
-                                <FormField
-                                  control={form.control}
-                                  name="otherReasonForFP"
-                                  
-                                  render={({ field: otherField }) => (
-                                    <Input className="w-32" placeholder="Specify" {...otherField} disabled={isCurrentUser} />
-                                  )}
-                                />
-                              )}
                             </div>
                           ))}
                         </div>
                         <FormMessage />
+                        {reasonForFP === "Others" && field.value === "Others" && !isCurrentUser && (
+                          <FormField
+                            control={form.control}
+                            name="otherReasonForFP"
+                            render={({ field: otherField }) => (
+                              <FormItem className="mt-2">
+                                <Label className={isCurrentUser ? "text-gray-400" : ""}>Specify:</Label>
+                                <FormControl>
+                                  <Input
+                                    className="w-full"
+                                    placeholder="Specify"
+                                    {...otherField}
+                                    disabled={isCurrentUser}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </FormItem>
                     )}
                   />
@@ -677,7 +678,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     name="reason"
                     render={({ field }) => (
                       <FormItem className="w-full">
-                        <Label className={`font-semibold ${isNewAcceptor ? "text-gray-400" : ""}`}>Reason</Label>
+                        <Label
+                          className={`font-semibold ${isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}`}
+                        >
+                          Reason
+                          {isChangingMethod && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
                         <div className="space-y-2 mt-2">
                           {["Medical Condition", "Side Effects"].map((reasonOption) => (
                             <div key={reasonOption} className="flex items-center space-x-2">
@@ -687,15 +693,43 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                   value={reasonOption}
                                   checked={field.value === reasonOption}
                                   onChange={() => field.onChange(reasonOption)}
-                                  disabled={isNewAcceptor}
-                                  className={isNewAcceptor ? "opacity-50 cursor-not-allowed" : ""}
+                                  disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
+                                  className={
+                                    isNewAcceptor || (!isChangingMethod && isCurrentUser)
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }
                                 />
                               </FormControl>
-                              <Label className={isNewAcceptor ? "text-gray-400" : ""}>{reasonOption}</Label>
+                              <Label
+                                className={isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}
+                              >
+                                {reasonOption}
+                              </Label>
                             </div>
                           ))}
                         </div>
                         <FormMessage />
+                        {field.value === "Side Effects" && isChangingMethod && (
+                          <FormField
+                            control={form.control}
+                            name="otherReason"
+                            render={({ field: otherField }) => (
+                              <FormItem className="mt-2">
+                                <Label className={!isChangingMethod ? "text-gray-400" : ""}>Specify side effect:</Label>
+                                <FormControl>
+                                  <Input
+                                    className="w-full"
+                                    placeholder="Specify side effect"
+                                    {...otherField}
+                                    disabled={!isChangingMethod}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </FormItem>
                     )}
                   />
@@ -703,40 +737,42 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
 
                 {/* Right Column - Method Currently Used */}
                 <div className="col-span-5">
-                  <h3 className="font-semibold text-sm mb-3">Method currently used (for Changing Method):</h3>
-                  <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                    {methodCurrentlyUsed.map((method) => (
-                      <FormField
-                        key={method.id}
-                        control={form.control}
-                        name="methodCurrentlyUsed"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center">
-                            <FormControl>
-                              <input
-                                type="radio"
-                                value={method.name}
-                                checked={field.value === method.name}
-                                onChange={() => field.onChange(method.name)}
-                                disabled={isNewAcceptor}
-                                className={isNewAcceptor ? "opacity-50 cursor-not-allowed" : ""}
-                              />
-                            </FormControl>
-                            <Label className={`text-sm whitespace-nowrap ml-2 ${isNewAcceptor ? "text-gray-400" : ""}`}>
-                              {method.name}
-                            </Label>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
+                  <h3 className={`font-semibold text-sm mb-3 ${isChangingMethod ? "" : "text-gray-400"}`}>
+                    Method currently used (for Changing Method):
+                    {isChangingMethod && <span className="text-red-500 ml-1">*</span>}
+                  </h3>
+                  <FormField
+                    control={form.control}
+                    name="methodCurrentlyUsed"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+                          {methodCurrentlyUsed.map((method) => (
+                            <div key={method.id} className="flex items-center">
+                              <FormControl>
+                                <input
+                                  type="radio"
+                                  value={method.name}
+                                  checked={field.value === method.name}
+                                  onChange={() => field.onChange(method.name)}
+                                  disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
+                                  className={
+                                    isNewAcceptor || (!isChangingMethod && isCurrentUser)
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }
+                                />
+                              </FormControl>
+                              <Label
+                                className={`text-sm whitespace-nowrap ml-2 ${isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}`}
+                              >
+                                {method.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
 
-                  <div className="flex items-center space-x-2 mt-2">
-                    <FormField
-                      control={form.control}
-                      name="methodCurrentlyUsed"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 mt-2">
                           <FormControl>
                             <input
                               type="radio"
@@ -748,53 +784,55 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                   form.setValue("otherMethod", "")
                                 }
                               }}
-                              disabled={isNewAcceptor}
-                              className={isNewAcceptor ? "opacity-50 cursor-not-allowed" : ""}
+                              disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
+                              className={
+                                isNewAcceptor || (!isChangingMethod && isCurrentUser)
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }
                             />
                           </FormControl>
-                          <Label className={`text-sm ${isNewAcceptor ? "text-gray-400" : ""}`}>Others</Label>
-                        </FormItem>
-                      )}
-                    />
-                    {form.watch("methodCurrentlyUsed") === "Others" && (
-                      <>
-                        <span className={`text-sm ${isNewAcceptor ? "text-gray-400" : ""}`}>specify:</span>
-                        <FormField
-                          control={form.control}
-                          name="otherMethod"
-                          render={({ field }) => (
-                            <Input type="text" className="w-32" {...field} disabled={isNewAcceptor} />
-                          )}
-                        />
-                      </>
+                          <Label
+                            className={`text-sm ${isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}`}
+                          >
+                            Others
+                          </Label>
+                        </div>
+                        <FormMessage />
+                        {field.value === "Others" && (
+                          <FormField
+                            control={form.control}
+                            name="otherMethod"
+                            render={({ field: otherField }) => (
+                              <FormItem className="mt-2">
+                                <Label
+                                  className={
+                                    isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""
+                                  }
+                                >
+                                  Specify other method:
+                                </Label>
+                                <FormControl>
+                                  <Input
+                                    type="text"
+                                    className="w-full"
+                                    {...otherField}
+                                    disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 </div>
               </div>
             </div>
             <div className="flex justify-end space-x-4">
-              <Button
-                type="button"
-                onClick={form.handleSubmit(
-                  // Success handler
-                  (data) => {
-                    console.log("Form is valid, proceeding to next page")
-                    updateFormData(data)
-                    onNext2()
-                  },
-                  // Error handler
-                  (errors) => {
-                    console.error("Validation errors:", errors)
-                    // Scroll to the first error
-                    const firstError = document.querySelector(".text-destructive")
-                    if (firstError) {
-                      firstError.scrollIntoView({ behavior: "smooth", block: "center" })
-                    }
-                  },
-                )}
-              >
-                Next
-              </Button>
+              <Button type="submit">Next</Button>
             </div>
           </form>
         </Form>

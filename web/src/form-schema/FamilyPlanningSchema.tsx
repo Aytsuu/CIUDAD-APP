@@ -31,7 +31,7 @@ export const FamilyPlanningSchema = z.object({
 
   address: z.object({
     houseNumber: z.string().optional(),
-    street: z.string().nonempty("Street is required"),
+    street: z.string().optional(),
     barangay: z.string().nonempty("Barangay is required"),
     municipality: z.string().nonempty("Municipality/City is required"),
     province: z.string().nonempty("Province is required"),
@@ -46,18 +46,18 @@ export const FamilyPlanningSchema = z.object({
     s_occupation: z.string().optional(),
   }),
 
-  numOfLivingChildren: z.number().min(1, "Number of living children is required"),
+  numOfLivingChildren: z.number().min(0, "Number of living children is required"),
   planToHaveMoreChildren: z.boolean(),
-  averageMonthlyIncome: z.string().optional(),
+  averageMonthlyIncome: z.string().nonempty("Average monthly income is required"),
 
   typeOfClient: z.string().nonempty("Type of client is required"),
   subTypeOfClient: z.string().optional(),
 
   reasonForFP: z.string().optional(),
-  otherReasonForFP: z.string().optional(),
+  otherReasonForFP: z.string().nonempty("Specify"),
 
   reason: z.string().optional(),
-
+  otherReason: z.string(),
   methodCurrentlyUsed: z
     .enum([
       "COC",
@@ -136,19 +136,31 @@ export const FamilyPlanningSchema = z.object({
     otherReferral: z.string().optional().nullable(),
   }),
 
-  // Page 4 fields - Updated for radio buttons
+  // Physical Examination Fields
   weight: z.string().nonempty("Weight is required"),
   height: z.string().nonempty("Height is required"),
   bloodPressure: z.string().nonempty("Blood pressure is required"),
   pulseRate: z.string().nonempty("Pulse rate is required"),
 
-  // Updated examination fields to use radio buttons
-  skinExamination: z.enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"]).default("not_applicable"),
-  conjunctivaExamination: z.enum(["normal", "pale", "yellowish", "not_applicable"]).default("not_applicable"),
-  neckExamination: z.enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"]).default("not_applicable"),
-  breastExamination: z.enum(["normal", "mass", "nipple_discharge", "not_applicable"]).default("not_applicable"),
-  abdomenExamination: z.enum(["normal", "abdominal_mass", "varicosities", "not_applicable"]).default("not_applicable"),
-  extremitiesExamination: z.enum(["normal", "edema", "varicosities", "not_applicable"]).default("not_applicable"),
+  // Updated examination fields with required selections
+  skinExamination: z
+    .enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select skin examination result" }),
+  conjunctivaExamination: z
+    .enum(["normal", "pale", "yellowish", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select conjunctiva examination result" }),
+  neckExamination: z
+    .enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select neck examination result" }),
+  breastExamination: z
+    .enum(["normal", "mass", "nipple_discharge", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select breast examination result" }),
+  abdomenExamination: z
+    .enum(["normal", "abdominal_mass", "varicosities", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select abdomen examination result" }),
+  extremitiesExamination: z
+    .enum(["normal", "edema", "varicosities", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select extremities examination result" }),
 
   // Pelvic Examination (for IUD Acceptors)
   pelvicExamination: z
@@ -163,50 +175,18 @@ export const FamilyPlanningSchema = z.object({
       "bloody_discharge",
       "not_applicable",
     ])
-    .default("not_applicable"),
+    .refine((val) => val !== undefined, { message: "Please select pelvic examination result" }),
 
   // Cervical Examination
-  cervicalConsistency: z.enum(["firm", "soft", "not_applicable"]).default("not_applicable"),
-  cervicalTenderness: z.boolean().default(false),
-  cervicalAdnexalMassTenderness: z.boolean().default(false),
+  cervicalConsistency: z.enum(["firm", "soft", "not_applicable"]).refine((val) => val !== undefined, { message: "Please select cervical consistency" }),
+  cervicalTenderness: z.boolean(),
+  cervicalAdnexalMassTenderness: z.boolean(),
 
   // Uterine Examination
-  uterinePosition: z.enum(["mid", "anteflexed", "retroflexed", "not_applicable"]).default("not_applicable"),
+  uterinePosition: z
+    .enum(["mid", "anteflexed", "retroflexed", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select uterine position" }),
   uterineDepth: z.string().optional(),
-
-  // Remove old checkbox fields that are now replaced by radio buttons
-  skinNormal: z.boolean().optional(),
-  skinPale: z.boolean().optional(),
-  skinYellowish: z.boolean().optional(),
-  skinHematoma: z.boolean().optional(),
-  conjunctivaNormal: z.boolean().optional(),
-  conjunctivaPale: z.boolean().optional(),
-  conjunctivaYellowish: z.boolean().optional(),
-  neckNormal: z.boolean().optional(),
-  neckMass: z.boolean().optional(),
-  neckEnlargedLymphNodes: z.boolean().optional(),
-  breastNormal: z.boolean().optional(),
-  breastMass: z.boolean().optional(),
-  breastNippleDischarge: z.boolean().optional(),
-  abdomenNormal: z.boolean().optional(),
-  abdomenMass: z.boolean().optional(),
-  abdomenVaricosities: z.boolean().optional(),
-  extremitiesNormal: z.boolean().optional(),
-  extremitiesEdema: z.boolean().optional(),
-  extremitiesVaricosities: z.boolean().optional(),
-  pelvicNormal: z.boolean().optional(),
-  pelvicMass: z.boolean().optional(),
-  pelvicAbnormalDischarge: z.boolean().optional(),
-  pelvicCervicalAbnormalities: z.boolean().optional(),
-  pelvicWarts: z.boolean().optional(),
-  pelvicPolypOrCyst: z.boolean().optional(),
-  pelvicInflammationOrErosion: z.boolean().optional(),
-  pelvicBloodyDischarge: z.boolean().optional(),
-  cervicalConsistencyFirm: z.boolean().optional(),
-  cervicalConsistencySoft: z.boolean().optional(),
-  uterinePositionMid: z.boolean().optional(),
-  uterinePositionAnteflexed: z.boolean().optional(),
-  uterinePositionRetroflexed: z.boolean().optional(),
 
   // Page 5 fields
   acknowledgement: z.object({
@@ -226,9 +206,8 @@ export const FamilyPlanningSchema = z.object({
         "implant",
         "condom",
         "others",
-      ], {
-        required_error: "Please select a method",
-      }),
+      ])
+      .refine((val) => val !== undefined, { message: "Please select a method" }),
     clientSignature: z.string().optional(), // Base64 string of signature
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().optional(),
@@ -266,7 +245,33 @@ export const page1Schema = FamilyPlanningSchema.pick({
   reason: true,
   methodCurrentlyUsed: true,
   otherMethod: true,
-})
+}).refine(
+  (data) => {
+    // If New Acceptor, reasonForFP is required
+    if (data.typeOfClient === "New Acceptor") {
+      return !!data.reasonForFP
+    }
+
+    // If Current User, subTypeOfClient is required
+    if (data.typeOfClient === "Current User") {
+      if (!data.subTypeOfClient) return false
+
+      // If Changing Method, both reason and methodCurrentlyUsed are required
+      if (data.subTypeOfClient === "Changing Method") {
+        return !!data.reason && !!data.methodCurrentlyUsed
+      }
+
+      // For other subtypes, no additional validation needed
+      return true
+    }
+
+    return true
+  },
+  {
+    message: "Please fill in all required fields based on your client type",
+    path: ["typeOfClient"], // This will show the error on the typeOfClient field
+  },
+)
 
 export const page2Schema = FamilyPlanningSchema.pick({
   medicalHistory: true,
