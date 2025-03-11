@@ -17,18 +17,18 @@ interface DropdownProps {
   label: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  itemClassName?: string
   options: Option[];
-  value?: string;
-  onChange?: (value: string) => void;
+  onSelect?: (value: string) => void;
 }
 
 export default function DropdownLayout({ 
   label, 
   className, 
   contentClassName, 
+  itemClassName,
   options, 
-  value, 
-  onChange 
+  onSelect 
 }: DropdownProps) {
   return (
     <DropdownMenu>
@@ -38,9 +38,9 @@ export default function DropdownLayout({
       <DropdownMenuContent className={cn("", contentClassName)}>
         {options.map((option, index) => (
           <DropdownMenuItem 
-            className="cursor-pointer flex items-center gap-x-2" 
+            className={cn("cursor-pointer flex items-center gap-x-2", itemClassName)}
             key={option.id || index} 
-            onSelect={() => option.id && onChange && onChange(option.id)}
+            onSelect={() => option.id && onSelect && onSelect(option.id)}
           >
             {option.icons}
             {option.name}

@@ -18,7 +18,7 @@ export const profilingFormSchema = z.object({
         indigenous: z.string().min(1, 'Indigenous is required'),
         sitio: z.string().min(1, 'Sitio is required'),
     }),
-
+    
     personalInfo: z.object({
         lastName: z.string().min(1, "Last Name is required"),
         firstName: z.string().min(1, "First Name is required"),
