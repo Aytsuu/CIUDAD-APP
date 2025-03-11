@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Image, Film, Plus, X, ArrowUp } from "lucide-react";
-import { BsChevronLeft, BsDot } from "react-icons/bs";
+import { Image, Film, Plus, X, ArrowUp, Play } from "lucide-react";
+import { BsChevronLeft } from "react-icons/bs";
 import { useState, useRef, ChangeEvent } from "react";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import { Link } from "react-router";
@@ -17,8 +17,12 @@ interface MediaFile {
 export function BlotterViewRecord() {
   // State to manage uploaded media files
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([
-    { id: 1, type: "image", url: sanRoqueLogo, description: "Video evidence" },
+    { id: 1, type: "image", url: sanRoqueLogo, description: "Image evidence" },
+    // You can add a sample video here for testing
   ]);
+
+  // State to track which video is currently being played
+  const [activeVideoId, setActiveVideoId] = useState<number | null>(null);
 
   // Create a ref for the file input
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +69,14 @@ export function BlotterViewRecord() {
   // Handler to remove a media file
   const handleRemoveMedia = (id: number) => {
     setMediaFiles(mediaFiles.filter((media) => media.id !== id));
+    if (activeVideoId === id) {
+      setActiveVideoId(null);
+    }
+  };
+
+  // Toggle video playback
+  const toggleVideoPlayback = (id: number) => {
+    setActiveVideoId(activeVideoId === id ? null : id);
   };
 
   return (
@@ -91,10 +103,9 @@ export function BlotterViewRecord() {
         </div>
         <Link to={""}>
           <Button
-            variant="outline"
-            className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
+            variant="destructive"
           >
-            <ArrowUp />
+            <ArrowUp className="mr-1" />
             Raise Issue
           </Button>
         </Link>
@@ -108,10 +119,6 @@ export function BlotterViewRecord() {
           <div>
             <h3 className="font-medium text-lg mb-2 text-darkBlue2 flex items-center gap-2">
               Complainant
-              <span className="flex items-center">
-                <BsDot className="text-gray-500" />
-                <span className="text-xs font-normal">Resident</span>
-              </span>
             </h3>
           </div>
           <div className="space-y-3">
@@ -159,10 +166,9 @@ export function BlotterViewRecord() {
         <h2 className="font-medium text-lg mb-2 text-darkBlue2">
           Incident Details
         </h2>
-        <textarea
-          className="w-full border border-gray-300 rounded-md p-2 min-h-24"
-          placeholder="Enter incident details here..."
-        ></textarea>
+        <div className="w-full border border-gray-300 rounded-md p-4 min-h-24 bg-white">
+          <p>gikuan ni kuan ang kuan niya ako a pud gikuan tas iya sad gikuan niya mao to nakuan ang di angay ma kuan</p>
+        </div>
       </div>
 
       {/* Supporting Documents section*/}
@@ -186,17 +192,32 @@ export function BlotterViewRecord() {
             {mediaFiles.map((media) => (
               <div key={media.id} className="relative group">
                 <div className="aspect-square bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
-                  <img
-                    src={media.url}
-                    alt={`Evidence ${media.id}`}
-                    className="object-cover w-full h-full"
-                  />
-                  {media.type === "video" && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-black bg-opacity-50 rounded-full p-2">
-                        <Film size={40} className="text-white" />
-                      </div>
+                  {media.type === "video" ? (
+                    <div className="w-full h-full relative">
+                      <video
+                        src={media.url}
+                        className="object-cover w-full h-full"
+                        controls={activeVideoId === media.id}
+                        muted={activeVideoId !== media.id}
+                        onClick={() => toggleVideoPlayback(media.id)}
+                      />
+                      {activeVideoId !== media.id && (
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black bg-opacity-20"
+                          onClick={() => toggleVideoPlayback(media.id)}
+                        >
+                          <div className="bg-black bg-opacity-50 rounded-full p-2">
+                            <Play size={40} className="text-white" />
+                          </div>
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <img
+                      src={media.url}
+                      alt={`Evidence ${media.id}`}
+                      className="object-cover w-full h-full"
+                    />
                   )}
                 </div>
                 <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
@@ -210,6 +231,7 @@ export function BlotterViewRecord() {
                 {/* Remove button and shows on hover */}
                 <button
                   onClick={() => handleRemoveMedia(media.id)}
+                  type="button"
                   className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   aria-label="Remove media"
                 >
