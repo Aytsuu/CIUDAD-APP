@@ -9,31 +9,27 @@ import {
 } from "@/components/ui/accordion"; // Assuming you're using a Radix-like accordion
 import api from "@/api/api";
 import { Separator } from "@/components/ui/separator";
-import { FixedSizeList as List} from 'react-window';
+import { FixedSizeList as List } from "react-window";
+import { Assigned, Feature } from "./_types";
 
-type Feature = {
-  feat_id: string;
-  feat_name: string;
-  feat_category: string;
-};
-
-type Assigned = {
-  assi_id: string
-  assi_date: string
-  feat: string
-  pos: string
-}
-
-export default function FeatureSelection(
-  {selectedPosition} : {selectedPosition: string}
-) {
-
+export default function FeatureSelection({
+  selectedPosition,
+	features,
+  assignedFeatures,
+	setFeatures,
+  setAssignedFeatures,
+}: {
+  selectedPosition: string,
+	features: Feature[],
+  assignedFeatures: Assigned[],
+	setFeatures: React.Dispatch<React.SetStateAction<Feature[]>>,
+  setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>
+}) {
+	
   // States and initializations
-  const [features, setFeatures] = React.useState<Feature[]>([]);
-  const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>([]);
   const hasFetchData = React.useRef(false);
 
-	// Group features by category
+  // Group features by category
   const groupedFeatures = React.useMemo(() => {
     return features.reduce((acc, feature) => {
       if (!acc[feature.feat_category]) {
@@ -64,38 +60,44 @@ export default function FeatureSelection(
   }, []);
 
   // Function to assign features
-	const assignFeature = (featureId: string) => (checked: boolean) => {
-    const method = checked ? 'post' : 'delete';
+  const assignFeature = (featureId: string) => (checked: boolean) => {
+    const method = checked ? "post" : "delete";
     const now = new Date();
-    const formattedDate = now.toISOString().split('T')[0];
-    
+    const formattedDate = now.toISOString().split("T")[0];
+
     // Checks which API request method to perform
     const requestConfig = checked
-      ? { // POST
-          url: 'administration/assignment/',
+      ? {
+          // POST
+          url: "administration/assignments/",
           data: {
             assi_date: formattedDate,
             feat: featureId,
             pos: selectedPosition,
           },
         }
-      : { // DELETE
-          url: `administration/assignment/${featureId}/${selectedPosition}/`,
+      : {
+          // DELETE
+          url: `administration/assignments/${featureId}/${selectedPosition}/`,
         };
-  
+
     api[method](requestConfig.url, requestConfig.data)
-      .then(() => {
+      .then((res) => {
         if (checked) {
           // Add the new assignment to the local state
-          setAssignedFeatures((prev) => [
+          setAssignedFeatures((prev: any) => [
             ...prev,
             {
-              assi_id: String(Date.now()), // Temporary ID (replace with actual ID from the API response if available)
+              assi_id: res.data.assi_id,
               assi_date: formattedDate,
               feat: featureId,
               pos: selectedPosition,
+							permissions: res.data.permissions
             },
           ]);
+
+          // Set permissions (default)
+          setPermissions(res.data.assi_id);
         } else {
           // Remove the assignment from the local state
           setAssignedFeatures((prev) =>
@@ -106,27 +108,43 @@ export default function FeatureSelection(
       .catch((err) => console.log(err));
   };
 
+  // Function to add permissions of the assigned feature to the db (all false by default)
+  const setPermissions = (assignmentId: string) =>
+    api
+      .post("administration/permissions/", { assi: assignmentId })
+      .catch((err) => console.log(err));
+
   // Function to get the assigned features of the position
   const getAssignedFeatures = React.useCallback(() => {
     api
-      .get(`administration/assignment/${selectedPosition}/`)
+      .get(`administration/assignments/${selectedPosition}/`)
       .then((res) => res.data)
       .then((data) => {
-        setAssignedFeatures(data)
+        setAssignedFeatures(data);
       })
-      .catch((err) => console.log(err))
-  }, [])
+      .catch((err) => console.log(err));
+  }, []);
 
+  // Function to check assigned features
   const checkAssignedFeatures = (featureId: string) => {
+    if (assignedFeatures) {
+      return assignedFeatures.some(
+        (value) => value.feat === featureId && value.pos === selectedPosition
+      );
+    }
+    return false;
+  };
 
-    if(assignedFeatures){
-      return assignedFeatures.some((value) => 
-        value.feat === featureId && value.pos === selectedPosition
-    )}
-    return false
-  }
-
-  const Row = ({ index, style, data }: { index: number; style: React.CSSProperties; data: Feature[] }) => {
+  // Render only the visible items on the list
+  const Row = ({
+    index,
+    style,
+    data,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+    data: Feature[];
+  }) => {
     const feature = data[index];
     return (
       <div style={style}>
@@ -141,7 +159,7 @@ export default function FeatureSelection(
 
   return (
     <Accordion type="multiple" className="w-full">
-			<Separator />
+      <Separator />
       {Object.entries(groupedFeatures).map(([category, categoryFeatures]) => (
         <AccordionItem key={category} value={category}>
           <AccordionTrigger className="text-black/80 text-[15px] font-medium">
@@ -164,24 +182,31 @@ export default function FeatureSelection(
   );
 }
 
-const FeatureCheckbox = React.memo(({ feature, isChecked, onCheckedChange }: {
-  feature: Feature;
-  isChecked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}) => {
-  return (
-    <div className="flex items-center gap-3">
-      <Checkbox
-        id={feature.feat_id}
-        onCheckedChange={onCheckedChange}
-        checked={isChecked}
-      />
-      <Label
-        htmlFor={feature.feat_id}
-        className="text-black/80 text-[14px] cursor-pointer"
-      >
-        {feature.feat_name}
-      </Label>
-    </div>
-  );
-});
+// Checkbox component tailored for feature selection
+const FeatureCheckbox = React.memo(
+  ({
+    feature,
+    isChecked,
+    onCheckedChange,
+  }: {
+    feature: Feature;
+    isChecked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+  }) => {
+    return (
+      <div className="flex items-center gap-3">
+        <Checkbox
+          id={feature.feat_id}
+          onCheckedChange={onCheckedChange}
+          checked={isChecked}
+        />
+        <Label
+          htmlFor={feature.feat_id}
+          className="text-black/80 text-[14px] cursor-pointer"
+        >
+          {feature.feat_name}
+        </Label>
+      </div>
+    );
+  }
+);

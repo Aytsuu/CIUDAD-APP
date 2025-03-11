@@ -27,4 +27,16 @@ class Assignment(models.Model):
         db_table = 'assignment'
         unique_together = (('feat', 'pos'))
 
+class Permission(models.Model):
+    perm_id = models.BigAutoField(primary_key=True)
+    view = models.BooleanField(default=False)
+    create = models.BooleanField(default=False)
+    update = models.BooleanField(default=False)
+    delete = models.BooleanField(default=False)
+    assi = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='permissions')
+
+    class Meta:
+        db_table = 'permission'
+
+
 

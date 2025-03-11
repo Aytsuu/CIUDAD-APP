@@ -4,25 +4,16 @@ import FeatureSelection from "./FeatureSelection";
 import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Permissions } from "./_types";
 import { useNavigate } from "react-router";
 import { ChevronLeft } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Assigned, Feature } from "./_types";
   
 export default function RoleLayout() {
     const navigate = useNavigate();
     const [selectedPosition, setSelectedPosition] = React.useState<string>('');
-  
-    // State to track selected features for each position
-    const [positionFeatures, setPositionFeatures] = React.useState<
-      Record<string, Record<string, Record<string, boolean>>>
-    >({});
-  
-  
-    // Check if any feature is selected for the current position
-    const hasSelectedFeature = selectedPosition
-      ? Object.values(positionFeatures[selectedPosition] || {}).some((category) =>
-          Object.values(category).some((value) => value === true))
-      : false;
+    const [features, setFeatures] = React.useState<Feature[]>([]);
+    const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>([]);
   
     // Handle position selection
     const handlePositionSelect = (position: string) => {
@@ -66,6 +57,10 @@ export default function RoleLayout() {
               {selectedPosition ? (
                 <FeatureSelection
                   selectedPosition={selectedPosition} 
+                  features={features}
+                  assignedFeatures={assignedFeatures}
+                  setFeatures={setFeatures}
+                  setAssignedFeatures={setAssignedFeatures}
                 />
               ) : (
                 <Label className="text-[15px] text-black/60">No position selected</Label>
@@ -75,44 +70,24 @@ export default function RoleLayout() {
   
           {/* Permissions Section */}
           <div className="w-full h-full border-l border-gray flex flex-col gap-4">
-            {/* <div className="w-full px-5 pt-5 text-darkBlue1">
+            <div className="w-full px-5 pt-5 text-darkBlue1">
               <Label>Set feature permissions</Label>
             </div>
             <ScrollArea className="w-full h-full px-5">
               {!selectedPosition ? (
                 <Label className="text-[15px] text-black/60">No position selected</Label>
-              ) : !hasSelectedFeature ? (
+              ) : !(assignedFeatures.length > 0) ? (
                 <Label className="text-[15px] text-black/60">No feature selected</Label>
               ) : (
                 <>
-                  <Separator />
-                  {Object.entries(positionFeatures[selectedPosition]).map(([category, categoryFeatures]) =>
-                    Object.entries(categoryFeatures).map(([featureId, isSelected]) =>
-                      isSelected && (
-                        <SettingPermissions
-                          key={`${category}-${featureId}`}
-                          id={featureId}
-                          feature={features[category][featureId]}
-                          permissions={positionPermissions[selectedPosition][category]}
-                          setPermissions={(updatedPermissions) =>
-                            setPositionPermissions((prev) => ({
-                              ...prev,
-                              [selectedPosition]: {
-                                ...prev[selectedPosition],
-                                [category]: updatedPermissions,
-                              },
-                            }))
-                          }
-                        />
-                      )
-                    )
-                  )}
+                  <SettingPermissions
+                    selectedPosition={selectedPosition}
+                    features={features}
+                    assignedFeatures={assignedFeatures}
+                  />
                 </>
               )}
-            </ScrollArea> */}
-            <div className="w-full flex justify-end px-5 pb-5">
-              {hasSelectedFeature && <Button>Save</Button>}
-            </div>
+            </ScrollArea>
           </div>
         </div>
       </div>
