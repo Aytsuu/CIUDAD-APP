@@ -19,5 +19,5 @@ export const profiling_router = [
     {
         path: "resident-information",
         element: <ProfileViewInfo />
-    }
+    },
 ];

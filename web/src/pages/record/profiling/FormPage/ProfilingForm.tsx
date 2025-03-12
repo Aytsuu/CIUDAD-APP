@@ -15,7 +15,7 @@ import { profilingFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 
-export function ProfilingForm() {
+export function ProfilingForm({type} : {type: String}) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const defaultValues = generateDefaultValues(profilingFormSchema)

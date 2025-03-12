@@ -7,7 +7,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import ViewInfo from "./ProfilingViewInfo";
+import ProfileViewInfo from "./ProfilingViewInfo";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -75,17 +75,11 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <DialogLayout
-        trigger={
-          <div className="w-[50px] h-[35px] border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            View
-          </div>
-        }
-        description=""
-        title=""
-        className=""
-        mainContent={<ViewInfo />}
-      />
+      <Link to='/resident-information'>
+        <Button>
+          View
+        </Button>
+      </Link>
     ),
     enableSorting: false,
     enableHiding: false,
