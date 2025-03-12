@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { main_router } from './routes/main-router';
+import { landing_router } from './routes/landing-router';
 
 // import FamilyPlanningForm from "./pages/familyplanning/FP-page1";
 // import FamilyPlanningMain from "./pages/familyplanning/main";
@@ -9,6 +10,7 @@ import { main_router } from './routes/main-router';
 const router = createBrowserRouter([
   ...main_router,
   { path: "*", element: ""}
+  // ...landing_router
 ])
 
 function App() {
