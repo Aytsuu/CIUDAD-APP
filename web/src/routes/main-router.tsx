@@ -25,6 +25,7 @@ import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
 import { familyProfilingRoute } from './family-profiling-route';
+import { patientsRecordRouter } from './patients-record-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -60,7 +61,9 @@ export const main_router: RouteObject[] = [
             ...childHealthServices,
             ...gad_router,
             ...familyProfilingRoute,
-            ...bites_route
+            ...bites_route,
+            ...patientsRecordRouter,
+            
         ]
     }
 ]
