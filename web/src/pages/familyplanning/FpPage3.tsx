@@ -106,36 +106,36 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                     )}
                   />
 
-{abnormalDischarge && (
-  <FormField
-    control={form.control}
-    name="sexuallyTransmittedInfections.dischargeFrom"
-    render={({ field }) => (
-      <FormItem className="ml-4 mb-4">
-        <p className="italic text-sm mb-2">If "YES" please indicate if from:</p>
-        <FormControl>
-          <div className="flex space-x-4">
-            {["Vagina", "Penis"].map((location) => (
-              <div key={location} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id={`discharge-${location.toLowerCase()}`}
-                  name="dischargeFrom" // Ensure all radios belong to the same group
-                  value={location}
-                  checked={field.value === location}
-                  onChange={() => field.onChange(location)}
-                  className="cursor-pointer"
-                />
-                <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
-              </div>
-            ))}
-          </div>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-)}
+                  {abnormalDischarge && (
+                    <FormField
+                      control={form.control}
+                      name="sexuallyTransmittedInfections.dischargeFrom"
+                      render={({ field }) => (
+                        <FormItem className="ml-4 mb-4">
+                          <p className="italic text-sm mb-2">If "YES" please indicate if from:</p>
+                          <FormControl>
+                            <div className="flex space-x-4">
+                              {["Vagina", "Penis"].map((location) => (
+                                <div key={location} className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`discharge-${location.toLowerCase()}`}
+                                    name="dischargeFrom" // Ensure all radios belong to the same group
+                                    value={location}
+                                    checked={field.value === location}
+                                    onChange={() => field.onChange(location)}
+                                    className="cursor-pointer"
+                                  />
+                                  <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   {/* Other STI Risks */}
                   {[

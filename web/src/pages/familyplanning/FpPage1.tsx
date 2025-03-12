@@ -153,7 +153,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                         <Checkbox
                           checked={field.value === "transient"}
                           onCheckedChange={(checked) => {
-                            field.onChange(checked ? "transient" : "resident");
+                            field.onChange(checked ? "Transient" : "Resident");
                           }}
                         />
                       </FormControl>
@@ -770,11 +770,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                             name="otherReason"
                             render={({ field: otherField }) => (
                               <FormItem className="mt-2">
-                                <Label className={!isChangingMethod ? "text-gray-400" : ""}>Specify side effect:</Label>
+                                <Label className={!isChangingMethod ? "text-gray-400" : ""}>Specify:</Label>
                                 <FormControl>
                                   <Input
                                     className="w-full"
-                                    placeholder="Specify side effect"
+                                    
                                     {...otherField}
                                     disabled={!isChangingMethod}
                                   />

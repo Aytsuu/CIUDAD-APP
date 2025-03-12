@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { page6Schema } from "@/form-schema/FamilyPlanningSchema"
 import { Form } from "@/components/ui/form"
+import SignatureCanvas from "react-signature-canvas"
 
 // Fix the props type
 interface ServiceProvisionFormProps {
@@ -51,10 +52,14 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     methodUnit: "box/pcs",
     serviceProviderSignature: "",
     medicalFindings: "",
+    weight: 0,
+    bp_systolic: 0,
+    bp_diastolic: 0,
   })
 
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [serviceProviderSignatureRef, setServiceProviderSignatureRef] = useState<SignatureCanvas | null>(null)
 
   // Update formData when records change
   useEffect(() => {
@@ -73,14 +78,19 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     setValidationError(null)
   }
 
-  // Remove or comment out this function since we're not using it anymore
-  // const handleDateChange = (date: Date | undefined) => {
-  //   setFollowUpDate(date)
-  //   if (date) {
-  //     setRecord((prev) => ({ ...prev, dateOfFollowUp: format(date, "yyyy-MM-dd") }))
-  //     setValidationError(null)
-  //   }
-  // }
+  const clearSignature = () => {
+    if (serviceProviderSignatureRef) {
+      serviceProviderSignatureRef.clear()
+      setRecord((prev) => ({ ...prev, serviceProviderSignature: "" }))
+    }
+  }
+
+  const saveSignature = () => {
+    if (serviceProviderSignatureRef) {
+      const signatureData = serviceProviderSignatureRef.toDataURL()
+      setRecord((prev) => ({ ...prev, serviceProviderSignature: signatureData }))
+    }
+  }
 
   const validateRecord = (): boolean => {
     if (!record.dateOfVisit) {
@@ -99,7 +109,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
       setValidationError("Follow-up date is required")
       return false
     }
-    if (!record.methodQuantity){
+    if (!record.methodQuantity) {
       setValidationError("Quantity is required")
       return false
     }
@@ -120,6 +130,9 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
         methodUnit: "box/pcs",
         serviceProviderSignature: "",
         medicalFindings: "",
+        weight: 0,
+        bp_systolic: 0,
+        bp_diastolic: 0,
       })
       setFollowUpDate(undefined)
       setValidationError(null)
@@ -218,7 +231,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 md:col-span-1">
                 <Label htmlFor="nameOfServiceProvider">
                   Name of Service Provider<span className="text-red-500 ml-1">*</span>
                 </Label>
@@ -226,6 +239,52 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   id="nameOfServiceProvider"
                   value={record.nameOfServiceProvider}
                   onChange={(e) => handleInputChange("nameOfServiceProvider", e.target.value)}
+                />
+              </div>
+
+             
+
+              <div className="space-y-2">
+                <Label htmlFor="weight">
+                  Weight
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  defaultValue={20}
+                  value={record.weight}
+                  onChange={(e) => handleInputChange("weight", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bpsystolic">
+                  Blood pressure (Systolic)
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input
+                  id="bpsystolic"
+                  type="number"
+                  placeholder="Systolic"
+                  className="w-50"
+                  value={record.bp_systolic}
+                  onChange={(e) => handleInputChange("bp_systolic", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bpdiastolic">
+                  Blood pressure (Diastolic)
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input
+                  id="bpdiastolic"
+                  type="number"
+                  placeholder="Systolic"
+                  className="w-50"
+                  value={record.bp_diastolic}
+                  onChange={(e) => handleInputChange("bp_diastolic", e.target.value)}
                 />
               </div>
 
@@ -238,6 +297,27 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   className="min-h-[80px]"
                 />
               </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
+                <div className="border border-gray-300 rounded p-2 h-32 bg-white">
+                  <SignatureCanvas
+                    ref={(ref) => setServiceProviderSignatureRef(ref)}
+                    canvasProps={{
+                      className: "w-full h-full",
+                    }}
+                  />
+                </div>
+                <div className="flex gap-2 justify-between">
+                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
+                    Clear
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={saveSignature}>
+                    Save Signature
+                  </Button>
+                </div>
+              </div>
+              
             </div>
 
             <div className="flex justify-end">
@@ -251,10 +331,12 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date of Visit</TableHead>
+                    <TableHead>Vital Signs</TableHead>
                     <TableHead>Method Accepted</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Medical Findings</TableHead>
                     <TableHead>Service Provider</TableHead>
+                    <TableHead>Signature</TableHead>
                     <TableHead>Follow-up Date</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -269,12 +351,18 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                     records.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>{item.dateOfVisit}</TableCell>
+                        <TableCell>
+                          <i>BP:</i> {item.bp_systolic} / {item.bp_diastolic}
+                          <br></br>
+                          <i>Weight:</i> {item.weight}{" "}
+                        </TableCell>
                         <TableCell>{item.methodAccepted}</TableCell>
                         <TableCell>
                           {item.methodQuantity} {item.methodUnit}{" "}
                         </TableCell>
                         <TableCell>{item.medicalFindings || "-"}</TableCell>
                         <TableCell>{item.nameOfServiceProvider}</TableCell>
+                        <TableCell>{item.serviceProviderSignature ? "Signed" : "Not signed"}</TableCell>
                         <TableCell>{item.dateOfFollowUp}</TableCell>
                       </TableRow>
                     ))
@@ -287,22 +375,19 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
               <Button variant="outline" type="button" onClick={onPrevious5}>
                 Previous
               </Button>
-              
+
               <Button
-                              type="submit"
-                              onClick={async () => {
-                                  // If valid, save data and proceed
-                                  const currentValues = form.getValues()
-                                  updateFormData(currentValues)
-                                  onSubmitFinal()
-                                 
-                              }}
-                            >
-                              Submit
-                            </Button>
-              
-              
-              
+                type="submit"
+                onClick={async () => {
+                  // If valid, save data and proceed
+                  const currentValues = form.getValues()
+                  updateFormData(currentValues)
+                  onSubmitFinal()
+                }}
+              >
+                Submit
+              </Button>
+
               {/* <Button type="submit">Submit</Button> */}
             </div>
           </form>

@@ -11,6 +11,9 @@ const ServiceProvisionRecordSchema = z.object({
   methodUnit: z.string().nonempty("Method unit is required"),
   serviceProviderSignature: z.string().nonempty("Service provider signature is required"),
   medicalFindings: z.string().nonempty("Medical findings is required"),
+  weight: z.number().min(1, "Weight is required"),
+  bp_systolic: z.number().min(1, "Systolic BP is required"),
+  bp_diastolic: z.number().min(1, "Diastolic BP is required"),
 })
 
 // Define the complete schema for all pages
@@ -209,10 +212,10 @@ export const FamilyPlanningSchema = z.object({
         "others",
       ])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
-    clientSignature: z.string(), 
+    clientSignature: z.string().nonempty("Required"), 
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().nonempty("Required"),
-    guardianSignature: z.string(), 
+    guardianSignature: z.string().nonempty("Required"),
     guardianSignatureDate: z.string().nonempty("Required"),
   }),
 
@@ -313,4 +316,3 @@ export const page6Schema = FamilyPlanningSchema.pick({
 export default FamilyPlanningSchema
 export type FormData = z.infer<typeof FamilyPlanningSchema>
 export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>
-

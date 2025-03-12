@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ArrowLeft } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
+import { useNavigate } from "react-router";
 
 
 const pregnancyQuestions = [
@@ -13,17 +14,18 @@ const pregnancyQuestions = [
 ]
 
 export default function FamilyPlanningView2() {
-
+ const navigate = useNavigate();
 
   return (
     <div className="container bg-white mx-auto p-4 max-w-7xl">
       {/* Header Section */}
-      <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" className="flex items-center text-gray-600">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-      </div>
+      <Button
+                    className="text-black p-2 self-start"
+                    variant={"outline"}
+                    onClick={() => navigate(-1)}
+                >
+                    <ChevronLeft />
+                </Button>
 
       {/* Form Title */}
       <div className="mb-6">
@@ -42,6 +44,9 @@ export default function FamilyPlanningView2() {
                 <br />
                 (MM/DD/YYYY)
               </th>
+              <th className="border border-gray-300 p-2 text-sm font-medium bg-gray-50 w-40">
+                VITAL SIGNS
+              </th>
               <th className="border border-gray-300 p-2 text-sm font-medium bg-gray-50">
                 MEDICAL FINDINGS
                 <br />
@@ -52,22 +57,10 @@ export default function FamilyPlanningView2() {
               </th>
               <th className="border border-gray-300 p-2 text-sm font-medium bg-gray-50 w-40">METHOD ACCEPTED</th>
               <th className="border border-gray-300 p-2 text-sm font-medium bg-gray-50 w-40">
-                NAME AND
-                <br />
-                SIGNATURE OF
-                <br />
-                SERVICE
-                <br />
-                PROVIDER
+                NAME AND<br />SIGNATURE OF<br />SERVICE<br />PROVIDER
               </th>
               <th className="border border-gray-300 p-2 text-sm font-medium bg-gray-50 w-32">
-                DATE OF
-                <br />
-                FOLLOW-UP
-                <br />
-                VISIT
-                <br />
-                (MM/DD/YYYY)
+                DATE OF<br />FOLLOW-UP<br />VISIT<br />(MM/DD/YYYY)
               </th>
             </tr>
           </thead>

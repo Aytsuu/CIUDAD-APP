@@ -966,7 +966,7 @@ const FamilyPlanningView: React.FC = () => {
 </div>
       {/* Navigation Buttons */}
       <div className="flex justify-end space-x-4 mt-6">
-        <Link to="/FamilyPlanning_view2">
+        <Link to="/FamPlanning_view2">
         <Button>Next</Button>
         </Link>
       </div>
