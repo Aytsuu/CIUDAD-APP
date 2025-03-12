@@ -194,7 +194,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="householdNo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Household No.</FormLabel>
+                    <FormLabel>Household No. <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Household No." {...field} />
                     </FormControl>
@@ -207,7 +207,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="familyNo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Family No.</FormLabel>
+                    <FormLabel>Family No.<span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Family No." {...field} />
                     </FormControl>
@@ -291,7 +291,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="respondent.lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Last Name" {...field} />
                     </FormControl>
@@ -304,7 +304,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="respondent.firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="First Name" {...field} />
                     </FormControl>
@@ -326,7 +326,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="respondent.gender"
@@ -364,19 +364,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="respondent.mothersMaidenName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mother's Maiden Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Mother's Maiden Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+             
             </div>
           </div>
 
@@ -390,7 +378,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="householdHead.lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Last Name" {...field} />
                     </FormControl>
@@ -403,7 +391,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="householdHead.firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="First Name" {...field} />
                     </FormControl>
@@ -461,7 +449,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="father.lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Last Name" {...field} />
                     </FormControl>
@@ -474,7 +462,7 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="father.firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="First Name" {...field} />
                     </FormControl>
@@ -502,9 +490,9 @@ export function DemographicData({ onSubmit, initialData }: DemographicDataProps)
                 name="father.birthYear"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Birth Year</FormLabel>
+                    <FormLabel>Birth Date <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Birth Year" {...field} />
+                      <Input placeholder="Birth Date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

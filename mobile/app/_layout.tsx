@@ -7,6 +7,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { NAV_THEME } from '@/lib/constants';
 import { PortalHost } from '@rn-primitives/portal';
+import 'global.css'
+
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -36,10 +38,21 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={LIGHT_THEME}>
       <StatusBar backgroundColor="#ECF8FF" style="dark" />
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+        <Stack>
+          <Stack.Screen
+            name = "(tabs)"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+          
+            name="animal-bites/[id]" 
+            options = {{
+
+              headerShown: false,
+            }}
+          
+          />
+        </Stack>
       <PortalHost />
     </ThemeProvider>
     

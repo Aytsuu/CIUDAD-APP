@@ -94,7 +94,7 @@ export default function SurveyIdentificationForm({ onSubmit, initialData }: Surv
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="font-medium">
-                      Filled by: <span className="text-red-500">*</span>
+                      Filled by: 
                     </FormLabel>
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
