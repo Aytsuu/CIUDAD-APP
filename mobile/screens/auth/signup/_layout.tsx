@@ -7,6 +7,7 @@ import { router } from "expo-router";
 export default ({ children, header, description }: 
     { children: React.ReactNode, header: String, description: String }) => {
         
+        
     return (
         <SafeAreaView className="flex-1 bg-lightBlue-1">
             <ScrollView
