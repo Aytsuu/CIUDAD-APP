@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import BlotterReport, Complainant, Accused, SupportingDocument
 
-class complainantSerializer(serializers.ModelSerializer):
+class ComplainantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complainant
         fields = '__all__'

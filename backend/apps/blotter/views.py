@@ -1,6 +1,6 @@
 from rest_framework import generics
 from .models import BlotterReport, Complainant, Accused
-from .serializers import BlotterReportSerializer, complainantSerializer, AccusedSerializer
+from .serializers import BlotterReportSerializer, ComplainantSerializer, AccusedSerializer
 
 
     #   Blotter Report Views
@@ -15,7 +15,7 @@ class BlotterReportDetail(generics.RetrieveUpdateDestroyAPIView):
     #   Complainant Views
 class ComplainantListCreate(generics.ListCreateAPIView):
     queryset = Complainant.objects.all()
-    serializer_class = complainantSerializer
+    serializer_class = ComplainantSerializer
     
     #  Accused Views
 class AccusedListCreate(generics.ListCreateAPIView):

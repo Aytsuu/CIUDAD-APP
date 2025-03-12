@@ -8,9 +8,9 @@ import { landing_router } from './routes/landing-router';
 // import FamilyPlanningForm2 from "./pages/familyplanning/FP-page2";
 
 const router = createBrowserRouter([
-  ...main_router,
-  { path: "*", element: ""}
-  // ...landing_router
+  // ...main_router,
+  // { path: "*", element: ""}
+  ...landing_router
 ])
 
 function App() {
