@@ -1,3 +1,4 @@
+import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { profilingFormSchema } from '@/form-schema/profiling-schema';
@@ -12,12 +13,39 @@ import {
 import { SelectLayout } from '@/components/ui/select/select-layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import api from '@/api/api';
+
 
 export default function DemographicInfo(
     {form, onSubmit}: {
         form: UseFormReturn<z.infer<typeof profilingFormSchema>>,
         onSubmit: () => void,
-    }){
+}){
+    
+    const [sitio, setSitio] = React.useState<{id: string, name: string}[]>([])
+    const hasFetchData = React.useRef(false)
+
+    React.useEffect(()=>{
+        if(!hasFetchData.current){
+            getSitio()
+            hasFetchData.current = true
+        }
+    }, [])
+
+    const getSitio = React.useCallback(() => {
+
+        api
+            .get('profiling/sitio/')
+            .then((res) => res.data)
+            .then((data) => {
+                const sitioList = data.map((item: { sitio_id: string, sitio_name: string }) => ({ 
+                    id: String(item.sitio_id), 
+                    name: item.sitio_name 
+                }));
+
+                setSitio(sitioList);
+            })
+    }, []);
 
     const submit = () => {
         // Validate only the demographicInfo fields
@@ -27,6 +55,7 @@ export default function DemographicInfo(
             } 
         })
     };
+
 
     return (
         <div className='flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto'>
@@ -161,10 +190,7 @@ export default function DemographicInfo(
                                     <SelectLayout
                                         placeholder='Select'
                                         className='w-full'
-                                        options={[
-                                            {id: "0", name: "No"},
-                                            {id: "1", name: "Yes"}
-                                        ]}
+                                        options={sitio}
                                         value={field.value}
                                         onChange={field.onChange}
                                     />

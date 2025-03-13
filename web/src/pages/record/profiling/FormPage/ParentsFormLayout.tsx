@@ -22,7 +22,7 @@ export default function ParentsFormLayout(
           <form>
             <ParentsForm 
               control={form.control} 
-              prefix="motherInfo.mother" 
+              prefix="motherInfo." 
               title="Mother's Information" 
             />
           </form>
@@ -33,7 +33,7 @@ export default function ParentsFormLayout(
           <form>
             <ParentsForm 
               control={form.control} 
-              prefix="fatherInfo.father" 
+              prefix="fatherInfo." 
               title="Father's Information" 
             />
           </form>
