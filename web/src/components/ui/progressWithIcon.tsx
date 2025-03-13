@@ -55,7 +55,7 @@ export default function ProgressWithIcon({ progress }: ProgressProps) {
               />
             )}
             
-            <div className="flex flex-col items-center space-y-1 md:space-y-2">
+            <div className="flex flex-col items-center space-y-1 md:space-y-2 p-4">
               <div
                 className={`
                   w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center

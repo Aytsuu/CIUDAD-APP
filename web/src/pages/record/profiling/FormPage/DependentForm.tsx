@@ -34,12 +34,12 @@ export default function DependentForm(
     if(isValid){
       append(newDependent)
 
-      form.setValue("dependentsInfo.new.dependentLName", "")
-      form.setValue("dependentsInfo.new.dependentFName", "")
-      form.setValue("dependentsInfo.new.dependentMName", "")
-      form.setValue("dependentsInfo.new.dependentSuffix", "")
-      form.setValue("dependentsInfo.new.dependentSex", "")
-      form.setValue("dependentsInfo.new.dependentDateOfBirth", "")
+      form.setValue("dependentsInfo.new.lastName", "")
+      form.setValue("dependentsInfo.new.firstName", "")
+      form.setValue("dependentsInfo.new.middleName", "")
+      form.setValue("dependentsInfo.new.suffix", "")
+      form.setValue("dependentsInfo.new.sex", "")
+      form.setValue("dependentsInfo.new.dateOfBirth", "")
     }
   }
 
@@ -51,7 +51,7 @@ export default function DependentForm(
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <FormField
               control={form.control}
-              name="dependentsInfo.new.dependentLName"
+              name="dependentsInfo.new.lastName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
@@ -66,7 +66,7 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.dependentFName`}
+              name={`dependentsInfo.new.firstName`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
@@ -81,7 +81,7 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.dependentMName`}
+              name={`dependentsInfo.new.middleName`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
@@ -96,7 +96,7 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.dependentSuffix`}
+              name={`dependentsInfo.new.suffix`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
@@ -111,7 +111,7 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.dependentSex`}
+              name={`dependentsInfo.new.sex`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
@@ -133,7 +133,7 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.dependentDateOfBirth`}
+              name={`dependentsInfo.new.dateOfBirth`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">

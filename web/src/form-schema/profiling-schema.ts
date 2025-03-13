@@ -1,12 +1,12 @@
 import * as z from "zod";
 
 export const dependentSchema = z.object({
-    dependentFName: z.string(),
-    dependentLName: z.string(),
-    dependentMName: z.string(),
-    dependentSuffix: z.string(),
-    dependentDateOfBirth: z.string(),
-    dependentSex: z.string(),
+    lastName: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    suffix: z.string(),
+    dateOfBirth: z.string(),
+    sex: z.string(),
 })
 
 export const profilingFormSchema = z.object({
@@ -27,39 +27,45 @@ export const profilingFormSchema = z.object({
         sex: z.string().min(1, "Sex is required"),
         dateOfBirth: z.string().date(),
         status: z.string().min(1, "Status is required"),
-        completeAddress: z.string().min(1, 'Address is required'),
-        citizenship: z.string().min(1, "Citizenship is required"),
+        streetAddress: z.string().min(1, 'Address is required'),
         religion: z.string().min(1, "Religion is required"),
         contact: z.string().min(1, "Contact is required"),
     }),
 
     motherInfo: z.object({
-        motherLName: z.string(),
-        motherFName: z.string(),
-        motherMName: z.string(),
-        motherSuffix: z.string(),
-        motherDateOfBirth: z.string().date(),  
-        motherStatus: z.string(),
-        motherReligion: z.string(),
-        motherEdAttainment: z.string(),
-        motherPhilhealth: z.string(),
-        motherVacStatus: z.string(),
-        motherBloodType: z.string()
+        lastName: z.string(),
+        firstName: z.string(),
+        middleName: z.string(),
+        suffix: z.string(),
+        dateOfBirth: z.string().date(),  
+        status: z.string(),
+        religion: z.string(),
+        edAttainment: z.string(),
+        contact: z.string(),
+        philhealth: z.string(),
+        vacStatus: z.string(),
+        bloodType: z.string()
     }),
     fatherInfo: z.object({
-        fatherLName: z.string(),
-        fatherFName: z.string(),
-        fatherMName: z.string(),
-        fatherSuffix: z.string(),
-        fatherDateOfBirth: z.string().date(),  
-        fatherStatus: z.string(),
-        fatherReligion: z.string(),
-        fatherEdAttainment: z.string(),
+        lastName: z.string(),
+        firstName: z.string(),
+        middleName: z.string(),
+        suffix: z.string(),
+        dateOfBirth: z.string().date(),  
+        status: z.string(),
+        religion: z.string(),
+        edAttainment: z.string(),
+        contact: z.string(),
+        philhealth: z.string(),
+        vacStatus: z.string(),
+        bloodType: z.string()
     }),
 
     dependentsInfo: z.object({
         list: z.array(dependentSchema).default([]),
         new: dependentSchema
-    })
+    }),
+
+    assignPosition: z.string().min(1, 'Assign a Position')
 })
 

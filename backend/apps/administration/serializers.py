@@ -4,21 +4,21 @@ from .models import *
 class PositionSerializer(serializers.ModelSerializer):  
     class Meta: 
         model = Position
-        fields = ['pos_id', 'pos_title']
+        fields = '__all__'
 
 class FeatureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feature
-        fields = ['feat_id', 'feat_name', 'feat_category']
+        fields = '__all__'
 
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
-        fields = ['perm_id', 'view', 'create', 'update', 'delete', 'assi']
+        fields = '__all__'
 
 class AssignmentSerializer(serializers.ModelSerializer):
     permissions = PermissionSerializer(many=True, read_only=True)
     
     class Meta:
         model = Assignment
-        fields = ['assi_id', 'assi_date', 'feat', 'pos', 'permissions']
+        fields = '__all__'

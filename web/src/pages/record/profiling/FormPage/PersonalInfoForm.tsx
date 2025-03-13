@@ -142,7 +142,7 @@ export default function PersonalInfoForm(
                     Date of Birth
                   </FormLabel>
                   <FormControl>
-                    <Input type="Date" {...field} />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -178,11 +178,11 @@ export default function PersonalInfoForm(
 
             <FormField
               control={form.control}
-              name='personalInfo.completeAddress'
+              name='personalInfo.streetAddress'
               render={({field}) => (
                   <FormItem className='col-span-6'>
                   <FormLabel className="font-medium text-black/65">
-                      Complete Address
+                      Street Address
                   </FormLabel>
                   <FormControl>
                       <Input placeholder='' {...field}/>
@@ -195,21 +195,6 @@ export default function PersonalInfoForm(
 
           {/* Citizenship, Religion, Contact */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="personalInfo.citizenship"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-medium text-black/65">
-                    Citizenship
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Citizenship" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="personalInfo.religion"

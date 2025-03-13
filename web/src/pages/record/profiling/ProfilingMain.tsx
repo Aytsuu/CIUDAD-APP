@@ -456,13 +456,10 @@ export default function ProfilingMain() {
             {/* Registration Button */}
             <DialogLayout
               trigger={
-                <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90 cursor-pointer">
                   <Plus size={15} /> Register
                 </div>
               }
-              className=""
-              title=""
-              description=""
               mainContent={<RegistrationOptions />}
             />
           </div>

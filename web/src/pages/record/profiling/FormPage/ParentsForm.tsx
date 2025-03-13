@@ -30,7 +30,7 @@ export default function ParentsForm({
         <div className="grid grid-cols-4 gap-4 mb-6">
           <FormField
             control={control}
-            name={`${prefix}LName`}
+            name={`${prefix}lastName`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -45,7 +45,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}FName`}
+            name={`${prefix}firstName`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -60,7 +60,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}MName`}
+            name={`${prefix}middleName`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -75,7 +75,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}Suffix`}
+            name={`${prefix}suffix`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -88,9 +88,31 @@ export default function ParentsForm({
               </FormItem>
             )}
           />
+
           <FormField
             control={control}
-            name={`${prefix}Status`}
+            name={`${prefix}dateOfBirth`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-black/65">
+                  Date of Birth
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    type="date" 
+                    className="w-full" 
+                    placeholder="dd/mm/yyyy" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name={`${prefix}status`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -112,48 +134,10 @@ export default function ParentsForm({
               </FormItem>
             )}
           />
+
           <FormField
             control={control}
-            name={`${prefix}DateOfBirth`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-black/65">
-                  Date of Birth
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    type="date" 
-                    className="w-full" 
-                    placeholder="dd/mm/yyyy" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name={`${prefix}Birthplace`}
-            render={({ field }) => (
-              <FormItem className="col-span-2"> 
-                <FormLabel className="text-black/65">
-                  Place of Birth
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    className="w-full" 
-                    placeholder="Street/Barangay/Municipality/Province/City" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name={`${prefix}Religion`}
+            name={`${prefix}religion`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -168,14 +152,14 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}Citizenship`}
+            name={`${prefix}edAttainment`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
-                  Citizenship
+                  Educational Attainment
                 </FormLabel>
                 <FormControl>
-                  <Input className="w-full" placeholder="Citizenship" {...field} />
+                  <Input className="w-full" placeholder="Educational Attainment" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -183,7 +167,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}Contact`}
+            name={`${prefix}contact`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -198,7 +182,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}Philheath`}
+            name={`${prefix}philhealth`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -213,7 +197,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}VacStatus`}
+            name={`${prefix}vacStatus`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
@@ -237,7 +221,7 @@ export default function ParentsForm({
           />
           <FormField
             control={control}
-            name={`${prefix}BloodType`}
+            name={`${prefix}bloodType`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-black/65">
