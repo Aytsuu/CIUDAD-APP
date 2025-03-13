@@ -85,7 +85,50 @@ export default function Schedules() {
                   <MoreVertical size={20} color="#263D67" />
                 </TouchableOpacity>
               </View>
-              <Text className="text-[#263D67] font-medium text-xl mb-4">June 12, 2023 - Morning</Text>
+              <Text className="text-[#263D67] font-medium text-xl mb-4">June 12, 2023 - Afternoon</Text>
+              <View className="border-t border-[#C7D7F4] pt-4 flex-row items-center">
+                <Heart size={20} color="#263D67" fill="#263D67" />
+                <Text className="text-[#263D67] font-medium text-lg ml-2">Medical Consultation</Text>
+              </View>
+            </View>
+          </Card>
+
+        </TabsContent>
+        <TabsContent value="past">
+          <Card className="bg-[#D7E2F8] rounded-xl  overflow-hidden mt-4">
+            <View className="p-4">
+              <View className="flex-row justify-between items-center mb-1">
+                <View className="flex-row items-center">
+                  <Calendar size={20} color="#263D67" />
+                  <Text className="text-black ml-2 text-md">Appointment date</Text>
+                </View>
+                <TouchableOpacity>
+                  <MoreVertical size={20} color="#263D67" />
+                </TouchableOpacity>
+              </View>
+              <Text className="text-[#263D67] font-medium text-xl mb-4">June 12, 2023 - Afternoon</Text>
+              <View className="border-t border-[#C7D7F4] pt-4 flex-row items-center">
+                <Heart size={20} color="#263D67" fill="#263D67" />
+                <Text className="text-[#263D67] font-medium text-lg ml-2">Medical Consultation</Text>
+              </View>
+            </View>
+          </Card>
+
+        </TabsContent>
+
+        <TabsContent value="past">
+          <Card className="bg-[#D7E2F8] rounded-xl  overflow-hidden mt-4">
+            <View className="p-4">
+              <View className="flex-row justify-between items-center mb-1">
+                <View className="flex-row items-center">
+                  <Calendar size={20} color="#263D67" />
+                  <Text className="text-black ml-2 text-md">Appointment date</Text>
+                </View>
+                <TouchableOpacity>
+                  <MoreVertical size={20} color="#263D67" />
+                </TouchableOpacity>
+              </View>
+              <Text className="text-[#263D67] font-medium text-xl mb-4">June 12, 2023 - Afternoon</Text>
               <View className="border-t border-[#C7D7F4] pt-4 flex-row items-center">
                 <Heart size={20} color="#263D67" fill="#263D67" />
                 <Text className="text-[#263D67] font-medium text-lg ml-2">Medical Consultation</Text>

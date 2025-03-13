@@ -1,9 +1,10 @@
 import React from "react";
-import { View, Image, ScrollView, StatusBar, TouchableOpacity } from "react-native";
+import { View, Image, ScrollView, StatusBar, TouchableOpacity, Touchable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
+import { router } from "expo-router";
 
 const Homepage = () => {
   return (
@@ -55,16 +56,11 @@ const Homepage = () => {
               </Button>
             </Card>
 
-            <Card className="w-64 h-40 bg-black shadow-lg rounded-lg mx-2 p-4">
+            <Card className="w-64 h-40 bg-white shadow-lg rounded-lg mx-2 p-4">
               <Text className="text-blue-900 text-lg font-bold">Animal</Text>
               <Text className="text-gray-500 text-sm">Lorem Ipsum</Text>
             </Card>
 
-            {/* You can add more cards here */}
-            <Card className="w-64 h-40 bg-blue-100 shadow-lg rounded-lg mx-2 p-4">
-              <Text className="text-blue-900 text-lg font-bold">Another Service</Text>
-              <Text className="text-gray-500 text-sm">More information here</Text>
-            </Card>
 
 
           </ScrollView>
@@ -91,26 +87,49 @@ const Homepage = () => {
 
         {/* Appointment Section */}
         <View className="flex-row justify-between px-4 mt-6">
-          <Text className="text-gray-800 text-lg font-bold">Book Appointment</Text>
-          <TouchableOpacity>
-            <Text className="text-blue-800 font-medium">My appointments</Text>
+          <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book Appointment</Text>
+          
+          <TouchableOpacity onPress={() => router.push("/appointments/schedules")}>
+          <View className="bg-transparent">
+          <Text className="text-blue-800 text-lg font-PoppinsMedium">My Appointments</Text>
+          </View>
           </TouchableOpacity>
         </View>
 
-        {/* Service Categories */}
-        <View className="flex-row px-4 mt-6">
-          <Card className="w-1/2 h-40 bg-[#8EADA0] border-0 p-4 items-center shadow-md rounded-lg mx-1">
-            <Image source={require('@/assets/images/Health/Home/Pregnant.png')} />
-            <Text className="text-[#2E4139] text-lg font-PoppinsSemiBold mt-2">Maternal</Text>
-            <Text className="text-[#2E4139] text-lg font-PoppinsSemiBold">Services</Text>
-          </Card>
 
-          <Card className="w-1/2 h-40 bg-pink-200 border-0 items-center shadow-md rounded-lg mx-1">
-            <Image source={require('@/assets/images/Health/Home/health_worker.png')} />
-            <Text className="text-[#2E4139] text-lg font-PoppinsSemiBold">Medical</Text>
-            <Text className="text-[#2E4139] text-lg font-PoppinsSemiBold">Consultation</Text>
-          </Card>
+        <View className="flex-row px-4 mt-6 space-x-4">
+      {/* Maternal Services Card */}
+      <TouchableOpacity
+        onPress={() => router.push("/maternal/maternal-landing")}
+        className="flex-1"
+      >
+        <View className="bg-[#8EADA0] border-0 p-4 shadow-md rounded-lg items-center h-48 justify-center">
+          <Image
+            source={require("@/assets/images/Health/Home/Pregnant.png")}
+            className="w-24 h-24 mb-2"
+            resizeMode="contain"
+          />
+          <Text className="text-[#2E4139] text-lg font-semibold">Maternal</Text>
+          <Text className="text-[#2E4139] text-lg font-semibold">Services</Text>
         </View>
+      </TouchableOpacity>
+
+      {/* Medical Consultation Card */}
+      <TouchableOpacity
+        onPress={() => router.push("/medconsultation/med-landing")}
+        className="flex-1"
+      >
+        <View className="bg-pink-200 border-0 p-4 shadow-md rounded-lg items-center h-48 justify-center">
+          <Image
+            source={require("@/assets/images/Health/Home/health_worker.png")}
+            className="w-24 h-24 mb-2"
+            resizeMode="contain"
+          />
+          <Text className="text-[#2E4139] text-lg font-semibold">Medical</Text>
+          <Text className="text-[#2E4139] text-lg font-semibold">Consultation</Text>
+        </View>
+      </TouchableOpacity>
+    </View>
 
         <View className="h-6" />
       </ScrollView>
@@ -119,3 +138,16 @@ const Homepage = () => {
 };
 
 export default Homepage;
+
+
+
+
+
+
+
+
+
+
+
+
+
