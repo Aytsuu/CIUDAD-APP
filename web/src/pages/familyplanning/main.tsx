@@ -79,7 +79,7 @@ const initialFormData: FormData = {
   },
   sexuallyTransmittedInfections: {
     abnormalDischarge: false,
-    dischargeFrom: [],
+    dischargeFrom: undefined,
     sores: false,
     pain: false,
     history: false,
@@ -146,8 +146,6 @@ export default function FamilyPlanningMain() {
   const [currentPage, setCurrentPage] = useState(1)
   const [formData, setFormData] = useState<FormData>(initialFormData)
 
-  // Modified handleNext to show validation errors but still allow proceeding
-  
   const handleNext = () => {
     try {
       console.log("Moving to next page, current data:", formData)

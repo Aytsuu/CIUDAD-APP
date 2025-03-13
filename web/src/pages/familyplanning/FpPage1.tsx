@@ -42,7 +42,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   // const reason = form.watch("reason")
   // const methodCurrentlyUsedValue = form.watch("methodCurrentlyUsed")
 
-  // Determine which sections should be enabled
+
   const isNewAcceptor = typeOfClient === "New Acceptor"
   const isCurrentUser = typeOfClient === "Current User"
   const isChangingMethod = isCurrentUser && subTypeOfClient === "Changing Method"
