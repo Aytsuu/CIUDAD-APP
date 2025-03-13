@@ -1,14 +1,16 @@
 "use client"
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
+import { FormProvider } from "react-hook-form"
 import PrenatalFormFirstPg from "./prenatal-form-firstpg"
 import { useForm } from "react-hook-form"
-import { Form } from "@/components/ui/form"
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card-layout"
-import CardLayout from "@/components/ui/card/card-layout"
+import { Card } from "@/components/ui/card/card"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button"
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { useState } from "react"
+
 
 
 // interface PrenatalFormProps {
@@ -16,128 +18,39 @@ import { Button } from "@/components/ui/button"
 // }
 
 export default function PrenatalForm(){
+    const defaultValues = generateDefaultValues(PrenatalFormSchema)
+    const [currentPage, setCurrentPage] = useState(1); 
+
     const form = useForm<z.infer<typeof PrenatalFormSchema>>({
         resolver: zodResolver(PrenatalFormSchema),
-        defaultValues: {
-            familyNo: "",
-            isTransient: "",
-            motherLName: "",
-            motherFName: "",
-            motherMName: undefined,
-            motherAge: undefined,
-            motherDOB: "",
-            husbandLName: "",
-            husbandFName: "",
-            husbandMName: "",
-            occupation: "",
-            address: [
-                {
-                    street: "",
-                    barangay: "",
-                    city: "",
-                    province: ""
-                }
-            ],
-            motherWt: 0,
-            motherHt: 0,
-            motherBMI: 0,
-
-            noOfChBornAlive: undefined,
-            noOfLivingCh: undefined,
-            noOfAbortion: undefined,
-            noOfStillBirths: undefined,
-            historyOfLBabies: undefined,
-            historyOfDiabetes: "",
-
-            prevIllness: "",
-            prevIllnessYear: 0,
-            prevHospitalization: "",
-            prevHospitalizationYear: 0,
-
-            dateOfDelivery: "",
-            outcome: "",
-            typeOfDelivery: "",
-            babysWt: 0,
-            gender: "",
-            ballardScore: 0,
-            apgarScore: 0,
-
-            ttStatus: "",
-            ttDateGiven: "",
-
-            gravida: 0,
-            para: 0,
-            fullterm: 0,
-            preterm: 0,
-            lmp: "",
-            edc: "",
-
-            dateOfFollowUp: "",
-
-            checklist: [{
-                increasedBP: false,
-                epigastricPain: false,
-                nausea: false,
-                blurringOfVision: false,
-                edema: false,
-                severeHeadache: false,
-                abnormalVaginalDischarges: false,
-                vaginalBleeding: false,
-                chillsFever: false,
-                diffInBreathing: false,
-                varicosities: false,
-                abdominalPain: false
-            }],
-
-            planPlacePfDel: "",
-            planNewbornScreening: false,
-
-            ironFolicStarted: "",
-            ironFolicCompleted: "",
-            deworming: "",
-
-            riskcodes: [{
-                prevCaesarian: false,
-                miscarriages: false,
-                postpartumHemorrhage: false,
-                tuberculosis: false,
-                heartDisease: false,
-                diabetes: false,
-                bronchialAsthma: false,
-                goiter: false
-            }],
-
-            assessedby: "",
-        }
+        defaultValues
     })
 
-    function onSubmit(values: z.infer<typeof PrenatalFormSchema>){
-        console.log(values);
+    // set to next page
+    const nextPage = () => {
+        setCurrentPage((prev) => prev + 1);
+    }
+
+    const prevPage = () => {
+        setCurrentPage((prev) => prev -1);
     }
 
     return(
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <CardLayout 
-                    cardTitle="MATERNAL HEALTH RECORD"
-                    CardTitleClassName="text-darkBlue1"
-                    cardContent={
-                        <> 
-                            <div>
-                                <PrenatalFormFirstPg />
-                            </div>
-                            <div className="flex justify-end space-x-4 pt-6">
-                                <Button type="button" variant="outline" onClick={() => form.reset()}>
-                                    Prev
-                                </Button>
-                                <Button type="submit" >Next</Button> 
-                            </div>
-                        </>
-                       
-                    }
-                />
+        <div>
+            <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
+                <FormProvider {...form}>
+                    {currentPage === 1 && (
+                        <PrenatalFormFirstPg 
+                            form={form}
+                            onSubmit={()=>nextPage()}
+                        />
+                    )}
+                    {currentPage === 2 && (
+                        <></>
+                    )}
+                </FormProvider>
                 
-            </form>
-        </Form>
+            </Card>
+        </div>
     )
 }

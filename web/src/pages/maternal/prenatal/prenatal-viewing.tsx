@@ -516,14 +516,14 @@ export default function PrenatalViewingOne() {
                 <div className="flex flex-col">
                     <h6 className="text-sm mt-4 underline"><b>PRESENT PREGNANCY</b></h6>
                     {presentPregnancyFieldGroups.map((group, index) => (
-                    <div className="flex" key={index}>
-                        {group.map((info, i) => (
-                            <React.Fragment key={i}>
-                                <Label className="mt-4">{info.name}</Label>
-                                <InputLine className={info.className}></InputLine>
-                            </React.Fragment>
-                        ))}
-                    </div>
+                        <div className="flex" key={index}>
+                            {group.map((info, i) => (
+                                <React.Fragment key={i}>
+                                    <Label className="mt-4">{info.name}</Label>
+                                    <InputLine className={info.className}></InputLine>
+                                </React.Fragment>
+                            ))}
+                        </div>
                     ))}
                 </div>
                 {/* guide 4ANC visits */}
