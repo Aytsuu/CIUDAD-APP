@@ -155,6 +155,7 @@ export default function MedicineStocks() {
           <div className="flex gap-2">
             <div className="flex justify-center gap-2">
               <TooltipLayout
+              
                 trigger={
                   <DialogLayout
                     trigger={
@@ -166,7 +167,6 @@ export default function MedicineStocks() {
                       <>
                         <EditMedicineForm
                           medicine={row.original}
-                          // onSave={handleSaveEditedMedicine}
                         />
                       </>
                     }

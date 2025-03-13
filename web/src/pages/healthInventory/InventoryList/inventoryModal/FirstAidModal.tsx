@@ -84,7 +84,7 @@ export default function FirstAidModal() {
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>Category</FormLabel> 
                 <FormControl>
                   <SelectLayoutWithAdd
                     className="w-full"

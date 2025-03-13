@@ -9,9 +9,9 @@ import {
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import {
-  nonPhilHealthSchema,
-  nonPhilHealthType,
-} from "@/form-schema/medicalConsultationSchema";
+  PhilHealthSchema,
+  PhilHealthType,
+} from "@/form-schema/medicalConsultation/philHealthSchema";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -22,18 +22,18 @@ import { useLocation } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
+import { useNavigate } from "react-router-dom";
 
 export default function PHMedicalForm() {
-  const form = useForm<nonPhilHealthType>({
-    resolver: zodResolver(nonPhilHealthSchema),
+  const form = useForm<PhilHealthType>({
+    resolver: zodResolver(PhilHealthSchema),
     defaultValues: {
       isTransient: "resident",
       fname: "",
       lname: "",
       mname: "",
       date: "",
-      age: undefined,
+      age: 0,
       sex: "",
       dob: "",
       houseno: "",
@@ -43,22 +43,22 @@ export default function PHMedicalForm() {
       province: "",
       city: "",
       bhwAssign: "",
-      hr: undefined,
-      temp: undefined,
-      bpsystolic: undefined,
-      bpdiastolic: undefined,
-      rrc: undefined,
-      rrcmp: undefined,
-      ht: "",
-      wt: "",
+      hr: 0,
+      temp: 0,
+      bpsystolic: 0,
+      bpdiastolic: 0,
+      rrc: 0,
+      ht: 0,
+      wt: 0,
       chiefComplaint: "",
+      atc: "",
+      pin: 0,
+      contactNo: 0,
+      memberORdependent: "",
+      status: "",
+      doctor: "",
     },
   });
-
-  function onSubmit(values: nonPhilHealthType) {
-    console.log(values);
-    // Add your submission logic here
-  }
 
   const formFields = {
     nameFields: [
@@ -79,30 +79,50 @@ export default function PHMedicalForm() {
       { name: "province", label: "Province", placeholder: "Enter province" },
     ],
     vitalSignsFields: [
-      { name: "hr", label: "HR", placeholder: "Enter Heart Rate" },
+      { name: "hr", label: "Heart Rate", placeholder: "Enter Heart Rate" },
       { name: "temp", label: "Temp", placeholder: "Enter Temperature" },
-      { name: "rrc", label: "RR", placeholder: "Enter Respiratory Count" },
       {
-        name: "rrcmp",
-        label: "RR (MP)",
-        placeholder: "Enter Respiratory Measurement",
+        name: "rrc",
+        label: "Respiratory Rate",
+        placeholder: "Enter Respiratory Count",
       },
+      { name: "ht", label: "Height", placeholder: "height" },
+      { name: "wt", label: "Weight", placeholder: "weight" },
     ],
   };
 
+  const status = [
+    { id: "Single", name: "Single" },
+    { id: "Married", name: "Married" },
+    { id: "Widower", name: "Widower" },
+  ];
+  const doctor = [
+    { id: "Kimmy Mo Ma Chung", name: "Kimmy Mo Ma Chung" },
+    { id: "Chi Chung", name: "Chi Chung" },
+  ];
+
+  const atc = [
+    { id: "walk-in with ATC", name: "walk-in with ATC" },
+    { id: "walk-in without ATC", name: "walk-in without ATC" },
+  ];
+
   const location = useLocation();
   const recordType = location.state?.recordType || "nonExistingPatient";
+  const navigate = useNavigate();
+  const currentDate = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
-  const navigate = useNavigate(); // Add this hook
+  const onSubmit = (data: PhilHealthType) => {
+    console.log(data);
+    alert("success");
+  };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row  gap-4 mb-8">
+    <div className="p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <Button
           className="text-black p-2 mb-2 self-start"
           variant={"outline"}
           onClick={() => {
-            // Add this onClick handler
             if (recordType === "nonExistingPatient") {
               navigate("/allMedRecords");
             } else {
@@ -121,10 +141,11 @@ export default function PHMedicalForm() {
           </p>
         </div>
       </div>
-      
-      <div className="bg-white rounded-lg shadow md:p-2 lg:p-8  ">
+
+      <div className="bg-white rounded-lg shadow p-4 sm:p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Search and Add Resident Section */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
               {recordType !== "existingPatient" ? (
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
@@ -140,7 +161,7 @@ export default function PHMedicalForm() {
                 </div>
               ) : null}
 
-              {/* Transient Checkbox - Always rendered */}
+              {/* Transient Checkbox */}
               <div
                 className={recordType === "existingPatient" ? "sm:ml-auto" : ""}
               >
@@ -157,61 +178,202 @@ export default function PHMedicalForm() {
                           }
                         />
                       </FormControl>
-                      <FormLabel  className="font-medium text-black/65">Transient</FormLabel>
+                      <FormLabel className="font-medium text-black/65">
+                        Transient
+                      </FormLabel>
                     </FormItem>
                   )}
                 />
               </div>
             </div>
 
-            {/* Date Field */}
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="w-full sm:w-64">
-                  <FormLabel  className="font-medium text-black/65">Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-10">
+              {/* Date Field */}
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Date
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} value={currentDate} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="atc"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      ATC Type
+                    </FormLabel>
+                    <FormControl>
+                      <SelectLayout
+                        className=""
+                        label=""
+                        placeholder="select"
+                        options={atc}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="memberORdependent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Member or Dependent
+                    </FormLabel>
+                    <FormControl>
+                      <SelectLayout
+                        className=""
+                        label=""
+                        placeholder="select"
+                        options={status}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <FormField
+                control={form.control}
+                name="pin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Pin
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Pin"
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : Number(value)
+                          );
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 items-center pt-3">
+              <FormField
+                control={form.control}
+                name="contactNo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Contact No.
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        value={field.value || ""}
+                        placeholder="Contact No."
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : Number(value)
+                          );
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             {/* Name Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {formFields.nameFields.map((field) => (
                 <FormField
                   key={field.name}
                   control={form.control}
-                  name={field.name as keyof nonPhilHealthType}
+                  name={field.name as keyof PhilHealthType}
                   render={({ field: formField }) => (
                     <FormItem>
-                      <FormLabel  className="font-medium text-black/65">{field.label}</FormLabel>
+                      <FormLabel className="font-medium text-black/65">
+                        {field.label}
+                      </FormLabel>
                       <FormControl>
-                        <Input {...formField} placeholder={field.placeholder} />
+                        <Input
+                          type="text"
+                          {...formField}
+                          value={formField.value ?? ""} // Fallback to empty string if null or undefined
+                          placeholder={field.placeholder}
+                          onChange={formField.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               ))}
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Status
+                    </FormLabel>
+                    <FormControl>
+                      <SelectLayout
+                        className=""
+                        label=""
+                        placeholder="select"
+                        options={status}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Demographics Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="age"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel  className="font-medium text-black/65">Age</FormLabel>
+                    <FormLabel className="font-medium text-black/65">
+                      Age
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ""}
+                        placeholder="Age"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : Number(value)
+                          );
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -224,7 +386,9 @@ export default function PHMedicalForm() {
                 name="dob"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel  className="font-medium text-black/65">Date of Birth</FormLabel>
+                    <FormLabel className="font-medium text-black/65">
+                      Date of Birth
+                    </FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -238,7 +402,9 @@ export default function PHMedicalForm() {
                 name="sex"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel  className="font-medium text-black/65">Sex</FormLabel>
+                    <FormLabel className="font-medium text-black/65">
+                      Sex
+                    </FormLabel>
                     <FormControl>
                       <SelectLayout
                         className=""
@@ -266,14 +432,19 @@ export default function PHMedicalForm() {
                   <FormField
                     key={field.name}
                     control={form.control}
-                    name={field.name as keyof nonPhilHealthType}
+                    name={field.name as keyof PhilHealthType}
                     render={({ field: formField }) => (
                       <FormItem>
-                        <FormLabel  className="font-medium text-black/65">{field.label}</FormLabel>
+                        <FormLabel className="font-medium text-black/65">
+                          {field.label}
+                        </FormLabel>
                         <FormControl>
                           <Input
+                            type="text"
                             {...formField}
+                            value={formField.value ?? ""} // Fallback to empty string if null or undefined
                             placeholder={field.placeholder}
+                            onChange={formField.onChange}
                           />
                         </FormControl>
                         <FormMessage />
@@ -287,22 +458,28 @@ export default function PHMedicalForm() {
             {/* Vital Signs Section */}
             <div className="space-y-4">
               <h2 className="font-bold text-darkBlue1">Vital Signs</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {formFields.vitalSignsFields.map((field) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {formFields.vitalSignsFields.slice(0, 3).map((field) => (
                   <FormField
                     key={field.name}
                     control={form.control}
-                    name={field.name as keyof nonPhilHealthType}
+                    name={field.name as keyof PhilHealthType}
                     render={({ field: formField }) => (
                       <FormItem>
-                        <FormLabel  className="font-medium text-black/65">{field.label}</FormLabel>
+                        <FormLabel className="font-medium text-black/65">
+                          {field.label}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            {...formField}
-                            onChange={(e) =>
-                              formField.onChange(Number(e.target.value))
-                            }
+                            value={formField.value || ""}
+                            placeholder={field.placeholder}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              formField.onChange(
+                                value === "" ? undefined : Number(value)
+                              );
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -313,8 +490,10 @@ export default function PHMedicalForm() {
               </div>
 
               {/* Blood Pressure */}
-              <div className="flex gap-4 items-center">
-                <FormLabel  className="font-medium text-black/65">Blood Pressure</FormLabel>
+              <div className="flex flex-col sm:flex-row gap-4 items-center pt-3">
+                <FormLabel className="font-medium text-black/65">
+                  Blood Pressure
+                </FormLabel>
                 <div className="flex gap-2">
                   <FormField
                     control={form.control}
@@ -326,6 +505,7 @@ export default function PHMedicalForm() {
                             type="number"
                             {...field}
                             placeholder="Systolic"
+                            value={field.value || ""}
                             onChange={(e) =>
                               field.onChange(Number(e.target.value))
                             }
@@ -345,6 +525,7 @@ export default function PHMedicalForm() {
                           <Input
                             type="number"
                             {...field}
+                            value={field.value || ""}
                             placeholder="Diastolic"
                             onChange={(e) =>
                               field.onChange(Number(e.target.value))
@@ -358,6 +539,36 @@ export default function PHMedicalForm() {
                 </div>
               </div>
             </div>
+            <div className="flex flex-col sm:flex-row gap-4 ">
+              {formFields.vitalSignsFields.slice(3, 5).map((field) => (
+                <FormField
+                  key={field.name}
+                  control={form.control}
+                  name={field.name as keyof PhilHealthType}
+                  render={({ field: formField }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium text-black/65">
+                        {field.label}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={formField.value || ""}
+                          placeholder={field.placeholder}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            formField.onChange(
+                              value === "" ? undefined : Number(value)
+                            );
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
 
             {/* Chief Complaint */}
             <FormField
@@ -365,7 +576,9 @@ export default function PHMedicalForm() {
               name="chiefComplaint"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel  className="font-medium text-black/65">Chief Complaint</FormLabel>
+                  <FormLabel className="font-medium text-black/65">
+                    Chief Complaint
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
@@ -378,9 +591,50 @@ export default function PHMedicalForm() {
               )}
             />
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+              {" "}
+              <FormField
+                control={form.control}
+                name="bhwAssign"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      BHW Assigned:
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="BHW Assigned" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="doctor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Forward to Doctor
+                    </FormLabel>
+                    <FormControl>
+                      <SelectLayout
+                        className="w-[250px] min-w-full"
+                        label=""
+                        options={doctor}
+                        placeholder="select"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Submit Button */}
             <div className="flex justify-end">
-              <Button type="submit" className="w-[100px]">
+              <Button type="submit" className="w-full sm:w-[100px]">
                 Submit
               </Button>
             </div>

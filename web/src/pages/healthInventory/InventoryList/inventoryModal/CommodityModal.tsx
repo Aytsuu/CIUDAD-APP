@@ -99,7 +99,7 @@ export default function CommodityModal() {
                       onChange={(selectedValue) =>
                         handleSelectChange(
                           selectedValue,
-                          field.onChange,
+                          field.onChange, 
                           setCategories,
                        
                         )

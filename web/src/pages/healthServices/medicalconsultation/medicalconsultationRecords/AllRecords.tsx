@@ -32,7 +32,6 @@ export default function AllMedicalConRecords() {
     type: string;
     date: Date;
     noOfRecords: number;
-    
   };
 
   // Table columns configuration
@@ -77,7 +76,7 @@ export default function AllMedicalConRecords() {
         </div>
       ),
     },
-    
+
     {
       accessorKey: "purok",
       header: "Purok",
@@ -99,7 +98,6 @@ export default function AllMedicalConRecords() {
     {
       accessorKey: "noOfRecords",
       header: "No. of records",
-    
     },
     {
       accessorKey: "action",
@@ -171,7 +169,6 @@ export default function AllMedicalConRecords() {
       date: new Date("2024-03-20"),
       noOfRecords: 1,
     },
-  
   ];
 
   // State management
@@ -183,15 +180,17 @@ export default function AllMedicalConRecords() {
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
-  // Navigation handlers
-  const toPhilHealth = () => {
-    navigate("/PHmedicalForm", { state: { recordType: "nonExistingPatient" } });
-  };
 
-  const toNonPhilHealth = () => {
-    navigate("/nonPHmedicalForm", {
-      state: { recordType: "nonExistingPatient" },
-    });
+  const handleNewRecord = () => {
+    // Assuming the type is passed as a prop or state
+    let recordType = "nophilhealth"; // Ensure this matches the comparison below
+    if (recordType === "philhealth") {
+      navigate("/PHmedicalForm", { state: { recordType: "nonExistingPatient" } });
+    }else { // Ensure this matches the value above
+      navigate("/nonPHmedicalForm", { //medical consultation
+        state: { recordType: "nonExistingPatient" },
+      });
+    }
   };
 
   useEffect(() => {
@@ -268,25 +267,16 @@ export default function AllMedicalConRecords() {
                 { id: "3", name: "Archived" },
               ]}
               value=""
-              onChange={() => {}}
+              onChange={() => {}} 
             />
           </div>
         </div>
 
         <div className="w-full sm:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>New Record</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={toNonPhilHealth}>
-                Non-PhilHealth
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={toPhilHealth}>
-                PhilHealth
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+        
+            <Button onClick={handleNewRecord}>New Record</Button>
+       
         </div>
       </div>
 

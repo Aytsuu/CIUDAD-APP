@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import VaccinationForm from "./VaccinationModal";
 import { Syringe, ArrowLeft, ArrowUpDown, ChevronLeft } from "lucide-react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router-dom";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,15 +31,6 @@ export default function IndivVaccinationRecords() {
     temp: number;
     signature: string;
   };
-
-  // Pagination and filtering state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentData, setCurrentData] = useState<vacRecords[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("All");
 
   // Sample data
   const sampleData: vacRecords[] = [
@@ -62,7 +54,7 @@ export default function IndivVaccinationRecords() {
       bp: "110/75",
       o2: 97,
       temp: 36.8,
-      signature: "JohnD",
+      signature: "JohnDdf",
     },
     // Add more records as needed
   ];
@@ -156,7 +148,7 @@ export default function IndivVaccinationRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center px-2 w-[100px]">
           <img
-            src={row.original.signature}
+            // src={row.original.signature}
             alt="Signature"
             className="w-12 h-12 object-contain rounded-md"
           />
@@ -165,19 +157,31 @@ export default function IndivVaccinationRecords() {
     },
   ];
 
-  // Filtering and pagination logic
-  const filteredData = sampleData.filter((item) => {
-    const matchesFilter =
-      selectedFilter === "All" || item.vaccine === selectedFilter;
-    const searchText = ` ${item.vaccine} ${item.dose}`.toLowerCase();
-    return matchesFilter && searchText.includes(searchTerm.toLowerCase());
-  });
+
+  
+  // State management
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState<vacRecords[]>(sampleData);
+  const [currentData, setCurrentData] = useState<vacRecords[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const navigate = useNavigate();
+ const [isDialogOpen,setIsDialogOpen]= useState (false)
 
   useEffect(() => {
-    const total = Math.ceil(filteredData.length / pageSize);
-    setTotalPages(total);
-    if (currentPage > total) setCurrentPage(1);
-  }, [filteredData, pageSize, currentPage]);
+    const filtered = sampleData.filter((record) => {
+      const searchText = `${record.id} 
+        ${record.vaccine} 
+        ${record.dateAdministered} 
+       
+       `.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
+    setFilteredData(filtered);
+    setTotalPages(Math.ceil(filtered.length / pageSize));
+    setCurrentPage(1);
+  }, [searchQuery, pageSize]);
 
   useEffect(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -185,13 +189,16 @@ export default function IndivVaccinationRecords() {
     setCurrentData(filteredData.slice(startIndex, endIndex));
   }, [currentPage, pageSize, filteredData]);
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+ 
+  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value);
+    setPageSize(!isNaN(value) && value > 0 ? value : 10);
   };
 
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   const vaccinesList = [
@@ -203,14 +210,23 @@ export default function IndivVaccinationRecords() {
   return (
     <>
       <div className="flex flex-col sm:flex-row  gap-4 mb-8">
-        <Link to="/allVaccinationRecord">
+        {/* <Link to="/allRecordsForVaccine">
           <Button
             className="text-black p-2 mb-2 self-start"
             variant={"outline"}
           >
             <ChevronLeft />
           </Button>
-        </Link>
+        </Link> */}
+
+        <Button
+          className="text-black p-2 mb-2 self-start"
+          variant={"outline"}
+          onClick={() => navigate("/allRecordsForVaccine")}
+        >
+          <ChevronLeft />
+        </Button>
+
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Records

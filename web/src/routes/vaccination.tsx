@@ -4,11 +4,12 @@ import AllVaccinationRecords from "@/pages/healthServices/vaccination/AllVaccina
 
 export const vaccination = [
   {
-    path: "/allVaccinationRecord",
-    element: <AllVaccinationRecords />,
+    path: "invVaccinationRecord",
+    element: <IndivVaccinationRecords/>,
   },
   {
-    path: "/invVaccinationRecord",
-    element: <IndivVaccinationRecords />,
+    path: "allRecordsForVaccine",
+    element: <AllVaccinationRecords/>,
   },
+
 ];

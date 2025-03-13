@@ -37,7 +37,7 @@ const initialFormData: FormData = {
   BFdates: [],
   ironDates: [],
   vaccines: [],
-  vitaminRecords: [],
+  vitaminRecords: [], 
   vitalSigns: [],
 };
 

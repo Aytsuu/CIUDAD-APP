@@ -27,6 +27,9 @@ import { bites_route } from './AnimalBite-route';
 import { announcement_route } from './Announcement-route';
 import { famplanning_route } from './FamilyPlanning-route';
 import { medicalConsultation } from './medConsultation';
+import { doctorRouting } from './doctor-router';
+
+
 export const main_router: RouteObject[] = [
     {
         path: "/",
@@ -65,7 +68,8 @@ export const main_router: RouteObject[] = [
             ...famplanning_route,
             ...healthinventory,
             ...medicalConsultation,
-            ...patientQueue
+            ...patientQueue,
+            ...doctorRouting
         ]
     }
 ]

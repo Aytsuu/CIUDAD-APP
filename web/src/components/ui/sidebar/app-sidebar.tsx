@@ -123,21 +123,19 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
       { title: "Maternal Services", url: "/maternalrecords" },
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Vaccination", url: "/allVaccinationRecord" },
+      { title: "Vaccination", url: "/allRecordsForVaccine" },
       {
         title: "Inventory",
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-     
-
-
         ],
       },
       {

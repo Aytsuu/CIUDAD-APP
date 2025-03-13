@@ -109,7 +109,7 @@ export default function FirstAidStockForm() {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Quantity"
+                        placeholder="Quantity" 
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
