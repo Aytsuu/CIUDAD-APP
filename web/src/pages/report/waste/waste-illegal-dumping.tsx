@@ -163,86 +163,98 @@ function WasteIllegalDumping() {
     },
   ];
 
-  const [selectedFilterId, setSelectedFilterId] = useState("0"); // Default to "All Report Category"
-
-  // Map the selected `id` to the corresponding `name`
+  const [selectedFilterId, setSelectedFilterId] = useState("0");
   const selectedFilterName =
     filterOptions.find((option) => option.id === selectedFilterId)?.name || "";
 
-  // Filter the data using the mapped `name`
   const filteredData =
-    selectedFilterId === "0" // Check if "All Report Category" is selected
-      ? data // Return all data
+    selectedFilterId === "0"
+      ? data
       : data.filter(
           (item) =>
             item.reportMatter.trim().toLowerCase() ===
             selectedFilterName.trim().toLowerCase()
         );
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(filteredData.length / 12);
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const startIndex = (currentPage - 1) * 12;
+  const endIndex = startIndex + 12;
+  const currentRows = filteredData.slice(startIndex, endIndex);
+
   return (
     <div className="w-full h-full">
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Illegal Dumping Reports
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view illegal dumping reports
-          </p>
-        </div>
-        <hr className="border-gray mb-6 sm:mb-10" />
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Illegal Dumping Reports
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view illegal dumping reports
+        </p>
+      </div>
+      <hr className="border-gray mb-6 sm:mb-10" />
 
-        {/* Filter and Search Section (Right Side) */}
-        <div className="relative w-full hidden lg:flex items-center gap-2 mb-4">
-
-          {/* Search Input with Icon */}
-          <div className="relative w-full sm:w-[200px] lg:w-[300px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search..." className="pl-10 w-full bg-white" />
-          </div>
-          
-          {/* Filter Dropdown */}
-          <div className="w-full sm:w-auto">
-            <SelectLayout
-              className="w-full sm:w-[200px] lg:w-[250px] bg-white"
-              placeholder="Report Matter"
-              options={filterOptions}
-              value={selectedFilterId}
-              label=""
-              onChange={(id) => {
-                setSelectedFilterId(id);
-              }}
-            />
-          </div>
+      {/* Filter and Search Section (Right Side) */}
+      <div className="relative w-full hidden lg:flex items-center gap-2 mb-4">
+        {/* Search Input with Icon */}
+        <div className="relative w-full sm:w-[200px] lg:w-[300px]">
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+            size={17}
+          />
+          <Input placeholder="Search..." className="pl-10 w-full bg-white" />
         </div>
 
-        {/* Combined Search, Filter, and Show Entries Section with Table */}
-        <div className="w-full">
-          <div className="flex flex-col sm:flex-row gap-3 w-full p-3 bg-white">
-            {/* Show Entries Section (Left Side) */}
-            <div className="flex items-center gap-x-2">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-8" defaultValue="10" />
-              <p className="text-xs sm:text-sm">Entries</p>
-            </div>
-          </div>
-
-          <div className="bg-white">
-            <DataTable columns={columns} data={filteredData} />
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of {filteredData.length} rows
-          </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
-          </div>
+        {/* Filter Dropdown */}
+        <div className="w-full sm:w-auto">
+          <SelectLayout
+            className="w-full sm:w-[200px] lg:w-[250px] bg-white"
+            placeholder="Report Matter"
+            options={filterOptions}
+            value={selectedFilterId}
+            label=""
+            onChange={(id) => {
+              setSelectedFilterId(id);
+            }}
+          />
         </div>
       </div>
+
+      {/* Combined Search, Filter, and Show Entries Section with Table */}
+      <div className="w-full">
+        <div className="flex flex-col sm:flex-row gap-3 w-full p-3 bg-white">
+          {/* Show Entries Section (Left Side) */}
+          <div className="flex items-center gap-x-2">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+        </div>
+
+        <div className="bg-white">
+          <DataTable columns={columns} data={filteredData} />
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          Showing 1-10 of {filteredData.length} rows
+        </p>
+
+        <div className="w-full sm:w-auto flex justify-center">
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
 export default WasteIllegalDumping;
-
