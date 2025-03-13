@@ -215,7 +215,6 @@ export default function FamilyPlanningMain() {
         <FamilyPlanningForm6
           onPrevious5={handlePrevious}
           onSubmitFinal={handleSubmit}
-          
           updateFormData={updateFormData}
           formData={formData}
         />

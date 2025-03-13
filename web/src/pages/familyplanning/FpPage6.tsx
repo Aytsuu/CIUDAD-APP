@@ -139,11 +139,36 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     }
   }
 
+  // Function to add the current record if it's valid
+  const addCurrentRecordIfValid = (): boolean => {
+    if (validateRecord()) {
+      // Only add if there's actual data in the record
+      if (record.methodAccepted && record.nameOfServiceProvider) {
+        setRecords((prev) => [...prev, record])
+        return true
+      }
+    }
+    return false
+  }
+
   const handleSubmit = (data: FormData) => {
+    // Try to add the current record if it's valid and not empty
+    const recordAdded = addCurrentRecordIfValid()
+
+    // Use the updated records (including the one just added if applicable)
+    const updatedRecords = recordAdded ? [...records, record] : records
+
     // Save current records before final submission
     updateFormData({
-      serviceProvisionRecords: records,
+      serviceProvisionRecords: updatedRecords,
     })
+
+    // Log the final data being submitted
+    console.log("Final form data:", {
+      ...data,
+      serviceProvisionRecords: updatedRecords,
+    })
+
     onSubmitFinal()
   }
 
@@ -206,14 +231,14 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                     placeholder="Enter qty"
                     className="rounded-r-none"
                   />
-                  <Select value={record.methodUnit || "box/pcs"} onValueChange={handleSelectChange("methodUnit")}>
+                  <Select value={record.methodUnit || ""} onValueChange={handleSelectChange("methodUnit")}>
                     <SelectTrigger className="w-[110px] rounded-l-none">
-                      <SelectValue placeholder="Unit" />
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="box/pcs">box/pcs</SelectItem>
-                      <SelectItem value="cycles">cycles</SelectItem>
-                      <SelectItem value="vials">vials</SelectItem>
+                      <SelectItem value="box">box</SelectItem>
+                      <SelectItem value="pcs">pcs</SelectItem>
+                     
                     </SelectContent>
                   </Select>
                 </div>
@@ -242,7 +267,25 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                 />
               </div>
 
-             
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
+                <div className="border border-gray-300 rounded p-2 h-32 bg-white">
+                  <SignatureCanvas
+                    ref={(ref) => setServiceProviderSignatureRef(ref)}
+                    canvasProps={{
+                      className: "w-full h-full",
+                    }}
+                  />
+                </div>
+                <div className="flex gap-2 justify-between">
+                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
+                    Clear
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={saveSignature}>
+                    Save Signature
+                  </Button>
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="weight">
@@ -297,27 +340,6 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   className="min-h-[80px]"
                 />
               </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
-                <div className="border border-gray-300 rounded p-2 h-32 bg-white">
-                  <SignatureCanvas
-                    ref={(ref) => setServiceProviderSignatureRef(ref)}
-                    canvasProps={{
-                      className: "w-full h-full",
-                    }}
-                  />
-                </div>
-                <div className="flex gap-2 justify-between">
-                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
-                    Clear
-                  </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={saveSignature}>
-                    Save Signature
-                  </Button>
-                </div>
-              </div>
-              
             </div>
 
             <div className="flex justify-end">
@@ -343,8 +365,8 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                 <TableBody>
                   {records.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No records found
+                      <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        No records found. Fill out the form above and click "Add Record" to add a record.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -379,16 +401,27 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
               <Button
                 type="submit"
                 onClick={async () => {
-                  // If valid, save data and proceed
-                  const currentValues = form.getValues()
-                  updateFormData(currentValues)
+                  // If the current record is valid, add it to the records array
+                  const recordAdded = addCurrentRecordIfValid()
+
+                  // Get the updated records (including the one just added if applicable)
+                  const updatedRecords = recordAdded ? [...records, record] : records
+
+                  // Update form data with the latest records
+                  updateFormData({
+                    serviceProvisionRecords: updatedRecords,
+                  })
+
+                  // Log the data being submitted
+                  console.log("Submitting data:", {
+                    serviceProvisionRecords: updatedRecords,
+                  })
+
                   onSubmitFinal()
                 }}
               >
                 Submit
               </Button>
-
-              {/* <Button type="submit">Submit</Button> */}
             </div>
           </form>
         </Form>

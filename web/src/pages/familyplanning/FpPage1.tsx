@@ -134,7 +134,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     />
                   </div>
 
-                  <Label>or</Label>
+                    <Label>or</Label>
 
                   <button className="flex items-center gap-1 underline text-blue hover:bg-blue-600 hover:text-sky-500 transition-colors rounded-md">
                     <UserPlus className="h-4 w-4" />
@@ -153,7 +153,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                         <Checkbox
                           checked={field.value === "transient"}
                           onCheckedChange={(checked) => {
-                            field.onChange(checked ? "Transient" : "Resident");
+                            field.onChange(checked ? "transient" : "resident");
                           }}
                         />
                       </FormControl>

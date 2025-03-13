@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -59,17 +59,22 @@ export default function FamilyPlanningForm5({
   updateFormData,
   formData,
 }: AcknowledgementFormProps) {
-  const form = useForm<FormData>({
-    resolver: zodResolver(page5Schema),
-    defaultValues: {
-      acknowledgement: formData?.acknowledgement || {
-        selectedMethod: "",
-        clientSignatureDate: new Date().toISOString().split("T")[0],
-        guardianName: "",
-        guardianSignatureDate: new Date().toISOString().split("T")[0],
-      },
+  // Initialize with empty strings for signatures to avoid validation errors
+  const defaultValues = {
+    acknowledgement: {
+      selectedMethod: formData?.acknowledgement?.selectedMethod || "",
+      clientSignature: formData?.acknowledgement?.clientSignature || "",
+      clientSignatureDate: formData?.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
+      guardianName: formData?.acknowledgement?.guardianName || "",
+      guardianSignature: formData?.acknowledgement?.guardianSignature || "",
+      guardianSignatureDate: formData?.acknowledgement?.guardianSignatureDate || new Date().toISOString().split("T")[0],
     },
-    mode: "onBlur", // Add validation mode
+  }
+
+  const form = useForm({
+    resolver: zodResolver(page5Schema),
+    defaultValues,
+    mode: "onChange",
   })
 
   const [clientSignature, setClientSignature] = useState<string>(formData?.acknowledgement?.clientSignature || "")
@@ -77,6 +82,12 @@ export default function FamilyPlanningForm5({
 
   let clientSignatureRef: SignatureCanvas | null = null
   let guardianSignatureRef: SignatureCanvas | null = null
+
+  // Set form values for signatures when they change
+  useEffect(() => {
+    form.setValue("acknowledgement.clientSignature", clientSignature || "")
+    form.setValue("acknowledgement.guardianSignature", guardianSignature || "")
+  }, [clientSignature, guardianSignature, form])
 
   const clearClientSignature = () => {
     if (clientSignatureRef) {
@@ -92,6 +103,7 @@ export default function FamilyPlanningForm5({
         },
       }
       updateFormData(updatedData)
+      form.setValue("acknowledgement.clientSignature", "")
     }
   }
 
@@ -109,6 +121,7 @@ export default function FamilyPlanningForm5({
         },
       }
       updateFormData(updatedData)
+      form.setValue("acknowledgement.guardianSignature", "")
     }
   }
 
@@ -126,6 +139,7 @@ export default function FamilyPlanningForm5({
         },
       }
       updateFormData(updatedData)
+      form.setValue("acknowledgement.clientSignature", signatureData)
     }
   }
 
@@ -143,19 +157,29 @@ export default function FamilyPlanningForm5({
         },
       }
       updateFormData(updatedData)
+      form.setValue("acknowledgement.guardianSignature", signatureData)
     }
   }
 
-  const handleFormSubmit = async (data: FormData) => {
+  const handleFormSubmit = (data: any) => {
+    // Skip validation for signatures - they're optional
+    if (!data.acknowledgement?.selectedMethod) {
+      form.setError("acknowledgement.selectedMethod", {
+        type: "manual",
+        message: "Please select a method",
+      })
+      return
+    }
+
     // Create updated form data with all acknowledgement fields
     const updatedData = {
       ...formData,
       acknowledgement: {
-        selectedMethod: data.acknowledgement?.selectedMethod || "",
-        clientSignature: clientSignature,
-        clientSignatureDate: data.acknowledgement?.clientSignatureDate || "",
+        selectedMethod: data.acknowledgement.selectedMethod,
+        clientSignature: clientSignature || "",
+        clientSignatureDate: data.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
         guardianName: data.acknowledgement?.guardianName || "",
-        guardianSignature: guardianSignature,
+        guardianSignature: guardianSignature || "",
         guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
       },
     }

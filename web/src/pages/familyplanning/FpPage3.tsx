@@ -16,7 +16,7 @@ const referralOptions = {
   WCPU: "WCPU",
   NGOs: "NGOs",
   Others: "Others",
-};
+}
 
 // Extract only the fields needed for this page
 const page3Schema = FamilyPlanningSchema.pick({
@@ -54,6 +54,12 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
   // Add form submission handler to update parent form data
   const onSubmit = (data: FormData) => {
     console.log("Form Submitted", data)
+
+    // Clear dischargeFrom if abnormalDischarge is false
+    if (!data.sexuallyTransmittedInfections.abnormalDischarge) {
+      data.sexuallyTransmittedInfections.dischargeFrom = undefined
+    }
+
     updateFormData(data)
     onNext4()
   }
@@ -61,9 +67,22 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
   // Add a function to save data without navigating
   const saveFormData = () => {
     const currentValues = form.getValues()
+
+    // Clear dischargeFrom if abnormalDischarge is false
+    if (!currentValues.sexuallyTransmittedInfections.abnormalDischarge) {
+      currentValues.sexuallyTransmittedInfections.dischargeFrom = undefined
+    }
+
     console.log("Saving current form data:", currentValues)
     updateFormData(currentValues)
   }
+
+  // Add effect to clear dischargeFrom when abnormalDischarge is false
+  useEffect(() => {
+    if (!abnormalDischarge) {
+      form.setValue("sexuallyTransmittedInfections.dischargeFrom", undefined)
+    }
+  }, [abnormalDischarge, form])
 
   return (
     <Card className="w-full">
@@ -87,26 +106,27 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                           <FormLabel>Abnormal discharge from the genital area</FormLabel>
                           <FormControl>
                             <div className="flex items-center space-x-2">
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                id="abnormalDischarge-yes"
-                              />
-                              <label htmlFor="abnormalDischarge-yes">Yes</label>
-                              <Checkbox
-                                checked={!field.value}
-                                onCheckedChange={() => field.onChange(false)}
-                                id="abnormalDischarge-no"
-                              />
-                              <label htmlFor="abnormalDischarge-no">No</label>
+                              {["Yes", "No"].map((option) => (
+                                <div key={option} className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`abnormalDischarge-${option.toLowerCase()}`}
+                                    name="sexuallyTransmittedInfections.abnormalDischarge"
+                                    value={(option === "Yes").toString()}
+                                    checked={field.value === (option === "Yes")}
+                                    onChange={() => field.onChange(option === "Yes")}
+                                    className="cursor-pointer"
+                                  />
+                                  <label htmlFor={`abnormalDischarge-${option.toLowerCase()}`}>{option}</label>
+                                </div>
+                              ))}
                             </div>
                           </FormControl>
                         </div>
                       </FormItem>
                     )}
                   />
-
-                  {abnormalDischarge && (
+                  {form.watch("sexuallyTransmittedInfections.abnormalDischarge") && (
                     <FormField
                       control={form.control}
                       name="sexuallyTransmittedInfections.dischargeFrom"
@@ -120,10 +140,10 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                   <input
                                     type="radio"
                                     id={`discharge-${location.toLowerCase()}`}
-                                    name="dischargeFrom" // Ensure all radios belong to the same group
+                                    name="sexuallyTransmittedInfections.dischargeFrom"
                                     value={location}
-                                    checked={field.value === location}
-                                    onChange={() => field.onChange(location)}
+                                    checked={field.value === location} // Ensuring it's a string match
+                                    onChange={(e) => field.onChange(e.target.value)} // Ensure value is set correctly
                                     className="cursor-pointer"
                                   />
                                   <label htmlFor={`discharge-${location.toLowerCase()}`}>{location}</label>
@@ -136,7 +156,6 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                       )}
                     />
                   )}
-
                   {/* Other STI Risks */}
                   {[
                     { key: "sores", label: "Sores" },
@@ -176,7 +195,6 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                 </div>
               </div>
 
-              {/* Section IV: Risks for Violence Against Women */}
               <div className="space-y-6 pl-0 md:pl-8">
                 <div>
                   <h3 className="font-bold text-lg mb-4">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</h3>
@@ -260,11 +278,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                   <FormItem className="ml-6 mt-2">
                                     <FormLabel>Specify:</FormLabel>
                                     <FormControl>
-                                      <Input
-                                        {...otherField}
-                                        value={otherField.value ?? ""}
-                                        className="w-[50%]"
-                                      />
+                                      <Input {...otherField} value={otherField.value ?? ""} className="w-[50%]" />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -288,8 +302,8 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                 variant="outline"
                 className="w-full md:w-auto"
                 onClick={() => {
-                  saveFormData();
-                  onPrevious2();
+                  saveFormData()
+                  onPrevious2()
                 }}
               >
                 Previous
@@ -306,3 +320,4 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
 }
 
 export default FamilyPlanningForm3
+

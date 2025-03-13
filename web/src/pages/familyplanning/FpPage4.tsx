@@ -229,14 +229,14 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                             className="flex space-x-4"
                           >
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="firm" id="cervicalConsistency-firm" disabled={!isIUDSelected} />
-                              <FormLabel htmlFor="cervicalConsistency-firm" className="text-sm font-normal">
+                              <RadioGroupItem value="firm" id="cervicalConsistency" disabled={!isIUDSelected} />
+                              <FormLabel htmlFor="cervicalConsistency" className="text-sm font-normal">
                                 Firm
                               </FormLabel>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="soft" id="cervicalConsistency-soft" disabled={!isIUDSelected} />
-                              <FormLabel htmlFor="cervicalConsistency-soft" className="text-sm font-normal">
+                              <RadioGroupItem value="soft" id="cervicalConsistency" disabled={!isIUDSelected} />
+                              <FormLabel htmlFor="cervicalConsistency" className="text-sm font-normal">
                                 Soft
                               </FormLabel>
                             </div>
@@ -308,28 +308,28 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                             className="flex flex-wrap gap-4"
                           >
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="mid" id="uterinePosition-mid" disabled={!isIUDSelected} />
-                              <FormLabel htmlFor="uterinePosition-mid" className="text-sm font-normal">
+                              <RadioGroupItem value="mid" id="uterinePositionMid" disabled={!isIUDSelected} />
+                              <FormLabel htmlFor="uterinePositionMid" className="text-sm font-normal">
                                 Mid
                               </FormLabel>
                             </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
                                 value="anteflexed"
-                                id="uterinePosition-anteflexed"
+                                id="uterinePositionAnteflexed"
                                 disabled={!isIUDSelected}
                               />
-                              <FormLabel htmlFor="uterinePosition-anteflexed" className="text-sm font-normal">
+                              <FormLabel htmlFor="uterinePositionAnteflexed" className="text-sm font-normal">
                                 Anteflexed
                               </FormLabel>
                             </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem
                                 value="retroflexed"
-                                id="uterinePosition-retroflexed"
+                                id="uterinePositionRetroflexed"
                                 disabled={!isIUDSelected}
                               />
-                              <FormLabel htmlFor="uterinePosition-retroflexed" className="text-sm font-normal">
+                              <FormLabel htmlFor="uterinePositionRetroflexed" className="text-sm font-normal">
                                 Retroflexed
                               </FormLabel>
                             </div>

@@ -83,7 +83,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                         <div className="flex space-x-4">
                           <div className="flex items-center space-x-2">
                             <FormControl>
-                              <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                              <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
                             </FormControl>
                             <Label>Yes</Label>
                           </div>
