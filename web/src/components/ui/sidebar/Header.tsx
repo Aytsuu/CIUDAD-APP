@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@radix-ui/react-popover
 import CardLayout from "../card/card-layout";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import DropdownLayout from "../dropdown/dropdown-layout";
+import { Link } from "react-router";
 
 export function Header() {
   const profileOptions = [
@@ -17,16 +18,19 @@ export function Header() {
       id: "view-profile",
       name: "View Profile",
       icons: <User size={20} />,
+      url: "",
     },
     {
       id: "settings",
       name: "Settings",
       icons: <Settings size={20} />,
+      url: "/settings"  
     },
     {
       id: "sign-out",
       name: "Sign out",
       icons: <LogOut size={20} />,
+      url: "",
     },
   ];
 
@@ -86,17 +90,34 @@ export function Header() {
   const profilePopoverContent = (
     <div>
       <hr className="pb-2" />
-      {profileOptions.map((item, index) => (
-        <div
-          key={index}
-          className="flex items-center gap-x-4 p-2 hover:bg-lightBlue hover:bg-gray-100 rounded-md cursor-pointer text-darkGray text-sm font-sans"
-        >
-          {item.icons}
-          <p>{item.name}</p>
-        </div>
-      ))}
+      {profileOptions.map((item) =>
+        item.url ? (
+          <Link
+            key={item.id}
+            to={item.url}
+            className="flex items-center gap-x-4 p-2 hover:bg-lightBlue hover:bg-gray-100 rounded-md cursor-pointer text-darkGray text-sm font-sans"
+          >
+            {item.icons}
+            <p>{item.name}</p>
+          </Link>
+        ) : (
+          <div
+            key={item.id}
+            className="flex items-center gap-x-4 p-2 hover:bg-lightBlue hover:bg-gray-100 rounded-md cursor-pointer text-darkGray text-sm font-sans"
+            onClick={() => {
+              if (item.id === "sign-out") {
+                console.log("Signing out...");
+              }
+            }}
+          >
+            {item.icons}
+            <p>{item.name}</p>
+          </div>
+        )
+      )}
     </div>
   );
+  
 
   const profilePopOverHeaderDesc = (
     <div className="flex items-center gap-x-2">
