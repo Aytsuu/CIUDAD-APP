@@ -539,6 +539,12 @@ export default function PrenatalFormFirstPg(
                                 </div>
                             </div>
                         </div>
+
+                        <div className="mt-8 sm:mt-auto flex justify-end">
+                            <Button type="submit" className="mt-4 mr-4 sm-w-32" onClick={onSubmit}>
+                                Next
+                            </Button>
+                        </div>
                     </form>
                 </Form>
             </div>

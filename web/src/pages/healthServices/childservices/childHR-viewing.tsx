@@ -11,25 +11,25 @@ import { DataTableViewing } from "@/components/ui/table/data-table-viewing"
 
 const idInfo = [
     {
-        name: "FAMILY NO.:", value: "", className: "w-[15rem]"
+        name: "FAMILY NO.:", value: "", className: "w-[6rem] "
     },
     {
-        name: "UFC NO.:", value: "", className: "w-[15rem]"
+        name: "UFC NO.:", value: "", className: "w-[6rem]"
     },
 ]
 
 const personalInfoOne = [
     {
-        name: "Name:", value: "", className: "w-[25rem]"
+        name: "Name:", value: "", className: "w-[13rem]"
     },
     {
-        name: "Sex:", value: "", className: "w-1/4"
+        name: "Sex:", value: "", className: "w-[6rem]"
     },
     {
-        name: "Date of Birth:", value: "", className: "w-[19.2rem]"
+        name: "Date of Birth:", value: "", className: "w-[7.3rem]"
     },
     {
-        name: "Birth Order:", value: "", className: "w-1/4"
+        name: "Birth Order:", value: "", className: "w-[6rem]"
     },
     
 ]
@@ -66,31 +66,31 @@ const placeOfDeliveryFieldGroups = [
 
 const personalInfoTwo = [
     {
-        name: "Mother:", value: "", className: "w-[24rem]"
+        name: "Mother:", value: "", className: "w-[13rem]"
     },
     {
-        name: "Age:", value: "", className: "w-1/4"
+        name: "Age:", value: "", className: "w-[5.2rem]"
     },
     {
-        name: "Occupation:", value: "", className: "w-[35.5rem]"
+        name: "Occupation:", value: "", className: "w-[19rem]"
     },
     {
-        name: "Father:", value: "", className: "w-[24.5rem]"
+        name: "Father:", value: "", className: "w-[13.5rem]"
     },
     {
-        name: "Age:", value: "", className: "w-1/4"
+        name: "Age:", value: "", className: "w-[5.2rem]"
     },
     {
-        name: "Occupation:", value: "", className: "w-[35.5rem]"
+        name: "Occupation:", value: "", className: "w-[19rem]"
     },
     {
-        name: "Complete Address w/ landmarks:", value: "", className: "w-[27rem]"
+        name: "Complete Address w/ landmarks:", value: "", className: "w-[10.6rem]"
     },
     {
-        name: "Type of Feeding", value: "", className: "w-[33.7rem]"
+        name: "Type of Feeding", value: "", className: "w-[17.3rem]"
     },
     {
-        name: "Date referred for newborn screening:", value: "", className: "w-[25.3rem]"
+        name: "Date referred for newborn screening:", value: "", className: "w-[15rem]"
     }
 ]
 
@@ -106,16 +106,16 @@ const personalInfoTwoFieldGroups = [
 
 const childInfo = [
     {
-        name: "Data assessed:", value: "", className: " w-[35rem]"
+        name: "Data assessed:", value: "", className: " w-[13rem]"
     }, 
     {
-        name: "TT status of mother:", value: "", className: "w-[33rem]"
+        name: "TT status of mother:", value: "", className: "w-[10.8rem]"
     },
     {
-        name: "Anemic children 2-59 mos. Seen:", value: "", className: "w-[28rem]"
+        name: "Anemic children 2-59 mos. Seen:", value: "", className: "w-[6rem]"
     },
     {
-        name: "Anemic children 2-59 mos. Given Iron:", value: "", className: "w-[26rem]"
+        name: "Anemic children 2-59 mos. Given Iron:", value: "", className: "w-[6rem]"
     },
     {
         name: "Birthwt:", value: "", className: "w-1/4"
@@ -160,7 +160,14 @@ type immunizations = {
 const columns: ColumnDef<immunizations>[] = [
     {
         accessorKey: "typeOfImmunization",
-        header: "Type of Immunization",     
+        header: "Type of Immunization",
+        cell: ({ row }) => {
+            const vaccines = ["BCG", "Hep.B", "PCV", "OPV", "AMV", "Prevalent"].includes(row.original.typeOfImmunization)
+
+            return (
+                <div className={vaccines ? "w-7" : "w-8"}>{row.original.typeOfImmunization}</div>
+            )
+        }
     },
     {
         accessorKey: "wtIn24hrs",
@@ -169,7 +176,7 @@ const columns: ColumnDef<immunizations>[] = [
             const noInputs = ["PCV", "OPV", "AMV", "Prevalent"].includes(row.original.typeOfImmunization);
         
             return (
-                <div className={noInputs ? "bg-black h-8 w-full" : "h-8 w-full"}
+                <div className={noInputs ? "bg-black h-5 w-full" : "h-5 w-full"}
                     style={{
                         margin: 0,
                         padding: 0
@@ -181,14 +188,35 @@ const columns: ColumnDef<immunizations>[] = [
     {
         accessorKey: "first",
         header: "1st",
+        cell: ({ row }) => {
+            const firstColumn = ["BCG", "Hep.B", "PCV", "OPV", "AMV", "Prevalent"].includes(row.original.typeOfImmunization)
+
+            return (
+                <div className={firstColumn ? "w-8" : "w-8"}></div>
+            );
+        },
     },
     {
         accessorKey: "second",
         header: "2nd",
+        cell: ({ row }) => {
+            const secondColumn = ["BCG", "Hep.B", "PCV", "OPV", "AMV", "Prevalent"].includes(row.original.typeOfImmunization)
+
+            return (
+                <div className={secondColumn ? "w-8" : "w-8"}></div>
+            )
+        }
     },
     {
         accessorKey: "third",
         header: "3rd",
+        cell: ({ row }) => {
+            const thirdColumn = ["BCG", "Hep.B", "PCV", "OPV", "AMV", "Prevalent"].includes(row.original.typeOfImmunization)
+
+            return (
+                <div className={thirdColumn ? "w-8" : "w-8"}></div>
+            )
+        }
     }
 ]
 
@@ -236,20 +264,7 @@ const ppcColumns= [
 
 const ppcData = [
     { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
-    { ppcDate: "", ppcAge: "", ppcWt: "", ppcTemp: "", ppcHt: "", ppcFindings: "", ppcNotes: "" },
+    
 ]
 
 // input line readOnly component
@@ -260,7 +275,7 @@ export const InputLine = ({className}: {className: string}) => (
 
 export default function ChildHealthViewing(){
     return(
-        <div className="w-full">
+        <div className="w-full text-[12px]">
             <div className="flex">
                 <Link to="/invtablechr">
                     <Button 
@@ -283,7 +298,7 @@ export default function ChildHealthViewing(){
             </div>
             
 
-            <div className=" w-full mx-auto m-3 p-10 border border-gray-300 bg-white">
+            <div className=" w-[816px] h- mx-auto m-3 p-5 border border-gray-300 bg-white">
                 <div className="flex flex-col m-5">
                     <div>
                         <p className="text-center mt-10 text-2xl underline"><b>CHILD HEALTH RECORD</b></p>
@@ -294,7 +309,7 @@ export default function ChildHealthViewing(){
                         {idInfo.map((info) => (
                             <div className="flex justify-end ">
                                 <React.Fragment>
-                                    <Label className="mt-4 mb-3">{info.name}</Label>
+                                    <Label className="text-[12px] mt-4">{info.name}</Label>
                                     <InputLine className={info.className}/>
                                 </React.Fragment>
                             </div>
@@ -305,10 +320,10 @@ export default function ChildHealthViewing(){
                         {/* personal info one */}
                         <div className="flex flex-col w-full">
                             {personalInfoOneFieldGroups.map((group, index) => (
-                                <div className="flex mb-3" key={index}>
+                                <div className="flex" key={index}>
                                     {group.map((info, i) => (
                                         <React.Fragment key={i}>
-                                            <Label className="mt-4">{info.name}</Label>
+                                            <Label className="text-[12px] mt-4">{info.name}</Label>
                                             <InputLine className={info.className} />
                                         </React.Fragment>
                                     ))}
@@ -316,7 +331,7 @@ export default function ChildHealthViewing(){
                             ))}
                             
                             <div className="flex mt-5">
-                                <Label className="mr-2">Place of Delivery:</Label>
+                                <Label className="text-[12px] mr-2">Place of Delivery:</Label>
                                 <div className="flex flex-col">
                                     {placeOfDeliveryFieldGroups.map((group, index) => (
                                         <div className="flex" key={index}>
@@ -325,7 +340,7 @@ export default function ChildHealthViewing(){
                                                     <RadioGroup>
                                                         <RadioGroupItem value={info.value}/>
                                                     </RadioGroup>
-                                                    <Label className="ml-1 mr-7 mb-3">{info.name}</Label>
+                                                    <Label className="text-[12px] ml-1 mr-5 mb-3">{info.name}</Label>
                                                 </React.Fragment>
                                             ))}
                                         </div>
@@ -335,10 +350,10 @@ export default function ChildHealthViewing(){
 
                             {/* personal info two */}
                             {personalInfoTwoFieldGroups.map((group, index) => (
-                                <div className="flex mb-3" key={index}>
+                                <div className="flex" key={index}>
                                     {group.map((info, i) => (
                                         <React.Fragment key={i}>
-                                            <Label className="mt-4">{info.name}</Label>
+                                            <Label className="text-[12px] mt-4">{info.name}</Label>
                                             <InputLine className={info.className}/>
                                         </React.Fragment>
                                     ))}
@@ -347,7 +362,7 @@ export default function ChildHealthViewing(){
 
                             {/* exclusive breastfeeding */}
                             <div className="flex flex-col mt-4">
-                                <Label>Exclusive BF check:</Label>
+                                <Label className="text-[12px]">Exclusive BF check:</Label>
                                 <table className="border border-black mr-6">
                                     <thead>
                                         <tr>
@@ -373,14 +388,15 @@ export default function ChildHealthViewing(){
                         {/* immunization table */}
                         <div className="w-full">
                             <div className="flex flex-col">
-                                <DataTableViewing columns={columns} data={data}/>
-                            
+                                <div>
+                                    <DataTableViewing columns={columns} data={data}/>
+                                </div>
                                 <div className="flex flex-col mt-3">
-                                    <Label>Child protected at birth:</Label>
+                                    <Label className="text-[12px]">Child protected at birth:</Label>
                                     {childInfo.map((info) => (
-                                        <div className="flex mb-3">
+                                        <div className="flex">
                                             <React.Fragment>
-                                                <Label className="mt-4">{info.name}</Label>
+                                                <Label className="text-[12px] mt-4">{info.name}</Label>
                                                 <InputLine className={info.className}></InputLine>
                                             </React.Fragment>
                                         </div>
@@ -397,9 +413,9 @@ export default function ChildHealthViewing(){
                     <div className="flex justify-end">
                         <div className="flex flex-col">
                             {ironDates.map((info) => (
-                                <div className="flex mb-3">
+                                <div className="flex">
                                     <React.Fragment>
-                                        <Label className="mt-4">{info.name}</Label>
+                                        <Label className="text-[12px] mt-4">{info.name}</Label>
                                         <InputLine className={info.className}/>
                                     </React.Fragment>
                                 </div>
@@ -409,7 +425,7 @@ export default function ChildHealthViewing(){
                         <div className="flex">
                             {vitaminDates.map((info) => (
                                 <React.Fragment>
-                                    <Label className="mt-4">{info.name}</Label>
+                                    <Label className="text-[12px] mt-4">{info.name}</Label>
                                     <InputLine className={info.className}/>
                                 </React.Fragment>
                             ))}
@@ -417,7 +433,7 @@ export default function ChildHealthViewing(){
                     </div>
 
                     {/* postpartum check table */}
-                    <div className="w-full">
+                    <div className="w-full mt-4">
                         <DataTableViewing columns={ppcColumns} data={ppcData}/>
                     </div>
                     

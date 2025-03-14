@@ -1,21 +1,21 @@
 "use client"
-
-import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
-import { FormProvider } from "react-hook-form"
-import PrenatalFormFirstPg from "./prenatal-form-firstpg"
-import { useForm } from "react-hook-form"
-import { Card } from "@/components/ui/card/card"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-// import { Button } from "@/components/ui/button"
-import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useState } from "react"
 
+import { FormProvider } from "react-hook-form"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+
+import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
+import PrenatalFormFirstPg from "./prenatal-form-firstpg"
+import PrenatalFormSecPg from "./prenatal-form-secpg"
+
+import { Card } from "@/components/ui/card/card"
+
+// import { Button } from "@/components/ui/button"
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 
 
-// interface PrenatalFormProps {
-//     recordType: string;
-// }
 
 export default function PrenatalForm(){
     const defaultValues = generateDefaultValues(PrenatalFormSchema)
@@ -46,7 +46,11 @@ export default function PrenatalForm(){
                         />
                     )}
                     {currentPage === 2 && (
-                        <></>
+                        <PrenatalFormSecPg 
+                            form={form}
+                            onSubmit={()=>nextPage()}
+                            back={()=>prevPage()}
+                        />
                     )}
                 </FormProvider>
                 

@@ -47,7 +47,7 @@ export const PrenatalFormSchema = z.object({
 
     // previous pregnancy
     previousPregnancy: z.object({
-        dateOfDelivery: z.string().optional(),
+        dateOfDelivery: z.string().date().optional(),
         outcome: z.string().optional(),
         typeOfDelivery: z.string().optional(),
         babysWt: z.number().optional(),
@@ -68,8 +68,8 @@ export const PrenatalFormSchema = z.object({
         para: z.number().default(0),
         fullterm: z.number().default(0),
         preterm: z.number().default(0),
-        lmp: z.string().min(1, 'LMP is required'),
-        edc: z.string().min(1, 'EDC is required')
+        lmp: z.string().date(),
+        edc: z.string().date(),
     }),
 
     // laboratory results
