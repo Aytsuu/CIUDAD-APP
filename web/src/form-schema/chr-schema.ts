@@ -13,28 +13,36 @@ export const VitalSignSchema = z.object({
 });
 
 export const BasicInfo = z.object({
-  familyNo: z.string().min(1, 'Family number is required'),
-  ufcNo: z.string().min(1, 'UFC number is required'),
-  childFname: z.string().min(1, 'Child first name is required'),
-  childLname: z.string().min(1, 'Child last name is required'),
-  childMname: z.string().min(1, 'Child middle name is required'),
-  childSex: z.string().min(1, 'Child sex is required'),
-  childDob: z.string().min(1, 'Child date of birth is required'),
-  childPob: z.string().min(1, 'Child place of birth is required'),
-  motherFname: z.string().min(1, 'Mother first name is required'),
-  motherLname: z.string().min(1, 'Mother last name is required'),
-  motherMname: z.string().min(1, 'Mother middle name is required'),
-  motherAge: z.string().min(1, 'Mother age is required'),
-  motherOccupation: z.string().min(1, 'Mother occupation is required'),
-  fatherFname: z.string().min(1, 'Father first name is required'),
-  fatherLname: z.string().min(1, 'Father last name is required'),
-  fatherMname: z.string().min(1, 'Father middle name is required'),
-  fatherAge: z.string().min(1, 'Father age is required'),
-  fatherOccupation: z.string().min(1, 'Father occupation is required'),
-  address: z.string().min(1, 'Address is required'),
+  familyNo: z.string().min(1, 'required'),
+  ufcNo: z.string().min(1, 'required'),
+  childFname: z.string().min(1, 'required'),
+  childLname: z.string().min(1, 'required'),
+  childMname: z.string(),
+  childSex: z.string().min(1, ' required'),
+  childDob: z.string().min(1, 'required'),
+  childPob: z.string().min(1, 'required'),
+  motherFname: z.string().min(1, 'required'),
+  motherLname: z.string().min(1, 'required'),
+  motherMname: z.string(),
+  motherAge: z.string().min(1, 'required'),
+  motherOccupation: z.string().min(1, 'required'),
+  fatherFname: z.string().min(1, 'required'),
+  fatherLname: z.string().min(1, 'required'),
+  fatherMname: z.string(),
+  fatherAge: z.string().min(1, 'required'),
+  fatherOccupation: z.string().min(1, 'required'),
+  // address: z.string().min(1, 'Address is required'),
   landmarks: z.string().optional(),
   isTransient: z.string().default('Resident'),
+  houseno:z.string(),
+  street: z.string().optional(),
+  sitio: z.string().optional(),
+  barangay: z.string().min(1, "required"),
+  province: z.string().optional(),
+  city: z.string().optional(),
 });
+
+
 
 export const ChildDetails = z.object({
   hasDisability: z.boolean().optional(),
@@ -50,13 +58,14 @@ export const ChildDetails = z.object({
   hasEdema: z.boolean().optional(),
   edemaSeverity: z.string().optional().default('N/A'),
   BFdates: z.array(z.string()).optional(), // Remove if not needed
+  dateNewbornScreening:z.string(),
 });
 
 export const Supplement = z.object({
   vitaminRecords: z
     .array(
       z.object({
-        vitaminType: z.string().min(1, 'Vitamin type is required'),
+        vitaminType: z.string().min(1, 'required'),
         date: z.string().min(1, 'Date is required'),
       })
     )
@@ -65,9 +74,9 @@ export const Supplement = z.object({
   ironDates: z
     .array(
       z.object({
-        ironType: z.string().min(1, 'Iron type is required'),
-        givenDate: z.string().min(1, 'Given date is required'),
-        completedDate: z.string().min(1, 'Completed date is required'),
+        ironType: z.string().min(1, 'required'),
+        givenDate: z.string().min(1, 'required'),
+        completedDate: z.string().min(1, 'required'),
       })
     )
     .optional()
@@ -79,9 +88,9 @@ export const VaccinesSchema = z.object({
     .array(
       z.object({
         id: z.number(),
-        vaccineType: z.string().min(1, 'Vaccine type is required'),
-        dose: z.string().min(1, 'Dose is required'),
-        date: z.string().min(1, 'Date is required'),
+        vaccineType: z.string().min(1, 'required'),
+        dose: z.string().min(1, 'required'),
+        date: z.string().min(1, 'required'),
       })
     )
     .optional()

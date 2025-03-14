@@ -1,84 +1,156 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { useForm, useFieldArray } from "react-hook-form";
+import type { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
+import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Baby, Calendar, CirclePlus, Trash2, ChevronLeft } from "lucide-react";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from "@/components/ui/card/card";
-import { Calendar, Syringe } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import ChildVaccines from "./ChildVaccines";
-import { Link } from "react-router";
-import { ChevronLeft, Search } from "lucide-react";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Link } from "react-router-dom";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { Label } from "@/components/ui/label"; // Ensure Label is imported
+import { DataTable } from "@/components/ui/table/data-table";
 
-type Page2FormData = z.infer<typeof ChildHealthFormSchema>;
+interface Option {
+  id: string;
+  name: string;
+}
+
+const initialCategories: Option[] = [
+  { id: "tablet", name: "Tablet" },
+  { id: "syrup", name: "Syrup" },
+  { id: "injection", name: "Injection" },
+];
+
+type Page1FormData = z.infer<typeof ChildHealthFormSchema> & {
+  dates?: string[];
+};
 
 type Page1Props = {
   onPrevious1: () => void;
   onNext3: () => void;
-  updateFormData: (data: Partial<Page2FormData>) => void;
-  formData: Page2FormData;
+  updateFormData: (data: Partial<Page1FormData>) => void;
+  formData: Page1FormData;
 };
 
-export default function ChildHRPage2({
+export default function ChildHRPage3({
   onPrevious1,
   onNext3,
   updateFormData,
   formData,
 }: Page1Props) {
-  const form = useForm<Page2FormData>({
-    defaultValues: { vaccines: formData.vaccines || [] },
+  const form = useForm<Page1FormData>({
+    defaultValues: {
+      ...formData,
+      hasDisability: formData.hasDisability || false,
+      hasEdema: formData.hasEdema || false,
+      disabilityTypes: formData.disabilityTypes || [],
+    },
   });
 
-  const { handleSubmit, control, setValue } = form;
-  const [vaccines, setVaccines] = useState(formData.vaccines ?? []);
-  const [newVaccine, setNewVaccine] = useState({
-    vaccineType: "",
-    dose: "",
-    date: new Date().toISOString().split("T")[0],
+  const [categories, setCategories] = useState<Option[]>(initialCategories);
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "disabilityTypes", // Name of the field array
   });
 
+  const { handleSubmit, reset, watch, setValue } = form;
+  const hasDisability = watch("hasDisability");
+  const hasEdema = watch("hasEdema");
+
+  const [dates, setDates] = useState<string[]>(formData.dates || []);
+  const [currentDate, setCurrentDate] = useState<string>("");
+
+  const [disabilityTypes, setDisabilityTypes] = useState([
+    { id: "diabetes", name: "Diabetes" },
+    { id: "heartache", name: "Heart Ache" },
+    { id: "fever", name: "Fever" },
+  ]);
+
+  const [edemaSeverity] = useState([
+    { id: "mild", name: "Mild" },
+    { id: "moderate", name: "Moderate" },
+    { id: "severe", name: "Severe" },
+  ]);
+
+  // Sync form state with formData changes
   useEffect(() => {
-    setVaccines(formData.vaccines ?? []);
-  }, [formData]);
+    reset({
+      ...formData,
+      hasDisability: formData.hasDisability || false,
+      hasEdema: formData.hasEdema || false,
+      disabilityTypes: formData.disabilityTypes || [],
+    });
+    setDates(formData.dates || []);
+  }, [formData, reset]);
 
-  const addVac = () => {
-    if (newVaccine.vaccineType && newVaccine.dose && newVaccine.date) {
-      const vaccineToAdd = {
-        id: Date.now(),
-        ...newVaccine,
-      };
-      const updatedVaccines = [...vaccines, vaccineToAdd];
-      setVaccines(updatedVaccines);
-      setValue("vaccines", updatedVaccines);
-      updateFormData({ vaccines: updatedVaccines });
-      setNewVaccine({
-        vaccineType: "",
-        dose: "",
-        date: new Date().toISOString().split("T")[0],
-      });
+  const onSubmitForm = (data: Page1FormData) => {
+    updateFormData({ ...data, disabilityTypes: data.disabilityTypes });
+    console.log("page 3", data);
+    onNext3();
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleString("default", { month: "long", year: "numeric" });
+  };
+
+  const handleAddDate = () => {
+    if (currentDate) {
+      const formattedDate = formatDate(currentDate);
+      const updatedDates = [...dates, formattedDate];
+      setDates(updatedDates);
+      setValue("dates", updatedDates);
+      setCurrentDate("");
     }
   };
 
-  const deleteVac = (id: number) => {
-    const updatedVaccines = vaccines.filter((vac) => vac.id !== id);
-    setVaccines(updatedVaccines);
-    setValue("vaccines", updatedVaccines);
-    updateFormData({ vaccines: updatedVaccines });
+  const handleDeleteDate = (index: number) => {
+    const updatedDates = dates.filter((_, i) => i !== index);
+    setDates(updatedDates);
+    setValue("dates", updatedDates);
+  };
+
+  const handleAddDisability = (label: string) => {
+    const newDisability = {
+      id: String(disabilityTypes.length + 1), // Generate a unique ID
+      name: label,
+    };
+    setDisabilityTypes((prev) => [...prev, newDisability]); // Add to disabilityTypes
+    append(newDisability); // Add to form state
+  };
+
+  const handlePrevious = () => {
+    const currentFormData = form.getValues();
+    updateFormData({
+      ...currentFormData,
+      disabilityTypes: currentFormData.disabilityTypes,
+    });
+    onPrevious1();
   };
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row  gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <Link to="/invtablechr">
           <Button
             className="text-black p-2 mb-2 self-start"
@@ -96,163 +168,228 @@ export default function ChildHRPage2({
           </p>
         </div>
       </div>
-      <div className="w-full  bg-white rounded-lg shadow  md:p-6 lg:p-8">
+      <div className="bg-white rounded-lg shadow">
         <Form {...form}>
           <form
-            onSubmit={handleSubmit((data) => {
-              console.log("pAGE 2:", data);
-              onNext3();
-            })}
-            className="space-y-6"
+            onSubmit={handleSubmit(onSubmitForm)}
+            className="space-y-6 p-4 md:p-6 lg:p-8"
           >
-            <h3 className="font-semibold text-lg">Type of Immunization</h3>
-            <div className="flex flex-col sm:flex-row gap-2">
+            {/* Disability Section */}
+            <div>
               <FormField
-                control={control}
-                name="vaccines"
-                render={() => (
-                  <FormItem className="w-full sm:w-[200px]">
+                control={form.control}
+                name="hasDisability"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
-                      <SelectLayout
-                        className="w-full"
-                        label="Vaccine Type"
-                        placeholder="Select Vaccine"
-                        options={[
-                          { id: "BCG", name: "BCG" },
-                          { id: "Polio", name: "Polio" },
-                          { id: "Measles", name: "Measles" },
-                        ]}
-                        value={newVaccine.vaccineType}
-                        onChange={(e) =>
-                          setNewVaccine((prev) => ({ ...prev, vaccineType: e }))
-                        }
+                      <Checkbox
+                        id="hasDisability"
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                        }}
                       />
                     </FormControl>
+                    <FormLabel htmlFor="hasDisability" className="leading-none">
+                      Does the child have any known disabilities?
+                    </FormLabel>
                   </FormItem>
                 )}
               />
-              <FormField
-                control={control}
-                name="vaccines"
-                render={() => (
-                  <FormItem className="w-full sm:w-[200px]">
-                    <FormControl>
-                      <SelectLayout
-                        className="w-full"
-                        label="Dose"
-                        placeholder="Select Dose"
-                        options={[
-                          { id: "1st Dose", name: "1st Dose" },
-                          { id: "2nd Dose", name: "2nd Dose" },
-                        ]}
-                        value={newVaccine.dose}
-                        onChange={(e) =>
-                          setNewVaccine((prev) => ({ ...prev, dose: e }))
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="vaccines"
-                render={() => (
-                  <FormItem className="w-full sm:w-[200px]">
-                    <FormControl>
-                      <Input
-                        type="date"
-                        value={newVaccine.date}
-                        onChange={(e) =>
-                          setNewVaccine((prev) => ({
-                            ...prev,
-                            date: e.target.value,
-                          }))
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="button"
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4"
-                onClick={addVac}
-                disabled={
-                  !newVaccine.vaccineType ||
-                  !newVaccine.dose ||
-                  !newVaccine.date
-                }
-              >
-                Add
-              </Button>
-            </div>
-            <div className="bg-gray-50">
-              <CardHeader className="w-full flex-row flex justify-between items-center gap-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Syringe className="h-5 w-5 text-blue" /> Administered
-                  Vaccines History
-                </CardTitle>
 
-                <DialogLayout
-                  trigger={
-                    <div className="text-blue italic underline px-4 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors">
-                      List of Vaccines To be Administered {">"}
-                    </div>
-                  }
-                  className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                  title="Vaccines"
-                  description="List of all Vaccines to be  administered ."
-                  mainContent={<ChildVaccines />}
-                />
-              </CardHeader>
-              <div>
-                {vaccines.length === 0 ? (
-                  <p>No vaccines added yet</p>
-                ) : (
-                  vaccines.map((vac) => (
-                    <div
-                      key={vac.id}
-                      className="bg-white rounded-lg p-4 shadow-sm border"
+              {hasDisability && (
+                <div className="ml-10">
+                  {/* Header with Add Button */}
+                  <div className="flex items-center gap-2 mb-2 mt-2  ">
+                    <Button
+                      type="button"
+                      onClick={() => append({ id: "", name: "" })}
+                      className=" bg-green-500 text-white  shadow-none hover:bg-green-400 px-2"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-20">
-                          <div>
-                            <span className="font-semibold">
-                              {vac.vaccineType}
-                            </span>
-                          </div>
-                          <div className="text-sm  flex items-center gap-2 text-gray-600">
-                            <Calendar className="h-4 w-4 inline-block" />{" "}
-                            {vac.date}
-                          </div>
-                          <Badge variant="secondary">{vac.dose}</Badge>
+                      Add Disability
+                      <CirclePlus className="font-medium" />
+                    </Button>
+                  </div>
+
+                  {/* Dynamic Fields */}
+                  <div className="space-y-1 flex gap-2 flex-col">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        {/* SelectLayoutWithAdd Component */}
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`disabilityTypes.${index}.name`}
+                            render={({ field }) => (
+                              <SelectLayoutWithAdd
+                                className="w-full"
+                                label="Category"
+                                placeholder="Select"
+                                options={categories}
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
+                            )}
+                          />
                         </div>
-                        <div className="flex items-center gap-2">
+
+                        {/* Delete Button */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          className="h-8 w-8 bg-red-500 text-white hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Edema Section */}
+            <div>
+              <FormField
+                control={form.control}
+                name="hasEdema"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        id="hasEdema"
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="hasEdema" className="leading-none">
+                      Does the child have any visible swelling (edema)?
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              {hasEdema && (
+                <FormField
+                  control={form.control}
+                  name="edemaSeverity"
+                  render={({ field }) => (
+                    <FormItem className="w-full sm:w-[200px] pl-10">
+                      <FormLabel className="mb-2 sm:mb-0 text-blue">
+                        Select Severity
+                      </FormLabel>
+                      <FormControl>
+                        <SelectLayout
+                          className="w-full"
+                          label="Select an option"
+                          placeholder="Select"
+                          options={edemaSeverity}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            {/* Exclusive BF Check Section */}
+            <div className="flex flex-col justify-between sm:flex-row gap-8">
+              <div className="flex flex-col space-y-2 pt-5">
+                <FormLabel className="font-semibold text-gray-700">
+                  Add Exclusive BF Check:
+                </FormLabel>
+
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                  <FormField
+                    control={form.control}
+                    name="BFdates"
+                    render={({ field }) => (
+                      <FormItem className="w-full sm:w-[220px]">
+                        <FormControl>
+                          <div className="flex items-center">
+                            <Input
+                              type="month"
+                              value={currentDate}
+                              onChange={(e) => setCurrentDate(e.target.value)}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4"
+                    onClick={handleAddDate}
+                    disabled={!currentDate}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Exclusive BF Check History Section */}
+              <Card className="w-full bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Baby className="h-6 w-6 text-blue" />
+                    Exclusive BF Check History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col pl-2">
+                    {dates.length === 0 ? (
+                      <p>No dates added yet</p>
+                    ) : (
+                      dates.map((date, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Calendar className="h-5 w-5 text-gray-500" />
+                            <span className="text-gray-700">{date}</span>
+                          </div>
                           <Button
+                            type="button"
                             variant="destructive"
-                            onClick={() => deleteVac(vac.id)}
+                            onClick={() => handleDeleteDate(index)}
                           >
                             Delete
                           </Button>
                         </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div className="flex w-full justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={onPrevious1}
-                className="w-[100px]"
-              >
-                Previous
-              </Button>
-              <Button type="submit" className="w-[100px]">
-                Next
-              </Button>
+
+            {/* Navigation Buttons */}
+            <div className="flex w-full justify-end">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrevious}
+                  className="w-[100px]"
+                >
+                  Previous
+                </Button>
+                <Button type="submit" className="w-[100px]">
+                  Next
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

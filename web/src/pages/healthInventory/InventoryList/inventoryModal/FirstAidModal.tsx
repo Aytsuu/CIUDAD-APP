@@ -18,7 +18,7 @@ import {
 } from "@/form-schema/inventory/inventoryListSchema";
 
 interface Option {
-  id: string;
+  id: string; 
   name: string;
 }
 

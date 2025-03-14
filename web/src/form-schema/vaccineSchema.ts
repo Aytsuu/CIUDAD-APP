@@ -8,7 +8,7 @@ export const VitalSignsSchema = z.object({
   bpsystolic: z.number().min(1, "Blood pressure Systolic is required"),
   bpdiastolic: z.number().min(1, "Blood pressure Diastolic is required"),
 
-});
+}); 
 
 // Schema for vaccine details
 export const VaccineSchema = z.object({

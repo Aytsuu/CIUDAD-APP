@@ -22,8 +22,6 @@ import { ChevronLeft, Search } from "lucide-react";
 import { Link } from "react-router";
 import { useLocation } from "react-router-dom";
 
-
-
 type Page1FormData = z.infer<typeof ChildHealthFormSchema>;
 type Page1Props = {
   onNext2: () => void;
@@ -37,7 +35,7 @@ export default function ChildHRPage1({
   formData,
 }: Page1Props) {
   const form = useForm<Page1FormData>({
-    resolver: zodResolver(ChildHealthFormSchema),
+    // resolver: zodResolver(ChildHealthFormSchema),
     defaultValues: formData,
   });
 
@@ -81,8 +79,15 @@ export default function ChildHRPage1({
     { name: "fatherMname", label: "Middle Name", type: "text" },
     { name: "fatherAge", label: "Age", type: "number" },
     { name: "fatherOccupation", label: "Occupation", type: "text" },
-    { name: "address", label: "Address:", type: "text" },
     { name: "landmarks", label: "Landmarks:", type: "text" },
+  ];
+  const addressFields = [
+    { name: "houseno", label: "House No.", placeholder: "Enter house number" },
+    { name: "street", label: "Street", placeholder: "Enter street" },
+    { name: "sitio", label: "Sitio", placeholder: "Enter sitio" },
+    { name: "barangay", label: "Barangay", placeholder: "Enter barangay" },
+    { name: "city", label: "City", placeholder: "Enter city" },
+    { name: "province", label: "Province", placeholder: "Enter province" },
   ];
 
   return (
@@ -165,7 +170,9 @@ export default function ChildHRPage1({
                   name={name as keyof Page1FormData}
                   render={({ field }) => (
                     <FormItem className="flex-1 min-w-[200px]">
-                      <FormLabel>{label}</FormLabel>
+                      <FormLabel className="text-black/65">
+                        {label} <span className="text-red-600">*</span>{" "}
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -181,9 +188,10 @@ export default function ChildHRPage1({
             </div>
 
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">
+              <h2 className="font-bold text-lg text-darkBlue2 mt-10">
                 Child's Information
-              </Label>
+              </h2>
+
               <div className="flex flex-wrap gap-4">
                 {formFields
                   .slice(2, 6)
@@ -194,7 +202,7 @@ export default function ChildHRPage1({
                       name={name as keyof Page1FormData}
                       render={({ field }) => (
                         <FormItem className="flex-1 min-w-[200px]">
-                          <FormLabel>{label}</FormLabel>
+                          <FormLabel className="text-black/65">{label}</FormLabel>
                           <FormControl>
                             {type === "select" ? (
                               <SelectLayout
@@ -234,7 +242,7 @@ export default function ChildHRPage1({
                             : "w-[200px]"
                         }
                       >
-                        <FormLabel>{label}</FormLabel>
+                        <FormLabel className="text-black/65">{label}</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -251,18 +259,24 @@ export default function ChildHRPage1({
             </div>
 
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">
+              <h2 className="font-bold text-lg text-darkBlue2">
                 Mother's Information
-              </Label>
+              </h2>
               <div className="flex flex-wrap gap-4">
-                {formFields.slice(8, 12).map(({ name, label, type }) => (
+                {formFields.slice(8, 12).map(({ name, label, type }, index) => (
                   <FormField
                     key={name}
                     control={form.control}
                     name={name as keyof Page1FormData}
                     render={({ field }) => (
                       <FormItem className="flex-1 min-w-[200px]">
-                        <FormLabel>{label}</FormLabel>
+                        <FormLabel className="text-black/65">
+                          {label}
+                          {/* Conditionally render the asterisk */}
+                          {index !== 2 && (
+                            <span className="text-red-600">*</span>
+                          )}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -276,6 +290,7 @@ export default function ChildHRPage1({
                   />
                 ))}
               </div>
+
               <div className="flex flex-wrap gap-4">
                 {formFields.slice(12, 13).map(({ name, label, type }) => (
                   <FormField
@@ -284,7 +299,7 @@ export default function ChildHRPage1({
                     name={name as keyof Page1FormData}
                     render={({ field }) => (
                       <FormItem className="w-full md:w-1/2">
-                        <FormLabel>{label}</FormLabel>
+                        <FormLabel className="text-black/65">{label} </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -301,30 +316,39 @@ export default function ChildHRPage1({
             </div>
 
             <div className="space-y-4">
-              <Label className="text-lg font-semibold">
+              <h2 className="font-bold text-lg text-darkBlue2 mt-10">
                 Father's Information
-              </Label>
+              </h2>
+
               <div className="flex flex-wrap gap-4">
-                {formFields.slice(13, 17).map(({ name, label, type }) => (
-                  <FormField
-                    key={name}
-                    control={form.control}
-                    name={name as keyof Page1FormData}
-                    render={({ field }) => (
-                      <FormItem className="flex-1 min-w-[200px]">
-                        <FormLabel>{label}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={type}
-                            value={String(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
+                {formFields
+                  .slice(13, 17)
+                  .map(({ name, label, type }, index) => (
+                    <FormField
+                      key={name}
+                      control={form.control}
+                      name={name as keyof Page1FormData}
+                      render={({ field }) => (
+                        <FormItem className="flex-1 min-w-[200px]">
+                          <FormLabel className="text-black/65">
+                            {label}
+                            {/* Conditionally render the asterisk */}
+                            {index !== 2 && (
+                              <span className="text-red-600">*</span>
+                            )}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type={type}
+                              value={String(field.value)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
               </div>
               <div className="flex flex-wrap gap-4">
                 {formFields.slice(17, 18).map(({ name, label, type }) => (
@@ -334,7 +358,7 @@ export default function ChildHRPage1({
                     name={name as keyof Page1FormData}
                     render={({ field }) => (
                       <FormItem className="w-full md:w-1/2">
-                        <FormLabel>{label}</FormLabel>
+                        <FormLabel className="text-black/65">{label}</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -350,15 +374,41 @@ export default function ChildHRPage1({
               </div>
             </div>
 
+            <h2 className="font-bold text-lg text-darkBlue2 mt-10">Address</h2>
+            {/* Address Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {addressFields.map(({ name, label, placeholder }) => (
+                <FormField
+                  key={name}
+                  control={form.control}
+                  name={name as keyof Page1FormData}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black/65">{label}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          value={String(field.value)}
+                          placeholder={placeholder}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
+
             <div className="flex flex-wrap gap-4">
-              {formFields.slice(18, 20).map(({ name, label, type }) => (
+              {formFields.slice(18).map(({ name, label, type }) => (
                 <FormField
                   key={name}
                   control={form.control}
                   name={name as keyof Page1FormData}
                   render={({ field }) => (
                     <FormItem className="flex-1 min-w-[300px]">
-                      <FormLabel>{label}</FormLabel>
+                      <FormLabel className="text-black/65">{label}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
