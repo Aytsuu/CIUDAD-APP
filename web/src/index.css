@@ -172,15 +172,39 @@ p[data-margin] {
 }
 
 .MuiPaper-root{
-  width: 1000px !important;
-
+  width: 100% !important;
+  padding: auto !important;
+  border-bottom-color: transparent !important;
+  box-sizing: none !important;
+  box-shadow: none !important;
 }
 
 .MuiContainer-root{
-  border: 0px !important;
-  
+  border: none !important;
+  padding: auto !important;
+  border-bottom-color: transparent !important;
 }
 
 .MuiButtonBase-root{
   background-color: #2563EB !important;
+}
+
+.MuiButton-root{
+  margin-left: 100px !important;
+}
+
+.MuiBox-root{
+  box-sizing: none !important;
+  color: transparent !important;
+  padding-bottom: 5px !important;
+  padding-top: 1px !important;
+}
+
+.rbc-calendar{
+  width: 100% !important;
+  padding: auto !important;
+}
+
+.MuiCardContent-root{
+  border-bottom-color: transparent !important;
 }

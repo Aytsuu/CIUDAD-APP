@@ -235,7 +235,7 @@ function WasteIllegalDumping() {
           </div>
         </div>
 
-        <div className="bg-white">
+        <div className="bg-white flex">
           <DataTable columns={columns} data={filteredData} />
         </div>
       </div>

@@ -48,9 +48,9 @@ interface IProps {
   
     return (
       <Dialog open={open} onClose={onClose}>
-        <DialogTitle>Add todo</DialogTitle>
+        <DialogTitle>Add Category</DialogTitle>
         <DialogContent>
-          <DialogContentText>Create todos to add to your Calendar.</DialogContentText>
+          <DialogContentText>Choose a color key for the category to add to your calendar.</DialogContentText>
           <Box>
             <TextField
               name="title"

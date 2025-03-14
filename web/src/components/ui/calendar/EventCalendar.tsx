@@ -175,24 +175,23 @@ const EventCalendar = () => {
       sx={{
         flexGrow: 1,
         py: 1,
-        width: "100%"
       }}
     >
-      <Container sx={{ width: "100%", padding: 0 }}>
-      <Card sx={{ width: "100%", padding: 0 }}>
+      <Container>
+      <Card >
           <CardHeader
             title=""
             subheader=""
           />
-          <CardContent sx={{ width: "100%", padding: 0 }}>
+          <CardContent>
             {/* Updated Button Layout */}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", p:2 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
                 onClick={() => setOpenTodoModal(true)}
                 size="small"
                 variant="contained"
               >
-                Create to-do
+                Add Category
               </Button>
             </Box>
             <br/>
@@ -245,7 +244,7 @@ const EventCalendar = () => {
               }}
               style={{
                 height: 900,
-                width:"100%",
+                width: "100%",
               }}
             />
           </CardContent>
