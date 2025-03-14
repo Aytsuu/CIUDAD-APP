@@ -170,7 +170,7 @@ function DonationTracker() {
           Manage and view donation records
         </p>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Combined Search, Filter, and Create Button Section */}
       <div className="relative w-full hidden lg:flex items-center gap-2 mb-4 justify-between">

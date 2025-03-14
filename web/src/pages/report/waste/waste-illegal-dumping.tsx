@@ -196,7 +196,7 @@ function WasteIllegalDumping() {
           Manage and view illegal dumping reports
         </p>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Filter and Search Section (Right Side) */}
       <div className="relative w-full hidden lg:flex items-center gap-2 mb-4">

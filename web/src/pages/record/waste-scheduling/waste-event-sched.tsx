@@ -2,7 +2,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { FilterAccordion } from '@/components/ui/filter-accordion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -87,7 +88,7 @@ function WasteEventSched() {
                             <FormItem>
                                 <Label>Date:</Label>
                                 <FormControl>
-                                    <Input type="date" placeholder="Date of the event" {...field} className="w-full" />
+                                    <input type="date" placeholder="Date of the event" {...field} className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -101,7 +102,7 @@ function WasteEventSched() {
                             <FormItem>
                                 <Label>Time:</Label>
                                 <FormControl>
-                                    <Input type="time" placeholder="Time of the event" {...field} className="w-full" />
+                                    <input type="time" placeholder="Time of the event" {...field} className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md"/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -161,21 +162,28 @@ function WasteEventSched() {
                     render={({ field }) => (
                         <FormItem className="mt-4">
                             <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <FilterAccordion
-                                title="Select Audience"
-                                options={announcementOptions.map((option) => ({
-                                    ...option,
-                                    checked: field.value?.includes(option.id) || false,
-                                }))}
-                                selectedCount={field.value?.length || 0}
-                                onChange={(id: string, checked: boolean) => {
-                                    const newSelected = checked
-                                        ? [...(field.value || []), id]
-                                        : (field.value || []).filter((category) => category !== id);
-                                    field.onChange(newSelected);
-                                }}
-                                onReset={handleResetAnnouncements}
-                            />
+                            <Accordion type="multiple" className="w-full">
+                                <AccordionItem value="announcements">
+                                    <AccordionTrigger>Select Audience</AccordionTrigger>
+                                    <AccordionContent className='flex flex-col gap-3'>
+                                        {announcementOptions.map((option) => (
+                                            <div key={option.id} className="flex items-center gap-2">
+                                                <Checkbox
+                                                    id={option.id}
+                                                    checked={field.value?.includes(option.id) || false}
+                                                    onCheckedChange={(checked) => {
+                                                        const newSelected = checked
+                                                        ? [...(field.value || []), option.id]
+                                                        : (field.value || []).filter((id) => id !== option.id);
+                                                        field.onChange(newSelected);
+                                                    }}
+                                                />
+                                                <Label htmlFor={option.id}>{option.label}</Label>
+                                            </div>
+                                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                             <FormMessage />
                         </FormItem>
                     )}

@@ -32,7 +32,7 @@ const WasteMainScheduling = () => {
           Manage and view scheduled tasks and events.
         </p>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Filter and Create Button Section */}
       <div className="relative w-full flex items-center gap-2 mb-4">

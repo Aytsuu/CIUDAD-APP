@@ -197,7 +197,7 @@ p[data-margin] {
   box-sizing: none !important;
   color: transparent !important;
   padding-bottom: 5px !important;
-  padding-top: 1px !important;
+  padding-top: 0px !important;
 }
 
 .rbc-calendar{
