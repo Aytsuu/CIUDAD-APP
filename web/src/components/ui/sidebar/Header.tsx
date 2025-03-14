@@ -18,7 +18,7 @@ export function Header() {
       id: "view-profile",
       name: "View Profile",
       icons: <User size={20} />,
-      url: "",
+      url: "/viewprofile",
     },
     {
       id: "settings",

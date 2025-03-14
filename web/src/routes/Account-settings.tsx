@@ -1,8 +1,8 @@
-import AccountSettings from "@/pages/settings/profilesettings"
+import AccountSettings from "@/pages/viewprofile/profilesettings"
 
-export const settings_router = [
+export const viewprofile_router = [
     {
-        path: '/settings',
+        path: '/viewprofile',
         element: <AccountSettings /> 
     }
 ]
