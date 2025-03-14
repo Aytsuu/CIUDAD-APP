@@ -2,35 +2,34 @@
 
 import type React from "react"
 
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 import {
-    Plus,
-    FileInput,
-    ArrowUpDown,
-    Search,
-    ChevronLeft,
-    ChevronRight,
-    Users,
-    Home,
-    UserCog,
-    ArrowUp,
-    ArrowDown,
-  } from "lucide-react"
+  Plus,
+  FileInput,
+  ArrowUpDown,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  Home,
+  UserCog,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu"
-import { Link } from "react-router"
+import { Link as RouterLink } from "react-router"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import { useState, useEffect } from "react"
 import { Separator } from "@/components/ui/separator"
 import CardLayout from "@/components/ui/card/card-layout"
-
+import { Button } from "@/components/ui/button"
 
 type Report = {
   id: string
@@ -41,7 +40,6 @@ type Report = {
   type: string
 }
 
-// Define the columns for the data table
 // Define the columns for the data table
 export const columns: ColumnDef<Report>[] = [
   {
@@ -109,9 +107,9 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <Link to={`/family-profile-view`}>
+      <RouterLink to={`/view-patients-record`}>
         <Button variant="outline">View</Button>
-      </Link>
+      </RouterLink>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -146,9 +144,7 @@ export const reports: Report[] = [
   },
   {
     id: "004",
-
     sitio: "Sitio B",
-
     lastName: "Johnson",
     firstName: "Mary",
     mi: "J",
@@ -175,7 +171,7 @@ const generateMoreData = (): Report[] => {
       lastName: `LastName${i}`,
       firstName: `FirstName${i}`,
       mi: String.fromCharCode(65 + (i % 26)),
-      type: `Resident${(i % 28) + 1}`,
+      type: i % 5 === 0 ? "Transient" : "Resident",
     })
   }
   return moreData
@@ -304,6 +300,14 @@ export default function PatientsRecord() {
   const [filteredData, setFilteredData] = useState<Report[]>(fullDataset)
   const [currentData, setCurrentData] = useState<Report[]>([])
   const [totalPages, setTotalPages] = useState(1)
+  const [filterBy, setFilterBy] = useState("")
+
+  // Calculate statistics
+  const totalPatients = fullDataset.length
+  const residents = fullDataset.filter((patient) => patient.type.includes("Resident")).length
+  const transients = fullDataset.filter((patient) => patient.type.includes("Transient")).length
+  const residentPercentage = Math.round((residents / totalPatients) * 100)
+  const transientPercentage = Math.round((transients / totalPatients) * 100)
 
   // Filter data based on search query
   useEffect(() => {
@@ -312,10 +316,19 @@ export default function PatientsRecord() {
         `${report.id} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.type}`.toLowerCase()
       return searchText.includes(searchQuery.toLowerCase())
     })
-    setFilteredData(filtered)
+
+    // Apply additional filters if needed
+    let filteredDataTemp = filtered
+    if (filterBy === "resident") {
+      filteredDataTemp = filteredDataTemp.filter((report) => report.type.includes("Resident"))
+    } else if (filterBy === "transient") {
+      filteredDataTemp = filteredDataTemp.filter((report) => report.type.includes("Transient"))
+    }
+
+    setFilteredData(filteredDataTemp)
     setTotalPages(Math.ceil(filtered.length / pageSize))
     setCurrentPage(1) // Reset to first page when search changes
-  }, [searchQuery, pageSize])
+  }, [searchQuery, pageSize, filterBy])
 
   // Update data based on page and page size
   useEffect(() => {
@@ -345,30 +358,31 @@ export default function PatientsRecord() {
   }
 
   return (
-    <div className="w-full ">
+    <div className="w-full">
       {/* Header Section */}
       <div className="flex flex-col justify-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patients Records</h1>
+        <h1 className="font-semibold text-xl sm:text-2xl text-black">Patients Records</h1>
         <p className="text-xs sm:text-sm text-darkGray">Manage and view patients information</p>
       </div>
-      <Separator className="bg-gray mb-6 sm:mb-8"/>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <Separator className="bg-gray mb-6 sm:mb-8" />
+
+      {/* Stats Cards with simplified design */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <CardLayout
           cardTitle="Total Patients"
           cardDescription="All registered patients"
           cardContent={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-3xl font-bold text-primary">{fullDataset.length}</span>
+                <span className="text-2xl font-bold">{totalPatients}</span>
                 <span className="text-xs text-muted-foreground">Total records</span>
               </div>
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-primary" />
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           }
-          cardClassName="border-none shadow-md hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-white to-buttonBlue/25"
+          cardClassName="border shadow-sm rounded-lg"
           cardHeaderClassName="pb-2"
           cardContentClassName="pt-0"
         />
@@ -379,20 +393,18 @@ export default function PatientsRecord() {
           cardContent={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-3xl font-bold text-buttonBlue">
-                  {fullDataset.filter((patient) => patient.type.includes("Resident")).length}
-                </span>
+                <span className="text-2xl font-bold">{residents}</span>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  <span>68% of total</span>
+                  <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  <span>{residentPercentage}% of total</span>
                 </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-buttonBlue/10 flex items-center justify-center">
-                <Home className="h-6 w-6 text-buttonBlue" />
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <Home className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           }
-          cardClassName="border-none shadow-md hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-white to-buttonBlue/25"
+          cardClassName="border shadow-sm rounded-lg"
           cardHeaderClassName="pb-2"
           cardContentClassName="pt-0"
         />
@@ -403,20 +415,18 @@ export default function PatientsRecord() {
           cardContent={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-3xl font-bold text-buttonBlue">
-                  {fullDataset.filter((patient) => patient.type.includes("Transient")).length}
-                </span>
+                <span className="text-2xl font-bold">{transients}</span>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  <ArrowDown className="h-3 w-3 mr-1" />
-                  <span>32% of total</span>
+                  <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  <span>{transientPercentage}% of total</span>
                 </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-buttonBlue/10 flex items-center justify-center">
-                <UserCog className="h-6 w-6 text-buttonBlue" />
+              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                <UserCog className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           }
-          cardClassName="border-none shadow-md hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-white to-buttonBlue/25"
+          cardClassName="border shadow-sm rounded-lg"
           cardHeaderClassName="pb-2"
           cardContentClassName="pt-0"
         />
@@ -449,13 +459,11 @@ export default function PatientsRecord() {
         </div>
         <div>
           <div className="flex gap-2">
-          
-            
-            <Link to="/create-patients-record">
+            <RouterLink to="/create-patients-record">
               <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
                 <Plus size={15} /> Create
               </Button>
-            </Link>
+            </RouterLink>
           </div>
         </div>
       </div>
