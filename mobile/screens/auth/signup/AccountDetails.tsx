@@ -19,17 +19,16 @@ export default function AccountDetails(){
   const [showRePassword, setShowRePassword] = React.useState(false);
 
   const handleProceed = () => {
-    // if (!username || !email || !password || !rePass) {
-    //   alert('Error', 'Please fill out all required fields.');
-    //   return;
-    // }
+    if (!username || !email || !password || !rePass) {
+      alert('Please fill out all required fields.');
+      return;
+    }
 
-    // if (password !== rePass) {
-    //   alert('Error', 'Passwords do not match.');
-    //   return;
-    // }
+    if (password !== rePass) {
+      alert('Passwords do not match.');
+      return;
+    }
 
-    // console.log('Proceeding with info:', username, email, password);
     router.push('/personal-information');
   };
 
@@ -70,7 +69,7 @@ export default function AccountDetails(){
                             secureTextEntry={!showPassword}
                         />
 
-                        {password.length > 0 &&
+                        {password.length >= 8 &&
                             <TouchableWithoutFeedback onPress={()=>{setShowPassword(!showPassword)}}>
                                 <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
                                     {showPassword ? <Eye className="text-gray-700"/> : <EyeOff className="text-gray-700"/>}
