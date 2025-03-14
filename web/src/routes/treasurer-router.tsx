@@ -6,11 +6,8 @@ import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests
 import BarangayService from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-barangayService";
 import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budget-plan-main";
 import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
-import AddBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-form";
+import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/treasurer-budgetplan-Form";
 import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-view";
-// import AddBudgetPlan from "@/pages/treasurer-budgetplan/treasurer-budgetplan-form";
-// import TreasurerDashboard from "@/pages/treasurer-dashboard/sample";
-
 
 export const treasurer_router = [
     {
@@ -19,7 +16,7 @@ export const treasurer_router = [
     },
     {
         path: "/treasurer-budgetplan-form",
-        element: <AddBudgetPlan/>
+        element: <CreateBudgetPlanForm/>
     },
     {
         path: '/treasurer-budgetplan-view',

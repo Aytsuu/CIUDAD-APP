@@ -56,13 +56,11 @@ export default function ChildHealthForm() {
   const updateFormData = (data: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
-  // Form submission handler
+  
   const handleSubmit = () => {
     console.log("Submitting Data:", formData);
-    // Add your submission logic here (e.g., API call)
   };
 
-  // Render the current page based on the currentPage state
   return (
     <>
       {currentPage === 1 && (

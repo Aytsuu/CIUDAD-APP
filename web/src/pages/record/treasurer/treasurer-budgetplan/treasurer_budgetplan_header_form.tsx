@@ -8,12 +8,15 @@ import { useForm } from "react-hook-form";
 import {useNavigate } from "react-router";
 
 function CreateBudgetPlanHeader(){
-
     const navigate = useNavigate();
     const form = useForm<z.infer<typeof BudgetHeaderSchema>>({
         resolver: zodResolver(BudgetHeaderSchema),
         defaultValues:{
-            availableResources: "",
+            balance: "",
+            realtyTaxShare: "",
+            taxAllotment: "",
+            clearanceAndCertFees: "",
+            otherSpecificIncome: "",
             actualIncome: "",
             actualRPT: ""
         }
@@ -21,18 +24,70 @@ function CreateBudgetPlanHeader(){
 
     const onSubmit = (values: z.infer<typeof BudgetHeaderSchema>) => {
         console.log(values)
-        navigate("/treasurer-budgetplan-form")
+        navigate("/treasurer-budgetplan-form", {state : values});
     }
     return(
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="flex flex-col gap-4">
-                    <FormField
+                <FormField
                     control={form.control}
-                    name="availableResources"
+                    name="balance"
                     render={({field}) =>(
                         <FormItem>
-                            <FormLabel>NET Available Resources</FormLabel>
+                            <FormLabel>Balance</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                )}></FormField>
+
+                <FormField
+                    control={form.control}
+                    name="realtyTaxShare"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Realty Tax Share</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="taxAllotment"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>National Tax Allotment</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="clearanceAndCertFees"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Clearance & Certification Fees</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="otherSpecificIncome"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Other Specific Income</FormLabel>
                             <FormControl>
                                 <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
                             </FormControl>
