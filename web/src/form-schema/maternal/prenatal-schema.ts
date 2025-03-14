@@ -58,8 +58,8 @@ export const PrenatalFormSchema = z.object({
 
         // pregnant tetanus vaccine
     tetanusToxoid: z.object({
-        ttStatus: z.string().min(1, 'TT Status is required'),
-        ttDateGiven: z.string().min(1, 'Date given is required')
+        ttStatus: z.string(),
+        ttDateGiven: z.string()
     }),
 
     // present pregnancy

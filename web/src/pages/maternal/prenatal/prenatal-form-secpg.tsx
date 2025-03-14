@@ -9,13 +9,25 @@ export default function PrenatalFormSecPg(
         onSubmit: () => void,
     }
 ){
-    const submmit = () => {
-        form.trigger(["previousPregnancy"])
+    const submit = () => {
+        form.trigger(["previousPregnancy", "tetanusToxoid", "presentPregnancy", "labResults"]).then((isValid) => {
+            if(isValid){
+                onSubmit();
+            }
+        })
     }
 
     return(
         <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
-            
+            <Form {...form}>
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    submit();
+                }}
+                >
+                <div></div>
+                </form>
+            </Form>
         </div>
     )
 }

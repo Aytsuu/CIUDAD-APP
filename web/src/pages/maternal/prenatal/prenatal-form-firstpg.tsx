@@ -147,7 +147,6 @@ export default function PrenatalFormFirstPg(
                         e.preventDefault();
                         submit();
                     }}
-                    className="flex flex-col gap-4 px-2 sm:px-6 md:px-12 lg:px-24"
                     >
 
                         <div className="flex justify-between">  
@@ -156,7 +155,7 @@ export default function PrenatalFormFirstPg(
                                 name="motherPersonalInfo.familyNo"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Family No</FormLabel>
+                                        <FormLabel>Family No.</FormLabel>
                                         <FormControl>
                                             <Input {...field} name="family" placeholder="Enter Family No." />
                                         </FormControl>

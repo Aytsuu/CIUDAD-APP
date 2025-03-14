@@ -7,9 +7,7 @@ import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
 import { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "@/components/ui/table/data-table"
-import DataTableViewing from "@/components/ui/table/data-table-viewing"
-import { Checkbox } from "@/components/ui/checkbox"
+import { DataTableViewing } from "@/components/ui/table/data-table-viewing"
 
 const idInfo = [
     {
@@ -151,8 +149,15 @@ const vitaminDates = [
     }
 ]
 
+type immunizations = {
+    typeOfImmunization: string,
+    wtIn24hrs: string,
+    first: string,
+    second: string,
+    third: string
+}
 
-const columns= [
+const columns: ColumnDef<immunizations>[] = [
     {
         accessorKey: "typeOfImmunization",
         header: "Type of Immunization",     
@@ -160,6 +165,18 @@ const columns= [
     {
         accessorKey: "wtIn24hrs",
         header: "wt. in 24 hrs",
+        cell: ({ row }) => {
+            const noInputs = ["PCV", "OPV", "AMV", "Prevalent"].includes(row.original.typeOfImmunization);
+        
+            return (
+                <div className={noInputs ? "bg-black h-8 w-full" : "h-8 w-full"}
+                    style={{
+                        margin: 0,
+                        padding: 0
+                    }}
+                    ></div>
+            );  
+        },
     },
     {
         accessorKey: "first",
@@ -189,7 +206,7 @@ const data = [
 const ppcColumns= [
     {
         accessorKey: "ppcDate",
-        header: "Date",     
+        header: "Date",    
     },
     {
         accessorKey: "ppcAge",
