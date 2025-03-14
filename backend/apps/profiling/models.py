@@ -81,8 +81,7 @@ class FamilyComposition(models.Model):
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
 
     class Meta:
-        db_table = 'family_composition'
-        unique_together = ('fam', 'per')
+        db_table = 'family_composition' 
 
 class Sitio(models.Model):
     sitio_id = models.BigAutoField(primary_key=True)
@@ -114,8 +113,5 @@ class Household(models.Model):
 class Building(models.Model): 
     build_id = models.BigAutoField(primary_key=True)
     build_type = models.CharField(max_length=100)
-    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+    hh= models.ForeignKey(Household, on_delete=models.CASCADE)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'building'

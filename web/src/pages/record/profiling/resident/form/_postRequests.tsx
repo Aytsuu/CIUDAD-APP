@@ -148,23 +148,6 @@ const familyComposition = (family_id: string, personal_id: string) => {
 
 }
 
-const household = async (address_id: string, personal_id: string, householdNo: string) => {
-
-    try{
-        const res = await api.post('profiling/household/', {
-            hh_id: householdNo,
-            hh_date_registered: formatDate(new Date()),
-            per: personal_id,
-            add: address_id
-        })
-
-        return res.data.hh_id
-
-    } catch (err) {
-        console.log(err)
-    }
-}
-
 const building = (householNo: string, family_id: string, building: string) => {
     
     try{
@@ -182,4 +165,4 @@ const building = (householNo: string, family_id: string, building: string) => {
 
 // ----------------------------------------------------------------------------------------------------------------------------
 
-export { address, personal, father, mother, family, dependents, household, building, familyComposition };
+export { address, personal, father, mother, family, dependents, building, familyComposition };

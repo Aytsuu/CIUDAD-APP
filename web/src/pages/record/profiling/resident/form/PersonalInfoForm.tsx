@@ -142,7 +142,7 @@ export default function PersonalInfoForm(
                     Date of Birth
                   </FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <input type="date" className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

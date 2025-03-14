@@ -2,12 +2,9 @@ import { BsChevronLeft } from "react-icons/bs";
 import { Link } from "react-router";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import ProfileViewInfo from "./ProfilingViewInfo";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";

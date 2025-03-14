@@ -1,4 +1,4 @@
-import { Report } from './ProfilingMain'; 
+import { Record } from '../_types';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import {autoTable} from 'jspdf-autotable';
@@ -10,7 +10,7 @@ const formatDate = (dateString: string) => {
 };
 
 // Export to CSV
-export const exportToCSV = (data: Report[]) => {
+export const exportToCSV = (data: Record[]) => {
   // Create CSV content
   const headers = ["Resident No.", "Household No.", "Family No.", "Sitio", "Last Name", "First Name", "M.I", "Suffix", "Date Registered"];
   
@@ -43,7 +43,7 @@ export const exportToCSV = (data: Report[]) => {
 };
 
 // Export to Excel
-export const exportToExcel = (data: Report[]) => {
+export const exportToExcel = (data: Record[]) => {
   // Format data for Excel
   const worksheet = XLSX.utils.json_to_sheet(data.map(row => ({
     'Resident No.': row.id,
@@ -80,7 +80,7 @@ export const exportToExcel = (data: Report[]) => {
 };
 
 // Export to PDF - Fixed version
-export const exportToPDF = (data: Report[]) => {
+export const exportToPDF = (data: Record[]) => {
   // Create new document
   const doc = new jsPDF('landscape');
   

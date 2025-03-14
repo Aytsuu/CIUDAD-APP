@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import api from '@/api/api';
 
 
+
 export default function DemographicInfo(
     {form, onSubmit}: {
         form: UseFormReturn<z.infer<typeof profilingFormSchema>>,
@@ -38,6 +39,7 @@ export default function DemographicInfo(
             .get('profiling/sitio/')
             .then((res) => res.data)
             .then((data) => {
+                
                 const sitioList = data.map((item: { sitio_id: string, sitio_name: string }) => ({ 
                     id: String(item.sitio_id), 
                     name: item.sitio_name 

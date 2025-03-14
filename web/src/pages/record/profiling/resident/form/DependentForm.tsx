@@ -140,12 +140,7 @@ export default function DependentForm(
                     Date of Birth
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      type="date" 
-                      className="w-full" 
-                      placeholder="dd/mm/yyyy" 
-                      {...field} 
-                    />
+                    <input type="date" className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

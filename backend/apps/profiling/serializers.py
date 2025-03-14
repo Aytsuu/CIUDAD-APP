@@ -6,11 +6,6 @@ class SitioSerializer(serializers.ModelSerializer):
         model = Sitio
         fields = '__all__'
 
-class PersonalSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Personal
-        fields = '__all__'
-
 class MotherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mother
@@ -36,12 +31,8 @@ class FamilyCompositionSerializer(serializers.ModelSerializer):
         model = FamilyComposition
         fields = '__all__'
 
-class HouseholdSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Household
-        fields = '__all__'
-
 class BuildingSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = Building
         fields = '__all__'
@@ -50,8 +41,17 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
         fields = '__all__'
-    
 
+class HouseholdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Household
+        fields = '__all__'
+
+        
+class PersonalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Personal
+        fields = '__all__'
 
 
     

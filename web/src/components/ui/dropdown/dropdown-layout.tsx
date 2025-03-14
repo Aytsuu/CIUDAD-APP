@@ -8,13 +8,12 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Option {
-  id?: string;
+  id: string;
   name: React.ReactNode;
-  icons?: React.ReactNode;
 }
 
 interface DropdownProps {
-  label: React.ReactNode;
+  trigger: React.ReactNode;
   className?: string;
   contentClassName?: string;
   itemClassName?: string
@@ -23,7 +22,7 @@ interface DropdownProps {
 }
 
 export default function DropdownLayout({ 
-  label, 
+  trigger, 
   className, 
   contentClassName, 
   itemClassName,
@@ -33,7 +32,7 @@ export default function DropdownLayout({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={cn("border-white focus:outline-none", className)}>
-        {label}
+        {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>
         {options.map((option, index) => (
@@ -42,7 +41,6 @@ export default function DropdownLayout({
             key={option.id || index} 
             onSelect={() => option.id && onSelect && onSelect(option.id)}
           >
-            {option.icons}
             {option.name}
           </DropdownMenuItem>
         ))}

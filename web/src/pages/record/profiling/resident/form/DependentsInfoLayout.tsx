@@ -7,8 +7,8 @@ import DependentForm from './DependentForm';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/table/data-table';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
-import AssignPosition from '../../administration/AssignPosition';
-import {personal, father, mother, family, dependents, household, address, building, familyComposition} from './_requests'
+import AssignPosition from '../../../administration/AssignPosition';
+import {personal, father, mother, family, dependents, address, building, familyComposition} from './_postRequests'
 
 type Dependent = {
     id: string
