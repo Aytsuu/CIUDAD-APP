@@ -4,8 +4,10 @@ import { z } from "zod";
 export const VitalSignsSchema = z.object({
   pr: z.string().min(1, "PR is required"),
   temp: z.string().min(1, "Temperature is required"),
-  bp: z.string().min(1, "Blood Pressure is required"),
   o2: z.string().min(1, "O2 is required"),
+  bpsystolic: z.number().min(1, "Blood pressure Systolic is required"),
+  bpdiastolic: z.number().min(1, "Blood pressure Diastolic is required"),
+
 });
 
 // Schema for vaccine details
@@ -24,7 +26,7 @@ export const VaccineSchema = z.object({
   barangay: z.string().min(1, "Barangay is required"),
   province: z.string().optional(),
   city: z.string().optional(),
-  assignto: z.string().min(1,"choose a person  to do the vitalsigns"),
+  assignto: z.string().min(1, "choose a person  to do the vitalsigns"),
   signature: z.string().min(1, "signature is required"),
   isTransient: z.string().default('Resident'),
 

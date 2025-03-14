@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
-import NotifyResident from "./notifyUserReceiveMed";
+import NotifyResident from "./NotifyUserReceiveMed";
 import { Pill } from "lucide-react";
 
 export default function MedicineRequestStatusTable() {

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
-import FeedbackForm from "./apprejectModal";
+import FeedbackForm from "./ApprejectModal";
 
 import {
   DropdownMenu,

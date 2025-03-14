@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
-import FeedbackForm from "../healthServices/reqrejectModal";
+import FeedbackForm from "./ApprejectModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 import MedicineSummary from "./medicineSummary";

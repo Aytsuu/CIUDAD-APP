@@ -56,7 +56,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Resident Report", url: "/drr-resident-report"},
+      { title: "Resident Report", url: "/drr-resident-report" },
       { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
       { title: "Monthly Report", url: "/drr-monthly-report" },
       { title: "Staff", url: "/drr-staff" },
@@ -67,9 +67,7 @@ const items: MenuItem[] = [
     title: "GAD",
     subItems: true,
     url: "/",
-    items: [
-      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
-    ],
+    items: [{ title: "Budget Tracker", url: "/gad-budget-tracker-main" }],
   },
   {
     title: "Council",
@@ -88,9 +86,16 @@ const items: MenuItem[] = [
     url: "/",
     items: [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
-      { title: "Income & Expense Tracking", url: "/treasurer-income-and-expense-tracking" },
-      { title: "Income & Disbursement", url: "/treasurer-income-and-disbursement" },
-      { title: "Clearance Requests", 
+      {
+        title: "Income & Expense Tracking",
+        url: "/treasurer-income-and-expense-tracking",
+      },
+      {
+        title: "Income & Disbursement",
+        url: "/treasurer-income-and-disbursement",
+      },
+      {
+        title: "Clearance Requests",
         url: "/",
         anotherItems: [
           { title: "Personal & Others", url: "/treasurer-personal-and-others" },
@@ -108,7 +113,7 @@ const items: MenuItem[] = [
   {
     title: "Illegal Dumping Reports",
     url: "/waste-illegaldumping-report",
-  },  
+  },
   {
     title: "Announcement",
     url: "/announcement",
@@ -118,14 +123,31 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      {title: "Animal Bites", url: "/Animalbite_viewing"},
-      {title: "Child Services", url: "/allChildHRTable"},
-      {title: "Maternal Services", url:"/maternalrecords"},
-      {title: "Family Planning", url: "/FamPlanning_table"},
-      {title: "Medical Consultation", url: "/"},
-      {title: "Vaccination", url: "/allVaccinationRecord"},
-    ]
-  }
+      { title: "Doctor", url: "/mainMedicalForm" },
+      { title: "Animal Bites", url: "/Animalbite_viewing" },
+      { title: "Child Services", url: "/allChildHRTable" },
+      { title: "Maternal Services", url: "/maternalrecords" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Medical Consultation", url: "/allMedRecords" },
+      { title: "Vaccination", url: "/allRecordsForVaccine" },
+      {
+        title: "Inventory",
+        url: "/",
+        anotherItems: [
+          { title: "Inventory List", url: "/mainInventoryList" },
+          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
+        ],
+      },
+      {
+        title: "Queueing",
+        url: "/",
+        anotherItems: [
+          { title: "Patients Queue", url: "/patientsQueue" },
+          { title: "Processing Queue", url: "/processingQueue" },
+        ],
+      },
+    ],
+  },
 ];
 
 interface SubMenuItemProps {
