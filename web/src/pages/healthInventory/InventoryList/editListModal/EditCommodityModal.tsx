@@ -10,12 +10,13 @@ import {
 import { useForm } from "react-hook-form";
 import {
   CommodityType,
-  CommodityListSchema,
+  CommodityListSchema, 
 } from "@/form-schema/inventory/inventoryListSchema";
 import { Input } from "@/components/ui/input";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+
 
 interface CommodityListProps {
   initialData: {
@@ -37,6 +38,7 @@ const initialCategories: Option[] = [
 export default function EditCommodityModal({
   initialData,
 }: CommodityListProps) {
+
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
@@ -45,8 +47,8 @@ export default function EditCommodityModal({
     },
   });
 
-  const [categories, setCategories] = useState<Option[]>(initialCategories);
 
+  const [categories, setCategories] = useState<Option[]>(initialCategories);
   const handleSelectChange = (
     selectedValue: string,
     fieldOnChange: (value: string) => void
@@ -65,7 +67,7 @@ export default function EditCommodityModal({
       commodityName: initialData.commodityName,
       category: initialData.category,
     });
-  });
+  }, [initialData, form]); // Add 
 
   const onSubmit = async (data: CommodityType) => {
     console.log(data);

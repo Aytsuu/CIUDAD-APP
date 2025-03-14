@@ -6,8 +6,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { VaccineStockType, VaccineStocksSchema } from "@/form-schema/inventory/inventoryStocksSchema";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
+
+
 
 export default function VaccineStockForm() {
+
+  UseHideScrollbar()
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
     defaultValues: {
@@ -45,7 +50,7 @@ export default function VaccineStockForm() {
   };
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-6 p-2">
@@ -208,7 +213,7 @@ export default function VaccineStockForm() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Stock
             </Button>

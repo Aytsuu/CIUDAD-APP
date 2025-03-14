@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+
 
 // ✅ Define Zod Schema for Wasted Doses
 const formSchema = z.object({
   usedItem: z
     .number()
-    .min(1, "Wasted dose must be at least 1")
+    .min(1, "Must have atleast 1 used Items")
     .int("Must be a whole number"),
 });
 
@@ -30,9 +32,11 @@ export default function UsedFAModal() {
     },
   });
 
+ 
+
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     console.log("Submitted Data:", data);
-    // Handle form submission (store data, send to API, etc.)
+    alert("Success")
   };
 
   return (

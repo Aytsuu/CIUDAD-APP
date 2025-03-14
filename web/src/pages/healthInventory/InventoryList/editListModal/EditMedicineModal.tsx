@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import {
   FormField,
@@ -18,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 
+
 interface MedicineListProps {
   initialData: {
     id: number;
@@ -36,7 +39,12 @@ const initialCategories: Option[] = [
   { id: "Antibiotic", name: "Antibiotic" },
 ];
 
-export default function MedicineListEdit({ initialData }: MedicineListProps) {
+
+export default function MedicineListEdit({
+  initialData,
+}: MedicineListProps) {
+
+
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: {
@@ -46,7 +54,6 @@ export default function MedicineListEdit({ initialData }: MedicineListProps) {
   });
 
   const [categories, setCategories] = useState<Option[]>(initialCategories);
-
   const handleSelectChange = (
     selectedValue: string,
     fieldOnChange: (value: string) => void
@@ -65,19 +72,19 @@ export default function MedicineListEdit({ initialData }: MedicineListProps) {
       medicineName: initialData.medicineName,
       category: initialData.category,
     });
-  });
+  }, [initialData, form]); // Add dependencies here
 
-  const onSubmit = (data: MedicineType) => {
+  const onSubmit = async (data: MedicineType) => {
     console.log(data);
-    // Handle form submission
+    alert("success");
   };
 
   return (
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          {/* Medicine Name Field */}
           <div className="flex flex-col gap-3">
+            {/* Commodity Name Field */}
             <FormField
               control={form.control}
               name="medicineName"
@@ -126,10 +133,10 @@ export default function MedicineListEdit({ initialData }: MedicineListProps) {
                 );
               }}
             />
-          </div>
 
-          <div className="w-full flex justify-end mt-8">
-            <Button type="submit">Submit</Button>
+            <div className="w-full flex justify-end mt-8">
+              <Button type="submit">Submit</Button>
+            </div>
           </div>
         </form>
       </Form>

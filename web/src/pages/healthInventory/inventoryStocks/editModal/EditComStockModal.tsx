@@ -17,7 +17,8 @@ import {
   CommodityStockType,
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
-import { z } from "zod";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
+
 
 interface EditCommodityStockFormProps {
   initialData: {
@@ -37,8 +38,11 @@ export default function EditCommodityStockForm({
   initialData,
 }: 
 EditCommodityStockFormProps) {
+  
+  UseHideScrollbar();
+  
+  
   const parseQuantity = (qtyString: string) => {
-    // Enhanced parsing with better error handling
     try {
       if (!qtyString) {
         return { qty: 0, pcs: 0, unit: "pcs" as const };
@@ -118,7 +122,7 @@ EditCommodityStockFormProps) {
   ];
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1  hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -217,8 +221,14 @@ EditCommodityStockFormProps) {
                   <FormControl>
                     <Input
                       type="number"
-                      value={field.value}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      placeholder="quantity"
+                      min={0}
+                      value={field.value || ""} // Handle undefined and 0
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : Number(value));
+                        }}
+
                     />
                   </FormControl>
                   <FormMessage />
@@ -262,8 +272,13 @@ EditCommodityStockFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        placeholder="pcs"
+                        value={field.value || ""} // Handle undefined and 0
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : Number(value));
+                        }}
+
                       />
                     </FormControl>
                     <FormMessage />
@@ -283,7 +298,7 @@ EditCommodityStockFormProps) {
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Changes
             </Button>

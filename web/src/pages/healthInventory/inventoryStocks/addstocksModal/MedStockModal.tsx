@@ -15,8 +15,12 @@ import {
   MedicineStocksSchema,
   MedicineStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
+
 
 export default function MedicineStockForm() {
+  
+    UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
@@ -51,7 +55,7 @@ export default function MedicineStockForm() {
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Main Form Content */}
@@ -296,7 +300,7 @@ export default function MedicineStockForm() {
           </div>
 
           {/* Sticky Submit Button */}
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Stock
             </Button>

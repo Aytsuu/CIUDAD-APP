@@ -45,7 +45,7 @@ export default function MedicineStocks() {
       },
       expiryDate: "2025-12-31",
       category: "Analgesic",
-      qty: "10 boxes (50 pcs)",
+      qty: "0 boxes (50 pcs)",
       distributed: "7 boxes (30 pcs)",
       availQty: "7 boxes (30 pcs)",
     },

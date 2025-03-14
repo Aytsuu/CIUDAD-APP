@@ -16,8 +16,10 @@ import {
   CommodityStockType,
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
 
 export default function CommodityStockForm() {
+  UseHideScrollbar();
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
@@ -50,7 +52,7 @@ export default function CommodityStockForm() {
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -244,7 +246,7 @@ export default function CommodityStockForm() {
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Commodity
             </Button>

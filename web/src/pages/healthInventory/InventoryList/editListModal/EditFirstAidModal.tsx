@@ -19,7 +19,7 @@ import {
 
 interface FirstAidListProps {
   initialData: {
-    id: number; 
+    id: number;
     itemName: string;
     category: string;
   };
@@ -31,12 +31,14 @@ interface Option {
 }
 
 const initialCategories: Option[] = [
-  { id: "Wound Care", name: "Wound Care" }, 
+  { id: "Wound Care", name: "Wound Care" },
   { id: "Syrup", name: "Syrup" },
   { id: "Disinfectant", name: "Disinfectant" },
 ];
 
 export default function EditFirstAidModal({ initialData }: FirstAidListProps) {
+  
+
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
@@ -46,7 +48,6 @@ export default function EditFirstAidModal({ initialData }: FirstAidListProps) {
   });
 
   const [categories, setCategories] = useState<Option[]>(initialCategories);
-
   const handleSelectChange = (
     selectedValue: string,
     fieldOnChange: (value: string) => void
@@ -69,7 +70,7 @@ export default function EditFirstAidModal({ initialData }: FirstAidListProps) {
 
   const onSubmit = async (data: FirstAidType) => {
     console.log(data);
-    alert("success")
+    alert("success");
   };
 
   return (

@@ -27,7 +27,6 @@ interface EditFirstAidStockFormProps {
     availQty: number;
     usedItem: number;
   };
- 
 }
 
 export default function EditFirstAidStockForm({
@@ -56,7 +55,7 @@ EditFirstAidStockFormProps) {
       expiryDate: initialData.expiryDate,
     },
   });
- 
+
   useEffect(() => {
     form.reset({
       // id: initialData.id,
@@ -131,9 +130,13 @@ EditFirstAidStockFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Quantity"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        min={0}
+                        placeholder="Enter quantity"
+                        value={field.value || ""} // Handle undefined and 0
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : Number(value));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

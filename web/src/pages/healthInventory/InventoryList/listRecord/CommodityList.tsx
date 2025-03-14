@@ -117,7 +117,7 @@ export default function CommodityList() {
     }
   };
 
-  return (
+  return ( 
     <>
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex flex-col md:flex-row gap-4 w-full">

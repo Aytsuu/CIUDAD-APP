@@ -26,12 +26,11 @@ interface VaccineListProps {
     vaccineName: string;
     ageGroup: string;
     noOfDoses: number;
-    interval:{
-      interval:number;
-      timeUnits:string;
-
-    },
-    specifyAge:string;
+    interval: {
+      interval: number;
+      timeUnits: string;
+    };
+    specifyAge: string;
   };
 }
 
@@ -46,7 +45,12 @@ const initialCategories: Option[] = [
   { id: "vaccine", name: "vaccine" },
 ];
 
-export default function EditVaccineListModal({ initialData }: VaccineListProps) {
+export default function EditVaccineListModal({
+  initialData,
+}: VaccineListProps) {
+
+
+
   const form = useForm<VacccineType>({
     resolver: zodResolver(VaccineListSchema),
     defaultValues: {
@@ -54,26 +58,23 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
       category: initialData.category,
       noOfDoses: initialData.noOfDoses,
       ageGroup: initialData.ageGroup,
-      interval:initialData.interval.interval,
+      interval: initialData.interval.interval,
       timeUnits: initialData.interval.timeUnits,
-      specifyAge:initialData.specifyAge
-  
+      specifyAge: initialData.specifyAge,
     },
   });
 
-
-  
-  const timeUnits= [
+  const timeUnits = [
     { id: "Years", name: "Years" },
     { id: "Months", name: "Months" },
     { id: "Weeks", name: "Weeks" },
-  ]
-  const ageGroup =[
+  ];
+  const ageGroup = [
     { id: "0-5 yrs old", name: "0-5 yrs old" },
     { id: "9-15 yrs old", name: "9-15 yrs old" },
-  ]
-  const [categories, setCategories] = useState<Option[]>(initialCategories);
+  ];
 
+  const [categories, setCategories] = useState<Option[]>(initialCategories);
   const handleSelectChange = (
     selectedValue: string,
     fieldOnChange: (value: string) => void
@@ -86,13 +87,11 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
     fieldOnChange(selectedValue);
   };
 
-  const onSubmit =  async (data: VacccineType) => {
-    
+  const onSubmit = async (data: VacccineType) => {
     console.log(data);
-    alert("Success")
+    alert("Success");
   };
 
-  
   const selectedAgeGroup = form.watch("ageGroup"); // Watch the selected age group
 
   return (
@@ -113,11 +112,7 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
                 <FormItem>
                   <FormLabel>Vaccine Name</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Vaccine Name"
-                      {...field}
-                    />
+                    <Input type="text" placeholder="Vaccine Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,12 +155,14 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
                       <Input
                         type="number"
                         placeholder="Interval"
-                        value={field.value || ""}
+                        value={
+                          field.value === undefined || field.value === null
+                            ? ""
+                            : field.value
+                        }
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
+                          field.onChange(value === "" ? null : Number(value));
                         }}
                       />
                     </FormControl>
@@ -218,8 +215,8 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
               )}
             />
 
-              {/* Specify Age Fields */}
-              {selectedAgeGroup === "0-5" && (
+            {/* Specify Age Fields */}
+            {selectedAgeGroup === "0-5" && (
               <div className="bg-gray-50 p-3 rounded-lg">
                 <FormField
                   control={form.control}
@@ -237,7 +234,6 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
               </div>
             )}
 
-            {/* Number of Doses */}
             <FormField
               control={form.control}
               name="noOfDoses"
@@ -248,12 +244,14 @@ export default function EditVaccineListModal({ initialData }: VaccineListProps) 
                     <Input
                       type="number"
                       placeholder="Number of Doses"
-                      value={field.value || ""}
+                      value={
+                        field.value === undefined || field.value === null
+                          ? ""
+                          : field.value
+                      }
                       onChange={(e) => {
                         const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
+                        field.onChange(value === "" ? null : Number(value));
                       }}
                     />
                   </FormControl>

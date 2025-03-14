@@ -1,4 +1,3 @@
-// EditMedicineForm.tsx
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,8 +15,8 @@ import {
   MedicineStocksSchema,
   MedicineStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
-import { useEffect, useState } from "react";
-import { z } from "zod";
+import { useEffect } from "react";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
 
 interface EditMedicineFormProps {
   medicine: {
@@ -34,26 +33,23 @@ interface EditMedicineFormProps {
     availQty: string;
     distributed: string;
   };
-  // onSave: (data: any) => void;
 }
 
-export default function EditMedicineForm({
-  medicine,
-}: // onSave,
-EditMedicineFormProps) {
+export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
+
+  UseHideScrollbar()
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
       medicineName: medicine.medicineInfo.medicineName,
       category: medicine.category,
-      // id: medicine.id,
       dosage: medicine.medicineInfo.dosage,
       dsgUnit: medicine.medicineInfo.dsgUnit,
       form: medicine.medicineInfo.form,
-      qty: parseInt(medicine.qty.split(" ")[0]) || 1,
+      qty: parseInt(medicine.qty.split(" ")[0]) || 0,
       unit: medicine.qty.includes("boxes") ? "boxes" : "bottles",
       pcs: medicine.qty.includes("boxes")
-        ? parseInt(medicine.qty.split("(")[1]) || 1
+        ? parseInt(medicine.qty.split("(")[1]) || 0
         : 0,
       expiryDate: medicine.expiryDate,
     },
@@ -63,14 +59,13 @@ EditMedicineFormProps) {
     form.reset({
       medicineName: medicine.medicineInfo.medicineName,
       category: medicine.category,
-      // id: medicine.id,
       dosage: medicine.medicineInfo.dosage,
       dsgUnit: medicine.medicineInfo.dsgUnit,
       form: medicine.medicineInfo.form,
-      qty: parseInt(medicine.qty.split(" ")[0]) || 1,
+      qty: parseInt(medicine.qty.split(" ")[0]) || 0,
       unit: medicine.qty.includes("boxes") ? "boxes" : "bottles",
       pcs: medicine.qty.includes("boxes")
-        ? parseInt(medicine.qty.split("(")[1]) || 1
+        ? parseInt(medicine.qty.split("(")[1]) || 0
         : 0,
       expiryDate: medicine.expiryDate,
     });
@@ -80,6 +75,11 @@ EditMedicineFormProps) {
     console.log("saved data", data);
     alert("Medicine stock updated successfully!");
   };
+
+
+
+
+    
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
@@ -96,14 +96,14 @@ EditMedicineFormProps) {
   ];
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* // Medicine Name Field */}
+            {/* Medicine Name Field */}
             <FormField
               control={form.control}
-              name="medicineName"
+              name="medicineName" 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
@@ -114,14 +114,14 @@ EditMedicineFormProps) {
                       placeholder="Select Medicine"
                       options={medicineOptions}
                       value={field.value}
-                      onChange={(value) => field.onChange(value)} // Ensure this passes the `id` string
+                      onChange={(value) => field.onChange(value)}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* // Category Field */}
+            {/* Category Field */}
             <FormField
               control={form.control}
               name="category"
@@ -135,7 +135,7 @@ EditMedicineFormProps) {
                       placeholder="Select Category"
                       options={categoryOptions}
                       value={field.value}
-                      onChange={(value) => field.onChange(value)} // Ensure this passes the `id` string
+                      onChange={(value) => field.onChange(value)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -175,10 +175,14 @@ EditMedicineFormProps) {
                     <Input
                       type="number"
                       min={0}
-                      value={field.value}
+                      value={
+                        field.value === undefined || field.value === 0
+                          ? ""
+                          : field.value
+                      } // Handle undefined and 0
                       onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        field.onChange(isNaN(value) ? 0 : value);
+                        const value = e.target.value;
+                        field.onChange(value === "" ? 0 : Number(value)); // Set to 0 if empty
                       }}
                     />
                   </FormControl>
@@ -248,11 +252,11 @@ EditMedicineFormProps) {
                   <FormControl>
                     <Input
                       type="number"
-                      min={1}
-                      value={field.value}
+                      min={0}
+                      value={field.value || ""} // Handle undefined and 0
                       onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        field.onChange(isNaN(value) ? 1 : value);
+                        const value = e.target.value;
+                        field.onChange(value === "" ? 0 : Number(value));
                       }}
                     />
                   </FormControl>
@@ -297,11 +301,16 @@ EditMedicineFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        min={1}
-                        value={field.value}
+                        min={0}
+                        placeholder="pcs"
+                        value={
+                          field.value === undefined || field.value === 0
+                            ? ""
+                            : field.value
+                        } // Handle undefined and 0
                         onChange={(e) => {
-                          const value = parseInt(e.target.value);
-                          field.onChange(isNaN(value) ? 1 : value);
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : Number(value));
                         }}
                       />
                     </FormControl>
@@ -324,7 +333,7 @@ EditMedicineFormProps) {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save
             </Button>
