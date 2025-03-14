@@ -14,6 +14,8 @@ export default () => {
             <Stack.Screen name="add-dependent" options={{ headerShown: false }}  />
             <Stack.Screen name="view-dependent" options={{ headerShown: false }}  />
             <Stack.Screen name="register-completion" options={{ headerShown: false }}  />
+            <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
+            <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
         </Stack>
     );
 }

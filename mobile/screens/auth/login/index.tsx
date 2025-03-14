@@ -1,7 +1,7 @@
 import "@/global.css"
 
 import React, { useState } from 'react';
-import { View, Text, TouchableWithoutFeedback, Image } from 'react-native';
+import { View, Text, TouchableWithoutFeedback, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
@@ -65,11 +65,14 @@ export default function LoginScreen(){
             }
 
           </View>
-          <TouchableWithoutFeedback>
-            <View className="flex-row justify-end">
-              <Text className="text-black font-PoppinsRegular text-[16px]">Forgot Password?</Text>
-            </View>
-          </TouchableWithoutFeedback>
+          <TouchableOpacity onPress={() => router.push('/verifyemail')}>
+  <View className="flex-row justify-end">
+    <Text className="text-black font-PoppinsRegular text-[16px]">Forgot Password?</Text>
+  </View>
+</TouchableOpacity>
+
+
+
           
           <Button 
             className="bg-primaryBlue native:h-[57px]"
