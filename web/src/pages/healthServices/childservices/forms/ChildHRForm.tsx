@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { FormData } from "@/form-schema/chr-schema";
-
+import { Link } from "react-router";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, Search } from "lucide-react";
 import ChildHRPage1 from "./ChildHRPage1";
 import ChildHRPage2 from "./ChildHRPage2";
 import ChildHRPage3 from "./ChildHRPage3";
 import ChildHRPage4 from "./ChildHRPage4";
 import LastPage from "./ChildHRPagelast";
-
 // Define initial form data
 const initialFormData: FormData = {
   familyNo: "",
@@ -27,7 +28,7 @@ const initialFormData: FormData = {
   fatherMname: "",
   fatherAge: "",
   fatherOccupation: "",
-  houseno:"",
+  houseno: "",
   street: "",
   sitio: "",
   barangay: "",
@@ -36,7 +37,7 @@ const initialFormData: FormData = {
   landmarks: "",
   isTransient: "Resident",
 
-  dateNewbornScreening:"",
+  dateNewbornScreening: "",
   hasDisability: false,
   disabilityTypes: [],
   hasEdema: false,
@@ -46,6 +47,8 @@ const initialFormData: FormData = {
   vaccines: [],
   vitaminRecords: [],
   vitalSigns: [],
+
+
 };
 
 export default function ChildHealthForm() {
@@ -73,6 +76,25 @@ export default function ChildHealthForm() {
   // Render the current page based on the currentPage state
   return (
     <>
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <Link to="/invtablechr">
+          <Button
+            className="text-black p-2 mb-2 self-start"
+            variant={"outline"}
+          >
+            <ChevronLeft />
+          </Button>
+        </Link>
+        <div className="flex-col items-center mb-4">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+            Child Health Record
+          </h1>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Manage and view patient's information
+          </p>
+        </div>
+      </div>
+
       {currentPage === 1 && (
         <ChildHRPage1
           onNext2={handleNext}

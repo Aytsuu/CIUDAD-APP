@@ -6,27 +6,37 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
+import { Calendar, Syringe } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { VaccineType ,VaccinesSchema} from "@/form-schema/chr-schema";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import ChildVaccines from "./ChildVaccines";
+import { Link } from "react-router";
+import { ChevronLeft } from "lucide-react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from "@/components/ui/card/card";
-import { Calendar, Syringe } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import ChildVaccines from "./ChildVaccines";
-import { Link } from "react-router";
-import { ChevronLeft, Search } from "lucide-react";
+import CardLayout from "@/components/ui/card/card-layout";
 
-type Page2FormData = z.infer<typeof ChildHealthFormSchema>;
+
 
 type Page1Props = {
   onPrevious2: () => void;
   onNext4: () => void;
-  updateFormData: (data: Partial<Page2FormData>) => void;
-  formData: Page2FormData;
+  updateFormData: (data: Partial<VaccineType>) => void;
+  formData: VaccineType;
+};
+
+type VaccineRecord = {
+  id: number;
+  vaccineType: string;
+  dose: string;
+  date: string;
 };
 
 export default function ChildHRPage3({
@@ -35,12 +45,15 @@ export default function ChildHRPage3({
   updateFormData,
   formData,
 }: Page1Props) {
-  const form = useForm<Page2FormData>({
+  const form = useForm<VaccineType>({
     defaultValues: { vaccines: formData.vaccines || [] },
+    resolver: zodResolver(VaccinesSchema),
   });
 
   const { handleSubmit, control, setValue } = form;
-  const [vaccines, setVaccines] = useState(formData.vaccines ?? []);
+  const [vaccines, setVaccines] = useState<VaccineRecord[]>(
+    formData.vaccines ?? []
+  );
   const [newVaccine, setNewVaccine] = useState({
     vaccineType: "",
     dose: "",
@@ -76,31 +89,49 @@ export default function ChildHRPage3({
     updateFormData({ vaccines: updatedVaccines });
   };
 
+  // Define columns for the DataTable
+  const vaccineColumns: ColumnDef<VaccineRecord>[] = [
+    {
+      accessorKey: "vaccineType",
+      header: "Vaccine Type",
+    },
+    {
+      accessorKey: "dose",
+      header: "Dose",
+      cell: ({ row }) => <Badge variant="secondary">{row.original.dose}</Badge>,
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center gap-2">
+          <Calendar className="h-4 w-4 inline-block" />
+          {row.original.date}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button
+          variant="destructive"
+          onClick={() => deleteVac(row.original.id)}
+        >
+          Delete
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <>
-      <div className="flex flex-col sm:flex-row  gap-4 mb-8">
-        <Link to="/invtablechr">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-          >
-            <ChevronLeft />
-          </Button>
-        </Link>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Record
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
-        </div>
-      </div>
-      <div className="w-full  bg-white rounded-lg shadow  md:p-6 lg:p-8">
+     
+
+      <div className="w-full bg-white rounded-lg shadow md:p-6 lg:p-8 p-8">
         <Form {...form}>
           <form
             onSubmit={handleSubmit((data) => {
-              console.log("pAGE 2:", data);
+              console.log("Page 2:", data);
               onNext4();
             })}
             className="space-y-6"
@@ -176,7 +207,7 @@ export default function ChildHRPage3({
               />
               <Button
                 type="button"
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4"
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4"
                 onClick={addVac}
                 disabled={
                   !newVaccine.vaccineType ||
@@ -187,61 +218,45 @@ export default function ChildHRPage3({
                 Add
               </Button>
             </div>
-            <div className="bg-gray-50">
-              <CardHeader className="w-full flex-row flex justify-between items-center gap-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Syringe className="h-5 w-5 text-blue" /> Administered
-                  Vaccines History
-                </CardTitle>
 
-                <DialogLayout
-                  trigger={
-                    <div className="text-blue italic underline px-4 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors">
-                      List of Vaccines To be Administered {">"}
-                    </div>
-                  }
-                  className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                  title="Vaccines"
-                  description="List of all Vaccines to be  administered ."
-                  mainContent={<ChildVaccines />}
-                />
-              </CardHeader>
-              <div>
-                {vaccines.length === 0 ? (
-                  <p>No vaccines added yet</p>
-                ) : (
-                  vaccines.map((vac) => (
-                    <div
-                      key={vac.id}
-                      className="bg-white rounded-lg p-4 shadow-sm border"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-20">
-                          <div>
-                            <span className="font-semibold">
-                              {vac.vaccineType}
-                            </span>
-                          </div>
-                          <div className="text-sm  flex items-center gap-2 text-gray-600">
-                            <Calendar className="h-4 w-4 inline-block" />{" "}
-                            {vac.date}
-                          </div>
-                          <Badge variant="secondary">{vac.dose}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="destructive"
-                            onClick={() => deleteVac(vac.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
+            <CardLayout
+              cardTitle=""
+              cardContent={
+                <>
+                  <div className="bg-gray-50 mt-[-20px]">
+                    <div className="w-full flex-row flex justify-between items-center gap-4">
+                      <div className="flex items-center gap-2 text-lg font-semibold">
+                        <Syringe className="h-5 w-5 text-blue " /> Administered
+                        Vaccines History
                       </div>
+
+                      <DialogLayout
+                        trigger={
+                          <div className="text-blue italic underline px-4 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors">
+                            List of Vaccines To be Administered {">"}
+                          </div>
+                        }
+                        className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                        title="Vaccines"
+                        description="List of all Vaccines to be administered."
+                        mainContent={<ChildVaccines />}
+                      />
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
+
+                    <div className="p-4">
+                      {vaccines.length === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-gray-500">No vaccines added yet</p>
+                        </div>
+                      ) : (
+                        <DataTable columns={vaccineColumns} data={vaccines} />
+                      )}
+                    </div>
+                  </div>
+                </>
+              }
+            />
+
             <div className="flex w-full justify-end gap-2">
               <Button
                 variant="outline"

@@ -10,7 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
+import { BasicInfoType, BasicInfoSchema } from "@/form-schema/chr-schema";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@radix-ui/react-label";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,10 @@ import { ChevronLeft, Search } from "lucide-react";
 import { Link } from "react-router";
 import { useLocation } from "react-router-dom";
 
-type Page1FormData = z.infer<typeof ChildHealthFormSchema>;
 type Page1Props = {
   onNext2: () => void;
-  updateFormData: (data: Partial<Page1FormData>) => void;
-  formData: Page1FormData;
+  updateFormData: (data: Partial<BasicInfoType>) => void;
+  formData: BasicInfoType;
 };
 
 export default function ChildHRPage1({
@@ -34,8 +33,8 @@ export default function ChildHRPage1({
   updateFormData,
   formData,
 }: Page1Props) {
-  const form = useForm<Page1FormData>({
-    // resolver: zodResolver(ChildHealthFormSchema),
+  const form = useForm<BasicInfoType>({
+    // resolver: zodResolver(BasicInfoSchema),
     defaultValues: formData,
   });
 
@@ -43,7 +42,7 @@ export default function ChildHRPage1({
     console.log("Form data updated:", formData);
   }, [formData]);
 
-  const onsubmitForm = (data: Page1FormData) => {
+  const onsubmitForm = (data: BasicInfoType) => {
     console.log("PAGE 1:", data);
     updateFormData(data);
     onNext2();
@@ -92,25 +91,7 @@ export default function ChildHRPage1({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row  gap-4 mb-8">
-        <Link to="/invtablechr">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-          >
-            <ChevronLeft />
-          </Button>
-        </Link>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Record
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
-        </div>
-      </div>
-      <div className=" bg-white rounded-lg shadow p-4 md:p-4 lg:p-5">
+      <div className=" bg-white rounded-lg shadow p-8 md:p-4 lg:p-8">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onsubmitForm, (errors) => {
@@ -167,7 +148,7 @@ export default function ChildHRPage1({
                 <FormField
                   key={name}
                   control={form.control}
-                  name={name as keyof Page1FormData}
+                  name={name as keyof BasicInfoType}
                   render={({ field }) => (
                     <FormItem className="flex-1 min-w-[200px]">
                       <FormLabel className="text-black/65">
@@ -199,10 +180,12 @@ export default function ChildHRPage1({
                     <FormField
                       key={name}
                       control={form.control}
-                      name={name as keyof Page1FormData}
+                      name={name as keyof BasicInfoType}
                       render={({ field }) => (
                         <FormItem className="flex-1 min-w-[200px]">
-                          <FormLabel className="text-black/65">{label}</FormLabel>
+                          <FormLabel className="text-black/65">
+                            {label}
+                          </FormLabel>
                           <FormControl>
                             {type === "select" ? (
                               <SelectLayout
@@ -233,7 +216,7 @@ export default function ChildHRPage1({
                   <FormField
                     key={name}
                     control={form.control}
-                    name={name as keyof Page1FormData}
+                    name={name as keyof BasicInfoType}
                     render={({ field }) => (
                       <FormItem
                         className={
@@ -267,7 +250,7 @@ export default function ChildHRPage1({
                   <FormField
                     key={name}
                     control={form.control}
-                    name={name as keyof Page1FormData}
+                    name={name as keyof BasicInfoType}
                     render={({ field }) => (
                       <FormItem className="flex-1 min-w-[200px]">
                         <FormLabel className="text-black/65">
@@ -296,10 +279,12 @@ export default function ChildHRPage1({
                   <FormField
                     key={name}
                     control={form.control}
-                    name={name as keyof Page1FormData}
+                    name={name as keyof BasicInfoType}
                     render={({ field }) => (
                       <FormItem className="w-full md:w-1/2">
-                        <FormLabel className="text-black/65">{label} </FormLabel>
+                        <FormLabel className="text-black/65">
+                          {label}{" "}
+                        </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -327,7 +312,7 @@ export default function ChildHRPage1({
                     <FormField
                       key={name}
                       control={form.control}
-                      name={name as keyof Page1FormData}
+                      name={name as keyof BasicInfoType}
                       render={({ field }) => (
                         <FormItem className="flex-1 min-w-[200px]">
                           <FormLabel className="text-black/65">
@@ -355,7 +340,7 @@ export default function ChildHRPage1({
                   <FormField
                     key={name}
                     control={form.control}
-                    name={name as keyof Page1FormData}
+                    name={name as keyof BasicInfoType}
                     render={({ field }) => (
                       <FormItem className="w-full md:w-1/2">
                         <FormLabel className="text-black/65">{label}</FormLabel>
@@ -381,7 +366,7 @@ export default function ChildHRPage1({
                 <FormField
                   key={name}
                   control={form.control}
-                  name={name as keyof Page1FormData}
+                  name={name as keyof BasicInfoType}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-black/65">{label}</FormLabel>
@@ -405,7 +390,7 @@ export default function ChildHRPage1({
                 <FormField
                   key={name}
                   control={form.control}
-                  name={name as keyof Page1FormData}
+                  name={name as keyof BasicInfoType}
                   render={({ field }) => (
                     <FormItem className="flex-1 min-w-[300px]">
                       <FormLabel className="text-black/65">{label}</FormLabel>

@@ -54,7 +54,7 @@ export default function NonPHMedicalForm() {
       othersTypeIds: [],
     },
   });
-
+ 
   const [categories, setCategories] = useState<Option[]>(initialCategories);
 
   const handleSelectChange = (

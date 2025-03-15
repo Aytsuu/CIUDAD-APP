@@ -1,18 +1,8 @@
 import { z } from 'zod';
 
-// Zod Schemas
-export const VitalSignSchema = z.object({
-  date: z.string().min(1, 'Date is required'),
-  age: z.string().min(1, 'Age is required'),
-  ht: z.number().min(0, 'Height must be a positive number'),
-  wt: z.number().min(0, 'Weight must be a positive number'),
-  temp: z.number().min(30, 'Temperature must be realistic'),
-  findings: z.string().optional(),
-  notes: z.string().optional(),
-  followUpVisit: z.string().optional(),
-});
 
-export const BasicInfo = z.object({
+
+export const BasicInfoSchema = z.object({
   familyNo: z.string().min(1, 'required'),
   ufcNo: z.string().min(1, 'required'),
   childFname: z.string().min(1, 'required'),
@@ -34,7 +24,7 @@ export const BasicInfo = z.object({
   // address: z.string().min(1, 'Address is required'),
   landmarks: z.string().optional(),
   isTransient: z.string().default('Resident'),
-  houseno:z.string(),
+  houseno: z.string(),
   street: z.string().optional(),
   sitio: z.string().optional(),
   barangay: z.string().min(1, "required"),
@@ -58,15 +48,15 @@ export const ChildDetails = z.object({
   hasEdema: z.boolean().optional(),
   edemaSeverity: z.string().optional().default('N/A'),
   BFdates: z.array(z.string()).optional(), // Remove if not needed
-  dateNewbornScreening:z.string(),
+  dateNewbornScreening: z.string(),
 });
 
 export const Supplement = z.object({
   vitaminRecords: z
     .array(
       z.object({
-        vitaminType: z.string().min(1, 'required'),
-        date: z.string().min(1, 'Date is required'),
+        vitaminType: z.string(),
+        date: z.string(),
       })
     )
     .optional()
@@ -74,14 +64,15 @@ export const Supplement = z.object({
   ironDates: z
     .array(
       z.object({
-        ironType: z.string().min(1, 'required'),
-        givenDate: z.string().min(1, 'required'),
-        completedDate: z.string().min(1, 'required'),
+        ironType: z.string(),
+        givenDate: z.string(),
+        completedDate: z.string(),
       })
     )
     .optional()
     .default([]),
 });
+
 
 export const VaccinesSchema = z.object({
   vaccines: z
@@ -97,14 +88,32 @@ export const VaccinesSchema = z.object({
     .default([]),
 });
 
-// Combined Schema
-export const ChildHealthFormSchema = BasicInfo.merge(ChildDetails)
+
+export const VitalSignSchema = z.object({
+  date: z.string().min(1, 'Date is required'),
+  age: z.string().min(1, 'Age is required'),
+  ht: z.number().min(0, 'Height must be a positive number'),
+  wt: z.number().min(0, 'Weight must be a positive number'),
+  temp: z.number().min(30, 'Temperature must be realistic'),
+  findings: z.string().optional(),
+  notes: z.string().optional(),
+  followUpVisit: z.string().optional(),
+});
+
+
+export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetails)
   .merge(Supplement)
   .merge(VaccinesSchema)
   .extend({
     vitalSigns: z.array(VitalSignSchema).optional(),
   });
 
+
 // Type for FormData
 export type FormData = z.infer<typeof ChildHealthFormSchema>;
-export type VitalSignFormData = z.infer<typeof VitalSignSchema>;
+export type BasicInfoType = z.infer<typeof BasicInfoSchema>;
+export type VitalSignType = z.infer<typeof VitalSignSchema>;
+
+export type SupplementType = z.infer<typeof Supplement>
+export type VaccineType = z.infer<typeof VaccinesSchema>
+

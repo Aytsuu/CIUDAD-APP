@@ -56,6 +56,7 @@ export default function ChildHRPage3({
   updateFormData,
   formData,
 }: Page1Props) {
+  
   const form = useForm<Page1FormData>({
     defaultValues: {
       ...formData,
@@ -150,30 +151,27 @@ export default function ChildHRPage3({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <Link to="/invtablechr">
-          <Button
-            className="text-black p-2 mb-2 self-start"
-            variant={"outline"}
-          >
-            <ChevronLeft />
-          </Button>
-        </Link>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Record
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
-        </div>
-      </div>
-      <div className="bg-white rounded-lg shadow">
+      <div className="w-full bg-white rounded-lg shadow md:p-6 lg:p-8 p-8">
         <Form {...form}>
-          <form
-            onSubmit={handleSubmit(onSubmitForm)}
-            className="space-y-6 p-4 md:p-6 lg:p-8"
-          >
+          <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
+      
+            <FormField
+              control={form.control}
+              name="dateNewbornScreening"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date of Newborn Screening</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      className="w-full sm:w-[150px]" // Responsive width
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             {/* Disability Section */}
             <div>
               <FormField
@@ -204,7 +202,7 @@ export default function ChildHRPage3({
                     <Button
                       type="button"
                       onClick={() => append({ id: "", name: "" })}
-                      className=" bg-green-500 text-white  shadow-none hover:bg-green-400 px-2"
+                      className=" bg-green-600 text-white  shadow-none hover:bg-green-700 px-2"
                     >
                       Add Disability
                       <CirclePlus className="font-medium" />
@@ -329,7 +327,7 @@ export default function ChildHRPage3({
 
                   <Button
                     type="button"
-                    className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4"
+                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4"
                     onClick={handleAddDate}
                     disabled={!currentDate}
                   >

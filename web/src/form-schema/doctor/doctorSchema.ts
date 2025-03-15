@@ -70,7 +70,7 @@ import { z } from "zod";
 
 export const AssessmentSchema = z.object({
   findings: z.array(z.string()),
-});
+}); 
 
 // MedConNoPHSchema
 export const MedConNoPHSchema = z.object({
