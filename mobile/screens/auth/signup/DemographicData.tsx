@@ -5,14 +5,14 @@ import { useRouter } from 'expo-router';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Layout from "./_layout";
-import { FormDataSchema, validateFormData } from "@/form-schema/registration-schema"; // Import the schema and validation function
-import { useForm } from "./FormContext"; // Import the useForm context
+import { FormDataSchema } from "@/form-schema/registration-schema"; 
+import { useForm } from "../../../app/(auth)/FormContext";
 import { z } from 'zod';
 
 export default function DemographicData() {
   const router = useRouter();
-  const { formData, setFormData } = useForm(); // Use the form context
-  const [errors, setErrors] = React.useState<z.ZodError | null>(null); // State to store validation errors
+  const { formData, setFormData } = useForm(); 
+  const [errors, setErrors] = React.useState<z.ZodError | null>(null); 
 
   const handleProceed = () => {
     // Validate the demographicData section using the FormDataSchema
@@ -21,11 +21,9 @@ export default function DemographicData() {
     }).safeParse(formData);
 
     if (validationResult.success) {
-      // If validation succeeds, proceed to the next screen
-      setErrors(null); // Clear any previous errors
+      setErrors(null); 
       router.push('/account-details');
     } else {
-      // If validation fails, display the errors
       setErrors(validationResult.error);
       alert('Please complete all required fields correctly.');
     }
@@ -92,7 +90,6 @@ export default function DemographicData() {
           </View>
         </View>
 
-        {/* Next Button */}
         <View>
           <Button
             onPress={handleProceed}

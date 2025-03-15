@@ -3,19 +3,17 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, TouchableWithoutFeedback, ScrollView } from "react-native";
 import { router } from "expo-router";
-import { FormProvider } from "./FormContext";
 
 export default ({
   children,
   header,
   description,
-}: {
+}: {  
   children: React.ReactNode;
   header: String;
   description: String;
 }) => {
   return (
-    <FormProvider>
       <SafeAreaView className="flex-1 bg-lightBlue-1">
         <ScrollView
           className="flex-1 p-[20px]"
@@ -44,6 +42,5 @@ export default ({
           </View>
         </ScrollView>
       </SafeAreaView>
-    </FormProvider>
   );
 };

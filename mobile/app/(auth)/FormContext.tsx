@@ -43,11 +43,12 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
     fatherInformation: {
       ...emptyPersonInfo,
     },
-    dependentInformation: {
-      ...emptyPersonInfo,
-      educAtt: "",
-      employment: "",
+    accountDetails: {
+      userName: "",
+      email: "",
+      password: "",
     },
+    dependentInformation: [],
     identification: {
       id: "",
       userPhoto: "",

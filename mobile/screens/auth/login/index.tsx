@@ -5,10 +5,11 @@ import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // keep the users logged in after they close and reonpen the app 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "@/components/ui/input";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
+import axios from "axios";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
@@ -18,31 +19,27 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://localhost:8000/account/api/login/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+      const response = await axios.post("http://192.168.1.48:8000/api/login", {
+        username,
+        password,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("Login Successful:", data);
-        // Store the access token for future requests (AsyncStorage)
+  
+      const data = response.data;
+  
+      if (data.access_token) {
         await AsyncStorage.setItem("accessToken", data.access_token);
         await AsyncStorage.setItem("refreshToken", data.refresh_token);
-        // router.push("/home"); // Navigate to Home or Dashboard
+        alert("Login Successful!");
       } else {
-        alert(data.error || "Invalid username or password");
+        alert("Login failed: No token received.");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      alert("Something went wrong. Please try again.");
+      if (axios.isAxiosError(error)) {
+        alert(error.response?.data?.error || "Invalid username or password");
+      } else {
+        console.error("Login error:", error);
+        alert("Something went wrong. Please try again.");
+      }
     }
   };
 

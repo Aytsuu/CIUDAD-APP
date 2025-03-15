@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from "zod";
 
 // PersonInfo
 const PersonInfoSchema = z.object({
@@ -9,12 +9,6 @@ const PersonInfoSchema = z.object({
   dob: z.string().optional(),
   civilStatus: z.string().optional(),
   sex: z.string().optional(),
-});
-
-// dependent-specific fields
-const DependentInfoSchema = PersonInfoSchema.extend({
-  educAtt: z.string().min(1, "Educational attainment is required"),
-  employment: z.string().min(1, "Employment status is required"),
 });
 
 // FormData
@@ -38,16 +32,26 @@ export const FormDataSchema = z.object({
   }),
   motherInformation: PersonInfoSchema,
   fatherInformation: PersonInfoSchema,
-  dependentInformation: DependentInfoSchema,
+  dependentInformation: z.array(
+    PersonInfoSchema.extend({
+      educAtt: z.string().min(1, "Educational attainment is required"),
+      employment: z.string().min(1, "Employment status is required"),
+    })
+  ),
   identification: z.object({
     id: z.string().min(1, "ID is required"),
     userPhoto: z.string().min(1, "User photo is required"),
+  }),
+  accountDetails: z.object({
+    userName: z.string().min(1, "Username is required"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters long"),
   }),
 });
 
 // interfaces derived from Zod schemas
 type PersonInfo = z.infer<typeof PersonInfoSchema>;
-type DependentInfo = z.infer<typeof DependentInfoSchema>;
+export type DependentInfo = z.infer<typeof FormDataSchema>["dependentInformation"][number];
 export type FormData = z.infer<typeof FormDataSchema>;
 
 export const emptyPersonInfo: PersonInfo = {

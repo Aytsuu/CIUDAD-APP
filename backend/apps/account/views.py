@@ -1,29 +1,57 @@
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth import authenticate
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.views import APIView
-from .models import Account
-from .serializers import AccountSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class LoginView(APIView):
+    def get(self, request):
+        """Retrieve the authenticated user's details if logged in"""
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "User not authenticated. Please log in."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return Response({
+            "id": request.user.id,
+            "email": request.user.acc_email,
+            "message": "User data retrieved successfully."
+        }, status=status.HTTP_200_OK)
+
     def post(self, request):
-        username_or_email = request.data.get("username_or_email")
+        """Authenticate user and return JWT tokens"""
+        email = request.data.get("email")
         password = request.data.get("password")
 
-        # Check if user exists by email or username
-        user = Account.objects.filter(acc_username=username_or_email).first() or \
-               Account.objects.filter(acc_email=username_or_email).first()
+        if not email or not password:
+            return Response(
+                {"error": "Email and password are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if not user:
-            return Response({"error": "Account does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        user = authenticate(username=email, password=password)  # Authenticate using email
 
-        # Verify password
-        if not check_password(password, user.acc_password):
-            return Response({"error": "Incorrect password"}, status=status.HTTP_400_BAD_REQUEST)
+        if user is not None:
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            return Response(
+                {
+                    "message": "Login successful",
+                    "user": {
+                        "id": user.id,
+                        "email": user.acc_email,
+                    },
+                    "access_token": str(refresh.access_token),
+                    "refresh_token": str(refresh),
+                },
+                status=status.HTTP_200_OK
+            )
 
-        return Response({"message": "Login successful", "user_id": user.acc_id}, status=status.HTTP_200_OK)
-
-    def get(self, request):
-        
-        return 0
+        return Response(
+            {"error": "Invalid credentials"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )

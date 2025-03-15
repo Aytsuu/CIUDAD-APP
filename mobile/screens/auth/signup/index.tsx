@@ -1,5 +1,6 @@
 import Layout from "./_layout";
 import { IdentityVerificationForm } from "./IdentityVerForm"
+import DemographicData from "./DemographicData";
 
 // This is the main page component
 export default () => {

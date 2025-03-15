@@ -9,11 +9,10 @@ import RNDateTimePicker, {
 import { RadioGroup } from "@/components/ui/radio-button/radio-group";
 import RadioButton from "@/components/ui/radio-button/radio-button";
 import { Calendar } from "@/lib/icons/Calendar";
-import { useForm } from "./FormContext";
-import { FormDataSchema, validateFormData } from "@/form-schema/registration-schema"; // Import the schema and validation function
+import { useForm } from "../../../app/(auth)/FormContext";
+import { FormDataSchema } from "@/form-schema/registration-schema"; 
 import { z } from "zod";
 
-// Utility function to extract error messages for a specific field
 const getErrorMessage = (errors: z.ZodError | null, path: string): string | undefined => {
   return errors?.issues.find((issue) => issue.path.includes(path))?.message;
 };
@@ -30,18 +29,15 @@ export const IdentityVerificationForm = () => {
   };
 
   const handleNext = () => {
-    // Validate only the identityVerification section
     const identityVerificationSchema = FormDataSchema.pick({
       identityVerification: true,
     });
     const validationResult = identityVerificationSchema.safeParse(formData);
 
     if (validationResult.success) {
-      // Proceed to the next step
-      setErrors(null); // Clear any previous errors
+      setErrors(null); 
       router.push("/demographic-data");
     } else {
-      // Display errors for the current step
       setErrors(validationResult.error);
       alert("Please complete all fields correctly.");
     }
