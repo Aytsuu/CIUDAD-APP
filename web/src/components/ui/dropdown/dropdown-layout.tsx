@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 interface Option {
   id: string;
   name: React.ReactNode;
+  icon?: React.ReactNode
 }
 
 interface DropdownProps {
@@ -41,6 +42,7 @@ export default function DropdownLayout({
             key={option.id || index} 
             onSelect={() => option.id && onSelect && onSelect(option.id)}
           >
+            {option.icon}
             {option.name}
           </DropdownMenuItem>
         ))}

@@ -8,16 +8,16 @@ import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { householdColumns } from "../profilingColumns";
 
-export default function ProfilingBusiness(){
+export default function ProfilingFamily(){
     return (
         <div className="w-full">
             <div className="mb-4">
                 <h1 className="text-xl sm:text-2xl font-semibold text-darkBlue2">Business Records</h1>
                 <p className="text-xs sm:text-sm text-darkGray">Manage and view business information</p>
             </div>
-
+                        
             <hr className="border-gray mb-6 sm:mb-8" />
-
+            
             <div className="hidden lg:flex justify-between items-center mb-4">
                 <div className="flex gap-2">
                     <div className="relative flex-1 bg-white">

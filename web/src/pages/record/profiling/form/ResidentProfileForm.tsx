@@ -21,7 +21,7 @@ export function ProfilingForm() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const defaultValues = generateDefaultValues(profilingFormSchema)
-  const { auth, type } = location.state || {auth: '', type: ''}
+  const { params } = location.state || { params: {}}
 
   const form = useForm<z.infer<typeof profilingFormSchema>>({
     resolver: zodResolver(profilingFormSchema),
@@ -117,7 +117,7 @@ export function ProfilingForm() {
               form={form}
               onSubmit={()=>nextStep()}
               back={()=>prevStep()}
-              auth={auth}
+              params={params}
             />
           )}
         </Card>

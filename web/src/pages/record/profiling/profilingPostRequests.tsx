@@ -163,6 +163,29 @@ const building = (householNo: string, family_id: string, building: string) => {
     }
 }
 
+const household = (demographicInfo: Record<string, string>, householdInfo: Record<string, string>, personal_id: string, sitio_id: string) => {
+
+    try{
+
+        api.post('profiling/household/', {
+            hh_id: demographicInfo.householdNo,
+            hh_existing_no: householdInfo.existing_no,
+            hh_nhts: demographicInfo.nhts,
+            hh_province: 'Cebu',
+            hh_city: 'Cebu City',
+            hh_barangay: 'San Roque',
+            hh_street: householdInfo.street,
+            hh_date_registered: formatDate(new Date()),
+            per: personal_id,
+            sitio: sitio_id,
+        })
+
+    } catch (err) {
+        console.log(err)
+    }
+
+}
+
 // ----------------------------------------------------------------------------------------------------------------------------
 
-export { address, personal, father, mother, family, dependents, building, familyComposition };
+export { address, personal, father, mother, family, dependents, building, familyComposition, household};

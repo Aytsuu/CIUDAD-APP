@@ -111,13 +111,13 @@ export default function AdministrativePositions(
                             <Label className="text-black/80 text-[15px] font-medium">{value.pos_title}</Label>
                             {value.pos_id === selectedPosition ? 
                                 (<DropdownLayout
-                                    label={<Ellipsis size={20}/>}
+                                    trigger={<Ellipsis size={20}/>}
                                     itemClassName="text-red-500 focus:text-red-500"
                                     options={[
                                         {
                                             id: 'delete',
                                             name: 'Delete',
-                                            icons: <Trash />
+                                            icon: <Trash />
                                         }
                                     ]}
                                     onSelect={deletePosition}

@@ -8,6 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Button } from "@/components/ui/button";
 import { MoveRight } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router";
+
 
 const defaultValues = generateDefaultValues(householdSchema)
 
@@ -45,6 +47,18 @@ export default function HouseholdProfileForm(){
                         </FormItem>
                     )}
                 />
+                <FormField
+                    control={form.control}
+                    name="streetAddress"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel>House Street Address</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Enter your house's street address" {...field}/>
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
                 <div className="grid gap-4">
                     <FormField
                         control={form.control}
@@ -54,16 +68,22 @@ export default function HouseholdProfileForm(){
                                 <FormLabel>Household Head</FormLabel>
                                 <FormControl>
                                     <Input placeholder="Enter resident no." {...field}/>
-                                </FormControl>
+                                </FormControl>  
                             </FormItem>
                         )}  
                     />
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                         <Label className="font-normal">Resident not found?</Label>
-                        <Label className="font-normal text-teal cursor-pointer hover:underline">Profile Resident</Label>
+                        <Link to='/resident-registration' state={{params: {origin: 'household', householdInfo: form.getValues()}}}>
+                            <Label 
+                                className="font-normal text-teal cursor-pointer hover:underline"
+                            >
+                                Redirect to Registration
+                            </Label>
+                        </Link>
                     </div>
                 </div>
-
+                        
                 <Button className="mt-5">
                     Register
                 </Button>

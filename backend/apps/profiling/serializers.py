@@ -37,11 +37,6 @@ class BuildingSerializer(serializers.ModelSerializer):
         model = Building
         fields = '__all__'
 
-class AddressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Address
-        fields = '__all__'
-
 class HouseholdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Household

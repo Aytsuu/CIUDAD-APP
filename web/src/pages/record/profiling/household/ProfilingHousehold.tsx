@@ -6,7 +6,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { householdColumns } from "../_columns";
+import { householdColumns } from "../profilingColumns";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 
 
@@ -62,9 +62,9 @@ export default function ProfilingHousehold(){
                 </div>
                 <DropdownLayout
                     trigger={
-                    <Button variant="outline">
-                        <FileInput className="mr-2" /> Export
-                    </Button>
+                        <Button variant="outline">
+                            <FileInput className="mr-2" /> Export
+                        </Button>
                     }
                     options={[
                     { id: '', name: "Export as CSV"},

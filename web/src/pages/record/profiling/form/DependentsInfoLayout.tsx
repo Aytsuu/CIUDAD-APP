@@ -7,8 +7,8 @@ import DependentForm from './DependentForm';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/table/data-table';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';
-import AssignPosition from '../../../administration/AssignPosition';
-import {personal, father, mother, family, dependents, address, building, familyComposition} from './_postRequests'
+import AssignPosition from '../../administration/AssignPosition';
+import {personal, father, mother, family, dependents, building, familyComposition, household} from '../profilingPostRequests'
 
 type Dependent = {
     id: string
@@ -57,9 +57,9 @@ const columns: ColumnDef<Dependent>[] = [
 ]
  
 export default function DependentsInfoLayout(
-  {form, onSubmit, back, auth}: {
-    auth: string,
-    form: UseFormReturn<z.infer<typeof profilingFormSchema>>,
+  {form, params, onSubmit, back}: {
+    form: UseFormReturn<z.infer<typeof profilingFormSchema>>
+    params: Record<string, any>
     onSubmit: () => void,
     back: () => void
 }){
@@ -92,14 +92,16 @@ export default function DependentsInfoLayout(
         const motherInfo = form.getValues().motherInfo
         const fatherInfo = form.getValues().fatherInfo
         const dependentsInfo = form.getValues().dependentsInfo.list
-
-        // Store to address
-
-        const address_id = await address(demographicInfo.sitio, personalInfo.streetAddress)
       
         // Store to personal
 
         const personal_id = await personal(personalInfo)
+
+        // Store to household  
+
+        if(params.origin === 'household') {
+            household(demographicInfo, params.householdInfo, personal_id, demographicInfo.sitio)
+        }
 
         // Store to father
 
@@ -121,13 +123,9 @@ export default function DependentsInfoLayout(
 
         familyComposition(family_id, personal_id)
 
-        // Store to household  
-
-        const household_id = await household(address_id, personal_id, demographicInfo.householdNo)
-
         // Store to building
 
-        building(household_id, demographicInfo.familyNo, demographicInfo.building)
+        building(demographicInfo.householdNo, demographicInfo.familyNo, demographicInfo.building)
         
         // Store to position assignment (if applied)
     }
@@ -152,7 +150,7 @@ export default function DependentsInfoLayout(
                 </Button>
                 
                 {
-                    auth === 'admin' ? 
+                    params.origin === 'administration' ? 
                     (
                         <DialogLayout
                             trigger={

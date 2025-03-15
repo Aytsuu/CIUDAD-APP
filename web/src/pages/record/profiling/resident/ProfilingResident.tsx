@@ -8,10 +8,9 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import RegistrationOptions from "./RegistrationOptions";
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
-import { residentColumns } from "../_columns";
-import { ResidentRecord } from "../_types";
+import { residentColumns } from "../profilingColumns";
+import { ResidentRecord } from "../profilingTypes";
 import api from "@/api/api";
 
 const FilterComponent = ({ onFilterChange }) => {
@@ -153,14 +152,11 @@ export default function ProfilingMain() {
               <ClockArrowUp /> Pending
             </Button>
           </Link>
-          <DialogLayout
-            trigger={
-              <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
-                <Plus size={15} /> Register
-              </Button>
-            }
-            mainContent={<RegistrationOptions />}
-          />
+          <Link to='/resident-registration'>
+            <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
+              <Plus size={15} /> Register
+            </Button>
+          </Link>
         </div>
       </div>
 

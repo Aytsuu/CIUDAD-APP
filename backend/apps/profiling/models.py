@@ -90,22 +90,17 @@ class Sitio(models.Model):
     class Meta:
         db_table = 'sitio'
 
-class Address(models.Model):
-    add_id = models.BigAutoField(primary_key=True)
-    add_province = models.CharField(max_length=100)
-    add_city = models.CharField(max_length=100)
-    add_barangay = models.CharField(max_length=100)
-    add_street = models.CharField(max_length=100)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'address'
-
 class Household(models.Model):
     hh_id = models.CharField(max_length=50,primary_key=True)
+    hh_existing_no = models.CharField(max_length=50, null=True)
+    hh_nhts = models.CharField(max_length=50)
+    hh_province = models.CharField(max_length=50)
+    hh_city = models.CharField(max_length=50)
+    hh_barangay = models.CharField(max_length=50)
+    hh_street = models.CharField(max_length=50)
     hh_date_registered = models.DateField()
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
-    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'household'

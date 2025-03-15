@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HouseholdRecord, ResidentRecord} from "./_types";
+import { HouseholdRecord, ResidentRecord} from "./profilingTypes";
 
 // Define the columns for the data table
 export const residentColumns: ColumnDef<ResidentRecord>[] = [

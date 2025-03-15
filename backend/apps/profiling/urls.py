@@ -31,10 +31,6 @@ urlpatterns = [
 
     path("sitio/", SitioView.as_view(), name="sitio-list"),
 
-    # Adress Urls
-
-    path("address/", AddressView.as_view(), name='address-details'),
-
     # Househould Urls
     
     path("household/", HouseholdView.as_view(), name="household-details"),

@@ -31,10 +31,6 @@ class SitioView(generics.ListCreateAPIView):
     serializer_class = SitioSerializer
     queryset = Sitio.objects.all()
 
-class AddressView(generics.ListCreateAPIView):
-    serializer_class = AddressSerializer
-    queryset = Address.objects.all()
-
 class HouseholdView(generics.ListCreateAPIView):
     serializer_class = HouseholdSerializer
     queryset = Household.objects.all()
