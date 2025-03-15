@@ -8,6 +8,7 @@ import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-
 import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
 import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/treasurer-budgetplan-Form";
 import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-view";
+import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 
 export const treasurer_router = [
     {
@@ -49,5 +50,9 @@ export const treasurer_router = [
     {
         path: '/treasurer-barangay-service',
         element: <BarangayService/>
+    },
+    {
+        path: '/treasurer-rates',
+        element: <RatesForm/>
     },
 ]

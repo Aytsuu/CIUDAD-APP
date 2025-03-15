@@ -1,5 +1,5 @@
 import CreateBudgetPlanPage1 from "./treasurer-budgetplan-Page1";
-import CreateBudgetPlanPage2 from "./treasurer.budgetplan-Page2";
+import CreateBudgetPlanPage2 from "./treasurer-budgetplan-Page2";
 import CreateBudgetPlanPage3 from "./treasurer-budgetplan-Page3";
 import CreateBudgetPlanPage4 from "./treasurer-budgetplan-Page4";
 import { useLocation } from "react-router";
