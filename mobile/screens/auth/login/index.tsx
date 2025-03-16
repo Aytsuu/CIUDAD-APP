@@ -1,7 +1,13 @@
 import "@/global.css";
 
 import React, { useState } from "react";
-import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
+import {
+  View,
+  Text,
+  TouchableWithoutFeedback,
+  Image,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
@@ -12,34 +18,56 @@ import { EyeOff } from "@/lib/icons/EyeOff";
 import axios from "axios";
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+  
+    setIsLoading(true);
+  
     try {
-      const response = await axios.post("http://192.168.1.48:8000/api/login", {
-        username,
-        password,
+      // Send a GET request to the backend with email and password as query parameters
+      const response = await axios.get("http://192.168.1.55:8000/api/login/", {
+        params: {
+          email: email,
+          password: password,
+        },
       });
   
-      const data = response.data;
+      if (response.data.success) {
+        await AsyncStorage.setItem("isLoggedIn", "true");
+        await AsyncStorage.setItem("userEmail", email);
   
-      if (data.access_token) {
-        await AsyncStorage.setItem("accessToken", data.access_token);
-        await AsyncStorage.setItem("refreshToken", data.refresh_token);
-        alert("Login Successful!");
+        Alert.alert("Success", "Login successful!");
       } else {
-        alert("Login failed: No token received.");
+        Alert.alert("Error", response.data.message || "Invalid email or password.");
       }
     } catch (error) {
+      // Suppress the error logging and only show an alert
       if (axios.isAxiosError(error)) {
-        alert(error.response?.data?.error || "Invalid username or password");
+        if (error.response?.status === 401) {
+          // Invalid password
+          Alert.alert("Error", "Invalid password.");
+        } else if (error.response?.status === 404) {
+          // User not found
+          Alert.alert("Error", "No account found with this email.");
+        } else {
+          // Other errors
+          Alert.alert("Error", "Something went wrong. Please try again.");
+        }
       } else {
-        console.error("Login error:", error);
-        alert("Something went wrong. Please try again.");
+        // Non-Axios errors
+        Alert.alert("Error", "Something went wrong. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,8 +91,10 @@ export default function LoginScreen() {
           <Input
             className="h-[57px] font-PoppinsRegular"
             placeholder="Username/Email"
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
           />
           <View className="relative">
             <Input
@@ -73,9 +103,10 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              autoCapitalize="none"
             />
 
-            {password.length >= 8 && (
+            {password.length > 0 && (
               <TouchableWithoutFeedback
                 onPress={() => setShowPassword(!showPassword)}
               >
@@ -101,9 +132,10 @@ export default function LoginScreen() {
             className="bg-primaryBlue native:h-[57px]"
             size={"lg"}
             onPress={handleLogin}
+            disabled={isLoading}
           >
             <Text className="text-white font-PoppinsSemiBold text-[16px]">
-              Log in
+              {isLoading ? "Logging in..." : "Log in"}
             </Text>
           </Button>
         </View>

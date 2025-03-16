@@ -1,7 +1,6 @@
 import "@/global.css";
-
 import React, { useState } from "react";
-import { View, Text, TouchableWithoutFeedback } from "react-native";
+import { View, Text, TouchableWithoutFeedback, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { EyeOff } from "@/lib/icons/EyeOff";
 import { useForm } from "../../../app/(auth)/FormContext";
 import { z } from "zod";
 import { FormDataSchema } from "@/form-schema/registration-schema";
+import axios from "axios";
 
 export default function AccountDetails() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function AccountDetails() {
   const [rePass, setRePass] = useState("");
   const [errors, setErrors] = useState<z.ZodError | null>(null);
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     // Validate user input
     const validationResult = FormDataSchema.pick({
       accountDetails: true,
@@ -39,7 +39,29 @@ export default function AccountDetails() {
 
     if (validationResult.success) {
       setErrors(null);
-      router.push("/personal-information");
+
+      try {
+        // Send data to the backend
+        const response = await axios.post("http://192.168.1.55:8000/api/account/", {
+          email: formData.accountDetails.email,
+          password: formData.accountDetails.password,
+        });
+
+        if (response.status === 201) {
+          Alert.alert("Success", "Account created successfully!");
+          router.push("/personal-information");
+        } else {
+          Alert.alert("Error", "Failed to create account.");
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const errorMessage = error.response?.data?.message || "Something went wrong.";
+          Alert.alert("Error", errorMessage);
+        } else {
+          console.error("Error:", error);
+          Alert.alert("Error", "Something went wrong. Please try again.");
+        }
+      }
     } else {
       setErrors(validationResult.error);
       alert("Please complete all required fields correctly.");
