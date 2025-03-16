@@ -19,3 +19,14 @@ export type HouseholdRecord = {
   dateRegistered: string,
   registeredBy: string
 }
+
+export type DependentRecord = {
+  id: string
+  lname: string
+  fname: string
+  mname: string
+  suffix: string
+  sex: string
+  dateOfBirth: string
+  // headRelationship: string
+}

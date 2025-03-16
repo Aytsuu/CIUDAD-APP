@@ -1,9 +1,8 @@
+import React from "react";
 import { Card } from "@/components/ui/card/card";
-import { useState } from "react";
-import PersonalInfoForm from "./PersonalInfoForm";
-import ParentsFormLayout from "./ParentsFormLayout";
-import DependentsInfoLayout from "./DependentsInfoLayout";
-import DemographicInfo from "./DemographicInfo";
+import ParentsFormLayout from "../form/ParentsFormLayout";
+import DependentsInfoLayout from "../form/DependentsInfoLayout";
+import DemographicInfo from "../form/DemographicInfo";
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
@@ -11,21 +10,19 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { profilingFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { useLocation } from "react-router";
 
-export function ProfilingForm() {
-  const location = useLocation()
+export default function FamilyProfileForm() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const defaultValues = generateDefaultValues(profilingFormSchema)
-  const { params } = location.state || { params: {}}
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const defaultValues = generateDefaultValues(familyFormSchema)
 
-  const form = useForm<z.infer<typeof profilingFormSchema>>({
-    resolver: zodResolver(profilingFormSchema),
-    defaultValues 
+  const form = useForm<z.infer<typeof familyFormSchema>>({
+    resolver: zodResolver(familyFormSchema),
+    defaultValues,
+    mode: 'onChange' 
   })
 
   const nextStep = () => {
@@ -41,12 +38,10 @@ export function ProfilingForm() {
   const calculateProgress = () => {
     switch (currentStep) {
       case 1:
-        return 20;
+        return 30;
       case 2:
         return 60;
       case 3:
-        return 80;
-      case 4:
         return 100;
       default:
         return 0;
@@ -67,22 +62,13 @@ export function ProfilingForm() {
           </Button>
           <div className="flex flex-col">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Registration Form
+              Family Form
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
               Provide your details to complete the registration process.
             </p>
           </div>  
         </div>
-        
-        <p className="text-sm text-gray-500">
-          {new Date().toLocaleDateString(undefined, {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-          })}
-
-        </p>
       </div>
 
       <hr className="border-gray mb-6 sm:mb-8" />
@@ -99,25 +85,17 @@ export function ProfilingForm() {
             />
           )}
           {currentStep === 2 && (
-            <PersonalInfoForm
-              form={form}
-              onSubmit={()=>nextStep()}
-              back={()=>prevStep()}
-            />
-          )}
-          {currentStep === 3 && (
             <ParentsFormLayout
               form={form}
               onSubmit={()=>nextStep()}
               back={()=>prevStep()}
             />
           )}
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <DependentsInfoLayout
               form={form}
-              onSubmit={()=>nextStep()}
+              defaultValues={defaultValues}
               back={()=>prevStep()}
-              params={params}
             />
           )}
         </Card>

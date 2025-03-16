@@ -1,6 +1,76 @@
 import * as z from "zod";
+import api from "@/api/api";
+
+// Fetch household numbers from the API
+const fetchHouseholdNumbers = async (): Promise<string[]> => {
+    try {
+        const res = await api.get('profiling/household/');
+        return res.data.map((household: any) => household.hh_id);
+    } catch (err) {
+        console.error("Failed to fetch household numbers:", err);
+        return [];
+    }
+};
+
+// Custom validation function to check if householdNo exists in the database
+const validateHouseholdNo = async (householdNo: string): Promise<boolean> => {
+    const householdNumbers = await fetchHouseholdNumbers();
+    return householdNumbers.includes(householdNo);
+};
+
+// Define the schema with custom validation for householdNo
+export const demographicInfo = z.object({
+    building: z.string().min(1, 'Building is required'),
+    householdNo: z.string().min(1, "Household number is required").refine(async (householdNo) => {
+        return await validateHouseholdNo(householdNo);
+    }, {
+        message: "Household number does not exist",
+    }),
+    indigenous: z.string().min(1, 'Indigenous is required'),
+});
+
+export const personalInfoSchema = z.object({
+    lastName: z.string().min(1, "Last Name is required"),
+    firstName: z.string().min(1, "First Name is required"),
+    middleName: z.string(),
+    suffix: z.string().optional(),
+    sex: z.string().min(1, "Sex is required"),
+    dateOfBirth: z.string().date(),
+    status: z.string().min(1, "Status is required"),
+    address: z.string().min(1, 'Address is required'),
+    edAttainment: z.string(),
+    religion: z.string().min(1, "Religion is required"),
+    contact: z.string().min(1, "Contact is required"),
+})
+
+export const motherInfo = z.object({
+    id: z.string(),
+    lastName: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    suffix: z.string(),
+    dateOfBirth: z.string().date(),  
+    status: z.string(),
+    religion: z.string(),
+    edAttainment: z.string(),
+    contact: z.string(),
+})
+
+export const fatherInfo = z.object({
+    id: z.string(),
+    lastName: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    suffix: z.string(),
+    dateOfBirth: z.string().date(),  
+    status: z.string(),
+    religion: z.string(),
+    edAttainment: z.string(),
+    contact: z.string(),
+})
 
 export const dependentSchema = z.object({
+    id: z.string(),
     lastName: z.string(),
     firstName: z.string(),
     middleName: z.string(),
@@ -9,63 +79,26 @@ export const dependentSchema = z.object({
     sex: z.string(),
 })
 
-export const profilingFormSchema = z.object({
-    demographicInfo: z.object({
-        building: z.string().min(1, "Building is required"),
-        householdNo: z.string(),
-        familyNo: z.string(),
-        nhts: z.string().min(1, 'NHTS Household is required'),
-        indigenous: z.string().min(1, 'Indigenous is required'),
-        sitio: z.string().min(1, 'Sitio is required'),
-    }),
-    
-    personalInfo: z.object({
-        lastName: z.string().min(1, "Last Name is required"),
-        firstName: z.string().min(1, "First Name is required"),
-        middleName: z.string().optional(),
-        suffix: z.string().optional(),
-        sex: z.string().min(1, "Sex is required"),
-        dateOfBirth: z.string().date(),
-        status: z.string().min(1, "Status is required"),
-        streetAddress: z.string().min(1, 'Address is required'),
-        religion: z.string().min(1, "Religion is required"),
-        contact: z.string().min(1, "Contact is required"),
-    }),
 
-    motherInfo: z.object({
-        lastName: z.string(),
-        firstName: z.string(),
-        middleName: z.string(),
-        suffix: z.string(),
-        dateOfBirth: z.string().date(),  
-        status: z.string(),
-        religion: z.string(),
-        edAttainment: z.string(),
-        contact: z.string(),
-        philhealth: z.string(),
-        vacStatus: z.string(),
-        bloodType: z.string()
-    }),
-    fatherInfo: z.object({
-        lastName: z.string(),
-        firstName: z.string(),
-        middleName: z.string(),
-        suffix: z.string(),
-        dateOfBirth: z.string().date(),  
-        status: z.string(),
-        religion: z.string(),
-        edAttainment: z.string(),
-        contact: z.string(),
-        philhealth: z.string(),
-        vacStatus: z.string(),
-        bloodType: z.string()
-    }),
-
+export const familyFormSchema = z.object({
+    demographicInfo: demographicInfo,
+    motherInfo: motherInfo,
+    fatherInfo: fatherInfo,
     dependentsInfo: z.object({
         list: z.array(dependentSchema).default([]),
         new: dependentSchema
     }),
-
-    assignPosition: z.string().min(1, 'Assign a Position')
 })
 
+export const householdSchema = z.object({
+    householdNo: z.string().min(1),
+    existingHouseNo: z.string(),
+    nhts: z.string().min(1),
+    sitio: z.string().min(1),
+    street: z.string().min(1),
+    householdHead: z.string().min(1)
+})
+
+export const assignPositionSchema = z.object({
+    
+})

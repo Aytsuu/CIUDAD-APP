@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Assigned, Feature } from "./_types";
+import { Assigned, Feature } from "./administrationTypes";
   
 export default function RoleLayout() {
     const navigate = useNavigate();

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog/dialog";
 
 interface DialogProps {
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
     className?: string;
     title?: string;
     description?: string;

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Assigned, Feature } from "./_types";
+import { Assigned, Feature } from "./administrationTypes";
 import api from "@/api/api";
 
 export default function SettingPermissions(
@@ -22,7 +22,11 @@ export default function SettingPermissions(
     }, []);
 
     // State to manage permissions
-    const [localAssignedFeatures, setLocalAssignedFeatures] = React.useState<Assigned[]>(assignedFeatures);
+    const [localAssignedFeatures, setLocalAssignedFeatures] = React.useState<Assigned[]>([]);
+
+    React.useEffect(() => {
+        setLocalAssignedFeatures(assignedFeatures);
+    }, [assignedFeatures]);
 
     // Filter assignedFeatures based on the selected position
     const filteredAssignedFeatures = React.useMemo(() => {
@@ -34,8 +38,8 @@ export default function SettingPermissions(
         return feature ? feature.feat_name : undefined;
     };
 
-    const changePermission = (assignmentId: string, option: string, permission: boolean) => {
-        // Update the local state first
+    const changePermission = async (assignmentId: string, option: string, permission: boolean) => {
+        // Update the local state first using a functional update
         setLocalAssignedFeatures((prev) =>
             prev.map((feature) =>
                 feature.assi_id === assignmentId
@@ -49,15 +53,27 @@ export default function SettingPermissions(
                     : feature
             )
         );
-
+    
         // Send the API request
-        api
-            .put(`administration/permissions/${assignmentId}/`, { [option]: permission })
-            .catch((err) => {
-                console.log(err);
-                // Revert the local state if the API call fails
-                setLocalAssignedFeatures(assignedFeatures);
-            });
+        try {
+            await api.put(`administration/permissions/${assignmentId}/`, { [option]: permission });
+        } catch (err) {
+            console.error(err);
+            // Revert the local state if the API call fails
+            setLocalAssignedFeatures((prev) =>
+                prev.map((feature) =>
+                    feature.assi_id === assignmentId
+                        ? {
+                            ...feature,
+                            permissions: feature.permissions.map((perm: any) => ({
+                                ...perm,
+                                [option]: !permission, // Revert to the previous value
+                            })),
+                        }
+                        : feature
+                )
+            );
+        }
     };
 
     // Helper function to flatten permissions
@@ -70,6 +86,57 @@ export default function SettingPermissions(
         }, {} as Record<string, boolean>);
     };
 
+    const handleAddAllForFeature = async (assignmentId: string, checked: boolean) => {
+        // Update the local state first
+        setLocalAssignedFeatures((prev) =>
+            prev.map((feature) =>
+                feature.assi_id === assignmentId
+                    ? {
+                        ...feature,
+                        permissions: feature.permissions.map((perm: any) => {
+                            const updatedPerm: Record<string, boolean> = {};
+                            Object.keys(perm).forEach((key) => {
+                                // Update all permissions except 'view'
+                                if (permissions.includes(key)) {
+                                    updatedPerm[key] = key !== 'view' ? checked : perm[key];
+                                } else {
+                                    updatedPerm[key] = perm[key]; // Preserve other keys
+                                }
+                            });
+                            return updatedPerm;
+                        }),
+                    }
+                    : feature
+            )
+        );
+    
+        // Find the feature to update
+        const featureToUpdate = localAssignedFeatures.find((feature) => feature.assi_id === assignmentId);
+    
+        if (featureToUpdate) {
+            // Flatten permissions for the feature
+            const flattenedPTU = flattenPermissions(featureToUpdate.permissions);
+    
+            // Filter permissions to include only those in the `permissions` array
+            const permissionsToUpdate = Object.entries(flattenedPTU).filter(([key]) =>
+                permissions.includes(key)
+            );
+    
+            // Make API calls to update permissions
+            for (const [key, value] of permissionsToUpdate) {
+                try {
+                    await api.put(`administration/permissions/${assignmentId}/`, {
+                        [key]: key !== 'view' ? checked : value,
+                    });
+                } catch (err) {
+                    console.error(err);
+                    // Revert the local state if the API call fails
+                    setLocalAssignedFeatures(assignedFeatures);
+                }
+            }
+        }
+    };
+
     return (
         <Accordion type="single" collapsible className="w-full">
             {filteredAssignedFeatures.map((feature) => {
@@ -79,6 +146,9 @@ export default function SettingPermissions(
                 // Filter out permissions not in the permissions list
                 const filteredPermissions = Object.entries(flattenedPermissions)
                     .filter(([key]) => permissions.includes(key));
+
+                // Check if all permissions are already enabled for this feature
+                const allPermissionsEnabled = filteredPermissions.every(([, value]) => value);
 
                 return (
                     <AccordionItem key={feature.assi_id} value={feature.assi_id}>
@@ -109,6 +179,20 @@ export default function SettingPermissions(
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="flex flex-col gap-3">
+                            {/* Add All Checkbox for each feature */}
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    id={`add-all-${feature.assi_id}`}
+                                    checked={allPermissionsEnabled}
+                                    onCheckedChange={(checked) =>
+                                        handleAddAllForFeature(feature.assi_id, checked as boolean)
+                                    }
+                                />
+                                <Label htmlFor={`add-all-${feature.assi_id}`} className="cursor-pointer">
+                                    All
+                                </Label>
+                            </div>
+
                             {/* Map through each permission option for the feature */}
                             {filteredPermissions.map(([key, value]) => (
                                 <div key={key} className="flex items-center gap-3">
@@ -119,6 +203,7 @@ export default function SettingPermissions(
                                         onCheckedChange={(checked) =>
                                             changePermission(feature.assi_id, key, checked as boolean)
                                         }
+                                        disabled={key === 'view'}
                                     />
                                     <Label htmlFor={key} className="cursor-pointer">
                                         {key}

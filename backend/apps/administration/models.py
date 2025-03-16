@@ -29,7 +29,7 @@ class Assignment(models.Model):
 
 class Permission(models.Model):
     perm_id = models.BigAutoField(primary_key=True)
-    view = models.BooleanField(default=False)
+    view = models.BooleanField(default=True)
     create = models.BooleanField(default=False)
     update = models.BooleanField(default=False)
     delete = models.BooleanField(default=False)

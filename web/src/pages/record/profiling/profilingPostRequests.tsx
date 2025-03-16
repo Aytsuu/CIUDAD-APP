@@ -1,30 +1,14 @@
 import api from "@/api/api"
-import formatDate from "@/helpers/dateFormatter"
+import { formatDate } from "@/helpers/dateFormatter"
+import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
-    
-const address = async (sitio: string, streetAddress: string) => {
-
-    try{
-        const res = await api.post('profiling/address/', {
-            add_province: 'Cebu',
-            add_city: 'Cebu City',
-            add_barangay: 'San Roque',
-            add_street: streetAddress,
-            sitio: sitio
-        })
-
-        return res.data.add_id
-    } catch (err) {
-        console.log(err)
-    } 
-}
 
 const personal = async (personalInfo: Record<string, string>) => {
 
     try {
-        
-        const res = await api.post('profiling/personal/', {
+
+        console.log({
             per_lname: personalInfo.lastName,
             per_fname: personalInfo.firstName,
             per_mname: personalInfo.middleName,
@@ -32,6 +16,22 @@ const personal = async (personalInfo: Record<string, string>) => {
             per_dob: formatDate(personalInfo.dateOfBirth),
             per_sex: personalInfo.sex,
             per_status: personalInfo.status,
+            per_address: personalInfo.address,
+            per_edAttainment: personalInfo.edAttainment,
+            per_religion: personalInfo.religion,
+            per_contact: personalInfo.contact
+        })
+        
+        const res = await api.post('profiling/personal/', {
+            per_lname: personalInfo.lastName,
+            per_fname: personalInfo.firstName,
+            per_mname: personalInfo.middleName || null,
+            per_suffix: personalInfo.suffix || null,
+            per_dob: formatDate(personalInfo.dateOfBirth),
+            per_sex: personalInfo.sex,
+            per_status: personalInfo.status,
+            per_address: personalInfo.address,
+            per_edAttainment: personalInfo.edAttainment || null,
             per_religion: personalInfo.religion,
             per_contact: personalInfo.contact
         })
@@ -43,22 +43,11 @@ const personal = async (personalInfo: Record<string, string>) => {
     }
 }
 
-const mother = async (motherInfo: Record<string, string>) => {
+const mother = async (personalId: string) => {
 
     try {
         const res = await api.post('profiling/mother/', {
-            mother_lname: motherInfo.lastName,
-            mother_fname: motherInfo.firstName,
-            mother_mname: motherInfo.middleName,
-            mother_suffix: motherInfo.suffix,
-            mother_dob: formatDate(motherInfo.dateOfBirth),
-            mother_status: motherInfo.status,
-            mother_religion: motherInfo.religion,
-            mother_ed_attainment: motherInfo.edAttainment,
-            mother_contact: motherInfo.contact,
-            mother_philhealth: motherInfo.philhealth,
-            mother_vacstatus: motherInfo.vacStatus,
-            mother_bloodtype: motherInfo.bloodType,
+            per: personalId
         })
 
         return res.data.mother_id
@@ -67,23 +56,12 @@ const mother = async (motherInfo: Record<string, string>) => {
     }
 }
 
-const father = async (fatherInfo: Record<string, string>) => {
+const father = async (personalId: string) => {
 
     try {
 
         const res = await api.post('profiling/father/', {
-            father_lname: fatherInfo.lastName,
-            father_fname: fatherInfo.firstName,
-            father_mname: fatherInfo.middleName,
-            father_suffix: fatherInfo.suffix,
-            father_dob: formatDate(fatherInfo.dateOfBirth),
-            father_status: fatherInfo.status,
-            father_religion: fatherInfo.religion,
-            father_ed_attainment: fatherInfo.edAttainment,
-            father_contact: fatherInfo.contact,
-            father_philhealth: fatherInfo.philhealth,
-            father_vacstatus: fatherInfo.vacStatus,
-            father_bloodtype: fatherInfo.bloodType,
+            per: personalId
         })
 
         return res.data.father_id
@@ -93,15 +71,49 @@ const father = async (fatherInfo: Record<string, string>) => {
     }
 }
 
-const family = async (mother_id: string, father_id: string, family_id: string) => { 
+const dependents = (dependentsInfo: Record<string, string>[], familyId: string) => {
 
     try{
 
-        const res = await api.post('profiling/family/',{
-            fam_id: family_id,
+        dependentsInfo.map((dependent) => { 
+            
+            console.log({
+                per: dependent.id,
+                fam: familyId,
+            })
+
+            api.post('profiling/dependent/', {
+                per: dependent.id,
+                fam: familyId,
+            })
+
+            familyComposition(familyId, dependent.id);
+        })
+
+    } catch (err) {
+        console.log(err)
+    }
+
+}
+
+const family = async (demographicInfo: Record<string, string>, fatherId: string, motherId: string) => { 
+
+    try{
+
+        console.log({
+            fam_id: await generateFamilyNo(demographicInfo.building),
+            fam_indigenous: demographicInfo.indigenous,
             fam_date_registered: formatDate(new Date()),
-            father: father_id,
-            mother: mother_id
+            father: fatherId || null,
+            mother: motherId || null
+        })
+
+        const res = await api.post('profiling/family/', {
+            fam_id: await generateFamilyNo(demographicInfo.building),
+            fam_indigenous: demographicInfo.indigenous,
+            fam_date_registered: formatDate(new Date()),
+            father: fatherId || null,
+            mother: motherId || null
         })
 
         return res.data.fam_id
@@ -109,53 +121,19 @@ const family = async (mother_id: string, father_id: string, family_id: string) =
     } catch (err) {
         console.log(err)
     }
-}
+} 
 
-const dependents = (dependentsInfo: Record<string, string>[], family_id: string) => {
+const familyComposition = (familyId: string, personalId: string) => {
+    try {
 
-    try{
-
-        dependentsInfo.map((dependent) => {  
-            api.post('profiling/dependent/', {
-                dep_lname: dependent.lastName,
-                dep_fname: dependent.firstName,
-                dep_mname: dependent.middleName,
-                dep_suffix: dependent.suffix,
-                dep_dob: formatDate(dependent.dateOfBirth),
-                dep_sex: dependent.sex,
-                fam: family_id,
-            })
+        console.log({
+            fam: familyId,
+            per: personalId
         })
-
-    } catch (err) {
-        console.log(err)
-    }
-
-}
-
-const familyComposition = (family_id: string, personal_id: string) => {
-
-    try{
 
         api.post('profiling/family-composition/', {
-            fam: family_id,
-            per: personal_id
-        })
-
-    } catch (err) {
-        console.log(err)
-    }
-
-}
-
-const building = (householNo: string, family_id: string, building: string) => {
-    
-    try{
-
-        api.post('profiling/building/', {
-            build_type: building,
-            hh: householNo,
-            fam: family_id 
+            fam: familyId,
+            per: personalId
         })
 
     } catch (err) {
@@ -163,22 +141,46 @@ const building = (householNo: string, family_id: string, building: string) => {
     }
 }
 
-const household = (demographicInfo: Record<string, string>, householdInfo: Record<string, string>, personal_id: string, sitio_id: string) => {
+const building = async (familyNo: string, demographicInfo: Record<string, string>) => {
+    try {
+
+        console.log({
+            build_type: demographicInfo.building,
+            hh: demographicInfo.householdNo,
+            fam: familyNo
+        })
+
+        const res = await api.post('profiling/building/', {
+            build_type: demographicInfo.building,
+            hh: demographicInfo.householdNo,
+            fam: familyNo
+        })
+
+        return res.data.build_id
+
+    } catch (err) {
+        console.log(err)
+    }
+}
+
+const household = async (householdInfo: Record<string, string>) => {
 
     try{
 
-        api.post('profiling/household/', {
-            hh_id: demographicInfo.householdNo,
-            hh_existing_no: householdInfo.existing_no,
-            hh_nhts: demographicInfo.nhts,
+        const res = await api.post('profiling/household/', {
+            hh_id: householdInfo.householdNo,
+            hh_existing_no: householdInfo.existingHouseNo || null,
+            hh_nhts: householdInfo.nhts,
             hh_province: 'Cebu',
             hh_city: 'Cebu City',
             hh_barangay: 'San Roque',
             hh_street: householdInfo.street,
             hh_date_registered: formatDate(new Date()),
-            per: personal_id,
-            sitio: sitio_id,
+            per: householdInfo.householdHead,
+            sitio: householdInfo.sitio,
         })
+
+        return res.data
 
     } catch (err) {
         console.log(err)
@@ -188,4 +190,4 @@ const household = (demographicInfo: Record<string, string>, householdInfo: Recor
 
 // ----------------------------------------------------------------------------------------------------------------------------
 
-export { address, personal, father, mother, family, dependents, building, familyComposition, household};
+export { personal, father, mother, family, dependents, building, familyComposition, household};

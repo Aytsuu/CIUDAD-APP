@@ -1,53 +1,77 @@
-import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
-import { familyFormSchema } from '@/form-schema/profiling-schema';
-import {
-    Form, 
-    FormControl,
-    FormField,
-    FormItem,
-    FormMessage,
-    FormLabel,
-} from '@/components/ui/form';
-import { SelectLayout } from '@/components/ui/select/select-layout';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { demographicInfo } from "@/form-schema/profiling-schema";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Label } from "@/components/ui/label";
+import { family, familyComposition, building } from "../profilingPostRequests";
 
-export default function DemographicInfo(
-    {form, onSubmit}: {
-    form: UseFormReturn<z.infer<typeof familyFormSchema>>,
-    onSubmit: () => void,
-}){
+export default function LivingSoloForm(
+    {residents} : {
+        residents: Record<string, string>[]
+    }
+) {
+    const defaultValues = generateDefaultValues(demographicInfo)
+    const [residentSearch, setResidentSearch] = React.useState<string>('')
+    const [isResidentFound, setIsResidentFound] = React.useState<boolean>(false)
 
-    const submit = () => {
-        // Validate only the demographicInfo fields
-        form.trigger("demographicInfo").then((isValid) => {
-            if (isValid) {
-                onSubmit(); // Proceed to the next step
-            } 
-        })
-    };
+    React.useEffect(()=>{
+        
+        const searchedResident = residents.find((value) => value.per_id == residentSearch)
 
+        if(searchedResident){
+            setIsResidentFound(true)
+        } else {
+            setIsResidentFound(false)
+        }
+
+    }, [residentSearch, residents])
+    
+    const form = useForm<z.infer<typeof demographicInfo>>({
+        resolver: zodResolver(demographicInfo),
+        defaultValues,
+        mode: "onChange" 
+    })
+
+    const submit = async () => {
+        if(isResidentFound){
+
+            const data = form.getValues()
+
+            const familyNo = await family(data, null, null)
+            familyComposition(familyNo, residentSearch)
+            const buildId = await building(familyNo,data)
+
+            if (buildId) {
+                setResidentSearch('')
+                form.reset(defaultValues)
+            }
+        }
+    }
 
     return (
-        <div className='flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto'>
-            <div className="pb-4">
-                <h2 className="text-lg font-semibold">Demographic Information</h2>
-                <p className="text-xs text-black/50">Fill out all necessary fields</p>
+        <div className="grid gap-3">
+            <Label className="text-black/70">Resident Number</Label>
+            <div className="grid gap-2">
+                <Input placeholder="Enter resident #" value={residentSearch} onChange={(e)=> setResidentSearch(e.target.value)}/>
+                {!isResidentFound && residentSearch.length > 0 &&
+                    <Label className="text-red-500 text-[13px]">Resident does not exist</Label>
+                }
             </div>
             <Form {...form}>
                 <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        submit()
-                    }}
-                    className="flex flex-col gap-4"
+                    onSubmit={(form.handleSubmit(submit))}
+                    className="flex flex-col gap-10"
                 >
-                    <div className='grid grid-cols-4 gap-4'>
+                    <div className="grid gap-3">
                         <FormField
                             control={form.control}
-                            name='demographicInfo.householdNo'
+                            name='householdNo'
                             render={({field}) => (
                                 <FormItem>
                                 <FormLabel className="font-medium text-black/65">
@@ -62,7 +86,7 @@ export default function DemographicInfo(
                         />
                         <FormField
                             control={form.control}
-                            name='demographicInfo.building'
+                            name='building'
                             render={({field}) => (
                                 <FormItem>
                                 <FormLabel className="font-medium text-black/65">
@@ -87,7 +111,7 @@ export default function DemographicInfo(
                         />
                         <FormField
                             control={form.control}
-                            name='demographicInfo.indigenous'
+                            name='indigenous'
                             render={({field}) => (
                                 <FormItem>
                                 <FormLabel className="font-medium text-black/65"> 
@@ -110,15 +134,12 @@ export default function DemographicInfo(
                             )}
                         />
                     </div>
-
                     {/* Submit Button */}
-                    <div className="mt-8 sm:mt-auto flex justify-end">
-                        <Button type="submit" className="w-full sm:w-32">
-                            Next
-                        </Button>
-                    </div>
+                     <Button type="submit">
+                        Register
+                    </Button>   
                 </form>
             </Form>
-        </div> 
+        </div>
     )
 }

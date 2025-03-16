@@ -1,7 +1,15 @@
-import { z } from "zod";
-import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import { profilingFormSchema } from "@/form-schema/profiling-schema";
+import { personalInfoSchema } from "@/form-schema/profiling-schema";
+import { Button } from "@/components/ui/button";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { personal } from "../profilingPostRequests";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import AssignPosition from "../../administration/AssignPosition";
+import { useLocation } from "react-router";
 import {
   Form,
   FormField,
@@ -10,22 +18,23 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 
-export default function PersonalInfoForm(
-  {form, onSubmit, back}: {
-    form: UseFormReturn<z.infer<typeof profilingFormSchema>>,
-    onSubmit: () => void,
-    back: () => void
-}){
-
-  const submit = () => {
-    // Validate personal information fields
-    form.trigger("personalInfo").then((isValid) => {
-      if(isValid) onSubmit(); // Proceed next process if true
+export default function PersonalInfoForm(){
+  const location = useLocation()
+  const defaultValues = generateDefaultValues(personalInfoSchema)
+  const { params } = location.state || { params: {}}
+  
+  const form = useForm<z.infer<typeof personalInfoSchema>>({
+      resolver: zodResolver(personalInfoSchema),
+      defaultValues 
     })
-    
+
+  const submit = async () => {
+    const res = await personal(form.getValues())
+
+    if(res){
+      form.reset(defaultValues)
+    }
   }
 
   return (
@@ -40,13 +49,13 @@ export default function PersonalInfoForm(
             e.preventDefault()
             submit()
           }}
-          className="flex flex-col gap-4 px-2 sm:px-6 md:px-12 lg:px-24"
+          className="flex flex-col gap-4"
         >
           {/* Name Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
             <FormField
               control={form.control}
-              name="personalInfo.lastName"
+              name="lastName"
               render={({ field }) => (
                 <FormItem className="lg:col-span-4">
                   <FormLabel className="font-medium text-black/65">
@@ -61,7 +70,7 @@ export default function PersonalInfoForm(
             />
             <FormField
               control={form.control}
-              name="personalInfo.firstName"
+              name="firstName"
               render={({ field }) => (
                 <FormItem className="lg:col-span-4">
                   <FormLabel className="font-medium text-black/65">
@@ -76,7 +85,7 @@ export default function PersonalInfoForm(
             />
             <FormField
               control={form.control}
-              name="personalInfo.middleName"
+              name="middleName"
               render={({ field }) => (
                 <FormItem className="sm:col-span-1 lg:col-span-3">
                   <FormLabel className="font-medium text-black/65">
@@ -91,7 +100,7 @@ export default function PersonalInfoForm(
             />
             <FormField
               control={form.control}
-              name="personalInfo.suffix"
+              name="suffix"
               render={({ field }) => (
                 <FormItem className="sm:col-span-1 lg:col-span-1">
                   <FormLabel className="font-medium text-black/65">
@@ -107,12 +116,12 @@ export default function PersonalInfoForm(
           </div>
 
           {/* Sex, Status, DOB, Birth Place */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField
               control={form.control}
-              name="personalInfo.sex"
+              name="sex"
               render={({ field }) => (
-                <FormItem className="sm:col-span-1 lg:col-span-2">
+                <FormItem className="sm:col-span-1 lg:col-span-1">
                   <FormLabel className="font-medium text-black/65">
                     Sex
                   </FormLabel>
@@ -135,9 +144,9 @@ export default function PersonalInfoForm(
 
             <FormField
               control={form.control}
-              name="personalInfo.dateOfBirth"
+              name="dateOfBirth"
               render={({ field }) => (
-                <FormItem className="sm:col-span-1 lg:col-span-2">
+                <FormItem className="sm:col-span-1 lg:col-span-1">
                   <FormLabel className="font-medium text-black/65">
                     Date of Birth
                   </FormLabel>
@@ -151,9 +160,9 @@ export default function PersonalInfoForm(
 
             <FormField
               control={form.control}
-              name="personalInfo.status"
+              name="status"
               render={({ field }) => (
-                <FormItem className="sm:col-span-1 lg:col-span-2">
+                <FormItem className="sm:col-span-1 lg:col-span-1">
                   <FormLabel className="font-medium text-black/65">
                     Marital Status
                   </FormLabel>
@@ -178,11 +187,11 @@ export default function PersonalInfoForm(
 
             <FormField
               control={form.control}
-              name='personalInfo.streetAddress'
+              name='address'
               render={({field}) => (
-                  <FormItem className='col-span-6'>
+                  <FormItem className='col-span-1'>
                   <FormLabel className="font-medium text-black/65">
-                      Street Address
+                      Address
                   </FormLabel>
                   <FormControl>
                       <Input placeholder='' {...field}/>
@@ -194,12 +203,27 @@ export default function PersonalInfoForm(
           </div>
 
           {/* Citizenship, Religion, Contact */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <FormField
+              control={form.control}
+              name='edAttainment'
+              render={({field}) => (
+                  <FormItem className='col-span-2'>
+                  <FormLabel className="font-medium text-black/65">
+                      Education Attainment
+                  </FormLabel>
+                  <FormControl>
+                      <Input placeholder='' {...field}/>
+                  </FormControl>
+                  <FormMessage/>
+                  </FormItem>
+              )}
+          />
             <FormField
               control={form.control}
-              name="personalInfo.religion"
+              name="religion"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className='col-span-1'>
                   <FormLabel className="font-medium text-black/65">
                     Religion
                   </FormLabel>
@@ -212,9 +236,9 @@ export default function PersonalInfoForm(
             />
             <FormField
               control={form.control}
-              name="personalInfo.contact"
+              name="contact"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className='col-span-1'>
                   <FormLabel className="font-medium text-black/65">
                     Contact#
                   </FormLabel>
@@ -229,12 +253,25 @@ export default function PersonalInfoForm(
 
           {/* Submit Button */}
           <div className="mt-8 flex justify-end gap-3">
-              <Button variant="outline" className="w-full sm:w-32" onClick={back}>
-                Prev
-              </Button>
-              <Button type="submit" className="w-full sm:w-32" onClick={onSubmit}> 
-                Next
-              </Button>
+            {params.origin === 'administration' ? 
+              (
+                  <DialogLayout
+                      trigger={
+                          <div className='text-white bg-buttonBlue py-1.5 px-12 rounded-md cursor-pointer text-[14px] font-medium hover:bg-buttonBlue/90'>
+                              Finish
+                          </div>
+                      }
+                      title='Position Assignment'
+                      description='Assign a position to complete the registration'
+                      mainContent={ <AssignPosition form={form}/>} 
+                  />
+              ) : (
+                  
+                <Button type="submit" className="w-full sm:w-32" > 
+                  Register
+                </Button>
+              )
+            }                  
           </div>
         </form>
       </Form>

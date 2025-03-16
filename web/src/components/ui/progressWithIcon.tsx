@@ -19,9 +19,8 @@ interface StepIconProps {
 }
 
 const STEPS: readonly Step[] = [
-  { label: "Demographic", minProgress: 20, icon: MdGroupWork },
-  { label: "Personal", minProgress: 60, icon: BsFillPersonFill },
-  { label: "Parent", minProgress: 80, icon: BsFillPeopleFill },
+  { label: "Demographic", minProgress: 30, icon: MdGroupWork },
+  { label: "Parent", minProgress: 60, icon: BsFillPeopleFill },
   { label: "Dependent", minProgress: 100, icon: BsFillPersonPlusFill }
 ] as const;
 

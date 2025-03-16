@@ -10,22 +10,21 @@ import {
 import api from "@/api/api";
 import { Separator } from "@/components/ui/separator";
 import { FixedSizeList as List } from "react-window";
-import { Assigned, Feature } from "./_types";
+import { Assigned, Feature } from "./administrationTypes";
 
 export default function FeatureSelection({
   selectedPosition,
-	features,
+  features,
   assignedFeatures,
-	setFeatures,
+  setFeatures,
   setAssignedFeatures,
 }: {
-  selectedPosition: string,
-	features: Feature[],
-  assignedFeatures: Assigned[],
-	setFeatures: React.Dispatch<React.SetStateAction<Feature[]>>,
-  setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>
+  selectedPosition: string;
+  features: Feature[];
+  assignedFeatures: Assigned[];
+  setFeatures: React.Dispatch<React.SetStateAction<Feature[]>>;
+  setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>;
 }) {
-	
   // States and initializations
   const hasFetchData = React.useRef(false);
 
@@ -60,7 +59,7 @@ export default function FeatureSelection({
   }, []);
 
   // Function to assign features
-  const assignFeature = (featureId: string) => (checked: boolean) => {
+  const assignFeature = async (featureId: string, checked: boolean) => {
     const method = checked ? "post" : "delete";
     const now = new Date();
     const formattedDate = now.toISOString().split("T")[0];
@@ -81,48 +80,63 @@ export default function FeatureSelection({
           url: `administration/assignments/${featureId}/${selectedPosition}/`,
         };
 
-    api[method](requestConfig.url, requestConfig.data)
-      .then((res) => {
-        if (checked) {
-          // Add the new assignment to the local state
-          setAssignedFeatures((prev: any) => [
-            ...prev,
-            {
-              assi_id: res.data.assi_id,
-              assi_date: formattedDate,
-              feat: featureId,
-              pos: selectedPosition,
-							permissions: res.data.permissions
-            },
-          ]);
+    try {
+      const res = await api[method](requestConfig.url, requestConfig.data);
 
-          // Set permissions (default)
-          setPermissions(res.data.assi_id);
-        } else {
-          // Remove the assignment from the local state
-          setAssignedFeatures((prev) =>
-            prev.filter((assignment) => assignment.feat !== featureId)
-          );
-        }
-      })
-      .catch((err) => console.log(err));
+      if (checked) {
+        // Set permissions (default)
+        const perm_id = await setPermissions(res.data.assi_id);
+
+        // Add the new assignment to the local state
+        setAssignedFeatures((prev: any) => [
+          ...prev,
+          {
+            assi_id: res.data.assi_id,
+            assi_date: formattedDate,
+            feat: featureId,
+            pos: selectedPosition,
+            permissions: [{
+              perm_id: perm_id,
+              view: true,
+              create: false,
+              update: false,
+              delete: false,
+              assi_id: res.data.assi_id
+            }],
+          },
+        ]);
+
+      } else {
+        // Remove the assignment from the local state
+        setAssignedFeatures((prev) =>
+          prev.filter((assignment) => assignment.feat !== featureId)
+        );
+      }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   // Function to add permissions of the assigned feature to the db (all false by default)
-  const setPermissions = (assignmentId: string) =>
-    api
-      .post("administration/permissions/", { assi: assignmentId })
-      .catch((err) => console.log(err));
+  const setPermissions = async (assignmentId: string) => {
+    try {
+      const res = await api.post("administration/permissions/", { assi: assignmentId });
+      return res.data.perm_id
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   // Function to get the assigned features of the position
-  const getAssignedFeatures = React.useCallback(() => {
-    api
-      .get(`administration/assignments/${selectedPosition}/`)
-      .then((res) => res.data)
-      .then((data) => {
-        setAssignedFeatures(data);
-      })
-      .catch((err) => console.log(err));
+  const getAssignedFeatures = React.useCallback(async () => {
+    try {
+      const res = await api.get(
+        `administration/assignments/${selectedPosition}/`
+      );
+      setAssignedFeatures(res.data);
+    } catch (err) {
+      console.log(err);
+    }
   }, []);
 
   // Function to check assigned features
@@ -151,7 +165,7 @@ export default function FeatureSelection({
         <FeatureCheckbox
           feature={feature}
           isChecked={checkAssignedFeatures(feature.feat_id)}
-          onCheckedChange={assignFeature(feature.feat_id)}
+          onCheckedChange={(checked) => assignFeature(feature.feat_id, checked)}
         />
       </div>
     );

@@ -56,7 +56,7 @@ export default function ProfilingMain() {
     }, []);
   
     const formatResidentData = (data: any[]): ResidentRecord[] => {
-      console.log(data)
+    
       return data.map(item => ({
         id: item.per_id || '',
         householdNo: item.households.hh_id || '',

@@ -37,9 +37,9 @@ export default function ProfilingHousehold(){
                 </div>
                 <DialogLayout
                     trigger={
-                    <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
-                        <Plus size={15} /> Register
-                    </Button>
+                        <Button>
+                            <Plus size={15} /> Register
+                        </Button>
                     }
                     title="Household Registration"
                     description="All fields are required"

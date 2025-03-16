@@ -3,8 +3,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HouseholdRecord, ResidentRecord} from "./profilingTypes";
-
 // Define the columns for the data table
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
 export const residentColumns: ColumnDef<ResidentRecord>[] = [
   {
     accessorKey: "id",
@@ -133,6 +133,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
   },
 ];
 
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   {
@@ -180,4 +181,6 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     ),
   },
 ]
+
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
 

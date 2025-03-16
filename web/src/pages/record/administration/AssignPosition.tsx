@@ -1,6 +1,6 @@
 import React from "react"
 import { z } from "zod"
-import { profilingFormSchema } from "@/form-schema/profiling-schema"
+import { personalInfoSchema } from "@/form-schema/profiling-schema"
 import { UseFormReturn } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { 
@@ -16,7 +16,7 @@ import api from "@/api/api"
 
 export default function AssignPosition(
     {form} : {
-        form: UseFormReturn<z.infer<typeof profilingFormSchema>>
+        form: UseFormReturn<z.infer<typeof personalInfoSchema>>
     }
 ){
 
@@ -45,7 +45,7 @@ export default function AssignPosition(
     return (
         <Form {...form}>
             <form>
-                <FormField 
+                {/* <FormField 
                     control={form.control}
                     name="assignPosition"
                     render={({field}) => (
@@ -63,7 +63,7 @@ export default function AssignPosition(
                             <FormMessage/>
                         </FormItem>
                     )}
-                />
+                /> */}
                 <div className="flex justify-end">
                     <Button>
                         Register

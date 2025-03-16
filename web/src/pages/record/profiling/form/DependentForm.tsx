@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { useFieldArray, UseFormReturn, useForm } from "react-hook-form";
+import { useFieldArray, UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,39 +12,69 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Plus } from "lucide-react";
-import { profilingFormSchema } from '@/form-schema/profiling-schema';
-import { SelectLayout } from '@/components/ui/select/select-layout';
+import { familyFormSchema } from '@/form-schema/profiling-schema';
 
 export default function DependentForm(
-  {form}: {
-    form: UseFormReturn<z.infer<typeof profilingFormSchema>>,
-}){
+  { form, residents }: {
+    form: UseFormReturn<z.infer<typeof familyFormSchema>>,
+    residents: Record<string, string>[]
+  }) {
+
+  const [search, setSearch] = React.useState<string>('');
 
   const { append } = useFieldArray({
     control: form.control,
     name: "dependentsInfo.list"
-  })
+  });
+
+  React.useEffect(() => {
+    const searchResident = residents.find((value) => value.per_id == search);
+
+    if (searchResident) {
+
+      // Populate form fields with the fetched data
+      form.setValue("dependentsInfo.new", {
+        id: searchResident.per_id || '',
+        lastName: searchResident.per_lname || '',
+        firstName: searchResident.per_fname || '',
+        middleName: searchResident.per_mname || '',
+        suffix: searchResident.per_suffix || '',
+        dateOfBirth: searchResident.per_sex || '',
+        sex: searchResident.per_dob || ''
+      })
+
+    } else {
+
+      // Clear form fields if no resident is found
+      form.setValue("dependentsInfo.new", {
+        id: '',
+        lastName: '',
+        firstName: '',
+        middleName: '',
+        suffix: '',
+        dateOfBirth: '',
+        sex: ''
+      })
+    }
+  }, [search, residents, form]);
 
   const handleAddDependent = () => {
-
     const newDependent = form.getValues("dependentsInfo.new");
 
-    const isValid = Object.values(newDependent).every((value) => value !== "")
+    const isValid = Object.values(newDependent).every((value) => value !== "");
 
-    if(isValid){
-      append(newDependent)
-
-      form.setValue("dependentsInfo.new.lastName", "")
-      form.setValue("dependentsInfo.new.firstName", "")
-      form.setValue("dependentsInfo.new.middleName", "")
-      form.setValue("dependentsInfo.new.suffix", "")
-      form.setValue("dependentsInfo.new.sex", "")
-      form.setValue("dependentsInfo.new.dateOfBirth", "")
+    if (isValid) {
+      append(newDependent);
     }
-  }
+  };
 
   return (
-    <div className="px-4 md:px-8 lg:px-24">
+    <div className="grid gap-3">
+      <Input
+        placeholder="Search by resident #..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
       <Form {...form}>
         <form>
           {/* Name row - now 3 columns, responsive */}
@@ -58,7 +88,7 @@ export default function DependentForm(
                     Last Name
                   </FormLabel>
                   <FormControl>
-                    <Input className="w-full" placeholder="Enter Last Name" {...field} />
+                    <Input className="w-full" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -66,14 +96,14 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.firstName`}
+              name="dependentsInfo.new.firstName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
                     First Name
                   </FormLabel>
                   <FormControl>
-                    <Input className="w-full" placeholder="Enter First Name" {...field} />
+                    <Input className="w-full" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -81,14 +111,14 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.middleName`}
+              name="dependentsInfo.new.middleName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
                     Middle Name
                   </FormLabel>
                   <FormControl>
-                    <Input className="w-full" placeholder="Enter Middle Name" {...field} />
+                    <Input className="w-full" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,14 +126,14 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.suffix`}
+              name="dependentsInfo.new.suffix"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
                     Suffix
                   </FormLabel>
                   <FormControl>
-                    <Input className="w-full" placeholder="Sfx." {...field} />
+                    <Input className="w-full" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,36 +141,29 @@ export default function DependentForm(
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.sex`}
+              name="dependentsInfo.new.sex"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
                     Sex
                   </FormLabel>
-                  <SelectLayout
-                    placeholder='Select'
-                    className='w-full'
-                    options={[
-                      {id: "0", name: "Female"},
-                      {id: "1", name: "Male"}
-                    ]}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <FormControl>
+                    <Input className="w-full" {...field} readOnly />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
-              name={`dependentsInfo.new.dateOfBirth`}
+              name="dependentsInfo.new.dateOfBirth"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">
                     Date of Birth
                   </FormLabel>
                   <FormControl>
-                    <input type="date" className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm" {...field} />
+                    <Input className="w-full" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,12 +175,12 @@ export default function DependentForm(
                 onClick={handleAddDependent}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <Plus/>Dependent
+                <Plus /> Dependent
               </Button>
             </div>
           </div>
         </form>
-      </Form>   
+      </Form>
     </div>
   );
 }
