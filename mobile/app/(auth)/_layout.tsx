@@ -31,6 +31,8 @@ export default () => {
           name="register-completion"
           options={{ headerShown: false }}
         />
+            <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
+            <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
       </Stack>
     </FormProvider>
   );
