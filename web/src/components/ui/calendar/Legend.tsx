@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Box, Typography, IconButton, Button, Paper } from "@mui/material";
+import { Box, Typography, Button, Paper } from "@mui/material";
 import { HexColorPicker } from "react-colorful";
 
 interface LegendItem {
@@ -49,17 +49,18 @@ const Legend = ({ legendItems, onColorChange }: LegendProps) => {
           key={item.label}
           sx={{ display: "flex", alignItems: "center", gap: 1 }}
         >
-          {/* Square Button to Open Color Picker */}
-          <IconButton
+          {/* Color Square (div) to Open Color Picker */}
+          <div
             onClick={() => {
               setOpenColorPicker(item.label); // Open the color picker for this item
-              setSelectedColor(legendItems.find(i => i.label === item.label)?.color || "#b32aa9"); 
+              setSelectedColor(item.color); // Set the selected color to the current item's color
             }}
-            sx={{
-              width: 24,
-              height: 24,
-              backgroundColor: item.color,
-              "&:hover": { backgroundColor: item.color },
+            style={{
+              width: "24px",
+              height: "24px",
+              backgroundColor: item.color, // Set the square's background color
+              borderRadius: "4px", // Optional: Add rounded corners
+              cursor: "pointer", // Show pointer cursor on hover
             }}
           />
 

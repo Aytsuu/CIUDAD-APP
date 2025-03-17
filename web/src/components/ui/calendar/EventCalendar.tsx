@@ -641,21 +641,12 @@ const EventCalendar = () => {
   
 
   const handleLegendColorChange = (label: string, newColor: string) => {
-    // Update legend items state
     setLegendItems((prevItems) =>
       prevItems.map((item) =>
         item.label === label ? { ...item, color: newColor } : item
       )
     );
-  
-    // Optionally, update events that use this legend's color
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.category === label ? { ...event, color: newColor } : event
-      )
-    );
-  };
-  
+  };  
 
   const handleSelectSlot = (event: Event) => {
     setOpenSlot(true);
