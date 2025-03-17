@@ -36,12 +36,22 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={LIGHT_THEME}>
       <StatusBar backgroundColor="#ECF8FF" style="dark" />
+<<<<<<< HEAD
       <Stack initialRouteName='(auth)'>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+=======
+      <Stack>
+>>>>>>> blotter
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <PortalHost />
     </ThemeProvider>
+<<<<<<< HEAD
   );
 }
+=======
+    
+  );
+}
+>>>>>>> blotter

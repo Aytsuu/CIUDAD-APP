@@ -9,9 +9,18 @@ module.exports = {
     			md: 'calc(var(--radius) - 2px)',
     			sm: 'calc(var(--radius) - 4px)'
     		},
-			fontFamily:{
-				poppins: ['Poppins', 'sans-serif']
-			},
+    		fontFamily: {
+    			poppins: [
+    				'Poppins',
+    				'sans-serif'
+    			]
+    		},
+    		fontFamily: {
+    			poppins: [
+    				'Poppins',
+    				'sans-serif'
+    			]
+    		},
     		colors: {
     			background: 'hsl(var(--background))',
     			foreground: 'hsl(var(--foreground))',
@@ -63,18 +72,39 @@ module.exports = {
     				border: 'hsl(var(--sidebar-border))',
     				ring: 'hsl(var(--sidebar-ring))'
     			},
-
-				// Use the following color scheme
-				snow: '#F3F4F8',
-				blue: '#1273B8',
-				lightBlue: '#EFF6FE',
-				darkBlue1: '#263D67',
-				darkBlue2: '#2D4A72',
-				darkBlue3: '#3D4C77',
-				gray: '#CECECE',
-				ashGray: '#D7DDE5',
-				darkGray: '#575757',
-				teal: '#129073'
+				buttonBlue: '#2563EB',
+    			snow: '#F3F4F8',
+    			blue: '#1273B8',
+    			lightBlue: '#EFF6FE',
+    			darkBlue1: '#263D67',
+    			darkBlue2: '#2D4A72',
+    			darkBlue3: '#3D4C77',
+    			gray: '#CECECE',
+    			ashGray: '#D7DDE5',
+    			darkGray: '#575757',
+    			teal: '#129073'
+    		},
+    		keyframes: {
+    			'accordion-down': {
+    				from: {
+    					height: '0'
+    				},
+    				to: {
+    					height: 'var(--radix-accordion-content-height)'
+    				}
+    			},
+    			'accordion-up': {
+    				from: {
+    					height: 'var(--radix-accordion-content-height)'
+    				},
+    				to: {
+    					height: '0'
+    				}
+    			}
+    		},
+    		animation: {
+    			'accordion-down': 'accordion-down 0.2s ease-out',
+    			'accordion-up': 'accordion-up 0.2s ease-out'
     		}
     	}
     },

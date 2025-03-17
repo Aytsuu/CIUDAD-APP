@@ -11,7 +11,7 @@ import {
 
   interface Option{
     id: string,
-    name: string
+    name: React.ReactNode
   }
 
   interface SelectProps{
@@ -30,10 +30,10 @@ import {
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          <SelectGroup>
+          <SelectGroup> 
             <SelectLabel>{label}</SelectLabel>
             {options.map((option)=>{
-                return <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                return <SelectItem key={option.id} value={option.id} className="cursor-pointer">{option.name}</SelectItem>
             })}
           </SelectGroup>
         </SelectContent>

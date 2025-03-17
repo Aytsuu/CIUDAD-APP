@@ -14,7 +14,7 @@ interface FilterAccordionProps {
     onChange,
   }: FilterAccordionProps) {
     return (
-      <details className="overflow-hidden rounded border border-gray-300 [&_summary::-webkit-details-marker]:hidden">
+      <details className="overflow-hidden rounded-[10px] border border-gray-300 [&_summary::-webkit-details-marker]:hidden">
         <summary className="flex cursor-pointer items-center justify-between gap-2 bg-white p-4 text-gray-900 transition">
           <span className="text-sm font-medium">{title}</span>
   
@@ -57,7 +57,7 @@ interface FilterAccordionProps {
                     type="checkbox"
                     id={option.id}
                     checked={option.checked}
-                    onChange={(e) => onChange(option.id, e.target.checked)}
+                    on={(e) => onChange(option.id, e.target.checked)}
                     className="size-5 rounded border-gray-300"
                   />
                   <span className="text-sm font-medium text-gray-700">
