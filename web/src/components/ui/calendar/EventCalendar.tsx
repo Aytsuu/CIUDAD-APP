@@ -526,7 +526,7 @@
 
 // export default EventCalendar;
 
-import { useState, MouseEvent } from "react";
+import { useState, MouseEvent, useEffect } from "react";
 import {
   Box,
   Button,
@@ -546,9 +546,9 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import EventInfo from "./EventInfo";
 import AddEventModal from "./AddEventModal";
 import EventInfoModal from "./EventInfoModal";
-import { AddTodoModal } from "./AddTodoModal";
+// import { AddTodoModal } from "./AddTodoModal";
 import AddDatePickerEventModal from "./AddDatePickerEventModal";
-import Legend from "./Legend"; // Import the Legend component
+import Legend from "./Legend";
 
 const locales = {
   "en-US": enUS,
@@ -606,7 +606,7 @@ const initialDatePickerEventFormData: DatePickerEventFormData = {
 const EventCalendar = () => {
   const [openSlot, setOpenSlot] = useState(false);
   const [openDatepickerModal, setOpenDatepickerModal] = useState(false);
-  const [openTodoModal, setOpenTodoModal] = useState(false);
+  // const [openTodoModal, setOpenTodoModal] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | IEventInfo | null>(
     null
   );
@@ -614,7 +614,7 @@ const EventCalendar = () => {
   const [eventInfoModal, setEventInfoModal] = useState(false);
 
   const [events, setEvents] = useState<IEventInfo[]>([]);
-  const [todos, setTodos] = useState<ITodo[]>([]);
+  // const [todos, setTodos] = useState<ITodo[]>([]);
 
   const [eventFormData, setEventFormData] = useState<EventFormData>(
     initialEventFormState
@@ -625,19 +625,37 @@ const EventCalendar = () => {
 
   // State for legend items
   const [legendItems, setLegendItems] = useState([
-    { label: "Waste Management Council", color: "#b32aa9" },
-    { label: "Donation", color: "#32a852" },
-    { label: "Council", color: "#3264a8" },
+    { label: "Council", color: "#b32aa9" },
+    { label: "GAD", color: "#32a852" },
+    { label: "DRR", color: "#3264a8" },
+    { label: "Waste Management Council", color: "#3264a8" },
   ]);
 
-  // Handle color change for legend items
-  const handleLegendColorChange = (label: string, color: string) => {
+  useEffect(() => {
+    console.log("Legend Colors:", legendItems.map(i => `${i.label}: ${i.color}`));
+  }, [legendItems]);
+
+  useEffect(() => {
+    console.log("Legend Items Updated:", legendItems);
+  }, [legendItems]);
+  
+
+  const handleLegendColorChange = (label: string, newColor: string) => {
+    // Update legend items state
     setLegendItems((prevItems) =>
       prevItems.map((item) =>
-        item.label === label ? { ...item, color } : item
+        item.label === label ? { ...item, color: newColor } : item
+      )
+    );
+  
+    // Optionally, update events that use this legend's color
+    setEvents((prevEvents) =>
+      prevEvents.map((event) =>
+        event.category === label ? { ...event, color: newColor } : event
       )
     );
   };
+  
 
   const handleSelectSlot = (event: Event) => {
     setOpenSlot(true);
@@ -730,13 +748,13 @@ const EventCalendar = () => {
 
             {/* Updated Button Layout */}
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                onClick={() => setOpenTodoModal(true)}
+              {/* <Button
+                // onClick={() => setOpenTodoModal(true)}
                 size="small"
                 variant="contained"
               >
                 Add Category
-              </Button>
+              </Button> */}
             </Box>
             <br />
             <AddEventModal
@@ -759,12 +777,12 @@ const EventCalendar = () => {
               onDeleteEvent={onDeleteEvent}
               currentEvent={currentEvent as IEventInfo}
             />
-            <AddTodoModal
+            {/* <AddTodoModal
               open={openTodoModal}
               handleClose={() => setOpenTodoModal(false)}
               todos={todos}
               setTodos={setTodos}
-            />
+            /> */}
             <Calendar
               localizer={localizer}
               events={events}

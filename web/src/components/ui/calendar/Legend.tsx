@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Box, Typography, IconButton, Button, Paper } from "@mui/material";
 import { HexColorPicker } from "react-colorful";
 
@@ -15,26 +15,50 @@ interface LegendProps {
 const Legend = ({ legendItems, onColorChange }: LegendProps) => {
   const [openColorPicker, setOpenColorPicker] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>("#b32aa9"); // Default color
+  const colorPickerRef = useRef<HTMLDivElement | null>(null); // Ref for the color picker modal
 
   const handleColorChange = (label: string) => {
     onColorChange(label, selectedColor); // Update the color in the parent component
     setOpenColorPicker(null); // Close the color picker
   };
 
+  // Effect to handle clicks outside the color picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target as Node)
+      ) {
+        setOpenColorPicker(null); // Close the color picker if clicked outside
+      }
+    };
+
+    // Add event listener
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
       {legendItems.map((item) => (
-        <Box key={item.label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          key={item.label}
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        >
           {/* Square Button to Open Color Picker */}
           <IconButton
             onClick={() => {
               setOpenColorPicker(item.label); // Open the color picker for this item
-              setSelectedColor(item.color); // Set the selected color to the item's color
+              setSelectedColor(legendItems.find(i => i.label === item.label)?.color || "#b32aa9"); 
             }}
             sx={{
               width: 24,
               height: 24,
-              backgroundColor: item.color, // Set the square's background color
+              backgroundColor: item.color,
               "&:hover": { backgroundColor: item.color },
             }}
           />
@@ -47,21 +71,25 @@ const Legend = ({ legendItems, onColorChange }: LegendProps) => {
           {/* Color Picker Modal */}
           {openColorPicker === item.label && (
             <Paper
+              ref={colorPickerRef} // Attach the ref to the Paper component
               elevation={3}
               sx={{
                 position: "absolute",
                 zIndex: 1000,
                 mt: 2,
                 p: 2,
-                backgroundColor: "white", // White background for the container
+                backgroundColor: "white",
                 borderRadius: 1,
-                maxWidth: '230px', // Set a max width to prevent it from being too wide
-                width: 'auto', // Allow the width to adjust based on
+                maxWidth: "230px",
+                width: "auto",
               }}
             >
               <HexColorPicker
                 color={selectedColor} // Current color of the legend item
-                onChange={setSelectedColor} // Update the selected color
+                onChange={(newColor) => {
+                  setSelectedColor(newColor);
+                  onColorChange(item.label, newColor); // Update the legend items state
+                }}
               />
               <Button
                 onClick={() => handleColorChange(item.label)} // Apply the selected color

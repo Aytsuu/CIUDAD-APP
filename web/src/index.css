@@ -187,6 +187,7 @@ p[data-margin] {
 
 .MuiButtonBase-root{
   background-color: #2563EB !important;
+  color: white !important;
 }
 
 .MuiButton-root{
