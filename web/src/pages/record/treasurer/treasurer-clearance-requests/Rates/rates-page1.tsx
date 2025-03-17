@@ -2,6 +2,11 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import RatesFormPage1 from "./rates-form-page1"
+import { DataTable } from "@/components/ui/table/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+import { Pen, Trash} from 'lucide-react';
+
 
 type PermitRangeAndFee = {
     minRange: string;
@@ -10,8 +15,54 @@ type PermitRangeAndFee = {
 }
 
 type Props = {
-    onNext2: () => void; // Function to handle the "Next" action
+    onNext2: () => void; 
 };
+
+const formatNumber = (value: string) => {
+    return `₱${Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+};
+
+export const columns: ColumnDef<PermitRangeAndFee>[] = [
+    { accessorKey: "rangeOfGrossSales", header: "Range of Annual Gross Sales", 
+        cell: ({ row }) => {
+            const minRange = row.original.minRange;
+            const maxRange = row.original.maxRange;
+            return `${formatNumber(minRange)} - ${formatNumber(maxRange)}`;
+        }
+    },
+    { accessorKey: "amount", header: "Amount",},
+    { accessorKey: "action", header: "Action",
+        cell: ({}) =>(
+            <div className="flex justify-center gap-2">
+                <TooltipLayout
+                trigger={
+                    <DialogLayout
+                        trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16}/></div>}
+                        className="flex flex-col"
+                        title="Create Receipt"
+                        description="Enter the serial number to generate a receipt."
+                        mainContent={
+                            <div></div>
+                        } 
+                    />
+                } content="Edit"/>
+                <TooltipLayout 
+                 trigger={
+                    <DialogLayout
+                    trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"> <Trash size={16} /></div>}
+                    className="max-w-[50%] h-2/3 flex flex-col"
+                    title="Image Details"
+                    description="Here is the image related to the report."
+                    mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} 
+                    />
+                 }  content="Delete"/>
+            </div>
+        )
+    }
+]
 
 export const RangesAndFees: PermitRangeAndFee[] = [
     {
@@ -37,12 +88,7 @@ export const RangesAndFees: PermitRangeAndFee[] = [
 ]
 
 function RatesPage1({ onNext2 }: Props) {
-    const formatNumber = (value: string) => {
-        return `₱${Number(value).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        })}`;
-    };
+    const data = RangesAndFees;
 
     return (
         <div className='bg-snow w-full h-full'>
@@ -61,21 +107,8 @@ function RatesPage1({ onNext2 }: Props) {
                             />
                         </div>
                     </div>
-                    <div className='flex flex-row gap-7 w-full p-3'>
-                        <Label className='w-1/2 flex justify-center text-md text-blue font-bold'>Range of Annual Gross Sales</Label>
-                        <Label className='w-1/2 flex justify-center text-md text-blue font-bold'>Amount</Label>
-                    </div>
-                    <div className="space-y-2">
-                        {RangesAndFees.map((rangeAndFee, index) => (
-                            <div key={index} className="flex flex-row gap-5 w-full p-2">
-                                <Label className='w-1/2 flex justify-center'>
-                                    {formatNumber(rangeAndFee.minRange)} - {formatNumber(rangeAndFee.maxRange)}
-                                </Label>
-                                <Label className='w-1/2 flex justify-center'>
-                                    {formatNumber(rangeAndFee.amount)}
-                                </Label>
-                            </div>
-                        ))}
+                    <div className='border overflow-auto max-h-[400px]'>
+                        <DataTable columns={columns} data={data}></DataTable>
                     </div>
                 </div>
             </div>
