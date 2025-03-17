@@ -13,17 +13,7 @@ const AddEventFormSchema = z.object({
     barangayCouncil: z.array(z.string()).optional(),
     gadCommittee: z.array(z.string()).optional(),
     wasteCommittee: z.array(z.string()).optional(),
-    // gadCommittee: z.string({ message: " " }),  
-    // wasteCommittee: z.string({ message: " " }),  
 
-    // complaintImg: z.instanceof(File)
-    // .refine(file => ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type), {
-    //     message: 'Only JPEG/JPG, or PNG, files are allowed!',
-    // })
-    // .refine(file => file.size <= 5 * 1024 * 1024, {
-    //     message: 'File size must be less than 5MB!',
-    // })
-    // .nullable()
 
 });
 

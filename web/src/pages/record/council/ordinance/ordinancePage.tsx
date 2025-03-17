@@ -150,7 +150,7 @@ function OrdinancePage() {
                     Manage and view ordinance information
                 </p>
             </div>
-            <hr className="border-gray mb-6 sm:mb-10" />        
+            <hr className="border-gray mb-6 sm:mb-8" />        
 
             <div className='w-full flex flex-col md:flex-row justify-between mb-4 gap-2'>
                 <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">

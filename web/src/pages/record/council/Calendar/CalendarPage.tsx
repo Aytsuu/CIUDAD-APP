@@ -26,12 +26,12 @@ function CalendarPage() {
                         />
                     </div>
 
-
+{/* 
                     <CalendarComp 
                         events={events} 
                         setEvents={setEvents} 
                         className=""
-                    />                        
+                    />                         */}
                 </div>
             </div>
         </div>

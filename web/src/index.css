@@ -89,81 +89,6 @@
     }
 }
 
-/* OTHER BUTTONS */
-.rbc-toolbar .rbc-btn-group:nth-of-type(3) button {
-  display: none !important; /* Hide all buttons in the first group */
-}
-
-
-/* TODAY BUTTON IN CALENDAR */
-.rbc-toolbar .rbc-btn-group:first-of-type button:first-child {
-margin-right: 20px; 
-margin-bottom: 10px;
-background-color: #3D4C77 !important; 
-color: white !important; 
-cursor: pointer; 
-border-radius: 5px !important;
-border: none;
-height: 34px;
-}
-
-.rbc-toolbar .rbc-btn-group:first-of-type button:first-child:hover {
-background-color: #4e6a9b !important; 
-color: #ffffff !important; 
-}
-
-
-/* BACK & NEXT BUTTON IN CALENDAR*/
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(2),
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(3) {
-background-color: #75b2f8 !important; 
-color: white !important; 
-cursor: pointer; 
-border-radius: 5px !important;
-margin-right: 5px;
-margin-bottom: 10px;
-border: none;
-}
-
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(2):hover,
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(3):hover {
-background-color: #98c8f8 !important; 
-color: #ffffff !important; 
-}
-
-
-/* CURRENT DATE BOX */
-.rbc-day-bg.rbc-today {
-background-color: #f0f7ff !important; 
-}
-
-.rbc-date-cell.rbc-now.rbc-current {
-background-color: #f0f7ff !important;
-}
-
-
-/* OTHER MONTHS BOXES */
-.rbc-day-bg.rbc-off-range-bg {
-background-color: #eeeeee !important; /* background color */
-}
-
-/* LABEL OF THE CALENDAR*/
-.rbc-toolbar-label{
-font-weight: bold;
-font-size: 30px;
-margin-right: 130px;
-margin-bottom: 15px;
-}
-
-/*day buttons*/
-.rbc-button-link {
-  pointer-events: none;
-}
-
-.rbc-day-bg{
-  background-color: #fffefe !important; 
-}
-
 
 /*TIPTAP CSS*/
 .tiptap ul {
@@ -189,6 +114,10 @@ p[data-margin] {
   }
 }
 
+@layer base {
+  img { display: initial; }
+}
+
 
 /* SCROLL BAR FOR THE  */
 .scrollbar-custom::-webkit-scrollbar {
@@ -205,77 +134,6 @@ p[data-margin] {
   border-radius: 8px;
 }
 
-
-/* OTHER BUTTONS */
-.rbc-toolbar .rbc-btn-group:nth-of-type(3) button {
-  display: none !important; /* Hide all buttons in the first group */
-}
-
-
-/* TODAY BUTTON IN CALENDAR */
-.rbc-toolbar .rbc-btn-group:first-of-type button:first-child {
-margin-right: 20px; 
-margin-bottom: 10px;
-background-color: #3D4C77 !important; 
-color: white !important; 
-cursor: pointer; 
-border-radius: 5px !important;
-border: none;
-height: 34px;
-}
-
-.rbc-toolbar .rbc-btn-group:first-of-type button:first-child:hover {
-background-color: #4e6a9b !important; 
-color: #ffffff !important; 
-}
-
-
-/* BACK & NEXT BUTTON IN CALENDAR*/
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(2),
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(3) {
-background-color: #75b2f8 !important; 
-color: white !important; 
-cursor: pointer; 
-border-radius: 5px !important;
-margin-right: 5px;
-margin-bottom: 10px;
-border: none;
-}
-
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(2):hover,
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(3):hover {
-background-color: #98c8f8 !important; 
-color: #ffffff !important; 
-}
-
-
-/* CURRENT DATE BOX */
-.rbc-day-bg.rbc-today {
-background-color: #f0f7ff !important; 
-}
-
-.rbc-date-cell.rbc-now.rbc-current {
-background-color: #f0f7ff !important;
-}
-
-
-/* OTHER MONTHS BOXES */
-.rbc-day-bg.rbc-off-range-bg {
-background-color: #eeeeee !important; /* background color */
-}
-
-/* LABEL OF THE CALENDAR*/
-.rbc-toolbar-label{
-font-weight: bold;
-font-size: 30px;
-margin-right: 130px;
-margin-bottom: 15px;
-}
-
-/*day buttons*/
-.rbc-button-link {
-  pointer-events: none;
-}
 
 
 /*TIPTAP CSS*/
@@ -317,72 +175,8 @@ p[data-margin] {
   border-radius: 8px;
 }
 
-/* OTHER BUTTONS */
-.rbc-toolbar .rbc-btn-group:nth-of-type(3) button {
-  display: none !important;
-}
 
 
-/* TODAY BUTTON IN CALENDAR */
-.rbc-toolbar .rbc-btn-group:first-of-type button:first-child {
-margin-right: 20px; 
-margin-bottom: 10px;
-background-color: #3D4C77 !important; 
-color: white !important; 
-cursor: pointer; 
-border-radius: 5px !important;
-border: none;
-height: 34px;
-}
-
-.rbc-toolbar .rbc-btn-group:first-of-type button:first-child:hover {
-background-color: #4e6a9b !important; 
-color: #ffffff !important; 
-}
-
-
-/* BACK & NEXT BUTTON IN CALENDAR*/
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(2),
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(3) {
-background-color: #75b2f8 !important; 
-color: white !important; 
-cursor: pointer; 
-border-radius: 5px !important;
-margin-right: 5px;
-margin-bottom: 10px;
-border: none;
-}
-
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(2):hover,
-.rbc-toolbar .rbc-btn-group:first-of-type button:nth-child(3):hover {
-background-color: #98c8f8 !important; 
-color: #ffffff !important; 
-}
-
-
-/* CURRENT DATE BOX */
-.rbc-day-bg.rbc-today {
-background-color: #f0f7ff !important; 
-}
-
-.rbc-date-cell.rbc-now.rbc-current {
-background-color: #f0f7ff !important; 
-}
-
-
-/* OTHER MONTHS BOXES */
-.rbc-day-bg.rbc-off-range-bg {
-background-color: #eeeeee !important; /* background color */
-}
-
-/* LABEL OF THE CALENDAR*/
-.rbc-toolbar-label{
-font-weight: bold;
-font-size: 30px;
-margin-right: 130px;
-margin-bottom: 15px;
-}
-
-.rbc-button-link {
-  pointer-events: none;
+.tox .tox-statusbar__branding {
+  display: none;
 }

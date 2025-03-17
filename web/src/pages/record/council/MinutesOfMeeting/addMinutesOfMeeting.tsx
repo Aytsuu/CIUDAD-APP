@@ -22,7 +22,7 @@ import { Link } from 'react-router';
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import minutesOfMeetingFormSchema from '@/form-schema/minutesOfMeetingSchema.ts';
+import minutesOfMeetingFormSchema from '@/form-schema/council/minutesOfMeetingSchema.ts';
 import Tiptap from '@/components/ui/tiptap/tiptap.tsx';
 
 
