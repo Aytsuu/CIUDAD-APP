@@ -32,6 +32,7 @@ function WasteEventSched() {
             invitees: '',
             eventDescription: '',
             selectedAnnouncements: [],
+            eventSubject: '',
         },
     });
 
@@ -41,8 +42,9 @@ function WasteEventSched() {
 
     const onSubmit = (values: z.infer<typeof WasteEventSchedSchema>) => {
         console.log(values);
-        // Handle form submission
     };
+
+    const selectedAnnouncements = form.watch('selectedAnnouncements') || [];
 
     return (
         <Form {...form}>
@@ -188,6 +190,22 @@ function WasteEventSched() {
                         </FormItem>
                     )}
                 />
+
+                {selectedAnnouncements.length > 0 && (
+                    <FormField
+                        control={form.control}
+                        name="eventSubject"
+                        render={({ field }) => (
+                            <FormItem className="mt-4">
+                                <Label>Event Subject:</Label>
+                                <FormControl>
+                                    <Textarea placeholder="Enter event subject" {...field} className="w-full" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
