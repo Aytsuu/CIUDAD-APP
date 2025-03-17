@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-function App() {
-
-  return (
-    <> 
-      
-    </> 
-  )
-}
-
-export default App;
-=======
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { main_router } from './routes/main-router';
 import { landing_router } from './routes/landing-router';
@@ -32,4 +20,3 @@ function App() {
   // return <FamilyPlanningMa></FamilyPlanningMain>
 }
 export default App;
->>>>>>> blotter

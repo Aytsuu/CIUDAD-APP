@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-=======
-// components/DialogLayout.tsx
-import React, { useState } from "react";
->>>>>>> blotter
 import {
     Dialog,
     DialogHeader,
@@ -11,34 +6,8 @@ import {
     DialogContent,
     DialogTrigger,
 } from "@/components/ui/dialog/dialog";
+import { useState } from "react";
 
-<<<<<<< HEAD
-import React from "react";
-
-interface DialogProps{
-   trigger: React.ReactNode,
-   className: string,
-   title: string,
-   description: string,
-   mainContent: React.ReactNode
-}
-
-export default function DialogLayout({trigger, className, title = "", description = "",  mainContent} : DialogProps){
-   return(
-       <Dialog>
-           <DialogTrigger>
-               {trigger}
-           </DialogTrigger>
-           <DialogContent className={className}>
-               <DialogHeader>
-                   <DialogTitle className="text-darkBlue1">{title}</DialogTitle>
-                   <DialogDescription>{description}</DialogDescription>
-               </DialogHeader> 
-               {mainContent}
-           </DialogContent>
-       </Dialog>
-   );
-=======
 interface DialogProps {
     trigger: React.ReactNode;
     className?: string;
@@ -79,5 +48,4 @@ export default function DialogLayout({
             </DialogContent>
         </Dialog>
     );
->>>>>>> blotter
 }

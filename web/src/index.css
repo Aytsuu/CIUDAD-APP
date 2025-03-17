@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-<<<<<<< HEAD
-=======
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 7px; /* Width of the scrollbar */
@@ -24,7 +22,6 @@
   background: #9b9b9b; /* Color of the thumb on hover */
 }
 
->>>>>>> blotter
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -82,10 +79,6 @@
   }
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> blotter
 @layer base {
   * {
     @apply border-border;
@@ -93,9 +86,6 @@
   body {
     @apply bg-background text-foreground;
     }
-<<<<<<< HEAD
-}
-=======
 }
 
 /* OTHER BUTTONS */
@@ -395,4 +385,3 @@ margin-bottom: 15px;
 .rbc-button-link {
   pointer-events: none;
 }
->>>>>>> blotter
