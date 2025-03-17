@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=D:\College\Capstone\CIUDAD-APP(master)\backend\venv
+set VIRTUAL_ENV=D:\NEW DOWNLOADS\CAPSTONE_CLONE\CIUDAD-APP\backend\venv
 
 if not defined PROMPT set PROMPT=$P$G
 

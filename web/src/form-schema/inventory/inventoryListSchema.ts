@@ -2,12 +2,12 @@ import { z } from "zod";
 
 export const MedicineListSchema = z.object({
   medicineName: z.string().min(1, "Medicine name is Required").default(""),
-  category: z.string().min(1, "Category is required").default("")
+
 });
 
 export const CommodityListSchema = z.object({
   commodityName: z.string().min(1, "Enter Commodity Name").default(""),
-  category: z.string().min(1, "Category is required").default("")
+ 
 });
 
 export const VaccineListSchema = z.object({
@@ -22,7 +22,7 @@ export const VaccineListSchema = z.object({
 
 export const FirstAidSchema = z.object({
   itemName: z.string().min(1, "Item name is Required").default(""),
-  category: z.string().min(1, "Category is Required").default("")
+ 
 });
 
 export type MedicineType = z.infer<typeof MedicineListSchema>;

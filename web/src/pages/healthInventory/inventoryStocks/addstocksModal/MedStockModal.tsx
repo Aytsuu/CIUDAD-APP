@@ -1,3 +1,4 @@
+import { useState } from "react"; // Add this import
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,11 +17,12 @@ import {
   MedicineStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-
+import { useCategories } from "../REQUEST/medcategory";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { ConfirmationDialog } from "../../CONFIRMATION MODAL/ConfirmModal";
 
 export default function MedicineStockForm() {
-  
-    UseHideScrollbar();
+  UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
@@ -36,6 +38,32 @@ export default function MedicineStockForm() {
     },
   });
 
+  const {
+    categories,
+    loading,
+    handleAddCategory,
+    handleDeleteCategory,
+    error,
+  } = useCategories();
+
+  // State for delete confirmation dialog
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+
+  // State for add confirmation dialog
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
+
+  const handleSelectChange = (
+    selectedValue: string,
+    fieldOnChange: (value: string) => void
+  ) => {
+    fieldOnChange(selectedValue);
+    form.setValue("category", selectedValue, { shouldValidate: true });
+  };
+
+
   const onSubmit = async (data: MedicineStockType) => {
     try {
       const validatedData = MedicineStocksSchema.parse(data);
@@ -47,12 +75,43 @@ export default function MedicineStockForm() {
       alert("Submission failed. Please check the form for errors.");
     }
   };
-  
+
+
   // Watch relevant fields for calculation
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
+
+  // Handle delete confirmation
+  const handleDeleteConfirmation = (categoryId: number) => {
+    setCategoryToDelete(categoryId);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (categoryToDelete !== null) {
+      await handleDeleteCategory(categoryToDelete);
+      setIsDeleteConfirmationOpen(false);
+      setCategoryToDelete(null);
+    }
+  };
+
+  // Handle add confirmation
+  const handleAddConfirmation = (categoryName: string) => {
+    setNewCategoryName(categoryName);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = async () => {
+    if (newCategoryName.trim()) {
+      await handleAddCategory(newCategoryName, (newId) => {
+        form.setValue("category", newId, { shouldValidate: true });
+      });
+      setIsAddConfirmationOpen(false);
+      setNewCategoryName("");
+    }
+  };
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
@@ -85,25 +144,43 @@ export default function MedicineStockForm() {
               )}
             />
 
-            {/* Category Dropdown */}
+            {/* Category Dropdown with Add/Delete */}
             <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black/65">Category</FormLabel>
+                  <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Category"
-                      options={[
-                        { id: "analgesic", name: "Analgesic" },
-                        { id: "antibiotic", name: "Antibiotic" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                    {loading ? (
+                      <p>Loading categories...</p>
+                    ) : (
+                      <SelectLayoutWithAdd
+                        className="w-full"
+                        label="Category"
+                        placeholder="Select a Category"
+                        options={categories}
+                        value={
+                          categories.find((cat) => cat.id === field.value)
+                            ?.id || ""
+                        }
+                        onChange={(selectedValue) =>
+                          handleSelectChange(selectedValue, field.onChange)
+                        }
+                        onAdd={handleAddConfirmation} // Pass the confirmation handler
+                        onDelete={(categoryId) => {
+                          const parsedCategoryId = Number(categoryId); // Convert to number
+                          if (!isNaN(parsedCategoryId)) {
+                            handleDeleteConfirmation(parsedCategoryId); // Open delete confirmation dialog
+                          } else {
+                            console.error(
+                              "❌ Invalid category ID:",
+                              categoryId
+                            );
+                          }
+                        }}
+                      />
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,8 +189,6 @@ export default function MedicineStockForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-           
-
             {/* Expiry Date */}
             <FormField
               control={form.control}
@@ -232,6 +307,7 @@ export default function MedicineStockForm() {
                 </FormItem>
               )}
             />
+
             {/* Quantity Unit */}
             <FormField
               control={form.control}
@@ -266,7 +342,9 @@ export default function MedicineStockForm() {
                 name="pcs"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black/65">Pieces per Box</FormLabel>
+                    <FormLabel className="text-black/65">
+                      Pieces per Box
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -307,6 +385,24 @@ export default function MedicineStockForm() {
           </div>
         </form>
       </Form>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog 
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={confirmDelete}
+        title="Delete Category"
+        description="Are you sure you want to delete this category? This action cannot be undone."
+      />
+
+      {/* Add Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Category"
+        description={`Are you sure you want to add the category "${newCategoryName}"?`}
+      />
     </div>
   );
 }
