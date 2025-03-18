@@ -43,7 +43,7 @@ class FirstAidList(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'commodity_list'
+        db_table = 'firstaid_list'
         
       
 class MedicineStocks(models.Model):

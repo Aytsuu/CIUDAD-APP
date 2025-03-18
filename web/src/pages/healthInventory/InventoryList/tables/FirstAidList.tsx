@@ -3,63 +3,29 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, Edit } from "lucide-react";
+import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import FirstAidModal from "../addListModal/FirstAidModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import VaccinationModal from "../inventoryModal/VaccineModal";
-import { FileInput } from "lucide-react";
-import EditVAccineListModal from "../editListModal/EditVaccineModal";
+import EditFirstAidModal from "../editListModal/EditFirstAidModal";
+import { Row } from "react-day-picker";
 
-export default function VaccinationList() {
-  type VaccinationRecords = {
+export default function FirstAidList() {
+  type FirstAidRecords = {
     id: number;
+    itemName: string;
     category: string;
-    vaccineName: string;
-    ageGroup: string;
-    noOfDoses: number;
-    interval: {
-      interval: number;
-      timeUnits: string;
-    };
-    specifyAge: string;
   };
 
-  const sampleData: VaccinationRecords[] = [
-    {
-      id: 1,
-      vaccineName: "COVID-19 Vaccine",
-      category: "MedicalSupplies",
-      ageGroup: "0-5 yrs old",
-      noOfDoses: 2,
-      interval: {
-        interval: 18,
-        timeUnits: "Months",
-      },
-      specifyAge: " ",
-    },
-    {
-      id: 2,
-      vaccineName: "Influenza Vaccine",
-      category: "vaccine",
-      ageGroup: "0-5 yrs old",
-      noOfDoses: 1,
-      interval: {
-        interval: 18,
-        timeUnits: "Weeks",
-      },
-      specifyAge: "",
-    },
-  ];
-
-  const columns: ColumnDef<VaccinationRecords>[] = [
+  const columns: ColumnDef<FirstAidRecords>[] = [
     {
       accessorKey: "id",
       header: "#",
@@ -72,39 +38,17 @@ export default function VaccinationList() {
       ),
     },
     {
-      accessorKey: "vaccineName",
-      header: "Vaccine Name",
-    },
-
-    {
-      accessorKey:"category",
-      header:"Category"
-
+      accessorKey: "itemName",
+      header: "Item Name",
     },
     {
-      accessorKey: "ageGroup",
-      header: "Age Group",
-    },
-    {
-      accessorKey: "noOfDoses",
-      header: "Required Doses",
-    },
-    {
-      accessorKey: "interval",
-      header: "Interval",
-      cell: ({ row }) => {
-        const interval=row.original.interval
-        return(
-          <div>
-            {interval.interval} {" "} {interval.timeUnits}
-          </div>
-        )
-      }
+      accessorKey: "category",
+      header: "Category",
     },
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
+      cell: ({row}) => (
         <div className="flex justify-center gap-2">
           <DialogLayout
             trigger={
@@ -112,13 +56,13 @@ export default function VaccinationList() {
                 <Edit size={16} />
               </div>
             }
-            mainContent={<EditVAccineListModal 
+            mainContent={<EditFirstAidModal
               initialData={row.original} />}
           />
 
           <DialogLayout
             trigger={
-              <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+              <div className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer">
                 <Trash size={16} />
               </div>
             }
@@ -129,18 +73,23 @@ export default function VaccinationList() {
     },
   ];
 
+  const sampleData: FirstAidRecords[] = [
+    { id: 1, itemName: "Bandage", category: "Wound Care" },
+    { id: 2, itemName: "Antiseptic Wipes", category: "Disinfectant" },
+  ];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] =
-    useState<VaccinationRecords[]>(sampleData);
-  const [currentData, setCurrentData] = useState<VaccinationRecords[]>([]);
+    useState<FirstAidRecords[]>(sampleData);
+  const [currentData, setCurrentData] = useState<FirstAidRecords[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const filtered = sampleData.filter((vaccine) => {
+    const filtered = sampleData.filter((item) => {
       const searchText =
-        `${vaccine.id} ${vaccine.vaccineName} ${vaccine.ageGroup} ${vaccine.noOfDoses}`.toLowerCase();
+        `${item.id} ${item.itemName} ${item.category}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
     setFilteredData(filtered);
@@ -192,8 +141,8 @@ export default function VaccinationList() {
               className="bg-white"
               options={[
                 { id: "1", name: "" },
-                { id: "2", name: "By age group" },
-                { id: "3", name: "By interval" },
+                { id: "2", name: "By category" },
+                { id: "3", name: "By item name" },
               ]}
               value=""
               onChange={() => {}}
@@ -206,9 +155,9 @@ export default function VaccinationList() {
               <Plus size={15} /> New
             </div>
           }
-          title="Vaccination List"
-          description="Add New Vaccine"
-          mainContent={<VaccinationModal />}
+          title="First Aid "
+          description="Add New First Aid Item"
+          mainContent={<FirstAidModal />}
         />
       </div>
 
@@ -251,7 +200,7 @@ export default function VaccinationList() {
             Showing{" "}
             {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
             {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
+            {filteredData.length} items
           </p>
 
           <div className="w-full sm:w-auto flex justify-center">

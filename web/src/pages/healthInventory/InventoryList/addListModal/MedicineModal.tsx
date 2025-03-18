@@ -15,11 +15,19 @@ import {
 } from "@/form-schema/inventory/inventoryListSchema";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getMedicines } from "../REQUEST/GetRequest";
-import { addMedicine } from "../REQUEST/postrequest";
-import { ConfirmationDialog } from "../../CONFIRMATION MODAL/ConfirmModal";
+import { getMedicines } from "../request/GetRequest";
+import { addMedicine } from "../request/Postrequest";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
-export default function MedicineModal() {
+interface MedicineModalProps {
+  onAdd: () => void; // Add this line
+  setIsDialog: (isOpen: boolean) => void;
+}
+
+export default function MedicineModal({
+  onAdd,
+  setIsDialog,
+}: MedicineModalProps) {
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: { medicineName: "" },
@@ -33,16 +41,17 @@ export default function MedicineModal() {
     if (newMedicineName.trim()) {
       try {
         if (await addMedicine(newMedicineName)) {
-          console.log("✅ Medicine added successfully");
-          form.reset();
+          setIsAddConfirmationOpen(false);
+          setIsDialog(false);
+          setNewMedicineName("");
+          setIsDialog(false);
+          onAdd()
         } else {
           console.error("Failed to add medicine.");
         }
       } catch (err) {
-        console.error("🔥 Error adding medicine:", err);
+        console.error(err);
       }
-      setIsAddConfirmationOpen(false);
-      setNewMedicineName("");
     }
   };
 
@@ -68,11 +77,7 @@ export default function MedicineModal() {
       setNewMedicineName(data.medicineName);
       setIsAddConfirmationOpen(true);
     } catch (err) {
-      console.error("🔥 Error:", err);
-      form.setError("medicineName", {
-        type: "manual",
-        message: "An error occurred.",
-      });
+      console.error(err);
     }
   };
 

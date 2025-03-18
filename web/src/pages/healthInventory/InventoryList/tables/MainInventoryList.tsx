@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Add useEffect
 import VaccinationList from "./VaccineList";
 import FirstAidList from "./FirstAidList";
 import MedicineList from "./MedicineList";
@@ -6,7 +6,16 @@ import CommodityList from "./CommodityList";
 import { Button } from "@/components/ui/button";
 
 export default function MainInventoryList() {
-  const [selectedView, setSelectedView] = useState("medicine");
+  // Retrieve the selected view from local storage, default to "medicine"
+  const [selectedView, setSelectedView] = useState(() => {
+    const savedView = localStorage.getItem("selectedView");
+    return savedView || "medicine"; // Default to "medicine" if no saved view exists
+  });
+
+  // Save the selected view to local storage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("selectedView", selectedView);
+  }, [selectedView]);
 
   const renderContent = () => {
     switch (selectedView) {
@@ -18,6 +27,8 @@ export default function MainInventoryList() {
         return <CommodityList />;
       case "firstaid":
         return <FirstAidList />;
+      default:
+        return <MedicineList />; // Default fallback
     }
   };
 

@@ -14,7 +14,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import CommodityModal from "../inventoryModal/CommodityModal";
+import CommodityModal from "../addListModal/CommodityModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import EditCommodityModal from "../editListModal/EditCommodityModal";
 

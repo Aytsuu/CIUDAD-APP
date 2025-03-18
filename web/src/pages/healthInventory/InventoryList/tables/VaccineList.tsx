@@ -3,32 +3,63 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Trash, Eye } from "lucide-react";
+import { Search, Trash, Plus, Edit } from "lucide-react";
 import {
-  DropdownMenu, 
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { FileInput } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Label } from "@/components/ui/label";
-import { ChevronLeft, Plus, Edit } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import MedicineModal from "../inventoryModal/MedicineModal";
-import MedicineListEdit from "../editListModal/EditMedicineModal";
+import VaccinationModal from "../addListModal/VaccineModal";
+import { FileInput } from "lucide-react";
+import EditVAccineListModal from "../editListModal/EditVaccineModal";
 
-export default function MedicineList() {
-  type MedicineRecords = {
+export default function VaccinationList() {
+  type VaccinationRecords = {
     id: number;
-    medicineName: string;
     category: string;
+    vaccineName: string;
+    ageGroup: string;
+    noOfDoses: number;
+    interval: {
+      interval: number;
+      timeUnits: string;
+    };
+    specifyAge: string;
   };
 
-  const columns: ColumnDef<MedicineRecords>[] = [
+  const sampleData: VaccinationRecords[] = [
+    {
+      id: 1,
+      vaccineName: "COVID-19 Vaccine",
+      category: "MedicalSupplies",
+      ageGroup: "0-5 yrs old",
+      noOfDoses: 2,
+      interval: {
+        interval: 18,
+        timeUnits: "Months",
+      },
+      specifyAge: " ",
+    },
+    {
+      id: 2,
+      vaccineName: "Influenza Vaccine",
+      category: "vaccine",
+      ageGroup: "0-5 yrs old",
+      noOfDoses: 1,
+      interval: {
+        interval: 18,
+        timeUnits: "Weeks",
+      },
+      specifyAge: "",
+    },
+  ];
+
+  const columns: ColumnDef<VaccinationRecords>[] = [
     {
       accessorKey: "id",
       header: "#",
@@ -41,40 +72,56 @@ export default function MedicineList() {
       ),
     },
     {
-      accessorKey: "medicineName",
-      header: "Medicine Name",
+      accessorKey: "vaccineName",
+      header: "Vaccine Name",
+    },
+
+    {
+      accessorKey:"category",
+      header:"Category"
+
     },
     {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.category}</div>
-        </div>
-      ),
+      accessorKey: "ageGroup",
+      header: "Age Group",
+    },
+    {
+      accessorKey: "noOfDoses",
+      header: "Required Doses",
+    },
+    {
+      accessorKey: "interval",
+      header: "Interval",
+      cell: ({ row }) => {
+        const interval=row.original.interval
+        return(
+          <div>
+            {interval.interval} {" "} {interval.timeUnits}
+          </div>
+        )
+      }
     },
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({row}) => (
-        <div className="flex justify-center gap-2 ">
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
           <DialogLayout
             trigger={
               <div className=" border  px-3 py-2 rounded cursor-pointer">
                 <Edit size={16} />
               </div>
             }
-            mainContent={<MedicineListEdit
+            mainContent={<EditVAccineListModal 
               initialData={row.original} />}
           />
 
           <DialogLayout
             trigger={
-              <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-3 py-2 rounded cursor-pointer">
+              <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
                 <Trash size={16} />
               </div>
             }
-            className=""
             mainContent={<></>}
           />
         </div>
@@ -82,31 +129,18 @@ export default function MedicineList() {
     },
   ];
 
-  const sampleData: MedicineRecords[] = [
-    {
-      id: 1,
-      medicineName: "Paracetamol",
-      category: "Analgesic",
-    },
-    {
-      id: 2,
-      medicineName: "Amoxicillin",
-      category: "Antibiotic",
-    },
-  ];
-
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] =
-    useState<MedicineRecords[]>(sampleData);
-  const [currentData, setCurrentData] = useState<MedicineRecords[]>([]);
+    useState<VaccinationRecords[]>(sampleData);
+  const [currentData, setCurrentData] = useState<VaccinationRecords[]>([]);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const filtered = sampleData.filter((medicine) => {
+    const filtered = sampleData.filter((vaccine) => {
       const searchText =
-        `${medicine.id} ${medicine.medicineName} ${medicine.category}`.toLowerCase();
+        `${vaccine.id} ${vaccine.vaccineName} ${vaccine.ageGroup} ${vaccine.noOfDoses}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
     setFilteredData(filtered);
@@ -158,8 +192,8 @@ export default function MedicineList() {
               className="bg-white"
               options={[
                 { id: "1", name: "" },
-                { id: "2", name: "By date" },
-                { id: "3", name: "By category" },
+                { id: "2", name: "By age group" },
+                { id: "3", name: "By interval" },
               ]}
               value=""
               onChange={() => {}}
@@ -172,9 +206,9 @@ export default function MedicineList() {
               <Plus size={15} /> New
             </div>
           }
-          title="Medicine List"
-          description="Add New Medicine"
-          mainContent={<MedicineModal />}
+          title="Vaccination List"
+          description="Add New Vaccine"
+          mainContent={<VaccinationModal />}
         />
       </div>
 

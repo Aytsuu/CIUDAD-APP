@@ -18,7 +18,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   description = "This action cannot be undone.",
 }) => {
   return ( 
-    <DialogLayout
+    <DialogLayout 
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       trigger={<></>} // No trigger needed since we control it externally

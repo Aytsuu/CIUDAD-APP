@@ -17,9 +17,9 @@ import {
   MedicineStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { useCategories } from "../REQUEST/medcategory";
+import { useCategories } from "../request/medcategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { ConfirmationDialog } from "../../CONFIRMATION MODAL/ConfirmModal";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 export default function MedicineStockForm() {
   UseHideScrollbar();
@@ -40,7 +40,7 @@ export default function MedicineStockForm() {
 
   const {
     categories,
-    loading,
+
     handleAddCategory,
     handleDeleteCategory,
     error,
@@ -63,7 +63,6 @@ export default function MedicineStockForm() {
     form.setValue("category", selectedValue, { shouldValidate: true });
   };
 
-
   const onSubmit = async (data: MedicineStockType) => {
     try {
       const validatedData = MedicineStocksSchema.parse(data);
@@ -76,13 +75,13 @@ export default function MedicineStockForm() {
     }
   };
 
-
   // Watch relevant fields for calculation
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
+  
   // Handle delete confirmation
   const handleDeleteConfirmation = (categoryId: number) => {
     setCategoryToDelete(categoryId);
@@ -152,35 +151,28 @@ export default function MedicineStockForm() {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    {loading ? (
-                      <p>Loading categories...</p>
-                    ) : (
-                      <SelectLayoutWithAdd
-                        className="w-full"
-                        label="Category"
-                        placeholder="Select a Category"
-                        options={categories}
-                        value={
-                          categories.find((cat) => cat.id === field.value)
-                            ?.id || ""
+                    <SelectLayoutWithAdd
+                      className="w-full"
+                      label="Category"
+                      placeholder="Select a Category"
+                      options={categories}
+                      value={
+                        categories.find((cat) => cat.id === field.value)?.id ||
+                        ""
+                      }
+                      onChange={(selectedValue) =>
+                        handleSelectChange(selectedValue, field.onChange)
+                      }
+                      onAdd={handleAddConfirmation} // Pass the confirmation handler
+                      onDelete={(categoryId) => {
+                        const parsedCategoryId = Number(categoryId); // Convert to number
+                        if (!isNaN(parsedCategoryId)) {
+                          handleDeleteConfirmation(parsedCategoryId); // Open delete confirmation dialog
+                        } else {
+                          console.error("❌ Invalid category ID:", categoryId);
                         }
-                        onChange={(selectedValue) =>
-                          handleSelectChange(selectedValue, field.onChange)
-                        }
-                        onAdd={handleAddConfirmation} // Pass the confirmation handler
-                        onDelete={(categoryId) => {
-                          const parsedCategoryId = Number(categoryId); // Convert to number
-                          if (!isNaN(parsedCategoryId)) {
-                            handleDeleteConfirmation(parsedCategoryId); // Open delete confirmation dialog
-                          } else {
-                            console.error(
-                              "❌ Invalid category ID:",
-                              categoryId
-                            );
-                          }
-                        }}
-                      />
-                    )}
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -387,7 +379,7 @@ export default function MedicineStockForm() {
       </Form>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog 
+      <ConfirmationDialog
         isOpen={isDeleteConfirmationOpen}
         onOpenChange={setIsDeleteConfirmationOpen}
         onConfirm={confirmDelete}

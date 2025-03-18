@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios"; // Ensure you import AxiosError if ne
 
 interface Option {
   id: string;
-  name: string;
+  name: string; 
 }
 
 export const useCategories = () => {
@@ -29,27 +29,26 @@ export const useCategories = () => {
 
   // GET
   const getCategories = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get("inventory/category/", {
         params: { cat_type: "Medicine" },
       });
-      console.log("Fetched categories from API:", data);
+      console.log(data);
 
-      if (!Array.isArray(data)) throw new Error("Invalid data format");
+      if (Array.isArray(data)) {
+        const transformedCategories = data
+          .filter((cat) => cat.cat_type === "Medicine")
+          .map((cat) => ({
+            id: String(cat.cat_id),
+            name: cat.cat_name || "Unnamed Category",
+          }));
 
-      const transformedCategories = data
-        .filter((cat) => cat.cat_type === "Medicine")
-        .map((cat) => ({
-          id: String(cat.cat_id),
-          name: cat.cat_name || "Unnamed Category",
-        }));
-
-      setCategories(transformedCategories);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-    } finally {
-      setLoading(false);
+        setCategories(transformedCategories);
+      } else {
+        console.error(error);
+      }
+    } catch (err) {
+      console.error(err);
     }
   }, []);
 
@@ -64,7 +63,6 @@ export const useCategories = () => {
     onCategoryAdded: (newId: string) => void
   ) => {
     if (!newCategoryName.trim() || isAdding) return;
-
     setIsAdding(true); // Prevent multiple calls
 
     const categoryExists = categories.some(
@@ -109,7 +107,7 @@ export const useCategories = () => {
   const handleDeleteCategory = async (categoryId: number) => {
     try {
       const response = await api.delete(
-        `inventory/delete_category/${categoryId}/`
+        `inventory/category/${categoryId}/`
       );
 
       if (response.status === 200 || response.status === 204) {
@@ -120,15 +118,10 @@ export const useCategories = () => {
           prev.filter((category) => category.id !== String(categoryId))
         );
       } else {
-        throw new Error(`Failed to delete category: ${response.statusText}`);
+        console.error(response);
       }
-    } catch (error) {
-      console.error(
-        "❌ Error deleting category:",
-        axios.isAxiosError(error)
-          ? error.response?.data || error.message
-          : error
-      );
+    } catch (err) {
+      console.error(err);
     }
   };
 

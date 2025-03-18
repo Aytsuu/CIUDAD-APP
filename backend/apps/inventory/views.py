@@ -56,7 +56,32 @@ class FirstAidListView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
+# -------------------DELETE-----LIST------------------
+class DeleteMedicineListView(generics.DestroyAPIView):
+    serializer_class = MedicineListSerializers    
+    queryset = Medicinelist.objects.all()
 
+    def get_object(self):
+        med_id = self.kwargs.get('med_id')
+        return get_object_or_404(Medicinelist, med_id=med_id)  # ✅ Correct field
+    
+
+
+
+#--------------------UPDATE---LIST-----------------------
+class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class=MedicineListSerializers
+    queryset = Medicinelist.objects.all()
+    lookup_field='med_id'
+    
+    def get_object(self):
+       med_id = self.kwargs.get('med_id')
+       
+       obj = get_object_or_404(Medicinelist, med_id = med_id)
+       return obj
+       
+    
 
 # ---------------------------------------------------------------------
 #STOCKS
