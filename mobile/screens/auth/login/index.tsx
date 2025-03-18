@@ -47,7 +47,7 @@ export default function LoginScreen() {
   
         Alert.alert("Success", "Login successful!");
       } else {
-        Alert.alert("Error", response.data.message || "Invalid email or password.");
+        Alert.alert("Error", response.data.message || "No Account Matched!");
       }
     } catch (error) {
       // Suppress the error logging and only show an alert
