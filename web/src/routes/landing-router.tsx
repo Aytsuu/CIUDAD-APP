@@ -2,7 +2,7 @@ import { Navigate } from 'react-router';
 import Home from "@/pages/landing/home";
 import SignIn from "@/pages/landing/sign-in";
 import About from '@/pages/landing/about';
-import LandingLayout from '@/layout/landing-layout';
+import LandingLayout from '@/layout/LandingLayout';
 import Services from '@/pages/landing/services';
 import Donation from '@/pages/landing/donation';
 import BarangayCouncil from '@/pages/landing/barangay-council';
