@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.1.55', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -156,10 +156,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:5173",
-    "http://192.168.1.55:8000", 
+CORS_ALLOWED_ORIGINS = [ "*"
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]

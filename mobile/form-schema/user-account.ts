@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-export const UserAccoun = z.object({
+export const UserAccount = z.object({
   accountDetails: z.object({
     userName: z.string().min(1, "Username is required"),
     email: z.string().email("Invalid email address"),
