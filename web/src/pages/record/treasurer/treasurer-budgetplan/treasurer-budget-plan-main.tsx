@@ -4,15 +4,18 @@ import { Eye, Trash, ArrowUpDown, Search } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CreateBudgetPlanHeader from "./treasurer_budgetplan_header_form";
+import api from "@/api/api";
+import { useEffect } from "react";
 
+
+// Table Columns
 export const columns: ColumnDef<BudgetPlan>[] = [
     { 
-        accessorKey: "budgetYear",
+        accessorKey: "plan_year",
         header: ({ column }) => (
             <div
                 className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -23,14 +26,14 @@ export const columns: ColumnDef<BudgetPlan>[] = [
             </div>
         ),
         cell: ({row}) => (
-            <div className="text-center">{row.getValue("budgetYear")}</div>
+            <div className="text-center">{row.getValue("plan_year")}</div>
         )
     },
     { 
-        accessorKey: "issueDate", 
+        accessorKey: "plan_issue_date", 
         header: "Issued On",
         cell: ({row}) => (
-            <div className="text-center">{row.getValue("issueDate")}</div>
+            <div className="text-center">{row.getValue("plan_issue_date")}</div>
         )
     },
     { 
@@ -59,23 +62,32 @@ export const columns: ColumnDef<BudgetPlan>[] = [
     }
 ];
 
+
 type BudgetPlan = {
-    budgetYear: string,
-    issueDate: string,
+    plan_year: string,
+    plan_issue_date: string,
 }
 
-export const BudgetPlanRecords: BudgetPlan[] = [
-    {
-        budgetYear: "Budget Plan (YYYY)",
-        issueDate: "MM-DD-YYYY"
-    }
-]
-
 function BudgetPlan(){
-    const data = BudgetPlanRecords;
-
+    const [budgetplans, setBudgetPlans] = useState<BudgetPlan[]>([])
+    // Table Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 10; // Example total number of pages
+
+    // Fetch data from the API
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await api.get('/treasurer/budget-plan/'); 
+                setBudgetPlans(response.data);
+            } catch (error) {
+                console.error("Failed to fetch budget plans:", error);
+            }
+        };
+
+        fetchData();
+    }, []); // Empty dependency array means this runs once on mount
+
 
     const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -94,12 +106,12 @@ function BudgetPlan(){
                 <hr className="border-gray mb-7 sm:mb-9" /> 
                 
                 <div className="flex flex-col md:flex-row justify-between items-center mb-5 gap-4 md:gap-0">
-                <div className="relative flex-1 max-w-[20rem]"> {/* Adjust max-width as needed */}
+                <div className="relative flex-1 max-w-[20rem]"> 
                     <Search
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                         size={17}
                     />
-                    <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                    <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> 
                 </div>
                   
                     <DialogLayout
@@ -120,7 +132,7 @@ function BudgetPlan(){
                         <p className="text-xs sm:text-sm">Entries</p>
                     </div>                              
 
-                    <DataTable columns={columns} data={data} />
+                    <DataTable columns={columns} data={budgetplans} />
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
