@@ -1,37 +1,42 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Baby, Calendar } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { FilterAccordion } from "@/components/ui/checkBox-with-search-add";
-import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Syringe } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { VaccineType ,VaccinesSchema} from "@/form-schema/chr-schema";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import ChildVaccines from "./ChildVaccines";
 import { Link } from "react-router";
+import { ChevronLeft } from "lucide-react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card/card";
+import CardLayout from "@/components/ui/card/card-layout";
 
 
-type Page1FormData = z.infer<typeof ChildHealthFormSchema> & {
-  dates?: string[];
-};
 
 type Page1Props = {
   onPrevious2: () => void;
   onNext4: () => void;
-  updateFormData: (data: Partial<Page1FormData>) => void;
-  formData: Page1FormData;
+  updateFormData: (data: Partial<VaccineType>) => void;
+  formData: VaccineType;
+};
+
+type VaccineRecord = {
+  id: number;
+  vaccineType: string;
+  dose: string;
+  date: string;
 };
 
 export default function ChildHRPage3({
@@ -40,328 +45,222 @@ export default function ChildHRPage3({
   updateFormData,
   formData,
 }: Page1Props) {
-  const form = useForm<Page1FormData>({
-    defaultValues: {
-      ...formData,
-      hasDisability: formData.hasDisability || false,
-      hasEdema: formData.hasEdema || false,
-      disabilityTypes: formData.disabilityTypes || [],
-    },
+  const form = useForm<VaccineType>({
+    defaultValues: { vaccines: formData.vaccines || [] },
+    resolver: zodResolver(VaccinesSchema),
   });
 
-  const { handleSubmit, reset, watch, setValue } = form;
-  const hasDisability = watch("hasDisability");
-  const hasEdema = watch("hasEdema");
+  const { handleSubmit, control, setValue } = form;
+  const [vaccines, setVaccines] = useState<VaccineRecord[]>(
+    formData.vaccines ?? []
+  );
+  const [newVaccine, setNewVaccine] = useState({
+    vaccineType: "",
+    dose: "",
+    date: new Date().toISOString().split("T")[0],
+  });
 
-  const [dates, setDates] = useState<string[]>(formData.dates || []);
-  const [currentDate, setCurrentDate] = useState<string>("");
-
-  const [disabilityTypes, setDisabilityTypes] = useState([
-    { id: "diabetes", name: "Diabetes" },
-    { id: "heartache", name: "Heart Ache" },
-    { id: "fever", name: "Fever" },
-  ]);
-
-  const [edemaSeverity] = useState([
-    { id: "mild", name: "Mild" },
-    { id: "moderate", name: "Moderate" },
-    { id: "severe", name: "Severe" },
-  ]);
-
-  const [selectedDisabilities, setSelectedDisabilities] = useState<
-    { id: string; name: string }[]
-  >(formData.disabilityTypes || []);
-
-  // Sync selectedDisabilities with formData.disabilityTypes
   useEffect(() => {
-    setSelectedDisabilities(formData.disabilityTypes || []);
-  }, [formData.disabilityTypes]);
+    setVaccines(formData.vaccines ?? []);
+  }, [formData]);
 
-  // Reset form and states when formData changes
-  useEffect(() => {
-    reset({
-      ...formData,
-      hasDisability: formData.hasDisability || false,
-      hasEdema: formData.hasEdema || false,
-      disabilityTypes: formData.disabilityTypes || [],
-    });
-    setDates(formData.dates || []);
-  }, [formData, reset]);
-
-  const onSubmitForm = (data: Page1FormData) => {
-    updateFormData({ ...data, disabilityTypes: selectedDisabilities });
-    console.log("page 3", data);
-    onNext4();
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-    return date.toLocaleString("default", { month: "long", year: "numeric" });
-  };
-
-  const handleAddDate = () => {
-    if (currentDate) {
-      const formattedDate = formatDate(currentDate);
-      const updatedDates = [...dates, formattedDate];
-      setDates(updatedDates);
-      setValue("dates", updatedDates);
-      setCurrentDate("");
+  const addVac = () => {
+    if (newVaccine.vaccineType && newVaccine.dose && newVaccine.date) {
+      const vaccineToAdd = {
+        id: Date.now(),
+        ...newVaccine,
+      };
+      const updatedVaccines = [...vaccines, vaccineToAdd];
+      setVaccines(updatedVaccines);
+      setValue("vaccines", updatedVaccines);
+      updateFormData({ vaccines: updatedVaccines });
+      setNewVaccine({
+        vaccineType: "",
+        dose: "",
+        date: new Date().toISOString().split("T")[0],
+      });
     }
   };
 
-  const handleDeleteDate = (index: number) => {
-    const updatedDates = dates.filter((_, i) => i !== index);
-    setDates(updatedDates);
-    setValue("dates", updatedDates);
+  const deleteVac = (id: number) => {
+    const updatedVaccines = vaccines.filter((vac) => vac.id !== id);
+    setVaccines(updatedVaccines);
+    setValue("vaccines", updatedVaccines);
+    updateFormData({ vaccines: updatedVaccines });
   };
 
-  const handleSelectDisability = (id: string, checked: boolean) => {
-    const disability = disabilityTypes.find((type) => type.id === id);
-    if (disability) {
-      if (checked) {
-        setSelectedDisabilities((prev) => [...prev, disability]);
-      } else {
-        setSelectedDisabilities((prev) => prev.filter((d) => d.id !== id));
-      }
-    }
-  };
-
-  const handleResetDisabilities = () => {
-    setSelectedDisabilities([]);
-  };
-
-  const handleAddDisability = (label: string) => {
-    const newDisability = {
-      id: String(disabilityTypes.length + 1), // Generate a unique ID
-      name: label,
-    };
-    setDisabilityTypes((prev) => [...prev, newDisability]); // Add to disabilityTypes
-    setSelectedDisabilities((prev) => [...prev, newDisability]); // Add to selectedDisabilities
-    setValue("disabilityTypes", [...selectedDisabilities, newDisability]); // Update form state
-  };
-
-  const handlePrevious = () => {
-    const currentFormData = form.getValues();
-    updateFormData({ ...currentFormData, disabilityTypes: selectedDisabilities });
-    onPrevious2();
-  };
+  // Define columns for the DataTable
+  const vaccineColumns: ColumnDef<VaccineRecord>[] = [
+    {
+      accessorKey: "vaccineType",
+      header: "Vaccine Type",
+    },
+    {
+      accessorKey: "dose",
+      header: "Dose",
+      cell: ({ row }) => <Badge variant="secondary">{row.original.dose}</Badge>,
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center gap-2">
+          <Calendar className="h-4 w-4 inline-block" />
+          {row.original.date}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button
+          variant="destructive"
+          onClick={() => deleteVac(row.original.id)}
+        >
+          Delete
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <>
-    <div className="flex flex-col sm:flex-row  gap-4 mb-8">
-      <Link to="/invtablechr">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-        >
-          <ChevronLeft />
-        </Button>
-      </Link>
-      <div className="flex-col items-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Child Health Record
-        </h1>
-        <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view patients information
-        </p>
-      </div>
-    </div>
-    <div className=" bg-white rounded-lg shadow ">
-      <Form {...form}>
-        <form
-          onSubmit={handleSubmit(onSubmitForm)}
-          className="space-y-6 p-4 md:p-6 lg:p-8"
-        >
-          {/* Disability Section */}
-          <div>
-            <FormField
-              control={form.control}
-              name="hasDisability"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      id="hasDisability"
-                      checked={!!field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                      }}
-                    />
-                  </FormControl>
-                  <FormLabel htmlFor="hasDisability" className="leading-none">
-                    Does the child have any known disabilities?
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
+     
 
-            {hasDisability && (
-              <div className="mt-4 space-y-4">
-                <FormLabel>Select Disability</FormLabel>
-                <FormField
-                  control={form.control}
-                  name="disabilityTypes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <FilterAccordion
-                          title="Disabilities"
-                          options={field.value.map((type) => ({
-                            id: type.id,
-                            label: type.name,
-                            checked: selectedDisabilities.some(
-                              (d) => d.id === type.id
-                            ),
-                          }))}
-                          selectedCount={selectedDisabilities.length}
-                          onReset={handleResetDisabilities}
-                          onChange={handleSelectDisability}
-                          onAddOption={handleAddDisability} // Pass the function to handle adding new disabilities
-                          showAddField={true} // Show the add field
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Edema Section */}
-          <div>
-            <FormField
-              control={form.control}
-              name="hasEdema"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      id="hasEdema"
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                      }}
-                    />
-                  </FormControl>
-                  <FormLabel htmlFor="hasEdema" className="leading-none">
-                    Does the child have any visible swelling (edema)?
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-
-            {hasEdema && (
+      <div className="w-full bg-white rounded-lg shadow md:p-6 lg:p-8 p-8">
+        <Form {...form}>
+          <form
+            onSubmit={handleSubmit((data) => {
+              console.log("Page 2:", data);
+              onNext4();
+            })}
+            className="space-y-6"
+          >
+            <h3 className="font-semibold text-lg">Type of Immunization</h3>
+            <div className="flex flex-col sm:flex-row gap-2">
               <FormField
-                control={form.control}
-                name="edemaSeverity"
-                render={({ field }) => (
-                  <FormItem className="w-full sm:w-[200px] pl-10">
-                    <FormLabel className="mb-2 sm:mb-0">
-                      Select Severity
-                    </FormLabel>
+                control={control}
+                name="vaccines"
+                render={() => (
+                  <FormItem className="w-full sm:w-[200px]">
                     <FormControl>
                       <SelectLayout
                         className="w-full"
-                        label="Select an option"
-                        placeholder="Select"
-                        options={edemaSeverity}
-                        value={field.value}
-                        onChange={field.onChange}
+                        label="Vaccine Type"
+                        placeholder="Select Vaccine"
+                        options={[
+                          { id: "BCG", name: "BCG" },
+                          { id: "Polio", name: "Polio" },
+                          { id: "Measles", name: "Measles" },
+                        ]}
+                        value={newVaccine.vaccineType}
+                        onChange={(e) =>
+                          setNewVaccine((prev) => ({ ...prev, vaccineType: e }))
+                        }
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-          </div>
-
-          {/* Exclusive BF Check Section */}
-          <div className="flex flex-col justify-between sm:flex-row gap-8">
-            <div className="flex flex-col space-y-2 pt-5">
-              <FormLabel className="font-semibold text-gray-700">
-                Add Exclusive BF Check:
-              </FormLabel>
-
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <FormField
-                  control={form.control}
-                  name="BFdates"
-                  render={({}) => (
-                    <FormItem className="w-full sm:w-[220px]">
-                      <FormControl>
-                        <div className="flex items-center">
-                          <Input
-                            type="month"
-                            value={currentDate}
-                            onChange={(e) => setCurrentDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="button"
-                  className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4"
-                  onClick={handleAddDate}
-                  disabled={!currentDate}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-
-            {/* Exclusive BF Check History Section */}
-            <Card className="w-full bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Baby className="h-6 w-6 text-blue" />
-                  Exclusive BF Check History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col pl-2">
-                  {dates.length === 0 ? (
-                    <p>No dates added yet</p>
-                  ) : (
-                    dates.map((date, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-5 w-5 text-gray-500" />
-                          <span className="text-gray-700">{date}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => handleDeleteDate(index)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Navigation Buttons */}
-          <div className="flex w-full justify-end">
-            <div className="flex gap-2">
+              <FormField
+                control={control}
+                name="vaccines"
+                render={() => (
+                  <FormItem className="w-full sm:w-[200px]">
+                    <FormControl>
+                      <SelectLayout
+                        className="w-full"
+                        label="Dose"
+                        placeholder="Select Dose"
+                        options={[
+                          { id: "1st Dose", name: "1st Dose" },
+                          { id: "2nd Dose", name: "2nd Dose" },
+                        ]}
+                        value={newVaccine.dose}
+                        onChange={(e) =>
+                          setNewVaccine((prev) => ({ ...prev, dose: e }))
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="vaccines"
+                render={() => (
+                  <FormItem className="w-full sm:w-[200px]">
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={newVaccine.date}
+                        onChange={(e) =>
+                          setNewVaccine((prev) => ({
+                            ...prev,
+                            date: e.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <Button
                 type="button"
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4"
+                onClick={addVac}
+                disabled={
+                  !newVaccine.vaccineType ||
+                  !newVaccine.dose ||
+                  !newVaccine.date
+                }
+              >
+                Add
+              </Button>
+            </div>
+
+            <CardLayout
+              cardTitle=""
+              cardContent={
+                <>
+                  <div className="bg-gray-50 mt-[-20px]">
+                    <div className="w-full flex-row flex justify-between items-center gap-4">
+                      <div className="flex items-center gap-2 text-lg font-semibold">
+                        <Syringe className="h-5 w-5 text-blue " /> Administered
+                        Vaccines History
+                      </div>
+
+                      <DialogLayout
+                        trigger={
+                          <div className="text-blue italic underline px-4 py-2 rounded cursor-pointer hover:bg-gray-100 transition-colors">
+                            List of Vaccines To be Administered {">"}
+                          </div>
+                        }
+                        className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                        title="Vaccines"
+                        description="List of all Vaccines to be administered."
+                        mainContent={<ChildVaccines />}
+                      />
+                    </div>
+
+                    <div className="p-4">
+                      {vaccines.length === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-gray-500">No vaccines added yet</p>
+                        </div>
+                      ) : (
+                        <DataTable columns={vaccineColumns} data={vaccines} />
+                      )}
+                    </div>
+                  </div>
+                </>
+              }
+            />
+
+            <div className="flex w-full justify-end gap-2">
+              <Button
                 variant="outline"
-                onClick={handlePrevious}
+                onClick={onPrevious2}
                 className="w-[100px]"
               >
                 Previous
@@ -370,10 +269,9 @@ export default function ChildHRPage3({
                 Next
               </Button>
             </div>
-          </div>
-        </form>
-      </Form>
-    </div>
+          </form>
+        </Form>
+      </div>
     </>
   );
 }
