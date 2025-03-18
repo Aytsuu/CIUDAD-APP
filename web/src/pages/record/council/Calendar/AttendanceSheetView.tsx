@@ -328,6 +328,169 @@
 
 
 
+
+
+// import { Button } from "@/components/ui/button";
+// import { Label } from '@/components/ui/label';
+// import { useState } from 'react';
+// import DataTableViewing from "@/components/ui/table/data-table-viewing"
+
+
+
+// import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
+
+// import html2pdf from 'html2pdf.js';
+
+
+// interface AttendanceSheetViewProps {
+//     selectedAttendees: string[]; // Assuming selectedAttendees is an array of strings
+//     activity: string;
+//     date: string;
+//     time: string;
+//     place: string;
+//     category: string;
+// }
+
+
+// // columns and data for postpartum table
+// const attendanceColumns= [
+//     {
+//         accessorKey: "Number",
+//         header: "No.",     
+//     },
+//     {
+//         accessorKey: "nameOfAttendee",
+//         header: "Name",     
+//     },
+//     {
+//         accessorKey: "designation",
+//         header: "Designation / Organization",
+//     },
+//     {
+//         accessorKey: "Sign",
+//         header: "Signature",
+//     },
+// ]
+
+
+
+
+
+// function formatTimeTo12Hour(time: string) {
+//     const [hours, minutes] = time.split(':');
+//     const formattedHours = (parseInt(hours) % 12) || 12; // Convert to 12-hour format
+//     const ampm = parseInt(hours) < 12 ? 'AM' : 'PM';
+//     return `${formattedHours}:${minutes} ${ampm}`;
+// }
+
+
+// function splitDataIntoChunks(data: any[], chunkSize: number) {
+//     const chunks = [];
+//     for (let i = 0; i < data.length; i += chunkSize) {
+//         chunks.push(data.slice(i, i + chunkSize));
+//     }
+//     return chunks;
+// }
+
+
+// function AttendanceSheetView({ selectedAttendees, activity, date, time, place, category }: AttendanceSheetViewProps) {
+
+//     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+//     const formattedTime = formatTimeTo12Hour(time); // formatted time w/ AM & PM
+
+//     const attendanceData = selectedAttendees.map((attendee, index) => ({
+//         Number: (index + 1).toString(),
+//         nameOfAttendee: attendee,
+//         designation: "Designation Here", // Modify as needed
+//         Sign: ""
+//     }));
+
+//     // Split the data into chunks
+//     const maxRowsPerContainer = 10; // Adjust based on your layout
+//     const dataChunks = splitDataIntoChunks(attendanceData, maxRowsPerContainer);
+
+
+
+//     const handleOnclick = async () => {
+//         setIsGeneratingPDF(true);
+//         const element = document.querySelector('#converted') as HTMLElement | null; // #converted id is added kong asa imong ganahan I pa pdf na div
+//         if (element) {
+//             const options = {
+//                 image: { type: 'jpeg', quality: 1 }, // JPEG with high quality
+//                 html2canvas: { scale: 7 }, // Adjust scale as needed
+//                 margin: 0,
+//                 jsPDF: { 
+//                     unit: 'mm',
+//                     format: [215.9, 330.5], // Long Bond Paper size
+//                     orientation: 'portrait',
+//                 },
+//             };
+
+//             (html2pdf() as any).from(element).set(options).save().then(() =>{
+//                 setIsGeneratingPDF(false);
+//             })
+//         }
+//     };
+
+
+//     return (
+//         <div className="w-full flex flex-col items-center justify-center p-[50px]">
+//             <div id="converted">
+//                 {dataChunks.map((chunk, index) => (
+//                     <div key={index} className={`w-[816px] h-[1248px] bg-white p-[96px] flex flex-col items-center ${!isGeneratingPDF ? 'border border-black' : ''} mb-[2px]`}>
+//                         {/* Conditionally render the header content only for the first container */}
+//                         {index === 0 && (
+//                             <>
+//                                 <img src={sanRoqueLogo} alt="Barangay Logo" className="w-40 h-30" />
+
+//                                 <div className="flex flex-col w-full items-center pt-5 p-5 gap-2">
+//                                     <Label className="text-[16px]">Republic of the Philippines</Label>
+//                                     <Label className="text-[16px]">Cebu City | <Label className="font-bold text-[16px]">Barangay San Roque Ciudad</Label></Label>
+//                                     <hr className="border-black w-[350px]" />       
+//                                 </div>
+
+//                                 <div className="flex flex-col w-full items-center pb-10">
+//                                     <Label className="font-bold text-[18px]">Office of the Barangay Captain</Label>
+//                                     <Label className="text-[16px]">Arellano Boulevard, San Roque, Cebu City</Label>
+//                                     <Label className="text-[16px]">Barangaysanroquecebu@gmail.com</Label>
+//                                     <Label className="text-[18px]">(032) 231 - 3699</Label>                    
+//                                 </div>
+
+//                                 <div className="flex flex-col w-full items-center pb-8">
+//                                     <Label className="text-[16px]">Activity: <Label className="font-bold text-[16px]">{activity.toUpperCase()}</Label></Label>
+//                                     <Label className="text-[16px]">Place/Room: <Label className="font-bold text-[16px]">{place.toUpperCase()}</Label></Label>          
+//                                     <Label className="text-[16px]">Date: <Label className="font-bold text-[16px]">{date}</Label></Label>          
+//                                     <Label className="text-[16px]">Time: <Label className="font-bold text-[16px]">{formattedTime}</Label></Label>                      
+//                                 </div>
+
+//                                 <Label className="font-bold text-[20px]">ATTENDANCE SHEET</Label>
+//                             </>
+//                         )}
+
+//                         {/* Always render the table */}
+//                         <DataTableViewing columns={attendanceColumns} data={chunk}/>
+//                     </div>
+//                 ))}
+//             </div>
+//             <div className="flex w-full pt-10  justify-end">
+//                 <Button onClick={handleOnclick}>
+//                     Download
+//                 </Button>
+//             </div>                          
+//         </div>
+//     );
+// }
+// export default AttendanceSheetView;
+
+
+
+
+
+
+
+
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
 
@@ -347,6 +510,7 @@ interface AttendanceSheetViewProps {
     time: string;
     place: string;
     category: string;
+    description: string
 }
 
 
@@ -391,7 +555,9 @@ function splitDataIntoChunks(data: any[], chunkSize: number) {
 }
 
 
-function AttendanceSheetView({ selectedAttendees, activity, date, time, place, category }: AttendanceSheetViewProps) {
+function AttendanceSheetView({ selectedAttendees, activity, date, time, place, category, description}: AttendanceSheetViewProps) {
+
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     const formattedTime = formatTimeTo12Hour(time); // formatted time w/ AM & PM
 
@@ -414,16 +580,18 @@ function AttendanceSheetView({ selectedAttendees, activity, date, time, place, c
         date: string,
         attendees: string[],
         category: string,
-        time: string // Add attendees as a parameter
+        time: string, // Add attendees as a parameter
+        description: string
     ) => {
         // Create a FormData object to send the file and additional data
         const formData = new FormData();
-        formData.append('file', pdfBlob, 'attendance_sheet.pdf'); // Append the PDF file
+        formData.append('file', pdfBlob, `${activity}.pdf`); // Append the PDF file
         formData.append('activity', activity); // Append activity
         formData.append('place', place); // Append place
         formData.append('date', date); // Append date
         formData.append('time', time);    
         formData.append('category', category);         
+        formData.append('description', description);   
         formData.append('attendees', JSON.stringify(attendees)); // Append attendees as JSON
 
 
@@ -459,6 +627,7 @@ function AttendanceSheetView({ selectedAttendees, activity, date, time, place, c
 
 
     const handleOnclick = async () => {
+        setIsGeneratingPDF(true);
         const element = document.querySelector('#converted') as HTMLElement | null;
         if (element) {
             const options = {
@@ -478,7 +647,8 @@ function AttendanceSheetView({ selectedAttendees, activity, date, time, place, c
                 .output('blob');
     
             // Pass the attendees data to the upload function
-            uploadPdfToDatabase(pdfBlob, activity, place, date, selectedAttendees, category, formattedTime);
+            uploadPdfToDatabase(pdfBlob, activity, place, date, selectedAttendees, category, formattedTime, description);
+            setIsGeneratingPDF(false);
         }
     };
 
@@ -487,7 +657,7 @@ function AttendanceSheetView({ selectedAttendees, activity, date, time, place, c
         <div className="w-full flex flex-col items-center justify-center p-[50px]">
             <div id="converted">
                 {dataChunks.map((chunk, index) => (
-                    <div key={index} className="w-[816px] h-[1248px] bg-white p-[96px] flex flex-col items-center border border-black mb-2">
+                    <div key={index} className={`w-[816px] h-[1248px] bg-white p-[96px] flex flex-col items-center ${!isGeneratingPDF ? 'border border-black' : ''} mb-[2px]`}>
                         {/* Conditionally render the header content only for the first container */}
                         {index === 0 && (
                             <>
@@ -531,8 +701,6 @@ function AttendanceSheetView({ selectedAttendees, activity, date, time, place, c
     );
 }
 export default AttendanceSheetView;
-
-
 
 
 

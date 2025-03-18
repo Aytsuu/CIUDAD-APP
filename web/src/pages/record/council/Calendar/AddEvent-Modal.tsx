@@ -2156,6 +2156,7 @@ function AddEvent() {
     const [eventTime, setEventTime] = useState<string>("");
     const [eventPlace, setEventPlace] = useState<string>("");
     const [eventCategory, setEventCategory] = useState<string>("");
+    const [eventDescription, setEventDescription] = useState<string>("");
 
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
     const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
@@ -2392,6 +2393,10 @@ function AddEvent() {
                                                     className="w-full p-2 shadow-sm h-40 mt-[12px] rounded-[5px] resize-none"
                                                     placeholder="Enter Meeting Description"
                                                     {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e); // Update form state
+                                                        setEventDescription(e.target.value); // Update local state
+                                                    }}     
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -2582,7 +2587,7 @@ function AddEvent() {
                                         className="max-w-[1000px] max-h-full flex flex-col overflow-auto scrollbar-custom"
                                         title="Attendance Details"
                                         description="Please review upon submitting."
-                                        mainContent={<AttendanceSheetView selectedAttendees={selectedAttendees} activity={eventTitle} date={eventDate} time={eventTime} place={eventPlace} category={eventCategory}/>}
+                                        mainContent={<AttendanceSheetView selectedAttendees={selectedAttendees} activity={eventTitle} date={eventDate} time={eventTime} place={eventPlace} category={eventCategory} description={eventDescription}/>}
                                         isOpen={isModalOpen} 
                                         onOpenChange={handleModalOpenChange} 
                                     />
