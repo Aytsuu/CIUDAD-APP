@@ -1,8 +1,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
-import ParentsFormLayout from "../form/ParentsFormLayout";
-import DependentsInfoLayout from "../form/DependentsInfoLayout";
-import DemographicInfo from "../form/DemographicInfo";
+import ParentsFormLayout from "./ParentsFormLayout";
+import DependentsInfoLayout from "./DependentsInfoLayout";
+import DemographicInfo from "./DemographicInfo";
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
