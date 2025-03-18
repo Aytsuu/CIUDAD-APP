@@ -124,7 +124,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <Link to="/resident-information">
+      <Link to="/resident-registration">
         <Button variant="outline">View</Button>
       </Link>
     ),
