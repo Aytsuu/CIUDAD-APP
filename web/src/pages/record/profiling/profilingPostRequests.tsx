@@ -4,23 +4,9 @@ import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
-const personal = async (personalInfo: Record<string, string>) => {
+export const personal = async (personalInfo: Record<string, string>) => {
 
     try {
-
-        console.log({
-            per_lname: personalInfo.lastName,
-            per_fname: personalInfo.firstName,
-            per_mname: personalInfo.middleName,
-            per_suffix: personalInfo.suffix,
-            per_dob: formatDate(personalInfo.dateOfBirth),
-            per_sex: personalInfo.sex,
-            per_status: personalInfo.status,
-            per_address: personalInfo.address,
-            per_edAttainment: personalInfo.edAttainment,
-            per_religion: personalInfo.religion,
-            per_contact: personalInfo.contact
-        })
         
         const res = await api.post('profiling/personal/', {
             per_lname: personalInfo.lastName,
@@ -43,7 +29,21 @@ const personal = async (personalInfo: Record<string, string>) => {
     }
 }
 
-const mother = async (personalId: string) => {
+export const registered = async (personalId: string) => {
+    
+    try{
+
+        await api.post('profiling/registered/', {
+            per: personalId
+        })
+
+    } catch (err) {
+        console.log(err)
+    }
+
+}
+
+export const mother = async (personalId: string) => {
 
     try {
         const res = await api.post('profiling/mother/', {
@@ -56,7 +56,7 @@ const mother = async (personalId: string) => {
     }
 }
 
-const father = async (personalId: string) => {
+export const father = async (personalId: string) => {
 
     try {
 
@@ -71,7 +71,7 @@ const father = async (personalId: string) => {
     }
 }
 
-const dependents = (dependentsInfo: Record<string, string>[], familyId: string) => {
+export const dependents = (dependentsInfo: Record<string, string>[], familyId: string) => {
 
     try{
 
@@ -96,7 +96,7 @@ const dependents = (dependentsInfo: Record<string, string>[], familyId: string) 
 
 }
 
-const family = async (demographicInfo: Record<string, string>, fatherId: string, motherId: string) => { 
+export const family = async (demographicInfo: Record<string, string>, fatherId: string, motherId: string) => { 
 
     try{
 
@@ -123,7 +123,7 @@ const family = async (demographicInfo: Record<string, string>, fatherId: string,
     }
 } 
 
-const familyComposition = (familyId: string, personalId: string) => {
+export const familyComposition = (familyId: string, personalId: string) => {
     try {
 
         console.log({
@@ -141,7 +141,7 @@ const familyComposition = (familyId: string, personalId: string) => {
     }
 }
 
-const building = async (familyNo: string, demographicInfo: Record<string, string>) => {
+export const building = async (familyNo: string, demographicInfo: Record<string, string>) => {
     try {
 
         console.log({
@@ -163,7 +163,7 @@ const building = async (familyNo: string, demographicInfo: Record<string, string
     }
 }
 
-const household = async (householdInfo: Record<string, string>) => {
+export const household = async (householdInfo: Record<string, string>) => {
 
     try{
 
@@ -189,5 +189,3 @@ const household = async (householdInfo: Record<string, string>) => {
 }
 
 // ----------------------------------------------------------------------------------------------------------------------------
-
-export { personal, father, mother, family, dependents, building, familyComposition, household};

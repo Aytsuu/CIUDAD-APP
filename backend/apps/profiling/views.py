@@ -38,3 +38,7 @@ class HouseholdView(generics.ListCreateAPIView):
 class BuildingView(generics.ListCreateAPIView):
     serializer_class = BuildingSerializer
     queryset = Building.objects.all()
+
+class RegisteredView(generics.ListCreateAPIView):
+    serializer_class = RegisteredSerializer
+    queryset = Registered.objects.all()

@@ -17,8 +17,16 @@ class PermissionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AssignmentSerializer(serializers.ModelSerializer):
-    permissions = PermissionSerializer(many=True, read_only=True)
+    permissions = PermissionSerializer(many=True, read_only=True)  
     
     class Meta:
         model = Assignment
         fields = '__all__'
+
+class StaffSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Staff
+        fields = '__all__'
+
+

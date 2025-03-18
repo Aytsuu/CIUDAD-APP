@@ -37,6 +37,10 @@ urlpatterns = [
 
     # Building Urls
 
-    path("building/", BuildingView.as_view(), name="building-details")
+    path("building/", BuildingView.as_view(), name="building-details"),
+
+    # Registered Urls
+
+    path("registered/", RegisteredView.as_view(), name="registered-details"),
 
 ]

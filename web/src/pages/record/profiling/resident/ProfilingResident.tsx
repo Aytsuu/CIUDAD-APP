@@ -37,6 +37,15 @@ const FilterComponent = ({ onFilterChange }) => {
   );
 };
 
+type ResidentData = {
+  per_id?: string;
+  per_lname?: string;
+  per_fname?: string;
+  per_mname?: string;
+  per_suffix?: string;
+  registered: Array<{ reg_date?: string }>;
+}
+
 export default function ProfilingMain() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
@@ -55,25 +64,29 @@ export default function ProfilingMain() {
       }
     }, []);
   
-    const formatResidentData = (data: any[]): ResidentRecord[] => {
+    const formatResidentData = (data: ResidentData[]): ResidentRecord[] => {
     
-      return data.map(item => ({
-        id: item.per_id || '',
-        householdNo: item.households.hh_id || '',
-        familyNo: item.family_compositions.fam || '',
-        sitio: item.households.add.sitio.sitio_id || '',
-        lastName: item.per_lname || '',
-        firstName: item.per_fname || '',
-        mi: item.per_mname || '',
-        suffix: item.per_suffix || '',  
-        dateRegistered: item.dateRegistered || '',
-      }));
+      return data.map(item => {
+        const [{reg_date} = {}] = item.registered
+
+        return {
+          id: item.per_id || '',
+          householdNo: '',
+          familyNo: '',
+          sitio: '',
+          lastName: item.per_lname || '',
+          firstName: item.per_fname || '',
+          mi: item.per_mname || '',
+          suffix: item.per_suffix || '',  
+          dateRegistered: reg_date || '',
+        }
+      });
     };
   
     const getResidents = async () => {
       try {
-        const response = await api.get('profiling/personal/');
-        const formattedData = formatResidentData(response.data);
+        const res = await api.get('profiling/personal/');
+        const formattedData = formatResidentData(res.data);
         setResidents(formattedData);
       } catch (err) {
         console.log(err);
@@ -90,40 +103,8 @@ export default function ProfilingMain() {
       );
     }
 
-    // if (activeFilter.type === "1") {
-    //   // Example: Filter by Sitio (replace with actual logic)
-    //   filtered = filtered.filter((record) => record.sitio === "Some Sitio");
-    // } else if (activeFilter.type === "2") {
-    //   // Example: Filter by location (replace with actual logic)
-    //   filtered = filtered.filter((record) => record.location === "Some Location");
-    // }
-
     return filtered;
   }, [residents, searchQuery, activeFilter]);
-
-  const totalPages = Math.ceil(filteredResidents.length / pageSize);
-  const currentData = filteredResidents.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  // const handleExport = async (format: "csv" | "excel" | "pdf") => {
-  //   try {
-  //     switch (format) {
-  //       case "csv":
-  //         exportToCSV(filteredResidents);
-  //         break;
-  //       case "excel":
-  //         exportToExcel(filteredResidents);
-  //         break;
-  //       case "pdf":
-  //         exportToPDF(filteredResidents);
-  //         break;
-  //     }
-  //   } catch (error) {
-  //     console.error(`Error exporting to ${format}:`, error);
-  //   }
-  // };
 
   return (
     <div className="w-full">
@@ -187,7 +168,7 @@ export default function ProfilingMain() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={residentColumns} data={currentData} />
+          <DataTable columns={residentColumns} data={residents} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
@@ -195,7 +176,7 @@ export default function ProfilingMain() {
           </p>
           <PaginationLayout
             currentPage={currentPage}
-            totalPages={totalPages}
+            totalPages={0}
             onPageChange={setCurrentPage}
           />
         </div>

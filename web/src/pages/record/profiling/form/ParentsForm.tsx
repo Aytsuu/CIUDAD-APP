@@ -24,11 +24,11 @@ export default function ParentsForm({
     title: string;
   })  {
 
-  const [search, setSearch] = React.useState<string>('');
+  const [residentSearch, setResidentSearch] = React.useState<string>('');
 
   React.useEffect(()=>{
 
-    const searchResident = residents.find((value) => value.per_id == search)
+    const searchResident = residents.find((value) => value.per_id == residentSearch)
 
     if(searchResident){
 
@@ -62,7 +62,7 @@ export default function ParentsForm({
 
     }
 
-  }, [search])
+  }, [residentSearch])
 
   return (
     <div className="bg-white rounded-lg">
@@ -74,8 +74,8 @@ export default function ParentsForm({
       <div className="grid gap-3">
         <Input
           placeholder="Search by resident #..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={residentSearch}
+          onChange={(e) => setResidentSearch(e.target.value)}
         />
         <Form {...form}>
           {/* Name row */}

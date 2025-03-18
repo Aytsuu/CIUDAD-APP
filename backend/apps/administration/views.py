@@ -3,7 +3,6 @@ from rest_framework import generics, status
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
-from datetime import datetime
 
 # Create your views here.
 
@@ -84,4 +83,12 @@ class PermissionUpdateView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Staff Views ------------------------------------------------------------------------
 
+class StaffView(generics.ListCreateAPIView):
+    serializer_class = StaffSerializer
+    queryset = Staff.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    

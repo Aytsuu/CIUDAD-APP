@@ -24,4 +24,9 @@ urlpatterns = [
     path('permissions/', PermissionView.as_view(), name='permissions-list'),
     path('permissions/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
 
+    # Staff Urls
+
+    path('staffs/', StaffView.as_view(), name='staff-list'),
+    
+
 ]   

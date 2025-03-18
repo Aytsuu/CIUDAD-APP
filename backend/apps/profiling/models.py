@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date
 
 # Create your models here.
 
@@ -36,7 +37,7 @@ class Father(models.Model):
 class Family(models.Model):
     fam_id = models.CharField(max_length=50,primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
-    fam_date_registered = models.DateField()
+    fam_date_registered = models.DateField(default=date.today)
     father = models.ForeignKey(Father, on_delete=models.CASCADE, null=True)
     mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True)
 
@@ -53,8 +54,8 @@ class Dependent(models.Model):
 
 class FamilyComposition(models.Model):
     fc_id = models.BigAutoField(primary_key=True)
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='compositions')
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='compositions')
 
     class Meta:
         db_table = 'family_composition' 
@@ -74,7 +75,7 @@ class Household(models.Model):
     hh_city = models.CharField(max_length=50)
     hh_barangay = models.CharField(max_length=50)
     hh_street = models.CharField(max_length=50)
-    hh_date_registered = models.DateField()
+    hh_date_registered = models.DateField(default=date.today)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
 
@@ -89,3 +90,11 @@ class Building(models.Model):
     
     class Meta:
         db_table = 'building'
+
+class Registered(models.Model):
+    reg_id = models.BigAutoField(primary_key=True)
+    reg_date = models.DateField(default=date.today)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='registered')
+
+    class Meta:
+        db_table = 'registered'

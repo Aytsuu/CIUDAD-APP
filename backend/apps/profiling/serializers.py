@@ -21,14 +21,16 @@ class DependentSerializer(serializers.ModelSerializer):
         model = Dependent
         fields = '__all__'
 
-class FamilySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Family
-        fields = '__all__'
-
 class FamilyCompositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FamilyComposition
+        fields = '__all__'
+
+class FamilySerializer(serializers.ModelSerializer):
+    compositions = FamilyCompositionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Family
         fields = '__all__'
 
 class BuildingSerializer(serializers.ModelSerializer):
@@ -42,8 +44,16 @@ class HouseholdSerializer(serializers.ModelSerializer):
         model = Household
         fields = '__all__'
 
-        
+class RegisteredSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Registered
+        fields = '__all__'
+
 class PersonalSerializer(serializers.ModelSerializer):
+    registered = RegisteredSerializer(many=True, read_only=True)
+    compositions = FamilyCompositionSerializer(many=True, read_only=True)
+
     class Meta:
         model = Personal
         fields = '__all__'

@@ -1,5 +1,5 @@
 from django.db import models
-
+from datetime import date
 
 # Create your models here.
 class Position(models.Model):
@@ -21,7 +21,7 @@ class Assignment(models.Model):
     assi_id = models.BigAutoField(primary_key=True)
     feat = models.ForeignKey(Feature, on_delete=models.CASCADE)
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
-    assi_date = models.DateField()
+    assi_date = models.DateField(default=date.today)
 
     class Meta: 
         db_table = 'assignment'
@@ -38,5 +38,12 @@ class Permission(models.Model):
     class Meta:
         db_table = 'permission'
 
+class Staff(models.Model):
+    staff_id = models.CharField(primary_key=True,max_length=50)
+    staff_assign_date = models.DateField(default=date.today)
+    pos = models.ForeignKey(Position, on_delete=models.CASCADE)
+    manager = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subordinates')
 
+    class Meta: 
+        db_table = 'staff'
 
