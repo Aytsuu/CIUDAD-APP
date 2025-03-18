@@ -3,16 +3,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { VitalSignSchema, VitalSignFormData } from "@/form-schema/chr-schema";
-
+import { VitalSignSchema, VitalSignType } from "@/form-schema/chr-schema";
+import { Textarea } from "@/components/ui/textarea";
 interface UpdateVitalSignsProps {
-  initialData: VitalSignFormData; // Add initialData prop
-  onSubmit: (values: VitalSignFormData) => void;
+  initialData: VitalSignType; // Add initialData prop
+  onSubmit: (values: VitalSignType) => void;
   onCancel: () => void;
 }
 
 export function UpdateVitalSigns({ initialData, onSubmit, onCancel }: UpdateVitalSignsProps) {
-  const form = useForm<VitalSignFormData>({
+  const form = useForm<VitalSignType>({
     resolver: zodResolver(VitalSignSchema),
     defaultValues: initialData, // Populate form with initialData
   });
@@ -44,7 +44,7 @@ export function UpdateVitalSigns({ initialData, onSubmit, onCancel }: UpdateVita
             <FormField
               key={name}
               control={form.control}
-              name={name as keyof VitalSignFormData}
+              name={name as keyof VitalSignType}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{label}</FormLabel>
@@ -59,6 +59,27 @@ export function UpdateVitalSigns({ initialData, onSubmit, onCancel }: UpdateVita
                           : field.onChange
                       }
                       value={field.value as string | number | readonly string[] | undefined}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {formFields.slice(7,3).map(({ name, label, type }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name as keyof VitalSignType}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      
                     />
                   </FormControl>
                   <FormMessage />

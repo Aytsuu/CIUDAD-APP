@@ -54,7 +54,7 @@ export default function NonPHMedicalForm() {
       othersTypeIds: [],
     },
   });
-
+ 
   const [categories, setCategories] = useState<Option[]>(initialCategories);
 
   const handleSelectChange = (
@@ -457,23 +457,22 @@ export default function NonPHMedicalForm() {
                 </FormItem>
               )}
             />
-            
 
             <div>
               {/* Header with Add Button */}
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium ">Assessment</Label>
-              <Button
-                type="button"
-                onClick={() => append({ findings: [] })}
-                className="bg-transparent text-green-800 shadow-none hover:bg-transparent p-0"
-              >
-                <CirclePlus className="font-medium" />
-              </Button>
-            </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium ">Assessment</Label>
+                <Button
+                  type="button"
+                  onClick={() => append({ findings: [] })}
+                  className="bg-transparent text-green-800 shadow-none hover:bg-transparent p-0"
+                >
+                  <CirclePlus className="font-medium" />
+                </Button>
+              </div>
 
-{/* Dynamic Fields */}
-<div className="space-y-1 ">
+              {/* Dynamic Fields */}
+              <div className="space-y-1 ">
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex items-center gap-2">
                     {/* SelectLayoutWithAdd Component */}
@@ -511,9 +510,6 @@ export default function NonPHMedicalForm() {
                 ))}
               </div>
             </div>
-          
-              
-            
 
             {/* Next Button */}
             <div className="flex gap-2 text-darkBlue2 justify-end">
