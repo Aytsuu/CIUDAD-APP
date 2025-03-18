@@ -1,6 +1,6 @@
 import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
-import AnnouncementDashboard from '@/pages/announcement/overall';
+import AnnouncementDashboard from '@/pages/announcement/AnnouncementList';
 
 import { RouteObject} from "react-router";
 import { Navigate } from 'react-router';

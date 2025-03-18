@@ -1,0 +1,105 @@
+import React from "react";
+import { Card } from "@/components/ui/card/card";
+import ParentsFormLayout from "../form/ParentsFormLayout";
+import DependentsInfoLayout from "../form/DependentsInfoLayout";
+import DemographicInfo from "../form/DemographicInfo";
+
+import ProgressWithIcon from "@/components/ui/progressWithIcon";
+import { BsChevronLeft } from "react-icons/bs";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+
+export default function FamilyProfileForm() {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const defaultValues = generateDefaultValues(familyFormSchema)
+
+  const form = useForm<z.infer<typeof familyFormSchema>>({
+    resolver: zodResolver(familyFormSchema),
+    defaultValues,
+    mode: 'onChange' 
+  })
+
+  const nextStep = () => {
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  // Handler for going to the previous step
+  const prevStep = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  // Calculate progress based on current step
+  const calculateProgress = () => {
+    switch (currentStep) {
+      case 1:
+        return 30;
+      case 2:
+        return 60;
+      case 3:
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
+  return (
+    <>
+      <div className="flex gap-2 justify-between pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Header - Stacks vertically on mobile */}
+          <Button 
+            className="text-black p-2 self-start"
+            variant={"outline"}
+            onClick={() => navigate(-1)}
+          >
+            <BsChevronLeft />
+          </Button>
+          <div className="flex flex-col">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Family Form
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Provide your details to complete the registration process.
+            </p>
+          </div>  
+        </div>
+      </div>
+
+      <hr className="border-gray mb-6 sm:mb-8" />
+
+      <div className="flex justify-center items-center pb-4 pt-4 bg-white mt-4 rounded-t-lg">
+        <ProgressWithIcon progress={calculateProgress()} />
+      </div>
+      <div>
+        <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
+          {currentStep === 1 && (
+            <DemographicInfo
+              form={form}
+              onSubmit={()=>nextStep()}
+            />
+          )}
+          {currentStep === 2 && (
+            <ParentsFormLayout
+              form={form}
+              onSubmit={()=>nextStep()}
+              back={()=>prevStep()}
+            />
+          )}
+          {currentStep === 3 && (
+            <DependentsInfoLayout
+              form={form}
+              defaultValues={defaultValues}
+              back={()=>prevStep()}
+            />
+          )}
+        </Card>
+      </div>
+    </>
+  );
+}

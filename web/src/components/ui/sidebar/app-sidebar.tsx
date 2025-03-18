@@ -40,12 +40,19 @@ const items: MenuItem[] = [
     url: "/waste-calendar-scheduling",
   },
   {
-    title: "Resident",
-    url: "/resident-records",
-  },
-  {
     title: "Administration",
     url: "/administrative",
+  },
+  {
+    title: "Profiling",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Resident", url: "/resident-records"},
+      { title: "Family", url: "/family-records" },
+      { title: "Household", url: "/household-records" },
+      { title: "Business", url: "/business-records" },
+    ],
   },
   {
     title: "Blotter",

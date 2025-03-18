@@ -1,8 +1,15 @@
 """
+<<<<<<< HEAD
 URL configuration for backend project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
+=======
+URL configuration for {{ project_name }} project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/{{ docs_version }}/topics/http/urls/
+>>>>>>> profiling
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -19,5 +26,10 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+<<<<<<< HEAD
     path('waste/', include('apps.waste.urls'))
+=======
+    path('profiling/', include("apps.profiling.urls")),
+    path('administration/', include("apps.administration.urls"))
+>>>>>>> profiling
 ]

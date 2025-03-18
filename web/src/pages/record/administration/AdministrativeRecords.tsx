@@ -148,9 +148,11 @@ export default function AdministrativeRecords(){
                                 <UserRoundCog /> Role
                             </Button>
                         </Link>
-                        <Button > 
-                            <Plus /> Register a Staff
-                        </Button>
+                        <Link to="/resident-registration" state={{params: {origin: 'administration'}}}>
+                            <Button > 
+                                <Plus /> Register a Staff
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </div>
