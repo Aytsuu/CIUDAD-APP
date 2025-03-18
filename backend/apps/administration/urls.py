@@ -28,5 +28,6 @@ urlpatterns = [
 
     path('staffs/', StaffView.as_view(), name='staff-list'),
     
+    
 
 ]   

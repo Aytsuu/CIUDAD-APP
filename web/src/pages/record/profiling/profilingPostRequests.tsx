@@ -96,7 +96,7 @@ export const dependents = (dependentsInfo: Record<string, string>[], familyId: s
 
 }
 
-export const family = async (demographicInfo: Record<string, string>, fatherId: string, motherId: string) => { 
+export const family = async (demographicInfo: Record<string, string>, fatherId: string | null, motherId: string | null) => { 
 
     try{
 

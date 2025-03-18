@@ -1,17 +1,63 @@
-import { Search, ClockArrowUp, Plus, FileInput} from "lucide-react";
+import React from "react";
+import { Search, Plus, FileInput} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { householdColumns } from "../profilingColumns";
 import HouseholdProfileForm from "./HouseholdProfileForm";
+import { HouseholdRecord } from "../profilingTypes";
+import api from "@/api/api";
+
 
 
 
 export default function ProfilingHousehold(){
+
+    const [households, setHouseholds] = React.useState<HouseholdRecord[]>([])
+    const hasFetchData = React.useRef(false)
+
+    React.useEffect(()=> {
+        if(!hasFetchData.current){ 
+            getHouseholds()
+            hasFetchData.current = true
+        }
+    })
+
+    const formatHouseholdData = (data: any[]): HouseholdRecord[] => {
+
+        return data.map((item)=> {
+
+            const sitio = item.sitio
+            const personal = item.per
+
+            return {
+                id: item.hh_id || '',
+                streetAddress: item.hh_street || '',
+                sitio: sitio?.sitio_name || '',
+                nhts: item.hh_nhts || '',
+                head: personal?.per_fname + ' ' + personal?.per_lname || '',
+                dateRegistered: item.hh_date_registered || '',
+                registeredBy: ''
+            }
+        })
+
+    }
+
+    const getHouseholds = React.useCallback(async () => {
+        try {
+
+            const res = await api.get('profiling/household/')
+            const formattedData = formatHouseholdData(res.data)
+            setHouseholds(formattedData)
+
+        } catch (err) {
+            console.log(err)
+        }
+    },[])
+
     return (
         <div className="w-full">
             <div className="mb-4">
@@ -74,7 +120,7 @@ export default function ProfilingHousehold(){
                 />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={householdColumns} data={[]} />
+                    <DataTable columns={householdColumns} data={households} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">

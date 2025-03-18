@@ -101,8 +101,8 @@ export default function HouseholdProfileForm(){
                                 placeholder='Select'
                                 className='w-full'
                                 options={[
-                                    {id: "0", name: "No"},
-                                    {id: "1", name: "Yes"}
+                                    {id: "no", name: "No"},
+                                    {id: "yes", name: "Yes"}
                                 ]}
                                 value={field.value}
                                 onChange={field.onChange}

@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/alert-dialog/alert-dialog";
+} from "@/components/ui/alert-dialog/alert-dialog";
 import { ChevronLeft, Search } from "lucide-react";
 
 

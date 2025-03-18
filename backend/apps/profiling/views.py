@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from rest_framework import generics
 from .serializers import *
+from django.db.models import Prefetch
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 # Create your views here.
 class PersonalView(generics.ListCreateAPIView):
@@ -42,3 +46,4 @@ class BuildingView(generics.ListCreateAPIView):
 class RegisteredView(generics.ListCreateAPIView):
     serializer_class = RegisteredSerializer
     queryset = Registered.objects.all()
+

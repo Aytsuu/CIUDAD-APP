@@ -1,42 +1,76 @@
-import React, { useState } from "react";
+import React from "react";
 import { Search, Plus, FileInput } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { householdColumns } from "../profilingColumns";
+import { familyColumns } from "../profilingColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
 import LivingSoloForm from "./LivingSoloForm";
 import api from "@/api/api";
+import { FamilyRecord } from "../profilingTypes";
 
 export default function ProfilingFamily() {
 
+    // Initialize states 
+    
     const [residents, setResidents] = React.useState<Record<string, string>[]>([]);
-    const [isOptionOpen, setIsOptionOpen] = useState(false);
-    const [isFamilyFormOpen, setIsFamilyFormOpen] = useState(false);
-    const hasFetchData = React.useRef(false)
+    const [isOptionOpen, setIsOptionOpen] = React.useState(false);
+    const [isFamilyFormOpen, setIsFamilyFormOpen] = React.useState(false);
+    const [families, setFamilies] = React.useState<FamilyRecord[]>([])
+    const hasFetchData = React.useRef(false);
 
     React.useEffect(()=>{
     if(!hasFetchData.current){
-        getResidents()
+        getResidents() 
+        getFamilies()
         hasFetchData.current = true
     }
     }, [])
       
-    const getResidents  = React.useCallback(()=> {
+    const getResidents  = React.useCallback(async ()=> {
         try{
 
-            api.get('profiling/personal/')
-            .then((res) => res.data)
-            .then((data)=>{
-                setResidents(data)
-            })
+            const res = await api.get('profiling/personal/')
+            setResidents(res.data)
 
         } catch (err) {
             console.log(err)
         } 
+    }, [])
+
+    const formatFamilyData = (data: any[]): FamilyRecord[] => {
+    
+        return data.map(item => {
+
+            const building = item.building
+            
+            return {
+                id: item.fam_id || '',
+                head: '',
+                noOfDependents: item.dependents.length,
+                building: building.build_type || '',
+                indigenous: item.fam_indigenous || '',
+                dateRegistered: item.fam_date_registered || '',
+                registeredBy: ''
+            }
+        });
+    };
+
+    const getFamilies = React.useCallback(async () => {
+
+        try {
+
+            const res = await api.get('profiling/family/')
+            const formattedData = formatFamilyData(res.data)
+            setFamilies(formattedData)
+
+        } catch (err) {
+            console.log(err)
+        }
+
     }, [])
 
     const handleDialogChange = () => {
@@ -116,7 +150,7 @@ export default function ProfilingFamily() {
                     />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={householdColumns} data={[]} />
+                    <DataTable columns={familyColumns} data={families} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">

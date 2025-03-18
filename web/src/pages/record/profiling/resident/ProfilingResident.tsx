@@ -37,15 +37,6 @@ const FilterComponent = ({ onFilterChange }) => {
   );
 };
 
-type ResidentData = {
-  per_id?: string;
-  per_lname?: string;
-  per_fname?: string;
-  per_mname?: string;
-  per_suffix?: string;
-  registered: Array<{ reg_date?: string }>;
-}
-
 export default function ProfilingMain() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
@@ -64,16 +55,17 @@ export default function ProfilingMain() {
       }
     }, []);
   
-    const formatResidentData = (data: ResidentData[]): ResidentRecord[] => {
+    const formatResidentData = (data: any[]): ResidentRecord[] => {
     
       return data.map(item => {
         const [{reg_date} = {}] = item.registered
+        const [{fam_id, building} = {}] = item.family
 
         return {
           id: item.per_id || '',
-          householdNo: '',
-          familyNo: '',
+          householdNo: building?.hh_id || '',
           sitio: '',
+          familyNo: fam_id || '',
           lastName: item.per_lname || '',
           firstName: item.per_fname || '',
           mi: item.per_mname || '',

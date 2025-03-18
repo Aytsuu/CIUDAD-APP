@@ -12,14 +12,6 @@ export type ResidentRecord = {
   // Add registered by
 };
 
-export type HouseholdRecord = {
-  id: string,
-  address: string,
-  head: string,
-  dateRegistered: string,
-  registeredBy: string
-}
-
 export type DependentRecord = {
   id: string
   lname: string
@@ -29,4 +21,24 @@ export type DependentRecord = {
   sex: string
   dateOfBirth: string
   // headRelationship: string
+}
+
+export type FamilyRecord = {
+  id: string
+  head: string
+  noOfDependents: string
+  building: string
+  indigenous: string
+  dateRegistered: string
+  registeredBy: string
+}
+
+export type HouseholdRecord = {
+  id: string,
+  streetAddress: string,
+  sitio: string,
+  nhts: string,
+  head: string,
+  dateRegistered: string,
+  registeredBy: string
 }

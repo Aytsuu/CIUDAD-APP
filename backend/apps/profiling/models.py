@@ -47,7 +47,7 @@ class Family(models.Model):
 class Dependent(models.Model):
     dep_id = models.BigAutoField(primary_key=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE) 
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='dependents') 
 
     class Meta:
         db_table = 'dependent'
@@ -85,7 +85,7 @@ class Household(models.Model):
 class Building(models.Model): 
     build_id = models.BigAutoField(primary_key=True)
     build_type = models.CharField(max_length=100)
-    hh= models.ForeignKey(Household, on_delete=models.CASCADE)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='buildings')
     fam = models.ForeignKey(Family, on_delete=models.CASCADE)
     
     class Meta:
@@ -98,3 +98,5 @@ class Registered(models.Model):
 
     class Meta:
         db_table = 'registered'
+
+
