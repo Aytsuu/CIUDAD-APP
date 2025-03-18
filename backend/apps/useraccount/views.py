@@ -20,6 +20,7 @@ class UserAccountLoginView(APIView):
         # Extract email and password from query parameters
         email = request.query_params.get("email")
         password = request.query_params.get("password")
+        username = request.query_params.get("username")
 
         # Validate email and password
         if not email or not password:
