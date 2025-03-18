@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import date
+from apps.administration.models import Staff
 
 # Create your models here.
 
@@ -95,6 +96,7 @@ class Registered(models.Model):
     reg_id = models.BigAutoField(primary_key=True)
     reg_date = models.DateField(default=date.today)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='registered')
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'registered'
