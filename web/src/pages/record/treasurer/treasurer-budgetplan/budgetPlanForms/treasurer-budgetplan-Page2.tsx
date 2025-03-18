@@ -7,7 +7,7 @@ import { FormData, CurrentExpenditureMaintandOtherExpensesSchema1 } from "@/form
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
-// import { useLocation } from "react-router";
+import { formatNumber } from "@/helpers/currencynumberformatter";
 
 const styles = {
     fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -24,7 +24,7 @@ type Props = {
     formData: BudgetPlanPage2FormData;
 };
 
-function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData }: Props) {
+function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}: Props) {
     
     const [total, setTotal] = useState(0);
     const [budgetLimit, setBudgetLimit] = useState(0.00); 
@@ -40,17 +40,21 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData 
     const memDueVal = watch("memDues");
 
     useEffect(() => {
+        updateFormData(formValues);
+    }, [formValues, updateFormData]);
+
+    useEffect(() => {
         const limit = Number(memDueVal) || 0;
         setBudgetLimit(limit)
     }, [memDueVal]);
 
     useEffect(() => {
         const calculatedTotal = Object.values(formValues).reduce((acc, val) => acc + (Number(val) || 0), 0);
-        setTotal(calculatedTotal);
+        setTotal(calculatedTotal); 
     }, [formValues]);
 
     const onSubmit = (value: BudgetPlanPage2FormData) => {
-        console.log(value);
+        console.log("Submitting Page 2 Data:", value);
         updateFormData(value);
         onNext3();
     };
@@ -108,7 +112,7 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData 
                                                 <div className='justify-end flex ml-4'>
                                                     <div className='flex flex-row gap-[3.5rem] justify-center'>
                                                         <Label className={styles.tabledata}>
-                                                            {budgetLimit.toFixed(2)}
+                                                            {formatNumber(budgetLimit.toString())}
                                                         </Label>
                                                     </div>
                                                 </div>
@@ -122,7 +126,7 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData 
                         ))}
 
                         <div className="flex justify-start p-2 ml-[21rem]">
-                            <Label className={styles.formfooter}>Total Php: {total.toFixed(2)}</Label>
+                            <Label className={styles.formfooter}>Total: {formatNumber(total.toString())}</Label>
                         </div>
                     </div>
 

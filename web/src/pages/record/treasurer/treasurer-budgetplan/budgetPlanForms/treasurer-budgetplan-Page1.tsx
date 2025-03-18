@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
+import { formatNumber } from "@/helpers/currencynumberformatter";
 
 const styles = {
     fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -39,6 +40,10 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
     const formValues = watch();
 
     useEffect(() => {
+        updateFormData(formValues);
+    }, [formValues, updateFormData]);
+
+    useEffect(() => {
         const calculatedTotal = Object.values(formValues).reduce((acc, val) => acc + (Number(val) || 0), 0);
         setTotal(calculatedTotal);
     }, [formValues]);
@@ -49,7 +54,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
     }, [total, personalServicesBudgetLimit]);
 
     const onSubmit = (value: BudgetPlanPage1FormData) => {
-        console.log("Form Submitted:", value); 
+        console.log("Submitting Page 1 Data:", value);
         updateFormData(value); 
         onNext2(); 
     };
@@ -102,9 +107,9 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
 
                         <div className="flex justify-end p-2">
                             <div className="flex flex-row justify-center gap-[2rem]">
-                                <Label className={styles.formfooter}>Total Php: {total.toFixed(2)}</Label>
-                                <Label className={styles.formfooter}>{personalServicesBudgetLimit.toFixed(2)}</Label> 
-                                <Label className={styles.formfooter}>{Balance.toFixed(2)}</Label> 
+                                <Label className={styles.formfooter}>Total: {formatNumber(total)}</Label>
+                                <Label className={styles.formfooter}>{formatNumber(personalServicesBudgetLimit)}</Label> 
+                                <Label className={styles.formfooter}>{formatNumber(Balance)}</Label> 
                             </div>
                         </div>
                     </div>

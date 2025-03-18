@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
+import { formatNumber } from "@/helpers/currencynumberformatter";
 
 const styles = {
     fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -55,10 +56,15 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     });
 
     const { watch } = form;
+    const formValues = watch();
     const capitalOutlaysVal = watch("capitalOutlays");
     const localDevVal = watch(["cleanAndGreen", "streetLighting", "rehabMultPurpose"]);
     const calamityFundVal = watch(["qrfFund", "disasterTraining", "disasterSupplies"]);
     const skVal = watch("skFund");
+
+    useEffect(() => {
+        updateFormData(formValues);
+    }, [formValues, updateFormData]);
 
     // localDev
     useEffect(() => {
@@ -93,7 +99,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
 
     // next and previous handlers
     const handleSubmit = (value: BudgetPlanPage4FormData) => {
-        console.log("Submitting Data:", value);
+        console.log("Submitting Page 4 Data:", value);
         updateFormData(value);
         onSubmit();
     };
@@ -148,10 +154,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                                         <div className="justify-end flex ml-4">
                                                             <div className="flex flex-row gap-[3.5rem] justify-center">
                                                                 <Label className={styles.tabledata}>
-                                                                    {skBudgetLimit.toFixed(2)}
+                                                                    {formatNumber(skBudgetLimit)}
                                                                 </Label>
                                                                 <Label className={styles.tabledata}>
-                                                                    {skFundBalance.toFixed(2)}
+                                                                    {formatNumber(skFundBalance)}
                                                                 </Label>
                                                             </div>
                                                         </div>
@@ -167,13 +173,13 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                     <div className="flex justify-end p-2">
                                         <div className="flex flex-row justify-center gap-[3rem]">
                                             <Label className={styles.formfooter}>
-                                                Total: Php {name === "rehabMultPurpose" ? totalDevFund.toFixed(2) : totalCalamityFund.toFixed(2)}
+                                                Total: Php {name === "rehabMultPurpose" ? formatNumber(totalDevFund) : formatNumber(totalCalamityFund)}
                                             </Label>
                                             <Label className={styles.formfooter}>
-                                                {name === "rehabMultPurpose" ? localDevBudgetLimit.toFixed(2) : calamityFundBudgetLimit.toFixed(2)}
+                                                {name === "rehabMultPurpose" ? formatNumber(localDevBudgetLimit) : formatNumber(calamityFundBudgetLimit)}
                                             </Label> 
                                             <Label className={styles.formfooter}>
-                                                {name === "rehabMultPurpose" ? localDevBalance.toFixed(2) : calamityFundBalance.toFixed(2)}
+                                                {name === "rehabMultPurpose" ? formatNumber(localDevBalance) : formatNumber(calamityFundBalance)}
                                             </Label> 
                                         </div>
                                     </div>
@@ -184,7 +190,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                     <div>
                                         <div className="flex justify-start p-2 ml-[21rem]">
                                             <div className="flex flex-row justify-center">
-                                                <Label className={styles.formfooter}>Total Php: {totalOutlays.toFixed(2)}</Label>
+                                                <Label className={styles.formfooter}>Total: {formatNumber(totalOutlays)}</Label>
                                             </div>
                                         </div>
                                         <div className='p-2 flex flex-col gap-1'>
