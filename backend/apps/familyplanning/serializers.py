@@ -9,7 +9,18 @@ class ObstetricalSerializer(serializers.ModelSerializer):
 class RiskStiSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskSti
-        fields = 'abnormalDischarge','sores','pain','history','hiv'
+        fields = ['abnormalDischarge', 'dischargeFrom', 'sores', 'pain', 'history', 'hiv']
+
+    def validate(self, data):
+        # If abnormalDischarge is True, ensure dischargeFrom is provided
+        if data.get('abnormalDischarge') and not data.get('dischargeFrom'):
+            raise serializers.ValidationError({"dischargeFrom": "This field is required when abnormal discharge is present."})
+        
+        # If abnormalDischarge is False, dischargeFrom should be null or empty
+        if not data.get('abnormalDischarge') and data.get('dischargeFrom'):
+            raise serializers.ValidationError({"dischargeFrom": "This field should be empty when there is no abnormal discharge."})
+
+        return data
         
 class RiskVawSerializer(serializers.ModelSerializer):
     class Meta:

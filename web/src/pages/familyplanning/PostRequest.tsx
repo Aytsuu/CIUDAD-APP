@@ -48,30 +48,26 @@ const obstetrical = async (data: Record<string, any>) => {
 
 const risks_sti = async (data: Record<string, any>) => {
     try {
-        console.log({
-            abnormalDischarge: data.sexuallyTransmittedInfections.abnormalDischarge,
-            dischargeFrom: data.sexuallyTransmittedInfections.dischargeFrom,
-            sores: data.sexuallyTransmittedInfections.sores,
-            pain: data.sexuallyTransmittedInfections.pain,
-            history: data.sexuallyTransmittedInfections.history,
-            hiv: data.sexuallyTransmittedInfections.hiv,
-        })
-
-        const res = await api.post("familyplanning/risk_sti/", {
-            abnormalDischarge: data.sexuallyTransmittedInfections.abnormalDischarge,
-            dischargeFrom: data.sexuallyTransmittedInfections.dischargeFrom,
-            sores: data.sexuallyTransmittedInfections.sores,
-            pain: data.sexuallyTransmittedInfections.pain,
-            history: data.sexuallyTransmittedInfections.history,
-            hiv: data.sexuallyTransmittedInfections.hiv,
-        })
-
-        return res.data.per_id
+      const requestData: Record<string, any> = {
+        abnormalDischarge: data.risks_sti.abnormalDischarge,
+        sores: data.risks_sti.sores,
+        pain: data.risks_sti.pain,
+        history: data.risks_sti.history,
+        hiv: data.risks_sti.hiv,
+      };
+  
+      // Include dischargeFrom only if abnormalDischarge is true
+      if (data.risks_sti.abnormalDischarge) {
+        requestData.dischargeFrom = data.risks_sti.dischargeFrom;
+      }
+  
+      const res = await api.post("familyplanning/risk_sti/", requestData);
+      return res.data.per_id;
     } catch (err) {
-        console.log(err)
+      console.log(err);
     }
-}
-
+  };
+  
 const risks_vaw = async (data: Record<string, any>) => {
     try {
         console.log({
