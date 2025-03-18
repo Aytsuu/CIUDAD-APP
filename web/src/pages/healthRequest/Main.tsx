@@ -1,6 +1,6 @@
-import AppointmentTable from "./appoinmentTable";
-import RequestTable from "./medrequestTable";
-import MedicineRequestStatusTable from "./toReceivedMedicineTable";
+import AppointmentTable from "./AppoinmentTable";
+import RequestTable from "./MedrequestTable";
+import MedicineRequestStatusTable from "./ToReceivedMedicineTable";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 

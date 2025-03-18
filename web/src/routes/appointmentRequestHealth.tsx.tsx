@@ -1,6 +1,6 @@
 import path from "path";
-import AppointmentTable from "@/pages/healthRequest/appoinmentTable";
-import RequestTable from "@/pages/healthRequest/medrequestTable";
+import AppointmentTable from "@/pages/healthRequest/AppoinmentTable";
+import RequestTable from "@/pages/healthRequest/MedrequestTable";
 import Main from "@/pages/healthRequest/Main";
 export const healthAppointment = [
   {

@@ -79,7 +79,10 @@
   }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 @layer base {
   * {
     @apply border-border;
@@ -89,6 +92,7 @@
     }
 }
 
+<<<<<<< HEAD
 /* OTHER BUTTONS */
 .rbc-toolbar .rbc-btn-group:nth-of-type(3) button {
   display: none !important; /* Hide all buttons in the first group */
@@ -164,6 +168,8 @@ margin-bottom: 15px;
   background-color: #fffefe !important; 
 }
 
+=======
+>>>>>>> master
 
 /*TIPTAP CSS*/
 .tiptap ul {
@@ -206,6 +212,7 @@ p[data-margin] {
 }
 
 
+<<<<<<< HEAD
 /* OTHER BUTTONS */
 .rbc-toolbar .rbc-btn-group:nth-of-type(3) button {
   display: none !important; /* Hide all buttons in the first group */
@@ -285,6 +292,8 @@ margin-bottom: 15px;
 }
 
 
+=======
+>>>>>>> master
 p[data-margin] {
   margin: var(--tiptap-margin); /* Use a CSS variable for easier customization */
 }
@@ -293,6 +302,7 @@ p[data-margin] {
 /* ---break---  */
 
 
+<<<<<<< HEAD
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -386,3 +396,43 @@ margin-bottom: 15px;
 .rbc-button-link {
   pointer-events: none;
 }
+=======
+.MuiPaper-root{
+  width: 100% !important;
+  padding: auto !important;
+  border-bottom-color: transparent !important;
+  box-sizing: none !important;
+  box-shadow: none !important;
+}
+
+.MuiContainer-root{
+  border: none !important;
+  padding: auto !important;
+  border-bottom-color: transparent !important;
+}
+
+.MuiButtonBase-root{
+  background-color: #2563EB !important;
+  color: white !important;
+}
+
+.MuiButton-root{
+  margin-left: 100px !important;
+}
+
+.MuiBox-root{
+  box-sizing: none !important;
+  color: transparent !important;
+  padding-bottom: 5px !important;
+  padding-top: 0px !important;
+}
+
+.rbc-calendar{
+  width: 100% !important;
+  padding: auto !important;
+}
+
+.MuiCardContent-root{
+  border-bottom-color: transparent !important;
+}
+>>>>>>> master
