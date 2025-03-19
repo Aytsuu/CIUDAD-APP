@@ -48,7 +48,26 @@ export const columns: ColumnDef<IncomeExpense>[] = [
     { accessorKey: "amount", header: "Amount" },
     { accessorKey: "entryType", header: "Entry Type" },
     { accessorKey: "receiver", header: "Receiver" },
-    { accessorKey: "addNotes", header: "Additional Notes" },
+    { 
+        accessorKey: "receipt", 
+        header: "Receipt",
+        cell: ({}) => (
+            <div  className="flex justify-center"> 
+                <DialogLayout
+                    trigger={<div className="bg-white hover:bg-[#f3f2f2] cursor-pointer text-[#1273B8] text-[12px] underline"> View Receipt</div>}
+                    className="max-w-[50%] h-2/3 flex flex-col"
+                    title="Edit Entry"
+                    description="Update income or expense details to keep records accurate."
+                    mainContent={
+                        <div className="max-h-[80vh] overflow-y-auto flex flex-col">
+
+                        </div>
+                    }
+                />
+            </div>
+        ) 
+
+    },
     { 
         accessorKey: "actions", 
         header: "Action", 
@@ -94,7 +113,6 @@ type IncomeExpense = {
     amount: string,
     entryType: "Income" | "Expense",
     receiver: string,
-    addNotes: string,
 };
 
 export const IncomeExpenseRecords: IncomeExpense[] = [
@@ -104,8 +122,7 @@ export const IncomeExpenseRecords: IncomeExpense[] = [
         particulars: 'Particulars',
         amount: "0.00",
         entryType: "Income",
-        receiver: 'Receiver',
-        addNotes: 'Additional Notes',
+        receiver: 'Receiver'
     }
 ];
 
@@ -194,7 +211,7 @@ function IncomeandExpenseTracking() {
                     Showing 1-10 of 150 rows
                 </p>
                 <div className="w-full sm:w-auto flex justify-center">
-                    <PaginationLayout className="" />
+                    {/* <PaginationLayout className="" /> */}
                 </div>
             </div>  
         </div>
