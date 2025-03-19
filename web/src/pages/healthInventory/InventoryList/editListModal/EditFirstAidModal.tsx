@@ -19,6 +19,7 @@ import {
 import { getFirstAid } from "../requests/GetRequest";
 import { addFirstAid } from "../requests/Postrequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { updateFirstAid, updateMedicine } from "../requests/UpdateRequest";
 
 interface FirstAidListProps {
   initialData: {
@@ -44,22 +45,15 @@ export default function EditFirstAidModal({
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newFirstAidName, setnewFirstAidName] = useState<string>("");
-
+  
   const confirmAdd = async () => {
-    if (newFirstAidName.trim()) {
-      try {
-        if (await addFirstAid(newFirstAidName)) {
-          setIsAddConfirmationOpen(false);
-          setIsDialog(false);
-          setnewFirstAidName("");
-          setIsDialog(false);
-          fetchData();
-        } else {
-          console.error("Failed to add medicine.");
-        }
-      } catch (err) {
-        console.error(err);
-      }
+    try {
+      await updateFirstAid(initialData.id, newFirstAidName); // Update the medicine
+      setIsAddConfirmationOpen(false); // Close the confirmation dialog
+      setIsDialog(false); // Close the edit dialog
+      fetchData(); // Refresh the table data
+    } catch (err) {
+      console.error("Error updating medicine:", err);
     }
   };
 
@@ -78,7 +72,7 @@ export default function EditFirstAidModal({
       if (isDuplicateFirstAidName(existingMedicines, data.firstAidName)) {
         form.setError("firstAidName", {
           type: "manual",
-          message: "Medicine already exists.",
+          message: "FirstAid already exists.",
         });
         return;
       }

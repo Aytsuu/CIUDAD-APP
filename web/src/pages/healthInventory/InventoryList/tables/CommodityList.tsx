@@ -17,12 +17,62 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import CommodityModal from "../addListModal/CommodityModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import EditCommodityModal from "../editListModal/EditCommodityModal";
+import { usePagination } from "../../../../components/ui/PaginationFunction.tsx/PaginationFunction";
+import { getCommodity } from "../requests/GetRequest";
+import { handleDeleteCommodityList } from "../requests/DeleteRequest";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 export default function CommodityList() {
   type CommodityRecords = {
     id: number;
     commodityName: string;
-    category: string;
+  };
+
+  const [data, setData] = useState<CommodityRecords[]>([]);
+  const [isDialog, setIsDialog] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [comDelete, setcomDelete] = useState<number | null>(null);
+
+  const {
+    searchQuery,
+    pageSize,
+    currentPage,
+    currentData,
+    totalPages,
+    handleSearchChange,
+    handlePageSizeChange,
+    handlePageChange,
+  } = usePagination<CommodityRecords>(data, 10);
+
+  const fetchData = async () => {
+    const commodity = await getCommodity();
+    if (commodity) {
+      const transformedData = commodity.map((commodity: any) => ({
+        id: commodity.com_id,
+        commodityName: commodity.com_name,
+      }));
+      setData(transformedData);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Open delete confirmation dialog
+  const handledeleteCommodity = (com_id: number) => {
+    setcomDelete(com_id);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  // Confirm deletion
+  const confirmDeleteCom = async () => {
+    if (comDelete !== null) {
+      await handleDeleteCommodityList(comDelete, setData);
+      setIsDeleteConfirmationOpen(false);
+      setcomDelete(null);
+    }
   };
 
   const columns: ColumnDef<CommodityRecords>[] = [
@@ -41,10 +91,7 @@ export default function CommodityList() {
       accessorKey: "commodityName",
       header: "Commodity Name",
     },
-    {
-      accessorKey: "category",
-      header: "Category",
-    },
+
     {
       accessorKey: "action",
       header: "Action",
@@ -56,68 +103,21 @@ export default function CommodityList() {
                 <Edit size={16} />
               </div>
             }
-            mainContent={<EditCommodityModal initialData={row.original} />}
+            mainContent={<EditCommodityModal initialData={row.original} fetchData={fetchData} setIsDialog={setIsDialog} />}
           />
 
-          <DialogLayout
-            trigger={
-              <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                <Trash size={16} />
-              </div>
-            }
-            mainContent={<></>}
-          />
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handledeleteCommodity(row.original.id)}
+          >
+            <Trash />
+          </Button>
         </div>
       ),
     },
   ];
-
-  const sampleData: CommodityRecords[] = [
-    { id: 1, commodityName: "Paracetamol", category: "Pharmaceutical" },
-    { id: 2, commodityName: "Amoxicillin", category: "Antibiotic" },
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<CommodityRecords[]>(sampleData);
-  const [currentData, setCurrentData] = useState<CommodityRecords[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const filtered = sampleData.filter((commodity) => {
-      const searchText =
-        `${commodity.id} ${commodity.commodityName} ${commodity.category}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  return ( 
+  return (
     <>
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -156,7 +156,9 @@ export default function CommodityList() {
           }
           title="Commodity List"
           description="Add New Commodity"
-          mainContent={<CommodityModal />}
+          mainContent={
+            <CommodityModal fetchData={fetchData} setIsDialog={setIsDialog} />
+          }
         />
       </div>
 
@@ -194,23 +196,30 @@ export default function CommodityList() {
           <DataTable columns={columns} data={currentData} />
         </div>
 
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
-            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
+            {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
+            {Math.min(currentPage * pageSize, data.length)} of {data.length}{" "}
+            rows
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={confirmDeleteCom}
+        title="Delete Medicine"
+        description="Are you sure you want to delete this medicine? This action cannot be undone."
+      />
     </>
   );
 }

@@ -23,10 +23,14 @@ urlpatterns = [
     #DELETE LIST
     path("medicinelist/<int:med_id>/", DeleteMedicineListView.as_view(), name="delete_medicinelist"),
     path("firstaidlist/<int:fa_id>/", DeleteFirstAidView.as_view(), name="delete_firstaid"),
+    path("commoditylist/<int:com_id>/", DeleteCommodityView.as_view(), name="delete_commodity"),
+
     
     
     #UPDATE LIST
-    path("update_medicinelist/<int:med_id>/", MedicineListUpdateView.as_view(), name="update_medicinelist")
+    path("update_medicinelist/<int:med_id>/", MedicineListUpdateView.as_view(), name="update_medicinelist"),
+    path("update_firstaidlist/<int:fa_id>/", FirstAidListUpdateView.as_view(), name="update_firstaidlist"),
+    path("update_commoditylist/<int:fa_id>/", CommodityListUpdateView.as_view(), name="update_commoditylist"),
 
     
     

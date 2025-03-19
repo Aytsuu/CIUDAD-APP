@@ -8,7 +8,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import MedicineModal from "../addListModal/MedicineModal";
 import MedicineListEdit from "../editListModal/EditMedicineModal";
-import { usePagination } from "../../PaginationFunction.tsx/PaginationFunction";
+import { usePagination } from "../../../../components/ui/PaginationFunction.tsx/PaginationFunction";
 import { getMedicines } from "../requests/GetRequest";
 import { handleDeleteMedicineList } from "../requests/DeleteRequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";

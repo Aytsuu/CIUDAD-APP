@@ -36,25 +36,21 @@ class InventoryView(generics.ListCreateAPIView):
     
 
 # ---------------------------LIST---VIEW------------------------------------
-
 class MedicineListView(generics.ListCreateAPIView):
     serializer_class=MedicineListSerializers
     queryset= Medicinelist.objects.all()
-    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
 class CommodityListView(generics.ListCreateAPIView):
     serializer_class=CommodityListSerializers
     queryset=CommodityList.objects.all()
-    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
 class FirstAidListView(generics.ListCreateAPIView):
     serializer_class=FirstAidListSerializers
     queryset=FirstAidList.objects.all()
-    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
@@ -63,20 +59,23 @@ class FirstAidListView(generics.ListCreateAPIView):
 class DeleteMedicineListView(generics.DestroyAPIView):
     serializer_class = MedicineListSerializers    
     queryset = Medicinelist.objects.all()
-
     def get_object(self):
         med_id = self.kwargs.get('med_id')
         return get_object_or_404(Medicinelist, med_id=med_id)  # ✅ Correct field# -------------------DELETE-----LIST------------------
 class DeleteFirstAidView(generics.DestroyAPIView):
     serializer_class = FirstAidListSerializers    
     queryset = FirstAidList.objects.all()
-
     def get_object(self):
         fa_id = self.kwargs.get('fa_id')
         return get_object_or_404(FirstAidList, fa_id=fa_id)  # ✅ Correct field
+
+class DeleteCommodityView(generics.DestroyAPIView):
+    serializer_class = CommodityListSerializers    
+    queryset = CommodityList.objects.all()
+    def get_object(self):
+        com_id = self.kwargs.get('com_id')
+        return get_object_or_404(CommodityList, com_id=com_id)  # ✅ Correct field
     
-
-
 
 
 #--------------------UPDATE---LIST-----------------------
@@ -87,11 +86,31 @@ class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
     
     def get_object(self):
        med_id = self.kwargs.get('med_id')
-       
        obj = get_object_or_404(Medicinelist, med_id = med_id)
        return obj
        
+class FirstAidListUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class=FirstAidListSerializers
+    queryset = FirstAidList.objects.all()
+    lookup_field='fa_id'
     
+    def get_object(self):
+       fa_id = self.kwargs.get('fa_id')
+       obj = get_object_or_404(FirstAidList, fa_id = fa_id)
+       return obj
+       
+class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class=CommodityListSerializers
+    queryset = CommodityList.objects.all()
+    lookup_field='com_id'
+    
+    def get_object(self):
+       com_id = self.kwargs.get('com_id')
+       obj = get_object_or_404(CommodityList, com_id = com_id)
+       return obj
+       
+       
+
 
 # ---------------------------------------------------------------------
 #STOCKS

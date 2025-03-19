@@ -13,49 +13,70 @@ import {
   CommodityListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
 import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { addCommodity } from "../requests/Postrequest";
+import { getCommodity } from "../requests/GetRequest";
 
-interface Option {
-  id: string;
-  name: string;
+interface CommodityProps {
+  fetchData: () => void;
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-const initialCategories: Option[] = [
-  { id: "tablet", name: "Tablet" },
-  { id: "syrup", name: "Syrup" },
-  { id: "injection", name: "Injection" },
-];
-
-export default function CommodityModal() {
+export default function CommodityModal({fetchData,setIsDialog}: CommodityProps) {
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
       commodityName: "",
     },
   });
-  const [categories, setCategories] = useState<Option[]>(initialCategories);
+  // State for add confirmation dialog
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [newCommodityName, setnewCommodityName] = useState<string>("");
 
-  // Fixed: Removed unused categories parameter
-  const handleSelectChange = (
-    selectedValue: string,
-    fieldOnChange: (value: string) => void,
-    setCategories: React.Dispatch<React.SetStateAction<Option[]>>
-  ) => {
-    setCategories((prev) =>
-      prev.some((opt) => opt.id === selectedValue)
-        ? prev
-        : [...prev, { id: selectedValue, name: selectedValue }]
+  const confirmAdd = async () => {
+    if (newCommodityName.trim()) {
+      try {
+        if (await addCommodity(newCommodityName)) {
+          setIsAddConfirmationOpen(false);
+          setIsDialog(false);
+          setnewCommodityName("");
+          fetchData()
+        } else {
+          console.error("Failed to add medicine.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const isDuplicateCommodity = (commoodity: any[], newCommodity: string) => {
+    return commoodity.some(
+      (com) => com.com_name.toLowerCase() === newCommodity.toLowerCase()
     );
-    fieldOnChange(selectedValue);
   };
 
-  const onSubmit = (data: CommodityType) => {
-    console.log(data);
-    // Handle form submission
-  };
+  const onSubmit = async (data: CommodityType) => {
+    try {
+      const existingcommoodity = await getCommodity();
+      if (!Array.isArray(existingcommoodity))
+        throw new Error("Invalid API response");
 
+      if (isDuplicateCommodity(existingcommoodity, data.commodityName)) {
+        form.setError("commodityName", {
+          type: "manual",
+          message: "Medicine already exists.",
+        });
+        return;
+      }
+      setnewCommodityName(data.commodityName);
+      setIsAddConfirmationOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <div>
       <Form {...form}>
@@ -87,6 +108,14 @@ export default function CommodityModal() {
           </div>
         </form>
       </Form>
+
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
+      />
     </div>
   );
 }

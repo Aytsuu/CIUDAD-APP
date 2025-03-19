@@ -12,7 +12,6 @@ export const CommodityListSchema = z.object({
 
 export const VaccineListSchema = z.object({
   vaccineName: z.string().min(1, "Vaccine name is required").default(""),
-  category:z.string().min(1,"category is required"),
   interval: z.number().optional(),
   timeUnits: z.string().optional().default(""),
   noOfDoses: z.number().default(0),

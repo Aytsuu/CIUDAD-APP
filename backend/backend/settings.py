@@ -90,6 +90,14 @@ DATABASES = {
         'PASSWORD': '8080',
         'HOST': 'localhost',
         'PORT': '5432'
+    },
+    'barangay': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'CIUDAD_TEMP_BRGY',
+        'USER': 'postgres',
+        'PASSWORD': '8080',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
 }
 
