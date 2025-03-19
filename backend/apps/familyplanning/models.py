@@ -141,7 +141,7 @@ class Acknowledgement(models.Model):
     clientSignature = models.TextField()
     clientSignatureDate = models.DateField()
 
-    guardianName = models.CharField(max_length=50)
+    clientName = models.CharField(max_length=50)
     guardianSignature = models.TextField()
     guardianSignatureDate = models.DateField()
     

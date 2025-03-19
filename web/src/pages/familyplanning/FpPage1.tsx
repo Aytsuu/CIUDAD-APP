@@ -2,16 +2,16 @@
 
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Button } from "@/components/ui/button"
-import { type FormData, page1Schema } from "@/form-schema/FamilyPlanningSchema"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { ChevronLeft, Search, UserPlus } from "lucide-react"
 import { useLocation, useNavigate } from "react-router"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 
 // Ensure the component is properly typed
 type Page1Props = {
@@ -32,16 +32,15 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     form.reset(formData)
   }, [form, formData])
 
-  const location = useLocation();
-    const recordType = location.state?.recordType || "nonExistingPatient";
-    
+  const location = useLocation()
+  const recordType = location.state?.recordType || "nonExistingPatient"
+
   // Get current values for conditional rendering
   const typeOfClient = form.watch("typeOfClient")
   const subTypeOfClient = form.watch("subTypeOfClient")
   const reasonForFP = form.watch("reasonForFP")
   // const reason = form.watch("reason")
   // const methodCurrentlyUsedValue = form.watch("methodCurrentlyUsed")
-
 
   const isNewAcceptor = typeOfClient === "New Acceptor"
   const isCurrentUser = typeOfClient === "Current User"
@@ -71,7 +70,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     }
   }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUser, isChangingMethod])
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   // Handle form submission
   const onSubmit = async (data: FormData) => {
     updateFormData(data)
@@ -98,16 +97,10 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
       <div className="rounded-lg w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Button
-                            className="text-black p-2 self-start"
-                            variant={"outline"}
-                            onClick={() => navigate(-1)}
-                        >
-                            <ChevronLeft />
-                        </Button>
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4  p-4 text-center">
-          Family Planning (FP) Form 1
-        </h2>
+        <Button className="text-black p-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
+          <ChevronLeft />
+        </Button>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4  p-4 text-center">Family Planning (FP) Form 1</h2>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-6">
@@ -124,17 +117,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               {recordType === "existingPatient" || (
                 <div className="flex items-center justify-between gap-3 mb-10">
                   <div className="relative flex-1">
-                    <Search
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                      size={17}
-                    />
-                    <Input
-                      placeholder="Search..."
-                      className="pl-10 w-72 bg-white"
-                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+                    <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
                   </div>
 
-                    <Label>or</Label>
+                  <Label>or</Label>
 
                   <button className="flex items-center gap-1 underline text-blue hover:bg-blue-600 hover:text-sky-500 transition-colors rounded-md">
                     <UserPlus className="h-4 w-4" />
@@ -153,7 +140,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                         <Checkbox
                           checked={field.value === "transient"}
                           onCheckedChange={(checked) => {
-                            field.onChange(checked ? "transient" : "resident");
+                            field.onChange(checked ? "transient" : "resident")
                           }}
                         />
                       </FormControl>
@@ -163,7 +150,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 />
               </div>
             </div>
-            
+
             {/* Client ID Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormField
@@ -772,12 +759,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                               <FormItem className="mt-2">
                                 <Label className={!isChangingMethod ? "text-gray-400" : ""}>Specify:</Label>
                                 <FormControl>
-                                  <Input
-                                    className="w-full"
-                                    
-                                    {...otherField}
-                                    disabled={!isChangingMethod}
-                                  />
+                                  <Input className="w-full" {...otherField} disabled={!isChangingMethod} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -791,102 +773,114 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
 
                 {/* Right Column - Method Currently Used */}
                 <div className="col-span-5">
-                  <h3 className={`font-semibold text-sm mb-3 ${isChangingMethod ? "" : "text-gray-400"}`}>
-                    Method currently used (for Changing Method):
-                    {isChangingMethod && <span className="text-red-500 ml-1">*</span>}
-                  </h3>
-                  <FormField
-                    control={form.control}
-                    name="methodCurrentlyUsed"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                          {methodCurrentlyUsed.map((method) => (
-                            <div key={method.id} className="flex items-center">
-                              <FormControl>
-                                <input
-                                  type="radio"
-                                  value={method.name}
-                                  checked={field.value === method.name}
-                                  onChange={() => field.onChange(method.name)}
-                                  disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
-                                  className={
-                                    isNewAcceptor || (!isChangingMethod && isCurrentUser)
-                                      ? "opacity-50 cursor-not-allowed"
-                                      : ""
-                                  }
-                                />
-                              </FormControl>
-                              <Label
-                                className={`text-sm whitespace-nowrap ml-2 ${isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}`}
-                              >
-                                {method.name}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
+                  {typeOfClient === "Current User" && form.watch("subTypeOfClient") === "Changing Method" && (
+                    <FormField
+                      control={form.control}
+                      name="methodCurrentlyUsed"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel className="font-semibold text-sm mb-3">
+                            Method currently used (for Changing Method):
+                            {isChangingMethod && <span className="text-red-500 ml-1">*</span>}
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="COC">COC</SelectItem>
+                              <SelectItem value="POP">POP</SelectItem>
+                              <SelectItem value="Injectable">Injectable</SelectItem>
+                              <SelectItem value="Implant">Implant</SelectItem>
+                              <SelectItem value="IUD">IUD</SelectItem>
+                              <SelectItem value="Interval">Interval</SelectItem>
+                              <SelectItem value="Post Partum">Post Partum</SelectItem>
+                              <SelectItem value="Condom">Condom</SelectItem>
+                              <SelectItem value="BOM/CMM">BOM/CMM</SelectItem>
+                              <SelectItem value="BBT">BBT</SelectItem>
+                              <SelectItem value="STM">STM</SelectItem>
+                              <SelectItem value="SDM">SDM</SelectItem>
+                              <SelectItem value="LAM">LAM</SelectItem>
+                              <SelectItem value="Others">Others</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-                        <div className="flex items-center space-x-2 mt-2">
+                  {typeOfClient === "New Acceptor" && (
+                    <FormField
+                      control={form.control}
+                      name="methodCurrentlyUsed"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel className="font-semibold text-sm mb-3">Method Accepted:</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Pills">1. Pills</SelectItem>
+                              <SelectItem value="DMPA">2. DMPA</SelectItem>
+                              <SelectItem value="Condom">3. Condom</SelectItem>
+                              <SelectItem value="IUD-i">4. IUD-i</SelectItem>
+                              <SelectItem value="IUD-pp">5. IUD-pp</SelectItem>
+                              <SelectItem value="Implant">6. Implant</SelectItem>
+                              <SelectItem value="Lactating Amenorrhea">7. Lactating Amenorrhea</SelectItem>
+                              <SelectItem value="Bilateral Tubal Ligation">8. Bilateral Tubal Ligation</SelectItem>
+                              <SelectItem value="Vasectomy">9. Vasectomy</SelectItem>
+                              <SelectItem value="Source">10. Source (specify FP method)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {typeOfClient === "New Acceptor" && form.watch("methodCurrentlyUsed") === "Source" && (
+                    <FormField
+                      control={form.control}
+                      name="otherMethod"
+                      render={({ field }) => (
+                        <FormItem className="w-full mt-4">
+                          <FormLabel>Specify FP Method:</FormLabel>
                           <FormControl>
-                            <input
-                              type="radio"
-                              value="Others"
-                              checked={field.value === "Others"}
-                              onChange={() => {
-                                field.onChange("Others")
-                                if (field.value !== "Others") {
-                                  form.setValue("otherMethod", "")
-                                }
-                              }}
-                              disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
-                              className={
-                                isNewAcceptor || (!isChangingMethod && isCurrentUser)
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }
-                            />
+                            <Input {...field} placeholder="Specify FP method" className="w-full" />
                           </FormControl>
-                          <Label
-                            className={`text-sm ${isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}`}
-                          >
-                            Others
-                          </Label>
-                        </div>
-                        <FormMessage />
-                        {field.value === "Others" && (
-                          <FormField
-                            control={form.control}
-                            name="otherMethod"
-                            render={({ field: otherField }) => (
-                              <FormItem className="mt-2">
-                                <Label
-                                  className={
-                                    isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""
-                                  }
-                                >
-                                  Specify other method:
-                                </Label>
-                                <FormControl>
-                                  <Input
-                                    type="text"
-                                    className="w-full"
-                                    {...otherField}
-                                    disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {typeOfClient === "Current User" &&
+                    form.watch("subTypeOfClient") === "Changing Method" &&
+                    form.watch("methodCurrentlyUsed") === "Others" && (
+                      <FormField
+                        control={form.control}
+                        name="otherMethod"
+                        render={({ field }) => (
+                          <FormItem className="w-full mt-4">
+                            <FormLabel>Specify Other Method:</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Specify other method" className="w-full" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </FormItem>
+                      />
                     )}
-                  />
                 </div>
               </div>
             </div>
             <div className="flex justify-end space-x-4">
-
               <Button
                 type="button"
                 onClick={async () => {

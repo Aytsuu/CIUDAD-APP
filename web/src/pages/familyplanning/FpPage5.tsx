@@ -65,7 +65,7 @@ export default function FamilyPlanningForm5({
       selectedMethod: formData?.acknowledgement?.selectedMethod || "",
       clientSignature: formData?.acknowledgement?.clientSignature || "",
       clientSignatureDate: formData?.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
-      guardianName: formData?.acknowledgement?.guardianName || "",
+      clientName: formData?.acknowledgement?.clientName || "",
       guardianSignature: formData?.acknowledgement?.guardianSignature || "",
       guardianSignatureDate: formData?.acknowledgement?.guardianSignatureDate || new Date().toISOString().split("T")[0],
     },
@@ -178,7 +178,7 @@ export default function FamilyPlanningForm5({
         selectedMethod: data.acknowledgement.selectedMethod,
         clientSignature: clientSignature || "",
         clientSignatureDate: data.acknowledgement?.clientSignatureDate || new Date().toISOString().split("T")[0],
-        guardianName: data.acknowledgement?.guardianName || "",
+        clientName: data.acknowledgement?.clientName || "",
         guardianSignature: guardianSignature || "",
         guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
       },
@@ -304,12 +304,12 @@ export default function FamilyPlanningForm5({
                 For WEA below 18 yrs. Old: I hereby consent
                 <FormField
                   control={form.control}
-                  name="acknowledgement.guardianName"
+                  name="acknowledgement.clientName"
                   render={({ field }) => (
                     <FormItem className="inline-block mx-2 mb-0 min-w-40">
                       <FormControl>
                         <Input
-                          placeholder="Guardian's name"
+                          placeholder="Client's name"
                           className="border-b border-t-0 border-l-0 border-r-0 rounded-none px-2"
                           {...field}
                           onChange={(e) => {
@@ -319,7 +319,7 @@ export default function FamilyPlanningForm5({
                               ...formData,
                               acknowledgement: {
                                 ...formData?.acknowledgement,
-                                guardianName: e.target.value,
+                                clientName: e.target.value,
                               },
                             }
                             updateFormData(updatedData)

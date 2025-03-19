@@ -6,11 +6,10 @@ const ServiceProvisionRecordSchema = z.object({
   methodAccepted: z.string().nonempty("Method is required"),
   nameOfServiceProvider: z.string().nonempty("Service provider name is required"),
   dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
-  // Optional fields
   methodQuantity: z.string().nonempty("Method quantity is required"),
   methodUnit: z.string().nonempty("Method unit is required"),
-  serviceProviderSignature: z.string().nonempty("Service provider signature is required"),
-  medicalFindings: z.string().nonempty("Medical findings is required"),
+  serviceProviderSignature: z.string(),
+  medicalFindings: z.string().optional(),
   weight: z.number().min(1, "Weight is required"),
   bp_systolic: z.number().min(1, "Systolic BP is required"),
   bp_diastolic: z.number().min(1, "Diastolic BP is required"),
@@ -31,8 +30,8 @@ export const FamilyPlanningSchema = z.object({
   age: z.number().min(1, "Age is required and must be a positive number"),
   educationalAttainment: z.string().nonempty("Educational Attainment is required"),
   occupation: z.string().optional(),
-  isTransient: z.string().default('Resident'),
-  
+  isTransient: z.string().default("Resident"),
+
   address: z.object({
     houseNumber: z.string().optional(),
     street: z.string().optional(),
@@ -78,6 +77,15 @@ export const FamilyPlanningSchema = z.object({
       "SDM",
       "LAM",
       "Others",
+      // New Acceptor methods
+      "Pills",
+      "DMPA",
+      "IUD-i",
+      "IUD-pp",
+      "Lactating Amenorrhea",
+      "Bilateral Tubal Ligation",
+      "Vasectomy",
+      "Source",
     ])
     .optional(),
 
@@ -136,7 +144,9 @@ export const FamilyPlanningSchema = z.object({
     unpleasantRelationship: z.boolean(),
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
-    referredTo: z.enum(["DSWD", "WCPU", "NGOs", "Others"]).refine((val) => val !== undefined, { message: "Please choose referral" }),
+    referredTo: z
+      .enum(["DSWD", "WCPU", "NGOs", "Others"])
+      .refine((val) => val !== undefined, { message: "Please choose referral" }),
     otherReferral: z.string().optional().nullable(),
   }),
 
@@ -148,22 +158,22 @@ export const FamilyPlanningSchema = z.object({
 
   // Updated examination fields with required selections
   skinExamination: z
-    .enum(["normal", "pale", "yellowish", "hematoma"])
+    .enum(["normal", "pale", "yellowish", "hematoma", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select skin examination result" }),
   conjunctivaExamination: z
-    .enum(["normal", "pale", "yellowish"])
+    .enum(["normal", "pale", "yellowish", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select conjunctiva examination result" }),
   neckExamination: z
-    .enum(["normal", "neck_mass", "enlarged_lymph_nodes"])
+    .enum(["normal", "neck_mass", "enlarged_lymph_nodes", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select neck examination result" }),
   breastExamination: z
-    .enum(["normal", "mass", "nipple_discharge"])
+    .enum(["normal", "mass", "nipple_discharge", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select breast examination result" }),
   abdomenExamination: z
-    .enum(["normal", "abdominal_mass", "varicosities"])
+    .enum(["normal", "abdominal_mass", "varicosities", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select abdomen examination result" }),
   extremitiesExamination: z
-    .enum(["normal", "edema", "varicosities"])
+    .enum(["normal", "edema", "varicosities", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select extremities examination result" }),
 
   // Pelvic Examination (for IUD Acceptors)
@@ -177,18 +187,20 @@ export const FamilyPlanningSchema = z.object({
       "polyp_or_cyst",
       "inflammation_or_erosion",
       "bloody_discharge",
-
+      "not_applicable",
     ])
     .refine((val) => val !== undefined, { message: "Please select pelvic examination result" }),
 
   // Cervical Examination
-  cervicalConsistency: z.enum(["firm", "soft"]).refine((val) => val !== undefined, { message: "Please select cervical consistency" }),
+  cervicalConsistency: z
+    .enum(["firm", "soft", "not_applicable"])
+    .refine((val) => val !== undefined, { message: "Please select cervical consistency" }),
   cervicalTenderness: z.boolean(),
   cervicalAdnexalMassTenderness: z.boolean(),
 
   // Uterine Examination
   uterinePosition: z
-    .enum(["mid", "anteflexed", "retroflexed"])
+    .enum(["mid", "anteflexed", "retroflexed", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select uterine position" }),
   uterineDepth: z.string().optional(),
 
@@ -212,11 +224,11 @@ export const FamilyPlanningSchema = z.object({
         "others",
       ])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
-    clientSignature: z.string().nonempty("Required"), 
+    clientSignature: z.string().optional(),
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
-    guardianName: z.string().nonempty("Required"),
-    guardianSignature: z.string().nonempty("Required"),
-    guardianSignatureDate: z.string().nonempty("Required"),
+    clientName: z.string().optional(),
+    guardianSignature: z.string().optional(),
+    guardianSignatureDate: z.string().optional(),
   }),
 
   // Page 6 fields
@@ -250,30 +262,7 @@ export const page1Schema = FamilyPlanningSchema.pick({
   methodCurrentlyUsed: true,
   otherMethod: true,
   isTransient: true,
-}).refine(
-  (data) => {
-    // If New Acceptor, reasonForFP is required
-    if (data.typeOfClient === "New Acceptor") {
-      return !!data.reasonForFP
-    }
-
-    // If Current User, subTypeOfClient is required
-    if (data.typeOfClient === "Current User") {
-      if (!data.subTypeOfClient) return false
-
-      // If Changing Method, both reason and methodCurrentlyUsed are required
-      if (data.subTypeOfClient === "Changing Method") {
-        return !!data.reason && !!data.methodCurrentlyUsed
-      }
-
-      // For other subtypes, no additional validation needed
-      return true
-    }
-
-    return true
-  },
-  
-)
+})
 
 export const page2Schema = FamilyPlanningSchema.pick({
   medicalHistory: true,
@@ -316,3 +305,4 @@ export const page6Schema = FamilyPlanningSchema.pick({
 export default FamilyPlanningSchema
 export type FormData = z.infer<typeof FamilyPlanningSchema>
 export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>
+
