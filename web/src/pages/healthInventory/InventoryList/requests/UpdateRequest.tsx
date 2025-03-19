@@ -1,10 +1,15 @@
 import api from "@/pages/api/api";
 
+
+const toTitleCase = (str: string): string => {
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 export const updateMedicine = async (med_id: number, medicineName: string) => {
   
     try {
       const res = await api.put(`inventory/update_medicinelist/${med_id}/`, {
-        med_name: medicineName,
+        med_name: toTitleCase(medicineName),
         updated_at: new Date().toISOString(),
       });
   

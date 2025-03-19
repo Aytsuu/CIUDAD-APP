@@ -21,7 +21,7 @@ export const VaccineListSchema = z.object({
 });
 
 export const FirstAidSchema = z.object({
-  itemName: z.string().min(1, "Item name is Required").default(""),
+  firstAidName: z.string().min(1, "Item name is Required").default(""),
  
 });
 

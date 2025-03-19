@@ -33,7 +33,6 @@ export default function CommodityModal() {
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
       commodityName: "",
-      category: "",
     },
   });
   const [categories, setCategories] = useState<Option[]>(initialCategories);
@@ -75,35 +74,6 @@ export default function CommodityModal() {
                       value={String(field.value)}
                       placeholder="Commodity Name"
                       onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category Field with Dynamic Addition */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <SelectLayoutWithAdd
-                      className="w-full"
-                      label="Category"
-                      placeholder="Select"
-                      options={categories}
-                      value={field.value}
-                      onChange={(selectedValue) =>
-                        handleSelectChange(
-                          selectedValue,
-                          field.onChange, 
-                          setCategories,
-                       
-                        )
-                      }
                     />
                   </FormControl>
                   <FormMessage />

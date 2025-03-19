@@ -8,12 +8,9 @@ class Category(models.Model):
     class Meta:
         db_table = 'category'
 
-
-
 class Inventory(models.Model):
     inv_id = models.BigAutoField(primary_key=True)
     inv_name = models.CharField(max_length=100)
-
     class Meta:
            db_table = 'inventory'
     
@@ -37,8 +34,8 @@ class CommodityList(models.Model):
         db_table = 'commodity_list'
         
 class FirstAidList(models.Model):
-    com_id = models.BigAutoField(primary_key=True)
-    com_name = models.CharField(max_length=100)
+    fa_id = models.BigAutoField(primary_key=True)
+    fa_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

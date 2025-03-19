@@ -1,10 +1,14 @@
 import api from "@/pages/api/api";
 
+const toTitleCase = (str: string): string => {
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+ 
 // Function to add a new medicine
 export const addMedicine = async (medicineName: string) => {
   try {
     const res = await api.post("inventory/medicinelist/", {
-      med_name: medicineName,
+      med_name: toTitleCase(medicineName),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -18,7 +22,7 @@ export const addMedicine = async (medicineName: string) => {
 export const addFirstAid = async (firstAidName: string) => {
   try {
     const res = await api.post("inventory/firstaidlist/", {
-      fa_name: firstAidName,
+      fa_name: toTitleCase(firstAidName),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -28,16 +32,15 @@ export const addFirstAid = async (firstAidName: string) => {
   }
 };
 
-
-export const addCommodity = async (commodityName:string)=>{
-    try{
-        const res = await api.post("inventory/commoditylist/",{
-            com_name:commodityName,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        })
-        return res.data
-    }catch(err){
-        console.log(err)
-    }
-}
+export const addCommodity = async (commodityName: string) => {
+  try {
+    const res = await api.post("inventory/commoditylist/", {
+      com_name: toTitleCase(commodityName),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    return res.data;
+  } catch (err) {
+    console.log(err);
+  }
+};

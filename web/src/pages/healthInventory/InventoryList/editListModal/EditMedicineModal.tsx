@@ -16,21 +16,21 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { getMedicines } from "../request/GetRequest";
-import { updateMedicine } from "../request/UpdateRequest";
+import { getMedicines } from "../requests/GetRequest";
+import { updateMedicine } from "../requests/UpdateRequest";
 
-interface MedicineListProps {
+interface MedicineListProps { 
   initialData: {
     id: number;
     medicineName: string;
   };
-  onUpdate: () => void; // Add this line
+  fetchData: () => void; // Add this line
   setIsDialog: (isOpen: boolean) => void; // Add this line
 }
 
 export default function MedicineListEdit({
   initialData,
-  onUpdate,
+  fetchData,
   setIsDialog,
 }: MedicineListProps) {
   const form = useForm<MedicineType>({
@@ -48,7 +48,7 @@ export default function MedicineListEdit({
       await updateMedicine(initialData.id, newMedicineName); // Update the medicine
       setIsAddConfirmationOpen(false); // Close the confirmation dialog
       setIsDialog(false); // Close the edit dialog
-      onUpdate(); // Refresh the table data
+      fetchData(); // Refresh the table data
     } catch (err) {
       console.error("Error updating medicine:", err);
     }

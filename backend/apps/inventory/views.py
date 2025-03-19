@@ -12,7 +12,8 @@ from datetime import datetime
 class CategoryView(generics.ListCreateAPIView):
     serializer_class = CategorySerializers
     queryset  =Category.objects.all()
-    def create(self, request, *args, **kwargs):
+    
+    def create(self , request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
 
@@ -45,17 +46,18 @@ class MedicineListView(generics.ListCreateAPIView):
 
 class CommodityListView(generics.ListCreateAPIView):
     serializer_class=CommodityListSerializers
-    queryset=CommodityList
+    queryset=CommodityList.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
 class FirstAidListView(generics.ListCreateAPIView):
     serializer_class=FirstAidListSerializers
-    queryset=FirstAidList
+    queryset=FirstAidList.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
     
 # -------------------DELETE-----LIST------------------
 class DeleteMedicineListView(generics.DestroyAPIView):
@@ -64,8 +66,16 @@ class DeleteMedicineListView(generics.DestroyAPIView):
 
     def get_object(self):
         med_id = self.kwargs.get('med_id')
-        return get_object_or_404(Medicinelist, med_id=med_id)  # ✅ Correct field
+        return get_object_or_404(Medicinelist, med_id=med_id)  # ✅ Correct field# -------------------DELETE-----LIST------------------
+class DeleteFirstAidView(generics.DestroyAPIView):
+    serializer_class = FirstAidListSerializers    
+    queryset = FirstAidList.objects.all()
+
+    def get_object(self):
+        fa_id = self.kwargs.get('fa_id')
+        return get_object_or_404(FirstAidList, fa_id=fa_id)  # ✅ Correct field
     
+
 
 
 

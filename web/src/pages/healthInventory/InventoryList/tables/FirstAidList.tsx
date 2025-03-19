@@ -16,13 +16,62 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import EditFirstAidModal from "../editListModal/EditFirstAidModal";
-import { Row } from "react-day-picker";
+import { getFirstAid } from "../requests/GetRequest";
+import { usePagination } from "../../PaginationFunction.tsx/PaginationFunction";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { handleDeleteFirstAidList } from "../requests/DeleteRequest";
 
 export default function FirstAidList() {
   type FirstAidRecords = {
     id: number;
-    itemName: string;
-    category: string;
+    firstAidName: string;
+  };
+  const [data, setData] = useState<FirstAidRecords[]>([]);
+  const [isDialog, setIsDialog] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [faDelete, setfaDelete] = useState<number | null>(null);
+
+  const {
+    searchQuery,
+    pageSize,
+    currentPage,
+    currentData,
+    totalPages,
+    handleSearchChange,
+    handlePageSizeChange,
+    handlePageChange,
+  } = usePagination<FirstAidRecords>(data, 10);
+
+  const fetchData = async () => {
+    const firstaid = await getFirstAid();
+    if (firstaid) {
+      const transformedData = firstaid.map((firstaid: any) => ({
+        id: firstaid.fa_id,
+        firstAidName: firstaid.fa_name,
+      }));
+      setData(transformedData);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Open delete confirmation dialog
+  const handleDeleteFa = (med_id: number) => {
+    setfaDelete(med_id);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  // Confirm deletion
+  const confirmDeleteFa = async () => {
+    if (faDelete !== null) {
+      await handleDeleteFirstAidList(faDelete, setData);
+      setIsDeleteConfirmationOpen(false);
+      setfaDelete(null);
+    }
   };
 
   const columns: ColumnDef<FirstAidRecords>[] = [
@@ -38,17 +87,14 @@ export default function FirstAidList() {
       ),
     },
     {
-      accessorKey: "itemName",
+      accessorKey: "firstAidName",
       header: "Item Name",
     },
-    {
-      accessorKey: "category",
-      header: "Category",
-    },
+
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({row}) => (
+      cell: ({ row }) => (
         <div className="flex justify-center gap-2">
           <DialogLayout
             trigger={
@@ -56,67 +102,20 @@ export default function FirstAidList() {
                 <Edit size={16} />
               </div>
             }
-            mainContent={<EditFirstAidModal
-              initialData={row.original} />}
+            mainContent={<EditFirstAidModal initialData={row.original} fetchData={fetchData}  setIsDialog={setIsDialog} />}
           />
 
-          <DialogLayout
-            trigger={
-              <div className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer">
-                <Trash size={16} />
-              </div>
-            }
-            mainContent={<></>}
-          />
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDeleteFa(row.original.id)}
+          >
+            <Trash />
+          </Button>
         </div>
       ),
     },
   ];
-
-  const sampleData: FirstAidRecords[] = [
-    { id: 1, itemName: "Bandage", category: "Wound Care" },
-    { id: 2, itemName: "Antiseptic Wipes", category: "Disinfectant" },
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<FirstAidRecords[]>(sampleData);
-  const [currentData, setCurrentData] = useState<FirstAidRecords[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const filtered = sampleData.filter((item) => {
-      const searchText =
-        `${item.id} ${item.itemName} ${item.category}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
 
   return (
     <>
@@ -157,7 +156,11 @@ export default function FirstAidList() {
           }
           title="First Aid "
           description="Add New First Aid Item"
-          mainContent={<FirstAidModal />}
+          mainContent={
+            <FirstAidModal fetchData={fetchData} setIsDialog={setIsDialog} />
+          }
+          isOpen={isDialog}
+          onOpenChange={setIsDialog}
         />
       </div>
 
@@ -195,23 +198,30 @@ export default function FirstAidList() {
           <DataTable columns={columns} data={currentData} />
         </div>
 
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
-            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} items
+            {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
+            {Math.min(currentPage * pageSize, data.length)} of {data.length}{" "}
+            rows
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={confirmDeleteFa}
+        title="Delete Medicine"
+        description="Are you sure you want to delete this medicine? This action cannot be undone."
+      />
     </>
   );
 }

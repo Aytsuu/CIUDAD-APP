@@ -9,8 +9,8 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import MedicineModal from "../addListModal/MedicineModal";
 import MedicineListEdit from "../editListModal/EditMedicineModal";
 import { usePagination } from "../../PaginationFunction.tsx/PaginationFunction";
-import { getMedicines } from "../request/GetRequest";
-import { handleDeleteMedicineList } from "../request/DeleteRequest";
+import { getMedicines } from "../requests/GetRequest";
+import { handleDeleteMedicineList } from "../requests/DeleteRequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 type MedicineRecords = {
@@ -20,15 +20,14 @@ type MedicineRecords = {
 
 export default function MedicineList() {
   const [data, setData] = useState<MedicineRecords[]>([]);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =useState(false);
   const [medToDelete, setMedToDelete] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   // Use custom pagination hook
   const {
     searchQuery,
     pageSize,
-    currentPage,
+    currentPage, 
     currentData,
     totalPages,
     handleSearchChange,
@@ -96,7 +95,7 @@ export default function MedicineList() {
             mainContent={
               <MedicineListEdit
                 initialData={row.original}
-                onUpdate={fetchData}
+                fetchData={fetchData}
                 setIsDialog={setIsDialog} // Pass setIsDialog to MedicineListEdit
               />
             }
@@ -144,7 +143,7 @@ export default function MedicineList() {
           }
           title="Add New Medicine"
           mainContent={
-            <MedicineModal onAdd={fetchData} setIsDialog={setIsDialog} />
+            <MedicineModal fetchData={fetchData} setIsDialog={setIsDialog} />
           }
           isOpen={isDialog}
           onOpenChange={setIsDialog}

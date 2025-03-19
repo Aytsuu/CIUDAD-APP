@@ -15,17 +15,17 @@ import {
 } from "@/form-schema/inventory/inventoryListSchema";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getMedicines } from "../request/GetRequest";
-import { addMedicine } from "../request/Postrequest";
+import { getMedicines } from "../requests/GetRequest";
+import { addMedicine } from "../requests/Postrequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 interface MedicineModalProps {
-  onAdd: () => void; // Add this line
+  fetchData: () => void; // Add this line
   setIsDialog: (isOpen: boolean) => void;
 }
 
 export default function MedicineModal({
-  onAdd,
+  fetchData,
   setIsDialog,
 }: MedicineModalProps) {
   const form = useForm<MedicineType>({
@@ -45,7 +45,7 @@ export default function MedicineModal({
           setIsDialog(false);
           setNewMedicineName("");
           setIsDialog(false);
-          onAdd()
+          fetchData()
         } else {
           console.error("Failed to add medicine.");
         }

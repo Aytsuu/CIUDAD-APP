@@ -17,27 +17,31 @@ import {
   FirstAidSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { addFirstAid } from "../request/Postrequest";
+import { addFirstAid } from "../requests/Postrequest";
+import { getFirstAid } from "../requests/GetRequest";
 
-export default function FirstAidModal() {
+interface FirstAidProps {
+  fetchData: () => void;
+  setIsDialog: (isOpen: boolean) => void;
+}
+
+export default function FirstAidModal({ fetchData, setIsDialog }: FirstAidProps) {
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
-      itemName: "",
+      firstAidName: "",
     },
   });
 
- // State for add confirmation dialog
+  // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newFirstAidName, setnewFirstAidName] = useState<string>("");
 
-
- const confirmAdd = async () => {
+  const confirmAdd = async () => {
     if (newFirstAidName.trim()) {
       try {
         if (await addFirstAid(newFirstAidName)) {
           console.log("✅ Medicine added successfully");
-          form.reset();
         } else {
           console.error("Failed to add medicine.");
         }
@@ -45,14 +49,36 @@ export default function FirstAidModal() {
         console.error(err);
       }
       setIsAddConfirmationOpen(false);
+      setIsDialog(false);
+      fetchData();
       setnewFirstAidName("");
     }
   };
 
-
+  const isDuplicateFirstAid = (firstaid: any[], newFirstAid: string) => {
+    return firstaid.some(
+      (fa) => fa.fa_name.toLowerCase() === newFirstAid.toLowerCase()
+    );
+  };
 
   const onSubmit = async (data: FirstAidType) => {
-    console.log(data);
+    try {
+      const existingFirstAid = await getFirstAid();
+      if (!Array.isArray(existingFirstAid))
+        throw new Error("Invalid API response");
+
+      if (isDuplicateFirstAid(existingFirstAid, data.firstAidName)) {
+        form.setError("firstAidName", {
+          type: "manual",
+          message: "Fa already eixst",
+        });
+        return;
+      }
+      setnewFirstAidName(data.firstAidName);
+      setIsAddConfirmationOpen(true);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
@@ -62,7 +88,7 @@ export default function FirstAidModal() {
           <div className="flex flex-col gap-3">
             <FormField
               control={form.control}
-              name="itemName"
+              name="firstAidName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Item Name</FormLabel>
@@ -86,13 +112,13 @@ export default function FirstAidModal() {
         </form>
       </Form>
 
-         <ConfirmationDialog
-              isOpen={isAddConfirmationOpen}
-              onOpenChange={setIsAddConfirmationOpen}
-              onConfirm={confirmAdd}
-              title="Add Medicine"
-              description={`Are you sure you want to add the medicine "${newFirstAidName}"?`}
-            />
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine "${newFirstAidName}"?`}
+      />
     </div>
   );
 }
