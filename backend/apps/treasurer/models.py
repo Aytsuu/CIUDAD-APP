@@ -109,3 +109,17 @@ class Disbursement_File(models.Model):
 
     class Meta:
         db_table = "Disbursement_File"
+
+
+class Income_Expense_Tracking(models.Model):
+    iet_num = models.BigAutoField(primary_key=True)
+    iet_date = models.DateField(default=date.date.today)
+    iet_particulars = models.CharField(max_length=100)
+    iet_receiver = models.CharField(max_length=100)
+    iet_additional_notes = models.CharField(max_length=100)
+    iet_receipt_image = models.CharField(null=False)
+    inv_num = models.ForeignKey('', on_delete=models.CASCADE)
+    feat_id = models.ForeignKey('', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "Income_Expense_Tracking"

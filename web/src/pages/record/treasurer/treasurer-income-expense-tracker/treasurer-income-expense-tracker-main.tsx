@@ -167,7 +167,7 @@ function IncomeandExpenseTracking() {
                     </div>
                     <DialogLayout
                         trigger={<Button className="w-full sm:w-auto">+ New Entry</Button>}
-                        className="max-w-md"
+                        className="max-w-md max-h-[530px] overflow-auto p-10    "
                         title="Add New Entry"
                         description="Fill in the details for your entry."
                         mainContent={

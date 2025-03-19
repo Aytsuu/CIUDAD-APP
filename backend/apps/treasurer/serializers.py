@@ -35,3 +35,8 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
     class Meta:
         model = Disbursement_File
         fields = '__all__'
+
+class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Income_Expense_Tracking
+        fields = '__all__'

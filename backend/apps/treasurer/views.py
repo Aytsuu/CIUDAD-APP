@@ -29,3 +29,7 @@ class Income_FileView(generics.ListCreateAPIView):
 class Disbursement_FileView(generics.ListCreateAPIView):
     serializer_class = Disbursement_FileSerializers
     queryset = Disbursement_File.objects.all()
+
+class Income_Expense_TrackingView(generics.ListCreateAPIView):
+    serializer_class = Income_Expense_TrackingSerializers
+    queryset = Income_Expense_Tracking.objects.all()
