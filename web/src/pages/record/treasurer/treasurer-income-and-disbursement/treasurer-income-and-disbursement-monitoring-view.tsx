@@ -43,6 +43,7 @@ function IncomeandDisbursementView() {
                 <div>
                     <div className="bg-white border border-gray-300 rounded-[5px] p-5 h-[20rem] flex items-center justify-center">
                         <h2 className="flex justify-center font-semibold text-lg text-darkGray items-center">No Files Uploaded.</h2>
+                        {/* ari e call ang images I think */}
                     </div>
                 </div>
             </div>
