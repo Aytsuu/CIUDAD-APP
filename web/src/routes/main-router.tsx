@@ -26,9 +26,12 @@ import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
 import { announcement_route } from './Announcement-route';
 import { famplanning_route } from './FamilyPlanning-route';
+<<<<<<< HEAD
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
 
+=======
+>>>>>>> frontend/feature/treasurer
 
 export const main_router: RouteObject[] = [
     {
@@ -66,10 +69,13 @@ export const main_router: RouteObject[] = [
             ...bites_route,
             ...announcement_route,
             ...famplanning_route,
+<<<<<<< HEAD
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
             ...doctorRouting
+=======
+>>>>>>> frontend/feature/treasurer
         ]
     }
 ]

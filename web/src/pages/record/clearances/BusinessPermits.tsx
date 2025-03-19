@@ -20,7 +20,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";;
 // Updated BusinessDocument type
 type BusinessDocument = {
     requestNo: string;
-    businessname: string;
+    businessname: string,
     address: string;
     gross: string;
     paymentMethod: string;

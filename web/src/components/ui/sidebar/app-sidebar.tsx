@@ -74,7 +74,15 @@ const items: MenuItem[] = [
     title: "GAD",
     subItems: true,
     url: "/",
+<<<<<<< HEAD
     items: [{ title: "Budget Tracker", url: "/gad-budget-tracker-main" }],
+=======
+    items: [
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
+      { title: "Project Proposals", url: "/gad-project-proposal"},
+      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
+    ],
+>>>>>>> frontend/feature/treasurer
   },
   {
     title: "Council",
@@ -109,6 +117,7 @@ const items: MenuItem[] = [
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
           { title: "Barangay Service", url: "/treasurer-barangay-service" },
+          { title: "Rates", url: "/treasurer-rates" },
         ],
       },
     ],
@@ -130,6 +139,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+<<<<<<< HEAD
       { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
@@ -155,6 +165,16 @@ const items: MenuItem[] = [
       },
     ],
   },
+=======
+      {title: "Animal Bites", url: "/Animalbite_viewing"},
+      {title: "Child Services", url: "/allChildHRTable"},
+      {title: "Maternal Services", url:"/maternalrecords"},
+      {title: "Family Planning", url: "/FamPlanning_table"},
+      {title: "Medical Consultation", url: "/"},
+      {title: "Vaccination", url: "/allVaccinationRecord"},
+    ]
+  }
+>>>>>>> frontend/feature/treasurer
 ];
 
 interface SubMenuItemProps {

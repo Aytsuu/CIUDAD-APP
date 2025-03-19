@@ -2,10 +2,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { Eye } from 'lucide-react';
-import { ReceiptText } from 'lucide-react';
-import { Trash } from 'lucide-react';
-import { Search } from 'lucide-react';
+import { Eye, ReceiptText, Trash, Search, FileInput } from 'lucide-react';
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -15,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+
 
 
 const styles = {
@@ -127,8 +126,7 @@ export const columns: ColumnDef<PermitClearance>[] = [
                 </div>
                 } 
                 />
-            } content="View">
-            </TooltipLayout>
+            } content="View"/>
             <TooltipLayout
             trigger={
                 <DialogLayout
@@ -140,8 +138,7 @@ export const columns: ColumnDef<PermitClearance>[] = [
                         <ReceiptForm/>
                     } 
                 />
-            } content="Create Receipt">
-            </TooltipLayout>
+            } content="Create Receipt"/>
             <TooltipLayout 
              trigger={
                 <DialogLayout
@@ -151,8 +148,7 @@ export const columns: ColumnDef<PermitClearance>[] = [
                 description="Here is the image related to the report."
                 mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} 
                 />
-             }  content="Delete"
-             ></TooltipLayout>
+             }  content="Delete"/>
         </div>
       )},
 ];
@@ -187,14 +183,14 @@ export const PermitClearanceRecords: PermitClearance[] = [
 function PermitClearance(){
     const data = PermitClearanceRecords;
     const filter = [
-        { id: "All Payment Status", name: "All Payment Status" },
+        { id: "All", name: "All" },
         { id: "Pending", name: "Pending" },
         { id: "Paid", name: "Paid" },
     ];
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
 
-    const filteredData = selectedFilter === "All Payment Status" ? data 
+    const filteredData = selectedFilter === "All" ? data 
     : data.filter((item) => item.paymentStat === selectedFilter);
     
 
@@ -223,7 +219,7 @@ function PermitClearance(){
                         </div>
                         <div className="flex flex-row gap-2 justify-center items-center">
                             <Label>Filter: </Label>
-                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="Payment Status" onChange={setSelectedFilter}></SelectLayout>
                         </div>                            
                     </div>
                     <div className="w-full sm:w-auto">
@@ -242,11 +238,29 @@ function PermitClearance(){
                 </div>
 
                 <div className="bg-white">
-                    <div className="flex flex-col sm:flex-row gap-2 items-center p-4">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input type="number" className="w-14 h-8" defaultValue="10" />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>        
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
+                            <div className="flex gap-x-2 items-center">
+                                <p className="text-xs sm:text-sm">Show</p>
+                                <Input type="number" className="w-14 h-8" defaultValue="10" />
+                                <p className="text-xs sm:text-sm">Entries</p>
+                            </div>
+
+                            <div>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                    <FileInput />
+                                    Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                                </DropdownMenuContent>
+                                </DropdownMenu>                    
+                            </div>
+                    </div>    
 
                     <DataTable columns={columns} data={filteredData}></DataTable>
                 </div>
@@ -257,7 +271,7 @@ function PermitClearance(){
                     </p>
 
                     <div className="w-full sm:w-auto flex justify-center">
-                        <PaginationLayout className="" />
+                        {/* <PaginationLayout className="" /> */}
                     </div>
                 </div>  
             </div>

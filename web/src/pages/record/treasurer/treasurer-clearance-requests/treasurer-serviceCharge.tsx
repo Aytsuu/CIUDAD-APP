@@ -1,14 +1,14 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { ReceiptText } from 'lucide-react';
-import { Trash } from 'lucide-react';
-import { Search } from 'lucide-react';
+import { Trash, FileInput, ReceiptText, Search } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import ReceiptForm from "./treasurer-create-receipt-form";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 
 
 export const columns: ColumnDef<ServiceCharge>[] = [
@@ -60,8 +60,7 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                         <ReceiptForm/>
                     } 
                   />
-              } content="Create Receipt">
-              </TooltipLayout>
+              } content="Create Receipt"/>
               <TooltipLayout 
                trigger={
                   <DialogLayout
@@ -71,8 +70,7 @@ export const columns: ColumnDef<ServiceCharge>[] = [
                       description="Here is the image related to the report."
                       mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} 
                   />
-               }  content="Delete"
-               ></TooltipLayout>
+               }  content="Delete"/>
           </div>
         )},
 ];
@@ -127,11 +125,29 @@ function ServiceCharge(){
                 </div>
                
                 <div className="bg-white">
-                    <div className="flex flex-col sm:flex-row gap-2 items-center p-4">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input type="number" className="w-14 h-8" defaultValue="10" />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>        
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
+                        <div className="flex gap-x-2 items-center">
+                            <p className="text-xs sm:text-sm">Show</p>
+                            <Input type="number" className="w-14 h-8" defaultValue="10" />
+                            <p className="text-xs sm:text-sm">Entries</p>
+                        </div>
+
+                        <div>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                <FileInput />
+                                Export
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>                    
+                        </div>
+                    </div>
 
                     <DataTable columns={columns} data={data}></DataTable>
                 </div>
@@ -142,7 +158,7 @@ function ServiceCharge(){
                     </p>
 
                     <div className="w-full sm:w-auto flex justify-center">
-                        <PaginationLayout className="" />
+                        {/* <PaginationLayout className="" /> */}
                     </div>
                 </div>  
             </div>
