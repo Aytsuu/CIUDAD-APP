@@ -39,24 +39,17 @@ export default function MedicineStockForm() {
     },
   });
 
-  const { categories, handleAddCategory, handleDeleteCategory, error } = useCategories();
+
+
+const {
+  categories,
+  handleDeleteConfirmation,
+  categoryHandleAdd,
+  ConfirmationDialogs,
+} = useCategories();
+
+// ... (rest of the code)
   const medicines = fetchMedicines();
-
-  // State for delete confirmation dialog
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
-
-  // State for add confirmation dialog
-  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState<string>("");
-
-  const handleSelectChange = (
-    selectedValue: string,
-    fieldOnChange: (value: string) => void
-  ) => {
-    fieldOnChange(selectedValue);
-    form.setValue("category", selectedValue, { shouldValidate: true });
-  };
 
 
   const onSubmit = async (data: MedicineStockType) => {
@@ -76,38 +69,6 @@ export default function MedicineStockForm() {
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
-
-  // Handle delete confirmation
-  const handleDeleteConfirmation = (categoryId: number) => {
-    setCategoryToDelete(categoryId);
-    setIsDeleteConfirmationOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (categoryToDelete !== null) {
-      await handleDeleteCategory(categoryToDelete);
-      setIsDeleteConfirmationOpen(false);
-      setCategoryToDelete(null);
-    }
-  };
-
-  // Handle add confirmation
-  const categoryHandleAdd = (categoryName: string) => {
-    setNewCategoryName(categoryName);
-    setIsAddConfirmationOpen(true);
-  };
-
-  const handleConfirmAdd = async () => {
-    if (newCategoryName.trim()) {
-      await handleAddCategory(newCategoryName, (newId) => {
-        form.setValue("category", newId, { shouldValidate: true });
-      });
-      setIsAddConfirmationOpen(false);
-      setNewCategoryName("");
-    }
-  };
-
-
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
@@ -145,28 +106,20 @@ export default function MedicineStockForm() {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <SelectLayoutWithAdd
-                      className="w-full"
-                      label="Category"
-                      placeholder="Select a Category"
-                      options={categories}
-                      value={
-                        categories.find((cat) => cat.id === field.value)?.id ||
-                        ""
-                      }
-                      onChange={(selectedValue) =>
-                        handleSelectChange(selectedValue, field.onChange)
-                      }
-                      onAdd={categoryHandleAdd} // Pass the confirmation handler
-                      onDelete={(categoryId) => {
-                        const parsedCategoryId = Number(categoryId); // Convert to number
-                        if (!isNaN(parsedCategoryId)) {
-                          handleDeleteConfirmation(parsedCategoryId); // Open delete confirmation dialog
-                        } else {
-                          console.error("❌ Invalid category ID:", categoryId);
-                        }
-                      }}
-                    />
+                   {/* Category Dropdown with Add/Delete */}
+            <SelectLayoutWithAdd
+              placeholder="select"
+              label="Select a Category"
+              options={categories}
+              value={field.value}
+              onChange={(value) => field.onChange(value)}
+              onAdd={(newCategoryName) => {
+                categoryHandleAdd(newCategoryName, (newId) => {
+                  field.onChange(newId); // Update the form value with the new category ID
+                });
+              }}
+              onDelete={(id) => handleDeleteConfirmation(Number(id))}
+            />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -371,24 +324,7 @@ export default function MedicineStockForm() {
           </div>
         </form>
       </Form>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={confirmDelete}
-        title="Delete Category"
-        description="Are you sure you want to delete this category? This action cannot be undone."
-      />
-
-      {/* Add Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={isAddConfirmationOpen}
-        onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={handleConfirmAdd}
-        title="Add Category"
-        description={`Are you sure you want to add the category "${newCategoryName}"?`}
-      />
+      {ConfirmationDialogs()}
     </div>
   );
 }

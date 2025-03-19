@@ -1,16 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "@/pages/api/api";
-import axios, { AxiosError } from "axios"; // Ensure you import AxiosError if needed
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 interface Option {
   id: string;
-  name: string; 
+  name: string;
 }
 
 export const useCategories = () => {
   const [categories, setCategories] = useState<Option[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // State for delete confirmation dialog
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
+
+  // State for add confirmation dialog
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
+
+  // State to store the onCategoryAdded callback
+  const [onCategoryAddedCallback, setOnCategoryAddedCallback] = useState<((newId: string) => void) | null>(null);
 
   // ADD CATEGORY
   const addCategory = async (CategoryInfo: Record<string, string>) => {
@@ -27,7 +38,7 @@ export const useCategories = () => {
     }
   };
 
-  // GET
+  // GET CATEGORIES
   const getCategories = useCallback(async () => {
     try {
       const { data } = await api.get("inventory/category/", {
@@ -63,7 +74,7 @@ export const useCategories = () => {
     onCategoryAdded: (newId: string) => void
   ) => {
     if (!newCategoryName.trim() || isAdding) return;
-    setIsAdding(true); // Prevent multiple calls
+    setIsAdding(true);
 
     const categoryExists = categories.some(
       (category) =>
@@ -89,12 +100,9 @@ export const useCategories = () => {
           name: newCategory.cat_name,
         };
 
-        if (
-          !categories.some((category) => category.id === newCategoryOption.id)
-        ) {
-          setCategories((prev) => [...prev, newCategoryOption]);
-          onCategoryAdded(newCategoryOption.id);
-        }
+        // Update the categories state with the new category
+        setCategories((prev) => [...prev, newCategoryOption]);
+        onCategoryAdded(newCategoryOption.id); // Call the callback with the new category ID
       }
     } catch (error) {
       console.error("❌ Failed to add category:", error);
@@ -103,8 +111,33 @@ export const useCategories = () => {
     }
   };
 
-  // DELETE
-  const handleDeleteCategory = async (categoryId: number) => {
+  // Handle add confirmation
+  const categoryHandleAdd = (categoryName: string, onCategoryAdded?: (newId: string) => void) => {
+    setNewCategoryName(categoryName);
+    setIsAddConfirmationOpen(true);
+
+    // Store the callback for later use
+    if (onCategoryAdded) {
+      setOnCategoryAddedCallback(() => onCategoryAdded);
+    }
+  };
+
+  const handleConfirmAdd = async () => {
+    if (newCategoryName.trim()) {
+      await handleAddCategory(newCategoryName, (newId) => {
+        // Call the stored callback with the new category ID
+        if (onCategoryAddedCallback) {
+          onCategoryAddedCallback(newId);
+        }
+      });
+      setIsAddConfirmationOpen(false);
+      setNewCategoryName("");
+      setOnCategoryAddedCallback(null); // Clear the callback after use
+    }
+  };
+
+   // DELETE CATEGORY
+   const handleDeleteCategory = async (categoryId: number) => {
     try {
       const response = await api.delete(
         `inventory/category/${categoryId}/`
@@ -125,11 +158,50 @@ export const useCategories = () => {
     }
   };
 
+  // Handle delete confirmation
+  const handleDeleteConfirmation = (categoryId: number) => {
+    setCategoryToDelete(categoryId);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+// ... (previous code)
+const ConfirmationDialogs = () => (
+  <>
+    {/* Add Confirmation Dialog */}
+    <ConfirmationDialog
+      isOpen={isAddConfirmationOpen}
+      onOpenChange={setIsAddConfirmationOpen}
+      onConfirm={handleConfirmAdd}
+      title="Add Category"
+      description={`Are you sure you want to add the category "${newCategoryName}"?`}
+    />
+
+    {/* Delete Confirmation Dialog */}
+    <ConfirmationDialog
+      isOpen={isDeleteConfirmationOpen}
+      onOpenChange={setIsDeleteConfirmationOpen}
+      onConfirm={() => {
+        if (categoryToDelete !== null) {
+          handleDeleteCategory(categoryToDelete);
+        }
+        setIsDeleteConfirmationOpen(false);
+      }}
+      title="Delete Category"
+      description="Are you sure you want to delete this category?"
+    />
+  </>
+);
+
+// ... (rest of the code)
+
   return {
     categories,
     loading,
     handleAddCategory,
     handleDeleteCategory,
     error,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
   };
 };
