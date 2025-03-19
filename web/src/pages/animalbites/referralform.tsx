@@ -72,7 +72,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
   console.log("❌ Validation errors:", form.formState.errors);
 
   return (
-    <div className="p-6">
+    <div className="p-3">
       {/* Header */}
       <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">
         Animal Bites Referral Form
@@ -145,7 +145,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           {/* Patient Information Section */}
           <div className="col-span-2 border-t pt-4 mt-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Last Name */}
               <FormField
                 control={form.control}
@@ -249,7 +249,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           {/* Animal Bite Details Section */}
           <div className="col-span-2 border-t pt-4 mt-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Animal Bite Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Exposure Type */}
               <FormField
                 control={form.control}
