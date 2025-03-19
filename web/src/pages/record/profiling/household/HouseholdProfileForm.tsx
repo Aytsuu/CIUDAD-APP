@@ -33,24 +33,25 @@ export default function HouseholdProfileForm(){
         }
     }, [])
 
-    const getSitio = React.useCallback(() => {
+    const getSitio = React.useCallback(async () => {
 
-        api
-            .get('profiling/sitio/')
-            .then((res) => res.data)
-            .then((data) => {
-                
-                const sitioList = data.map((item: { sitio_id: string, sitio_name: string }) => ({ 
-                    id: String(item.sitio_id), 
-                    name: item.sitio_name 
-                }));
+        try {
 
-                setSitio(sitioList);
-            })
+            const res = await api.get('profiling/sitio/')
+            const sitioList = res.data.map((item: { sitio_id: string, sitio_name: string }) => ({ 
+                id: String(item.sitio_id), 
+                name: item.sitio_name 
+            }));
+            setSitio(sitioList);
+
+        } catch (err) {
+            console.log(err)
+        }
     }, []);
 
     const submit = async () => {
-        const res = await household(form.getValues());
+        const data = form.getValues()
+        const res = await household(data);
 
         if (res) {
             form.reset(defaultValues)

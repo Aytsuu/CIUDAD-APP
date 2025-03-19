@@ -73,7 +73,7 @@ class Household(models.Model):
     hh_existing_no = models.CharField(max_length=50, null=True)
     hh_nhts = models.CharField(max_length=50)
     hh_province = models.CharField(max_length=50)
-    hh_city = models.CharField(max_length=50)
+    hh_city = models.CharField(max_length=50)       
     hh_barangay = models.CharField(max_length=50)
     hh_street = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)

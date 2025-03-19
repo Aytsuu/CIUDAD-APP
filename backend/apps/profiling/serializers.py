@@ -67,8 +67,11 @@ class PersonalSerializer(serializers.ModelSerializer):
         return FamilySerializer(family, many=True).data
 
 class HouseholdSerializer(serializers.ModelSerializer):
-    sitio = SitioSerializer(read_only=True)
-    per = PersonalSerializer(read_only=True)
+    sitio = SitioSerializer(read_only=True)  # Read-only for display
+    per = PersonalSerializer(read_only=True)  # Read-only for display
+    
+    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio')
+    per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
     
     class Meta:
         model = Household

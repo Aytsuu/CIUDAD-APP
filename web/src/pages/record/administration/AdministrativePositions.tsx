@@ -32,12 +32,15 @@ export default function AdministrativePositions(
     }, [])
 
     // Retrieve al positions
-    const getPositions = React.useCallback(()=> {
-        api
-            .get("administration/positions/")
-            .then((res) => res.data)
-            .then((data) => {setPositions(data)})
-            .catch((err) => console.log(err))
+    const getPositions = React.useCallback(async ()=> {
+        try {
+            
+            const res = await api.get("administration/positions/")
+            setPositions(res.data)
+
+        } catch (err) {
+            console.log(err)
+        }
     }, [])
 
     // Add new position
@@ -54,16 +57,17 @@ export default function AdministrativePositions(
     }
 
     // Delete a position
-    const deletePosition = () => {
-        api
-            .delete(`administration/positions/${selectedPosition}/`)
-            .then((res) => {
-                if(res.status === 204) {
-                    getPositions()
-                    setSelectedPosition('')
-                }
-            })
-            .catch((err) => console.log(err))
+    const deletePosition = async () => {
+
+        try {
+            const res = await api.delete(`administration/positions/${selectedPosition}/`)
+            if(res.status === 204){
+                await getPositions()
+                setSelectedPosition('')
+            }
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     return (

@@ -1,11 +1,16 @@
+import React from "react";
 import { Card } from "@/components/ui/card/card";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 export default function ResidentProfileForm() {
+  const location = useLocation()
   const navigate = useNavigate();
+  const params = React.useMemo(() => {
+    return location.state?.params || {};
+  }, [location.state]); 
 
   return (
     <>
@@ -21,10 +26,10 @@ export default function ResidentProfileForm() {
           </Button>
           <div className="flex flex-col">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Registration Form
+              {params.title}
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Provide your details to complete the registration process.
+              {params.description}
             </p>
           </div>  
         </div>
@@ -34,7 +39,7 @@ export default function ResidentProfileForm() {
 
       <div>
         <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
-            <PersonalInfoForm/>
+            <PersonalInfoForm params={params}/>
         </Card>
       </div>
     </>

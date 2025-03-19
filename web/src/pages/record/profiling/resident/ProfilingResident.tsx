@@ -125,7 +125,14 @@ export default function ProfilingMain() {
               <ClockArrowUp /> Pending
             </Button>
           </Link>
-          <Link to='/resident-registration'>
+          <Link to='/resident-registration' 
+            state={{
+                params: {
+                  title: 'Resident Registration', 
+                  description: 'Provide your details to complete the registration process.'
+                }
+              }}
+            >
             <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
               <Plus size={15} /> Register
             </Button>

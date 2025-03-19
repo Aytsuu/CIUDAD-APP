@@ -10,7 +10,6 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { personal, registered } from "../profilingPostRequests";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import AssignPosition from "../../administration/AssignPosition";
-import { useLocation } from "react-router";
 import {
   Form,
   FormField,
@@ -19,16 +18,21 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { CircleCheck, CircleAlert } from "lucide-react";
+import { CircleCheck, CircleAlert, Pen } from "lucide-react";
 import api from "@/api/api";
 
-export default function PersonalInfoForm(){
+enum Origin {
+  Administration = 'administration',
+}
+
+enum Type {
+  Viewing = 'viewing'
+}
+
+export default function PersonalInfoForm({params}: {params: any}){
  
   // Initialize states
-
-  const location = useLocation()
   const defaultValues = generateDefaultValues(personalInfoSchema)
-  const { params } = location.state || { params: {}}
   
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
@@ -37,7 +41,7 @@ export default function PersonalInfoForm(){
   
   const [residents, setResidents] = React.useState<Record<string, string>[]>([])
   const [residentSearch, setResidentSearch] = React.useState<string>('');
-  const [isResidentFound, setIsResidentFound] = React.useState<boolean>(false);
+  const [isReadOnly, setIsReadOnly] = React.useState<boolean>(true);
 
   const [staffs, setStaffs] = React.useState<Record<string, string>[]>([]);
   const [isStaff, setIsStaff] = React.useState<boolean>(false);
@@ -47,15 +51,30 @@ export default function PersonalInfoForm(){
   
   // Side effect to fetch residents
   React.useEffect(()=>{
-    if(!hasFetchData.current){
+    const initialize = async () => {
+      if(!hasFetchData.current){
 
-      if(params.origin === 'administration') {
-        getStaffs()
+        const fetchedResident = await getResidents()
+  
+        if(params.type === Type.Viewing){
+
+          const searchResident = await fetchedResident.find(
+            (value: Record<string, string>) => value.per_id == params.data
+          )
+
+          setIsReadOnly(true)
+          populateFields(searchResident)
+        }
+  
+        if(params.origin === Origin.Administration) {
+          getStaffs()
+        }
+  
+        hasFetchData.current = true
       }
-
-      getResidents()
-      hasFetchData.current = true
     }
+
+    initialize()
   }, []);
 
   // Function to perform api GET request to staffs
@@ -73,6 +92,7 @@ export default function PersonalInfoForm(){
     try {
       const res = await api.get('profiling/personal/')
       setResidents(res.data)
+      return(res.data)
     } catch (err) {
       console.log(err)
     }
@@ -81,41 +101,47 @@ export default function PersonalInfoForm(){
   // Side effects for searching resident
   React.useEffect(()=>{
 
+    if(params.type === Type.Viewing) return;
+
     const searchResident = residents.find((value) => value.per_id == residentSearch)
     const searchStaff = Boolean(staffs.some((value) => value.staff_id == searchResident?.per_id))
     searchStaff ? setIsStaff(true) : setIsStaff(false)
 
     if(searchResident && searchStaff !== true){
 
-      setIsResidentFound(true)
+      setIsReadOnly(true)
+      populateFields(searchResident)
+    } else {
 
-      const fields = [
-        { key: 'id', value: searchResident.per_id },
-        { key: 'lastName', value: searchResident.per_lname },
-        { key: 'firstName', value: searchResident.per_fname },
-        { key: 'middleName', value: searchResident.per_mname },
-        { key: 'suffix', value: searchResident.per_suffix },
-        { key: 'sex', value: searchResident.per_sex },
-        { key: 'dateOfBirth', value: searchResident.per_dob },
-        { key: 'status', value: searchResident.per_status },
-        { key: 'address', value: searchResident.per_address },
-        { key: 'religion', value: searchResident.per_religion },
-        { key: 'edAttainment', value: searchResident.per_edAttainment },
-        { key: 'contact', value: searchResident.per_contact },
-      ];
+      setIsReadOnly(false)
+      form.reset(defaultValues)
 
-      fields.forEach(({ key, value }) => {
-        form.setValue(key as keyof z.infer<typeof personalInfoSchema>, value || '');
-      });
-
-      } else {
-
-        setIsResidentFound(false)
-        form.reset(defaultValues)
-
-      }
+    }
 
   }, [residentSearch])
+
+  const populateFields = (searchResident: Record <string, string> | undefined) => {
+
+    const fields = [
+      { key: 'id', value: searchResident?.per_id },
+      { key: 'lastName', value: searchResident?.per_lname },
+      { key: 'firstName', value: searchResident?.per_fname },
+      { key: 'middleName', value: searchResident?.per_mname },
+      { key: 'suffix', value: searchResident?.per_suffix },
+      { key: 'sex', value: searchResident?.per_sex },
+      { key: 'dateOfBirth', value: searchResident?.per_dob },
+      { key: 'status', value: searchResident?.per_status },
+      { key: 'address', value: searchResident?.per_address },
+      { key: 'religion', value: searchResident?.per_religion },
+      { key: 'edAttainment', value: searchResident?.per_edAttainment },
+      { key: 'contact', value: searchResident?.per_contact },
+    ];
+
+    fields.forEach(({ key, value }) => {
+      form.setValue(key as keyof z.infer<typeof personalInfoSchema>, value || '');
+    });
+
+  }
   
   // Handle submit
   const submit = async () => {
@@ -142,7 +168,7 @@ export default function PersonalInfoForm(){
         {params.origin === 'administration' && 
           <div className="relative">
             <Input placeholder="Search resident #..." value={residentSearch} onChange={(e)=> setResidentSearch(e.target.value)}/>
-            {isResidentFound && 
+            {isReadOnly && 
               <CircleCheck size={24} className="absolute top-1/2 right-3 transform -translate-y-1/2 fill-green-500 stroke-white"/>
             }
             {isStaff && 
@@ -163,7 +189,7 @@ export default function PersonalInfoForm(){
                 name="lastName"
                 label="Last Name"
                 placeholder="Enter Last Name"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
 
@@ -172,7 +198,7 @@ export default function PersonalInfoForm(){
                 name="firstName"
                 label="First Name"
                 placeholder="Enter First Name"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
 
@@ -181,7 +207,7 @@ export default function PersonalInfoForm(){
                 name="middleName"
                 label="Middle Name"
                 placeholder="Enter Middle Name"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
 
@@ -190,7 +216,7 @@ export default function PersonalInfoForm(){
                 name="suffix"
                 label="Suffix"
                 placeholder="Sfx."
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
             </div>
@@ -206,16 +232,19 @@ export default function PersonalInfoForm(){
                       Sex
                     </FormLabel>
                     <FormControl>
-                      <SelectLayout
-                        placeholder='Select'
-                        className="w-full"
-                        options={[
-                          {id: "female", name: "Female"},
-                          {id: "male", name: "Male"},
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
+                      {!isReadOnly ?
+                        (<SelectLayout
+                          placeholder='Select'
+                          className="w-full"
+                          options={[
+                            {id: "female", name: "Female"},
+                            {id: "male", name: "Male"},
+                          ]}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />) :
+                        (<Input {...field} readOnly={isReadOnly} />)
+                    }
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,7 +260,13 @@ export default function PersonalInfoForm(){
                       Date of Birth
                     </FormLabel>
                     <FormControl>
-                      <input type="date" className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm" {...field} readOnly={isResidentFound} />
+                      <input 
+                        type="date" 
+                        className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm" 
+                        {...field} 
+                        readOnly={isReadOnly} 
+                        disabled={params.type === 'viewing' ? true : false}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -247,18 +282,21 @@ export default function PersonalInfoForm(){
                       Marital Status
                     </FormLabel>
                     <FormControl>
-                      <SelectLayout
-                        placeholder='Select'
-                        className="w-full"
-                        options={[
-                          {id: "single", name: "Single"},
-                          {id: "married", name: "Married"},
-                          {id: "divorced", name: "Divorced"},
-                          {id: "widowed", name: "Widowed"},
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
+                      {!isReadOnly ? 
+                        (<SelectLayout
+                          placeholder='Select'
+                          className="w-full"
+                          options={[
+                            {id: "single", name: "Single"},
+                            {id: "married", name: "Married"},
+                            {id: "divorced", name: "Divorced"},
+                            {id: "widowed", name: "Widowed"},
+                          ]}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />) : 
+                        (<Input {...field} readOnly={isReadOnly}/>)
+                    }
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -270,7 +308,7 @@ export default function PersonalInfoForm(){
                 name="address"
                 label="Address"
                 placeholder="Enter address"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
             </div>
@@ -282,7 +320,7 @@ export default function PersonalInfoForm(){
                 name="edAttainment"
                 label="Educational Attainment"
                 placeholder="Enter educational attainment"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
 
@@ -291,7 +329,7 @@ export default function PersonalInfoForm(){
                 name="religion"
                 label="Religion"
                 placeholder="Enter religion"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
 
@@ -300,14 +338,14 @@ export default function PersonalInfoForm(){
                 name="contact"
                 label="Contact"
                 placeholder="Enter contact"
-                readOnly={isResidentFound}
+                readOnly={isReadOnly}
                 className="lg:col-span-1"
               />
             </div>
 
             {/* Submit Button */}
             <div className="mt-8 flex justify-end gap-3">
-              {params.origin === 'administration' ? 
+              {params.origin === Origin.Administration ? 
                 (
                     <DialogLayout
                         trigger={
@@ -329,12 +367,27 @@ export default function PersonalInfoForm(){
                         isOpen={isAssignmentOpen}
                         onOpenChange={setIsAssignmentOpen}
                     />
-                ) : (
+                ) : 
+                  
+                  (
+                    params.type === Type.Viewing ? 
+                    ( <Button
+                        onClick={() => {
+                          setIsReadOnly(false)
+                          params.type = 'editing'
+                        }}
+                      > 
+                        <Pen size={24}/> Edit 
+                      </Button>) :
+                    ( <Button 
+                        type="submit" 
+                        className="w-full sm:w-32" 
+                      > 
+                        Register
+                      </Button>
+                    ) 
                     
-                  <Button type="submit" className="w-full sm:w-32" > 
-                    Register
-                  </Button>
-                )
+                  )
               }                  
             </div>
           </form>
@@ -343,7 +396,7 @@ export default function PersonalInfoForm(){
     </div>
   );
 };
-
+2
 const FormInput = ({ control, name, label, placeholder, readOnly, className } : 
   {control: any, name: string, label: string, placeholder: string, readOnly: boolean, className?: string}
 ) => (
