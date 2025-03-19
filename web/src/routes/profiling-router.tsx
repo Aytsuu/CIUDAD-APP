@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-import ProfilingMain from "@/pages/record/profiling/ProfilingMain";
-import { ProfilingForm } from "@/pages/record/profiling/FormPage/ProfilingForm";
-import ProfilingRequest from "@/pages/record/profiling/ProfilingRequests";
-import ProfileViewInfo from "@/pages/record/profiling/ProfilingViewInfo";
-
-export const profiling_router = [
-=======
 import ProfilingMain from "@/pages/record/profiling/resident/ProfilingResident";
 import ResidentProfileForm from "@/pages/record/profiling/resident/ResidentProfileForm";
 import ProfilingRequest from "@/pages/record/profiling/resident/ProfilingRequests";
@@ -18,18 +10,13 @@ import FamilyProfileForm from "@/pages/record/profiling/family/FamilyProfileForm
 export const profiling_router = [
 
     // Resident
->>>>>>> master
     {
         path: "resident-records",
         element: <ProfilingMain />
     },
     {
         path: "resident-registration",
-<<<<<<< HEAD
-        element: <ProfilingForm />
-=======
         element: <ResidentProfileForm />
->>>>>>> master
     },
     {
         path: "registration-request",
@@ -38,9 +25,6 @@ export const profiling_router = [
     {
         path: "resident-information",
         element: <ProfileViewInfo />
-<<<<<<< HEAD
-    }
-=======
     },
     
     // Family
@@ -65,5 +49,4 @@ export const profiling_router = [
         path: "business-records",
         element: <ProfilingBusiness />
     },
->>>>>>> master
 ];

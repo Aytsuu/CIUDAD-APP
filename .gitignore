@@ -17,11 +17,7 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 *.suo
-<<<<<<< HEAD
-*.ntvs*
-=======
 .ntvs
->>>>>>> master
 *.njsproj
 *.sln
 *.sw?
@@ -32,11 +28,7 @@ web-build/
 expo-env.d.ts
 
 # Native
-<<<<<<< HEAD
-*.orig.*
-=======
 .orig.
->>>>>>> master
 *.jks
 *.p8
 *.p12
@@ -51,18 +43,12 @@ expo-env.d.ts
 *.pem
 
 # local env files
-<<<<<<< HEAD
-=======
 .env
->>>>>>> master
 .env*.local
 
 # typescript
 *.tsbuildinfo
 
-<<<<<<< HEAD
-app-example
-=======
 app-example
 
 # Byte-compiled / optimized files
@@ -75,4 +61,3 @@ __pycache__/
 venv/
 env/
 .venv/
->>>>>>> master

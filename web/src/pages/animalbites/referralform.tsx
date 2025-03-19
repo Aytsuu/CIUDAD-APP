@@ -41,15 +41,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       };
 
       console.log("👨‍⚕️ Adding new patient:", newPatient);
-<<<<<<< HEAD
-    onAddPatient(newPatient);
-    
-    onClose();
-  } else {
-    console.log("❌ onAddPatient function is missing!");
-  }
-}
-=======
       onAddPatient(newPatient);
 
       onClose();
@@ -57,7 +48,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       console.log("❌ onAddPatient function is missing!");
     }
   }
->>>>>>> master
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
     // resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
@@ -90,81 +80,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4">
-<<<<<<< HEAD
-          {/* Receiver */}
-          <FormField
-            control={form.control}
-            name="receiver"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Receiver:</Label>
-                <FormControl>
-                  <Input placeholder="Enter recipient" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Sender */}
-          <FormField
-            control={form.control}
-            name="sender"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Sender:</Label>
-                <FormControl>
-                  <Input placeholder="Enter sender" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Date */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Date:</Label>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Transient Checkbox */}
-          <FormField
-            control={form.control}
-            name="transient"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
-                <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-                <Label>Transient</Label>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* 🔹 Patient Information */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-2">Patient Information</h3>
-
-            {/* Last Name */}
-            <FormField
-              control={form.control}
-              name="p_lname"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Last Name:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter last name" {...field} />
-=======
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Receiver */}
             <FormField
@@ -175,24 +90,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                   <Label>Receiver:</Label>
                   <FormControl>
                     <Input placeholder="Enter recipient" {...field} />
->>>>>>> master
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-<<<<<<< HEAD
-            {/* First Name */}
-            <FormField
-              control={form.control}
-              name="p_fname"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>First Name:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter first name" {...field} />
-=======
             {/* Sender */}
             <FormField
               control={form.control}
@@ -202,24 +105,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                   <Label>Sender:</Label>
                   <FormControl>
                     <Input placeholder="Enter sender" {...field} />
->>>>>>> master
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-<<<<<<< HEAD
-            {/* Middle Name */}
-            <FormField
-              control={form.control}
-              name="p_mname"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Middle Name:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter middle name" {...field} />
-=======
             {/* Date */}
             <FormField
               control={form.control}
@@ -229,63 +120,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                   <Label>Date:</Label>
                   <FormControl>
                     <Input type="date" {...field} />
->>>>>>> master
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-<<<<<<< HEAD
-            {/* Address */}
-            <FormField
-              control={form.control}
-              name="p_address"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Address:</Label>
-                  <FormControl>
-                    <Textarea placeholder="Enter address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Age */}
-            <FormField
-              control={form.control}
-              name="p_age"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Age:</Label>
-                  <FormControl>
-                    <Input type="number" placeholder="Enter age" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="p_gender"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Gender:</Label>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-=======
             {/* Transient Checkbox */}
             <FormField
               control={form.control}
@@ -296,101 +136,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                     <Checkbox className="mt-3 border border-black" checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <Label>Transient</Label>
->>>>>>> master
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-<<<<<<< HEAD
-          {/* 🔹 Animal Bite Details */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Animal Bite Details</h3>
-
-            {/* Exposure Type */}
-            <FormField
-              control={form.control}
-              name="p_exposure"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Type of Exposure:</Label>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Bite</SelectItem>
-                        <SelectItem value="female">Non-bite</SelectItem>
-
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Site of Exposure */}
-            <FormField
-              control={form.control}
-              name="p_siteofexposure"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Site of Exposure:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter body part affected" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Biting Animal */}
-            <FormField
-              control={form.control}
-              name="p_bitinganimal"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Biting Animal:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* 🔹 Additional Actions */}
-          <FormField
-            control={form.control}
-            name="p_actions"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Actions Taken:</Label>
-                <FormControl>
-                  <Textarea placeholder="Describe the required actions..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2">
-            <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" className="">
-              Add
-            </Button>
-    
-          </div>
-        </form>
-   
-=======
           {/* Patient Information Section */}
           <div className="col-span-2 border-t pt-4 mt-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
@@ -577,7 +328,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             <Button type="submit">Add</Button>
           </div>
         </form>
->>>>>>> master
       </Form>
     </div>
   );
