@@ -86,3 +86,5 @@ class Capital_Outlays_And_Non_Office(models.Model):
 
     class Meta:
         db_table = "Capital_Outlays_And_Non_Office"
+
+
