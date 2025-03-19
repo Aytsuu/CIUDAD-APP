@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 // import z from "zod"
 
 // const IncomeExpenseFormSchema = z.object({
@@ -15,7 +13,6 @@
 // export default IncomeExpenseFormSchema
 
 
->>>>>>> frontend/feature/treasurer
 import z from "zod"
 
 const IncomeExpenseFormSchema = z.object({
@@ -26,13 +23,10 @@ const IncomeExpenseFormSchema = z.object({
     amount: z.string().nonempty('Amount is required'),
     receiver: z.string().nonempty('Receiver Name is required'),
     addNotes: z.string().optional(),
-<<<<<<< HEAD
-=======
     // receipt_image: z.string().nonempty('Receipt is required.'),
     receipt_image: z.instanceof(File).refine((file) => file.size > 0, {
         message: "Receipt is required.",
     }), // Make this required
->>>>>>> frontend/feature/treasurer
 })
 
 export default IncomeExpenseFormSchema

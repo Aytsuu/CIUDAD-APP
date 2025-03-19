@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 // import { Input } from "@/components/ui/input";
 // import { SelectLayout } from "@/components/ui/select/select-layout";
 // import { Button } from "@/components/ui/button";
@@ -140,7 +138,6 @@
 // export default IncomeandExpenseCreateForm;
 
 
->>>>>>> frontend/feature/treasurer
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
@@ -166,12 +163,8 @@ function IncomeandExpenseCreateForm() {
             particulars: "",
             amount: "",
             receiver: "",
-<<<<<<< HEAD
-            addNotes: ""
-=======
             addNotes: "",
             receipt_image: undefined
->>>>>>> frontend/feature/treasurer
         }
     });
 
@@ -183,11 +176,7 @@ function IncomeandExpenseCreateForm() {
     return (
     <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
-<<<<<<< HEAD
-                <div>
-=======
                 <div className="pb-5">
->>>>>>> frontend/feature/treasurer
                     <FormField
                         control={form.control}
                         name="serialNo"
@@ -203,11 +192,7 @@ function IncomeandExpenseCreateForm() {
                     </FormField>
                 </div>
 
-<<<<<<< HEAD
-                <div>
-=======
                 <div className="pb-5">
->>>>>>> frontend/feature/treasurer
                     <FormField
                     control={form.control}
                     name="entryType"
@@ -222,11 +207,7 @@ function IncomeandExpenseCreateForm() {
                     )}></FormField>
                 </div>
 
-<<<<<<< HEAD
-                <div>
-=======
                 <div className="pb-5">
->>>>>>> frontend/feature/treasurer
                     <FormField
                     control={form.control}
                     name="particulars"
@@ -241,11 +222,7 @@ function IncomeandExpenseCreateForm() {
                     )}></FormField>
                 </div>
 
-<<<<<<< HEAD
-                <div>
-=======
                 <div className="pb-5">
->>>>>>> frontend/feature/treasurer
                     <FormField
                     control={form.control}
                     name="amount"
@@ -260,11 +237,7 @@ function IncomeandExpenseCreateForm() {
                     )}></FormField>
                 </div>
 
-<<<<<<< HEAD
-                <div>
-=======
                 <div className="pb-5">
->>>>>>> frontend/feature/treasurer
                     <FormField
                     control={form.control}
                     name="receiver"
@@ -279,11 +252,7 @@ function IncomeandExpenseCreateForm() {
                     )}></FormField>
                 </div>
 
-<<<<<<< HEAD
-                <div>
-=======
                 <div className="pb-5">
->>>>>>> frontend/feature/treasurer
                     <FormField
                     control={form.control}
                     name="addNotes"
@@ -299,8 +268,6 @@ function IncomeandExpenseCreateForm() {
                 </div>
 
 
-<<<<<<< HEAD
-=======
                 <div className="pb-5">
                     <FormField
                     control={form.control}
@@ -328,7 +295,6 @@ function IncomeandExpenseCreateForm() {
                 </div>
 
 
->>>>>>> frontend/feature/treasurer
                 <div className="flex justify-end mt-[20px]">
                     <Button>Save Entry</Button>       
                 </div> 
@@ -337,8 +303,4 @@ function IncomeandExpenseCreateForm() {
     );
 }
 
-<<<<<<< HEAD
 export default IncomeandExpenseCreateForm;
-=======
-export default IncomeandExpenseCreateForm;
->>>>>>> frontend/feature/treasurer
