@@ -3,56 +3,76 @@
 import { useState } from "react"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Edit, Printer, Download } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { ChevronLeft, Edit, Printer, Share2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import CardLayout from "@/components/ui/card/card-layout"
+import { useForm } from "react-hook-form"
+import type { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { useLocation } from "react-router"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-// Mock patient data
-const patientData = {
-  id: "001",
-  lastName: "Smith",
-  firstName: "John",
-  middleName: "David",
-  gender: "Male",
-  contactNumber: "09123456789",
-  dateOfBirth: "1985-06-15",
-  age: 38,
-  address: {
+export default function ViewPatientRecord() {
+  const [activeTab, setActiveTab] = useState("personal")
+
+  // Mock data for a patient record
+  const patientData = {
+    lastName: "Smith",
+    firstName: "John",
+    middleName: "David",
+    gender: "male",
+    contact: "555-123-4567",
+    dateOfBirth: "1985-06-15",
+    patientType: "Resident",
     houseNo: "123",
     street: "Main Street",
     sitio: "Sitio A",
     barangay: "San Jose",
-    city: "Manila",
-    province: "Metro Manila",
-  },
-  patientType: "Resident",
-  bloodType: "O+",
-  emergencyContact: {
-    name: "Jane Smith",
-    relationship: "Wife",
-    contactNumber: "09187654321",
-  },
-  medicalHistory: [
-    { date: "2023-01-15", diagnosis: "Hypertension", notes: "Prescribed medication and lifestyle changes" },
-    { date: "2022-11-03", diagnosis: "Influenza", notes: "Bed rest and fluids recommended" },
-    { date: "2022-05-22", diagnosis: "Sprained ankle", notes: "Physical therapy recommended" },
-  ],
-  medications: [
-    { name: "Amlodipine", dosage: "5mg", frequency: "Once daily", startDate: "2023-01-15" },
-    { name: "Paracetamol", dosage: "500mg", frequency: "As needed", startDate: "2022-11-03" },
-  ],
-  visits: [
-    { date: "2023-01-15", reason: "Regular check-up", doctor: "Dr. Santos" },
-    { date: "2022-11-03", reason: "Flu symptoms", doctor: "Dr. Reyes" },
-    { date: "2022-05-22", reason: "Ankle injury", doctor: "Dr. Cruz" },
-  ],
-}
+    city: "Metro City",
+    province: "Central Province",
+    // Additional mock data for medical history
+    bloodType: "O+",
+    allergies: "None",
+    chronicConditions: "Hypertension",
+    lastVisit: "2023-11-10",
+    // Mock data for visits
+    visits: [
+      { date: "2023-11-10", reason: "Regular checkup", doctor: "Dr. Johnson" },
+      { date: "2023-08-22", reason: "Fever", doctor: "Dr. Martinez" },
+      { date: "2023-05-15", reason: "Vaccination", doctor: "Dr. Williams" },
+    ],
+  }
 
-export default function ViewPatientsRecord() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const location = useLocation()
+  const { params } = location.state || { params: {} }
+
+  // Initialize form with react-hook-form and zod validation
+  const form = useForm<z.infer<typeof patientRecordSchema>>({
+    resolver: zodResolver(patientRecordSchema),
+    defaultValues: patientData,
+  })
+
+  // Get patient initials for avatar
+  const getInitials = () => {
+    return `${patientData.firstName.charAt(0)}${patientData.lastName.charAt(0)}`
+  }
+
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth: string) => {
+    const today = new Date()
+    const birthDate = new Date(dateOfBirth)
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const m = today.getMonth() - birthDate.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
+  }
 
   return (
     <div className="w-full">
@@ -67,198 +87,387 @@ export default function ViewPatientsRecord() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex flex-col">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patients Records</h1>
-            <p className="text-xs sm:text-sm text-darkGray">View Patient Record</p>
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patient Record</h1>
+            <p className="text-xs sm:text-sm text-darkGray">View patient information</p>
           </div>
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Printer className="h-4 w-4 mr-2" />
-              Print
+          <div className="flex gap-2 sm:ml-auto">
+            <Button variant="outline" size="sm" className="gap-1">
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">Print</span>
             </Button>
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            <Button variant="outline" size="sm" className="gap-1">
+              <Share2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Share</span>
             </Button>
-            <Button size="sm" className="bg-buttonBlue hover:bg-buttonBlue/90">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
+            <Button className="gap-1 bg-buttonBlue hover:bg-buttonBlue/90">
+              <Edit className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
             </Button>
           </div>
         </div>
       </div>
+      <Separator className="bg-gray mb-4 sm:mb-6" />
 
-      <Separator className="bg-gray mb-6 sm:mb-8" />
-
-      {/* Patient Information Card */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex flex-col items-center md:items-start gap-2">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src="/placeholder.svg" alt={`${patientData.firstName} ${patientData.lastName}`} />
-                <AvatarFallback>{`${patientData.firstName.charAt(0)}${patientData.lastName.charAt(0)}`}</AvatarFallback>
+      {/* Patient Summary Card */}
+      <div className="mb-6">
+        <CardLayout
+          cardTitle=""
+          cardDescription=""
+          cardContent={
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <Avatar className="h-16 w-16 border-2 border-primary/10">
+                <AvatarFallback className="bg-primary/10 text-primary text-xl">{getInitials()}</AvatarFallback>
               </Avatar>
-              <Badge className="bg-buttonBlue hover:bg-buttonBlue/90">{patientData.patientType}</Badge>
-            </div>
-
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Patient ID</p>
-                <p className="font-medium">{patientData.id}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Full Name</p>
-                <p className="font-medium">{`${patientData.lastName}, ${patientData.firstName} ${patientData.middleName}`}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Gender</p>
-                <p className="font-medium">{patientData.gender}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Date of Birth</p>
-                <p className="font-medium">{new Date(patientData.dateOfBirth).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Age</p>
-                <p className="font-medium">{patientData.age} years</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Contact Number</p>
-                <p className="font-medium">{patientData.contactNumber}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Blood Type</p>
-                <p className="font-medium">{patientData.bloodType}</p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="text-sm text-muted-foreground">Address</p>
-                <p className="font-medium">
-                  {`${patientData.address.houseNo} ${patientData.address.street}, ${patientData.address.sitio}, ${patientData.address.barangay}, ${patientData.address.city}, ${patientData.address.province}`}
-                </p>
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold">{`${patientData.firstName} ${patientData.middleName ? patientData.middleName + " " : ""}${patientData.lastName}`}</h2>
+                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                  <span>
+                    ID: <span className="font-medium text-foreground">P-10025</span>
+                  </span>
+                  <span>•</span>
+                  <span>{calculateAge(patientData.dateOfBirth)} years old</span>
+                  <span>•</span>
+                  <span>{patientData.gender === "male" ? "Male" : "Female"}</span>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Badge variant={patientData.patientType === "Resident" ? "default" : "secondary"}>
+                    {patientData.patientType}
+                  </Badge>
+                  <Badge variant="outline" className="bg-primary/5">
+                    Blood Type: {patientData.bloodType}
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          }
+          cardClassName="border shadow-sm rounded-lg"
+          cardHeaderClassName="hidden"
+          cardContentClassName="p-4"
+        />
+      </div>
 
-      {/* Tabs Section */}
-      <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-        <div className="border-b bg-transparent">
-          <TabsList className="bg-transparent h-auto p-0">
-            <TabsTrigger
-              value="overview"
-              className={`px-4 py-2 data-[state=active]:border-b-2 data-[state=active]:border-buttonBlue data-[state=active]:text-buttonBlue rounded-none`}
-            >
-              Overview
-            </TabsTrigger>
-            <TabsTrigger
-              value="records"
-              className={`px-4 py-2 data-[state=active]:border-b-2 data-[state=active]:border-buttonBlue data-[state=active]:text-buttonBlue rounded-none`}
-            >
-              Records
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Tabs for different sections */}
+      <Tabs defaultValue="personal" className="w-full ml-2" onValueChange={setActiveTab}>
+        <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
+          <TabsTrigger
+            value="personal"
+            className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent ml-6"
+          >
+            Personal Information
+          </TabsTrigger>
+          <TabsTrigger
+            value="medical"
+            className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
+          >
+            Medical History
+          </TabsTrigger>
+          <TabsTrigger
+            value="visits"
+            className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
+          >
+            Visit History
+          </TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="overview" className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Emergency Contact */}
-            <CardLayout
-              cardTitle="Emergency Contact"
-              cardDescription="Primary contact in case of emergency"
-              cardContent={
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Name</p>
-                    <p className="font-medium">{patientData.emergencyContact.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Relationship</p>
-                    <p className="font-medium">{patientData.emergencyContact.relationship}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Contact Number</p>
-                    <p className="font-medium">{patientData.emergencyContact.contactNumber}</p>
-                  </div>
-                </div>
-              }
-              cardClassName="h-full"
-            />
-
-            {/* Current Medications */}
-            <CardLayout
-              cardTitle="Current Medications"
-              cardDescription="Active prescriptions"
-              cardContent={
-                <div className="space-y-4">
-                  {patientData.medications.map((medication, index) => (
-                    <div key={index} className="p-3 border rounded-md">
-                      <div className="flex justify-between">
-                        <p className="font-medium">{medication.name}</p>
-                        <Badge variant="outline">{medication.dosage}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Frequency: {medication.frequency}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Started: {new Date(medication.startDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              }
-              cardClassName="h-full"
-            />
-
-            {/* Medical History Summary */}
-            <CardLayout
-              cardTitle="Medical History"
-              cardDescription="Recent diagnoses and conditions"
-              cardContent={
-                <div className="space-y-4">
-                  {patientData.medicalHistory.map((record, index) => (
-                    <div key={index} className="p-3 border rounded-md">
-                      <div className="flex justify-between">
-                        <p className="font-medium">{record.diagnosis}</p>
-                        <p className="text-sm text-muted-foreground">{new Date(record.date).toLocaleDateString()}</p>
-                      </div>
-                      <p className="text-sm">{record.notes}</p>
-                    </div>
-                  ))}
-                </div>
-              }
-              cardClassName="h-full md:col-span-2"
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="records" className="pt-6">
+        <TabsContent value="personal" className="mt-0">
           <CardLayout
-            cardTitle="Visit History"
-            cardDescription="Record of all patient visits"
+            cardTitle="Personal Information"
+            cardDescription="Patient's personal and contact details"
             cardContent={
-              <div className="space-y-4">
-                {patientData.visits.map((visit, index) => (
-                  <div key={index} className="p-4 border rounded-md">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                      <div>
-                        <p className="font-medium text-lg">{new Date(visit.date).toLocaleDateString()}</p>
-                        <p className="text-muted-foreground">{visit.reason}</p>
-                      </div>
-                      <div className="flex flex-col items-start sm:items-end">
-                        <Badge variant="outline">{visit.doctor}</Badge>
-                        <Button variant="link" size="sm" className="h-auto p-0 text-buttonBlue">
-                          View details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="w-full mx-auto border-none">
+                <Separator className="w-full bg-gray" />
+                <div className="pt-4">
+                  <Form {...form}>
+                    <form className="space-y-6">
+                      {/* Personal Information Section */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Last Name */}
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Last Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
 
-                <div className="flex justify-center mt-6">
-                  <Button variant="outline">Load More Records</Button>
+                        {/* First Name */}
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">First Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Middle Name */}
+                        <FormField
+                          control={form.control}
+                          name="middleName"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Middle Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        {/* Gender */}
+                        <FormField
+                          control={form.control}
+                          name="gender"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Gender</FormLabel>
+                              <Select disabled defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger className="bg-muted/30">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="male">Male</SelectItem>
+                                  <SelectItem value="female">Female</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Contact Number */}
+                        <FormField
+                          control={form.control}
+                          name="contact"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Contact Number</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Date of Birth */}
+                        <FormField
+                          control={form.control}
+                          name="dateOfBirth"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Date of Birth</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Patient Type */}
+                        <FormField
+                          control={form.control}
+                          name="patientType"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Patient Type</FormLabel>
+                              <Select disabled defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger className="bg-muted/30">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Resident">Resident</SelectItem>
+                                  <SelectItem value="Transient">Transient</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Address Section */}
+                      <h3 className="text-md font-medium pt-4">Address Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                          control={form.control}
+                          name="houseNo"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">House Number</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="street"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Street</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="sitio"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Sitio</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="barangay"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Barangay</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">City</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="province"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-medium">Province</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled className="bg-muted/30" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </form>
+                  </Form>
                 </div>
               </div>
             }
-            cardClassName="w-full"
+            cardClassName="border shadow-sm rounded-lg"
+            cardHeaderClassName="pb-2"
+            cardContentClassName="pt-0"
+          />
+        </TabsContent>
+
+        <TabsContent value="medical" className="mt-0">
+          <CardLayout
+            cardTitle="Medical History"
+            cardDescription="Patient's medical information and history"
+            cardContent={
+              <div className="w-full mx-auto border-none">
+                <Separator className="w-full bg-gray" />
+                <div className="pt-4 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Blood Type</h3>
+                      <div className="p-3 bg-muted/30 rounded-md border">{patientData.bloodType}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Allergies</h3>
+                      <div className="p-3 bg-muted/30 rounded-md border">{patientData.allergies}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Chronic Conditions</h3>
+                      <div className="p-3 bg-muted/30 rounded-md border">{patientData.chronicConditions}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium">Last Visit</h3>
+                      <div className="p-3 bg-muted/30 rounded-md border">
+                        {new Date(patientData.lastVisit).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Medical Notes</h3>
+                    <div className="p-3 bg-muted/30 rounded-md border min-h-[100px]">
+                      Patient has been managing hypertension with medication for the past 3 years. Regular check-ups
+                      show stable condition. Recommended to maintain current medication and follow up every 3 months.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            cardHeaderClassName="pb-2"
+            cardContentClassName="pt-0"
+          />
+        </TabsContent>
+
+        <TabsContent value="visits" className="mt-0">
+          <CardLayout
+            cardTitle="Visit History"
+            cardDescription="Record of patient visits and consultations"
+            cardContent={
+              <div className="w-full mx-auto border-none">
+                <Separator className="w-full bg-gray" />
+                <div className="pt-4">
+                  <div className="space-y-4">
+                    {patientData.visits.map((visit, index) => (
+                      <div key={index} className="p-4 border rounded-lg bg-card">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{new Date(visit.date).toLocaleDateString()}</span>
+                            <span className="text-sm text-muted-foreground">{visit.reason}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{visit.doctor}</Badge>
+                            <Button variant="outline" size="sm">
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            cardHeaderClassName="pb-2"
+            cardContentClassName="pt-0"
           />
         </TabsContent>
       </Tabs>

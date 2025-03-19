@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native'
 import React from 'react'
+import ReferralForm from '@/screens/animal-bites/ReferralForm'
 
 const profile = () => {
   return (
