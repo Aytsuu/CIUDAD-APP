@@ -86,3 +86,20 @@ class Capital_Outlays_And_Non_Office(models.Model):
 
     class Meta:
         db_table = "Capital_Outlays_And_Non_Office"
+
+class Income_File(models.Model):
+    inc_num = models.BigAutoField(primary_key=True)
+    inc_month = models.CharField(max_length=2)
+    inc_year = models.CharField(max_length=4)
+    inc_file = models.CharField(null=False)
+    inc_upload_date = models.DateField(default=date.date.today)
+    iet_num = models.ForeignKey('', on_delete=models.CASCADE)
+    feat_id = models.ForeignKey('', on_delete=models.CASCADE)
+
+class Disbursement_File(models.Model):
+    dis_num = models.BigAutoField(primary_key=True)
+    dis_month = models.CharField(max_length=2)
+    dis_year = models.CharField(max_length=4)
+    dis_file = models.CharField(null=False)
+    dis_upload_date = models.DateField(default=date.date.today)
+    feat_id = models.ForeignKey('', on_delete=models.CASCADE)
