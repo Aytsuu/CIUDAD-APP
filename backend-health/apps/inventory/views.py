@@ -1,0 +1,124 @@
+from django.shortcuts import render
+from rest_framework import generics, status
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from .serializers import * 
+from datetime import datetime
+
+
+
+# ----------------------CATEGORY---VIEW------------------------------------
+
+class CategoryView(generics.ListCreateAPIView):
+    serializer_class = CategorySerializers
+    queryset  =Category.objects.all()
+    
+    def create(self , request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+
+# ----------------------CATEGORY---DELETE------------------------------------
+class DeleteCategoryView(generics.DestroyAPIView):
+    serializer_class = CategorySerializers    
+    queryset = Category.objects.all()
+
+    def get_object(self):
+        cat_id = self.kwargs.get('cat_id')
+        return get_object_or_404(Category, cat_id=cat_id)  # ✅ Correct field
+    
+
+# ----------------------INVENTORY---VIEW------------------------------------  
+class InventoryView(generics.ListCreateAPIView):
+    serializer_class=InventorySerializers
+    queryset = Category.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+
+# ---------------------------LIST---VIEW------------------------------------
+class MedicineListView(generics.ListCreateAPIView):
+    serializer_class=MedicineListSerializers
+    queryset= Medicinelist.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+class CommodityListView(generics.ListCreateAPIView):
+    serializer_class=CommodityListSerializers
+    queryset=CommodityList.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+class FirstAidListView(generics.ListCreateAPIView):
+    serializer_class=FirstAidListSerializers
+    queryset=FirstAidList.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+    
+# -------------------DELETE-----LIST------------------
+class DeleteMedicineListView(generics.DestroyAPIView):
+    serializer_class = MedicineListSerializers    
+    queryset = Medicinelist.objects.all()
+    def get_object(self):
+        med_id = self.kwargs.get('med_id')
+        return get_object_or_404(Medicinelist, med_id=med_id)  # ✅ Correct field# -------------------DELETE-----LIST------------------
+class DeleteFirstAidView(generics.DestroyAPIView):
+    serializer_class = FirstAidListSerializers    
+    queryset = FirstAidList.objects.all()
+    def get_object(self):
+        fa_id = self.kwargs.get('fa_id')
+        return get_object_or_404(FirstAidList, fa_id=fa_id)  # ✅ Correct field
+
+class DeleteCommodityView(generics.DestroyAPIView):
+    serializer_class = CommodityListSerializers    
+    queryset = CommodityList.objects.all()
+    def get_object(self):
+        com_id = self.kwargs.get('com_id')
+        return get_object_or_404(CommodityList, com_id=com_id)  # ✅ Correct field
+    
+
+
+#--------------------UPDATE---LIST-----------------------
+class MedicineListUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class=MedicineListSerializers
+    queryset = Medicinelist.objects.all()
+    lookup_field='med_id'
+    
+    def get_object(self):
+       med_id = self.kwargs.get('med_id')
+       obj = get_object_or_404(Medicinelist, med_id = med_id)
+       return obj
+       
+class FirstAidListUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class=FirstAidListSerializers
+    queryset = FirstAidList.objects.all()
+    lookup_field='fa_id'
+    
+    def get_object(self):
+       fa_id = self.kwargs.get('fa_id')
+       obj = get_object_or_404(FirstAidList, fa_id = fa_id)
+       return obj
+       
+class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class=CommodityListSerializers
+    queryset = CommodityList.objects.all()
+    lookup_field='com_id'
+    
+    def get_object(self):
+       com_id = self.kwargs.get('com_id')
+       obj = get_object_or_404(CommodityList, com_id = com_id)
+       return obj
+       
+       
+
+
+# ---------------------------------------------------------------------
+#STOCKS
+class MedicineStocksView(generics.ListCreateAPIView):
+    serializer_class=MedicineListSerializers
+    queryset=MedicineStocks.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+    
+    
