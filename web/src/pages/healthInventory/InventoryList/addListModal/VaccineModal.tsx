@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FormField,
   FormItem,
@@ -12,71 +12,44 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
-import {
-  VaccineListSchema,
-  VacccineType,
-} from "@/form-schema/inventory/inventoryListSchema"; // Adjust the import path as needed
-import { useState } from "react";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-
-interface Option {
-  id: string;
-  name: string;
-}
-
-// Initial options for the "Category" dropdown
-const initialCategories: Option[] = [
-  { id: "vaccine", name: "vaccine" },
-  { id: "MedicalSupplies", name: "MedicalSupplies" },
-];
+import { VaccineListSchema, VacccineType } from "@/form-schema/inventory/inventoryListSchema";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function VaccinationModal() {
   const form = useForm<VacccineType>({
     resolver: zodResolver(VaccineListSchema),
     defaultValues: {
       vaccineName: "",
-      category: "",
-      interval: 0,
-      timeUnits: "",
+      intervals: [],
+      timeUnits: [],
       noOfDoses: 0,
       ageGroup: "",
       specifyAge: "",
+      administeredOnce: false,
     },
   });
 
-
-  const timeUnits= [
+  const timeUnits = [
     { id: "years", name: "Years" },
     { id: "months", name: "Months" },
     { id: "weeks", name: "Weeks" },
-  ]
-  const [categories, setCategories] = useState<Option[]>(initialCategories);
+  ];
 
-  const handleSelectChange = (
-    selectedValue: string,
-    fieldOnChange: (value: string) => void,
-    setCategories: React.Dispatch<React.SetStateAction<Option[]>>
-  ) => {
-    setCategories((prev) =>
-      prev.some((opt) => opt.id === selectedValue)
-        ? prev
-        : [...prev, { id: selectedValue, name: selectedValue }]
-    );
-    fieldOnChange(selectedValue);
-  };
+  const [numberOfDoses, setNumberOfDoses] = useState(0);
+  const administeredOnce = form.watch("administeredOnce");
 
   const onSubmit = (data: VacccineType) => {
     console.log(data);
-    alert("success")
+    alert("success");
   };
 
-  const selectedAgeGroup = form.watch("ageGroup"); // Watch the selected age group
+  const selectedAgeGroup = form.watch("ageGroup");
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full">
             {/* Header content if needed */}
           </div>
 
@@ -101,55 +74,29 @@ export default function VaccinationModal() {
                   </FormItem>
                 )}
               />
-
-              {/* Category Field with Dynamic Addition */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <SelectLayoutWithAdd
-                        className="w-full"
-                        label="Category"
-                        placeholder="Select"
-                        options={categories}
-                        value={field.value}
-                        onChange={(selectedValue) =>
-                          handleSelectChange(
-                            selectedValue,
-                            field.onChange,
-                            setCategories
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
-            {/* Interval and Time Units */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Number of Doses and Administered Only Once Checkbox */}
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              {/* Number of Doses */}
               <FormField
                 control={form.control}
-                name="interval"
+                name="noOfDoses"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Interval</FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>Required Dose/s</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Interval"
+                        placeholder="Number of Doses"
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
+                          const numDoses = value === "" ? 0 : Number(value);
+                          field.onChange(numDoses);
+                          setNumberOfDoses(numDoses);
                         }}
+                        disabled={administeredOnce}
                       />
                     </FormControl>
                     <FormMessage />
@@ -157,27 +104,99 @@ export default function VaccinationModal() {
                 )}
               />
 
+              {/* Administered Only Once Checkbox */}
               <FormField
                 control={form.control}
-                name="timeUnits"
+                name="administeredOnce"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Time Units</FormLabel>
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 mt-8">
                     <FormControl>
-                      <SelectLayout
-                        className="w-full"
-                        label="Time Units"
-                        placeholder="Select"
-                        options={timeUnits}
-                        value={field.value}
-                        onChange={field.onChange}
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (checked) {
+                            form.setValue("noOfDoses", 1);
+                            setNumberOfDoses(1);
+                          } else {
+                            form.setValue("noOfDoses", 0);
+                            setNumberOfDoses(0);
+                          }
+                        }}
                       />
                     </FormControl>
+                    <FormLabel>Administered Only Once</FormLabel>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            {/* Dynamically Render Dose Fields */}
+            {!administeredOnce &&
+              Array.from({ length: numberOfDoses }).map((_, index) => (
+                <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Dose Label */}
+                  <div className="col-span-full">
+                    <h3 className="text-lg font-semibold">
+                      {index + 1}
+                      {index === 0
+                        ? "st"
+                        : index === 1
+                        ? "nd"
+                        : index === 2
+                        ? "rd"
+                        : "th"}{" "}
+                      Dose
+                    </h3>
+                  </div>
+
+                  {/* Interval Field */}
+                  <FormField
+                    control={form.control}
+                    name={`intervals.${index}`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Interval</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Interval"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === "" ? undefined : Number(value));
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Time Units Field */}
+                  <FormField
+                    control={form.control}
+                    name={`timeUnits.${index}`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Time Units</FormLabel>
+                        <FormControl>
+                          <SelectLayout
+                            className="w-full"
+                            label="Time Units"
+                            placeholder="Select"
+                            options={timeUnits}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
 
             {/* Age Group Field */}
             <FormField
@@ -222,31 +241,6 @@ export default function VaccinationModal() {
                 />
               </div>
             )}
-
-            {/* Number of Doses */}
-            <FormField
-              control={form.control}
-              name="noOfDoses"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Required Dose/s</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Number of Doses"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
 
           {/* Fixed Submit Button */}

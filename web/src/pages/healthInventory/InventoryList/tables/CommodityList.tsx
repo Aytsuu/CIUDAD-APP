@@ -103,7 +103,13 @@ export default function CommodityList() {
                 <Edit size={16} />
               </div>
             }
-            mainContent={<EditCommodityModal initialData={row.original} fetchData={fetchData} setIsDialog={setIsDialog} />}
+            mainContent={
+              <EditCommodityModal
+                initialData={row.original}
+                fetchData={fetchData}
+                setIsDialog={setIsDialog}
+              />
+            }
           />
 
           <Button
@@ -159,6 +165,8 @@ export default function CommodityList() {
           mainContent={
             <CommodityModal fetchData={fetchData} setIsDialog={setIsDialog} />
           }
+          isOpen={isDialog}
+          onOpenChange={setIsDialog}
         />
       </div>
 

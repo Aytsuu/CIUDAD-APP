@@ -15,7 +15,7 @@ import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 type MedicineRecords = {
   id: number;
-  medicineName: string;
+  medicineName: string; 
 };
 
 export default function MedicineList() {

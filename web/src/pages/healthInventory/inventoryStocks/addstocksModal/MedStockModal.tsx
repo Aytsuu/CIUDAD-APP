@@ -1,4 +1,4 @@
-import { useState } from "react"; // Add this import
+import { useState, useEffect } from "react"; // Add this import
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,7 +20,8 @@ import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { useCategories } from "../request/medcategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-
+import { getMedicines } from "../../InventoryList/requests/GetRequest";
+import { fetchMedicines } from "../request/fetch";
 export default function MedicineStockForm() {
   UseHideScrollbar();
   const form = useForm<MedicineStockType>({
@@ -38,17 +39,11 @@ export default function MedicineStockForm() {
     },
   });
 
-  const {
-    categories,
-
-    handleAddCategory,
-    handleDeleteCategory,
-    error,
-  } = useCategories();
+  const { categories, handleAddCategory, handleDeleteCategory, error } = useCategories();
+  const medicines = fetchMedicines();
 
   // State for delete confirmation dialog
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
 
   // State for add confirmation dialog
@@ -62,6 +57,7 @@ export default function MedicineStockForm() {
     fieldOnChange(selectedValue);
     form.setValue("category", selectedValue, { shouldValidate: true });
   };
+
 
   const onSubmit = async (data: MedicineStockType) => {
     try {
@@ -81,7 +77,6 @@ export default function MedicineStockForm() {
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
-  
   // Handle delete confirmation
   const handleDeleteConfirmation = (categoryId: number) => {
     setCategoryToDelete(categoryId);
@@ -97,12 +92,12 @@ export default function MedicineStockForm() {
   };
 
   // Handle add confirmation
-  const handleAddConfirmation = (categoryName: string) => {
+  const categoryHandleAdd = (categoryName: string) => {
     setNewCategoryName(categoryName);
     setIsAddConfirmationOpen(true);
   };
 
-  const confirmAdd = async () => {
+  const handleConfirmAdd = async () => {
     if (newCategoryName.trim()) {
       await handleAddCategory(newCategoryName, (newId) => {
         form.setValue("category", newId, { shouldValidate: true });
@@ -111,6 +106,8 @@ export default function MedicineStockForm() {
       setNewCategoryName("");
     }
   };
+
+
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
@@ -130,10 +127,7 @@ export default function MedicineStockForm() {
                       label=""
                       className="w-full"
                       placeholder="Select Medicine"
-                      options={[
-                        { id: "paracetamol", name: "Paracetamol" },
-                        { id: "amoxicillin", name: "Amoxicillin" },
-                      ]}
+                      options={medicines}
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -163,7 +157,7 @@ export default function MedicineStockForm() {
                       onChange={(selectedValue) =>
                         handleSelectChange(selectedValue, field.onChange)
                       }
-                      onAdd={handleAddConfirmation} // Pass the confirmation handler
+                      onAdd={categoryHandleAdd} // Pass the confirmation handler
                       onDelete={(categoryId) => {
                         const parsedCategoryId = Number(categoryId); // Convert to number
                         if (!isNaN(parsedCategoryId)) {
@@ -391,7 +385,7 @@ export default function MedicineStockForm() {
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
-        onConfirm={confirmAdd}
+        onConfirm={handleConfirmAdd}
         title="Add Category"
         description={`Are you sure you want to add the category "${newCategoryName}"?`}
       />

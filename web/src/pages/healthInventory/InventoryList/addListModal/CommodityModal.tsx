@@ -40,8 +40,8 @@ export default function CommodityModal({fetchData,setIsDialog}: CommodityProps) 
       try {
         if (await addCommodity(newCommodityName)) {
           setIsAddConfirmationOpen(false);
-          setIsDialog(false);
           setnewCommodityName("");
+          setIsDialog(false);
           fetchData()
         } else {
           console.error("Failed to add medicine.");

@@ -17,6 +17,8 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
+import { fetchCommodity } from "../request/fetch";
+
 
 export default function CommodityStockForm() {
   UseHideScrollbar();
@@ -33,6 +35,7 @@ export default function CommodityStockForm() {
     },
   });
 
+  const commodity = fetchCommodity();
   const onSubmit = async (data: CommodityStockType) => {
     try {
       const validatedData = CommodityStocksSchema.parse(data);
@@ -68,11 +71,7 @@ export default function CommodityStockForm() {
                       label=""
                       className="w-full"
                       placeholder="Select Category"
-                      options={[
-                        { id: "medical", name: "Medical Supplies" },
-                        { id: "pharmaceutical", name: "Pharmaceuticals" },
-                        { id: "equipment", name: "Equipment" },
-                      ]}
+                      options={commodity}
                       value={field.value}
                       onChange={field.onChange}
                     />

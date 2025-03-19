@@ -191,13 +191,13 @@ export default function PEForm({ form }: PEFormProps) {
                         return (
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
-                              <Checkbox
-                                id={finding.name}
-                                checked={isChecked}
-                                onCheckedChange={(checked) => {
-                                  field.onChange(checked ? ["true"] : []);
-                                }}
-                              />
+                                <Checkbox
+                                  id={finding.name}
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    field.onChange(checked ? ["true"] : []);
+                                  }}
+                                />
                             </FormControl>
                             <FormLabel className="font-normal cursor-pointer">
                               {finding.label}

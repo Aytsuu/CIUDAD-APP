@@ -15,6 +15,7 @@ import {
   FirstAidStockSchema,
   FirstAidStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
+import { fetchFirstAid } from "../request/fetch";
 
 export default function FirstAidStockForm() {
   const form = useForm<FirstAidStockType>({
@@ -27,6 +28,7 @@ export default function FirstAidStockForm() {
     },
   });
 
+  const firstAid = fetchFirstAid();
   const onSubmit = async (data: FirstAidStockType) => {
     try {
       const validatedData = FirstAidStockSchema.parse(data);
@@ -57,11 +59,7 @@ export default function FirstAidStockForm() {
                         label=""
                         className="w-full"
                         placeholder="Select Item"
-                        options={[
-                          { id: "bandage", name: "Bandage" },
-                          { id: "antiseptic", name: "Antiseptic" },
-                          { id: "gloves", name: "Gloves" },
-                        ]}
+                        options={firstAid}
                         value={field.value}
                         onChange={field.onChange}
                       />
