@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Search } from 'lucide-react';
-=======
 // import { Input } from "@/components/ui/input";
 // import { SelectLayout } from "@/components/ui/select/select-layout";
 // import { useState } from "react";
@@ -71,7 +64,6 @@ interface FileData {
     id: number; // or string, depending on your data
     name: string;
 }
->>>>>>> frontend/feature/treasurer
 
 function IncomeandDisbursementView() {
     const filter = [
@@ -81,8 +73,6 @@ function IncomeandDisbursementView() {
     ];
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-<<<<<<< HEAD
-=======
     const [files, setFiles] = useState<FileData[]>([]); 
     const fetchFiles = async () => {
         try {
@@ -96,7 +86,6 @@ function IncomeandDisbursementView() {
     useEffect(() => {
         fetchFiles();
     }, []);
->>>>>>> frontend/feature/treasurer
 
     return (
         <div className="w-full h-full">
@@ -127,9 +116,6 @@ function IncomeandDisbursementView() {
 
                 <div>
                     <div className="bg-white border border-gray-300 rounded-[5px] p-5 h-[20rem] flex items-center justify-center">
-<<<<<<< HEAD
-                        <h2 className="flex justify-center font-semibold text-lg text-darkGray items-center">No Files Uploaded.</h2>
-=======
                     {files.length === 0 ? (
                             <h2 className="flex justify-center font-semibold text-lg text-darkGray items-center">No Files Uploaded.</h2>
                         ) : (
@@ -139,12 +125,11 @@ function IncomeandDisbursementView() {
                                 ))}
                             </ul>
                         )}
->>>>>>> frontend/feature/treasurer
                     </div>
                 </div>
             </div>
         </div>
-    );
+    );<s></s>
 }
 
 export default IncomeandDisbursementView;
