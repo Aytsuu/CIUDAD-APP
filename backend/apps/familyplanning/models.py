@@ -1,7 +1,17 @@
 from django.db import models
 
-
 class ObstetricalHistory(models.Model):
+    obs_id = models.AutoField(primary_key=True)
+    obs_living_children = models.PositiveIntegerField(default=0)
+    obs_abortion = models.PositiveIntegerField(default=0)
+    obs_fetal_death = models.PositiveIntegerField(default=0)
+    obs_large_babies = models.PositiveIntegerField(default=0)
+    obs_gravida = models.PositiveIntegerField(default=0)
+    obs_para = models.PositiveIntegerField(default=0)
+    obs_fullterm = models.PositiveIntegerField(default=0)
+    obs_category = models.CharField(max_length=20)
+    
+class FP_ObstetricalHistory(models.Model):
     g_pregnancies = models.PositiveIntegerField(default=0)
     p_pregnancies = models.PositiveIntegerField(default=0)
     full_term = models.PositiveIntegerField()
@@ -16,6 +26,9 @@ class ObstetricalHistory(models.Model):
     dysmenorrhea = models.BooleanField(default=False)
     hydatidiform_mole = models.BooleanField(default=False)
     ectopic_pregnancy_history = models.BooleanField(default=False)
+    obs = models.ForeignKey(ObstetricalHistory,on_delete=models.CASCADE)
+    
+    
     
     class Meta:
         db_table = "obstetrical_history"
@@ -137,9 +150,10 @@ class PhysicalExamination(models.Model):
         
         
 class Acknowledgement(models.Model):
-    selectedMethod = models.CharField(max_length=50)
-    clientSignature = models.TextField()
-    clientSignatureDate = models.DateField()
+    ack_id = models.BigAutoField(primary_key=True)
+    ack_clientSignature = models.TextField()
+    ack_selectedMethod = models.CharField(max_length=50)
+    ack_clientSignatureDate = models.DateField()
 
     clientName = models.CharField(max_length=50)
     guardianSignature = models.TextField()
