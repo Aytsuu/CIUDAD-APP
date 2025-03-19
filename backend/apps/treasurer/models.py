@@ -96,6 +96,9 @@ class Income_File(models.Model):
     iet_num = models.ForeignKey('', on_delete=models.CASCADE)
     feat_id = models.ForeignKey('', on_delete=models.CASCADE)
 
+    class Meta:
+        db_table = "Income_File"
+
 class Disbursement_File(models.Model):
     dis_num = models.BigAutoField(primary_key=True)
     dis_month = models.CharField(max_length=2)
@@ -103,3 +106,6 @@ class Disbursement_File(models.Model):
     dis_file = models.CharField(null=False)
     dis_upload_date = models.DateField(default=date.date.today)
     feat_id = models.ForeignKey('', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "Disbursement_File"
