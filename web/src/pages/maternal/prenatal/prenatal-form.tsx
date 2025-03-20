@@ -9,6 +9,7 @@ import { z } from "zod"
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-firstpg"
 import PrenatalFormSecPg from "./prenatal-form-secpg"
+import PrenatalFormThirdPg from "./prenatal-form-thirdpg"
 
 import { Card } from "@/components/ui/card/card"
 
@@ -47,6 +48,13 @@ export default function PrenatalForm(){
                     )}
                     {currentPage === 2 && (
                         <PrenatalFormSecPg 
+                            form={form}
+                            onSubmit={()=>nextPage()}
+                            back={()=>prevPage()}
+                        />
+                    )}
+                    {currentPage === 3 && (
+                        <PrenatalFormThirdPg
                             form={form}
                             onSubmit={()=>nextPage()}
                             back={()=>prevPage()}

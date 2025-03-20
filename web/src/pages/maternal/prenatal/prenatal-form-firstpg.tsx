@@ -12,12 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/table/data-table";
-// import { DatePicker } from "@/components/ui/datepicker";
 
 // schema import
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
-
-// import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select/select";
 
 
 export default function PrenatalFormFirstPg(
@@ -140,7 +137,7 @@ export default function PrenatalFormFirstPg(
         <>
             <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
                 <div className="pb-4">
-                    <h2 className="text-lg font-semibold">MATERNAL HEALTH RECORD</h2>
+                    <h2 className="text-3xl font-bold text-center">MATERNAL HEALTH RECORD</h2>
                 </div>
                 <Form {...form}>
                     <form onSubmit={(e) => {
@@ -258,7 +255,7 @@ export default function PrenatalFormFirstPg(
                                 name="motherPersonalInfo.husbandFName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>First Name</FormLabel>
+                                        <FormLabel>Husband's First Name</FormLabel>
                                         <FormControl>
                                             <Input {...field} placeholder="Enter First Name" />
                                         </FormControl>

@@ -294,7 +294,7 @@ export default function PrenatalFormSecPg(
                                 <FormItem>
                                     <FormLabel>LMP</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder=""/>
+                                        <Input {...field} type="date" placeholder=""/>
                                     </FormControl>
                                 </FormItem>
                             )}
@@ -306,7 +306,7 @@ export default function PrenatalFormSecPg(
                                 <FormItem>
                                     <FormLabel>EDC</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder=""/>
+                                        <Input {...field} type="date" placeholder=""/>
                                     </FormControl>
                                 </FormItem>
                             )}
@@ -315,8 +315,145 @@ export default function PrenatalFormSecPg(
 
                     {/* laboratory exam */}
                     <Separator className="mt-10"/>
-                    <h3 className="text-md font-bold mt-8">PRESENT PREGNANCY</h3>
-                    <div></div>
+                    <h3 className="text-md font-bold mt-8">LABORATORY RESULTS: (DATE AND RESULT)</h3>
+                    <div className="flex justify-end">
+                        <Button>Upload Lab Result</Button>
+                    </div>
+                    <Label>PRE-ECLAMPSIA PANEL:</Label>
+                    <div className="grid grid-cols-6 gap-4 mt-2">
+                        <FormField
+                            control={form.control}
+                            name="labResults.urinalysisDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>URINALYSIS</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.cbcDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>CBC</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.sgotSgptDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>SGOT/SGPT</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.creatinineDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>CREATININE SERUM</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.buaBunDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>BUA/BUN</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.syphillisDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>SYPHILLIS</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.hivTestDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>HIV TEST</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.hepaBDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>HEPA B</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.bloodTypingDate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>BLOOD TYPING</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.ogct50Date"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>OGCT: 50GMS 24-28 WKS)</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="labResults.ogct50Date"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>100GMS</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
 
                     <div className="mt-8 sm:mt-auto flex justify-end">
                         <Button variant="outline" className="mt-4 mr-4 sm-w-32" onClick={back}>

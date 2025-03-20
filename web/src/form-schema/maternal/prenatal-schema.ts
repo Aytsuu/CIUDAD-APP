@@ -74,22 +74,30 @@ export const PrenatalFormSchema = z.object({
 
     // laboratory results
     labResults: z.object({
-        urinalyisDate: z.string().optional(),
-        cbcDate: z.string().optional(),
-        sgotSgptDate: z.string().optional(),
-        creatinineDate: z.string().optional(),
-        buaBunDate: z.string().optional(),
-        syphillisDate: z.string().optional(),
-        hivTestDate: z.string().optional(),
-        hepaBDate: z.string().optional(),
-        bloodTypingDate: z.string().optional(),
-        ogct50Date: z.string().optional(),
-        ogct100Date: z.string().optional()
+        urinalysisDate: z.string().date().optional(),
+        cbcDate: z.string().date().optional(),
+        sgotSgptDate: z.string().date().optional(),
+        creatinineDate: z.string().date().optional(),
+        buaBunDate: z.string().date().optional(),
+        syphillisDate: z.string().date().optional(),
+        hivTestDate: z.string().date().optional(),
+        hepaBDate: z.string().date().optional(),
+        bloodTypingDate: z.string().date().optional(),
+        ogct50Date: z.string().date().optional(),
+        ogct100Date: z.string().date().optional()
     }),
 
         // follow-up schedule
     followUpSchedule: z.object({
-        dateOfFollowUp: z.string().min(1, 'Date is required')
+        scheduleOption: z.enum(['week', 'twoweeks', 'month']),
+        dateOfFollowUp: z.string().date()
+    }),
+
+    ancVisits: z.object({
+        firstTri: z.string().date().optional(),
+        secondTri: z.string().date().optional(),
+        thirdTriOne: z.string().date().optional(),
+        thirdTriTwo: z.string().date().optional(),
     }),
 
     // checklist
