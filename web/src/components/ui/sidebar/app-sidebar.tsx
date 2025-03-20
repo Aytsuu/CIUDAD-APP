@@ -109,6 +109,7 @@ const items: MenuItem[] = [
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
           { title: "Barangay Service", url: "/treasurer-barangay-service" },
+          { title: "Rates", url: "/treasurer-rates" },
         ],
       },
     ],
