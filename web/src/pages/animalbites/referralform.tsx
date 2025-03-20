@@ -34,7 +34,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
         age: values.p_age.toString(), // Convert to string (to match `Patient` type)
         gender: values.p_gender,
         date: values.date,
-        exposure: values.p_exposure,
+        exposure: values.p_exposuretype,
         siteOfExposure: values.p_siteofexposure,
         bitingAnimal: values.p_bitinganimal,
         actions: values.p_actions || "No actions recorded",
@@ -61,7 +61,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_address: "",
       p_age: 0,
       p_gender: "",
-      p_exposure: "",
+      p_exposuretype: "",
       p_siteofexposure: "",
       p_bitinganimal: "",
       p_lab_exam: "",
@@ -69,8 +69,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_referred: "",
     },
   });
-  console.log("❌ Validation errors:", form.formState.errors);
-
+  
   return (
     <div className="p-3">
       {/* Header */}
@@ -253,7 +252,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               {/* Exposure Type */}
               <FormField
                 control={form.control}
-                name="p_exposure"
+                name="p_exposuretype"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Type of Exposure:</Label>

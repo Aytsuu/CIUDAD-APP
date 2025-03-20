@@ -6,8 +6,22 @@ from .serializers import *
 
 # Create your views here.
 class PatientsView(generics.ListCreateAPIView):
-    serializer_class = Patient 
-    queryset = PatientsView.objects.all()
+    serializer_class = PatientsSerializer 
+    queryset = Patient.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+class ReferralView(generics.ListCreateAPIView):
+    serializer_class = ReferralSerializer 
+    queryset = Referral.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+class BiteDetailsView(generics.ListCreateAPIView):
+    serializer_class = BiteDetailsSerializer 
+    queryset = BiteDetails.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
