@@ -11,10 +11,9 @@ export const ReferralFormSchema = z.object({
     p_address: z.string().nonempty("Address is required"),
     p_age: z.coerce.number().min(0, "Age must be a positive number").nonnegative("Invalid age"),
     p_gender: z.string().nonempty("Gender is required"),
-    p_exposuretype: z.string().nonempty("Exposure type is required"),
-    p_siteofexposure: z.string().nonempty("Site of exposure is required"),
-    p_bitinganimal: z.string().nonempty("Biting animal is required"),
-    p_lab_exam: z.string().optional(), 
+    exposure_type: z.string().nonempty("Exposure type is required"),
+    exposure_site: z.string().nonempty("Site of exposure is required"),
+    biting_animal: z.string().nonempty("Biting animal is required"),
     p_actions: z.string().nonempty("Actions required"),
     p_referred: z.string().nonempty("Referred by is required"),
 });

@@ -149,7 +149,7 @@ function AnimalBites() {
                 placeholder="Search..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
-                onChangeCapture={handleSearchChange}
+                onChange={handleSearchChange}
               />
             </div>
 

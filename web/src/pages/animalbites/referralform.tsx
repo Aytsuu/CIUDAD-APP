@@ -1,55 +1,31 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-// import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import ReferralFormSchema from "@/form-schema/ReferralFormSchema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import type { z } from "zod"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import ReferralFormSchema from "@/form-schema/ReferralFormSchema"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { useState } from "react"
+import { patient,referral,bitedetails } from "./postrequest"
 
 
 type ReferralFormModalProps = {
-  onClose: () => void;
-  onAddPatient?: (patient: any) => void; // Add this line
-};
+  onClose: () => void
+  onAddPatient?: (patient: any) => void
+}
 
 export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFormModalProps) {
-  function onSubmit(values: z.infer<typeof ReferralFormSchema>) {
-    console.log("Form submitted:", values);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-    if (onAddPatient) {
-      const newPatient = {
-        id: Date.now(), // Generate a unique ID
-        lname: values.p_lname,
-        fname: values.p_fname,
-        age: values.p_age.toString(), // Convert to string (to match `Patient` type)
-        gender: values.p_gender,
-        date: values.date,
-        exposure: values.p_exposuretype,
-        siteOfExposure: values.p_siteofexposure,
-        bitingAnimal: values.p_bitinganimal,
-        actions: values.p_actions || "No actions recorded",
-      };
-
-      console.log("👨‍⚕️ Adding new patient:", newPatient);
-      onAddPatient(newPatient);
-
-      onClose();
-    } else {
-      console.log("❌ onAddPatient function is missing!");
-    }
-  }
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
-    // resolver: zodResolver(ReferralFormSchema),
+    resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
       receiver: "",
       sender: "",
@@ -61,21 +37,96 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_address: "",
       p_age: 0,
       p_gender: "",
-      p_exposuretype: "",
-      p_siteofexposure: "",
-      p_bitinganimal: "",
-      p_lab_exam: "",
+      exposure_type: "",
+      exposure_site: "",
+      biting_animal: "",
+     
       p_actions: "",
       p_referred: "",
     },
-  });
-  
+  })
+
+  async function onSubmit(values: z.infer<typeof ReferralFormSchema>) {
+    setIsSubmitting(true)
+    setError(null)
+    console.log("Form submitted:", values)
+
+    try {
+      // 1. Create patient record
+      const patientData = {
+        transient: values.transient,
+        lastname: values.p_lname,
+        firstname: values.p_fname,
+        middlename: values.p_mname,
+        address: values.p_address,
+        age: values.p_age,
+        gender: values.p_gender,
+      }
+
+      console.log("Submitting patient data:", patientData)
+      const patientId = await patient(patientData)
+      console.log("Patient created with ID:", patientId)
+
+      // 2. Create referral record
+      const referralData = {
+        receiver: values.receiver,
+        sender: values.sender,
+        date: values.date,
+      }
+
+      console.log("Submitting referral data:", referralData)
+      const referralId = await referral(referralData, patientId)
+      console.log("Referral created with ID:", referralId)
+
+      // 3. Create bite details record
+      const biteDetailsData = {
+        exposure_type: values.exposure_type,
+        exposure_site: values.exposure_site,
+        biting_animal: values.biting_animal,
+        actions_taken: values.p_actions || "No actions recorded",
+      }
+
+      console.log("Submitting bite details data:", biteDetailsData)
+      const biteDetailsId = await bitedetails(biteDetailsData, referralId)
+      console.log("Bite details created with ID:", biteDetailsId)
+
+      if (onAddPatient) {
+        const newPatient = {
+          id: referralId,
+          lname: values.p_lname,
+          fname: values.p_fname,
+          mname: values.p_mname,
+          address: values.p_address,
+          age: values.p_age.toString(),
+          gender: values.p_gender,
+          date: values.date,
+          transient: values.transient,
+          exposure: values.exposure_type,
+          siteOfExposure: values.exposure_site,
+          bitingAnimal: values.biting_animal,
+          actions: values.p_actions || "No actions recorded",
+        }
+
+        console.log("👨‍⚕️ Adding new patient to UI:", newPatient)
+        onAddPatient(newPatient)
+      }
+
+      // 5. Close the modal
+      onClose()
+    } catch (err) {
+      console.error("Error saving record:", err)
+      setError("Failed to save record. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="p-3">
       {/* Header */}
-      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">
-        Animal Bites Referral Form
-      </h2>
+      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">Animal Bites Referral Form</h2>
+
+      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4">
@@ -132,7 +183,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               render={({ field }) => (
                 <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <Checkbox className="mt-3 border border-black" checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      className="mt-3 border border-black"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <Label>Transient</Label>
                   <FormMessage />
@@ -252,7 +307,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               {/* Exposure Type */}
               <FormField
                 control={form.control}
-                name="p_exposuretype"
+                name="exposure_type"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Type of Exposure:</Label>
@@ -275,7 +330,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               {/* Site of Exposure */}
               <FormField
                 control={form.control}
-                name="p_siteofexposure"
+                name="exposure_site"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Site of Exposure:</Label>
@@ -290,12 +345,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               {/* Biting Animal */}
               <FormField
                 control={form.control}
-                name="p_bitinganimal"
+                name="biting_animal"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Biting Animal:</Label>
                     <FormControl>
-                      <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
+                      <Input placeholder="e.g., Dog, Cat" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -324,10 +379,13 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Add</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Add"}
+            </Button>
           </div>
         </form>
       </Form>
     </div>
-  );
+  )
 }
+
