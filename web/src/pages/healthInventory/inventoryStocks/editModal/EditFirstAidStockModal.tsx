@@ -16,6 +16,9 @@ import {
   FirstAidStockSchema,
   FirstAidStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
+import { fetchFirstAid } from "../request/fetch";
+import { useCategoriesFirstAid } from "../request/FirstAidCategory";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 
 interface EditFirstAidStockFormProps {
   initialData: {
@@ -39,11 +42,7 @@ EditFirstAidStockFormProps) {
     { id: "Antiseptic Solution", name: "Antiseptic Solution" },
   ];
 
-  const categoryOptions = [
-    { id: "Dressings", name: "Dressings" },
-    { id: "Wound Care", name: "Wound Care" },
-    { id: "Cleaning Supplies", name: "Cleaning Supplies" },
-  ];
+
 
   const form = useForm<FirstAidStockType>({
     resolver: zodResolver(FirstAidStockSchema),
@@ -65,6 +64,14 @@ EditFirstAidStockFormProps) {
       expiryDate: initialData.expiryDate,
     });
   }, [initialData, form]);
+
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesFirstAid();
+  const firstAid = fetchFirstAid();
 
   const onSubmit = async (data: FirstAidStockType) => {
     console.log("submitted data:", data);
@@ -88,7 +95,7 @@ EditFirstAidStockFormProps) {
                         label=""
                         className="w-full"
                         placeholder="Select Item"
-                        options={itemOptions}
+                        options={firstAid}
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -107,13 +114,19 @@ EditFirstAidStockFormProps) {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <SelectLayout
-                        label=""
-                        className="w-full"
-                        placeholder="Select Category"
-                        options={categoryOptions}
+                      {/* Category Dropdown with Add/Delete */}
+                      <SelectLayoutWithAdd
+                        placeholder="select"
+                        label="Select a Category"
+                        options={categories}
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(value) => field.onChange(value)}
+                        onAdd={(newCategoryName) => {
+                          categoryHandleAdd(newCategoryName, (newId) => {
+                            field.onChange(newId); // Update the form value with the new category ID
+                          });
+                        }}
+                        onDelete={(id) => handleDeleteConfirmation(Number(id))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -173,6 +186,7 @@ EditFirstAidStockFormProps) {
           </div>
         </form>
       </Form>
+      {ConfirmationDialogs()}
     </div>
   );
 }

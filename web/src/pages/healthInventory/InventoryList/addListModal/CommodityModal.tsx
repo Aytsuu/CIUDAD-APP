@@ -104,7 +104,7 @@ export default function CommodityModal({fetchData,setIsDialog}: CommodityProps) 
 
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>
-            </div>
+            </div> 
           </div>
         </form>
       </Form>

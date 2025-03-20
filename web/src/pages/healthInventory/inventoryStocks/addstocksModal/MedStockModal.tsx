@@ -17,17 +17,18 @@ import {
   MedicineStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { useCategories } from "../request/medcategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { getMedicines } from "../../InventoryList/requests/GetRequest";
 import { fetchMedicines } from "../request/fetch";
+import { useCategoriesMedicine } from "../request/Medcategory";
+import { MedicineInventoryPayload, InventoryPayload, generateID } from "./type";
+import { addMedicineInventory, addInventory } from "../request/Post";
+
 export default function MedicineStockForm() {
   UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
-      medicineName: "",
+      medicineID: "",
       category: "",
       dosage: 0,
       dsgUnit: "",
@@ -39,30 +40,75 @@ export default function MedicineStockForm() {
     },
   });
 
-
-
-const {
-  categories,
-  handleDeleteConfirmation,
-  categoryHandleAdd,
-  ConfirmationDialogs,
-} = useCategories();
-
-// ... (rest of the code)
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesMedicine();
   const medicines = fetchMedicines();
-
 
   const onSubmit = async (data: MedicineStockType) => {
     try {
-      const validatedData = MedicineStocksSchema.parse(data);
-      console.log("Form submitted", validatedData);
-      form.reset();
-      alert("Medicine stock added successfully!");
-    } catch (error) {
-      console.error("Form submission error:", form.formState.errors);
-      alert("Submission failed. Please check the form for errors.");
+        const inventoryPayload = {
+            expiry_date: data.expiryDate,
+            inv_type: "Medicine",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        };
+
+        // Step 1: Create inventory entry
+        const inventoryResponse = await addInventory(inventoryPayload);
+        console.log("Inventory Response:", inventoryResponse);
+
+        if (!inventoryResponse?.inv_id) {
+            throw new Error("Failed to generate inventory ID.");
+        }
+        
+        const inv_id = parseInt(inventoryResponse.inv_id, 10); // Ensure it's an integer
+        console.log("Generated inv_id:", inv_id);
+
+        if (!data.medicineID) {
+            throw new Error("Medicine ID is required.");
+        }
+
+        const med_id = parseInt(data.medicineID, 10); // Convert to integer
+
+        console.log("Creating Inventory Entry:", inventoryPayload);
+
+        const qty = Number(data.qty) || 0;
+        const pcs = Number(data.pcs) || 0;
+        const minv_qty_avail = data.unit === "boxes" ? qty * pcs : qty;
+
+        const medicinePayload: MedicineInventoryPayload = {
+            minv_dsg: Number(data.dosage) || 0,
+            minv_dsg_unit: data.dsgUnit || "N/A",
+            minv_form: data.form || "N/A",
+            minv_qty: qty,
+            minv_qty_unit: data.unit || "N/A",
+            minv_pcs: pcs,
+            minv_distributed: 0,
+            minv_qty_avail,
+            med_id, // FK from medicine
+            cat_id: Number(data.category) || 0,
+            inv_id, // FK from inventory (integer)
+        };
+
+        console.log("Medicine Payload:", medicinePayload);
+
+        // Add delay to avoid async race conditions
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const medicineInventoryResponse = await addMedicineInventory(medicinePayload);
+        console.log("Medicine Inventory Response:", medicineInventoryResponse);
+
+    } catch (error: any) {
+        console.error("Submission Error:", error);
+        if (error.response) {
+            console.error("Error response:", error.response.data);
+        }
     }
-  };
+};
 
   // Watch relevant fields for calculation
   const currentUnit = form.watch("unit");
@@ -79,7 +125,7 @@ const {
             {/* Medicine Name Dropdown */}
             <FormField
               control={form.control}
-              name="medicineName"
+              name="medicineID"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-black/65">Medicine Name</FormLabel>
@@ -90,7 +136,10 @@ const {
                       placeholder="Select Medicine"
                       options={medicines}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        console.log("Selected Medicine ID:", value);
+                        field.onChange(value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -106,20 +155,24 @@ const {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                   {/* Category Dropdown with Add/Delete */}
-            <SelectLayoutWithAdd
-              placeholder="select"
-              label="Select a Category"
-              options={categories}
-              value={field.value}
-              onChange={(value) => field.onChange(value)}
-              onAdd={(newCategoryName) => {
-                categoryHandleAdd(newCategoryName, (newId) => {
-                  field.onChange(newId); // Update the form value with the new category ID
-                });
-              }}
-              onDelete={(id) => handleDeleteConfirmation(Number(id))}
-            />
+                    {/* Category Dropdown with Add/Delete */}
+                    <SelectLayoutWithAdd
+                      placeholder="select"
+                      label="Select a Category"
+                      options={
+                        categories.length > 0
+                          ? categories
+                          : [{ id: "loading", name: "Loading..." }]
+                      }
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      onAdd={(newCategoryName) => {
+                        categoryHandleAdd(newCategoryName, (newId) => {
+                          field.onChange(newId); // Update the form value with the new category ID
+                        });
+                      }}
+                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -324,7 +377,14 @@ const {
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()}
+      {ConfirmationDialogs()} //Category
+      {/* <ConfirmationDialog
+              isOpen={isAddConfirmationOpen}
+              onOpenChange={setIsAddConfirmationOpen}
+              onConfirm={confirmAdd}
+              title="Add Medicine"
+              description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
+            /> */}
     </div>
   );
 }

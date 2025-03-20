@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 interface Option {
   id: string;
   name: string;
-}
+} 
 
 interface SelectProps {
   placeholder: string;

@@ -7,6 +7,8 @@ urlpatterns = [
     # VIEW POST
     path("category/", CategoryView.as_view(), name="category"),
     path("inventorylist/", InventoryView.as_view(), name="inventorylist"),
+#    path("retrieveinventorylist/<str:inv_id>", InventoryRetriveView.as_view(), name="inventorylist-retrieve"),
+
     
     #LIST POST
     path("medicinelist/", MedicineListView.as_view(), name="medicinelist"),
@@ -14,7 +16,7 @@ urlpatterns = [
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
     
     #STOCKS POST
-    path("medicinestocks/", MedicineListView.as_view(), name="inventorylist"),
+    path("medicineinventorylist/", MedicineInventoryView.as_view(), name="medicine-inventory"),
     
 
     # DELETE CATEGORY

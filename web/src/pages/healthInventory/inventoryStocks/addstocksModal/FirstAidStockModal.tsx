@@ -16,6 +16,9 @@ import {
   FirstAidStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import { fetchFirstAid } from "../request/fetch";
+import { useCategoriesFirstAid } from "../request/FirstAidCategory";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+
 
 export default function FirstAidStockForm() {
   const form = useForm<FirstAidStockType>({
@@ -24,10 +27,11 @@ export default function FirstAidStockForm() {
       itemName: "",
       category: "",
       qty: 0,
-      expiryDate:""
+      expiryDate: "",
     },
   });
 
+  const {categories,handleDeleteConfirmation,categoryHandleAdd,ConfirmationDialogs,} = useCategoriesFirstAid();
   const firstAid = fetchFirstAid();
   const onSubmit = async (data: FirstAidStockType) => {
     try {
@@ -77,17 +81,19 @@ export default function FirstAidStockForm() {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <SelectLayout
-                        label=""
-                        className="w-full"
-                        placeholder="Select Category"
-                        options={[
-                          { id: "consumables", name: "Consumables" },
-                          { id: "equipment", name: "Equipment" },
-                          { id: "medications", name: "Medications" },
-                        ]}
+                      {/* Category Dropdown with Add/Delete */}
+                      <SelectLayoutWithAdd
+                        placeholder="select"
+                        label="Select a Category"
+                        options={categories}
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(value) => field.onChange(value)}
+                        onAdd={(newCategoryName) => {
+                          categoryHandleAdd(newCategoryName, (newId) => {
+                            field.onChange(newId); // Update the form value with the new category ID
+                          });
+                        }}
+                        onDelete={(id) => handleDeleteConfirmation(Number(id))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -107,7 +113,7 @@ export default function FirstAidStockForm() {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Quantity" 
+                        placeholder="Quantity"
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -121,8 +127,8 @@ export default function FirstAidStockForm() {
                   </FormItem>
                 )}
               />
-               {/* Expiry Date */}
-               <FormField
+              {/* Expiry Date */}
+              <FormField
                 control={form.control}
                 name="expiryDate"
                 render={({ field }) => (
@@ -146,6 +152,7 @@ export default function FirstAidStockForm() {
           </div>
         </form>
       </Form>
+      {ConfirmationDialogs()}
     </div>
   );
 }

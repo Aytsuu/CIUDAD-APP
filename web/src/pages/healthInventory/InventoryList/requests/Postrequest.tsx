@@ -1,6 +1,6 @@
 import api from "@/pages/api/api";
 
-const toTitleCase = (str: string): string => {
+export const toTitleCase = (str: string): string => {
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
  

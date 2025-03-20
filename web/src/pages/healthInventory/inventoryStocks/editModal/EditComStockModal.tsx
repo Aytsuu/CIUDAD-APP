@@ -18,7 +18,9 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-
+import { fetchCommodity } from "../request/fetch";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { useCategoriesCommodity } from "../request/CommodityCategory";
 
 interface EditCommodityStockFormProps {
   initialData: {
@@ -33,15 +35,11 @@ interface EditCommodityStockFormProps {
   };
 }
 
-
 export default function EditCommodityStockForm({
   initialData,
-}: 
-EditCommodityStockFormProps) {
-  
+}: EditCommodityStockFormProps) {
   UseHideScrollbar();
-  
-  
+
   const parseQuantity = (qtyString: string) => {
     try {
       if (!qtyString) {
@@ -94,6 +92,8 @@ EditCommodityStockFormProps) {
     }
   }, [initialData, form]);
 
+  const commodity = fetchCommodity();
+
   const onSubmit = async (data: CommodityStockType) => {
     console.log(data);
     alert("✅ Data saved successfully!");
@@ -105,15 +105,13 @@ EditCommodityStockFormProps) {
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
   // Form options
-  const commodityOptions = [
-    { id: "Condom", name: "Condom" },
-    { id: "pills COC", name: "Pills COC" },
-  ];
 
-  const categoryOptions = [
-    { id: "Condom", name: "Condom" },
-    { id: "Pills", name: "Pills" },
-  ];
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesCommodity();
 
   const recevFromOptions = [
     { id: "DOH", name: "DOH" },
@@ -137,7 +135,7 @@ EditCommodityStockFormProps) {
                       label=""
                       className="w-full"
                       placeholder="Select Commodity"
-                      options={commodityOptions}
+                      options={commodity}
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -153,13 +151,19 @@ EditCommodityStockFormProps) {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Category"
-                      options={categoryOptions}
+                    {/* Category Dropdown with Add/Delete */}
+                    <SelectLayoutWithAdd
+                      placeholder="select"
+                      label="Select a Category"
+                      options={categories}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value)}
+                      onAdd={(newCategoryName) => {
+                        categoryHandleAdd(newCategoryName, (newId) => {
+                          field.onChange(newId); // Update the form value with the new category ID
+                        });
+                      }}
+                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -224,11 +228,10 @@ EditCommodityStockFormProps) {
                       placeholder="quantity"
                       min={0}
                       value={field.value || ""} // Handle undefined and 0
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? 0 : Number(value));
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -278,7 +281,6 @@ EditCommodityStockFormProps) {
                           const value = e.target.value;
                           field.onChange(value === "" ? 0 : Number(value));
                         }}
-
                       />
                     </FormControl>
                     <FormMessage />
@@ -305,6 +307,7 @@ EditCommodityStockFormProps) {
           </div>
         </form>
       </Form>
+      {ConfirmationDialogs()}
     </div>
   );
 }

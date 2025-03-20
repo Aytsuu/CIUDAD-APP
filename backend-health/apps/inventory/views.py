@@ -30,7 +30,7 @@ class DeleteCategoryView(generics.DestroyAPIView):
 # ----------------------INVENTORY---VIEW------------------------------------  
 class InventoryView(generics.ListCreateAPIView):
     serializer_class=InventorySerializers
-    queryset = Category.objects.all()
+    queryset = Inventory.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
@@ -114,9 +114,9 @@ class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
 
 # ---------------------------------------------------------------------
 #STOCKS
-class MedicineStocksView(generics.ListCreateAPIView):
-    serializer_class=MedicineListSerializers
-    queryset=MedicineStocks.objects.all()
+class MedicineInventoryView(generics.ListCreateAPIView):
+    serializer_class=MedicineInventorySerializer
+    queryset=MedicineInventory.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     

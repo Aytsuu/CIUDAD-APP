@@ -17,6 +17,9 @@ import {
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import { useEffect } from "react";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
+import { fetchMedicines } from "../request/fetch";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { useCategoriesMedicine } from "../request/Medcategory";
 
 interface EditMedicineFormProps {
   medicine: {
@@ -36,8 +39,7 @@ interface EditMedicineFormProps {
 }
 
 export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
-
-  UseHideScrollbar()
+  UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
@@ -71,30 +73,27 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
     });
   }, [medicine, form]);
 
+  const {categories,handleDeleteConfirmation,categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();
+  const medicines = fetchMedicines();
+
   const onSubmit = async (data: MedicineStockType) => {
-    console.log("saved data", data);
-    alert("Medicine stock updated successfully!");
+    try {
+      const validatedData = MedicineStocksSchema.parse(data);
+      console.log("Form submitted", validatedData);
+      form.reset();
+      alert("Medicine stock added successfully!");
+    } catch (error) {
+      console.error("Form submission error:", form.formState.errors);
+      alert("Submission failed. Please check the form for errors.");
+    }
   };
 
-
-
-
-    
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
-  const medicineOptions = [
-    { id: "Paracetamol", name: "Paracetamol" },
-    { id: "Amoxicillin", name: "Amoxicillin" },
-  ];
-
-  const categoryOptions = [
-    { id: "Analgesic", name: "Analgesic" },
-    { id: "Antibiotic", name: "Antibiotic" },
-  ];
-
+ 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
@@ -103,7 +102,7 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
             {/* Medicine Name Field */}
             <FormField
               control={form.control}
-              name="medicineName" 
+              name="medicineName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Medicine Name</FormLabel>
@@ -112,7 +111,7 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                       label=""
                       className="w-full"
                       placeholder="Select Medicine"
-                      options={medicineOptions}
+                      options={medicines}
                       value={field.value}
                       onChange={(value) => field.onChange(value)}
                     />
@@ -121,7 +120,8 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                 </FormItem>
               )}
             />
-            {/* Category Field */}
+
+            {/* Category Dropdown with Add/Delete */}
             <FormField
               control={form.control}
               name="category"
@@ -129,13 +129,19 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Category"
-                      options={categoryOptions}
+                    {/* Category Dropdown with Add/Delete */}
+                    <SelectLayoutWithAdd
+                      placeholder="select"
+                      label="Select a Category"
+                      options={categories}
                       value={field.value}
                       onChange={(value) => field.onChange(value)}
+                      onAdd={(newCategoryName) => {
+                        categoryHandleAdd(newCategoryName, (newId) => {
+                          field.onChange(newId); // Update the form value with the new category ID
+                        });
+                      }}
+                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -340,6 +346,7 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
           </div>
         </form>
       </Form>
+      {ConfirmationDialogs()}
     </div>
   );
 }

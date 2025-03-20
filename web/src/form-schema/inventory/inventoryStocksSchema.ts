@@ -3,12 +3,12 @@ import { z } from "zod";
 
 
 export const MedicineStocksSchema = z.object({
-  medicineName: z.string().min(1, "Medicine name is Required").default(""),
+  medicineID: z.string().min(1, "Medicine name is Required").default(""),
   category: z.string().min(1, "Category is required").default(""),
   dosage: z.number({ required_error: "Dosage is Required" }).min(0, "Dosage must be a non-negative number"),
   dsgUnit: z.string().min(1, "Dosage unit is required").default(""),
   form: z.string().min(1, "Form is required").default(""),
-  qty: z.number().min(1,"Qty is Required"),
+  qty: z.number().min(1, "Qty is Required"),
   unit: z.string().min(1, "Unit is required").default(""),
   pcs: z.number({ required_error: "Pieces is Required" }).min(0, "Pieces must be a non-negative number"),
   expiryDate: z.string().min(1, "Expiry date is required").default("")
@@ -59,7 +59,7 @@ export const CommodityStocksSchema = z.object({
 export const FirstAidStockSchema = z.object({
   itemName: z.string().min(1, "Item name is Required").default(""),
   category: z.string().min(1, "Category is Required").default(""),
-  qty:z.number().min(1, "Quantity required"),
+  qty: z.number().min(1, "Quantity required"),
   expiryDate: z.string().default(""),
 });
 

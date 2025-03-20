@@ -1,18 +1,15 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models import Max
+from datetime import datetime
+from django.utils import timezone  # Import timezone for default value
 
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
     cat_name = models.CharField(max_length=100)
-
     class Meta:
         db_table = 'category'
 
-class Inventory(models.Model):
-    inv_id = models.BigAutoField(primary_key=True)
-    inv_name = models.CharField(max_length=100)
-    class Meta:
-           db_table = 'inventory'
     
 class Medicinelist(models.Model):
     med_id = models.BigAutoField(primary_key=True)
@@ -42,24 +39,37 @@ class FirstAidList(models.Model):
     class Meta:
         db_table = 'firstaid_list'
         
-      
-class MedicineStocks(models.Model):
-    minv_id = models.BigAutoField(primary_key=True)
-    minv_dsg = models.IntegerField()  # Dosage
-    minv_dsg_unit = models.CharField(max_length=100)  # Dosage unit
-    minv_form = models.CharField(max_length=100)  # Medicine form (e.g., Tablet, Syrup)
-    minv_qty = models.IntegerField()  # Total quantity
-    minv_pcs_per_box = models.IntegerField()  # Pieces per box
-    minv_distributed = models.IntegerField(default=0)  # Distributed stock
-    minv_qty_avail = models.IntegerField()  # Available quantity
 
-    # Foreign Keys with CASCADE behavior
-    inv = models.ForeignKey(Inventory, on_delete=models.CASCADE)  
-    med = models.ForeignKey(Medicinelist, on_delete=models.CASCADE)  
-    cat = models.ForeignKey(Category, on_delete=models.CASCADE)  
+
+
+
+
+class Inventory(models.Model):
+    inv_id =models.BigAutoField(primary_key=True)
+    expiry_date = models.DateField()
+    inv_type = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'medicine_stocks'
-     
-       
-    
+        db_table = 'inventory'  # Sets the table name explicitlyt
+
+class MedicineInventory(models.Model):
+    minv_id =models.BigAutoField(primary_key=True)
+    minv_dsg = models.PositiveIntegerField(default=0)
+    minv_dsg_unit = models.CharField(max_length=100)
+    minv_form = models.CharField(max_length=100)
+    minv_qty = models.PositiveIntegerField(default=0)
+    minv_qty_unit = models.CharField(max_length=100)
+    minv_pcs = models.PositiveIntegerField(default=0)
+    minv_distributed = models.PositiveIntegerField(default=0)
+    minv_qty_avail = models.PositiveIntegerField(default=0)
+    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE)
+    med_id = models.ForeignKey('Medicinelist', on_delete=models.CASCADE)
+    cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'medicine_inventory'
+  
+
+        

@@ -18,6 +18,8 @@ import {
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { fetchCommodity } from "../request/fetch";
+import { useCategoriesCommodity } from "../request/CommodityCategory";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 
 
 export default function CommodityStockForm() {
@@ -31,7 +33,7 @@ export default function CommodityStockForm() {
       qty: 0,
       pcs: 0,
       expiryDate: "",
-      recevFrom: "",
+      recevFrom: "", 
     },
   });
 
@@ -47,6 +49,14 @@ export default function CommodityStockForm() {
       alert("Submission failed. Please check the form for errors.");
     }
   };
+
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesCommodity();
+
 
   // Watch relevant fields for calculation
   const currentUnit = form.watch("unit");
@@ -82,30 +92,32 @@ export default function CommodityStockForm() {
             />
 
             {/* Category Dropdown */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Category"
-                      options={[
-                        { id: "medical", name: "Medical Supplies" },
-                        { id: "pharmaceutical", name: "Pharmaceuticals" },
-                        { id: "equipment", name: "Equipment" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+                       control={form.control}
+                       name="category"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Category</FormLabel>
+                           <FormControl>
+                             {/* Category Dropdown with Add/Delete */}
+                             <SelectLayoutWithAdd
+                               placeholder="select"
+                               label="Select a Category"
+                               options={categories}
+                               value={field.value}
+                               onChange={(value) => field.onChange(value)}
+                               onAdd={(newCategoryName) => {
+                                 categoryHandleAdd(newCategoryName, (newId) => {
+                                   field.onChange(newId); // Update the form value with the new category ID
+                                 });
+                               }}
+                               onDelete={(id) => handleDeleteConfirmation(Number(id))}
+                             />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -252,6 +264,7 @@ export default function CommodityStockForm() {
           </div>
         </form>
       </Form>
+      {ConfirmationDialogs()}
     </div>
   );
 }
