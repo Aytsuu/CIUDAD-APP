@@ -5,12 +5,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { householdSchema } from "@/form-schema/profiling-schema";
-import { Form, FormControl, FormField, FormItem, FormLabel} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel} from "@/components/ui/form/form";
+import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { household } from "../profilingPostRequests";
+import { household } from "../restful-api/profiingPostAPI";
 import api from "@/api/api";
 
 

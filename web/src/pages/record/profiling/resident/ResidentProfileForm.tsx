@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card/card";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { BsChevronLeft } from "react-icons/bs";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useLocation, useNavigate } from "react-router";
 
 export default function ResidentProfileForm() {

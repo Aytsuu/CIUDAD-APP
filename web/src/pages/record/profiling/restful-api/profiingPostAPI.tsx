@@ -1,6 +1,8 @@
 import api from "@/api/api"
 import { formatDate } from "@/helpers/dateFormatter"
 import { generateFamilyNo } from "@/helpers/generateFamilyNo";
+import { generateResidentNo } from "@/helpers/generateResidentNo";
+import { useCapitalize } from "@/helpers/useCapitalize";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
@@ -9,17 +11,18 @@ export const personal = async (personalInfo: Record<string, string>) => {
     try {
         
         const res = await api.post('profiling/personal/', {
-            per_lname: personalInfo.lastName,
-            per_fname: personalInfo.firstName,
-            per_mname: personalInfo.middleName || null,
-            per_suffix: personalInfo.suffix || null,
-            per_dob: formatDate(personalInfo.dateOfBirth),
-            per_sex: personalInfo.sex,
-            per_status: personalInfo.status,
-            per_address: personalInfo.address,
-            per_edAttainment: personalInfo.edAttainment || null,
-            per_religion: personalInfo.religion,
-            per_contact: personalInfo.contact
+            per_id: await generateResidentNo(),
+            per_lname: useCapitalize(personalInfo.per_lname),
+            per_fname: useCapitalize(personalInfo.per_fname),
+            per_mname: useCapitalize(personalInfo.per_mname) || null,
+            per_suffix: useCapitalize(personalInfo.per_suffix) || null,
+            per_dob: formatDate(personalInfo.per_dob),
+            per_sex: useCapitalize(personalInfo.per_sex),
+            per_status: useCapitalize(personalInfo.per_status),
+            per_address: useCapitalize(personalInfo.per_address),
+            per_edAttainment: useCapitalize(personalInfo.per_edAttainment) || null,
+            per_religion: useCapitalize(personalInfo.per_religion),
+            per_contact: useCapitalize(personalInfo.per_contact)
         })
 
         return res.data.per_id

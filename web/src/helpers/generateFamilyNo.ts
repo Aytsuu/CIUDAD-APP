@@ -1,8 +1,8 @@
 import { formatDate } from "@/helpers/dateFormatter";
-import api from "@/api/api";
+import { getFamilies } from "@/pages/record/profiling/restful-api/profilingGetAPI";
 
 export const generateFamilyNo = async (buildingType: string) => {
-    const familyList: Record<string, string>[] = await getFamilyList();
+    const familyList: Record<string, string>[] = await getFamilies();
     const nextVal = familyList.length + 1;
     let type: string;
 
@@ -21,14 +21,4 @@ export const generateFamilyNo = async (buildingType: string) => {
     
     return familyNo
 
-}
-
-const getFamilyList = async () => {
-    try {
-        const res = await api.get('profiling/family/')
-        return res.data
-
-    } catch (err) {
-        console.log(err)
-    }
 }

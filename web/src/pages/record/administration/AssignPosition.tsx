@@ -4,11 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { personalInfoSchema } from "@/form-schema/profiling-schema"
 import { positionAssignmentSchema } from "@/form-schema/administration-schema"
 import { useForm, UseFormReturn } from "react-hook-form"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { staff } from "./administrationPostRequest"
-import { personal } from "../profiling/profilingPostRequests"
+import { personal } from "../profiling/restful-api/profiingPostAPI"
 import api from "@/api/api"
 import { 
     Form,
@@ -16,7 +16,7 @@ import {
     FormControl,
     FormItem,
     FormMessage,
- } from "@/components/ui/form"
+ } from "@/components/ui/form/form"
 
 
 export default function AssignPosition(

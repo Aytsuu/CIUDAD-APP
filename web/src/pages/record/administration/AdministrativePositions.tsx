@@ -1,7 +1,7 @@
 import React from "react"
 import { Label } from "@/components/ui/label"
 import { ChevronRight, Plus, Check, Ellipsis, Trash } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Separator } from "@/components/ui/separator"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { Input } from "@/components/ui/input"

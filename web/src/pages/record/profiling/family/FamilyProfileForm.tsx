@@ -6,7 +6,7 @@ import DemographicInfo from "./DemographicInfo";
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";

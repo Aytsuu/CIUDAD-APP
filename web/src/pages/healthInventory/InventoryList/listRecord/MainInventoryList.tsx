@@ -3,7 +3,7 @@ import VaccinationList from "./VaccineList";
 import FirstAidList from "./FirstAidList";
 import MedicineList from "./MedicineList";
 import CommodityList from "./CommodityList";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 export default function MainInventoryList() {
   const [selectedView, setSelectedView] = useState("medicine");

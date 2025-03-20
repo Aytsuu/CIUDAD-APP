@@ -25,6 +25,8 @@ import {
    
   export function SelectLayout({ placeholder, label, className, options, value, onChange }: SelectProps) {
 
+    console.log(value)
+
     return (
         <Select value={value} onValueChange={onChange}>
             <SelectTrigger className={cn("w-[180px]", className)}>

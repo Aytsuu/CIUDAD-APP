@@ -30,18 +30,18 @@ export const demographicInfo = z.object({
 });
 
 export const personalInfoSchema = z.object({
-    id: z.string(),
-    lastName: z.string().min(1, "Last Name is required"),
-    firstName: z.string().min(1, "First Name is required"),
-    middleName: z.string(),
-    suffix: z.string().optional(),
-    sex: z.string().min(1, "Sex is required"),
-    dateOfBirth: z.string().date(),
-    status: z.string().min(1, "Status is required"),
-    address: z.string().min(1, 'Address is required'),
-    edAttainment: z.string(),
-    religion: z.string().min(1, "Religion is required"),
-    contact: z.string().min(1, "Contact is required"),
+    per_id: z.string(),
+    per_lname: z.string().min(1, "Last Name is required"),
+    per_fname: z.string().min(1, "First Name is required"),
+    per_mname: z.string(),
+    per_suffix: z.string().optional(),
+    per_sex: z.string().min(1, "Sex is required"),
+    per_dob: z.string().date(),
+    per_status: z.string().min(1, "Status is required"),
+    per_address: z.string().min(1, 'Address is required'),
+    per_edAttainment: z.string(),
+    per_religion: z.string().min(1, "Religion is required"),
+    per_contact: z.string().min(1, "Contact is required"),
 })                                                                                                                                                                                                                                       
 export const motherInfo = z.object({
     id: z.string(),

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Plus, ClockArrowUp, FileInput, Search } from "lucide-react";
 import { Link } from "react-router";
@@ -9,9 +9,11 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
-import { residentColumns } from "../profilingColumns";
+import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
-import api from "@/api/api";
+
+import { useQuery } from "@tanstack/react-query";
+import { getResidents } from "../restful-api/profilingGetAPI";
 
 const FilterComponent = ({ onFilterChange }) => {
   const [filterType, setFilterType] = React.useState("");
@@ -45,58 +47,48 @@ export default function ProfilingMain() {
     type: string | null;
   }>({ type: null });
 
-    const [residents, setResidents] = React.useState<ResidentRecord[]>([]);
-    const hasFetchData = React.useRef(false);
-
-    React.useEffect(() => {
-      if (!hasFetchData.current) {
-        getResidents();
-        hasFetchData.current = true;
-      }
-    }, []);
+  // Fetch residents and staffs using useQuery
+  const { data: residents, isLoading: isLoadingResidents } = useQuery({
+    queryKey: ['residents'],
+    queryFn: getResidents,
+  });
   
-    const formatResidentData = (data: any[]): ResidentRecord[] => {
+  const formatResidentData = (): ResidentRecord[] => {
     
-      return data.map(item => {
-        const [{reg_date} = {}] = item.registered
-        const [{fam_id, building} = {}] = item.family
+    return residents.map((item: any) => {
+      const [{reg_date} = {}] = item.registered
+      const [{fam_id, building} = {}] = item.family
 
-        return {
-          id: item.per_id || '',
-          householdNo: building?.hh_id || '',
-          sitio: '',
-          familyNo: fam_id || '',
-          lastName: item.per_lname || '',
-          firstName: item.per_fname || '',
-          mi: item.per_mname || '',
-          suffix: item.per_suffix || '',  
-          dateRegistered: reg_date || '',
-        }
-      });
-    };
-  
-    const getResidents = async () => {
-      try {
-        const res = await api.get('profiling/personal/');
-        const formattedData = formatResidentData(res.data);
-        setResidents(formattedData);
-      } catch (err) {
-        console.log(err);
+      return {
+        id: item.per_id || '',
+        householdNo: building?.hh_id || '',
+        sitio: '',
+        familyNo: fam_id || '',
+        lname: item.per_lname || '',
+        fname: item.per_fname || '',
+        mname: item.per_mname || '',
+        suffix: item.per_suffix || '',  
+        dateRegistered: reg_date || '',
       }
-    };
+    });
+  };
 
   // Filter residents based on search query and active filter
   const filteredResidents = React.useMemo(() => {
     let filtered = residents;
 
     if (searchQuery) {
-      filtered = filtered.filter((record) =>
+      filtered = filtered.filter((record: any) =>
         Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     return filtered;
   }, [residents, searchQuery, activeFilter]);
+
+  if(isLoadingResidents) {
+    return <p>Loading...</p>
+  }
 
   return (
     <div className="w-full">
@@ -108,11 +100,11 @@ export default function ProfilingMain() {
 
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="flex gap-2">
-          <div className="relative flex-1 bg-white">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
               placeholder="Search..."
-              className="pl-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              className="pl-10 bg-white"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -167,7 +159,7 @@ export default function ProfilingMain() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={residentColumns} data={residents} />
+          <DataTable columns={residentColumns(residents)} data={formatResidentData()} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">

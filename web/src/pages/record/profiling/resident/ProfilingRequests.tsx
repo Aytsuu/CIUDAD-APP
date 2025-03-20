@@ -7,7 +7,7 @@ import { ArrowUpDown, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useNavigate } from "react-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 // Define the type for the Report object
 type Report = {

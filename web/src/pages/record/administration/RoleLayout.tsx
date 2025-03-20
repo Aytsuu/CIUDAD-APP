@@ -3,7 +3,7 @@ import AdministrativePositions from "./AdministrativePositions";
 import FeatureSelection from "./FeatureSelection";
 import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";

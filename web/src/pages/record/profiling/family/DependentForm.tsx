@@ -1,7 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
 import { useFieldArray, UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -10,7 +10,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Plus } from "lucide-react";
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 

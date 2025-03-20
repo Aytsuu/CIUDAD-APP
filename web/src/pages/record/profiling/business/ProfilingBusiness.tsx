@@ -1,6 +1,6 @@
 import { Search, ClockArrowUp, Plus, FileInput} from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";

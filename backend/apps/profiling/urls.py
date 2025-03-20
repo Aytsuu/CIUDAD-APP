@@ -6,6 +6,7 @@ urlpatterns = [
     # Personal Urls
 
     path("personal/", PersonalView.as_view(), name="personal-details-list"),
+    path("personal/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
 
     # Mother Urls
 

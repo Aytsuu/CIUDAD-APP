@@ -1,8 +1,8 @@
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import BarangayServiceFormSchema from "@/form-schema/barangay-service-schema";
 import { Checkbox } from "@/components/ui/checkbox";

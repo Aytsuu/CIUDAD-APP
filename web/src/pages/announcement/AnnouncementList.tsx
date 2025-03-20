@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DialogLayout from '@/components/ui/dialog/dialog-layout';

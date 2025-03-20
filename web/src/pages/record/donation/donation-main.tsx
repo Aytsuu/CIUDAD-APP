@@ -11,7 +11,7 @@ import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 type Donation = {
   refNo: string;
