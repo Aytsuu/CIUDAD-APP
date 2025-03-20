@@ -9,26 +9,27 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { householdColumns } from "../profilingColumns";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 import { HouseholdRecord } from "../profilingTypes";
-import api from "@/api/api";
-
-
-
+import { useQuery } from "@tanstack/react-query";
+import { getHouseholds } from "../restful-api/profilingGetAPI";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MainLayoutComponent } from "@/components/ui/main-layout-component";
 
 export default function ProfilingHousehold(){
 
-    const [households, setHouseholds] = React.useState<HouseholdRecord[]>([])
-    const hasFetchData = React.useRef(false)
-
-    React.useEffect(()=> {
-        if(!hasFetchData.current){ 
-            getHouseholds()
-            hasFetchData.current = true
-        }
+    const [searchQuery, setSearchQuery] = React.useState('')
+    const [pageSize, setPageSize] = React.useState(10)
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const { data: households, isLoading: isLoadingHouseholds } = useQuery({
+        queryKey: ['households'],
+        queryFn: getHouseholds,
+        refetchOnMount: true,
+        staleTime: 0
     })
 
-    const formatHouseholdData = (data: any[]): HouseholdRecord[] => {
+    const formatHouseholdData = (): HouseholdRecord[] => {
+        if(!households) return [];
 
-        return data.map((item)=> {
+        return households.map((item: any)=> {
 
             const sitio = item.sitio
             const personal = item.per
@@ -46,40 +47,53 @@ export default function ProfilingHousehold(){
 
     }
 
-    const getHouseholds = React.useCallback(async () => {
-        try {
+    const filteredHouseholds = React.useMemo(() => {
+        let filtered = formatHouseholdData();
 
-            const res = await api.get('profiling/household/')
-            const formattedData = formatHouseholdData(res.data)
-            setHouseholds(formattedData)
+        filtered = filtered.filter((record: any) =>
+            Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+        )
 
-        } catch (err) {
-            console.log(err)
-        }
-    },[])
+        return filtered;
+    }, [searchQuery, households])
+
+    // Calculate total pages for pagination
+    const totalPages = Math.ceil(filteredHouseholds.length / pageSize);
+
+    // Slice the data for the current page
+    const paginatedHouseholds = filteredHouseholds.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
+
+    if(isLoadingHouseholds) {
+        return (
+            <div className="w-full h-full">
+                <Skeleton className="h-10 w-1/6 mb-3" />
+                <Skeleton className="h-7 w-1/4 mb-6" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-4/5 w-full mb-4" />
+            </div>
+        )
+    }
 
     return (
-        <div className="w-full">
-            <div className="mb-4">
-                <h1 className="text-xl sm:text-2xl font-semibold text-darkBlue2">Household Records</h1>
-                <p className="text-xs sm:text-sm text-darkGray">Manage and view household information</p>
-            </div>
-
-            <hr className="border-gray mb-6 sm:mb-8" />
-
+        <MainLayoutComponent 
+            title="Household Profiling"
+            description="Manage and view household records"
+        >
             <div className="hidden lg:flex justify-between items-center mb-4">
-        <div className="flex gap-2">
-            <div className="relative flex-1 bg-white">
+                <div className="flex gap-2 w-full">
+                    <div className="relative flex-1">
 
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-                <Input
-                    placeholder="Search..." 
-                    className="pl-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    value={''}
-                    onChange={() => {}}
-                    />
-                </div>
-
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+                        <Input
+                            placeholder="Search..." 
+                            className="pl-10 bg-white"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
                 <DialogLayout
                     trigger={
@@ -95,40 +109,51 @@ export default function ProfilingHousehold(){
 
             <div className="bg-white rounded-md">
                 <div className="flex justify-between p-3">
-                <div className="flex items-center gap-2">
-                    <p className="text-xs sm:text-sm">Show</p>
-                    <Input
-                        type="number"
-                        className="w-14 h-6"
-                        value={''}
-                        onChange={() => {}}
-                        min="1"
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs sm:text-sm">Show</p>
+                        <Input
+                            type="number"
+                            className="w-14 h-6"
+                            value={pageSize}
+                            onChange={(e) => {
+                                const value = +e.target.value;
+                                if (value >= 1) {
+                                    setPageSize(value);
+                                } else {
+                                    setPageSize(1); // Reset to 1 if invalid
+                                }
+                            }}
+                            min="1"
+                        />
+                        <p className="text-xs sm:text-sm">Entries</p>
+                    </div>
+                    <DropdownLayout
+                        trigger={
+                            <Button variant="outline">
+                                <FileInput className="mr-2" /> Export
+                            </Button>
+                        }
+                        options={[
+                        { id: '', name: "Export as CSV"},
+                        { id: '', name: "Export as Excel"},
+                        { id: '', name: "Export as PDF"},
+                        ]}
                     />
-                    <p className="text-xs sm:text-sm">Entries</p>
-                </div>
-                <DropdownLayout
-                    trigger={
-                        <Button variant="outline">
-                            <FileInput className="mr-2" /> Export
-                        </Button>
-                    }
-                    options={[
-                    { id: '', name: "Export as CSV"},
-                    { id: '', name: "Export as Excel"},
-                    { id: '', name: "Export as PDF"},
-                    ]}
-                />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={householdColumns} data={households} />
+                    <DataTable columns={householdColumns} data={paginatedHouseholds} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">
-                        Showing 0 rows
+                        Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredHouseholds.length)} of {filteredHouseholds.length} rows
                     </p>
-                    <PaginationLayout/>
+                    {paginatedHouseholds.length > 0 && <PaginationLayout
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />}
                 </div>
             </div>
-        </div>
+        </MainLayoutComponent>
     )
 }

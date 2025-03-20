@@ -114,7 +114,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("lname")}
+        {row.getValue("fname")}
       </div>
     ),
   },
@@ -168,7 +168,9 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
           }
         }}
       >
-        <Button variant="outline">View<MoveRight/></Button>
+        <Button variant="outline">
+          View <MoveRight/>
+        </Button>
       </Link>
     ),
     enableSorting: false,

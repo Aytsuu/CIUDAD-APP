@@ -92,7 +92,7 @@ export const renderActionButton = (
   if (isSubmitting) {
     return (
       <LoadButton>
-        Registering...
+        {formType === Type.Editing ? "Saving..." : "Registering..."}
       </LoadButton>
     );
   }

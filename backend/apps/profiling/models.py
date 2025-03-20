@@ -5,7 +5,7 @@ from apps.administration.models import Staff
 # Create your models here.
 
 class Personal(models.Model):
-    per_id = models.CharField(primary_key=True)
+    per_id = models.CharField(max_length=50,primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
     per_mname = models.CharField(max_length=100, null=True)

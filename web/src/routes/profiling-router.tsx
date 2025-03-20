@@ -1,4 +1,4 @@
-import ProfilingMain from "@/pages/record/profiling/resident/ProfilingResident";
+import ProfilingResident from "@/pages/record/profiling/resident/ProfilingResident";
 import ResidentProfileForm from "@/pages/record/profiling/resident/ResidentProfileForm";
 import ProfilingRequest from "@/pages/record/profiling/resident/ProfilingRequests";
 import ProfileViewInfo from "@/pages/record/profiling/resident/ProfilingViewInfo";
@@ -12,7 +12,7 @@ export const profiling_router = [
     // Resident
     {
         path: "resident-records",
-        element: <ProfilingMain />
+        element: <ProfilingResident />
     },
     {
         path: "resident-registration",

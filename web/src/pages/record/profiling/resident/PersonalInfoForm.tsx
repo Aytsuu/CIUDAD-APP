@@ -32,6 +32,20 @@ export default function PersonalInfoForm({ params }: { params: any }) {
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
+  React.useEffect(() => {
+
+    if (formType === Type.Viewing) {
+      toast.dismiss();
+      setIsReadOnly(true)
+      populateFields();
+      form.clearErrors();
+    }
+
+    if (formType === Type.Editing) {
+      setIsReadOnly(false)
+    }
+  }, [formType])
+
   // Populate form fields with resident data
   const populateFields = () => {
     const resident = params.data;
@@ -56,40 +70,28 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     });
   };
 
-  React.useEffect(() => {
-    if (formType === Type.Viewing) {
-      setIsReadOnly(true)
-      populateFields();
-    }
+  const checkDefaultValues = (values: any, params: any) => {
+    
+    const keys = Object.keys(values);
+    const isDefault = keys.every((key) => values[key] == params[key] || values[key] == '');
 
-    if (formType === Type.Editing) {
-      setIsReadOnly(false)
-    }
-  }, [formType])
+    return isDefault;
+  }
 
-  // Handle resident search
-  React.useEffect(() => {
-    if (formType === Type.Viewing) {
-
-      const resident = params.data
-
-      if (resident) {
-        setIsReadOnly(true);
-        populateFields();
-      } else {
-        setIsReadOnly(false);
-        form.reset(defaultValues);
-      }
-    }
-  }, []);
+  const handleEditSaved = (message: string, icon: React.ReactNode) => {
+    setFormType(Type.Viewing);
+    toast(message, {
+      icon: icon
+    });
+  }
 
   // Handle form submission
   const submit = async () => {
-    setIsSubmitting(true);
 
+    setIsSubmitting(true);
     const formIsValid = await form.trigger();
 
-    if(!formIsValid){
+    if(!formIsValid) {
       setIsSubmitting(false);
       toast('Please fill out all required fields', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
@@ -101,16 +103,34 @@ export default function PersonalInfoForm({ params }: { params: any }) {
       const values = form.getValues();
 
       if (formType === Type.Editing) {
-        await updateProfile(params.data.per_id, values);
-        setFormType(Type.Viewing);
-        setIsReadOnly(true);
-        console.log('Record updated successfully');
+
+        if(checkDefaultValues(values, params.data)) {
+
+          handleEditSaved(
+            'No changes made', 
+            <CircleAlert size={24} className="fill-orange-500 stroke-white" />
+          );      
+  
+          return
+  
+        }
+
+        const res = await updateProfile(params.data.per_id, values);
+
+        if(res) {
+          params.data = values
+          handleEditSaved(
+            'Record updated successfully', 
+            <CircleCheck size={24} className="fill-green-500 stroke-white" />
+          );
+        }
 
       } else {
-        const perId = await personal(values);
-        await registered(perId); 
 
-        if(perId) {
+        const res = await personal(values);
+        await registered(res); 
+
+        if(res) {
           toast('New record created successfully', {
             icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
             action: {

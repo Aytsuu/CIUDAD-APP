@@ -11,51 +11,30 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
-
 import { useQuery } from "@tanstack/react-query";
 import { getResidents } from "../restful-api/profilingGetAPI";
+import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const FilterComponent = ({ onFilterChange }) => {
-  const [filterType, setFilterType] = React.useState("");
-
-  const handleFilterTypeChange = (value: string) => {
-    setFilterType(value);
-    onFilterChange({ type: value });
-  };
-
-  return (
-    <div className="flex gap-2 items-start">
-      <SelectLayout
-        placeholder="Filter by"
-        className="bg-white"
-        options={[
-          { id: "1", name: "By Sitio" },
-          { id: "2", name: "By location" },
-        ]}
-        value={filterType}
-        onChange={handleFilterTypeChange}
-      />
-    </div>
-  );
-};
-
-export default function ProfilingMain() {
+export default function ProfilingResident() {
+  
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [activeFilter, setActiveFilter] = React.useState<{
-    type: string | null;
-  }>({ type: null });
 
   // Fetch residents and staffs using useQuery
   const { data: residents, isLoading: isLoadingResidents } = useQuery({
     queryKey: ['residents'],
     queryFn: getResidents,
+    refetchOnMount: true, // Force refetch on mount
+    staleTime: 0, // Ensure data is never considered stale
   });
   
   const formatResidentData = (): ResidentRecord[] => {
+    if (!residents) return [];
     
     return residents.map((item: any) => {
+
       const [{reg_date} = {}] = item.registered
       const [{fam_id, building} = {}] = item.family
 
@@ -75,41 +54,51 @@ export default function ProfilingMain() {
 
   // Filter residents based on search query and active filter
   const filteredResidents = React.useMemo(() => {
-    let filtered = residents;
+    let filtered = formatResidentData();
 
-    if (searchQuery) {
-      filtered = filtered.filter((record: any) =>
-        Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    filtered = filtered.filter((record: any) =>
+      Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return filtered;
-  }, [residents, searchQuery, activeFilter]);
+  }, [searchQuery, residents]);
+
+  // Calculate total pages for pagination
+  const totalPages = Math.ceil(filteredResidents.length / pageSize);
+
+  // Slice the data for the current page
+  const paginatedResidents = filteredResidents.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   if(isLoadingResidents) {
-    return <p>Loading...</p>
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    )
   }
 
   return (
-    <div className="w-full">
-      <div className="mb-4">
-        <h1 className="text-xl sm:text-2xl font-semibold text-darkBlue2">Resident Records</h1>
-        <p className="text-xs sm:text-sm text-darkGray">Manage and view resident information</p>
-      </div>
-      <hr className="border-gray mb-6 sm:mb-8" />
-
+    <MainLayoutComponent
+      title="Resident Profiling"
+      description="This page displays the list of residents in the community."
+    >
       <div className="hidden lg:flex justify-between items-center mb-4">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="w-full flex gap-2 mr-2">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input
               placeholder="Search..."
-              className="pl-10 bg-white"
+              className="pl-10 bg-white w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <FilterComponent onFilterChange={setActiveFilter} />
         </div>
         <div className="flex gap-2">
           <Link to="/registration-request">
@@ -121,7 +110,7 @@ export default function ProfilingMain() {
             state={{
                 params: {
                   title: 'Resident Registration', 
-                  description: 'Provide your details to complete the registration process.'
+                  description: 'Provide your details to complete the registration process.',
                 }
               }}
             >
@@ -140,15 +129,22 @@ export default function ProfilingMain() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={(e) => setPageSize(Math.max(1, +e.target.value))}
+              onChange={(e) => {
+                const value = +e.target.value;
+                if (value >= 1) {
+                  setPageSize(value);
+                } else {
+                  setPageSize(1); // Reset to 1 if invalid
+                }
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <DropdownLayout
             trigger={
-              <Button variant="outline">
-                <FileInput className="mr-2" /> Export
+              <Button variant="outline" className="h-[2rem]">
+                <FileInput /> Export
               </Button>
             }
             options={[
@@ -159,19 +155,19 @@ export default function ProfilingMain() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={residentColumns(residents)} data={formatResidentData()} />
+          <DataTable columns={residentColumns(residents)} data={paginatedResidents} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredResidents.length)} of {filteredResidents.length} rows
           </p>
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={0}
-            onPageChange={setCurrentPage}
-          />
+          {paginatedResidents.length > 0 && <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+          />}
         </div>
       </div>
-    </div>
+    </MainLayoutComponent>
   );
 }

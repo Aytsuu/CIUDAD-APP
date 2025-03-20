@@ -1,4 +1,4 @@
-export const useCapitalize = (str: string | null): string | null => {
+export const capitalize = (str: string | null): string | null => {
     if (!str) return null;
     return str
         .toLowerCase()

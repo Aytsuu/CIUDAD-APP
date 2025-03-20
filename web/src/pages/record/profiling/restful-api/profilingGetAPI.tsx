@@ -33,7 +33,20 @@ export const getFamilies = async () => {
       return res.data
 
   } catch (err) {
-      console.log(err)
+      console.error(err)
+  }
+
+}
+
+export const getHouseholds = async () => {
+
+  try {
+
+      const res = await api.get('profiling/household/')
+      return res.data
+
+  } catch (err) {
+      console.error(err)
   }
 
 }
