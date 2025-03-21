@@ -21,67 +21,98 @@ import { addMedicineStocks } from "../request/Post";
 import api from "@/pages/api/api";
 
 interface AddMedProps {
-  minv_id: number;
-  minv_pcs: number;
-  minv_qty_unit: string;
+  initialData: {
+    id: number;
+    medicineInfo: {
+      medicineName: string;
+      dosage: number;
+      dsgUnit: string;
+      form: string;
+    };
+    expiryDate: string;
+    category: string;
+    qty: {
+      qty: number;
+      pcs: number;
+    };
+    minv_qty_unit: string; // Ensure this is either "boxes" or "bottles"
+    availQty: string;
+    distributed: string;
+  };
 }
 
-export default function EditMedicineForm({ minv_id, minv_pcs, minv_qty_unit }: AddMedProps) {
+export default function EditMedicineForm({ initialData }: AddMedProps) {
   UseHideScrollbar();
+  console.log("Initial Data:", initialData); // Debugging: Check if the correct row data is passed
 
   const form = useForm<addMedicineStocksType>({
     resolver: zodResolver(AddMedicineStocksSchema),
     defaultValues: {
-      minv_qty: 0, // Align with schema
-      minv_qty_unit: minv_qty_unit, // Set initial value from props
-      minv_pcs: minv_pcs, // Set initial value from props
+      minv_qty: 0,
+      minv_qty_unit: initialData.minv_qty_unit === "boxes" || initialData.minv_qty_unit === "bottles"
+        ? initialData.minv_qty_unit
+        : "boxes", // Default to "boxes" if invalid
+      minv_pcs: initialData.qty.pcs,
     },
   });
 
   const onSubmit = async (data: addMedicineStocksType) => {
-    console.log("Form data:", data);
-
+    console.log("Submitting data:", JSON.stringify(data));
+  
     try {
-      const res = await api.get(`inventory/get_medicinestocks/${minv_id}/`);
-      const currentStock = res.data[0];
-      console.log("Current stock:", currentStock);
-
-      const currentMinvQtyAvail = currentStock?.minv_qty_avail;
-      const currentMinvQty = currentStock?.minv_qty;
-      const currentMinvPcs = currentStock?.minv_pcs;
-      const inv_id = currentStock?.inv_detail?.inv_id;
-
-      if (currentMinvPcs !== data.minv_pcs) {
+      console.log("Checking if medicine ID exists:", initialData.id);
+      
+      // Fetch the medicine list
+      const res = await api.get(`inventory/medicineinventorylist/`);
+      const existingMedicine = res.data.find((med: any) => med.minv_id === initialData.id);
+  
+      if (!existingMedicine) {
+        alert("Medicine ID not found. Please check the ID.");
+        return;
+      }
+  
+      console.log("Medicine found:", existingMedicine);
+  
+      const currentMinvQtyAvail = existingMedicine.minv_qty_avail;
+      const currentMinvQty = existingMedicine.minv_qty;
+      const currentMinvPcs = existingMedicine.minv_pcs;
+      const inv_id = existingMedicine.inv_detail?.inv_id;
+  
+      console.log("Current Minv Pcs:", currentMinvPcs);
+  
+      if (data.minv_qty_unit === "boxes" && Number(currentMinvPcs) !== Number(data.minv_pcs)) {
         form.setError("minv_pcs", {
           type: "manual",
-          message: `Pieces per box must match the existing stock which is (${currentMinvPcs}).`,
+          message: `Pieces per box must match the existing stock (${currentMinvPcs}).`,
         });
         return;
       }
-
+  
       let newMinvQtyAvail = currentMinvQtyAvail;
       let newQty = currentMinvQty;
+      
       if (data.minv_qty_unit === "boxes") {
-        newMinvQtyAvail += data.minv_qty * data.minv_pcs;
-        newQty += data.minv_qty * data.minv_pcs;
+        newMinvQtyAvail += data.minv_qty * (data.minv_pcs || 0);
+        newQty += data.minv_qty * (data.minv_pcs || 0);
       } else {
         newMinvQtyAvail += data.minv_qty;
         newQty += data.minv_qty;
       }
-
-      const updateRes = await api.put(`inventory/update_medicinestocks/${minv_id}/`, {
+  
+      const updateRes = await api.put(`inventory/update_medicinestocks/${initialData.id}/`, {
         minv_qty: newQty,
-        minv_qty_unit: data.minv_qty_unit,
         minv_qty_avail: newMinvQtyAvail,
       });
-
+  
       if (inv_id) {
         await api.put(`inventory/update_inventorylist/${inv_id}/`, {
           updated_at: new Date().toISOString(),
         });
       }
+      
       console.log("Stock updated successfully:", updateRes.data);
       alert("Stock updated successfully!");
+  
     } catch (err: any) {
       if (err.response) {
         console.error("Error Response:", err.response.status, err.response.data);
@@ -92,13 +123,6 @@ export default function EditMedicineForm({ minv_id, minv_pcs, minv_qty_unit }: A
       }
     }
   };
-
-  useEffect(() => {
-    form.reset((prevValues) => ({
-      ...prevValues,
-      minv_pcs: minv_pcs || 0,
-    }));
-  }, [minv_pcs, form]);
 
   const currentUnit = form.watch("minv_qty_unit");
   const qty = form.watch("minv_qty") || 0;
@@ -133,7 +157,7 @@ export default function EditMedicineForm({ minv_id, minv_pcs, minv_qty_unit }: A
                 </FormItem>
               )}
             />
-{/* 
+
             <FormField
               control={form.control}
               name="minv_qty_unit"
@@ -141,41 +165,8 @@ export default function EditMedicineForm({ minv_id, minv_pcs, minv_qty_unit }: A
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
                   <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                      disabled={minv_qty_unit !== "boxes"} // Disable if not boxes
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
-
-<FormField
-              control={form.control}
-              name="minv_qty_unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                  Unit
-                  </FormLabel>
-                  <FormControl>
                     <Input
-                   
-                   
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? 0 : Number(value));
-                      }}
+                      value={field.value}
                       disabled
                     />
                   </FormControl>
@@ -183,7 +174,6 @@ export default function EditMedicineForm({ minv_id, minv_pcs, minv_qty_unit }: A
                 </FormItem>
               )}
             />
-
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -18,14 +18,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { getMedicines } from "../requests/GetRequest";
 import { addMedicine } from "../requests/Postrequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface MedicineModalProps {
-  fetchData: () => void; // Add this line
+
   setIsDialog: (isOpen: boolean) => void;
 }
 
 export default function MedicineModal({
-  fetchData,
   setIsDialog,
 }: MedicineModalProps) {
   const form = useForm<MedicineType>({
@@ -36,6 +36,7 @@ export default function MedicineModal({
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newMedicineName, setNewMedicineName] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const confirmAdd = async () => {
     if (newMedicineName.trim()) {
@@ -44,8 +45,9 @@ export default function MedicineModal({
           setIsAddConfirmationOpen(false);
           setIsDialog(false);
           setNewMedicineName("");
-          setIsDialog(false);
-          fetchData()
+          
+          // ✅ Invalidate the cache to trigger a refetch
+          queryClient.invalidateQueries({ queryKey: ["medicines"] });
         } else {
           console.error("Failed to add medicine.");
         }
@@ -54,6 +56,7 @@ export default function MedicineModal({
       }
     }
   };
+  
 
   const isDuplicateMedicine = (medicines: any[], newMedicine: string) => {
     return medicines.some(

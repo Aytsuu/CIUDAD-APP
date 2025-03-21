@@ -18,19 +18,19 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { getMedicines } from "../requests/GetRequest";
 import { updateMedicine } from "../requests/UpdateRequest";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface MedicineListProps { 
+interface MedicineListProps {
   initialData: {
     id: number;
     medicineName: string;
   };
-  fetchData: () => void; // Add this line
   setIsDialog: (isOpen: boolean) => void; // Add this line
 }
 
 export default function MedicineListEdit({
   initialData,
-  fetchData,
+
   setIsDialog,
 }: MedicineListProps) {
   const form = useForm<MedicineType>({
@@ -42,13 +42,13 @@ export default function MedicineListEdit({
 
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newMedicineName, setNewMedicineName] = useState<string>("");
-
+  const queryClient = useQueryClient();
   const confirmAdd = async () => {
     try {
       await updateMedicine(initialData.id, newMedicineName); // Update the medicine
-      setIsAddConfirmationOpen(false); // Close the confirmation dialog
-      setIsDialog(false); // Close the edit dialog
-      fetchData(); // Refresh the table data
+      setIsDialog(false);
+      setIsAddConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["medicines"] });
     } catch (err) {
       console.error("Error updating medicine:", err);
     }

@@ -1,4 +1,3 @@
-// MedicineStocks.tsx
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
@@ -18,10 +17,14 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import MedicineStockForm from "../addstocksModal/MedStockModal";
 import EditMedicineForm from "../editModal/EditMedStockModal";
 import { usePagination } from "../../../../components/ui/PaginationFunction.tsx/PaginationFunction";
-import { getMedicineStocks } from "../request/Get";
-import { fetchMedicineStocks } from "../request/Fetch";
 import { handleDeleteMedicineStocks } from "../request/Delete";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { fetchMedicineStocks } from "../request/Fetch";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getMedicines } from "../../InventoryList/requests/GetRequest";
+import { Skeleton } from "@/components/ui/skeleton";
+import MedicineModal from "../../InventoryList/addListModal/MedicineModal";
+import MedicineListEdit from "../../InventoryList/editListModal/EditMedicineModal";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
@@ -43,31 +46,60 @@ export default function MedicineStocks() {
     distributed: string;
   };
 
+  type MedicineRecords = {
+    id: number;
+    medicineName: string;
+  };
+
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
   const [medStockDelete, setmedStockDelete] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   const [data, setData] = useState<MedicineStocksRecord[]>([]);
-  const {
-    searchQuery,
-    pageSize,
-    currentPage,
-    currentData,
-    totalPages,
-    handleSearchChange,
-    handlePageSizeChange,
-    handlePageChange,
-  } = usePagination<MedicineStocksRecord>(data, 10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
 
+  // Fetch medicine stocks
   useEffect(() => {
     fetchMedicineStocks(setData);
   }, []);
 
-  // Open delete confirmation dialog
+  // Fetch medicines using useQuery
+  const { data: medicines, isLoading: isLoadingMedicines } = useQuery({
+    queryKey: ["medicines"],
+    queryFn: getMedicines,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  const formatMedicineData = React.useCallback((): MedicineRecords[] => {
+    if (!medicines) return [];
+    return medicines.map((medicine: any) => ({
+      id: medicine.med_id,
+      medicineName: medicine.med_name,
+    }));
+  }, [medicines]);
+
+  const filteredMedicines = React.useMemo(() => {
+    return formatMedicineData().filter((record) =>
+      Object.values(record)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, formatMedicineData]);
+
+  const totalPages = Math.ceil(filteredMedicines.length / pageSize);
+  const paginatedMedicines = filteredMedicines.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleDeleteMed = (med_id: number) => {
     setmedStockDelete(med_id);
     setIsDeleteConfirmationOpen(true);
-    fetchMedicineStocks(setData);
   };
 
   const confirmDeleteMed = async () => {
@@ -75,11 +107,22 @@ export default function MedicineStocks() {
       await handleDeleteMedicineStocks(medStockDelete, setData);
       setIsDeleteConfirmationOpen(false);
       setmedStockDelete(null);
-      fetchMedicineStocks(setData);
+      fetchMedicineStocks(setData); // Refresh data after deletion
     }
   };
 
-  // Table columns
+
+  if (isLoadingMedicines) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
   const columns: ColumnDef<MedicineStocksRecord>[] = [
     {
       accessorKey: "medicineInfo",
@@ -120,7 +163,6 @@ export default function MedicineStocks() {
         );
       },
     },
-
     {
       accessorKey: "distributed",
       header: "Distributed",
@@ -147,45 +189,40 @@ export default function MedicineStocks() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <>
-          <div className="flex gap-2">
-            <div className="flex justify-center gap-2">
-              <TooltipLayout
-                trigger={
-                  <DialogLayout
-                    trigger={
-                      <div className=" hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                        <Edit size={16} />
-                      </div>
-                    }
-                    mainContent={
-                      <>
-                        <EditMedicineForm
-                          minv_id={row.original.id}
-                          minv_pcs={row.original.qty.pcs}
-                          minv_qty_unit={row.original.minv_qty_unit}
-                        />
-                      </>
-                    }
-                  />
-                }
-                content="Delete"
-              />
+      cell: ({ row }) => {
+        console.log("Row Data:", row.original); // Debugging: Check if the correct row data is passed
+        return (
+          <>
+            <div className="flex gap-2">
+              <div className="flex justify-center gap-2">
+                <TooltipLayout
+                  trigger={
+                    <DialogLayout
+                      trigger={
+                        <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                          <Edit size={16} />
+                        </div>
+                      }
+                      mainContent={<EditMedicineForm initialData={row.original} />}
+                    />
+                  }
+                  content="Edit"
+                />
+              </div>
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteMed(row.original.id)}
+                >
+                  <Trash />
+                </Button>
+              </div>
             </div>
-            <div className="flex justify-center gap-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDeleteMed(row.original.id)}
-              >
-                <Trash />
-              </Button>
-            </div>
-          </div>
-        </>
-      ),
-    },
+          </>
+        );
+      },
+    }
   ];
 
   return (
@@ -202,7 +239,7 @@ export default function MedicineStocks() {
                 placeholder="Search..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <SelectLayout
@@ -227,12 +264,7 @@ export default function MedicineStocks() {
           }
           title="Medicine List"
           description="Add New Medicine"
-          mainContent={
-            <MedicineStockForm
-              fetchData={() => fetchMedicineStocks(setData)}
-              setIsDialog={setIsDialog}
-            />
-          }
+          mainContent={<MedicineStockForm setIsDialog={setIsDialog} />}
           isOpen={isDialog}
           onOpenChange={setIsDialog}
         />
@@ -246,7 +278,14 @@ export default function MedicineStocks() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={(e) => {
+                const value = +e.target.value;
+                if (value >= 1) {
+                  setPageSize(value);
+                } else {
+                  setPageSize(1); // Reset to 1 if invalid
+                }
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
@@ -269,20 +308,19 @@ export default function MedicineStocks() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={currentData} />
+          <DataTable columns={columns} data={data} />
         </div>
         {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing{" "}
-            {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
+            Showing {data.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
             {Math.min(currentPage * pageSize, data.length)} of {data.length}{" "}
             rows
           </p>
           <PaginationLayout
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={handlePageChange}
+            onPageChange={setCurrentPage}
           />
         </div>
       </div>

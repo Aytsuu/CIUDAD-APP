@@ -67,12 +67,6 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
     cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
     minv_dsg_unit = serializers.CharField()
-    minv_form = serializers.CharField()
-    minv_qty = serializers.IntegerField()
-    minv_qty_unit = serializers.CharField()
-    minv_pcs = serializers.IntegerField()
-    minv_distributed = serializers.IntegerField()
-    minv_qty_avail = serializers.IntegerField()
 
     class Meta:
         model = MedicineInventory

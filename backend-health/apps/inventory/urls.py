@@ -41,7 +41,7 @@ urlpatterns = [
 
     
     #STOCKS UPDATE OR RETRIEVE
-    path("get_medicinestocks/<int:minv_id>/", MedicineInventoryView.as_view(), name="get_medicinestocks"),
+    path("get_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="get_medicinestocks"),
       #STOCKS UPDATE OR RETRIEVE
     path("update_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="update_medicinestocks"),
       

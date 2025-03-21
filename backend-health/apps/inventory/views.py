@@ -154,6 +154,18 @@ class DeleteMedicineInvView(generics.DestroyAPIView):
        minv_id = self.kwargs.get('minv_id')
        obj = get_object_or_404(MedicineInventory, minv_id = minv_id)
        return obj
+    def perform_destroy(self, instance):
+        # Get the related Inventory record
+        inventory_record = instance.inv_id  # Access the related Inventory instance via ForeignKey
+
+        # Delete the MedicineInventory instance
+        instance.delete()
+
+        # Delete the related Inventory record
+        if inventory_record:
+            inventory_record.delete()
+   
+   
     
 
 class AddMedicineStocksView(generics.ListCreateAPIView):

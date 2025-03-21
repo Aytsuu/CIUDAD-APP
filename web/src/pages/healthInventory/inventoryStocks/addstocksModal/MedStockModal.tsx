@@ -27,11 +27,10 @@ import { MedicinePayload } from "../request/Payload";
 
 
 interface MedicineStocksProps{
-  fetchData:()=>void;
   setIsDialog:(isOpen: boolean) => void
 }
 
-export default function MedicineStockForm({fetchData,setIsDialog}:MedicineStocksProps) {
+export default function MedicineStockForm({setIsDialog}:MedicineStocksProps) {
   UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
@@ -73,7 +72,7 @@ const handleSubmit = async (data: MedicineStockType) => {
     setIsAddConfirmationOpen(false); 
     setIsDialog(false)
     
-    fetchData()
+   
   } catch (error: any) {
     console.error(error);
     if (error.response) {

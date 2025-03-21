@@ -1,3 +1,5 @@
+// EditCommodityStockForm.tsx
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,78 +13,210 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useEffect } from "react";
-import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import {
-  AddMedicineStocksSchema,
-  addMedicineStocksType,
-} from "@/form-schema/inventory/addStocksSchema";
-import { addMedicineStocks } from "../request/Post";
-import api from "@/pages/api/api";
+  CommodityStockType,
+  CommodityStocksSchema,
+} from "@/form-schema/inventory/inventoryStocksSchema";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
+import { fetchCommodity } from "../request/Fetch";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { useCategoriesCommodity } from "../request/CommodityCategory";
 
-
-interface AddMedProps{
-  initialData :number;
+interface EditCommodityStockFormProps {
+  initialData: {
+    id: number;
+    commodityName: string;
+    category: string;
+    recevFrom: string;
+    qty: string;
+    availQty: string;
+    expiryDate: string;
+    dispensed: string;
+  };
 }
-export default function EditCommodityStockForm({initialData}:AddMedProps) {
+
+export default function EditCommodityStockForm({
+  initialData,
+}: EditCommodityStockFormProps) {
   UseHideScrollbar();
 
-  const form = useForm<addMedicineStocksType>({
-    resolver: zodResolver(AddMedicineStocksSchema),
-    defaultValues: {
-      minv_qty: 0, // Align with schema
-      minv_qty_unit: "", // Align with schema
-      minv_pcs: 0, // Align with schema
-    },
-  });
-
-
-  
-
-
-  
-
-  const onSubmit = async (data: addMedicineStocksType) => {
+  const parseQuantity = (qtyString: string) => {
     try {
-      // Fetch the current available quantity
-      const res = await api.get(`inventory/update_medicinestocks/${initialData}/`);
-      const currentStock = res.data;
-      console.log(currentStock)
-  
-      // Compute the new available quantity
-      const newMinvQtyAvail = (currentStock?.minv_qty_avail || 0) + (data.minv_qty * (data.minv_pcs || 1));
-  
-      // Update the stock with the new available quantity
-      const updateRes = await api.put(`inventory/update_medicinestocks/${initialData}/`, {
-        minv_qty: data.minv_qty,
-        minv_qty_unit: data.minv_qty_unit,
-        minv_pcs: data.minv_pcs,
-        minv_qty_avail: newMinvQtyAvail, // Updated dynamically
-        updated_at: new Date().toISOString(),
-      });
-  
-      console.log("Stock updated successfully", updateRes.data);
-    } catch (err) {
-      console.error("Error updating stock:", err);
+      if (!qtyString) {
+        return { qty: 0, pcs: 0, unit: "pcs" as const };
+      }
+
+      const boxMatch = qtyString.match(/(\d+) bx\/s \((\d+) pc\/s\)/);
+      if (boxMatch && boxMatch[1] && boxMatch[2]) {
+        return {
+          qty: parseInt(boxMatch[1]),
+          pcs: parseInt(boxMatch[2]),
+          unit: "boxes" as const,
+        };
+      }
+
+      const piecesMatch = qtyString.match(/(\d+)/);
+      return {
+        qty: piecesMatch ? parseInt(piecesMatch[0]) : 0,
+        pcs: 0,
+        unit: "pcs" as const,
+      };
+    } catch (error) {
+      console.error("Error parsing quantity:", error);
+      return { qty: 0, pcs: 0, unit: "pcs" as const };
     }
   };
 
+  const form = useForm<CommodityStockType>({
+    resolver: zodResolver(CommodityStocksSchema),
+    defaultValues: {
+      commodityName: initialData?.commodityName || "",
+      category: initialData?.category || "",
+      recevFrom: initialData?.recevFrom || "",
+      ...parseQuantity(initialData?.qty || ""),
+      expiryDate: initialData?.expiryDate || "",
+    },
+  });
 
-  
+  useEffect(() => {
+    if (initialData) {
+      const parsed = parseQuantity(initialData.qty);
+      form.reset({
+        commodityName: initialData.commodityName,
+        category: initialData.category,
+        // id: initialData.id,
+        recevFrom: initialData.recevFrom,
+        ...parsed,
+        expiryDate: initialData.expiryDate,
+      });
+    }
+  }, [initialData, form]);
 
-  const currentUnit = form.watch("minv_qty_unit"); // Use schema field name
-  const qty = form.watch("minv_qty") || 0; // Use schema field name
-  const pcs = form.watch("minv_pcs") || 0; // Use schema field name
+  const commodity = fetchCommodity();
+
+  const onSubmit = async (data: CommodityStockType) => {
+    console.log(data);
+    alert("✅ Data saved successfully!");
+  };
+
+  const currentUnit = form.watch("unit");
+  const qty = form.watch("qty") || 0;
+  const pcs = form.watch("pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
+  // Form options
+
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesCommodity();
+
+  const recevFromOptions = [
+    { id: "DOH", name: "DOH" },
+    { id: "CHD", name: "CHD" },
+    { id: "OTHERS", name: "OTHERS" },
+  ];
+
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1  hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="minv_qty" // Updated to match schema
+              name="commodityName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Commodity Name</FormLabel>
+                  <FormControl>
+                    <SelectLayout
+                      label=""
+                      className="w-full"
+                      placeholder="Select Commodity"
+                      options={commodity}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    {/* Category Dropdown with Add/Delete */}
+                    <SelectLayoutWithAdd
+                      placeholder="select"
+                      label="Select a Category"
+                      options={categories}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      onAdd={(newCategoryName) => {
+                        categoryHandleAdd(newCategoryName, (newId) => {
+                          field.onChange(newId); // Update the form value with the new category ID
+                        });
+                      }}
+                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="expiryDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expiry Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      value={field.value?.split("T")[0] || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="recevFrom"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Received From</FormLabel>
+                <FormControl>
+                  <SelectLayout
+                    label=""
+                    className="w-full"
+                    placeholder="Select Source"
+                    options={recevFromOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="qty"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
@@ -91,8 +225,9 @@ export default function EditCommodityStockForm({initialData}:AddMedProps) {
                   <FormControl>
                     <Input
                       type="number"
+                      placeholder="quantity"
                       min={0}
-                      value={field.value || ""}
+                      value={field.value || ""} // Handle undefined and 0
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? 0 : Number(value));
@@ -106,7 +241,7 @@ export default function EditCommodityStockForm({initialData}:AddMedProps) {
 
             <FormField
               control={form.control}
-              name="minv_qty_unit" // Updated to match schema
+              name="unit"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
@@ -117,7 +252,7 @@ export default function EditCommodityStockForm({initialData}:AddMedProps) {
                       placeholder="Select Unit"
                       options={[
                         { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
+                        { id: "pcs", name: "Pieces" },
                       ]}
                       value={field.value}
                       onChange={field.onChange}
@@ -129,24 +264,19 @@ export default function EditCommodityStockForm({initialData}:AddMedProps) {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {currentUnit === "boxes" && (
+          {currentUnit === "boxes" && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="minv_pcs" // Updated to match schema
+                name="pcs"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pieces per Box</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        min={0}
                         placeholder="pcs"
-                        value={
-                          field.value === undefined || field.value === 0
-                            ? ""
-                            : field.value
-                        }
+                        value={field.value || ""} // Handle undefined and 0
                         onChange={(e) => {
                           const value = e.target.value;
                           field.onChange(value === "" ? 0 : Number(value));
@@ -157,9 +287,7 @@ export default function EditCommodityStockForm({initialData}:AddMedProps) {
                   </FormItem>
                 )}
               />
-            )}
 
-            {currentUnit === "boxes" && (
               <FormItem className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -169,16 +297,17 @@ export default function EditCommodityStockForm({initialData}:AddMedProps) {
                   </span>
                 </div>
               </FormItem>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
-              Save
+              Save Changes
             </Button>
           </div>
         </form>
       </Form>
+      {ConfirmationDialogs()}
     </div>
   );
 }
