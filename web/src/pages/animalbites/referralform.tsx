@@ -43,6 +43,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     },
   })
   async function onSubmit() {
+    const isValid = form.trigger()
+
+    if (!isValid) {
+      return
+    }
+    
     const values = form.getValues()
     console.log("Form submitted with values:", values);
   
@@ -91,7 +97,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       setIsSubmitting(false);
     }
   }
-  
+
 
   return (
     <div className="p-3">
@@ -101,7 +107,8 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4">
+        <form onSubmit={(e) => {e.preventDefault() 
+          onSubmit()}} className="p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Receiver */}
             <FormField
