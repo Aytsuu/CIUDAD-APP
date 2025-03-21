@@ -18,12 +18,20 @@ import {
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { fetchMedicines } from "../request/fetch";
-import { useCategoriesMedicine } from "../request/Medcategory";
-import { MedicineInventoryPayload, InventoryPayload, generateID } from "./type";
+import { fetchMedicines } from "../request/Fetch";
+import { useCategoriesMedicine } from "../request/Category/Medcategory";
 import { addMedicineInventory, addInventory } from "../request/Post";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { InventoryPayload } from "../request/Payload";
+import { MedicinePayload } from "../request/Payload";
 
-export default function MedicineStockForm() {
+
+interface MedicineStocksProps{
+  fetchData:()=>void;
+  setIsDialog:(isOpen: boolean) => void
+}
+
+export default function MedicineStockForm({fetchData,setIsDialog}:MedicineStocksProps) {
   UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
@@ -40,81 +48,59 @@ export default function MedicineStockForm() {
     },
   });
 
-  const {
-    categories,
-    handleDeleteConfirmation,
-    categoryHandleAdd,
-    ConfirmationDialogs,
-  } = useCategoriesMedicine();
-  const medicines = fetchMedicines();
+const {categories,handleDeleteConfirmation, categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();const medicines = fetchMedicines();
+const [isAddConfirmationOpen,setIsAddConfirmationOpen] =useState(false)
+const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
 
-  const onSubmit = async (data: MedicineStockType) => {
-    try {
-        const inventoryPayload = {
-            expiry_date: data.expiryDate,
-            inv_type: "Medicine",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
-
-        // Step 1: Create inventory entry
-        const inventoryResponse = await addInventory(inventoryPayload);
-        console.log("Inventory Response:", inventoryResponse);
-
-        if (!inventoryResponse?.inv_id) {
-            throw new Error("Failed to generate inventory ID.");
-        }
-        
-        const inv_id = parseInt(inventoryResponse.inv_id, 10); // Ensure it's an integer
-        console.log("Generated inv_id:", inv_id);
-
-        if (!data.medicineID) {
-            throw new Error("Medicine ID is required.");
-        }
-
-        const med_id = parseInt(data.medicineID, 10); // Convert to integer
-
-        console.log("Creating Inventory Entry:", inventoryPayload);
-
-        const qty = Number(data.qty) || 0;
-        const pcs = Number(data.pcs) || 0;
-        const minv_qty_avail = data.unit === "boxes" ? qty * pcs : qty;
-
-        const medicinePayload: MedicineInventoryPayload = {
-            minv_dsg: Number(data.dosage) || 0,
-            minv_dsg_unit: data.dsgUnit || "N/A",
-            minv_form: data.form || "N/A",
-            minv_qty: qty,
-            minv_qty_unit: data.unit || "N/A",
-            minv_pcs: pcs,
-            minv_distributed: 0,
-            minv_qty_avail,
-            med_id, // FK from medicine
-            cat_id: Number(data.category) || 0,
-            inv_id, // FK from inventory (integer)
-        };
-
-        console.log("Medicine Payload:", medicinePayload);
-
-        // Add delay to avoid async race conditions
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const medicineInventoryResponse = await addMedicineInventory(medicinePayload);
-        console.log("Medicine Inventory Response:", medicineInventoryResponse);
-
-    } catch (error: any) {
-        console.error("Submission Error:", error);
-        if (error.response) {
-            console.error("Error response:", error.response.data);
-        }
+const handleSubmit = async (data: MedicineStockType) => {
+  try {
+    const inventoryResponse = await addInventory(InventoryPayload(data)); 
+    if (!inventoryResponse?.inv_id) {
+      throw new Error("Failed to generate inventory ID.");
     }
+    const inv_id = parseInt(inventoryResponse.inv_id, 10);
+    if (!data.medicineID) {
+      throw new Error("Medicine ID is required.");
+    }
+    const medicinePayload = MedicinePayload(data, inv_id);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const medicineInventoryResponse = await addMedicineInventory(medicinePayload);
+    if (!medicineInventoryResponse || medicineInventoryResponse.error) {
+      throw new Error("Failed to add medicine inventory.");
+    }
+    console.log("Medicine Inventory Response:", medicineInventoryResponse);
+    // Close the confirmation modal only if successful
+    setIsAddConfirmationOpen(false); 
+    setIsDialog(false)
+    
+    fetchData()
+  } catch (error: any) {
+    console.error(error);
+    if (error.response) {
+      console.error("Error response:", error.response.data);
+      setIsAddConfirmationOpen(false);
+    }
+    setIsAddConfirmationOpen(false);
+  }
 };
 
-  // Watch relevant fields for calculation
-  const currentUnit = form.watch("unit");
-  const qty = form.watch("qty") || 0;
-  const pcs = form.watch("pcs") || 0;
-  const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
+// Open confirmation dialog and store submission data
+const onSubmit = (data: MedicineStockType) => {
+  setSubmissionData(data);
+  setIsAddConfirmationOpen(true);
+};
+
+const confirmAdd = () => {
+  if (submissionData) {
+    handleSubmit(submissionData);
+  }
+};
+
+ 
+const currentUnit = form.watch("unit");
+const qty = form.watch("qty");
+const pcs = form.watch("pcs");
+const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
@@ -378,13 +364,13 @@ export default function MedicineStockForm() {
         </form>
       </Form>
       {ConfirmationDialogs()} //Category
-      {/* <ConfirmationDialog
+      <ConfirmationDialog
               isOpen={isAddConfirmationOpen}
               onOpenChange={setIsAddConfirmationOpen}
               onConfirm={confirmAdd}
               title="Add Medicine"
-              description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
-            /> */}
+              description={`Are you sure you want to add the medicine "?`}
+            />
     </div>
   );
 }

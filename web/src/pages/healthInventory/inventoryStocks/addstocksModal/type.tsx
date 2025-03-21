@@ -1,14 +1,5 @@
-  export const generateID = (prefix: string) => {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0"); // Ensure two-digit month
-    const year = String(now.getFullYear()).slice(-2); // Get last two digits of year
-    const randomNum = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
-    return `${month}${year}${prefix}${randomNum}`;
-  };
 
-
-export interface MedicineInventoryPayload {
-
+export interface MedicineStockType {
     minv_dsg: number;
     minv_dsg_unit: string;
     minv_form: string;
@@ -22,11 +13,20 @@ export interface MedicineInventoryPayload {
     cat_id: number;
   }
   
-  export interface InventoryPayload {
+  export interface InventoryType {
     
     inv_type: string;
     expiry_date: string | null;
     created_at: string;
     updated_at: string;
+  }
+  
+  export interface AddMedicineStockType {
+    mdt_qty: string;
+    mdt_action: string;
+    minv_qty: string;
+    minv_qty_avail: string;
+    created_at:string
+   
   }
   

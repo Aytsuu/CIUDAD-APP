@@ -11,7 +11,11 @@ export const MedicineStocksSchema = z.object({
   qty: z.number().min(1, "Qty is Required"),
   unit: z.string().min(1, "Unit is required").default(""),
   pcs: z.number({ required_error: "Pieces is Required" }).min(0, "Pieces must be a non-negative number"),
-  expiryDate: z.string().min(1, "Expiry date is required").default("")
+  expiryDate: z
+  .string()
+  .refine((date) => new Date(date) > new Date(), {
+    message: "Expiry date must be in the future",
+  }),
 }).refine(
   (data) => {
     if (data.unit === "boxes") {

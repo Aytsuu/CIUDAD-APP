@@ -24,33 +24,80 @@ class CategorySerializers(serializers.ModelSerializer):
         model=Category
         fields = '__all__'
     
+from datetime import date
+from rest_framework import serializers
+from .models import Inventory  # Ensure the correct import path
+
 class InventorySerializers(serializers.ModelSerializer):
     class Meta:
         model = Inventory
-        fields = '__all__'  # Include all fields
+        fields = '__all__'  # Automatically includes all model fields
 
     def validate(self, data):
         """Custom validation for Inventory data"""
         print("Received data:", data)  # Debugging step
 
-        # Ensure expiry_date is in the future
+        # Validate expiry_date only if it's provided
         if "expiry_date" in data and data["expiry_date"] <= date.today():
             raise serializers.ValidationError({"expiry_date": "Expiry date must be in the future."})
 
-        # Ensure inv_type is not empty
-        if not data.get("inv_type") or data["inv_type"].strip() == "":
+        # Validate inv_type only if it's provided
+        if "inv_type" in data and data["inv_type"].strip() == "":
             raise serializers.ValidationError({"inv_type": "Inventory type cannot be empty."})
 
         return data  # Return validated data
 
+    def to_internal_value(self, data):
+        """Allow partial updates but require all fields for creation."""
+        if self.instance:  # If updating an existing instance
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False  # Make missing fields optional
+        return super().to_internal_value(data)
+
 
 class MedicineInventorySerializer(serializers.ModelSerializer):
-  # Show full details when retrieving
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     med_detail = MedicineListSerializers(source='med_id', read_only=True)  
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
-    # Allow setting foreign keys when adding records
+    # Foreign keys (required for creation but optional for updates)
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    med_id = serializers.PrimaryKeyRelatedField(queryset=Medicinelist.objects.all())
+    cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+
+    minv_dsg_unit = serializers.CharField()
+    minv_form = serializers.CharField()
+    minv_qty = serializers.IntegerField()
+    minv_qty_unit = serializers.CharField()
+    minv_pcs = serializers.IntegerField()
+    minv_distributed = serializers.IntegerField()
+    minv_qty_avail = serializers.IntegerField()
+
+    class Meta:
+        model = MedicineInventory
+        fields = '__all__'
+
+    def to_internal_value(self, data):
+        """Allow partial updates but require all fields for creation."""
+        if self.instance:
+            # Partial update: Allow missing fields
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
+
+
+
+
+
+class AddMedicineStocksSerializers(serializers.ModelSerializer):
+  # Show full details when retrieving
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)  
+    minv_detail = MedicineInventorySerializer(source='minv_id', read_only=True)  
+    med_detail = MedicineListSerializers(source='med_id', read_only=True)  
+    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+       # Allow setting foreign keys when adding records
     inv_id = serializers.PrimaryKeyRelatedField(
         queryset=Inventory.objects.all(), required=True
     )
@@ -61,42 +108,8 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), required=True
     )
 
-
     class Meta:
-        model = MedicineInventory
+        model = AddMedicineStocks
         fields = '__all__'  # Ensure all fields are included
     
-    def validate(self, data):
-        """Custom validation for bad responses"""
-        
-        # Ensure numeric fields are greater than zero
-        if data.get("minv_qty") is None or data["minv_qty"] <= 0:
-            raise serializers.ValidationError({"minv_qty": "Quantity must be greater than zero."})
-        
-        if data.get("minv_pcs") is None or data["minv_pcs"] < 0:
-            raise serializers.ValidationError({"minv_pcs": "Pieces cannot be negative."})
-        
-        if data.get("minv_qty_avail") is None or data["minv_qty_avail"] < 0:
-            raise serializers.ValidationError({"minv_qty_avail": "Available quantity cannot be negative."})
-        
-        # Ensure required foreign keys exist
-        if not data.get("med_id"):
-            raise serializers.ValidationError({"med_id": "Medicine ID is required."})
-        
-        if not data.get("inv_id"):
-            raise serializers.ValidationError({"inv_id": "Inventory ID is required."})
-        
-        if not data.get("cat_id"):
-            raise serializers.ValidationError({"cat_id": "Category ID is required."})
-        
-        # Ensure text fields are not empty
-        for field in ["minv_dsg_unit", "minv_form", "minv_qty_unit"]:
-            if not data.get(field) or data[field].strip() == "":
-                raise serializers.ValidationError({field: f"{field.replace('_', ' ').title()} cannot be empty."})
-        
-        return data  # Return validated data
-
-    def validate_med_id(self, value):
-        if isinstance(value, list):
-            raise serializers.ValidationError("Medicine ID must be a single value, not an array.")
-        return value
+    

@@ -17,6 +17,11 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import MedicineStockForm from "../addstocksModal/MedStockModal";
 import EditMedicineForm from "../editModal/EditMedStockModal";
+import { usePagination } from "../../../../components/ui/PaginationFunction.tsx/PaginationFunction";
+import { getMedicineStocks } from "../request/Get";
+import { fetchMedicineStocks } from "../request/Fetch";
+import { handleDeleteMedicineStocks } from "../request/Delete";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
@@ -29,68 +34,53 @@ export default function MedicineStocks() {
     };
     expiryDate: string;
     category: string;
-    qty: string;
+    qty: {
+      qty: number;
+      pcs: number;
+    };
+    minv_qty_unit: string;
     availQty: string;
     distributed: string;
   };
 
-  const sampleData: MedicineStocksRecord[] = [
-    {
-      id: 2323,
-      medicineInfo: {
-        medicineName: "Paracetamol",
-        dosage: 500,
-        dsgUnit: "mg",
-        form: "tablet",
-      },
-      expiryDate: "2025-12-31",
-      category: "Analgesic",
-      qty: "0 boxes (50 pcs)",
-      distributed: "7 boxes (30 pcs)",
-      availQty: "7 boxes (30 pcs)",
-    },
-    {
-      id: 1212,
-      medicineInfo: {
-        medicineName: "Amoxicillin",
-        dosage: 250,
-        dsgUnit: "mg",
-        form: "capsule",
-      },
-      expiryDate: "2024-06-30",
-      category: "Antibiotic",
-      qty: "5 bot",
-      distributed: "0",
-      availQty: "5 bot",
-    },
-  ];
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [medStockDelete, setmedStockDelete] = useState<number | null>(null);
+  const [isDialog, setIsDialog] = useState(false);
+  const [data, setData] = useState<MedicineStocksRecord[]>([]);
+  const {
+    searchQuery,
+    pageSize,
+    currentPage,
+    currentData,
+    totalPages,
+    handleSearchChange,
+    handlePageSizeChange,
+    handlePageChange,
+  } = usePagination<MedicineStocksRecord>(data, 10);
 
-  // State management
-  const [medicines, setMedicines] =
-    useState<MedicineStocksRecord[]>(sampleData);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<MedicineStocksRecord[]>(sampleData);
-  const [currentData, setCurrentData] = useState<MedicineStocksRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
+  useEffect(() => {
+    fetchMedicineStocks(setData);
+  }, []);
 
-  // // Handle edit save
-  // const handleSaveEditedMedicine = (updatedMedicine: MedicineStocksRecord) => {
-  //   setMedicines((prevMedicines) =>
-  //     prevMedicines.map((medicine) =>
-  //       medicine.id === updatedMedicine.id
-  //         ? updatedMedicine
-  //         : medicine
-  //     )
-  //   );
-  // };
+  // Open delete confirmation dialog
+  const handleDeleteMed = (med_id: number) => {
+    setmedStockDelete(med_id);
+    setIsDeleteConfirmationOpen(true);
+    fetchMedicineStocks(setData);
+  };
 
-  
+  const confirmDeleteMed = async () => {
+    if (medStockDelete !== null) {
+      await handleDeleteMedicineStocks(medStockDelete, setData);
+      setIsDeleteConfirmationOpen(false);
+      setmedStockDelete(null);
+      fetchMedicineStocks(setData);
+    }
+  };
+
   // Table columns
   const columns: ColumnDef<MedicineStocksRecord>[] = [
-   
     {
       accessorKey: "medicineInfo",
       header: "Medicine ",
@@ -122,8 +112,15 @@ export default function MedicineStocks() {
     {
       accessorKey: "qty",
       header: "Stocks",
-      cell: ({ row }) => <div className="text-center">{row.original.qty}</div>,
+      cell: ({ row }) => {
+        return (
+          <div className="text-center">
+            <span className="text-blue">{row.original.qty.qty}</span>
+          </div>
+        );
+      },
     },
+
     {
       accessorKey: "distributed",
       header: "Distributed",
@@ -155,7 +152,6 @@ export default function MedicineStocks() {
           <div className="flex gap-2">
             <div className="flex justify-center gap-2">
               <TooltipLayout
-              
                 trigger={
                   <DialogLayout
                     trigger={
@@ -166,7 +162,9 @@ export default function MedicineStocks() {
                     mainContent={
                       <>
                         <EditMedicineForm
-                          medicine={row.original}
+                          minv_id={row.original.id}
+                          minv_pcs={row.original.qty.pcs}
+                          minv_qty_unit={row.original.minv_qty_unit}
                         />
                       </>
                     }
@@ -176,59 +174,19 @@ export default function MedicineStocks() {
               />
             </div>
             <div className="flex justify-center gap-2">
-              <TooltipLayout
-                trigger={
-                  <DialogLayout
-                    trigger={
-                      <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                        <Trash size={16} />
-                      </div>
-                    }
-                    mainContent={<> </>}
-                  />
-                }
-                content="Delete"
-              />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteMed(row.original.id)}
+              >
+                <Trash />
+              </Button>
             </div>
           </div>
         </>
       ),
     },
   ];
-
-  // Search and pagination effects
-  useEffect(() => {
-    const filtered = medicines.filter((medicine) => {
-      const searchText =
-        `${medicine.id} ${medicine.medicineInfo.medicineName} ${medicine.medicineInfo.dosage}${medicine.medicineInfo.dsgUnit} ${medicine.expiryDate} ${medicine.category}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize, medicines]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
 
   return (
     <>
@@ -269,7 +227,14 @@ export default function MedicineStocks() {
           }
           title="Medicine List"
           description="Add New Medicine"
-          mainContent={<MedicineStockForm />}
+          mainContent={
+            <MedicineStockForm
+              fetchData={() => fetchMedicineStocks(setData)}
+              setIsDialog={setIsDialog}
+            />
+          }
+          isOpen={isDialog}
+          onOpenChange={setIsDialog}
         />
       </div>
 
@@ -306,24 +271,30 @@ export default function MedicineStocks() {
         <div className="bg-white w-full overflow-x-auto">
           <DataTable columns={columns} data={currentData} />
         </div>
-
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
-            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
+            {currentData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
+            {Math.min(currentPage * pageSize, data.length)} of {data.length}{" "}
+            rows
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={confirmDeleteMed}
+        title="Delete Medicine"
+        description="Are you sure you want to delete this medicine? This action cannot be undone."
+      />
     </>
   );
 }

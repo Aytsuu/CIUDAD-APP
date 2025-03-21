@@ -17,8 +17,8 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { fetchCommodity } from "../request/fetch";
-import { useCategoriesCommodity } from "../request/CommodityCategory";
+import { fetchCommodity } from "../request/Fetch";
+import { useCategoriesCommodity } from "../request/Category/CommodityCategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 
 

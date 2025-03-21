@@ -24,16 +24,8 @@ export default function MedicineList() {
   const [medToDelete, setMedToDelete] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   // Use custom pagination hook
-  const {
-    searchQuery,
-    pageSize,
-    currentPage, 
-    currentData,
-    totalPages,
-    handleSearchChange,
-    handlePageSizeChange,
-    handlePageChange,
-  } = usePagination<MedicineRecords>(data, 10);
+  const {searchQuery,pageSize,currentPage, 
+    currentData,totalPages,handleSearchChange,handlePageSizeChange,handlePageChange,} = usePagination<MedicineRecords>(data, 10);
 
   const fetchData = async () => {
     const medicines = await getMedicines();

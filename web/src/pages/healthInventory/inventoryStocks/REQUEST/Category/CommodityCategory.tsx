@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "@/pages/api/api";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-
+import { ConfirmationDialog } from "@/pages/healthInventory/confirmationLayout/ConfirmModal";
 interface Option { 
   id: string;
   name: string;
 }
 
-export const useCategoriesMedicine = () => {
+export const useCategoriesCommodity= () => {
   const [categories, setCategories] = useState<Option[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,16 +41,16 @@ export const useCategoriesMedicine = () => {
   const getCategories = useCallback(async () => {
     try {
       const { data } = await api.get("inventory/category/", {
-        params: { cat_type: "Medicine" },
+        params: { cat_type: "Commodity" },
       });
       console.log(data);
 
       if (Array.isArray(data)) {
         const transformedCategories = data
-          .filter((cat) => cat.cat_type === "Medicine")
+          .filter((cat) => cat.cat_type === "Commodity")
           .map((cat) => ({
             id: String(cat.cat_id),
-            name: cat.cat_name,
+            name: cat.cat_name || "Unnamed Category",
           }));
 
         setCategories(transformedCategories);
@@ -90,7 +89,7 @@ export const useCategoriesMedicine = () => {
 
     try {
       const newCategory = await addCategory({
-        cat_type: "Medicine",
+        cat_type: "Commodity",
         cat_name: newCategoryName,
       });
 

@@ -11,245 +11,108 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import {
-  MedicineStocksSchema,
-  MedicineStockType,
-} from "@/form-schema/inventory/inventoryStocksSchema";
 import { useEffect } from "react";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { fetchMedicines } from "../request/fetch";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useCategoriesMedicine } from "../request/Medcategory";
+import {
+  AddMedicineStocksSchema,
+  addMedicineStocksType,
+} from "@/form-schema/inventory/addStocksSchema";
+import { addMedicineStocks } from "../request/Post";
+import api from "@/pages/api/api";
 
-interface EditMedicineFormProps {
-  medicine: {
-    id: number;
-    medicineInfo: {
-      medicineName: string;
-      dosage: number;
-      dsgUnit: string;
-      form: string;
-    };
-    expiryDate: string;
-    category: string;
-    qty: string;
-    availQty: string;
-    distributed: string;
-  };
+interface AddMedProps {
+  minv_id: number;
+  minv_pcs: number;
+  minv_qty_unit: string;
 }
 
-export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
+export default function EditMedicineForm({ minv_id, minv_pcs, minv_qty_unit }: AddMedProps) {
   UseHideScrollbar();
-  const form = useForm<MedicineStockType>({
-    resolver: zodResolver(MedicineStocksSchema),
+
+  const form = useForm<addMedicineStocksType>({
+    resolver: zodResolver(AddMedicineStocksSchema),
     defaultValues: {
-      medicineName: medicine.medicineInfo.medicineName,
-      category: medicine.category,
-      dosage: medicine.medicineInfo.dosage,
-      dsgUnit: medicine.medicineInfo.dsgUnit,
-      form: medicine.medicineInfo.form,
-      qty: parseInt(medicine.qty.split(" ")[0]) || 0,
-      unit: medicine.qty.includes("boxes") ? "boxes" : "bottles",
-      pcs: medicine.qty.includes("boxes")
-        ? parseInt(medicine.qty.split("(")[1]) || 0
-        : 0,
-      expiryDate: medicine.expiryDate,
+      minv_qty: 0, // Align with schema
+      minv_qty_unit: minv_qty_unit, // Set initial value from props
+      minv_pcs: minv_pcs, // Set initial value from props
     },
   });
 
-  useEffect(() => {
-    form.reset({
-      medicineName: medicine.medicineInfo.medicineName,
-      category: medicine.category,
-      dosage: medicine.medicineInfo.dosage,
-      dsgUnit: medicine.medicineInfo.dsgUnit,
-      form: medicine.medicineInfo.form,
-      qty: parseInt(medicine.qty.split(" ")[0]) || 0,
-      unit: medicine.qty.includes("boxes") ? "boxes" : "bottles",
-      pcs: medicine.qty.includes("boxes")
-        ? parseInt(medicine.qty.split("(")[1]) || 0
-        : 0,
-      expiryDate: medicine.expiryDate,
-    });
-  }, [medicine, form]);
+  const onSubmit = async (data: addMedicineStocksType) => {
+    console.log("Form data:", data);
 
-  const {categories,handleDeleteConfirmation,categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();
-  const medicines = fetchMedicines();
-
-  const onSubmit = async (data: MedicineStockType) => {
     try {
-      const validatedData = MedicineStocksSchema.parse(data);
-      console.log("Form submitted", validatedData);
-      form.reset();
-      alert("Medicine stock added successfully!");
-    } catch (error) {
-      console.error("Form submission error:", form.formState.errors);
-      alert("Submission failed. Please check the form for errors.");
+      const res = await api.get(`inventory/get_medicinestocks/${minv_id}/`);
+      const currentStock = res.data[0];
+      console.log("Current stock:", currentStock);
+
+      const currentMinvQtyAvail = currentStock?.minv_qty_avail;
+      const currentMinvQty = currentStock?.minv_qty;
+      const currentMinvPcs = currentStock?.minv_pcs;
+      const inv_id = currentStock?.inv_detail?.inv_id;
+
+      if (currentMinvPcs !== data.minv_pcs) {
+        form.setError("minv_pcs", {
+          type: "manual",
+          message: `Pieces per box must match the existing stock which is (${currentMinvPcs}).`,
+        });
+        return;
+      }
+
+      let newMinvQtyAvail = currentMinvQtyAvail;
+      let newQty = currentMinvQty;
+      if (data.minv_qty_unit === "boxes") {
+        newMinvQtyAvail += data.minv_qty * data.minv_pcs;
+        newQty += data.minv_qty * data.minv_pcs;
+      } else {
+        newMinvQtyAvail += data.minv_qty;
+        newQty += data.minv_qty;
+      }
+
+      const updateRes = await api.put(`inventory/update_medicinestocks/${minv_id}/`, {
+        minv_qty: newQty,
+        minv_qty_unit: data.minv_qty_unit,
+        minv_qty_avail: newMinvQtyAvail,
+      });
+
+      if (inv_id) {
+        await api.put(`inventory/update_inventorylist/${inv_id}/`, {
+          updated_at: new Date().toISOString(),
+        });
+      }
+      console.log("Stock updated successfully:", updateRes.data);
+      alert("Stock updated successfully!");
+    } catch (err: any) {
+      if (err.response) {
+        console.error("Error Response:", err.response.status, err.response.data);
+        alert(`Failed to update stock: ${err.response.data.detail || "Unknown error"}`);
+      } else {
+        console.error("Error:", err.message);
+        alert("Network error. Please try again.");
+      }
     }
   };
 
-  const currentUnit = form.watch("unit");
-  const qty = form.watch("qty") || 0;
-  const pcs = form.watch("pcs") || 0;
+  useEffect(() => {
+    form.reset((prevValues) => ({
+      ...prevValues,
+      minv_pcs: minv_pcs || 0,
+    }));
+  }, [minv_pcs, form]);
+
+  const currentUnit = form.watch("minv_qty_unit");
+  const qty = form.watch("minv_qty") || 0;
+  const pcs = form.watch("minv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
- 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Medicine Name Field */}
             <FormField
               control={form.control}
-              name="medicineName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Medicine Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Medicine"
-                      options={medicines}
-                      value={field.value}
-                      onChange={(value) => field.onChange(value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category Dropdown with Add/Delete */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    {/* Category Dropdown with Add/Delete */}
-                    <SelectLayoutWithAdd
-                      placeholder="select"
-                      label="Select a Category"
-                      options={categories}
-                      value={field.value}
-                      onChange={(value) => field.onChange(value)}
-                      onAdd={(newCategoryName) => {
-                        categoryHandleAdd(newCategoryName, (newId) => {
-                          field.onChange(newId); // Update the form value with the new category ID
-                        });
-                      }}
-                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      min={new Date().toISOString().split("T")[0]}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="dosage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dosage</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={
-                        field.value === undefined || field.value === 0
-                          ? ""
-                          : field.value
-                      } // Handle undefined and 0
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? 0 : Number(value)); // Set to 0 if empty
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dsgUnit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dosage Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "mg", name: "mg" },
-                        { id: "ml", name: "ml" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="form"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Form</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Form"
-                      options={[
-                        { id: "tablet", name: "Tablet" },
-                        { id: "capsule", name: "Capsule" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="qty"
+              name="minv_qty"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
@@ -259,7 +122,7 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                     <Input
                       type="number"
                       min={0}
-                      value={field.value || ""} // Handle undefined and 0
+                      value={field.value || ""}
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? 0 : Number(value));
@@ -270,10 +133,10 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                 </FormItem>
               )}
             />
-
+{/* 
             <FormField
               control={form.control}
-              name="unit"
+              name="minv_qty_unit"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
@@ -288,19 +151,46 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                       ]}
                       value={field.value}
                       onChange={field.onChange}
+                      disabled={minv_qty_unit !== "boxes"} // Disable if not boxes
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            /> */}
+
+<FormField
+              control={form.control}
+              name="minv_qty_unit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                  Unit
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                   
+                   
+                      value={field.value || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? 0 : Number(value));
+                      }}
+                      disabled
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {currentUnit === "boxes" && (
               <FormField
                 control={form.control}
-                name="pcs"
+                name="minv_pcs"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pieces per Box</FormLabel>
@@ -313,11 +203,12 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
                           field.value === undefined || field.value === 0
                             ? ""
                             : field.value
-                        } // Handle undefined and 0
+                        }
                         onChange={(e) => {
                           const value = e.target.value;
                           field.onChange(value === "" ? 0 : Number(value));
                         }}
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />
@@ -346,7 +237,6 @@ export default function EditMedicineForm({ medicine }: EditMedicineFormProps) {
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()}
     </div>
   );
 }

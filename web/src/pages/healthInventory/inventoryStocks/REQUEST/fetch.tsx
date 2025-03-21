@@ -5,6 +5,8 @@ import {
   getMedicines,
 } from "../../InventoryList/requests/GetRequest"; // Adjust the import based on your API setup
 import { getFirstAid } from "../../InventoryList/requests/GetRequest";
+import api from "@/pages/api/api";
+import { getMedicineStocks } from "./Get";
 
 export const fetchMedicines = () => {
   const [medicines, setMedicines] = useState<{ id: string; name: string }[]>(
@@ -81,3 +83,34 @@ export const fetchCommodity = () => {
 
 
 
+export const fetchMedicineStocks = async (setData: (data: any) => void) => {
+  try {
+    const medicineStocks = await getMedicineStocks();
+    if (medicineStocks) {
+      const transformedData = medicineStocks.map((medicineStock: any) => ({
+        id: medicineStock.minv_id,
+        medicineInfo: {
+          medicineName: medicineStock.med_detail?.med_name,
+          dosage: medicineStock.minv_dsg,
+          dsgUnit: medicineStock.minv_dsg_unit,
+          form: medicineStock.minv_form,
+        },
+        expiryDate: medicineStock.inv_detail?.expiry_date,
+        category: medicineStock.cat_detail?.cat_name,
+
+        qty: {
+          qty:medicineStock.minv_qty,
+          pcs:medicineStock.minv_pcs,
+
+        },
+        minv_qty_unit:medicineStock.minv_qty_unit,
+        availQty: medicineStock.minv_qty_avail,
+        distributed: medicineStock.minv_distributed,
+      }));
+
+      setData(transformedData);
+    }
+  } catch (error) {
+    console.error("Error fetching medicine stocks:", error);
+  }
+};

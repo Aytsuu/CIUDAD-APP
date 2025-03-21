@@ -27,14 +27,6 @@ class DeleteCategoryView(generics.DestroyAPIView):
         return get_object_or_404(Category, cat_id=cat_id)  # ✅ Correct field
     
 
-# ----------------------INVENTORY---VIEW------------------------------------  
-class InventoryView(generics.ListCreateAPIView):
-    serializer_class=InventorySerializers
-    queryset = Inventory.objects.all()
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-
 # ---------------------------LIST---VIEW------------------------------------
 class MedicineListView(generics.ListCreateAPIView):
     serializer_class=MedicineListSerializers
@@ -112,6 +104,26 @@ class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
        
 
 
+# ----------------------INVENTORY---VIEW------------------------------------  
+class InventoryView(generics.ListCreateAPIView):
+    serializer_class=InventorySerializers
+    queryset = Inventory.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+
+class InventoryUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = InventorySerializers
+    queryset = Inventory.objects.all()
+    lookup_field='inv_id'
+    
+    def get_object(self):
+       inv_id = self.kwargs.get('inv_id')
+       obj = get_object_or_404(Inventory, inv_id = inv_id)
+       return obj
+
+    
+
 # ---------------------------------------------------------------------
 #STOCKS
 class MedicineInventoryView(generics.ListCreateAPIView):
@@ -121,4 +133,32 @@ class MedicineInventoryView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     
+# ----------------------MEDICINE STOCK---RETRIEVE------------------------------------  
+class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
+    serializer_class=MedicineInventorySerializer
+    queryset = MedicineInventory.objects.all()
+    lookup_field='minv_id'
+    
+    def get_object(self):
+       minv_id = self.kwargs.get('minv_id')
+       obj = get_object_or_404(MedicineInventory, minv_id = minv_id)
+       return obj
+       
+    
+# ----------------------MEDICINE STOCK---DELETE------------------------------------  
+class DeleteMedicineInvView(generics.DestroyAPIView):
+    serializer_class=MedicineInventorySerializer
+    queryset = MedicineInventory.objects.all()
+ 
+    def get_object(self):
+       minv_id = self.kwargs.get('minv_id')
+       obj = get_object_or_404(MedicineInventory, minv_id = minv_id)
+       return obj
+    
+
+class AddMedicineStocksView(generics.ListCreateAPIView):
+    serializer_class=AddMedicineStocksSerializers
+    queryset=AddMedicineStocks.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
     

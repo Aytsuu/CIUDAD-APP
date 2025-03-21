@@ -86,7 +86,7 @@ export default function CommodityStocks() {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <TooltipLayout
+          {/* <TooltipLayout
             trigger={
               <DialogLayout
                 trigger={
@@ -102,7 +102,7 @@ export default function CommodityStocks() {
               />
             }
             content="Edit"
-          />
+          /> */}
           <TooltipLayout
             trigger={
               <DialogLayout

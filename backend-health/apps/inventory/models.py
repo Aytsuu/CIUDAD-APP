@@ -40,10 +40,6 @@ class FirstAidList(models.Model):
         db_table = 'firstaid_list'
         
 
-
-
-
-
 class Inventory(models.Model):
     inv_id =models.BigAutoField(primary_key=True)
     expiry_date = models.DateField()
@@ -60,7 +56,7 @@ class MedicineInventory(models.Model):
     minv_dsg_unit = models.CharField(max_length=100)
     minv_form = models.CharField(max_length=100)
     minv_qty = models.PositiveIntegerField(default=0)
-    minv_qty_unit = models.CharField(max_length=100)
+    minv_qty_unit = models.CharField(max_length=100) 
     minv_pcs = models.PositiveIntegerField(default=0)
     minv_distributed = models.PositiveIntegerField(default=0)
     minv_qty_avail = models.PositiveIntegerField(default=0)
@@ -72,4 +68,15 @@ class MedicineInventory(models.Model):
         db_table = 'medicine_inventory'
   
 
-        
+class AddMedicineStocks(models.Model):
+    mdt_id =models.BigAutoField(primary_key=True)
+    mdt_qty = models.CharField(max_length=100)
+    mdt_qty_avail = models.CharField(max_length=100)
+    mdt_action = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'medicine_transaction'
+  
