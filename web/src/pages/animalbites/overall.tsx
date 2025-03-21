@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import ReferralFormModal from "@/pages/animalbites/referralform";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Eye, Search, Trash } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Link } from "react-router-dom";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
 // Define Patient Type
 type Patient = {
@@ -75,12 +76,23 @@ function AnimalBites() {
 
   // Define Columns for DataTable
   const columns: ColumnDef<Patient>[] = [
+    { accessorKey: "id", header: "#" },
     {
       accessorKey: "fullName",
       header: "Patient",
       cell: ({ row }) => {
-        const { fname, lname } = row.original;
-        return `${lname}, ${fname}`;
+        const patient = row.original;
+        const fullName = `${patient.lname}, ${patient.fname}`;
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {patient.gender}, {patient.age} years old
+              </div>
+            </div>
+          </div>
+        );
       },
     },
     { accessorKey: "age", header: "Age" },
@@ -88,19 +100,44 @@ function AnimalBites() {
     { accessorKey: "date", header: "Date" },
     { accessorKey: "exposure", header: "Exposure" },
     { accessorKey: "siteOfExposure", header: "Site of Exposure" },
-    { accessorKey: "transient", header: "Transient", cell: ({ row }) => (row.original.transient ? "Yes" : "No") },
+    {
+      accessorKey: "transient",
+      header: "Transient",
+      cell: ({ row }) => (row.original.transient ? "Yes" : "No"),
+    },
     { accessorKey: "bitingAnimal", header: "Biting Animal" },
-    { accessorKey: "actions", header: "Actions taken" },
+    { accessorKey: "actions", header: "Actions Taken" },
+    
     {
       accessorKey: "button",
       header: "",
-      cell: ({ }) => (
+      cell: ({ row }) => (
         <div className="flex justify-center">
-          <Link to={`/Animalbite_individual/`}>
-            <Button variant="outline" className="">
-              View
-            </Button>
-          </Link>
+          <TooltipLayout
+            trigger={
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Link to={`/Animalbite_individual/`}>
+                  <Eye size={15} />
+                </Link>
+              </div>
+            }
+            content="View"
+          />
+
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                    <Trash size={16} />
+                  </div>
+                }
+                className=""
+                mainContent={<></>}
+              />
+            }
+            content="Delete"
+          />
         </div>
       ),
     },

@@ -13,7 +13,8 @@ const patient = async (data: Record<string, any>) => {
       gender: data.p_gender,
     })
 
-    const res = await api.post("patients/", {
+    // Update the endpoint path to match your Django URL configuration
+    const res = await api.post("animalbites/patients/", {
       transient: data.transient,
       lastname: data.p_lname,
       firstname: data.p_fname,
@@ -39,7 +40,8 @@ const referral = async (data: Record<string, any>, patientId: number) => {
       patient: patientId, // Link referral to the patient
     })
 
-    const res = await api.post("referral/", {
+    // Update the endpoint path to match your Django URL configuration
+    const res = await api.post("animalbites/referral/", {
       receiver: data.receiver,
       sender: data.sender,
       date: formatDate(data.date),
@@ -59,16 +61,15 @@ const bitedetails = async (data: Record<string, any>, referralId: number) => {
       exposure_type: data.exposure_type,
       exposure_site: data.exposure_site,
       biting_animal: data.biting_animal,
-      lab_exam: data.lab_exam || "",
       actions_taken: data.p_actions || "No actions recorded",
       referral: referralId,
     })
 
-    const res = await api.post("details/", {
+    // Update the endpoint path to match your Django URL configuration
+    const res = await api.post("animalbites/details/", {
       exposure_type: data.exposure_type,
       exposure_site: data.exposure_site,
       biting_animal: data.biting_animal,
-      lab_exam: data.lab_exam || "",
       actions_taken: data.p_actions || "No actions recorded",
       referral: referralId,
     })
@@ -81,4 +82,3 @@ const bitedetails = async (data: Record<string, any>, referralId: number) => {
 }
 
 export { patient, referral, bitedetails }
-

@@ -48,26 +48,26 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     if (!isValid) {
       return
     }
-    
+
     const values = form.getValues()
     console.log("Form submitted with values:", values);
-  
+
     setIsSubmitting(true);
     setError(null);
-  
+
     try {
       console.log("Creating patient...");
       const patientId = await patient(values);
       console.log("Patient created with ID:", patientId);
-  
+
       console.log("Creating referral...");
       const referralId = await referral(values, patientId);
       console.log("Referral created with ID:", referralId);
-  
+
       console.log("Creating bite details...");
       const biteDetailsId = await bitedetails(values, referralId);
       console.log("Bite details created with ID:", biteDetailsId);
-  
+
       if (onAddPatient) {
         const newPatient = {
           id: referralId,
@@ -87,7 +87,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
         console.log("Adding patient to state:", newPatient);
         onAddPatient(newPatient);
       }
-  
+
       console.log("All data saved successfully");
       onClose();
     } catch (err) {
@@ -107,8 +107,10 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
       <Form {...form}>
-        <form onSubmit={(e) => {e.preventDefault() 
-          onSubmit()}} className="p-4 space-y-4">
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          onSubmit()
+        }} className="p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Receiver */}
             <FormField
@@ -266,9 +268,9 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -350,14 +352,26 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="p_referred"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Referred by:</Label>
+                    <FormControl>
+                      <Input  {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
             </div>
           </div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
-              Cancel
-            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Saving..." : "Add"}
             </Button>
@@ -367,4 +381,3 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     </div>
   )
 }
-
