@@ -26,6 +26,14 @@ class BudgetPlanDetialsView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Budget_Plan.DoesNotExist:
             return Response({"error": "Budget Plan not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+    def delete(self, request, plan_id):
+        try:
+            budget_plan = Budget_Plan.objects.get(plan_id=plan_id)
+            budget_plan.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Budget_Plan.DoesNotExist:
+            return Response({"error": "Budget Plan not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class Current_Expenditures_PersonalView(generics.ListCreateAPIView):
     serializer_class = Current_Expenditures_PersonalSerializers
