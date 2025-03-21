@@ -74,15 +74,11 @@ const items: MenuItem[] = [
     title: "GAD",
     subItems: true,
     url: "/",
-<<<<<<< HEAD
-    items: [{ title: "Budget Tracker", url: "/gad-budget-tracker-main" }],
-=======
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposals", url: "/gad-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
     ],
->>>>>>> frontend/feature/treasurer
   },
   {
     title: "Council",
@@ -139,33 +135,6 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-<<<<<<< HEAD
-      { title: "Doctor", url: "/mainMedicalForm" },
-      { title: "Animal Bites", url: "/Animalbite_viewing" },
-      { title: "Child Services", url: "/allChildHRTable" },
-      { title: "Maternal Services", url: "/maternalrecords" },
-      { title: "Family Planning", url: "/FamPlanning_table" },
-      { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Vaccination", url: "/allRecordsForVaccine" },
-      {
-        title: "Inventory",
-        url: "/",
-        anotherItems: [
-          { title: "Inventory List", url: "/mainInventoryList" },
-          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-        ],
-      },
-      {
-        title: "Queueing",
-        url: "/",
-        anotherItems: [
-          { title: "Patients Queue", url: "/patientsQueue" },
-          { title: "Processing Queue", url: "/processingQueue" },
-        ],
-      },
-    ],
-  },
-=======
       {title: "Animal Bites", url: "/Animalbite_viewing"},
       {title: "Child Services", url: "/allChildHRTable"},
       {title: "Maternal Services", url:"/maternalrecords"},
@@ -174,7 +143,6 @@ const items: MenuItem[] = [
       {title: "Vaccination", url: "/allVaccinationRecord"},
     ]
   }
->>>>>>> frontend/feature/treasurer
 ];
 
 interface SubMenuItemProps {
