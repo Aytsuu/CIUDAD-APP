@@ -17,18 +17,19 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom"; // For navigation after login
+import { supabase } from "@/supabaseClient"; // Import Supabase client
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const Icon = showPassword ? LuEyeOff : LuEye;
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
     defaultValues: {
-      username: "",
+      usernameOrEmail: "", // Combined field for username or email
       password: "",
     },
   });
@@ -36,31 +37,51 @@ export default function SignIn() {
   const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
     setLoading(true);
     setErrorMessage("");
-  
+
     try {
-      // Send a POST request to the login endpoint
-      const response = await axios.post("http://127.0.0.1:8000/api/auth/login/", {
-        username: data.username,
-        password: data.password,
+      // Step 1: Determine if the input is an email or username
+      const isEmail = data.usernameOrEmail.includes("@");
+
+      // Step 2: Authenticate with Supabase
+      const { data: supabaseData, error: supabaseError } = isEmail
+        ? await supabase.auth.signInWithPassword({
+            email: data.usernameOrEmail,
+            password: data.password,
+          })
+        : await supabase.auth.signInWithPassword({
+            email: data.usernameOrEmail + "@example.com", // Append a dummy domain for username
+            password: data.password,
+          });
+
+      if (supabaseError) {
+        throw supabaseError;
+      }
+
+      // Step 3: Get the Supabase JWT
+      const supabaseToken = supabaseData.session.access_token;
+
+      // Step 4: Send the JWT to your Django backend for verification
+      const response = await axios.post("http://127.0.0.1:8000/api/supabase-login/", {
+        token: supabaseToken,
       });
-  
+
       if (response.status === 200) {
         console.log("Login successful!", response.data);
-  
-        // Store tokens in localStorage (or cookies for better security)
-        localStorage.setItem("access_token", response.data.access);
-        localStorage.setItem("refresh_token", response.data.refresh);
-  
-        // Redirect to the home page or dashboard
+
+        // Step 5: Store user data in localStorage (or cookies for better security)
+        localStorage.setItem("user_id", response.data.user_id);
+        localStorage.setItem("is_superuser", response.data.is_superuser);
+
+        // Step 6: Redirect to the home page or dashboard
         navigate("/");
       }
     } catch (error) {
       console.error("Login failed:", error);
-  
+
       // Handle different types of errors
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          setErrorMessage("Invalid username or password.");
+          setErrorMessage("Invalid username/email or password.");
         } else {
           setErrorMessage("An error occurred. Please try again later.");
         }
@@ -68,7 +89,7 @@ export default function SignIn() {
         setErrorMessage("An unexpected error occurred.");
       }
     }
-  
+
     setLoading(false);
   };
 
@@ -82,7 +103,7 @@ export default function SignIn() {
           {/* Username/Email Field */}
           <FormField
             control={form.control}
-            name="username"
+            name="usernameOrEmail"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Username or Email</FormLabel>
@@ -133,7 +154,7 @@ export default function SignIn() {
         {/* Submit Button */}
         <div className="w-full flex items-end justify-end">
           <Button type="submit" disabled={loading}>
-          {loading ? <Loading /> : "Log in"}
+            {loading ? <Loading /> : "Log in"}
           </Button>
         </div>
       </form>

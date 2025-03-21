@@ -8,11 +8,9 @@
 # ]
 
 from django.urls import path
-from .views import UserCreateView, AdminUserCreateView
+from .views import SupabaseLoginView, UserDetailView
 
 urlpatterns = [
-    # Regular user registration
-    path('register/', UserCreateView.as_view(), name='user-create'),
-    # Admin-only endpoint to create superusers
-    path('admin/register/', AdminUserCreateView.as_view(), name='adminuser-create'),
+    path('supabase-login/', SupabaseLoginView.as_view(), name='supabase-login'),
+    path('me/', UserDetailView.as_view(), name='user-detail'),
 ]

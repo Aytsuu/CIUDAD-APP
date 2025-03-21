@@ -18,33 +18,33 @@
 # class CustomTokenObtainPairView(TokenObtainPairView):
 #     serializer_class = CustomTokenObtainPairSerializer
 
-
-from rest_framework import generics, permissions
-from django.contrib.auth.models import User
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import login
+from .authentication import SupabaseAuthenticationBackend
 from .serializers import UserSerializer
+from django.contrib.auth.models import User
 
-# Regular user registration
-class UserCreateView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]  # Allow anyone to register
+class SupabaseLoginView(APIView):
+    def post(self, request):
+        token = request.data.get("token")
+        if not token:
+            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-# Admin-only view to create superusers
-class AdminUserCreateView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]  # Only admins can access
+        # Authenticate the user using the Supabase JWT
+        backend = SupabaseAuthenticationBackend()
+        user = backend.authenticate(request, token=token)
+        if user:
+            login(request, user)
+            return Response({"message": "Login successful", "user_id": user.id, "is_superuser": user.is_superuser})
+        else:
+            return Response({"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED)
 
-    def perform_create(self, serializer):
-        # Set is_superuser for admin users
-        serializer.save(is_superuser=True)
+class UserDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-# View to retrieve, update, or delete a user
-class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]  # Only authenticated users can access
-
-    def get_object(self):
-        # Return the user associated with the logged-in user
-        return self.request.user
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)

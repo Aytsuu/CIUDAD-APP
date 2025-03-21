@@ -166,7 +166,13 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
 CORS_ALLOW_HEADERS = ["*"]
 
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+    'useraccount.authentication.SupabaseAuthenticationBackend',  # Supabase backend
+]
+
 # Supabase credentials
-SUPABASE_URL = os.getenv('SUPABASE_URL')  
-SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY') 
-SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
+SUPABASE_URL = os.getenv('https://bnvhzzbsqixwyevhgcol.supabase.co')  
+SUPABASE_ANON_KEY = os.getenv('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudmh6emJzcWl4d3lldmhnY29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODkwMDEsImV4cCI6MjA1ODE2NTAwMX0.CaEU6OAV3BjTZ0Lh5TDTRkHzqKQmoHlbZ2dBOlDsEjs') 
+SUPABASE_JWT_SECRET = os.getenv('EEDHhSbqr5GRRUZWNzJuiNAh1m6k5S4LD9JhKbQJ/UPN0WTzICDRrl7Q3Vbw05jk1SZDrNZl4ofrde2b0ihwAQ==')

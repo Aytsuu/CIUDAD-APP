@@ -48,14 +48,13 @@
 #             return data
 #         else:
 #             raise serializers.ValidationError("Invalid username/email or password.")
-
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'is_superuser']
+        fields = ['id', 'username', 'email', 'is_superuser']
         extra_kwargs = {
             'password': {'write_only': True},  # Hide password in responses
             'is_superuser': {'read_only': True},  # Prevent non-admins from setting this field
