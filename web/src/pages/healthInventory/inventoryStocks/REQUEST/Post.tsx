@@ -28,9 +28,9 @@ export const addInventory = async (inventoryData: InventoryType) => {
 };
 
 // add stocks for medicine
-export const addMedicineStocks = async () => {
+export const addMedicineTransaction = async () => {
   try {
-    const res = await api.post("inventory/addmedicinestocks");
+    const res = await api.post("inventory/medicinetransaction");
     return res.data;
   } catch (err:any) {
     console.log("Error response:", err.response?.data || err.message);

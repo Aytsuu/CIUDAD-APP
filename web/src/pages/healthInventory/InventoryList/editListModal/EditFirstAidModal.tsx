@@ -20,19 +20,18 @@ import { getFirstAid } from "../requests/GetRequest";
 import { addFirstAid } from "../requests/Postrequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { updateFirstAid, updateMedicine } from "../requests/UpdateRequest";
+import {  useQueryClient } from "@tanstack/react-query";
 
 interface FirstAidListProps {
   initialData: {
     id: number;
     firstAidName: string;
   };
-  fetchData: () => void;
   setIsDialog: (isOpen: boolean) => void;
 }
 
 export default function EditFirstAidModal({
   initialData,
-  fetchData,
   setIsDialog,
 }: FirstAidListProps) {
   const form = useForm<FirstAidType>({
@@ -42,16 +41,16 @@ export default function EditFirstAidModal({
     },
   });
 
-  // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newFirstAidName, setnewFirstAidName] = useState<string>("");
-  
+  const queryClient = useQueryClient();
+
   const confirmAdd = async () => {
     try {
       await updateFirstAid(initialData.id, newFirstAidName); // Update the medicine
-      setIsAddConfirmationOpen(false); // Close the confirmation dialog
       setIsDialog(false); // Close the edit dialog
-      fetchData(); // Refresh the table data
+      queryClient.invalidateQueries({ queryKey: ["firstAid"] });
+      setIsAddConfirmationOpen(false); // Close the confirmation dialog   
     } catch (err) {
       console.error("Error updating medicine:", err);
     }

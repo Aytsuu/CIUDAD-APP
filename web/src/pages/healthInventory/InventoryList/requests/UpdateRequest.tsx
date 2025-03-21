@@ -32,6 +32,21 @@ export const updateMedicine = async (med_id: number, medicineName: string) => {
       return res.data;
     } catch (err) {
       console.log(err);
-      throw err; // Re-throw the error to handle it in the calling function
+      throw err; 
+    }
+  };
+
+  export const updateCommodity = async (com_id: number, comName: string) => {
+  
+    try {
+      const res = await api.put(`inventory/update_commoditylist/${com_id}/`, {
+        com_name: toTitleCase(comName),
+        updated_at: new Date().toISOString(),
+      });
+  
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      throw err; 
     }
   };

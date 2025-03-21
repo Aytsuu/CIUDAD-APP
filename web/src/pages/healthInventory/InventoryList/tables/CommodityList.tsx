@@ -2,25 +2,20 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CommodityModal from "../addListModal/CommodityModal";
-import EditCommodityModal from "../editListModal/EditCommodityModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCommodity } from "../requests/GetRequest";
 import { handleDeleteCommodityList } from "../requests/DeleteRequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { MainLayoutComponent } from "@/components/ui/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { CommodityColumns } from "./MedicineListColumsn";
+import { CommodityRecords
 
-type CommodityRecords = {
-  id: number;
-  commodityName: string;
-};
-
+ } from "./MedicineListColumsn";
 export default function CommodityList() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
@@ -50,7 +45,7 @@ export default function CommodityList() {
 
   // Filter commodity data based on search query
   const filteredCommodities = React.useMemo(() => {
-    return formatCommodityData().filter((record) =>
+    return formatCommodityData().filter((record: CommodityRecords) =>
       Object.values(record)
         .join(" ")
         .toLowerCase()
@@ -77,7 +72,8 @@ export default function CommodityList() {
       setComToDelete(null);
     }
   };
-
+  // Generate columns using CommodityColumns
+  const columns = CommodityColumns(setIsDialog, setComToDelete, setIsDeleteConfirmationOpen);
   if (isLoadingCommodities) {
     return (
       <div className="w-full h-full">
@@ -88,56 +84,6 @@ export default function CommodityList() {
       </div>
     );
   }
-
-  const columns: ColumnDef<CommodityRecords>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "commodityName",
-      header: "Commodity Name",
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <DialogLayout
-            trigger={
-              <Button variant="outline">
-                <Edit size={16} />
-              </Button>
-            }
-            mainContent={
-              <EditCommodityModal
-                initialData={row.original}
-                fetchData={formatCommodityData}
-                setIsDialog={setIsDialog}
-              />
-            }
-          />
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              setComToDelete(row.original.id);
-              setIsDeleteConfirmationOpen(true);
-            }}
-          >
-            <Trash />
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div>
@@ -164,8 +110,7 @@ export default function CommodityList() {
               </Button>
             }
             title="Add New Commodity"
-            // mainContent={<CommodityModal setIsDialog={setIsDialog} />}
-            mainContent={<></>}
+            mainContent={<CommodityModal setIsDialog={setIsDialog} />}
             isOpen={isDialog}
             onOpenChange={setIsDialog}
           />

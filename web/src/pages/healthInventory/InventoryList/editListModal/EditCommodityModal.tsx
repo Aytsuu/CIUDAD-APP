@@ -19,19 +19,23 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { addCommodity } from "../requests/Postrequest";
 import { getCommodity } from "../requests/GetRequest";
+import { updateCommodity } from "../requests/UpdateRequest";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface CommodityListProps {
   initialData: {
     id: number;
     commodityName: string;
   };
-  fetchData: () => void,
-  setIsDialog:(isOpen : boolean) => void
+  setIsDialog: (isOpen: boolean) => void;
 }
 
 export default function EditCommodityModal({
-  initialData,fetchData,setIsDialog
+  initialData,
+  setIsDialog,
 }: CommodityListProps) {
+
+
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
@@ -39,30 +43,23 @@ export default function EditCommodityModal({
     },
   });
 
-
-
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newCommodityName, setnewCommodityName] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const confirmAdd = async () => {
-    if (newCommodityName.trim()) {
-      try {
-        if (await addCommodity(newCommodityName)) {
-          setIsAddConfirmationOpen(false);
-          setnewCommodityName("");
-          setIsDialog(false);
-          fetchData()
-        } else {
-          console.error("Failed to add medicine.");
-        }
-      } catch (err) {
-        console.error(err);
-      }
+    try {
+      await updateCommodity(initialData.id, newCommodityName); // Update the medicine
+      setIsDialog(false);
+      setIsAddConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+    } catch (err) {
+      console.error("Error updating medicine:", err);
     }
   };
 
-  const isDuplicateMedicine = (commodity: any[], newCommodityName: string) => {
+  const isDuplicateCOmmodity = (commodity: any[], newCommodityName: string) => {
     return commodity.some(
       (com) => com.com_name.toLowerCase() === newCommodityName.toLowerCase()
     );
@@ -74,15 +71,16 @@ export default function EditCommodityModal({
       if (!Array.isArray(existingCommodity))
         throw new Error("Invalid API response");
 
-      if (isDuplicateMedicine(existingCommodity, data.commodityName)) {
+      if (isDuplicateCOmmodity(existingCommodity, data.commodityName)) {
         form.setError("commodityName", {
           type: "manual",
-          message: "Commodity already exists.",
+          message: "Medicine already exists.",
         });
         return;
       }
       setnewCommodityName(data.commodityName);
       setIsAddConfirmationOpen(true);
+      setIsDialog(false);
     } catch (err) {
       console.error(err);
     }
@@ -120,13 +118,13 @@ export default function EditCommodityModal({
         </form>
       </Form>
 
-       <ConfirmationDialog
-              isOpen={isAddConfirmationOpen}
-              onOpenChange={setIsAddConfirmationOpen}
-              onConfirm={confirmAdd}
-              title="Add Medicine"
-              description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
-            />
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
+      />
     </div>
   );
 }

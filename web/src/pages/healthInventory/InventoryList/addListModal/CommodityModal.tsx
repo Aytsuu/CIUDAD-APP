@@ -18,13 +18,12 @@ import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { addCommodity } from "../requests/Postrequest";
 import { getCommodity } from "../requests/GetRequest";
-
+import { useQueryClient } from "@tanstack/react-query";
 interface CommodityProps {
-  fetchData: () => void;
   setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function CommodityModal({fetchData,setIsDialog}: CommodityProps) {
+export default function CommodityModal({ setIsDialog }: CommodityProps) {
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
@@ -34,15 +33,16 @@ export default function CommodityModal({fetchData,setIsDialog}: CommodityProps) 
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newCommodityName, setnewCommodityName] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const confirmAdd = async () => {
     if (newCommodityName.trim()) {
       try {
         if (await addCommodity(newCommodityName)) {
           setIsAddConfirmationOpen(false);
-          setnewCommodityName("");
           setIsDialog(false);
-          fetchData()
+          queryClient.invalidateQueries({queryKey:["commodities"]})
+
         } else {
           console.error("Failed to add medicine.");
         }
@@ -104,7 +104,7 @@ export default function CommodityModal({fetchData,setIsDialog}: CommodityProps) 
 
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>
-            </div> 
+            </div>
           </div>
         </form>
       </Form>

@@ -1,25 +1,20 @@
+// FirstAidList.tsx
 import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import FirstAidModal from "../addListModal/FirstAidModal";
-import EditFirstAidModal from "../editListModal/EditFirstAidModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFirstAid } from "../requests/GetRequest";
 import { handleDeleteFirstAidList } from "../requests/DeleteRequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { MainLayoutComponent } from "@/components/ui/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-
-type FirstAidRecords = {
-  id: number;
-  firstAidName: string;
-};
+import { FirstAidColumns } from "./MedicineListColumsn";
+import { FirstAidRecords } from "./MedicineListColumsn";
 
 export default function FirstAidList() {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -40,7 +35,7 @@ export default function FirstAidList() {
   });
 
   // Format first aid data
-  const formatFirstAidData = React.useCallback((): FirstAidRecords[] => {
+  const formatFirstAidData = React.useCallback(() => {
     if (!firstAidData) return [];
     return firstAidData.map((firstAid: any) => ({
       id: firstAid.fa_id,
@@ -48,9 +43,9 @@ export default function FirstAidList() {
     }));
   }, [firstAidData]);
 
-  // Filter first aid data based on search query
+
   const filteredFirstAid = React.useMemo(() => {
-    return formatFirstAidData().filter((record) =>
+    return formatFirstAidData().filter((record: FirstAidRecords) =>
       Object.values(record)
         .join(" ")
         .toLowerCase()
@@ -78,6 +73,9 @@ export default function FirstAidList() {
     }
   };
 
+  // Generate columns using FirstAidColumns
+  const columns = FirstAidColumns(setIsDialog, setFaToDelete, setIsDeleteConfirmationOpen);
+
   if (isLoadingFirstAid) {
     return (
       <div className="w-full h-full">
@@ -88,56 +86,6 @@ export default function FirstAidList() {
       </div>
     );
   }
-
-  const columns: ColumnDef<FirstAidRecords>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "firstAidName",
-      header: "Item Name",
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <DialogLayout
-            trigger={
-              <Button variant="outline">
-                <Edit size={16} />
-              </Button>
-            }
-            mainContent={
-              <EditFirstAidModal
-                initialData={row.original}
-                fetchData={formatFirstAidData}
-                setIsDialog={setIsDialog}
-              />
-            }
-          />
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              setFaToDelete(row.original.id);
-              setIsDeleteConfirmationOpen(true);
-            }}
-          >
-            <Trash />
-          </Button>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div>
@@ -164,8 +112,7 @@ export default function FirstAidList() {
               </Button>
             }
             title="Add New First Aid Item"
-            // mainContent={<FirstAidModal setIsDialog={setIsDialog}  />}
-            mainContent={<></>}
+            mainContent={<FirstAidModal setIsDialog={setIsDialog} />}
             isOpen={isDialog}
             onOpenChange={setIsDialog}
           />

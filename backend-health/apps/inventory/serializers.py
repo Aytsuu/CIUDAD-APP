@@ -85,7 +85,7 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
 
 
 
-class AddMedicineStocksSerializers(serializers.ModelSerializer):
+class MedicineTransactionSerializers(serializers.ModelSerializer):
   # Show full details when retrieving
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     minv_detail = MedicineInventorySerializer(source='minv_id', read_only=True)  
@@ -103,7 +103,7 @@ class AddMedicineStocksSerializers(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = AddMedicineStocks
+        model = MedicineTransaction
         fields = '__all__'  # Ensure all fields are included
     
     

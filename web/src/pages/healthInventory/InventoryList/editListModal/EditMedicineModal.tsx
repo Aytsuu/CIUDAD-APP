@@ -27,7 +27,7 @@ interface MedicineListProps {
   };
   setIsDialog: (isOpen: boolean) => void; // Add this line
 }
-
+ 
 export default function MedicineListEdit({
   initialData,
 

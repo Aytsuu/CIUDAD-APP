@@ -2,24 +2,18 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Edit, Plus, FileInput } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import MedicineModal from "../addListModal/MedicineModal";
-import MedicineListEdit from "../editListModal/EditMedicineModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicines } from "../requests/GetRequest";
 import { handleDeleteMedicineList } from "../requests/DeleteRequest";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { MainLayoutComponent } from "@/components/ui/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-
-type MedicineRecords = {
-  id: number;
-  medicineName: string;
-};
+import { MedicineRecords } from "./MedicineListColumsn";
+import { Medcolumns } from "./MedicineListColumsn";
 
 export default function MedicineList() {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -30,6 +24,9 @@ export default function MedicineList() {
   const [medToDelete, setMedToDelete] = React.useState<number | null>(null);
   const [isDialog, setIsDialog] = React.useState(false);
   const queryClient = useQueryClient();
+
+  // Pass the necessary functions to Medcolumns
+  const columns = Medcolumns(setIsDialog, setMedToDelete, setIsDeleteConfirmationOpen);
 
   // Fetch medicines using useQuery
   const { data: medicines, isLoading: isLoadingMedicines } = useQuery({
@@ -83,44 +80,8 @@ export default function MedicineList() {
     );
   }
 
-  const columns: ColumnDef<MedicineRecords>[] = [
-    { accessorKey: "id", header: "Medicine ID" },
-    { accessorKey: "medicineName", header: "Medicine Name" },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <DialogLayout
-            trigger={
-              <Button variant="outline">
-                <Edit size={16} />
-              </Button>
-            }
-            mainContent={
-              <MedicineListEdit
-                initialData={row.original}
-                setIsDialog={setIsDialog}
-              />
-            }
-          />
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              setMedToDelete(row.original.id);
-              setIsDeleteConfirmationOpen(true);
-            }}
-          >
-            <Trash />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
-    <div >
+    <div>
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">

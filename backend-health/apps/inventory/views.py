@@ -53,20 +53,20 @@ class DeleteMedicineListView(generics.DestroyAPIView):
     queryset = Medicinelist.objects.all()
     def get_object(self):
         med_id = self.kwargs.get('med_id')
-        return get_object_or_404(Medicinelist, med_id=med_id)  # ✅ Correct field# -------------------DELETE-----LIST------------------
+        return get_object_or_404(Medicinelist, med_id=med_id) 
 class DeleteFirstAidView(generics.DestroyAPIView):
     serializer_class = FirstAidListSerializers    
     queryset = FirstAidList.objects.all()
     def get_object(self):
         fa_id = self.kwargs.get('fa_id')
-        return get_object_or_404(FirstAidList, fa_id=fa_id)  # ✅ Correct field
+        return get_object_or_404(FirstAidList, fa_id=fa_id)  
 
 class DeleteCommodityView(generics.DestroyAPIView):
     serializer_class = CommodityListSerializers    
     queryset = CommodityList.objects.all()
     def get_object(self):
         com_id = self.kwargs.get('com_id')
-        return get_object_or_404(CommodityList, com_id=com_id)  # ✅ Correct field
+        return get_object_or_404(CommodityList, com_id=com_id) 
     
 
 
@@ -168,9 +168,9 @@ class DeleteMedicineInvView(generics.DestroyAPIView):
    
     
 
-class AddMedicineStocksView(generics.ListCreateAPIView):
-    serializer_class=AddMedicineStocksSerializers
-    queryset=AddMedicineStocks.objects.all()
+class MedicineTransactionView(generics.ListCreateAPIView):
+    serializer_class=MedicineTransactionSerializers
+    queryset=MedicineTransaction.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     

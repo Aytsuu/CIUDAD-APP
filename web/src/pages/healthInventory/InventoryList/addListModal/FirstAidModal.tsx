@@ -19,13 +19,14 @@ import {
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { addFirstAid } from "../requests/Postrequest";
 import { getFirstAid } from "../requests/GetRequest";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 interface FirstAidProps {
-  fetchData: () => void;
   setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function FirstAidModal({ fetchData, setIsDialog }: FirstAidProps) {
+export default function FirstAidModal({  setIsDialog }: FirstAidProps) {
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
@@ -36,7 +37,7 @@ export default function FirstAidModal({ fetchData, setIsDialog }: FirstAidProps)
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newFirstAidName, setnewFirstAidName] = useState<string>("");
-
+  const queryClient = useQueryClient();
   const confirmAdd = async () => {
     if (newFirstAidName.trim()) {
       try {
@@ -48,9 +49,10 @@ export default function FirstAidModal({ fetchData, setIsDialog }: FirstAidProps)
       } catch (err) {
         console.error(err);
       }
+      queryClient.invalidateQueries({ queryKey: ["firstAid"] });
       setIsAddConfirmationOpen(false);
       setIsDialog(false);
-      fetchData();
+  
       setnewFirstAidName("");
     }
   };

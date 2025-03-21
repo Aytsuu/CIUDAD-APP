@@ -26,7 +26,7 @@ urlpatterns = [
     #UPDATE LIST
     path("update_medicinelist/<int:med_id>/", MedicineListUpdateView.as_view(), name="update_medicinelist"),
     path("update_firstaidlist/<int:fa_id>/", FirstAidListUpdateView.as_view(), name="update_firstaidlist"),
-    path("update_commoditylist/<int:fa_id>/", CommodityListUpdateView.as_view(), name="update_commoditylist"),
+    path("update_commoditylist/<int:com_id>/", CommodityListUpdateView.as_view(), name="update_commoditylist"),
     
     
     # INVENTORY  
@@ -41,13 +41,11 @@ urlpatterns = [
 
     
     #STOCKS UPDATE OR RETRIEVE
-    path("get_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="get_medicinestocks"),
-      #STOCKS UPDATE OR RETRIEVE
     path("update_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="update_medicinestocks"),
       
-      
+    
     #ADD MEDICINE STOCKS  POST
-    path("addmedicinestocks/", AddMedicineStocksView.as_view(), name="addmed-stocks"),
+    path("medicinetransaction/", MedicineTransactionView.as_view(), name="medicine-transaction"),
     
     
     

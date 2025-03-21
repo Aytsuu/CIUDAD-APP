@@ -24,7 +24,7 @@ import { addMedicineInventory, addInventory } from "../request/Post";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { InventoryPayload } from "../request/Payload";
 import { MedicinePayload } from "../request/Payload";
-
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MedicineStocksProps{
   setIsDialog:(isOpen: boolean) => void
@@ -50,6 +50,7 @@ export default function MedicineStockForm({setIsDialog}:MedicineStocksProps) {
 const {categories,handleDeleteConfirmation, categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();const medicines = fetchMedicines();
 const [isAddConfirmationOpen,setIsAddConfirmationOpen] =useState(false)
 const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
+const queryClient = useQueryClient()
 
 const handleSubmit = async (data: MedicineStockType) => {
   try {
@@ -67,11 +68,12 @@ const handleSubmit = async (data: MedicineStockType) => {
     if (!medicineInventoryResponse || medicineInventoryResponse.error) {
       throw new Error("Failed to add medicine inventory.");
     }
+    queryClient.invalidateQueries({queryKey:["medicineStocks"] })
+
     console.log("Medicine Inventory Response:", medicineInventoryResponse);
-    // Close the confirmation modal only if successful
     setIsAddConfirmationOpen(false); 
     setIsDialog(false)
-    
+
    
   } catch (error: any) {
     console.error(error);
@@ -86,12 +88,14 @@ const handleSubmit = async (data: MedicineStockType) => {
 // Open confirmation dialog and store submission data
 const onSubmit = (data: MedicineStockType) => {
   setSubmissionData(data);
+
   setIsAddConfirmationOpen(true);
 };
 
 const confirmAdd = () => {
   if (submissionData) {
     handleSubmit(submissionData);
+
   }
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +16,11 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import MedicineStockForm from "../addstocksModal/MedStockModal";
 import EditMedicineForm from "../editModal/EditMedStockModal";
-import { usePagination } from "../../../../components/ui/PaginationFunction.tsx/PaginationFunction";
 import { handleDeleteMedicineStocks } from "../request/Delete";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { fetchMedicineStocks } from "../request/Fetch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getMedicines } from "../../InventoryList/requests/GetRequest";
+import { getMedicineStocks } from "../request/Get";
 import { Skeleton } from "@/components/ui/skeleton";
-import MedicineModal from "../../InventoryList/addListModal/MedicineModal";
-import MedicineListEdit from "../../InventoryList/editListModal/EditMedicineModal";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
@@ -46,53 +42,55 @@ export default function MedicineStocks() {
     distributed: string;
   };
 
-  type MedicineRecords = {
-    id: number;
-    medicineName: string;
-  };
-
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [medStockDelete, setmedStockDelete] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
-  const [data, setData] = useState<MedicineStocksRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
 
-  // Fetch medicine stocks
-  useEffect(() => {
-    fetchMedicineStocks(setData);
-  }, []);
-
-  // Fetch medicines using useQuery
-  const { data: medicines, isLoading: isLoadingMedicines } = useQuery({
-    queryKey: ["medicines"],
-    queryFn: getMedicines,
+  // Fetch medicine stocks using useQuery
+  const { data: medicineStocks, isLoading: isLoadingMedicines } = useQuery({
+    queryKey: ["medicineStocks"],
+    queryFn: getMedicineStocks,
     refetchOnMount: true,
     staleTime: 0,
   });
 
-  const formatMedicineData = React.useCallback((): MedicineRecords[] => {
-    if (!medicines) return [];
-    return medicines.map((medicine: any) => ({
-      id: medicine.med_id,
-      medicineName: medicine.med_name,
+  const formatMedicineStocksData = React.useCallback((): MedicineStocksRecord[] => {
+    if (!medicineStocks) return [];
+    return medicineStocks.map((medicineStock: any) => ({
+      id: medicineStock.minv_id,
+      medicineInfo: {
+        medicineName: medicineStock.med_detail?.med_name,
+        dosage: medicineStock.minv_dsg,
+        dsgUnit: medicineStock.minv_dsg_unit,
+        form: medicineStock.minv_form,
+      },
+      expiryDate: medicineStock.inv_detail?.expiry_date,
+      category: medicineStock.cat_detail?.cat_name,
+      qty: {
+        qty: medicineStock.minv_qty,
+        pcs: medicineStock.minv_pcs,
+      },
+      minv_qty_unit: medicineStock.minv_qty_unit,
+      availQty: medicineStock.minv_qty_avail,
+      distributed: medicineStock.minv_distributed,
     }));
-  }, [medicines]);
+  }, [medicineStocks]);
 
-  const filteredMedicines = React.useMemo(() => {
-    return formatMedicineData().filter((record) =>
-      Object.values(record)
+  const filteredData = React.useMemo(() => {
+    return formatMedicineStocksData().filter((record) =>
+      Object.values(record.medicineInfo)
         .join(" ")
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery, formatMedicineData]);
+  }, [searchQuery, formatMedicineStocksData]);
 
-  const totalPages = Math.ceil(filteredMedicines.length / pageSize);
-  const paginatedMedicines = filteredMedicines.slice(
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
@@ -104,13 +102,13 @@ export default function MedicineStocks() {
 
   const confirmDeleteMed = async () => {
     if (medStockDelete !== null) {
-      await handleDeleteMedicineStocks(medStockDelete, setData);
+      await handleDeleteMedicineStocks(medStockDelete, () => {
+        queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
+      });
       setIsDeleteConfirmationOpen(false);
       setmedStockDelete(null);
-      fetchMedicineStocks(setData); // Refresh data after deletion
     }
   };
-
 
   if (isLoadingMedicines) {
     return (
@@ -190,7 +188,6 @@ export default function MedicineStocks() {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => {
-        console.log("Row Data:", row.original); // Debugging: Check if the correct row data is passed
         return (
           <>
             <div className="flex gap-2">
@@ -308,13 +305,13 @@ export default function MedicineStocks() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={data} />
+          <DataTable columns={columns} data={paginatedData} />
         </div>
         {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {data.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
-            {Math.min(currentPage * pageSize, data.length)} of {data.length}{" "}
+            Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
+            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length}{" "}
             rows
           </p>
           <PaginationLayout
