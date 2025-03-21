@@ -158,7 +158,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <Link to="/resident-registration" 
+      <Link to="/resident-form" 
         state={{
           params: {
             type: 'viewing',

@@ -24,7 +24,7 @@ export const getResidents = async () => {
     }
 };
 
-// Fecth families
+// Fetch families
 export const getFamilies = async () => {
 
   try {
@@ -38,6 +38,8 @@ export const getFamilies = async () => {
 
 }
 
+
+// Fetch households
 export const getHouseholds = async () => {
 
   try {
@@ -47,6 +49,20 @@ export const getHouseholds = async () => {
 
   } catch (err) {
       console.error(err)
+  }
+
+}
+
+// Fetch sitio
+export const getSitio = async () => {
+
+  try {
+
+    const res = await api.get('profiling/sitio/')
+    return res.data
+
+  } catch (err) {
+    console.error(err)
   }
 
 }

@@ -38,7 +38,13 @@ export type HouseholdRecord = {
   streetAddress: string,
   sitio: string,
   nhts: string,
+  headNo: string,
   head: string,
   dateRegistered: string,
   registeredBy: string
+}
+
+export type SitioRecord = {
+  sitio_id: string,
+  sitio_name: string
 }

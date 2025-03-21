@@ -20,7 +20,7 @@ export default function FamilyProfileOptions({ onClose }: FamilyProfileOptionsPr
                 </div>
             </div>
             <Link
-                to="/family-registration"
+                to="/family-form"
                 className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
             >
                 {/* Text content */}

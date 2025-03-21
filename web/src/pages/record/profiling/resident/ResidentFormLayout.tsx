@@ -5,7 +5,7 @@ import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "@/components/ui/button/button";
 import { useLocation, useNavigate } from "react-router";
 
-export default function ResidentProfileForm() {
+export default function ResidentFormLayout() {
   const location = useLocation()
   const navigate = useNavigate();
   const params = React.useMemo(() => {

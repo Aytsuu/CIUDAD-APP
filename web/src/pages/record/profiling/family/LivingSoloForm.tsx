@@ -1,5 +1,8 @@
 import React from "react";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormSelect } from "@/components/ui/form/form-select";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { demographicInfo } from "@/form-schema/profiling-schema";

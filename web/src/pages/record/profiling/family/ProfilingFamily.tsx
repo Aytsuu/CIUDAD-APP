@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { familyColumns } from "../profilingColumns";
+import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
 import LivingSoloForm from "./LivingSoloForm";
@@ -100,7 +100,7 @@ export default function ProfilingFamily() {
 
             <hr className="border-gray mb-6 sm:mb-8" />
 
-            <div className="hidden lg:flex justify-between items-center mb-4">
+            <div className="hidden lg:flex justify-between items-center mb-4 gap-2">
                 <div className="flex gap-2 w-full">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />

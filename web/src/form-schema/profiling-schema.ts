@@ -91,8 +91,6 @@ export const familyFormSchema = z.object({
 })
 
 export const householdSchema = z.object({
-    householdNo: z.string().min(1),
-    existingHouseNo: z.string(),
     nhts: z.string().min(1),
     sitio: z.string().min(1),
     street: z.string().min(1),

@@ -6,7 +6,6 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { householdColumns } from "../profilingColumns";
 
 export default function ProfilingBusiness(){
     return (
@@ -69,7 +68,7 @@ export default function ProfilingBusiness(){
                     />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={householdColumns} data={[]} />
+                    <DataTable columns={[]} data={[]} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">

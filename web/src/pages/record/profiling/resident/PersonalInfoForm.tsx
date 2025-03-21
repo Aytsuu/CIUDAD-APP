@@ -20,10 +20,10 @@ import { FormDateInput } from "@/components/ui/form/form-date-input";
 export default function PersonalInfoForm({ params }: { params: any }) {
 
   const navigate = useNavigate();
-  const defaultValues = generateDefaultValues(personalInfoSchema);
+  const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema));
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    defaultValues,
+    defaultValues: defaultValues.current,
   });
 
   const [formType, setFormType] = React.useState<Type>(params.type);
@@ -139,7 +139,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
             }
           });
 
-          form.reset(defaultValues);
+          form.reset(defaultValues.current);
         }
       }
     } catch (err) {

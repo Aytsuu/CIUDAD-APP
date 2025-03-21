@@ -20,7 +20,7 @@ export const FormDateInput = React.memo(({ control, name, label, readOnly }:
           <FormControl>
             <input
               type="date"
-              className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm"
+              className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               {...field}
               readOnly={readOnly}
             />

@@ -2,29 +2,48 @@ import React from "react";
 import { Search, Plus, FileInput} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { householdColumns } from "../profilingColumns";
-import HouseholdProfileForm from "./HouseholdProfileForm";
+import { householdColumns } from "./HouseholdColumns";
 import { HouseholdRecord } from "../profilingTypes";
 import { useQuery } from "@tanstack/react-query";
-import { getHouseholds } from "../restful-api/profilingGetAPI";
+import { getHouseholds, getSitio, getResidents } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { Link } from "react-router";
 
 export default function ProfilingHousehold(){
 
-    const [searchQuery, setSearchQuery] = React.useState('')
-    const [pageSize, setPageSize] = React.useState(10)
-    const [currentPage, setCurrentPage] = React.useState(1);
+    const [searchQuery, setSearchQuery] = React.useState<string>('')
+    const [pageSize, setPageSize] = React.useState<number>(10)
+    const [currentPage, setCurrentPage] = React.useState<number>(1);
+
+    // Fetch households using useQuery
     const { data: households, isLoading: isLoadingHouseholds } = useQuery({
         queryKey: ['households'],
         queryFn: getHouseholds,
         refetchOnMount: true,
         staleTime: 0
     })
+    
+    // Fetch staffs using useQuery
+    const { data: sitio, isLoading: isLoadingSitio } = useQuery({
+        queryKey: ['sitio'],
+        queryFn: getSitio,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+
+    // Fetch residents using useQuery
+    const { data: residents, isLoading: isLoadingResidents } = useQuery({
+        queryKey: ['residents'],
+        queryFn: getResidents,
+        refetchOnMount: true, 
+        staleTime: 0, 
+    });
+
+
 
     const formatHouseholdData = (): HouseholdRecord[] => {
         if(!households) return [];
@@ -39,6 +58,7 @@ export default function ProfilingHousehold(){
                 streetAddress: item.hh_street || '',
                 sitio: sitio?.sitio_name || '',
                 nhts: item.hh_nhts || '',
+                headNo: personal?.per_id,
                 head: personal?.per_fname + ' ' + personal?.per_lname || '',
                 dateRegistered: item.hh_date_registered || '',
                 registeredBy: ''
@@ -66,7 +86,7 @@ export default function ProfilingHousehold(){
         currentPage * pageSize
     );
 
-    if(isLoadingHouseholds) {
+    if(isLoadingHouseholds || isLoadingSitio || isLoadingResidents) {
         return (
             <div className="w-full h-full">
                 <Skeleton className="h-10 w-1/6 mb-3" />
@@ -82,7 +102,7 @@ export default function ProfilingHousehold(){
             title="Household Profiling"
             description="Manage and view household records"
         >
-            <div className="hidden lg:flex justify-between items-center mb-4">
+            <div className="hidden lg:flex justify-between items-center mb-4 gap-2">
                 <div className="flex gap-2 w-full">
                     <div className="relative flex-1">
 
@@ -95,16 +115,19 @@ export default function ProfilingHousehold(){
                         />
                     </div>
                 </div>
-                <DialogLayout
-                    trigger={
-                        <Button>
-                            <Plus size={15} /> Register
-                        </Button>
-                    }
-                    title="Household Registration"
-                    description="All fields are required"
-                    mainContent={<HouseholdProfileForm/>}
-                />
+                <Link to="/household-form" 
+                    state={{
+                        params: {
+                            sitio: sitio, 
+                            residents: residents, 
+                            households: households
+                        }
+                    }}
+                >
+                    <Button>
+                        <Plus size={15} /> Register
+                    </Button>
+                </Link>
             </div>
 
             <div className="bg-white rounded-md">

@@ -30,7 +30,7 @@ export default function ProfilingResident() {
     staleTime: 0, // Ensure data is never considered stale
   });
   
-  const formatResidentData = (): ResidentRecord[] => {
+  const formatResidentData = React.useCallback((): ResidentRecord[] => {
     if (!residents) return [];
     
     return residents.map((item: any) => {
@@ -50,9 +50,9 @@ export default function ProfilingResident() {
         dateRegistered: reg_date || '',
       }
     });
-  };
+  }, []);
 
-  // Filter residents based on search query and active filter
+  // Filter residents based on search query
   const filteredResidents = React.useMemo(() => {
     let filtered = formatResidentData();
 
@@ -106,7 +106,7 @@ export default function ProfilingResident() {
               <ClockArrowUp /> Pending
             </Button>
           </Link>
-          <Link to='/resident-registration' 
+          <Link to='/resident-form' 
             state={{
                 params: {
                   title: 'Resident Registration', 

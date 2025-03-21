@@ -3,6 +3,7 @@ import { formatDate } from "@/helpers/dateFormatter"
 import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 import { generateResidentNo } from "@/helpers/generateResidentNo";
 import { capitalize } from "@/helpers/capitalize";
+import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
@@ -147,16 +148,15 @@ export const household = async (householdInfo: Record<string, string>) => {
     try{
 
         const res = await api.post('profiling/household/', {
-            hh_id: householdInfo.householdNo,
-            hh_existing_no: householdInfo.existingHouseNo || null,
-            hh_nhts: householdInfo.nhts,
+            hh_id: await generateHouseholdNo(),
+            hh_nhts: capitalize(householdInfo.nhts),
             hh_province: 'Cebu',
             hh_city: 'Cebu City',
             hh_barangay: 'San Roque',
-            hh_street: householdInfo.street,
+            hh_street: capitalize(householdInfo.street),
             hh_date_registered: formatDate(new Date()),
-            per: householdInfo.householdHead,
-            sitio: householdInfo.sitio,
+            per_id: householdInfo.householdHead.split(" ")[0],
+            sitio_id: householdInfo.sitio,
         })
 
         return res.data
