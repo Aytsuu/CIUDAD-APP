@@ -16,11 +16,11 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import MedicineStockForm from "../addstocksModal/MedStockModal";
 import EditMedicineForm from "../editModal/EditMedStockModal";
-import { handleDeleteMedicineStocks } from "../request/Delete";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicineStocks } from "../request/Get";
 import { Skeleton } from "@/components/ui/skeleton";
+import { handleDeleteMedicineStocks } from "../request/Delete";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
@@ -200,7 +200,7 @@ export default function MedicineStocks() {
                           <Edit size={16} />
                         </div>
                       }
-                      mainContent={<EditMedicineForm initialData={row.original} />}
+                      mainContent={<EditMedicineForm initialData={row.original} setIsDialog={setIsDialog} />}
                     />
                   }
                   content="Edit"

@@ -44,8 +44,7 @@ export default function MedicineModal({
         if (await addMedicine(newMedicineName)) {
           setIsAddConfirmationOpen(false);
           setIsDialog(false);
-          setNewMedicineName("");
-          
+          setNewMedicineName(""); 
           // ✅ Invalidate the cache to trigger a refetch
           queryClient.invalidateQueries({ queryKey: ["medicines"] });
         } else {

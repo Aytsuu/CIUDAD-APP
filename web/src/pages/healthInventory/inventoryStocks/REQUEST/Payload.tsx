@@ -1,4 +1,4 @@
-import { MedicineStockType } from "../addstocksModal/type";
+import { MedicineStockType } from "./type";
 
 
 
@@ -34,4 +34,16 @@ export const InventoryPayload= (data:any)=>{
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }
+}
+
+
+export const MedicineTransactionPayload = (data: any, minv_id: number) => {
+
+return{
+  mdt_qty: data.minv_qty, // Quantity added/updated
+        mdt_qty_avail: data.minv_qty, // New available quantity
+        mdt_action:"Added", // Action type (e.g., "update")
+        mdt_staff: 1, // Replace with actual staff ID (if applicable)
+        minv_id: minv_id, // Foreign key to MedicineInventory
+}
 }

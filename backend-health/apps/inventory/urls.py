@@ -44,7 +44,7 @@ urlpatterns = [
     path("update_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="update_medicinestocks"),
       
     
-    #ADD MEDICINE STOCKS  POST
+    #ADD MEDICINE STOCKS  POST 
     path("medicinetransaction/", MedicineTransactionView.as_view(), name="medicine-transaction"),
     
     

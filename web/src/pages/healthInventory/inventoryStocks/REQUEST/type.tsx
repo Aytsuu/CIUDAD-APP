@@ -30,3 +30,9 @@ export interface MedicineStockType {
    
   }
   
+  export interface MedicineTransactionType {
+      mdt_qty: number,
+      mdt_action: string, 
+      mdt_staff: number, 
+      minv_id: number, 
+  }

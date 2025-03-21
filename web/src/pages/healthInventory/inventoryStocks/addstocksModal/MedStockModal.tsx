@@ -18,13 +18,14 @@ import {
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { fetchMedicines } from "../request/Fetch";
 import { useCategoriesMedicine } from "../request/Category/Medcategory";
-import { addMedicineInventory, addInventory } from "../request/Post";
+import { addMedicineInventory } from "../request/Post";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { addInventory } from "../request/Post";
 import { InventoryPayload } from "../request/Payload";
 import { MedicinePayload } from "../request/Payload";
-import { useQueryClient } from "@tanstack/react-query";
+import { fetchMedicines } from "../request/Fetch";
 
 interface MedicineStocksProps{
   setIsDialog:(isOpen: boolean) => void

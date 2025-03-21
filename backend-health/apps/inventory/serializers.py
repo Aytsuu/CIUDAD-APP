@@ -66,7 +66,6 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
     med_id = serializers.PrimaryKeyRelatedField(queryset=Medicinelist.objects.all())
     cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
-    minv_dsg_unit = serializers.CharField()
 
     class Meta:
         model = MedicineInventory
@@ -84,26 +83,24 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
 
 
 
-
 class MedicineTransactionSerializers(serializers.ModelSerializer):
-  # Show full details when retrieving
-    inv_detail = InventorySerializers(source='inv_id', read_only=True)  
-    minv_detail = MedicineInventorySerializer(source='minv_id', read_only=True)  
-    med_detail = MedicineListSerializers(source='med_id', read_only=True)  
+    # Read-only fields for viewing related details
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)
+    minv_detail = MedicineInventorySerializer(source='minv_id', read_only=True)
+    med_detail = MedicineListSerializers(source='med_id', read_only=True)
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
-       # Allow setting foreign keys when adding records
+
+    # Write-only fields for creation
     inv_id = serializers.PrimaryKeyRelatedField(
-        queryset=Inventory.objects.all(), required=True
+        queryset=Inventory.objects.all(), write_only=True, required=False
     )
     med_id = serializers.PrimaryKeyRelatedField(
-        queryset=Medicinelist.objects.all(), required=True
+        queryset=Medicinelist.objects.all(), write_only=True, required=False
     )
     cat_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), required=True
+        queryset=Category.objects.all(), write_only=True, required=False
     )
 
     class Meta:
-        model = MedicineTransaction
-        fields = '__all__'  # Ensure all fields are included
-    
-    
+        model = MedicineTransactions
+        fields = '__all__'

@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-
 export const AddMedicineStocksSchema = z
   .object({
     minv_qty: z.number().min(1, "Enter qty Name").default(0),
     minv_qty_unit: z.string().min(1, "Unit is required").default(""),
-    minv_pcs: z.number().min(1, "Enter qty Name").default(0),
+    minv_pcs: z.number().min(0).default(0), // Allow 0 as default
   })
   .refine(
     (data) => {
@@ -19,7 +18,5 @@ export const AddMedicineStocksSchema = z
       path: ["minv_pcs"], // Corrected path
     }
   );
-  
-
 
 export type addMedicineStocksType = z.infer<typeof AddMedicineStocksSchema>

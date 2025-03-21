@@ -166,11 +166,11 @@ class DeleteMedicineInvView(generics.DestroyAPIView):
             inventory_record.delete()
    
    
-    
 
 class MedicineTransactionView(generics.ListCreateAPIView):
     serializer_class=MedicineTransactionSerializers
-    queryset=MedicineTransaction.objects.all()
+    queryset=MedicineTransactions.objects.all()
+    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-    
+     

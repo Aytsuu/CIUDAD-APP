@@ -64,19 +64,18 @@ class MedicineInventory(models.Model):
     med_id = models.ForeignKey('Medicinelist', on_delete=models.CASCADE)
     cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta: 
         db_table = 'medicine_inventory'
   
 
-class MedicineTransaction(models.Model):
+class MedicineTransactions(models.Model):
     mdt_id =models.BigAutoField(primary_key=True)
-    mdt_qty = models.CharField(max_length=100)
-    mdt_qty_avail = models.CharField(max_length=100)
+    mdt_qty = models.PositiveIntegerField(default=0)
     mdt_action = models.CharField(max_length=100)
     mdt_staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.CASCADE)
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.CASCADE,  db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'

@@ -8,6 +8,7 @@ import { getFirstAid } from "../../InventoryList/requests/GetRequest";
 import api from "@/pages/api/api";
 import { getMedicineStocks } from "./Get";
 
+
 export const fetchMedicines = () => {
   const [medicines, setMedicines] = useState<{ id: string; name: string }[]>(
     []

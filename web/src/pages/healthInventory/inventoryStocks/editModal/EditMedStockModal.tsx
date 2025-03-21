@@ -18,6 +18,9 @@ import {
 import api from "@/pages/api/api";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { addMedicineTransaction } from "../request/Post";
+import { MedicineTransactionPayload } from "../request/Payload";
 
 interface AddMedProps {
   initialData: {
@@ -34,16 +37,17 @@ interface AddMedProps {
       qty: number;
       pcs: number;
     };
-    minv_qty_unit: string; 
+    minv_qty_unit: string;
     availQty: string;
     distributed: string;
   };
+  setIsDialog: (isOpen: boolean) => void; // Add this line
 }
 
-export default function EditMedicineForm({ initialData }: AddMedProps) {
+export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProps) {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); // State for confirmation modal
   const [formData, setFormData] = useState<addMedicineStocksType | null>(null); // Store form data for confirmation
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const form = useForm<addMedicineStocksType>({
     resolver: zodResolver(AddMedicineStocksSchema),
@@ -54,37 +58,34 @@ export default function EditMedicineForm({ initialData }: AddMedProps) {
     },
   });
 
-  const onSubmit = async (data: addMedicineStocksType) => {
+  const onSubmit = useCallback(async (data: addMedicineStocksType) => {
     setFormData(data);
     setIsConfirmationOpen(true);
-  };
+  }, []);
 
-  const handleConfirm = async () => {
+  const handleConfirm = useCallback(async () => {
     if (!formData) return;
-    console.log("Submitting data:", JSON.stringify(formData));
 
     try {
-      console.log("Checking if medicine ID exists:", initialData.id);
-
-      // Fetch the medicine list
       const res = await api.get(`inventory/medicineinventorylist/`);
-      const existingMedicine = res.data.find((med: any) => med.minv_id === initialData.id);
+      const existingMedicine = res.data.find(
+        (med: any) => med.minv_id === initialData.id
+      );
 
       if (!existingMedicine) {
         alert("Medicine ID not found. Please check the ID.");
         return;
       }
 
-      console.log("Medicine found:", existingMedicine);
-
       const currentMinvQtyAvail = existingMedicine.minv_qty_avail;
       const currentMinvQty = existingMedicine.minv_qty;
       const currentMinvPcs = existingMedicine.minv_pcs;
       const inv_id = existingMedicine.inv_detail?.inv_id;
 
-      console.log("Current Minv Pcs:", currentMinvPcs);
-
-      if (formData.minv_qty_unit === "boxes" && Number(currentMinvPcs) !== Number(formData.minv_pcs)) {
+      if (
+        formData.minv_qty_unit === "boxes" &&
+        Number(currentMinvPcs) !== Number(formData.minv_pcs)
+      ) {
         form.setError("minv_pcs", {
           type: "manual",
           message: `Pieces per box must match the existing stock (${currentMinvPcs}).`,
@@ -103,41 +104,56 @@ export default function EditMedicineForm({ initialData }: AddMedProps) {
         newQty += formData.minv_qty;
       }
 
-      const updateRes = await api.put(`inventory/update_medicinestocks/${initialData.id}/`, {
-        minv_qty: newQty,
-        minv_qty_avail: newMinvQtyAvail,
-      });
+      await api.put(
+        `inventory/update_medicinestocks/${initialData.id}/`,
+        {
+          minv_qty: newQty,
+          minv_qty_avail: newMinvQtyAvail,
+        }
+      );
 
       if (inv_id) {
         await api.put(`inventory/update_inventorylist/${inv_id}/`, {
           updated_at: new Date().toISOString(),
         });
       }
+     
 
-      console.log("Stock updated successfully:", updateRes.data);
+    // Pass initialData to MedicineTransactionPayload
+    const MedicineTransactionpayload = MedicineTransactionPayload(formData, initialData.id);
+    console.log("Med", formData)
+    console.log("MInv", initialData.id)
+    const medicineTransactionResponse = await addMedicineTransaction(MedicineTransactionpayload);
+
+    if (!medicineTransactionResponse || medicineTransactionResponse.error) {
+      throw new Error("Failed to add medicine inventory.");
+    }
+
+      setIsDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
       alert("Stock updated successfully!");
-      queryClient.invalidateQueries({queryKey:["medicineStocks"] })
-
-
     } catch (err: any) {
       if (err.response) {
-        console.error("Error Response:", err.response.status, err.response.data);
-        alert(`Failed to update stock: ${err.response.data.detail || "Unknown error"}`);
+        alert(
+          `Failed to update stock: ${
+            err.response.data.detail || "Unknown error"
+          }`
+        );
       } else {
-        console.error("Error:", err.message);
         alert("Network error. Please try again.");
       }
     } finally {
-      setIsConfirmationOpen(false); // Close the confirmation modal
+      setIsConfirmationOpen(false);
     }
-  };
+  }, [formData, initialData.id, form, setIsDialog, queryClient]);
+
 
   const currentUnit = form.watch("minv_qty_unit");
   const qty = form.watch("minv_qty") || 0;
   const pcs = form.watch("minv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
-http://localhost:5173/donation
-  return (
+  //localhost:5173/donation
+  http: return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -173,10 +189,7 @@ http://localhost:5173/donation
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
                   <FormControl>
-                    <Input
-                      value={field.value}
-                      disabled
-                    />
+                    <Input value={field.value} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -195,7 +208,7 @@ http://localhost:5173/donation
                     <FormControl>
                       <Input
                         type="number"
-                        min={0}
+                        min={1} // Ensure it's at least 1 when boxes are selected
                         placeholder="pcs"
                         value={
                           field.value === undefined || field.value === 0
@@ -206,7 +219,6 @@ http://localhost:5173/donation
                           const value = e.target.value;
                           field.onChange(value === "" ? 0 : Number(value));
                         }}
-                        disabled
                       />
                     </FormControl>
                     <FormMessage />
