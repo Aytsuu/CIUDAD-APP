@@ -4,7 +4,7 @@ import { Eye, Trash, ArrowUpDown, Search } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CreateBudgetPlanHeader from "./treasurer_budgetplan_header_form";
@@ -36,34 +36,49 @@ export const columns: ColumnDef<BudgetPlan>[] = [
             <div className="text-center">{row.getValue("plan_issue_date")}</div>
         )
     },
-    { 
+    {
         accessorKey: "action", 
         header: "Action",
-        cell: ({}) => (
-            <div className="flex justify-center gap-2">
-                <TooltipLayout
-                    trigger={<Link to='/treasurer-budgetplan-view' ><div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Eye size={16}/></div></Link>}
-                    content="View"
-                />
-                <TooltipLayout 
-                    trigger={
-                        <DialogLayout
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"> <Trash size={16} /></div>}
-                            className="max-w-[50%] h-2/3 flex flex-col"
-                            title="Image Details"
-                            description="Here is the image related to the report."
-                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />} 
-                        />
-                    }  
-                    content="Delete"
-                />
-            </div>
-        )
+        cell: ({ row }) => {
+            const planId = row.original.plan_id;
+            return (
+                <div className="flex justify-center gap-2">
+                    <TooltipLayout
+                        trigger={
+                            <Link to={`/treasurer-budgetplan-view/${planId}`}>
+                                <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                                    <Eye size={16} />
+                                </div>
+                            </Link>
+                        }
+                        content="View"
+                    />
+                    <TooltipLayout
+                        trigger={
+                            <DialogLayout
+                                trigger={
+                                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                                        <Trash size={16} />
+                                    </div>
+                                }
+                                className="max-w-[50%] h-2/3 flex flex-col"
+                                title="Delete Budget Plan"
+                                description="Are you sure you want to delete this budget plan?"
+                                mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />}
+                            />
+                        }
+                        content="Delete"
+                    />
+                </div>
+            );
+        }
     }
+    
 ];
 
 
 type BudgetPlan = {
+    plan_id: number,
     plan_year: string,
     plan_issue_date: string,
 }
@@ -78,15 +93,15 @@ function BudgetPlan(){
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await api.get('/treasurer/budget-plan/'); 
+                const response = await api.get('/treasurer/budget-plan/');
+                console.log("Fetched budget plans:", response.data);  
                 setBudgetPlans(response.data);
             } catch (error) {
                 console.error("Failed to fetch budget plans:", error);
             }
         };
-
         fetchData();
-    }, []); // Empty dependency array means this runs once on mount
+    }, []);
 
 
     const handlePageChange = (newPage: number) => {

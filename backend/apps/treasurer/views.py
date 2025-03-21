@@ -1,10 +1,31 @@
-from django.shortcuts import render
-from rest_framework  import generics
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
 from .serializers import *
 
 class Budget_PlanView(generics.ListCreateAPIView):
     serializer_class = Budget_PlanSerializer
     queryset = Budget_Plan.objects.all()
+
+class BudgetPlanDetialsView(APIView):
+    def get(self, request, plan_id):
+        try:
+            # Fetch the Budget_Plan object with all related data
+            budget_plan = Budget_Plan.objects.select_related(
+                # Add any forward relationships here (if applicable)
+            ).prefetch_related(
+                'personal',  
+                'maintenance',  
+                'other_expenses',  
+                'capital_nonoffice'  
+            ).get(plan_id=plan_id)
+            
+            # Serialize the data
+            serializer = BudgetPlanDetailsSerializers(budget_plan)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Budget_Plan.DoesNotExist:
+            return Response({"error": "Budget Plan not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class Current_Expenditures_PersonalView(generics.ListCreateAPIView):
     serializer_class = Current_Expenditures_PersonalSerializers

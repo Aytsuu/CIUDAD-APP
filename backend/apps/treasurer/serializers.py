@@ -26,6 +26,16 @@ class Capital_Outlays_And_Non_OfficeSerializers(serializers.ModelSerializer):
         model = Capital_Outlays_And_Non_Office
         fields = '__all__'
 
+class BudgetPlanDetailsSerializers(serializers.ModelSerializer): 
+    personal = Current_Expenditures_PersonalSerializers(many = True, read_only = True)
+    maintenance = Current_Expenditures_MaintenanceSerializers(many = True, read_only = True)
+    other_expenses = Other_Maint_And_Operating_ExpenseSerializers(many = True, read_only = True)
+    capital_nonoffice = Capital_Outlays_And_Non_OfficeSerializers(many = True, read_only = True)
+
+    class Meta: 
+        model = Budget_Plan
+        fields = '__all__'
+
 # class Income_FileSerializers(serializers.ModelSerializer):
 #     class Meta:
 #         model = Income_File

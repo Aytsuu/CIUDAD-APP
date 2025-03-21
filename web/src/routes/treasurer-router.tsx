@@ -20,7 +20,7 @@ export const treasurer_router = [
         element: <CreateBudgetPlanForm/>
     },
     {
-        path: '/treasurer-budgetplan-view',
+        path: '/treasurer-budgetplan-view/:plan_id',
         element: <ViewBudgetPlan/>
     },
     {
