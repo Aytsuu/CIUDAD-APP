@@ -268,8 +268,15 @@ function ClerkDonateView() {
                         name="don_category"
                         label="Category"
                         options={[
-                            { id: 'Category 1', name: 'Category 1' },
-                            { id: 'Category 2', name: 'Category 2' },
+                            { id: "Monetary Donations", name: "Monetary Donations" },
+                            { id: "Essential Goods", name: "Essential Goods" },
+                            { id: "Medical Supplies", name: "Medical Supplies" },
+                            { id: "Household Items", name: "Household Items" },
+                            { id: "Educational Supplies", name: "Educational Supplies" },
+                            { id: "Baby & Childcare Items", name: "Baby & Childcare Items"},
+                            { id: "Animal Welfare Items", name: "Animal Welfare Items" },
+                            { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid"},
+                            { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies"},
                         ]}
                         readOnly={!isEditing}
                     />
@@ -278,7 +285,7 @@ function ClerkDonateView() {
                     <FormSelect
                         control={form.control}
                         name="don_receiver"
-                        label="Receiver"
+                        label="Received by"
                         options={[
                             { id: 'Employee 1', name: 'Employee 1' },
                             { id: 'Employee 2', name: 'Employee 2' },
@@ -308,7 +315,7 @@ function ClerkDonateView() {
                         <Button
                             type="button"
                             onClick={() => setIsEditing(!isEditing)}
-                            className="bg-blue hover:bg-blue hover:opacity-[95%]"
+                            className="bg-buttonBlue hover:bg-buttonBlue/90"
                         >
                             {isEditing ? 'Save' : 'Edit'}
                         </Button>
