@@ -159,13 +159,13 @@ function IncomeandExpenseCreateForm() {
     const form = useForm<z.infer<typeof IncomeExpenseFormSchema>>({
         resolver: zodResolver(IncomeExpenseFormSchema),
         defaultValues: {
-            serialNo: "",
-            entryType: "",
-            particulars: "",
-            amount: "",
-            receiver: "",
-            addNotes: "",
-            receipt_image: undefined
+            iet_serial_num: "",
+            iet_entryType: "",
+            iet_particulars: "",
+            iet_amount: "",
+            iet_receiver: "",
+            iet_additional_notes: "",
+            iet_receipt_image: undefined
         }
     });
 
@@ -187,7 +187,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                         control={form.control}
-                        name="serialNo"
+                        name="iet_serial_num"
                         render={({field }) =>(
                             <FormItem>
                                 <FormLabel>Serial No.</FormLabel>
@@ -203,7 +203,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="entryType"
+                    name="iet_entryType"
                     render={({field }) =>(
                         <FormItem>
                             <FormLabel>Entry Type</FormLabel>
@@ -218,7 +218,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="particulars"
+                    name="iet_particulars"
                     render={({field }) => (
                         <FormItem>
                             <FormLabel>Particulars</FormLabel>
@@ -233,7 +233,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="amount"
+                    name="iet_amount"
                     render={({field })=>(
                         <FormItem>
                             <FormLabel>Amount</FormLabel>
@@ -248,7 +248,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="receiver"
+                    name="iet_receiver"
                     render={({field }) =>(
                         <FormItem>
                             <FormLabel>Receiver</FormLabel>
@@ -263,7 +263,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="addNotes"
+                    name="iet_additional_notes"
                     render={({field}) =>(
                         <FormItem>
                             <FormLabel>Additional Notes</FormLabel>
@@ -279,7 +279,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="receipt_image"
+                    name="iet_receipt_image"
                     render={({field}) =>(
                         <FormItem>
                             <FormLabel>Receipt</FormLabel>
