@@ -13,7 +13,7 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import GADEditEntrySchema from "@/form-schema/gad-budget-tracker-edit-form-schema";
 
 function GADEditEntryForm() {

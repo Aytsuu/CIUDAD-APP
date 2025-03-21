@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import PersonalClearanceFormSchema from "@/form-schema/personalClearance-schema";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
+import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"

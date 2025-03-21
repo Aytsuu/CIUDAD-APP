@@ -141,7 +141,7 @@
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -240,7 +240,7 @@ function IncomeandExpenseCreateForm() {
                 <div className="pb-5">
                     <FormField
                     control={form.control}
-                    name="receiver"
+                    name="donReceiver"
                     render={({field }) =>(
                         <FormItem>
                             <FormLabel>Receiver</FormLabel>

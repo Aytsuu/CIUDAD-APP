@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input"
-import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form"
+import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form/form"
 import { Button } from "@/components/ui/button"
 import { ServiceChargesSchema, FormData } from "@/form-schema/rates-form-schema"
 import z from "zod"

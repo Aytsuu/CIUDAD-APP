@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { CircleCheck, CircleAlert } from "lucide-react";
 import api from "@/api/api";
 

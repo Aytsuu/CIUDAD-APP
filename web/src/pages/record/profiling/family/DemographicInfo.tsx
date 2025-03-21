@@ -9,7 +9,7 @@ import {
     FormItem,
     FormMessage,
     FormLabel,
-} from '@/components/ui/form';
+} from '@/components/ui/form/form';
 import { SelectLayout } from '@/components/ui/select/select-layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

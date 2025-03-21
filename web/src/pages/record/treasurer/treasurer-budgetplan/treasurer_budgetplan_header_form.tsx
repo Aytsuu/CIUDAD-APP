@@ -1,4 +1,4 @@
-import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BudgetHeaderSchema from "@/form-schema/budgetplan-header-schema";

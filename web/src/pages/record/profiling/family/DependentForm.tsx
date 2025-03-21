@@ -10,7 +10,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Plus } from "lucide-react";
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 

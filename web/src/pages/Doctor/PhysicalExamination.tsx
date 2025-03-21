@@ -6,7 +6,7 @@ import {
   FormControl,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { UseFormReturn, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PEType, PESchema } from "@/form-schema/doctor/doctorSchema";

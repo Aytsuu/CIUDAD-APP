@@ -16,7 +16,7 @@ import {
     FormControl,
     FormItem,
     FormMessage,
- } from "@/components/ui/form"
+ } from "@/components/ui/form/form"
 
 
 export default function AssignPosition(

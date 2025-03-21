@@ -8,7 +8,7 @@ import {
   FormControl,
   FormLabel,
   Form,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import {
   MedicineType,

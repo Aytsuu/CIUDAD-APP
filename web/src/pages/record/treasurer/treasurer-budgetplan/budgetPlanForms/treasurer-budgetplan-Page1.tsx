@@ -1,4 +1,4 @@
-import { Form, FormItem, FormField, FormLabel, FormMessage, FormControl } from "@/components/ui/form";
+import { Form, FormItem, FormField, FormLabel, FormMessage, FormControl } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

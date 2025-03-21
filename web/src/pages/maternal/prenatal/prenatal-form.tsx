@@ -3,7 +3,7 @@
 import { PrenatalFormSchema } from "@/form-schema/prenatal-schema"
 import PrenatalFormFirstPg from "./prenatal-form-firstpg"
 import { useForm } from "react-hook-form"
-import { Form } from "@/components/ui/form"
+import { Form } from "@/components/ui/form/form"
 // import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card-layout"
 import CardLayout from "@/components/ui/card/card-layout"
 import { zodResolver } from "@hookform/resolvers/zod"

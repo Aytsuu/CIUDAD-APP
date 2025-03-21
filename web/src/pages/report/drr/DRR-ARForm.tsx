@@ -16,7 +16,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from '@/components/ui/form';
+} from '@/components/ui/form/form';
 
 // Main component for the DRR AR Form
 export default function DRRARForm() {

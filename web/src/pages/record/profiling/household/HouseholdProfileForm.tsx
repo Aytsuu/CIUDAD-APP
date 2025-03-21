@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { householdSchema } from "@/form-schema/profiling-schema";
-import { Form, FormControl, FormField, FormItem, FormLabel} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel} from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";

@@ -12,7 +12,7 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import ReferralFormSchema from "@/form-schema/ReferralFormSchema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 
@@ -84,7 +84,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             {/* Receiver */}
             <FormField
               control={form.control}
-              name="receiver"
+              name="donReceiver"
               render={({ field }) => (
                 <FormItem>
                   <Label>Receiver:</Label>
