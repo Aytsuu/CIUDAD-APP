@@ -1,6 +1,4 @@
 <<<<<<< HEAD
-=======
-<<<<<<< HEAD
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -192,7 +190,6 @@ function CertificatePage() {
 
 export default CertificatePage;
 =======
->>>>>>> frontend/feature/treasurer
 import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import {Button} from "@/components/ui/button";
@@ -407,7 +404,4 @@ function CertificatePage() {
 }
 
 export default CertificatePage;
-<<<<<<< HEAD
-=======
 >>>>>>> master
->>>>>>> frontend/feature/treasurer

@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+=======
 <<<<<<< HEAD
 import * as React from "react";
 import { format, getMonth, getYear, setMonth, setYear, addDays } from "date-fns";
@@ -9,8 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 =======
-=======
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
 import * as React from "react"
 import { format, getMonth, getYear, setMonth, setYear } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
@@ -19,14 +19,17 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 <<<<<<< HEAD
->>>>>>> mobile/feature/landing-page
 =======
->>>>>>> frontend/feature/treasurer
+>>>>>>> mobile/feature/landing-page
+>>>>>>> master
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 <<<<<<< HEAD
+} from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select/select"
+=======
 <<<<<<< HEAD
 } from "@/components/ui/popover";
 import {
@@ -40,10 +43,7 @@ import {
 } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select/select"
 >>>>>>> mobile/feature/landing-page
-=======
-} from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select/select"
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
 
 interface DatePickerProps {
   startYear?: number;
@@ -54,6 +54,7 @@ export function DatePicker({
   endYear = getYear(new Date()) + 100,
 }: DatePickerProps) {
 <<<<<<< HEAD
+=======
 <<<<<<< HEAD
   const [date, setDate] = React.useState<Date>(new Date());
 
@@ -71,8 +72,7 @@ export function DatePicker({
     "November",
     "December",
 =======
-=======
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
 
   const [date, setDate] = React.useState<Date>(new Date());
 
@@ -90,9 +90,9 @@ export function DatePicker({
     'November',
     'December',
 <<<<<<< HEAD
->>>>>>> mobile/feature/landing-page
 =======
->>>>>>> frontend/feature/treasurer
+>>>>>>> mobile/feature/landing-page
+>>>>>>> master
   ];
   const years = Array.from(
     { length: endYear - startYear + 1 },
@@ -103,6 +103,7 @@ export function DatePicker({
     const newDate = setMonth(date, months.indexOf(month));
     setDate(newDate);
 <<<<<<< HEAD
+=======
 <<<<<<< HEAD
   };
 
@@ -117,8 +118,7 @@ export function DatePicker({
     }
   };
 =======
-=======
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
   }
 
   const handleYearChange = (year: string) => {
@@ -132,9 +132,9 @@ export function DatePicker({
     }
   }
 <<<<<<< HEAD
->>>>>>> mobile/feature/landing-page
 =======
->>>>>>> frontend/feature/treasurer
+>>>>>>> mobile/feature/landing-page
+>>>>>>> master
 
   return (
     <Popover>
@@ -161,6 +161,9 @@ export function DatePicker({
             </SelectTrigger>
             <SelectContent>
 <<<<<<< HEAD
+              {months.map(month => (
+                <SelectItem key={month} value={month}>{month}</SelectItem>
+=======
 <<<<<<< HEAD
               {months.map((month) => (
                 <SelectItem key={month} value={month}>
@@ -170,10 +173,7 @@ export function DatePicker({
               {months.map(month => (
                 <SelectItem key={month} value={month}>{month}</SelectItem>
 >>>>>>> mobile/feature/landing-page
-=======
-              {months.map(month => (
-                <SelectItem key={month} value={month}>{month}</SelectItem>
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
               ))}
             </SelectContent>
           </Select>
@@ -186,6 +186,9 @@ export function DatePicker({
             </SelectTrigger>
             <SelectContent>
 <<<<<<< HEAD
+              {years.map(year => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+=======
 <<<<<<< HEAD
               {years.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
@@ -195,10 +198,7 @@ export function DatePicker({
               {years.map(year => (
                 <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
 >>>>>>> mobile/feature/landing-page
-=======
-              {years.map(year => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
               ))}
             </SelectContent>
           </Select>
@@ -215,6 +215,8 @@ export function DatePicker({
       </PopoverContent>
     </Popover>
 <<<<<<< HEAD
+  )
+=======
 <<<<<<< HEAD
   );
 }
@@ -292,7 +294,5 @@ export function DatePickerWithRange({
 =======
   )
 >>>>>>> mobile/feature/landing-page
-=======
-  )
->>>>>>> frontend/feature/treasurer
+>>>>>>> master
 }

@@ -100,41 +100,6 @@ p[data-margin] {
   margin: var(--tiptap-margin); /* Use a CSS variable for easier customization */
 }
 
-
-/* ---break---  */
-
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-
-/* SCROLL BAR FOR THE  */
-.scrollbar-custom::-webkit-scrollbar {
-  width: 8px; /* Width of the scrollbar */
-}
-
-.scrollbar-custom::-webkit-scrollbar-thumb {
-  background-color: #c7c7c9; /* Scrollbar thumb color */
-  border-radius: 8px;
-}
-
-.scrollbar-custom::-webkit-scrollbar-track {
-  background-color: #e5e7eb; /* Track color */
-  border-radius: 8px;
-}
-
-
-p[data-margin] {
-  margin: var(--tiptap-margin); /* Use a CSS variable for easier customization */
-}
-
-
 /* ---break---  */
 
 

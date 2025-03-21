@@ -26,17 +26,17 @@ class Capital_Outlays_And_Non_OfficeSerializers(serializers.ModelSerializer):
         model = Capital_Outlays_And_Non_Office
         fields = '__all__'
 
-class Income_FileSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = Income_File
-        fields = '__all__'
+# class Income_FileSerializers(serializers.ModelSerializer):
+#     class Meta:
+#         model = Income_File
+#         fields = '__all__'
 
-class Disbursement_FileSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = Disbursement_File
-        fields = '__all__'
+# class Disbursement_FileSerializers(serializers.ModelSerializer):
+#     class Meta:
+#         model = Disbursement_File
+#         fields = '__all__'
 
-class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = Income_Expense_Tracking
-        fields = '__all__'
+# class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
+#     class Meta:
+#         model = Income_Expense_Tracking
+#         fields = '__all__'

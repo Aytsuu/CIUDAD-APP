@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
-import { FormData, ClearanceForPermitRatesSchema } from "@/form-schema/rates-form-schema"
+import { ClearanceForPermitRatesSchema } from "@/form-schema/rates-form-schema"
 import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form";
