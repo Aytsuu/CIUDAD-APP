@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from rest_framework import generics
+from .models import Acknowledgement
+from .serializers import AcknowledgementSerializer
 
-# Create your views here.
+class AcknowledgementView(generics.ListCreateAPIView):
+    queryset = Acknowledgement.objects.all()
+    serializer_class = AcknowledgementSerializer
