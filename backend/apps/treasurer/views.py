@@ -30,6 +30,6 @@ class Capital_Outlays_And_Non_OfficeView(generics.ListCreateAPIView):
 #     serializer_class = Disbursement_FileSerializers
 #     queryset = Disbursement_File.objects.all()
 
-# class Income_Expense_TrackingView(generics.ListCreateAPIView):
-#     serializer_class = Income_Expense_TrackingSerializers
-#     queryset = Income_Expense_Tracking.objects.all()
+class Income_Expense_TrackingView(generics.ListCreateAPIView):
+    serializer_class = Income_Expense_TrackingSerializers
+    queryset = Income_Expense_Tracking.objects.all()

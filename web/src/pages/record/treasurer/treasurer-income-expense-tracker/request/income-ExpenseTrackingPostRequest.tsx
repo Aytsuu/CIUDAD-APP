@@ -1,0 +1,42 @@
+import api from "@/api/api";
+import { formatDate } from '@/helpers/dateFormatter';
+import { parseFloatSafe } from '@/helpers/floatformatter';
+import { capitalize } from "@/helpers/capitalize";
+
+
+export const income_expense_tracking = async (incomeExpenseInfo: Record<string, any>) => {
+
+    try{
+
+        let entry = incomeExpenseInfo.entryType == "0" ? "Income" : "Expense";
+
+        console.log({
+            iet_date: formatDate(new Date().toISOString().split('T')[0]),
+            iet_entryType: entry,
+            iet_amount: parseFloatSafe(incomeExpenseInfo.amount),
+            iet_particulars:  capitalize(incomeExpenseInfo.particulars),
+            iet_receiver: capitalize(incomeExpenseInfo.receiver),
+            iet_additional_notes: incomeExpenseInfo.addNotes,
+            iet_receipt_image: "urlfornow"
+        })
+
+        const res = await api.post('treasurer/income-expense-tracking/',{
+
+            iet_serial_num: incomeExpenseInfo.serialNo,
+            iet_date: formatDate(new Date().toISOString().split('T')[0]),
+            iet_entryType: entry,
+            iet_amount: parseFloatSafe(incomeExpenseInfo.amount),
+            iet_particulars:  capitalize(incomeExpenseInfo.particulars),
+            iet_receiver: capitalize(incomeExpenseInfo.receiver),
+            iet_additional_notes: incomeExpenseInfo.addNotes,
+            iet_receipt_image: "urlfornow",
+            inv_num: "None"
+
+        })
+
+        return res.data.iet_num;
+    }
+    catch (err){
+        console.error(err);
+    }
+}

@@ -147,6 +147,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import IncomeExpenseFormSchema from "@/form-schema/income-expense-tracker-schema";
 import { Textarea } from "@/components/ui/textarea";
+import { income_expense_tracking } from "./request/income-ExpenseTrackingPostRequest";
 
 
 function IncomeandExpenseCreateForm() {
@@ -168,9 +169,16 @@ function IncomeandExpenseCreateForm() {
         }
     });
 
-    const onSubmit = (values: z.infer<typeof IncomeExpenseFormSchema>) => {
-        console.log(values);
-    }
+    const onSubmit = async (values: z.infer<typeof IncomeExpenseFormSchema>) => {
+        try{
+            await income_expense_tracking(values)
+
+        }
+        catch(err){
+            console.error("Error submitting expense or income:", err);
+            alert("Failed to submit income or expense. Please check the input data and try again.");
+        }
+    };
 
 
     return (

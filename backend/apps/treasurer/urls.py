@@ -10,5 +10,5 @@ urlpatterns=[
     path('capital-outlays-and-nonoffice/', Capital_Outlays_And_Non_OfficeView.as_view(), name = 'treasurer-budget-plan-capital-and-nonoffice'),
     # path('income-file/', Income_FileView.as_view(), name = 'treasurer-income-file'),
     # path('disbursement-file/', Disbursement_FileView.as_view(), name = 'treasurer-disbursement-file'),
-    # path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
+    path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
 ]
