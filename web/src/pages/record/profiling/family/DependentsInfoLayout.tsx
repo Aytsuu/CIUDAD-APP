@@ -10,59 +10,37 @@ import { DependentRecord } from '../profilingTypes';
 import { ColumnDef } from '@tanstack/react-table';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout';
 import { Trash } from 'lucide-react';
-import api from '@/api/api';
  
 export default function DependentsInfoLayout(
-  {form, defaultValues, back}: {
-    form: UseFormReturn<z.infer<typeof familyFormSchema>>
-    defaultValues: Record<string, any>
-    back: () => void
+  {form, residents, defaultValues, back}: {
+    form: UseFormReturn<z.infer<typeof familyFormSchema>>;
+    residents: any
+    defaultValues: Record<string, any>;
+    back: () => void;
 }){
 
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>([])
-  const [residents, setResidents] = React.useState<Record<string, string>[]>([])
-  const hasFetchData = React.useRef(false)
 
-  React.useEffect(()=>{
-    if(!hasFetchData.current){
-      getResidents()
-      hasFetchData.current = true
-    }
-  }, [])
-
-  const getResidents  = React.useCallback(()=> {
-    try{
-
-      api.get('profiling/personal/')
-      .then((res) => res.data)
-      .then((data)=>{
-          setResidents(data)
-      })
-
-    } catch (err) {
-      console.log(err)
-    } 
-  }, [])
-
-    React.useEffect(() => {
-        const dependentsList = form.getValues("dependentsInfo.list");
-      
-        if (Array.isArray(dependentsList)) {
-          // Transform the list into an array of Dependent objects
-          const transformedData = dependentsList.map((value) => ({
-            id: value.id,
-            lname: value.lastName,
-            fname: value.firstName,
-            mname: value.middleName,
-            suffix: value.suffix,
-            sex: value.sex,
-            dateOfBirth: value.dateOfBirth,
-          }));
-      
-          // Update the state with the transformed data
-          setDependentsList(transformedData);
-        }
-      }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
+  React.useEffect(() => {
+      const dependentsList = form.getValues("dependentsInfo.list");
+      console.log(dependentsList)
+    
+      if (Array.isArray(dependentsList)) {
+        // Transform the list into an array of Dependent objects
+        const transformedData = dependentsList.map((value) => ({
+          id: value.id,
+          lname: value.lastName,
+          fname: value.firstName,
+          mname: value.middleName,
+          suffix: value.suffix,
+          sex: value.sex,
+          dateOfBirth: value.dateOfBirth,
+        }));
+    
+        // Update the state with the transformed data
+        setDependentsList(transformedData);
+      }
+    }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
     
     const dependentColumns: ColumnDef<DependentRecord>[] = [
         { accessorKey: "id", header: "#" },

@@ -6,6 +6,7 @@ import ProfilingBusiness from "@/pages/record/profiling/business/ProfilingBusine
 import ProfilingFamily from "@/pages/record/profiling/family/ProfilingFamily";
 import FamilyProfileForm from "@/pages/record/profiling/family/FamilyProfileForm";
 import HouseholdFormLayout from "@/pages/record/profiling/household/HouseholdFormLayout";
+import SoloFormLayout from "@/pages/record/profiling/family/SoloFormLayout";
 
 export const profiling_router = [
 
@@ -31,6 +32,10 @@ export const profiling_router = [
     {
         path: "family-form",
         element: <FamilyProfileForm />
+    },
+    {
+        path: "family-solo-form",
+        element: <SoloFormLayout />
     },
 
 

@@ -130,9 +130,15 @@ export const familyComposition = (familyId: string, personalId: string) => {
 export const building = async (familyNo: string, demographicInfo: Record<string, string>) => {
     try {
 
-        const res = await api.post('profiling/building/', {
+        console.log({
             build_type: demographicInfo.building,
             hh: demographicInfo.householdNo,
+            fam: familyNo
+        })
+
+        const res = await api.post('profiling/building/', {
+            build_type: demographicInfo.building,
+            hh_id: demographicInfo.householdNo,
             fam: familyNo
         })
 

@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 import { BsChevronLeft } from "react-icons/bs";
+import { Separator } from "@/components/ui/separator";
+import { formatResidents, formatSitio} from "../formatting";
 
 export default function HouseholdFormLayout() {
     const navigate = useNavigate();
@@ -11,42 +13,8 @@ export default function HouseholdFormLayout() {
         return location.state?.params || {};
     }, [location.state]);
 
-
-    const formatResidents = React.useCallback(() => {
-        if (!params.residents || !params.households) return [];
-    
-        // Format the data and filter unassigned residents in one step
-        return params.residents
-            .map((resident: any) => ({
-                id: `${resident.per_id} ${resident.per_fname} ${resident.per_mname} ${resident.per_lname}`,
-                name: (
-                    <div className="flex gap-4 items-center">
-                        <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
-                            #{resident.per_id}
-                        </span>
-                        {`${resident.per_lname}, ${resident.per_fname}, ${resident.per_mname.slice(0, 1)}.`}
-                    </div>
-                ),
-            }))
-            .filter((resident: any) => !params.households.some((household: any) => 
-                household.per.per_id === resident.id.split(" ")[0]
-            ));
-
-    }, [params.residents, params.households]);
-
-    const [residents, setResidents] = React.useState(() => formatResidents());
-
-    // Format sitio
-    const getSitio = React.useCallback(() => {
-        if (!params.sitio) return [];
-
-        const sitioList = params.sitio.map((item: { sitio_id: string; sitio_name: string }) => ({
-            id: String(item.sitio_id),
-            name: item.sitio_name,
-        }));
-
-        return sitioList;
-    }, [params.sitio]);
+    const [residents, setResidents] = React.useState(() => formatResidents(params, true));
+    const sitio = React.useRef(formatSitio(params))
 
     // Function to update residents after a new household is registered
     const updateResidents = React.useCallback((newHousehold: any) => {
@@ -76,8 +44,11 @@ export default function HouseholdFormLayout() {
                         </p>
                     </div>
                 </div>
+
+                <Separator className="mb-4"/>
+
                 <HouseholdProfileForm 
-                    sitio={getSitio()} 
+                    sitio={sitio.current} 
                     residents={residents} 
                     onHouseholdRegistered={updateResidents}
                 />

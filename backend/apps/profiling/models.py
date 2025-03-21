@@ -86,7 +86,7 @@ class Building(models.Model):
     build_id = models.BigAutoField(primary_key=True)
     build_type = models.CharField(max_length=100)
     hh = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='buildings')
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE)
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='buildings')
     
     class Meta:
         db_table = 'building'

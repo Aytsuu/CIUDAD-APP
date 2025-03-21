@@ -2,31 +2,37 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
-import {
-    Form, 
-    FormControl,
-    FormField,
-    FormItem,
-    FormMessage,
-    FormLabel,
-} from '@/components/ui/form/form';
-import { SelectLayout } from '@/components/ui/select/select-layout';
-import { Input } from '@/components/ui/input';
+import { Form } from '@/components/ui/form/form';
+import { FormSelect } from '@/components/ui/form/form-select';
 import { Button } from '@/components/ui/button/button';
+import { Combobox } from '@/components/ui/combobox';
+import { Label } from '@/components/ui/label';
+import { CircleAlert } from 'lucide-react';
+import { toast } from 'sonner';
+import { LoadButton } from '@/components/ui/button/load-button';
 
 export default function DemographicInfo(
-    {form, onSubmit}: {
-    form: UseFormReturn<z.infer<typeof familyFormSchema>>,
-    onSubmit: () => void,
+    {form, households, onSubmit}: {
+    form: UseFormReturn<z.infer<typeof familyFormSchema>>;
+    households: any[]
+    onSubmit: () => void
 }){
 
-    const submit = () => {
-        // Validate only the demographicInfo fields
-        form.trigger("demographicInfo").then((isValid) => {
-            if (isValid) {
-                onSubmit(); // Proceed to the next step
-            } 
-        })
+    const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
+
+    const submit = async () => {
+
+        setIsSubmitting(true)
+        const formIsValid = await form.trigger('demographicInfo');
+
+        if (formIsValid) {
+          onSubmit();
+        } else {
+          toast("Please fill out all required fields", {
+            icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+          });
+          setIsSubmitting(false)
+        }
     };
 
 
@@ -45,77 +51,37 @@ export default function DemographicInfo(
                     className="flex flex-col gap-4"
                 >
                     <div className='grid grid-cols-4 gap-4'>
-                        <FormField
-                            control={form.control}
-                            name='demographicInfo.householdNo'
-                            render={({field}) => (
-                                <FormItem>
-                                <FormLabel className="font-medium text-black/65">
-                                    Household Number
-                                </FormLabel>
-                                <FormControl>
-                                    <Input placeholder='Enter your household # (e.g.,H04123)' {...field}/>
-                                </FormControl>
-                                <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name='demographicInfo.building'
-                            render={({field}) => (
-                                <FormItem>
-                                <FormLabel className="font-medium text-black/65">
-                                    Building
-                                </FormLabel>
-                                <FormControl>
-                                    <SelectLayout
-                                        placeholder='Select'
-                                        className='w-full'
-                                        options={[
-                                            {id: "owner", name: "Owner"},
-                                            {id: "renter", name: "Renter"},
-                                            {id: "other", name: "Other"},
-                                        ]}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name='demographicInfo.indigenous'
-                            render={({field}) => (
-                                <FormItem>
-                                <FormLabel className="font-medium text-black/65"> 
-                                    Indigenous People
-                                </FormLabel>
-                                <FormControl>
-                                    <SelectLayout
-                                        placeholder='Select'
-                                        className='w-full'
-                                        options={[
-                                            {id: "no", name: "No"},
-                                            {id: "yes", name: "Yes"}
-                                        ]}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
+                        <div className='grid items-end col-span-1'>
+                            <Label className="mb-1">Household</Label>
+                            <Combobox 
+                                options={households}
+                                value={form.watch('demographicInfo.householdNo')}
+                                onChange={(value) => form.setValue('demographicInfo.householdNo', value)}
+                                placeholder='Search for household...'
+                                contentClassName='w-[22rem]'
+                            />
+                        </div>
+                        <FormSelect control={form.control} name='demographicInfo.building' label='Building' options={[
+                            {id: "owner", name: "Owner"},
+                            {id: "renter", name: "Renter"},
+                            {id: "other", name: "Other"},
+                        ]} readOnly={false}/>
+                        
+                        <FormSelect control={form.control} name='demographicInfo.indigenous' label='Inigenous People' options={[
+                            {id: "no", name: "No"},
+                            {id: "yes", name: "Yes"}
+                        ]} readOnly={false}/>
                     </div>
 
                     {/* Submit Button */}
                     <div className="mt-8 sm:mt-auto flex justify-end">
-                        <Button type="submit" className="w-full sm:w-32">
+                        {!isSubmitting ? (<Button type="submit" className="w-full sm:w-32">
                             Next
-                        </Button>
+                        </Button>) : (
+                            <LoadButton>
+                                Saving...
+                            </LoadButton>
+                        )}
                     </div>
                 </form>
             </Form>

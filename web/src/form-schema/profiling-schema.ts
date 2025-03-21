@@ -20,6 +20,7 @@ const validateHouseholdNo = async (householdNo: string): Promise<boolean> => {
 
 // Define the schema with custom validation for householdNo
 export const demographicInfo = z.object({
+    id: z.string(), // For residents living independently
     building: z.string().min(1, 'Building is required'),
     householdNo: z.string().min(1, "Household number is required").refine(async (householdNo) => {
         return await validateHouseholdNo(householdNo);

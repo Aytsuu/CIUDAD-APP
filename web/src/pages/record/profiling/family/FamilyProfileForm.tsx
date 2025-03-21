@@ -7,23 +7,41 @@ import DemographicInfo from "./DemographicInfo";
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "@/components/ui/button/button";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { formatHouseholds, formatResidents } from "../formatting";
 
 export default function FamilyProfileForm() {
+
+  // Memoizing components
+  const MemoizedDemographicInfo = React.memo(DemographicInfo);
+
+  const location = useLocation();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = React.useState(1);
-  const defaultValues = generateDefaultValues(familyFormSchema)
+  const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
 
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
-    defaultValues,
+    defaultValues: defaultValues.current,
     mode: 'onChange' 
   })
+
+  const params = React.useMemo(() => {
+    return location.state?.params || {}
+  }, [location.state]);
+
+  const formattedResidents = React.useMemo(() => {
+    return formatResidents(params, false)
+  }, [params.residents]);
+
+  const households = React.useMemo(() => {
+    return formatHouseholds(params)
+  }, [params.households])
 
   const nextStep = () => {
     setCurrentStep((prev) => prev + 1);
@@ -79,14 +97,16 @@ export default function FamilyProfileForm() {
       <div>
         <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
           {currentStep === 1 && (
-            <DemographicInfo
+            <MemoizedDemographicInfo
               form={form}
+              households={households}
               onSubmit={()=>nextStep()}
             />
           )}
           {currentStep === 2 && (
             <ParentsFormLayout
               form={form}
+              residents={{default: params.residents, formatted: formattedResidents}}
               onSubmit={()=>nextStep()}
               back={()=>prevStep()}
             />
@@ -94,6 +114,7 @@ export default function FamilyProfileForm() {
           {currentStep === 3 && (
             <DependentsInfoLayout
               form={form}
+              residents={{default: params.residents, formatted: formattedResidents}}
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />

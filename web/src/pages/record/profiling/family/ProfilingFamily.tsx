@@ -11,7 +11,7 @@ import FamilyProfileOptions from "./FamilyProfileOptions";
 import LivingSoloForm from "./LivingSoloForm";
 import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
-import { getFamilies, getResidents } from "../restful-api/profilingGetAPI";
+import { getFamilies, getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilingFamily() {
@@ -20,7 +20,6 @@ export default function ProfilingFamily() {
     const [searchQuery, setSearchQuery] = React.useState('')
     const [pageSize, setPageSize] = React.useState(10)
     const [currentPage, setCurrentPage] = React.useState(1);
-    const [isOptionOpen, setIsOptionOpen] = React.useState(false);
     const [isFamilyFormOpen, setIsFamilyFormOpen] = React.useState(false);
 
     // Fetch families and residents using useQuery
@@ -38,6 +37,13 @@ export default function ProfilingFamily() {
         staleTime: 0
     });
 
+    const { data: households, isLoading: isLoadingHouseholds} = useQuery({
+        queryKey: ['households'],
+        queryFn: getHouseholds,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+
     const formatFamilyData = (): FamilyRecord[] => {
         if(!families) return [];
     
@@ -49,18 +55,13 @@ export default function ProfilingFamily() {
                 id: item.fam_id || '',
                 head: '',
                 noOfDependents: item.dependents.length,
-                building: building.build_type || '',
+                building: building?.build_type || '',
                 indigenous: item.fam_indigenous || '',
                 dateRegistered: item.fam_date_registered || '',
                 registeredBy: ''
             }
         });
     };
-
-    const handleDialogChange = () => {
-        setIsOptionOpen(false)
-        setIsFamilyFormOpen(true)
-    }
 
     const filteredFamilies = React.useMemo(() => {
         let filtered = formatFamilyData();
@@ -80,7 +81,7 @@ export default function ProfilingFamily() {
         currentPage * pageSize
     );
 
-    if (isLoadingFamilies || isLoadingResidents) {
+    if (isLoadingFamilies || isLoadingResidents || isLoadingHouseholds) {
         return (
             <div className="w-full h-full">
                 <Skeleton className="h-10 w-1/6 mb-3" />
@@ -121,18 +122,11 @@ export default function ProfilingFamily() {
                         </Button>
                     }
                     mainContent={
-                        <FamilyProfileOptions onClose={handleDialogChange} />
+                        <FamilyProfileOptions 
+                            residents={residents}  
+                            households={households}
+                        />
                     }
-                    isOpen={isOptionOpen}
-                    onOpenChange={setIsOptionOpen}
-                />
-
-                <DialogLayout 
-                    mainContent={<LivingSoloForm residents={residents}/>}
-                    title="Register Family"
-                    description="Family registration form for individuals living independently. Please fill out all required fields"
-                    isOpen={isFamilyFormOpen}
-                    onOpenChange={setIsFamilyFormOpen}
                 />
             </div>
 

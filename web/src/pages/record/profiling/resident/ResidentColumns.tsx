@@ -33,9 +33,9 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-        const familyNo: string = row.getValue("familyNo");
+        const householdNo: string = row.getValue("householdNo");
         
-        return familyNo ? (<div>{familyNo}</div>) :
+        return householdNo ? (<div>{householdNo}</div>) :
         (<TooltipLayout
             trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
             content={"Family not registered"}
@@ -75,9 +75,9 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-        const familyNo: string = row.getValue("familyNo");
+        const sitio: string = row.getValue("sitio");
         
-        return familyNo ? (<div>{familyNo}</div>) :
+        return sitio ? (<div>{sitio}</div>) :
         (<TooltipLayout
             trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
             content="Family not registered"

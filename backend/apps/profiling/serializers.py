@@ -70,7 +70,7 @@ class HouseholdSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)  # Read-only for display
     per = PersonalSerializer(read_only=True)  # Read-only for display
     
-    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio')
+    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio') 
     per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
     
     class Meta:
@@ -80,6 +80,7 @@ class HouseholdSerializer(serializers.ModelSerializer):
 
 class BuildingSerializer(serializers.ModelSerializer):
     hh = HouseholdSerializer(read_only=True)
+    hh_id = serializers.PrimaryKeyRelatedField(queryset=Household.objects.all(), write_only=True, source='hh')
     
     class Meta:
         model = Building

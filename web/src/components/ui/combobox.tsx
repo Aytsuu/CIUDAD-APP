@@ -21,30 +21,33 @@ export function Combobox({
   value,
   onChange,
   placeholder,
+  contentClassName,
+  triggerClassName
 }: {
   options: { id: string; name: React.ReactNode }[];
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  contentClassName?: string;
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild>  
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full h-15 justify-between text-black/80"
+          className={cn("w-full h-15 justify-between text-black/80", triggerClassName)}
         >
-          {value
-            ? options.find((option) => option.id === value)?.name
+          {value ? options.find((option) => option.id === value)?.name
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[30rem] p-0">
+      <PopoverContent className={cn("w-[30rem] p-0", contentClassName)}>
         <Command>
           <CommandInput placeholder={placeholder} />
           <CommandList>

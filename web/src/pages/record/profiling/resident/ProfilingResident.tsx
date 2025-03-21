@@ -41,7 +41,7 @@ export default function ProfilingResident() {
       return {
         id: item.per_id || '',
         householdNo: building?.hh_id || '',
-        sitio: '',
+        sitio:  '',
         familyNo: fam_id || '',
         lname: item.per_lname || '',
         fname: item.per_fname || '',
