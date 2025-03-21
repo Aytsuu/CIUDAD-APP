@@ -6,7 +6,7 @@ import axios from "axios";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { Input } from "@/components/ui/input";
 import { LuEye, LuEyeOff } from "react-icons/lu";
-
+import Loading from "@/components/ui/loading";
 import {
   Form,
   FormControl,
@@ -16,12 +16,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom"; // For navigation after login
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const Icon = showPassword ? LuEyeOff : LuEye;
+  const navigate = useNavigate(); 
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
@@ -34,26 +36,39 @@ export default function SignIn() {
   const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
     setLoading(true);
     setErrorMessage("");
-
+  
     try {
-      
-      const response = await axios.get("http://192.168.1.55:8000/api/login/", {
-        params: {
-          email: data.username,
-          password: data.password,
-        },
+      // Send a POST request to the login endpoint
+      const response = await axios.post("http://127.0.0.1:8000/api/auth/login/", {
+        username: data.username,
+        password: data.password,
       });
-
+  
       if (response.status === 200) {
         console.log("Login successful!", response.data);
-        // Handle login success (redirect, store token, etc.)
-        
+  
+        // Store tokens in localStorage (or cookies for better security)
+        localStorage.setItem("access_token", response.data.access);
+        localStorage.setItem("refresh_token", response.data.refresh);
+  
+        // Redirect to the home page or dashboard
+        navigate("/");
       }
     } catch (error) {
       console.error("Login failed:", error);
-      setErrorMessage("Invalid email or password.");
+  
+      // Handle different types of errors
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          setErrorMessage("Invalid username or password.");
+        } else {
+          setErrorMessage("An error occurred. Please try again later.");
+        }
+      } else {
+        setErrorMessage("An unexpected error occurred.");
+      }
     }
-
+  
     setLoading(false);
   };
 
@@ -64,15 +79,15 @@ export default function SignIn() {
         className="w-full h-full flex flex-col gap-2"
       >
         <div className="w-full h-full flex flex-col gap-2">
-          {/* Email Field */}
+          {/* Username/Email Field */}
           <FormField
             control={form.control}
             name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Username or Email</FormLabel>
                 <FormControl>
-                <Input
+                  <Input
                     type="text"
                     placeholder="Enter your username or email..."
                     {...field}
@@ -118,7 +133,7 @@ export default function SignIn() {
         {/* Submit Button */}
         <div className="w-full flex items-end justify-end">
           <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Log in"}
+          {loading ? <Loading /> : "Log in"}
           </Button>
         </div>
       </form>

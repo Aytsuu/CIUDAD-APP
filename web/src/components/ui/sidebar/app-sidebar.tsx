@@ -1,10 +1,7 @@
-<<<<<<< HEAD
-// import { Calendar, LayoutDashboard, Inbox, Search, Settings } from "lucide-react"
- 
-=======
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
->>>>>>> blotter
+
 import {
   Sidebar,
   SidebarContent,
@@ -13,25 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-<<<<<<< HEAD
-} from "./sidebar"
- 
-// Menu items.
-const items = [
-  {
-    title: "Dashboard",
-    url: "/clerkDashboard",
-  },
-  {
-    title: "Certification, Permit & Mediation",
-    url: "/clerkCertification",
-  },
-  {
-    title: "Record",
-    url: "/record",
-=======
 } from "./sidebar";
-import { Link } from "react-router";
 
 type AnotherSubMenuItem = {
   title: string;
@@ -122,36 +101,12 @@ const items: MenuItem[] = [
         ],
       },
     ],
->>>>>>> blotter
   },
   {
     title: "Donation",
     url: "/donation",
   },
   {
-<<<<<<< HEAD
-    title: "Announcement",
-    url: "/announcement",
-  },
-]
- 
-export function AppSidebar() {
-  return (
-    <Sidebar className="pt-14 border-none">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      {/* <item.icon /> */}
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-=======
     title: "Illegal Dumping Reports",
     url: "/waste-illegaldumping-report",
   },  
@@ -345,19 +300,13 @@ export function AppSidebar() {
                   activeItem={activeItem}
                   setActiveItem={setActiveItem}
                 />
->>>>>>> blotter
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-<<<<<<< HEAD
-  )
-}
-=======
   );
 }
 
 export default AppSidebar;
->>>>>>> blotter

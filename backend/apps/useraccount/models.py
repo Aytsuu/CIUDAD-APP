@@ -1,10 +1,18 @@
+# from django.contrib.auth.models import AbstractUser
+# from django.db import models
+
+# class UserAccount(AbstractUser):
+#     email = models.EmailField(unique=True)  # Use EmailField for email
+#     date_created = models.DateField(auto_now_add=True)
+
+#     def __str__(self):
+#         return self.email
+
 from django.db import models
+from django.contrib.auth.models import User
 
 class UserAccount(models.Model):
-    email = models.CharField(max_length=255, unique=True)  
-    dateCreated = models.DateField(auto_now_add=True)
-    password = models.CharField(max_length=200) 
-    username = models.CharField(max_length=200, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.email
+        return self.user.username

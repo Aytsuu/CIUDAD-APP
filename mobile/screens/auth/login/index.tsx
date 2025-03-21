@@ -120,7 +120,7 @@ export default function LoginScreen() {
               </TouchableWithoutFeedback>
             )}
           </View>
-          <TouchableWithoutFeedback>
+          <TouchableWithoutFeedback onPress={() => router.push("/verifyemail")}>
             <View className="flex-row justify-end">
               <Text className="text-black font-PoppinsRegular text-[16px]">
                 Forgot Password?
