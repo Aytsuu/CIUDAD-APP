@@ -5,27 +5,27 @@ const patient = async (data: Record<string, any>) => {
   try {
     console.log("Patient data being sent to API:", {
       transient: data.transient,
-      lastname: data.lastname,
-      firstname: data.firstname,
-      middlename: data.middlename,
-      address: data.address,
-      age: data.age,
-      gender: data.gender,
+      lastname: data.p_lname,
+      firstname: data.p_fname,
+      middlename: data.p_mname,
+      address: data.p_address,
+      age: data.p_age,
+      gender: data.p_gender,
     })
 
     const res = await api.post("patients/", {
       transient: data.transient,
-      lastname: data.lastname,
-      firstname: data.firstname,
-      middlename: data.middlename,
-      address: data.address,
-      age: data.age,
-      gender: data.gender,
+      lastname: data.p_lname,
+      firstname: data.p_fname,
+      middlename: data.p_mname,
+      address: data.p_address,
+      age: data.p_age,
+      gender: data.p_gender,
     })
     console.log("Patient API response:", res.data)
-    return res.data.patient_id // Return the patient ID for use in referral
-  } catch (err) {
-    console.error("Error creating patient:", err)
+    return res.data.patient_id
+  } catch (err: any) {
+    console.error("Error creating patient:", err.response?.data || err.message)
     throw err
   }
 }
@@ -47,8 +47,8 @@ const referral = async (data: Record<string, any>, patientId: number) => {
     })
     console.log("Referral API response:", res.data)
     return res.data.referral_id // Return the referral ID for use in bite details
-  } catch (err) {
-    console.error("Error creating referral:", err)
+  } catch (err: any) {
+    console.error("Error creating referral:", err.response?.data || err.message)
     throw err // Rethrow the error for handling in the calling function
   }
 }
@@ -60,8 +60,8 @@ const bitedetails = async (data: Record<string, any>, referralId: number) => {
       exposure_site: data.exposure_site,
       biting_animal: data.biting_animal,
       lab_exam: data.lab_exam || "",
-      actions_taken: data.actions_taken,
-      referral: referralId, // Link bite details to the referral
+      actions_taken: data.p_actions || "No actions recorded",
+      referral: referralId,
     })
 
     const res = await api.post("details/", {
@@ -69,14 +69,14 @@ const bitedetails = async (data: Record<string, any>, referralId: number) => {
       exposure_site: data.exposure_site,
       biting_animal: data.biting_animal,
       lab_exam: data.lab_exam || "",
-      actions_taken: data.actions_taken,
-      referral: referralId, // Pass the referral ID
+      actions_taken: data.p_actions || "No actions recorded",
+      referral: referralId,
     })
     console.log("Bite details API response:", res.data)
-    return res.data.bite_id // Return the bite details ID
-  } catch (err) {
-    console.error("Error creating bite details:", err)
-    throw err // Rethrow the error for handling in the calling function
+    return res.data.bite_id
+  } catch (err: any) {
+    console.error("Error creating bite details:", err.response?.data || err.message)
+    throw err
   }
 }
 

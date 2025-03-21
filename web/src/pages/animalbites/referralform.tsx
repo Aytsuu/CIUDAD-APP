@@ -1,4 +1,3 @@
-"use client"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,8 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import ReferralFormSchema from "@/form-schema/ReferralFormSchema"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { useState } from "react"
-import { patient,referral,bitedetails } from "./postrequest"
-
+import { patient, referral, bitedetails } from "./postrequest"
 
 type ReferralFormModalProps = {
   onClose: () => void
@@ -40,56 +38,30 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       exposure_type: "",
       exposure_site: "",
       biting_animal: "",
-     
       p_actions: "",
       p_referred: "",
     },
   })
-
-  async function onSubmit(values: z.infer<typeof ReferralFormSchema>) {
-    setIsSubmitting(true)
-    setError(null)
-    console.log("Form submitted:", values)
-
+  async function onSubmit() {
+    const values = form.getValues()
+    console.log("Form submitted with values:", values);
+  
+    setIsSubmitting(true);
+    setError(null);
+  
     try {
-      // 1. Create patient record
-      const patientData = {
-        transient: values.transient,
-        lastname: values.p_lname,
-        firstname: values.p_fname,
-        middlename: values.p_mname,
-        address: values.p_address,
-        age: values.p_age,
-        gender: values.p_gender,
-      }
-
-      console.log("Submitting patient data:", patientData)
-      const patientId = await patient(patientData)
-      console.log("Patient created with ID:", patientId)
-
-      // 2. Create referral record
-      const referralData = {
-        receiver: values.receiver,
-        sender: values.sender,
-        date: values.date,
-      }
-
-      console.log("Submitting referral data:", referralData)
-      const referralId = await referral(referralData, patientId)
-      console.log("Referral created with ID:", referralId)
-
-      // 3. Create bite details record
-      const biteDetailsData = {
-        exposure_type: values.exposure_type,
-        exposure_site: values.exposure_site,
-        biting_animal: values.biting_animal,
-        actions_taken: values.p_actions || "No actions recorded",
-      }
-
-      console.log("Submitting bite details data:", biteDetailsData)
-      const biteDetailsId = await bitedetails(biteDetailsData, referralId)
-      console.log("Bite details created with ID:", biteDetailsId)
-
+      console.log("Creating patient...");
+      const patientId = await patient(values);
+      console.log("Patient created with ID:", patientId);
+  
+      console.log("Creating referral...");
+      const referralId = await referral(values, patientId);
+      console.log("Referral created with ID:", referralId);
+  
+      console.log("Creating bite details...");
+      const biteDetailsId = await bitedetails(values, referralId);
+      console.log("Bite details created with ID:", biteDetailsId);
+  
       if (onAddPatient) {
         const newPatient = {
           id: referralId,
@@ -105,21 +77,21 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           siteOfExposure: values.exposure_site,
           bitingAnimal: values.biting_animal,
           actions: values.p_actions || "No actions recorded",
-        }
-
-        console.log("👨‍⚕️ Adding new patient to UI:", newPatient)
-        onAddPatient(newPatient)
+        };
+        console.log("Adding patient to state:", newPatient);
+        onAddPatient(newPatient);
       }
-
-      // 5. Close the modal
-      onClose()
+  
+      console.log("All data saved successfully");
+      onClose();
     } catch (err) {
-      console.error("Error saving record:", err)
-      setError("Failed to save record. Please try again.")
+      console.error("Failed to save record:", err);
+      setError("Failed to save record. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
+  
 
   return (
     <div className="p-3">

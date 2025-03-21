@@ -88,7 +88,7 @@ function AnimalBites() {
     { accessorKey: "date", header: "Date" },
     { accessorKey: "exposure", header: "Exposure" },
     { accessorKey: "siteOfExposure", header: "Site of Exposure" },
-    { accessorKey: "transient", header: "Transient", cell:({row}) => (row.original.transient? "Yes":"No")},
+    { accessorKey: "transient", header: "Transient", cell: ({ row }) => (row.original.transient ? "Yes" : "No") },
     { accessorKey: "bitingAnimal", header: "Biting Animal" },
     { accessorKey: "actions", header: "Actions taken" },
     {
@@ -125,12 +125,12 @@ function AnimalBites() {
     <div className="w-full h-full flex flex-col">
       {/* Header Section */}
       <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Animal Bite Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patients information
-          </p>
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Animal Bite Records
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view patients information
+        </p>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
@@ -172,12 +172,14 @@ function AnimalBites() {
         {/* New Record Button */}
         <div className="flex justify-end">
           <DialogLayout
-            trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
+            trigger={
+              <Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>
+            }
             className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
             mainContent={
               <ReferralFormModal
                 onAddPatient={handleAddPatient}
-                onClose={() => console.log("Closing modal")}
+                onClose={() => console.log("Closing modal")} // Ensure onClose is passed
               />
             }
             title={""}
