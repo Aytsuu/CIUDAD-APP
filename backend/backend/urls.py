@@ -32,5 +32,6 @@ urlpatterns = [
     path('waste/', include('apps.waste.urls')),
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
-    path('treasurer/', include('apps.treasurer.urls'))
+    path('treasurer/', include('apps.treasurer.urls')),
+    path('donation/', include('apps.donation.urls')),
 ]

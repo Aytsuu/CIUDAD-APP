@@ -550,6 +550,9 @@ import EventInfoModal from "./EventInfoModal";
 import AddDatePickerEventModal from "./AddDatePickerEventModal";
 import Legend from "./Legend";
 
+// npm install date-fns@2.30.0 react-big-calendar@1.8.2 react-colorful@5.6.1 @mui/x-date-pickers@5.0.12 @types/react-big-calendar
+// npm install @mui/material@5.14.6 @mui/icons-material@5.14.6 @emotion/react@11.11.1 @emotion/styled@11.11.0
+
 const locales = {
   "en-US": enUS,
 };

@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'apps.waste',
     'apps.profiling',
     'apps.administration',
-    'apps.treasurer'
+    'apps.treasurer',
+    'apps.donation',
 ]
 
 MIDDLEWARE = [
