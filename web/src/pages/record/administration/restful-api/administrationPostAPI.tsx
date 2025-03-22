@@ -2,6 +2,7 @@ import api from "@/api/api";
 
 export const staff = async(personalId: string, positionId: string, ) => {
     try {
+
         console.log({
             staff_id: personalId,
             pos: positionId,
@@ -11,7 +12,7 @@ export const staff = async(personalId: string, positionId: string, ) => {
         const res = await api.post('administration/staffs/', {
             staff_id: personalId,
             pos: positionId,
-            manager: 1
+            manager: "asdasda"
         })
 
         return res.data

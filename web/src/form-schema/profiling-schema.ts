@@ -1,32 +1,10 @@
 import * as z from "zod";
-import api from "@/api/api";
-
-// Fetch household numbers from the API
-const fetchHouseholdNumbers = async (): Promise<string[]> => {
-    try {
-        const res = await api.get('profiling/household/');
-        return res.data.map((household: any) => household.hh_id);
-    } catch (err) {
-        console.error("Failed to fetch household numbers:", err);
-        return [];
-    }
-};
-
-// Custom validation function to check if householdNo exists in the database
-const validateHouseholdNo = async (householdNo: string): Promise<boolean> => {
-    const householdNumbers = await fetchHouseholdNumbers();
-    return householdNumbers.includes(householdNo);
-};
 
 // Define the schema with custom validation for householdNo
-export const demographicInfo = z.object({
+export const demographicInfoSchema = z.object({
     id: z.string(), // For residents living independently
     building: z.string().min(1, 'Building is required'),
-    householdNo: z.string().min(1, "Household number is required").refine(async (householdNo) => {
-        return await validateHouseholdNo(householdNo);
-    }, {
-        message: "Household number does not exist",
-    }),
+    householdNo: z.string(),
     indigenous: z.string().min(1, 'Indigenous is required'),
 });
 
@@ -44,7 +22,7 @@ export const personalInfoSchema = z.object({
     per_religion: z.string().min(1, "Religion is required"),
     per_contact: z.string().min(1, "Contact is required"),
 })                                                                                                                                                                                                                                       
-export const motherInfo = z.object({
+export const motherInfoSchema = z.object({
     id: z.string(),
     lastName: z.string(),
     firstName: z.string(),
@@ -57,7 +35,7 @@ export const motherInfo = z.object({
     contact: z.string(),
 })
 
-export const fatherInfo = z.object({
+export const fatherInfoSchema = z.object({
     id: z.string(),
     lastName: z.string(),
     firstName: z.string(),
@@ -82,9 +60,9 @@ export const dependentSchema = z.object({
 
 
 export const familyFormSchema = z.object({
-    demographicInfo: demographicInfo,
-    motherInfo: motherInfo,
-    fatherInfo: fatherInfo,
+    demographicInfo: demographicInfoSchema,
+    motherInfo: motherInfoSchema,
+    fatherInfo: fatherInfoSchema,
     dependentsInfo: z.object({
         list: z.array(dependentSchema).default([]),
         new: dependentSchema

@@ -2,8 +2,9 @@ import { Label } from "@/components/ui/label";
 
 // Format residents for searching
 export const formatResidents = (params: any, isHousehold: boolean) => {
-    if (!params.residents || !params.households) return [];
+    if (!params.residents) return [];
 
+    // Begin formatting
     const formatted = params.residents.map((resident: any) => ({
         id: `${resident.per_id} ${resident.per_fname} ${resident.per_mname} ${resident.per_lname}`,
         name: (
@@ -17,11 +18,15 @@ export const formatResidents = (params: any, isHousehold: boolean) => {
     }));
 
     // Filter unassigned residents for household registration
-    const filtered = formatted.filter((resident: any) => !params.households.some((household: any) => 
-        household.per.per_id === resident.id.split(" ")[0]
-    ));
+    if(isHousehold) {
+        const filtered = formatted.filter((resident: any) => !params.households.some((household: any) => 
+            household.per.per_id === resident.id.split(" ")[0]
+        ));
+
+        return filtered
+    }
     
-    return isHousehold ? filtered : formatted
+    return formatted
 };
 
 // Format sitio for searching

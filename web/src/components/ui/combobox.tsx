@@ -16,21 +16,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export function Combobox({
-  options,
-  value,
-  onChange,
-  placeholder,
-  contentClassName,
-  triggerClassName
-}: {
+export const Combobox = React.memo(({ options, value, onChange, placeholder, contentClassName, triggerClassName, emptyMessage }: {
   options: { id: string; name: React.ReactNode }[];
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   contentClassName?: string;
   triggerClassName?: string;
-}) {
+  emptyMessage: string;
+}) => {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -51,7 +45,7 @@ export function Combobox({
         <Command>
           <CommandInput placeholder={placeholder} />
           <CommandList>
-            <CommandEmpty>No resident found.</CommandEmpty>
+            <CommandEmpty>{emptyMessage}.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
@@ -77,4 +71,4 @@ export function Combobox({
       </PopoverContent>
     </Popover>
   );
-}
+})

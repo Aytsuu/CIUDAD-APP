@@ -1,7 +1,7 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { demographicInfo } from "@/form-schema/profiling-schema";
+import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button/button";
@@ -21,9 +21,9 @@ export default function LivingSoloForm({residents, households} : {
 
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-    const defaultValues = React.useRef(generateDefaultValues(demographicInfo));
-    const form = useForm<z.infer<typeof demographicInfo>>({
-        resolver: zodResolver(demographicInfo),
+    const defaultValues = React.useRef(generateDefaultValues(demographicInfoSchema));
+    const form = useForm<z.infer<typeof demographicInfoSchema>>({
+        resolver: zodResolver(demographicInfoSchema),
         defaultValues: defaultValues.current,
         mode: "onChange" 
     });
@@ -84,6 +84,7 @@ export default function LivingSoloForm({residents, households} : {
                         onChange={(value) => form.setValue('householdNo', value)}
                         placeholder="Search for household..."
                         triggerClassName="font-normal"
+                        emptyMessage="No resident found"
                     />
                     <FormSelect control={form.control} name="building" label="Building" options={[
                         {id: "owner", name: "Owner"},

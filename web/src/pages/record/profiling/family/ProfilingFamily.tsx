@@ -8,7 +8,6 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
-import LivingSoloForm from "./LivingSoloForm";
 import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
 import { getFamilies, getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
@@ -20,7 +19,6 @@ export default function ProfilingFamily() {
     const [searchQuery, setSearchQuery] = React.useState('')
     const [pageSize, setPageSize] = React.useState(10)
     const [currentPage, setCurrentPage] = React.useState(1);
-    const [isFamilyFormOpen, setIsFamilyFormOpen] = React.useState(false);
 
     // Fetch families and residents using useQuery
     const { data: families, isLoading: isLoadingFamilies } = useQuery({
@@ -44,6 +42,7 @@ export default function ProfilingFamily() {
         staleTime: 0
     })
 
+    // Format family to populate data table
     const formatFamilyData = (): FamilyRecord[] => {
         if(!families) return [];
     

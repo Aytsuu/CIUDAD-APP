@@ -12,26 +12,43 @@ import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
 import { useQuery } from "@tanstack/react-query";
-import { getResidents } from "../restful-api/profilingGetAPI";
+import { getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
 import { MainLayoutComponent } from "@/components/ui/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilingResident() {
   
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [pageSize, setPageSize] = React.useState<number>(10);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Fetch residents and staffs using useQuery
+  // Fetch residents using useQuery
   const { data: residents, isLoading: isLoadingResidents } = useQuery({
     queryKey: ['residents'],
     queryFn: getResidents,
     refetchOnMount: true, // Force refetch on mount
     staleTime: 0, // Ensure data is never considered stale
   });
+
+  // Fetch households using useQuery
+  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
+    queryKey: ['households'],
+    queryFn: getHouseholds,
+    refetchOnMount: true,
+    staleTime: 0
+  });
   
+  // Format resident to populate data table
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
-    if (!residents) return [];
+    if (!residents || !households) return [];
+
+    const getSitio = (hh_id: string) => {
+      const household = households.find((household: any) => 
+        household.hh_id === hh_id
+      )
+
+      return household?.sitio.sitio_name
+    }
     
     return residents.map((item: any) => {
 
@@ -41,7 +58,7 @@ export default function ProfilingResident() {
       return {
         id: item.per_id || '',
         householdNo: building?.hh_id || '',
-        sitio:  '',
+        sitio:  getSitio(building?.hh_id) || '',
         familyNo: fam_id || '',
         lname: item.per_lname || '',
         fname: item.per_fname || '',
@@ -50,7 +67,7 @@ export default function ProfilingResident() {
         dateRegistered: reg_date || '',
       }
     });
-  }, []);
+  }, [residents, households]);
 
   // Filter residents based on search query
   const filteredResidents = React.useMemo(() => {
@@ -72,7 +89,7 @@ export default function ProfilingResident() {
     currentPage * pageSize
   );
 
-  if(isLoadingResidents) {
+  if(isLoadingResidents || isLoadingHouseholds) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3" />
@@ -137,7 +154,6 @@ export default function ProfilingResident() {
                   setPageSize(1); // Reset to 1 if invalid
                 }
               }}
-              min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>

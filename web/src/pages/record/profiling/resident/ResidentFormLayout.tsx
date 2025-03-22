@@ -1,3 +1,12 @@
+/* 
+
+  Note...
+
+  This form is being utilized for creating, viewing, and updating resident records
+  Additionally, it is being used for adminstrative position assignment or staff registration 
+
+*/
+
 import React from "react";
 import { Card } from "@/components/ui/card/card";
 import PersonalInfoForm from "./PersonalInfoForm";

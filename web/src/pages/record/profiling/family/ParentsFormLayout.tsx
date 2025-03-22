@@ -6,14 +6,15 @@ import ParentsForm from "./ParentsForm";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 
 export default function ParentsFormLayout(
-  { form, residents, onSubmit, back}: {
+  { form, residents, selectedParents, setSelectedMotherId, setSelectedFatherId, onSubmit, back}: {
     form: UseFormReturn<z.infer<typeof familyFormSchema>>;
     residents: any;
+    selectedParents: Record<string, string>;
+    setSelectedMotherId: React.Dispatch<React.SetStateAction<string>>;
+    setSelectedFatherId: React.Dispatch<React.SetStateAction<string>>;
     onSubmit: () => void;
     back: () => void;
   }) {
-
-  
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
@@ -22,6 +23,8 @@ export default function ParentsFormLayout(
         <ParentsForm 
           residents={residents}
           form={form}
+          selectedParent={selectedParents.father}
+          onSelect={setSelectedMotherId}
           prefix="motherInfo" 
           title="Mother's Information" 
         />
@@ -31,6 +34,8 @@ export default function ParentsFormLayout(
         <ParentsForm 
           residents={residents}
           form={form}
+          selectedParent={selectedParents.mother}
+          onSelect={setSelectedFatherId}
           prefix="fatherInfo" 
           title="Father's Information" 
         />

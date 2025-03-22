@@ -1,117 +1,82 @@
+import React from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
-import { ColumnDef } from "@tanstack/react-table";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { ArrowUpDown, Plus, Pen, UserRoundCog, Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-
-type Record = {
-    id: string
-    lname: string
-    fname: string
-    mname: string
-    suffix: string
-    dateOfBirth: string
-    contact: number
-    dateAssigned: string
-    position: string
-}
-
-const records: Record[] = [
-    {
-        id: 'Lorem',
-        lname: 'Lorem',
-        fname: 'Lorem',
-        mname: 'Lorem',
-        suffix: 'Lorem',
-        dateOfBirth: 'Lorem',
-        contact: 1233,
-        dateAssigned: 'Lorem',
-        position: 'Lorem'
-    }
-]
-
-const columns: ColumnDef<Record>[] = [
-    {
-        accessorKey: 'lname',
-        header: ({column}) => (
-            <div
-                className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
-                onClick={() => (column.toggleSorting(column.getIsSorted() === "asc"))}
-            >
-                Last Name
-                <TooltipLayout
-                    trigger={<ArrowUpDown size={15}/>}
-                    content={"Sort"}
-                />
-            </div>
-        )
-    },
-    {
-        accessorKey: 'fname',
-        header: ({column}) => (
-            <div
-                className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
-                onClick={()=> (
-                    column.toggleSorting(column.getIsSorted() === "asc")
-                )}
-            >
-                First Name
-                <TooltipLayout
-                    trigger={<ArrowUpDown size={15} />}
-                    content={"Sort"}
-                />
-            </div>
-        )
-    },
-    {
-        accessorKey: 'mname',
-        header: ({column}) => (
-            <div
-                className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
-                onClick={()=> (
-                    column.toggleSorting(column.getIsSorted() === "asc")
-                )}
-            >
-                Middle Name
-                <TooltipLayout
-                    trigger={<ArrowUpDown size={15} />}
-                    content={"Sort"}
-                />
-            </div>
-        )
-    },
-    {
-        accessorKey: 'suffix',
-        header: 'Suffix'
-    },
-    {
-        accessorKey: 'dateOfBirth',
-        header: 'Date of Birth'
-    },
-    {
-        accessorKey: 'contact',
-        header: 'Contact'
-    },
-    {
-        accessorKey: 'dateAssigned',
-        header: 'Date Assigned'
-    },
-    {
-        accessorKey: 'action',
-        header: 'Action',
-        cell: ({row}) => (
-            <Button variant={"outline"}>View</Button>
-        )
-    }
-]
+import { Search, UserRoundCog, Plus } from "lucide-react";
+import { administrationColumns } from "./AdministrationColumns";
+import { getResidents } from "../profiling/restful-api/profilingGetAPI";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getStaffs } from "./restful-api/administrationGetAPI";
+import { AdministrationRecord } from "./administrationTypes";
 
 export default function AdministrativeRecords(){
 
-    const data = records;
+    const [searchQuery, setSearchQuery] = React.useState<string>('');
+    const [pageSize, setPageSize] = React.useState<number>(10);
+    const [currentPage, setCurrentPage] = React.useState<number>(1);
+
+    const { data: residents, isLoading: isLoadingResidents} = useQuery({
+        queryKey: ['residents'],
+        queryFn: getResidents,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+
+    const { data: staffs, isLoading: isLoadingStaffs} = useQuery({
+        queryKey: ['staffs'],
+        queryFn: getStaffs,
+
+    })
+
+    const formatStaffData = React.useCallback((): AdministrationRecord[] => {
+        if(!staffs) return [];
+
+        return staffs.map((staff: any) => { 
+            
+            return {
+                id: '',
+                lname: '',
+                fname: '',
+                mname: '',
+                suffix: '',
+                dateOfBirth: '',
+                contact: '', 
+                position: '',
+                dateAssigned: ''
+            }
+        })
+
+    }, [staffs])
+
+    const filteredStaffs = React.useMemo(() => {
+        let filtered = formatStaffData()
+
+        return filtered.filter((record: any) => 
+            Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [staffs, searchQuery])
+
+    const totalPage = Math.ceil(filteredStaffs.length / pageSize)
+
+    const paginatedStaffs = filteredStaffs.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    )
+
+    if(isLoadingResidents || isLoadingStaffs) {
+        return (
+          <div className="w-full h-full">
+            <Skeleton className="h-10 w-1/6 mb-3" />
+            <Skeleton className="h-7 w-1/4 mb-6" />
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-4/5 w-full mb-4" />
+          </div>
+        )
+    }
 
     return(
         <div className="w-full h-full flex flex-col">
@@ -127,33 +92,42 @@ export default function AdministrativeRecords(){
             <hr className="border-gray mb-5 sm:mb-8" />
 
             <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-                <div className="flex gap-x-2">
-                    <div className="relative flex-1 bg-white">
+                <div className="w-full flex gap-2 ">
+                    <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                        <Input placeholder="Search..." className="pl-10 w-72" />
+                        <Input 
+                            placeholder="Search..." 
+                            className="pl-10 w-full bg-white" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                     <SelectLayout 
                         placeholder="Filter by"
                         label=""
-                        className="bg-white"
+                        className="bg-white w-1/6"
                         options={[]}
                         value=""
                         onChange={() => {}}
                     />
-                </div>
-                <div>
-                    <div className="flex gap-2">
-                        <Link to="/role">
-                            <Button > 
-                                <UserRoundCog /> Role
-                            </Button>
-                        </Link>
-                        <Link to="/resident-registration" state={{params: {origin: 'administration'}}}>
-                            <Button > 
-                                <Plus /> Register a Staff
-                            </Button>
-                        </Link>
-                    </div>
+                    <Link to="/role">
+                        <Button > 
+                            <UserRoundCog /> Role
+                        </Button>
+                    </Link>
+                    <Link to="/resident-form" state={{
+                            params: {
+                                title: 'Staff Registration',
+                                description: 'Ensure that all required fields are filled out correctly before submission.',
+                                origin: 'administration', 
+                                residents: residents
+                            }
+                        }}
+                    >
+                        <Button > 
+                            <Plus /> Register a Staff
+                        </Button>
+                    </Link>
                 </div>
             </div>
             
@@ -161,24 +135,41 @@ export default function AdministrativeRecords(){
                 <div className="w-full h-auto bg-white p-3">
                     <div className="flex gap-x-2 items-center">
                         <p className="text-xs sm:text-sm">Show</p>
-                            <Input type="number" className="w-14 h-8" defaultValue="10" />
+                        <Input
+                            type="number"
+                            className="w-14 h-6"
+                            value={pageSize}
+                            onChange={(e) => {
+                            const value = +e.target.value;
+                            if (value >= 1) {
+                                setPageSize(value);
+                            } else {
+                                setPageSize(1); // Reset to 1 if invalid
+                            }
+                            }}
+                        />
                         <p className="text-xs sm:text-sm">Entries</p>
                     </div>
                 </div>
                 <div className="bg-white w-full overflow-x-auto">
                     {/* Table Placement */}
-                    <DataTable columns={columns} data={data} />
-                </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-                {/* Showing Rows Info */}
-                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing 1-10 of 150 rows
-                </p>
-    
-                {/* Pagination */}
-                <div className="w-full sm:w-auto flex justify-center">
-                    <PaginationLayout />
+                    <DataTable columns={administrationColumns} data={paginatedStaffs} />
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                        {/* Showing Rows Info */}
+                        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                            Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredStaffs.length)} of {filteredStaffs.length} rows
+                        </p>
+            
+                        {/* Pagination */}
+                        <div className="w-full sm:w-auto flex justify-center">
+                            {paginatedStaffs.length > 0 && <PaginationLayout 
+                                currentPage={currentPage}
+                                totalPages={totalPage}
+                                onPageChange={setCurrentPage}
+                            />}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>  

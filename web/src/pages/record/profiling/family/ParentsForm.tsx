@@ -8,24 +8,32 @@ import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
 
-export default function ParentsForm({ residents, form, prefix, title}: {
-    residents: any
-    form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-    prefix: 'motherInfo' | 'fatherInfo';
-    title: string;
-  })  {
+export default function ParentsForm({ residents, form, selectedParent, onSelect, prefix, title }: {
+  residents: any;
+  form: UseFormReturn<z.infer<typeof familyFormSchema>>;
+  selectedParent: string;
+  onSelect: React.Dispatch<React.SetStateAction<string>>
+  prefix: 'motherInfo' | 'fatherInfo';
+  title: string;
+}) {
 
 
-  React.useEffect(()=>{
+  const filteredResidents = React.useMemo(() => {
+    return residents.formatted.filter((resident: any) => 
+      resident.id.split(" ")[0] !== selectedParent
+    )
+  }, [residents.formatted, selectedParent])
 
-    const searchResident = residents.default.find((value: any) => 
-      value.per_id == form.watch(`${prefix}.id`).split(" ")[0]
+  React.useEffect(() => {
+
+    const searchedResidentId = form.watch(`${prefix}.id`);
+    const searchResident = residents.default.find((value: any) =>
+      value.per_id === searchedResidentId?.split(" ")[0]
     );
 
-    if(searchResident){
-
+    if (searchResident) {
       form.setValue(`${prefix}`, {
-        id: searchResident.per_id || '',
+        id: searchedResidentId || '',
         lastName: searchResident.per_lname || '',
         firstName: searchResident.per_fname || '',
         middleName: searchResident.per_mname || '',
@@ -36,9 +44,7 @@ export default function ParentsForm({ residents, form, prefix, title}: {
         edAttainment: searchResident.per_edAttainment || '',
         contact: searchResident.per_contact || ''
       });
-
     } else {
-
       form.setValue(`${prefix}`, {
         id: '',
         lastName: '',
@@ -51,8 +57,9 @@ export default function ParentsForm({ residents, form, prefix, title}: {
         edAttainment: '',
         contact: ''
       });
-
     }
+
+    onSelect(searchedResidentId?.split(' ')[0])
 
   }, [form.watch(`${prefix}.id`)]);
 
@@ -65,33 +72,34 @@ export default function ParentsForm({ residents, form, prefix, title}: {
 
       <Form {...form}>
         <form className="grid gap-4">
-          <Combobox 
-            options={residents.formatted}
-            value={form.watch(`${prefix}.id`)}
+          <Combobox
+            options={filteredResidents}
+            value={form.watch(`${prefix}.id`)} // Use the isolated watched value
             onChange={(value) => form.setValue(`${prefix}.id`, value)}
             placeholder="Search for resident..."
             contentClassName="w-[28rem]"
             triggerClassName="w-1/3"
+            emptyMessage="No resident found"
           />
 
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <FormInput control={form.control} name={`${prefix}.lastName`} label="Last Name" readOnly/>
-            <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly/>
-            <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly/>
-            <FormInput control={form.control} name={`${prefix}.suffix`} label="Suffix" readOnly/>
-            <FormDateInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" readOnly/>
+            <FormInput control={form.control} name={`${prefix}.lastName`} label="Last Name" readOnly />
+            <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
+            <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />
+            <FormInput control={form.control} name={`${prefix}.suffix`} label="Suffix" readOnly />
+            <FormDateInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" readOnly />
             <FormSelect control={form.control} name={`${prefix}.status`} label="Marital Status" options={[
-                { id: 'single', name: 'Single' },
-                { id: 'married', name: 'Married' },
-                { id: 'divorced', name: 'Divorced' },
-                { id: 'widowed', name: 'Widowed' },
-              ]} readOnly/>
-            <FormInput control={form.control} name={`${prefix}.religion`} label="Religion" readOnly/>
-            <FormInput control={form.control}  name={`${prefix}.edAttainment`} label="Educational Attainment" readOnly/>
-            <FormInput control={form.control} name={`${prefix}.contact`} label="Contact#" readOnly/>
+              { id: 'single', name: 'Single' },
+              { id: 'married', name: 'Married' },
+              { id: 'divorced', name: 'Divorced' },
+              { id: 'widowed', name: 'Widowed' },
+            ]} readOnly />
+            <FormInput control={form.control} name={`${prefix}.religion`} label="Religion" readOnly />
+            <FormInput control={form.control} name={`${prefix}.edAttainment`} label="Educational Attainment" readOnly />
+            <FormInput control={form.control} name={`${prefix}.contact`} label="Contact#" readOnly />
           </div>
         </form>
       </Form>
     </div>
   );
-};
+}

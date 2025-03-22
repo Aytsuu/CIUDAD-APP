@@ -14,21 +14,21 @@ import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { formatHouseholds, formatResidents } from "../formatting";
+import { father } from "../restful-api/profiingPostAPI";
 
 export default function FamilyProfileForm() {
 
-  // Memoizing components
-  const MemoizedDemographicInfo = React.memo(DemographicInfo);
-
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = React.useState(1);
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
 
+  const [selectedMotherId, setSelectedMotherId] = React.useState<string>('');
+  const [selectedFatherId, setSelectedFatherId] = React.useState<string>('');
+  
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
     defaultValues: defaultValues.current,
-    mode: 'onChange' 
   })
 
   const params = React.useMemo(() => {
@@ -43,17 +43,17 @@ export default function FamilyProfileForm() {
     return formatHouseholds(params)
   }, [params.households])
 
-  const nextStep = () => {
+  const nextStep = React.useCallback(() => {
     setCurrentStep((prev) => prev + 1);
-  };
+  }, []);
 
   // Handler for going to the previous step
-  const prevStep = () => {
+  const prevStep = React.useCallback(() => {
     setCurrentStep((prev) => prev - 1);
-  };
+  }, []);
 
   // Calculate progress based on current step
-  const calculateProgress = () => {
+  const calculateProgress = React.useCallback(() => {
     switch (currentStep) {
       case 1:
         return 30;
@@ -64,7 +64,7 @@ export default function FamilyProfileForm() {
       default:
         return 0;
     }
-  };
+  }, [currentStep]);
 
   return (
     <>
@@ -97,7 +97,7 @@ export default function FamilyProfileForm() {
       <div>
         <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
           {currentStep === 1 && (
-            <MemoizedDemographicInfo
+            <DemographicInfo
               form={form}
               households={households}
               onSubmit={()=>nextStep()}
@@ -107,6 +107,9 @@ export default function FamilyProfileForm() {
             <ParentsFormLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
+              selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
+              setSelectedMotherId={setSelectedMotherId}
+              setSelectedFatherId={setSelectedFatherId}
               onSubmit={()=>nextStep()}
               back={()=>prevStep()}
             />
@@ -115,6 +118,7 @@ export default function FamilyProfileForm() {
             <DependentsInfoLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
+              selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />

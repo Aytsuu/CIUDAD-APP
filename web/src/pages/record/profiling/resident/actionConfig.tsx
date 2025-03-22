@@ -9,7 +9,6 @@ import { Pen } from "lucide-react";
 export const buttonConfig = (
     form: any,
     isAssignmentOpen: boolean,
-    setResidentSearch: (value: string) => void,
     setIsAssignmentOpen: (value: boolean) => void,
     setFormType: (value: Type) => void,
 ) => ({
@@ -17,13 +16,12 @@ export const buttonConfig = (
     [Type.Viewing]: null, // No button for viewing in administration
     default: (
       <DialogLayout
-        trigger={<Button type="submit" className="px-12">Finish</Button>}
+        trigger={<Button className="px-12">Finish</Button>}
         title="Position Assignment"
         description="Assign a position to complete the registration"
         mainContent={
           <AssignPosition
             close={() => {
-              setResidentSearch('');
               setIsAssignmentOpen(false);
             }}
             personalInfoform={form}
@@ -80,11 +78,10 @@ export const renderActionButton = (
   formType: Type,
   Origin: OriginKeys,
   isSubmitting: boolean,
-  setResidentSearch: (value: string) => void,
   setIsAssignmentOpen: (value: boolean) => void,
   setFormType: (value: Type) => void,
 ) => {
-  const config = buttonConfig(form, isAssignmentOpen, setResidentSearch, setIsAssignmentOpen, setFormType);
+  const config = buttonConfig(form, isAssignmentOpen, setIsAssignmentOpen, setFormType);
   const originConfig = config[Origin] || config.defaultOrigin;
   const button = originConfig[formType as keyof typeof originConfig] || originConfig.default;
 

@@ -9,7 +9,6 @@ import { Combobox } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
 import { CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { LoadButton } from '@/components/ui/button/load-button';
 
 export default function DemographicInfo(
     {form, households, onSubmit}: {
@@ -18,11 +17,8 @@ export default function DemographicInfo(
     onSubmit: () => void
 }){
 
-    const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-
     const submit = async () => {
 
-        setIsSubmitting(true)
         const formIsValid = await form.trigger('demographicInfo');
 
         if (formIsValid) {
@@ -31,10 +27,12 @@ export default function DemographicInfo(
           toast("Please fill out all required fields", {
             icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
           });
-          setIsSubmitting(false)
         }
     };
 
+    const handleHouseholdChange = React.useCallback((value: any) => {
+        form.setValue('demographicInfo.householdNo', value);
+    }, [form]);
 
     return (
         <div className='flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto'>
@@ -55,10 +53,11 @@ export default function DemographicInfo(
                             <Label className="mb-1">Household</Label>
                             <Combobox 
                                 options={households}
-                                value={form.watch('demographicInfo.householdNo')}
-                                onChange={(value) => form.setValue('demographicInfo.householdNo', value)}
+                                value={form.watch(`demographicInfo.householdNo`)}
+                                onChange={handleHouseholdChange}
                                 placeholder='Search for household...'
                                 contentClassName='w-[22rem]'
+                                emptyMessage='No household found'
                             />
                         </div>
                         <FormSelect control={form.control} name='demographicInfo.building' label='Building' options={[
@@ -75,13 +74,9 @@ export default function DemographicInfo(
 
                     {/* Submit Button */}
                     <div className="mt-8 sm:mt-auto flex justify-end">
-                        {!isSubmitting ? (<Button type="submit" className="w-full sm:w-32">
+                        <Button type="submit" className="w-full sm:w-32">
                             Next
-                        </Button>) : (
-                            <LoadButton>
-                                Saving...
-                            </LoadButton>
-                        )}
+                        </Button>
                     </div>
                 </form>
             </Form>

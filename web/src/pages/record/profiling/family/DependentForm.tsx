@@ -9,13 +9,13 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
+import { DependentRecord } from '../profilingTypes';
 
-export default function DependentForm({
-  form,
-  residents,
-}: {
+export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  residents: any;
+  residents: any; 
+  selectedParents: Record<string, string>
+  dependents: DependentRecord[]
 }) {
 
   const { append } = useFieldArray({
@@ -23,9 +23,18 @@ export default function DependentForm({
     name: 'dependentsInfo.list',
   });
 
+  const filteredResidents = React.useMemo(() => {
+    return residents.formatted.filter((resident: any) => {
+      const residentId = resident.id?.split(" ")[0]
+
+      return residentId !== selectedParents.mother && residentId !== selectedParents.father &&
+        !dependents.some((dependent) => dependent.id === residentId)
+    })
+  }, [residents.formatted, selectedParents, dependents])
+
   React.useEffect(() => {
     const searchedResident = residents.default.find((value: any) => 
-      value.per_id === form.watch('dependentsInfo.new.id').split(" ")[0]
+      value.per_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]
   );
 
     if (searchedResident) {
@@ -67,12 +76,13 @@ export default function DependentForm({
       <Form {...form}>
         <form className='grid gap-4'>
           <Combobox 
-            options={residents.formatted}
+            options={filteredResidents}
             value={form.watch('dependentsInfo.new.id')}
             onChange={(value) => form.setValue('dependentsInfo.new.id', value)}
             placeholder='Search for resident...'
             triggerClassName='w-1/3'
             contentClassName='w-[28rem]'
+            emptyMessage='No resident found'
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <FormInput control={form.control} name="dependentsInfo.new.lastName" label="Last Name" readOnly />

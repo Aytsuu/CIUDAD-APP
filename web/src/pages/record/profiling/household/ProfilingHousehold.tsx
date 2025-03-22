@@ -43,8 +43,7 @@ export default function ProfilingHousehold(){
         staleTime: 0, 
     });
 
-
-
+    // Format households to populate data table
     const formatHouseholdData = (): HouseholdRecord[] => {
         if(!households) return [];
 

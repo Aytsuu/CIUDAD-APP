@@ -21,3 +21,15 @@ export type Permission = {
     delete: boolean
     assi_id: string
 }
+
+export type AdministrationRecord = {
+    id: string
+    lname: string
+    fname: string
+    mname: string
+    suffix: string
+    dateOfBirth: string
+    contact: number
+    position: string
+    dateAssigned: string
+}
