@@ -11,7 +11,7 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { budget_plan, budget_plan_details } from "../budgetPlanPostRequests";
+import { budget_plan, budget_plan_details } from "../request/budgetPlanPostRequests";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",

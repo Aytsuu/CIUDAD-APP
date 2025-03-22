@@ -10,6 +10,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CreateBudgetPlanHeader from "./treasurer_budgetplan_header_form";
 import api from "@/api/api";
 import { useEffect } from "react";
+import { deleteBudgetPlan } from "./request/deleteRequest";
 
 type BudgetPlan = {
     plan_id: number,
@@ -38,16 +39,7 @@ function BudgetPlan() {
 
     // Handle delete
     const handleDelete = async (planId: number) => {
-        const isConfirmed = window.confirm("Are you sure you want to delete this budget plan?"); 
-        if (isConfirmed) {
-            try {
-                await api.delete(`/treasurer/budget-plan/${planId}/`);
-                setBudgetPlans((prev) => prev.filter((plan) => plan.plan_id !== planId));
-                console.log("Budget plan deleted successfully");
-            } catch (error) {
-                console.error("Failed to delete budget plan:", error);
-            }
-        }
+        await deleteBudgetPlan(planId, setBudgetPlans);
     };
 
     // Table Columns

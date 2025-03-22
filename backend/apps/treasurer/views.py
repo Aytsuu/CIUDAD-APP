@@ -23,6 +23,11 @@ class Budget_Plan_DetailView(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         else:
             return super().create(request, *args, **kwargs) 
+        
+class Delete_Update_Retrieve_BudgetPlanView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Budget_Plan.objects.all()
+    serializer_class = Budget_PlanSerializer
+    lookup_field = 'plan_id'
 
 
 # class Income_FileView(generics.ListCreateAPIView):
