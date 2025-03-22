@@ -13,6 +13,8 @@ class Budget_Plan(models.Model):
     plan_tax_allotment = models.DecimalField(max_digits=10, decimal_places=2)
     plan_cert_fees = models.DecimalField(max_digits=10, decimal_places=2)
     plan_other_income = models.DecimalField(max_digits=10, decimal_places=2)
+    plan_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
+    plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
 
     class Meta:
@@ -30,7 +32,8 @@ class Current_Expenditures_Personal(models.Model):
     cep_brgy_workers_honoraria = models.DecimalField(max_digits=10, decimal_places=2)
     cep_enhancement_incentive = models.DecimalField(max_digits=10, decimal_places=2)
     cep_leave_credits = models.DecimalField(max_digits=10, decimal_places=2)
-    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE)
+    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='personal')
+
 
     class Meta:
         db_table = "Current_Expenditures_Personal"
@@ -49,7 +52,7 @@ class Current_Expenditures_Maintenance(models.Model):
     cem_membership_dues = models.DecimalField(max_digits=10, decimal_places=2)
     cem_office_maintenance = models.DecimalField(max_digits=10, decimal_places=2)
     cem_vehicle_maintenance = models.DecimalField(max_digits=10, decimal_places=2) 
-    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE)
+    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='maintenance')
 
     class Meta: 
         db_table = "Current_Expenditures_Maintenance"
@@ -68,7 +71,7 @@ class Other_Maint_And_Operating_Expense(models.Model):
     ome_fidelity_bond = models.DecimalField(max_digits=10, decimal_places=2)
     ome_insurance_expense = models.DecimalField(max_digits=10, decimal_places=2)
     ome_misc_expense = models.DecimalField(max_digits=10, decimal_places=2)
-    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE)
+    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='other_expenses')
 
     class Meta:
         db_table = "Other_Maint_And_Operating_Expense"
@@ -84,8 +87,8 @@ class Capital_Outlays_And_Non_Office(models.Model):
     con_quick_response = models.DecimalField(max_digits=10, decimal_places=2)
     con_disaster_training = models.DecimalField(max_digits=10, decimal_places=2)
     con_disaster_supplies = models.DecimalField(max_digits=10, decimal_places=2)
-    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE)
-
+    plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='capital_nonoffice')
+    
     class Meta:
         db_table = "Capital_Outlays_And_Non_Office"
 

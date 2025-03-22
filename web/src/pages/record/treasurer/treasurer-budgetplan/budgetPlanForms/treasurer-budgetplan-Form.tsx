@@ -141,6 +141,8 @@
                     otherSpecificIncome,
                     actualIncome,
                     actualRPT,
+                    totalBudgetObligations, 
+                    balUnappropriated,
                 };
     
                 const planId = await budget_plan(budgetHeader);

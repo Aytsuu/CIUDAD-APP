@@ -13,6 +13,8 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_tax_allotment: parseFloatSafe(budgetInfo.taxAllotment), 
             plan_cert_fees: parseFloatSafe(budgetInfo.clearanceAndCertFees), 
             plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
+            plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
+            plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
         });
 
@@ -25,6 +27,8 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_tax_allotment: parseFloatSafe(budgetInfo.taxAllotment), 
             plan_cert_fees: parseFloatSafe(budgetInfo.clearanceAndCertFees), 
             plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
+            plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
+            plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
             plan_issue_date: formatDate(new Date().toISOString().split('T')[0]), 
         });
 
