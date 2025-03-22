@@ -3,7 +3,7 @@ from .models import *
 from datetime import date  # Add this import
 
 class MedicineListSerializers(serializers.ModelSerializer):
-    class Meta:
+    class Meta: 
         model = Medicinelist
         fields = '__all__'
 

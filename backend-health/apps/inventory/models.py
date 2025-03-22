@@ -2,7 +2,7 @@ from django.db import models, transaction
 from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
-
+ 
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)

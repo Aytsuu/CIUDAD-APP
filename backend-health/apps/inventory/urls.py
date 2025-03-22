@@ -3,7 +3,7 @@ from .views import *
 
 
 urlpatterns = [
-    
+     
     # VIEW POST
     path("category/", CategoryView.as_view(), name="category"),
 
