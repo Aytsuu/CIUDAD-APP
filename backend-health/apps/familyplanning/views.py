@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from django.shortcuts import render
 from rest_framework import generics,status
 from django.shortcuts import get_object_or_404
@@ -48,19 +47,3 @@ class AcknowledgementView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-=======
-from rest_framework import generics
-from .models import Acknowledgement
-from .serializers import *
-
-class AcknowledgementView(generics.ListCreateAPIView):
-    queryset = Acknowledgement.objects.all()
-    serializer_class = AcknowledgementSerializer
-
-class RiskVawView(generics.ListCreateAPIView):
-    serializer_class = RiskVawSerializer
-    queryset = Risk_vaw.objects.all()
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
->>>>>>> eac5b29bec182701333af109425eb1c2c4d6e7d9
