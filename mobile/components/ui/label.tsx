@@ -1,6 +1,10 @@
 import * as LabelPrimitive from '@rn-primitives/label';
 import * as React from 'react';
+<<<<<<< HEAD
 import { cn } from '/lib/utils';
+=======
+import { cn } from '@/lib/utils';
+>>>>>>> mobile/feature/landing-page
 
 const Label = React.forwardRef<LabelPrimitive.TextRef, LabelPrimitive.TextProps>(
   ({ className, onPress, onLongPress, onPressIn, onPressOut, ...props }, ref) => (
