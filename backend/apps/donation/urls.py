@@ -6,5 +6,5 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path("donation", DonationView.as_view(), name="donation"),
+    path("donation-record/", DonationView.as_view(), name="donation-record"),
 ]

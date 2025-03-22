@@ -120,7 +120,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Donation",
-    url: "/donation",
+    url: "/donation-record",
   },
   {
     title: "Illegal Dumping Reports",

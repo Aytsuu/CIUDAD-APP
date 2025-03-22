@@ -13,7 +13,7 @@ class Donation(models.Model):
     don_description = models.CharField(max_length=200, null=True)
     don_category = models.CharField(max_length=100, null=True)
     don_receiver = models.CharField(max_length=100, null=True)
-    don_date = models.DateField(null=False)
+    don_date = models.DateField(default=date.today)
     # ra_id = models.ForeignKey(Resident_Account on_delete=models.CASCADE)
     # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
     

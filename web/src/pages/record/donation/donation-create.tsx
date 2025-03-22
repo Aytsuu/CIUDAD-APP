@@ -7,12 +7,13 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
-import { donation_record } from "./donationPostRequest";
+import { postdonationreq } from "./request-db/donationPostRequest";
 
 function ClerkDonateCreate() {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
     resolver: zodResolver(ClerkDonateCreateSchema),
     defaultValues: {
+      don_num: '',
       don_donorfname: "",
       don_donorlname: "",
       don_item_name: "",
@@ -24,9 +25,13 @@ function ClerkDonateCreate() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof ClerkDonateCreateSchema>) => {
-    console.log(values);
-    donation_record(values);
+  const onSubmit = async (values: z.infer<typeof ClerkDonateCreateSchema>) => {
+    try {
+      await postdonationreq(values);
+  } catch (err) {
+      console.error("Error submitting expense or income:", err);
+      alert("Failed to submit income or expense. Please check the input data and try again.");
+  }
   };
 
   return (
@@ -41,6 +46,15 @@ function ClerkDonateCreate() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-4"
           >
+            {/* Reference Number*/}
+            <FormInput
+              control={form.control}
+              name="don_num"
+              label="Reference Number"
+              placeholder="Please enter reference number"
+              readOnly={false}
+            />
+
             {/* Donor First Name */}
             <FormInput
               control={form.control}
