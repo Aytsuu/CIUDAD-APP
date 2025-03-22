@@ -9,18 +9,19 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-from decouple import config
 from pathlib import Path
+import sys,os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+BASE_DIR = Path(__file__).resolve().parent.parent 
+sys.path.append(os.path.join(BASE_DIR,'apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6n6-xejtvy0)rf68$fg6d@916r-ya*ml_y$dhaa(^cyy#mq$(p'
+SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.animalbites',
     'apps.familyplanning',
     'corsheaders',
     'rest_framework',
@@ -128,6 +130,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
