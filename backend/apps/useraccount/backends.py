@@ -23,7 +23,7 @@ class SupabaseAuthenticationBackend:
             # Get or create the user in Django
             user, created = User.objects.get_or_create(
                 username=user_id,
-                defaults={"email": email},
+                defaults={"email": email, "password": ""},  # Password is not used
             )
             return user
         except jwt.ExpiredSignatureError:

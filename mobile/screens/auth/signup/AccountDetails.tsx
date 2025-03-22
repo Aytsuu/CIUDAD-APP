@@ -25,28 +25,29 @@ export default function AccountDetails() {
     const validationResult = FormDataSchema.pick({
       accountDetails: true,
     }).safeParse(formData);
-
+  
     if (!formData.accountDetails.password || !rePass) {
       setErrors(null);
       alert("Please complete all required fields.");
       return;
     }
-
+  
     if (formData.accountDetails.password !== rePass) {
       alert("Passwords do not match.");
       return;
     }
-
+  
     if (validationResult.success) {
       setErrors(null);
-
+  
       try {
         // Send data to the backend
-        const response = await axios.post("http://192.168.1.55:8000/api/account/", {
+        const response = await axios.post("http://192.168.1.4:8000/api/signup/", {
+          username: formData.accountDetails.userName, // Add username to the payload
           email: formData.accountDetails.email,
           password: formData.accountDetails.password,
         });
-
+  
         if (response.status === 201) {
           Alert.alert("Success", "Account created successfully!");
           router.push("/personal-information");

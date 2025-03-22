@@ -34,7 +34,7 @@ export default function LoginScreen() {
   
     try {
       // Send a GET request to the backend with email and password as query parameters
-      const response = await axios.get("http://192.168.1.55:8000/api/login/", {
+      const response = await axios.get("http://192.168.1.4:8000/api/login/", {
         params: {
           email: email,
           password: password,

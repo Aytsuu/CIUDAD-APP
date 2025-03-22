@@ -49,7 +49,7 @@ export default function SignIn() {
             password: data.password,
           })
         : await supabase.auth.signInWithPassword({
-            email: data.usernameOrEmail + "@example.com", // Append a dummy domain for username
+            email: data.usernameOrEmail + "@gmail.com",
             password: data.password,
           });
 
@@ -61,7 +61,7 @@ export default function SignIn() {
       const supabaseToken = supabaseData.session.access_token;
 
       // Step 4: Send the JWT to your Django backend for verification
-      const response = await axios.post("http://127.0.0.1:8000/api/supabase-login/", {
+      const response = await axios.post("http://192.168.1.4/api/login/", {
         token: supabaseToken,
       });
 

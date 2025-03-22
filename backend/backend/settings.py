@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '*']
+ALLOWED_HOSTS = ['localhost', '*', '192.168.1.4']
 
 # Application definition
 INSTALLED_APPS = [
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'useraccount.middleware.SupabaseJWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -84,11 +85,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'CIUDAD-APP',
-        'USER': 'postgres',
-        'PASSWORD': '123',
-        'HOST': 'localhost',
-        'PORT': '5432'
+        'NAME': 'postgres',
+        'USER': 'postgres.isxckceeyjcwvjipndfd',
+        'PASSWORD': 'research@capstone',
+        'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',
+        'PORT': '6543'
     }
 }
 
@@ -136,17 +137,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Django REST Framework Settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny', 
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES':(
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework.authentication.TokenAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.AllowAny', 
+#         'rest_framework.permissions.IsAuthenticated',
+#     ],
+# }
 
 # JWT Authentication Settings
 SIMPLE_JWT = {
@@ -160,6 +161,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:5173",
+    "http://192.168.1.4:8000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -173,6 +175,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Supabase credentials
-SUPABASE_URL = os.getenv('https://bnvhzzbsqixwyevhgcol.supabase.co')  
-SUPABASE_ANON_KEY = os.getenv('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudmh6emJzcWl4d3lldmhnY29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODkwMDEsImV4cCI6MjA1ODE2NTAwMX0.CaEU6OAV3BjTZ0Lh5TDTRkHzqKQmoHlbZ2dBOlDsEjs') 
-SUPABASE_JWT_SECRET = os.getenv('EEDHhSbqr5GRRUZWNzJuiNAh1m6k5S4LD9JhKbQJ/UPN0WTzICDRrl7Q3Vbw05jk1SZDrNZl4ofrde2b0ihwAQ==')
+# Supabase credentials
+SUPABASE_URL = "https://bnvhzzbsqixwyevhgcol.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudmh6emJzcWl4d3lldmhnY29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODkwMDEsImV4cCI6MjA1ODE2NTAwMX0.CaEU6OAV3BjTZ0Lh5TDTRkHzqKQmoHlbZ2dBOlDsEjs"
+SUPABASE_JWT_SECRET = "EEDHhSbqr5GRRUZWNzJuiNAh1m6k5S4LD9JhKbQJ/UPN0WTzICDRrl7Q3Vbw05jk1SZDrNZl4ofrde2b0ihwAQ=="
