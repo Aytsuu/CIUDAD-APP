@@ -7,9 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
-import PrenatalFormFirstPg from "./prenatal-form-firstpg"
-import PrenatalFormSecPg from "./prenatal-form-secpg"
-import PrenatalFormThirdPg from "./prenatal-form-thirdpg"
+import PrenatalFormFirstPg from "./prenatal-form-page1"
+import PrenatalFormSecPg from "./prenatal-form-page2"
+import PrenatalFormThirdPg from "./prenatal-form-page3"
 
 import { Card } from "@/components/ui/card/card"
 

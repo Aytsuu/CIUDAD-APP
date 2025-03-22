@@ -202,8 +202,8 @@ export default function MaternalAllRecords() {
     },
   ];
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // const [searchTerm, setSearchTerm] = useState("");
   const data = sampleData;
 
   const filter = [

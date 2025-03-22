@@ -151,10 +151,11 @@ export default function PrenatalFormSecPg(
                             )}
                         />
                     </div>
+                    
                     {/* tetanus toxoid status */}
-                    <Separator className="mt-10"/>
-                    <h3 className="text-md font-bold mt-8"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <Separator className="mt-10 mb-10"/>
+                    <h3 className="text-md font-bold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
+                    <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col">
                             <FormField
                                 control={form.control}
@@ -198,12 +199,12 @@ export default function PrenatalFormSecPg(
                                 Add
                             </Button>
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col border rounded-md p-2">
                                 <div className="grid grid-cols-3 gap-2 m-3">
                                     <div className="border h-[80px] rounded-md text-center" id="tt1-div">
                                         <h3 className="font-bold">TT1</h3>
                                         <p className="text-[10px]">(FIRST VISIT)</p>
-                                        <Label className="tt1Input text-[18px]"></Label>
+                                        <Label className="tt1Input text-[18px]">02/25/2025</Label>
                                     </div>
                                     <div className="border h-[80px] rounded-md text-center" id="tt2-div">
                                         <h3 className="font-bold">TT2</h3>
@@ -234,6 +235,7 @@ export default function PrenatalFormSecPg(
                                 </div>
                         </div>
                     </div>
+                    
 
                     {/* present pregnancy */}
                     <Separator className="mt-10"/>

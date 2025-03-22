@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ArrowUpDown } from "lucide-react";
 import { useFormContext, UseFormReturn } from "react-hook-form"
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -12,9 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/table/data-table";
+import { Trash } from "lucide-react";
 
 // schema import
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 
 export default function PrenatalFormFirstPg(
@@ -35,12 +37,10 @@ export default function PrenatalFormFirstPg(
 
     type previousIllness= {
         prevIllness: string;
-        prevIllnessYear: number;
     }
 
     type previousHospitalization= {
         prevHospitalization: string;
-        prevHospitalizationYear: number;
     }
 
     const [prevIllnessData, setprevIllnessData] = useState<previousIllness[]>([])
@@ -57,18 +57,27 @@ export default function PrenatalFormFirstPg(
             )
         },
         {
-            accessorKey: "prevIllnessYear",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Year <ArrowUpDown size={15} />
-                </div>
-            ),
-            cell: ({ row }) => (
-                <div className="flex justify-start min-w-[200px] px-2">
-                    <div className="w-full truncate">{row.original.prevIllnessYear}</div>
+            accessorKey: "action",
+            header: "Action",
+            cell: ({}) => (
+                <div className="flex justify-center">
+                    <TooltipLayout
+                        trigger={
+                            <DialogLayout
+                            trigger={
+                                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                                {" "}
+                                <Trash size={16} />
+                                </div>
+                            }
+                            className=""
+                            title="Delete Record"
+                            description="Are you sure you want to delete this record?"
+                            mainContent={<></>}
+                            />
+                        }
+                        content="Delete"
+                    />
                 </div>
             )
         }
@@ -85,18 +94,27 @@ export default function PrenatalFormFirstPg(
             )
         },
         {
-            accessorKey: "prevHospitalizationYear",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Year <ArrowUpDown size={15} />
-                </div>
-            ),
-            cell: ({ row }) => (
-                <div className="flex justify-start min-w-[200px] px-2">
-                    <div className="w-full truncate">{row.original.prevHospitalizationYear}</div>
+            accessorKey: "action",
+            header: "Action",
+            cell: ({}) => (
+                <div className="flex justify-center gap-2">
+                    <TooltipLayout
+                        trigger={
+                            <DialogLayout
+                            trigger={
+                                <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
+                                {" "}
+                                <Trash size={16} />
+                                </div>
+                            }
+                            className=""
+                            title="Delete Record"
+                            description="Are you sure you want to delete this record?"
+                            mainContent={<></>}
+                            />
+                        }
+                        content="Delete"
+                    />
                 </div>
             )
         }
@@ -105,30 +123,24 @@ export default function PrenatalFormFirstPg(
     // functionality to handle adding of previous illness
     const addPrevIllness = () => {
         const illness = getValues("medicalHistory.prevIllness");
-        const year = Number(getValues("medicalHistory.prevIllnessYear"));
 
-        console.log(illness, year);
+        console.log(illness);
 
-        if(illness && year){
-            setprevIllnessData((prev) => [...prev, {prevIllness: illness, prevIllnessYear: year}]);
+        if(illness){
+            setprevIllnessData((prev) => [...prev, {prevIllness: illness}]);
             setValue("medicalHistory.prevIllness", "");
-            setValue("medicalHistory.prevIllnessYear", "");
-        } else{
-            console.error("Please fill out both illness and year.")
         }
     }
 
     // functionality to handle adding of previous hopsitalization
     const addPrevHospitalization = () => {
         const hospitalization = getValues("medicalHistory.prevHospitalization");
-        const year = Number(getValues("medicalHistory.prevHospitalizationYear"));
 
-        console.log(hospitalization, year);
+        console.log(hospitalization);
 
-        if(hospitalization && year){
-            setprevHospitalizationData((prev) => [...prev, {prevHospitalization: hospitalization, prevHospitalizationYear: year}]);
+        if(hospitalization){
+            setprevHospitalizationData((prev) => [...prev, {prevHospitalization: hospitalization}]);
             setValue("medicalHistory.prevHospitalization", "");
-            setValue("medicalHistory.prevHospitalizationYear", "");
         }   
     }
     
@@ -479,19 +491,6 @@ export default function PrenatalFormFirstPg(
                                                 )}
                                             />
                                         </div>
-                                        <div className="flex-1">
-                                            <FormField
-                                                control={form.control}
-                                                name="medicalHistory.prevIllnessYear"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Enter Year" />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
                                         <Button onClick={addPrevIllness} type="button" variant="default">Add</Button>
                                     </div>
                                     <div className="flex bg-white w-full overflow-x-auto mt-4">
@@ -510,19 +509,6 @@ export default function PrenatalFormFirstPg(
                                                     <FormItem>
                                                         <FormControl>
                                                             <Input {...field} placeholder="Enter Previous Hospitalization" />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <FormField
-                                                control={form.control}
-                                                name="medicalHistory.prevHospitalizationYear"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Enter Year" />
                                                         </FormControl>
                                                     </FormItem>
                                                 )}

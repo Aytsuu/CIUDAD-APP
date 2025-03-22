@@ -20,7 +20,7 @@ export const PrenatalFormSchema = z.object({
                 barangay: z.string().min(1, 'Barangay is required'),
                 city: z.string().min(1, 'City is required'),
                 province: z.string().min(1, 'Province is required'),
-            })
+            })  
         ),
         motherWt: z.number().min(0, 'Weight must be a positive number'),
         motherHt: z.number().min(0, 'Height must be a positive number'),
@@ -40,9 +40,7 @@ export const PrenatalFormSchema = z.object({
     // medical history
     medicalHistory: z.object({
         prevIllness: z.string().optional(),
-        prevIllnessYear: z.number().optional(),
         prevHospitalization: z.string().optional(),
-        prevHospitalizationYear: z.number().optional()
     }),
 
     // previous pregnancy
@@ -87,65 +85,67 @@ export const PrenatalFormSchema = z.object({
         ogct100Date: z.string().date().optional()
     }),
 
-        // follow-up schedule
+    // follow-up schedule
     followUpSchedule: z.object({
         scheduleOption: z.enum(['week', 'twoweeks', 'month']),
         dateOfFollowUp: z.string().date()
     }),
 
+    // guide for 4anc visits
     ancVisits: z.object({
         firstTri: z.string().date().optional(),
         secondTri: z.string().date().optional(),
         thirdTriOne: z.string().date().optional(),
-        thirdTriTwo: z.string().date().optional(),
+        thirdTriTwo: z.string().date().optional()
     }),
 
     // checklist
-    checklist: z.array(
-        z.object({
-            increasedBP: z.boolean(),
-            epigastricPain: z.boolean(),
-            nausea: z.boolean(),
-            blurringOfVision: z.boolean(),
-            edema: z.boolean(),
-            severeHeadache: z.boolean(),
-            abnormalVaginalDischarges: z.boolean(),
-            vaginalBleeding: z.boolean(),
-            chillsFever: z.boolean(),
-            diffInBreathing: z.boolean(),
-            varicosities: z.boolean(),
-            abdominalPain: z.boolean()
-        })
-    ),
+    assessmentChecklist: z.object({
+        increasedBP: z.boolean(),
+        epigastricPain: z.boolean(),
+        nausea: z.boolean(),
+        blurringOfVision: z.boolean(),
+        edema: z.boolean(),
+        severeHeadache: z.boolean(),
+        abnormalVaginalDischarges: z.boolean(),
+        vaginalBleeding: z.boolean(),
+        chillsFever: z.boolean(),
+        diffInBreathing: z.boolean(),
+        varicosities: z.boolean(),
+        abdominalPain: z.boolean()
+    }),
 
+    // pregnancy plan
     pregnancyPlan: z.object({
-        planPlacePfDel: z.string().optional(),
+        planPlaceOfDel: z.string().optional(),
         planNewbornScreening: z.boolean()
     }),
 
+    // micronutrient supplementation
     micronutrientSupp: z.object({
         ironFolicStarted: z.string().optional(),
         ironFolicCompleted: z.string().optional(),
         deworming: z.string().optional()
     }),
 
-    riskCodes: z.array(
-        z.object({
+    // risk codes
+    riskCodes: z.object({
+        hasOneOrMoreOfTheFF: z.object({
             prevCaesarian: z.boolean(),
             miscarriages: z.boolean(),
             postpartumHemorrhage: z.boolean(),
+        }),
+        hasOneOrMoreOneConditions: z.object({
             tuberculosis: z.boolean(),
             heartDisease: z.boolean(),
             diabetes: z.boolean(),
             bronchialAsthma: z.boolean(),
             goiter: z.boolean()
         })
-    ),
+    }),
 
+    // assessed by
     assessedBy: z.object({
         assessedby: z.string().min(1, "Assessed by is required")
     })
 })
-
-    
-// export type FormData = z.infer<typeof PrenatalFormSchema>;
