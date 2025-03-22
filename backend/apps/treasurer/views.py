@@ -2,8 +2,6 @@ from django.shortcuts import render
 from rest_framework import generics
 from .serializers import *
 from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -12,48 +10,20 @@ class Budget_PlanView(generics.ListCreateAPIView):
     serializer_class = Budget_PlanSerializer
     queryset = Budget_Plan.objects.all()
 
-class BudgetPlanDetialsView(APIView):
-    def get(self, request, plan_id):
-        try:
-            # Fetch the Budget_Plan object with all related data
-            budget_plan = Budget_Plan.objects.select_related(
-                # Add any forward relationships here (if applicable)
-            ).prefetch_related(
-                'personal',  
-                'maintenance',  
-                'other_expenses',  
-                'capital_nonoffice'  
-            ).get(plan_id=plan_id)
-            
-            # Serialize the data
-            serializer = BudgetPlanDetailsSerializers(budget_plan)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Budget_Plan.DoesNotExist:
-            return Response({"error": "Budget Plan not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-    def delete(self, request, plan_id):
-        try:
-            budget_plan = Budget_Plan.objects.get(plan_id=plan_id)
-            budget_plan.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Budget_Plan.DoesNotExist:
-            return Response({"error": "Budget Plan not found"}, status=status.HTTP_404_NOT_FOUND)
+class Budget_Plan_DetailView(generics.ListCreateAPIView):
+    serializer_class = Budget_Plan_DetailSerializer
+    queryset = Budget_Plan_Detail.objects.all()
 
-class Current_Expenditures_PersonalView(generics.ListCreateAPIView):
-    serializer_class = Current_Expenditures_PersonalSerializers
-    queryset = Current_Expenditures_Personal.objects.all()
+    def create(self, request, *args, **kwargs):
+        if isinstance(request.data, list): 
+            serializer = self.get_serializer(data=request.data, many=True) 
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            return super().create(request, *args, **kwargs) 
 
-class Current_Expenditures_MaintenanceView(generics.ListCreateAPIView):
-    serializer_class = Current_Expenditures_MaintenanceSerializers
-    queryset = Current_Expenditures_Maintenance.objects.all()
-
-class Other_Maint_And_Operating_ExpenseView(generics.ListCreateAPIView):
-    serializer_class = Other_Maint_And_Operating_ExpenseSerializers
-    queryset = Other_Maint_And_Operating_Expense.objects.all()
-
-class Capital_Outlays_And_Non_OfficeView(generics.ListCreateAPIView):
-    serializer_class = Capital_Outlays_And_Non_OfficeSerializers
-    queryset = Capital_Outlays_And_Non_Office.objects.all()
 
 # class Income_FileView(generics.ListCreateAPIView):
 #     serializer_class = Income_FileSerializers
