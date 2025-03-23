@@ -4,7 +4,7 @@ import api from "@/api/api";
 export const getResidents = async () => {
     try {
 
-        const res = await api.get('profiling/personal/');
+        const res = await api.get('profiling/resident/');
         return res.data;
         
     } catch (err) {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 import { BsChevronLeft } from "react-icons/bs";
 import { Separator } from "@/components/ui/separator";
-import { formatResidents, formatSitio} from "../formatting";
+import { formatResidents, formatSitio} from "../profilingFormats";
 
 export default function HouseholdFormLayout() {
     const navigate = useNavigate();
@@ -22,6 +22,8 @@ export default function HouseholdFormLayout() {
             return prevResidents.filter((resident: any) => resident.id.split(" ")[0] !== newHousehold.per.per_id);
         });
     }, []);
+
+    console.log(params)
 
     return (
         <div className="w-full flex justify-center">

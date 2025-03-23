@@ -72,7 +72,7 @@ export default function HouseholdProfileForm({ sitio, residents, onHouseholdRegi
                         value={form.watch("householdHead")}
                         onChange={(value) => form.setValue("householdHead", value)}
                         placeholder="Search for household head (by resident #)"
-                        emptyMessage="No household found"
+                        emptyMessage="No resident found"
                     />
                     <div className="flex gap-2 items-center">
                         <Label className="font-normal">Resident not found?</Label>

@@ -1,11 +1,11 @@
 from django.db import models
+from django.conf import settings
 from datetime import date
-from apps.administration.models import Staff
 
 # Create your models here.
 
 class Personal(models.Model):
-    per_id = models.CharField(max_length=50,primary_key=True)
+    per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
     per_fname = models.CharField(max_length=100)
     per_mname = models.CharField(max_length=100, null=True)
@@ -21,19 +21,35 @@ class Personal(models.Model):
     class Meta:
         db_table = 'personal'
 
+class ResidentProfile(models.Model):
+    rp_id = models.CharField(max_length=50,primary_key=True)
+    rp_date_registered = models.DateField(default=date.today)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_information')
+    staff = models.ForeignKey("administration.Staff", on_delete=models.CASCADE, null=True, related_name="resident_profiles")
+
+    class Meta:
+        db_table = 'resident_profile'
+
 class Mother(models.Model):
     mother_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'mother'
 
 class Father(models.Model):
     father_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'father'
+
+class Guardian(models.Model):
+    guard_id = models.BigAutoField(primary_key=True)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'guardian'
 
 class Family(models.Model):
     fam_id = models.CharField(max_length=50,primary_key=True)
@@ -41,13 +57,14 @@ class Family(models.Model):
     fam_date_registered = models.DateField(default=date.today)
     father = models.ForeignKey(Father, on_delete=models.CASCADE, null=True)
     mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 
     class Meta:
         db_table = 'family' 
 
 class Dependent(models.Model):
     dep_id = models.BigAutoField(primary_key=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='dependents') 
 
     class Meta:
@@ -56,7 +73,7 @@ class Dependent(models.Model):
 class FamilyComposition(models.Model):
     fc_id = models.BigAutoField(primary_key=True)
     fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='compositions')
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='compositions')
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='compositions')
 
     class Meta:
         db_table = 'family_composition' 
@@ -76,12 +93,13 @@ class Household(models.Model):
     hh_barangay = models.CharField(max_length=50)
     hh_street = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
 
     class Meta:
         db_table = 'household'
-
+    
 class Building(models.Model): 
     build_id = models.BigAutoField(primary_key=True)
     build_type = models.CharField(max_length=100)
@@ -90,14 +108,4 @@ class Building(models.Model):
     
     class Meta:
         db_table = 'building'
-
-class Registered(models.Model):
-    reg_id = models.BigAutoField(primary_key=True)
-    reg_date = models.DateField(default=date.today)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='registered')
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'registered'
-
 

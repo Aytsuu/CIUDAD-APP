@@ -97,7 +97,6 @@ export default function DependentsInfoLayout(
           const dependentsInfo = form.getValues().dependentsInfo.list;
   
           // Store mother information
-          
           const motherId = await mother(selectedParents.mother);
   
           // Store father information

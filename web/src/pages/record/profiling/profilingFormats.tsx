@@ -6,21 +6,21 @@ export const formatResidents = (params: any, isHousehold: boolean) => {
 
     // Begin formatting
     const formatted = params.residents.map((resident: any) => ({
-        id: `${resident.per_id} ${resident.per_fname} ${resident.per_mname} ${resident.per_lname}`,
+        id: `${resident.rp_id} ${resident.per.per_fname} ${resident.per.per_mname} ${resident.per.per_lname}`,
         name: (
             <div className="flex gap-4 items-center">
                 <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
-                    #{resident.per_id}
+                    #{resident.rp_id}
                 </span>
-                {`${resident.per_lname}, ${resident.per_fname}, ${resident.per_mname.slice(0, 1)}.`}
+                {`${resident.per.per_lname}, ${resident.per.per_fname} ${resident.per.per_mname ? resident.per.per_mname.charAt(0) + '.' : ''}`}
             </div>
         ),
     }));
 
     // Filter unassigned residents for household registration
     if(isHousehold) {
-        const filtered = formatted.filter((resident: any) => !params.households.some((household: any) => 
-            household.per.per_id === resident.id.split(" ")[0]
+        const filtered = formatted.filter((resident: any) => !params.households?.some((household: any) => 
+            household.rp.rp_id === resident.id.split(" ")[0]
         ));
 
         return filtered
@@ -55,7 +55,7 @@ export const formatHouseholds = (params: any) => {
                     </span>
                     <div className="flex items-center gap-2">
                         <Label>Head:</Label>
-                        {`${household.per.per_lname}, ${household.per.per_fname}, ${household.per.per_mname.slice(0,1)}.`}
+                        {`${household.rp.per.per_lname}, ${household.rp.per.per_fname}, ${household.rp.per.per_mname ? household.rp.per.per_mname.charAt(0) + '.' : ''}`}
                     </div>
                 </div>
             )

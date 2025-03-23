@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 export default function FamilyProfileOptions({residents, households} : {
     residents: any[]; households: any[]
 }) {
+
     return (
         <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Registration Form */}

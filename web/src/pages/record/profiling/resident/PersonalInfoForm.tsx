@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { personal, registered } from "../restful-api/profiingPostAPI";
+import { personal, residentProfile } from "../restful-api/profiingPostAPI";
 import { updateProfile } from "../restful-api/profilingPutAPI";
 import { CircleCheck, CircleAlert } from "lucide-react";
 import { Type, Origin } from "../profilingEnums";
@@ -25,7 +25,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { Combobox } from "@/components/ui/combobox";
-import { formatResidents } from "../formatting";
+import { formatResidents } from "../profilingFormats";
 
 export default function PersonalInfoForm({ params }: { params: any }) {
 
@@ -49,7 +49,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
 
     if (formType === Type.Viewing) {
       toast.dismiss();
-      populateFields(params.data);
+      populateFields(params.data.per);
       form.clearErrors();
     }
 
@@ -60,10 +60,10 @@ export default function PersonalInfoForm({ params }: { params: any }) {
 
   const handleComboboxChange = React.useCallback(() => {
     const data = params.residents.find((resident: any) => 
-      resident.per_id === form.watch('per_id').split(" ")[0]
+      resident.rp_id === form.watch('per_id').split(" ")[0]
     )
 
-    populateFields(data)
+    populateFields(data.per)
   }, [form.watch('per_id')])
 
   // For resident viewing, populate form fields with resident data
@@ -71,18 +71,18 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     const resident = data;
 
     const fields = [
-      { key: 'per_id', value: params.origin === Origin.Administration ? form.watch('per_id') : resident?.per_id },
-      { key: 'per_lname', value: resident?.per_lname },
-      { key: 'per_fname', value: resident?.per_fname },
-      { key: 'per_mname', value: resident?.per_mname },
-      { key: 'per_suffix', value: resident?.per_suffix },
-      { key: 'per_sex', value: resident?.per_sex },
-      { key: 'per_dob', value: resident?.per_dob },
-      { key: 'per_status', value: resident?.per_status },
-      { key: 'per_address', value: resident?.per_address },
-      { key: 'per_religion', value: resident?.per_religion },
-      { key: 'per_edAttainment', value: resident?.per_edAttainment },
-      { key: 'per_contact', value: resident?.per_contact },
+      { key: 'per_id', value: params.origin === Origin.Administration ? String(form.watch('per_id')) : String(resident?.per_id) || ''},
+      { key: 'per_lname', value: resident?.per_lname},
+      { key: 'per_fname', value: resident?.per_fname || ''},
+      { key: 'per_mname', value: resident?.per_mname || ''},
+      { key: 'per_suffix', value: resident?.per_suffix || ''},
+      { key: 'per_sex', value: resident?.per_sex || ''},
+      { key: 'per_dob', value: resident?.per_dob || ''},
+      { key: 'per_status', value: resident?.per_status || ''},
+      { key: 'per_address', value: resident?.per_address || ''},
+      { key: 'per_religion', value: resident?.per_religion || ''},
+      { key: 'per_edAttainment', value: resident?.per_edAttainment || ''},
+      { key: 'per_contact', value: resident?.per_contact || ''},
     ];
 
     fields.forEach(({ key, value }) => {
@@ -101,8 +101,23 @@ export default function PersonalInfoForm({ params }: { params: any }) {
   // For type edit, check if values are unchanged
   const checkDefaultValues = (values: any, params: any) => {
     
+    // Optional fields
+    const optionalFields = ['per_id', 'per_mname', 'per_suffix', 'per_edAttainment'];
     const keys = Object.keys(values);
-    const isDefault = keys.every((key) => values[key] == params[key] || values[key] == '');
+    const isDefault = keys.every((key) => {
+      if(optionalFields.includes(key)) {
+
+        const isParamEmpty = !params[key] || params[key] === '';
+        const isValueEmpty = !values[key] || values[key] === '';
+      
+        return (
+          (isParamEmpty && isValueEmpty) || // Both empty
+          (String(params[key]) === String(values[key])) // Both non-empty and equal
+        );
+      } else {
+        return params[key] === values[key] ? true : false
+      }
+    });
 
     return isDefault;
   }
@@ -119,9 +134,12 @@ export default function PersonalInfoForm({ params }: { params: any }) {
   const submit = async () => {
 
     setIsSubmitting(true);
+
     const formIsValid = await form.trigger();
 
     if(!formIsValid) {
+      const errors = form.formState.errors;
+      console.log("Validation Errors:", errors);
       setIsSubmitting(false);
       toast('Please fill out all required fields', {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
@@ -134,7 +152,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
 
       if (formType === Type.Editing) {
 
-        if(checkDefaultValues(values, params.data)) {
+        if(checkDefaultValues(values, params.data.per)) {
 
           handleEditSaved(
             'No changes made', 
@@ -145,10 +163,10 @@ export default function PersonalInfoForm({ params }: { params: any }) {
   
         }
 
-        const res = await updateProfile(params.data.per_id, values);
+        const res = await updateProfile(params.data.per.per_id, values);
 
         if(res) {
-          params.data = values
+          params.data.per = values
           handleEditSaved(
             'Record updated successfully', 
             <CircleCheck size={24} className="fill-green-500 stroke-white" />
@@ -157,8 +175,8 @@ export default function PersonalInfoForm({ params }: { params: any }) {
 
       } else {
 
-        const res = await personal(values);
-        await registered(res); 
+        const personalId = await personal(values);
+        const res= await residentProfile(personalId); 
 
         if(res) {
           toast('New record created successfully', {

@@ -37,47 +37,47 @@ export default function ProfilingResident() {
     refetchOnMount: true,
     staleTime: 0
   });
+
+  // Function to get sitio (works even if households is not fully loaded)
+  const getSitio = React.useCallback((hh_id: string) => {
+    if (!households) return ''; // Return empty string if households are not ready
+    const household = households.find((hh: any) => hh.hh_id === hh_id);
+    return household?.sitio?.sitio_name || '';
+  }, [households]);
   
   // Format resident to populate data table
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
-    if (!residents || !households) return [];
+    if (!residents) return [];
 
-    const getSitio = (hh_id: string) => {
-      const household = households.find((household: any) => 
-        household.hh_id === hh_id
-      )
-
-      return household?.sitio.sitio_name
-    }
-    
     return residents.map((item: any) => {
 
-      const [{reg_date} = {}] = item.registered
-      const [{fam_id, building} = {}] = item.family
+      const personal = item?.per
+      const family = item?.per?.family
 
       return {
-        id: item.per_id || '',
-        householdNo: building?.hh_id || '',
-        sitio:  getSitio(building?.hh_id) || '',
-        familyNo: fam_id || '',
-        lname: item.per_lname || '',
-        fname: item.per_fname || '',
-        mname: item.per_mname || '',
-        suffix: item.per_suffix || '',  
-        dateRegistered: reg_date || '',
+        id: item.rp_id || '',
+        householdNo: family?.building.hh_id || '',
+        sitio:  getSitio(family?.building?.hh_id),
+        familyNo: family?.fam_id || '',
+        lname: personal.per_lname || '',
+        fname: personal.per_fname || '',
+        mname: personal.per_mname || '',
+        suffix: personal.per_suffix || '',  
+        dateRegistered: item.rp_date_registered || '',
+        registeredBy: item.staff || '',
       }
     });
-  }, [residents, households]);
+  }, [residents]);  
 
   // Filter residents based on search query
   const filteredResidents = React.useMemo(() => {
-    let filtered = formatResidentData();
+    const formattedData = formatResidentData();
+     if (!formattedData.length) return [];
 
-    filtered = filtered.filter((record: any) =>
+    return formattedData.filter((record: any) =>
       Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    return filtered;
   }, [searchQuery, residents]);
 
   // Calculate total pages for pagination

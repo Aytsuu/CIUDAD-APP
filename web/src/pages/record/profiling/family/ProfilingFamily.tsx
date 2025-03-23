@@ -57,7 +57,7 @@ export default function ProfilingFamily() {
                 building: building?.build_type || '',
                 indigenous: item.fam_indigenous || '',
                 dateRegistered: item.fam_date_registered || '',
-                registeredBy: ''
+                registeredBy: item.staff
             }
         });
     };

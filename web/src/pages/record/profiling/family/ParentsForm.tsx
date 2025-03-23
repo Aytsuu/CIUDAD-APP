@@ -28,21 +28,21 @@ export default function ParentsForm({ residents, form, selectedParent, onSelect,
 
     const searchedResidentId = form.watch(`${prefix}.id`);
     const searchResident = residents.default.find((value: any) =>
-      value.per_id === searchedResidentId?.split(" ")[0]
+      value.rp_id === searchedResidentId?.split(" ")[0]
     );
 
     if (searchResident) {
       form.setValue(`${prefix}`, {
         id: searchedResidentId || '',
-        lastName: searchResident.per_lname || '',
-        firstName: searchResident.per_fname || '',
-        middleName: searchResident.per_mname || '',
-        suffix: searchResident.per_suffix || '',
-        dateOfBirth: searchResident.per_dob || '',
-        status: searchResident.per_status || '',
-        religion: searchResident.per_religion || '',
-        edAttainment: searchResident.per_edAttainment || '',
-        contact: searchResident.per_contact || ''
+        lastName: searchResident.per.per_lname || '',
+        firstName: searchResident.per.per_fname || '',
+        middleName: searchResident.per.per_mname || '',
+        suffix: searchResident.per.per_suffix || '',
+        dateOfBirth: searchResident.per.per_dob || '',
+        status: searchResident.per.per_status || '',
+        religion: searchResident.per.per_religion || '',
+        edAttainment: searchResident.per.per_edAttainment || '',
+        contact: searchResident.per.per_contact || ''
       });
     } else {
       form.setValue(`${prefix}`, {

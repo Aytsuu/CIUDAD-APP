@@ -37,16 +37,19 @@ export default function AdministrativeRecords(){
 
         return staffs.map((staff: any) => { 
             
+            const position = staff.pos
+            const personal = staff.rp.per
+
             return {
-                id: '',
-                lname: '',
-                fname: '',
-                mname: '',
-                suffix: '',
-                dateOfBirth: '',
-                contact: '', 
-                position: '',
-                dateAssigned: ''
+                id: staff.staff_id || '',
+                lname: personal.per_lname || '',
+                fname: personal.per_fname || '',
+                mname: personal.per_mname || '',
+                suffix: personal.per_suffix ||  '',
+                dateOfBirth: personal.per_dob || '',
+                contact: personal.per_contact || '', 
+                position: position.pos_title || '',
+                dateAssigned: staff.staff_assign_date || ''
             }
         })
 

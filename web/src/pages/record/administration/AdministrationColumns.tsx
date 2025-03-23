@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown } from "lucide-react"
+import { ArrowUpDown, Ellipsis, Trash } from "lucide-react"
 import { AdministrationRecord } from "./administrationTypes"
-import { Button } from "@/components/ui/button/button"
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
@@ -67,11 +67,21 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                     content={"Sort"}
                 />
             </div>
+        ),
+        cell: ({ row }) => (
+            <div className="hidden lg:block max-w-xs truncate">
+                {row.getValue("mname") ? row.getValue("mname") : '-'}
+            </div>
         )
     },
     {
         accessorKey: 'suffix',
-        header: 'Suffix'
+        header: 'Suffix',
+        cell: ({ row }) => (
+            <div className="hidden lg:block max-w-xs truncate">
+                {row.getValue("suffix") ? row.getValue("suffix") : '-'}
+            </div>
+        )
     },
     {
         accessorKey: 'dateOfBirth',
@@ -93,7 +103,17 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         accessorKey: 'action',
         header: 'Action',
         cell: ({row}) => (
-            <Button variant={"outline"}>View</Button>
+            <DropdownLayout
+                trigger={<Ellipsis size={20}/>}
+                itemClassName="text-red-500 focus:text-red-500"
+                options={[
+                    {
+                        id: 'delete',
+                        name: 'Remove',
+                        icon: <Trash />
+                    }
+                ]}
+            />
         )
     }
 ]

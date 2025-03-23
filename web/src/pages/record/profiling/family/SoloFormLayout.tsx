@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button"
 import LivingSoloForm from "./LivingSoloForm"
 import { BsChevronLeft } from "react-icons/bs"
 import { Separator } from "@/components/ui/separator"
-import { formatHouseholds, formatResidents } from "../formatting"
+import { formatHouseholds, formatResidents } from "../profilingFormats"
 
 export default function SoloFormLayout(){
 

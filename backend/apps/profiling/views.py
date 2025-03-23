@@ -76,9 +76,9 @@ class BuildingView(generics.ListCreateAPIView):
     serializer_class = BuildingSerializer
     queryset = Building.objects.all()
 
-# Registered Views ------------------------------------------------------------------------
+# ResidentProfile Views ------------------------------------------------------------------------
 
-class RegisteredView(generics.ListCreateAPIView):
-    serializer_class = RegisteredSerializer
-    queryset = Registered.objects.all()
+class ResidentProfileView(generics.ListCreateAPIView):
+    serializer_class = ResidentProfileSerializer
+    queryset = ResidentProfile.objects.all()
 

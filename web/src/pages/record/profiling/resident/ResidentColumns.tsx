@@ -122,9 +122,9 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     accessorKey: "mname",
     header: "Middle Name",
     cell: ({ row }) => (
-        <div className="hidden lg:block max-w-xs truncate">
-          {row.getValue("mname") ? row.getValue("mname") : '-'}
-        </div>
+      <div className="hidden lg:block max-w-xs truncate">
+        {row.getValue("mname") ? row.getValue("mname") : '-'}
+      </div>
     )
   },
   {
@@ -150,7 +150,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     header: "Registered By",
     cell: ({ row }) => (
         <div className="hidden lg:block max-w-xs truncate">
-          {row.getValue("registeredBy")}
+          {row.getValue("registeredBy") ? row.getValue("registeredBy") : '-'}
         </div>
     ),
   },
@@ -164,7 +164,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
             type: 'viewing',
             title: 'Resident Details',
             description: 'Information is displayed in a clear, organized, and secure manner.',
-            data: residents.find((resident) => resident.per_id === row.original.id),
+            data: residents.find((resident) => resident.rp_id === row.original.id),
           }
         }}
       >

@@ -5,7 +5,7 @@ export const getStaffs = async () => {
     
     try {
 
-        const res = await api.get('administration/staffs/')
+        const res = await api.get('administration/staff/')
         return res.data
 
     } catch (err) {
@@ -19,7 +19,7 @@ export const getPositions = async () => {
 
     try { 
 
-        const res = await api.get('administration/positions/')
+        const res = await api.get('administration/position/')
 
         const formattedData = res.data.map((item: {pos_id: string, pos_title: string}) => ({
             id: String(item.pos_id),

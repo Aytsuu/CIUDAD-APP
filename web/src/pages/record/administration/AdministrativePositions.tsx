@@ -1,47 +1,29 @@
 import React from "react"
 import { Label } from "@/components/ui/label"
-import { ChevronRight, Plus, Check, Ellipsis, Trash } from "lucide-react"
+import { ChevronRight, Plus, Check, Ellipsis, Trash, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { Separator } from "@/components/ui/separator"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { Input } from "@/components/ui/input"
 import api from "@/api/api"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
-
-type Position = {
-    pos_id: string;
-    pos_title: string;
-}
+import { useQuery } from "@tanstack/react-query"
+import { getPositions } from "./restful-api/administrationGetAPI"
 
 export default function AdministrativePositions(
     {selectedPosition, setSelectedPosition} : 
     {selectedPosition: string, setSelectedPosition : (value: string) => void}
 ){
 
-    const [positions, setPositions] = React.useState<Record<string, Position>>({});
     const [addClicked, setAddClicked] = React.useState<boolean>(false);
     const [position, setPosition] = React.useState<string>('')
-    const hasFetchData = React.useRef(false)
 
-    // Perform side effects
-    React.useEffect(()=>{
-        if(!hasFetchData.current){
-            getPositions()
-            hasFetchData.current = true
-        }
-    }, [])
-
-    // Retrieve al positions
-    const getPositions = React.useCallback(async ()=> {
-        try {
-            
-            const res = await api.get("administration/positions/")
-            setPositions(res.data)
-
-        } catch (err) {
-            console.log(err)
-        }
-    }, [])
+    const { data: positions, isLoading: isLoadingPositions} = useQuery({
+        queryKey: ['positions'],
+        queryFn: getPositions,
+        refetchOnMount: true,
+        staleTime: 0
+    })
 
     // Add new position
     const addPosition = (e: any) => {
@@ -68,6 +50,14 @@ export default function AdministrativePositions(
         } catch (err) {
             console.log(err)
         }
+    }
+
+    if(isLoadingPositions) {
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin"/>
+            </div>
+        )
     }
 
     return (
@@ -106,30 +96,37 @@ export default function AdministrativePositions(
             </div>
             <div className="w-full flex flex-col">
                 {
-                    Object.values(positions).map((value) => (
-                        <div key={value.pos_id} 
-                            className={`w-full flex justify-between items-center hover:bg-lightBlue/40 p-3 rounded-md cursor-pointer 
-                                ${value.pos_id == selectedPosition ? "bg-lightBlue" : ""}`}
-                            onClick={()=>{setSelectedPosition(value.pos_id)}}
-                        >
-                            <Label className="text-black/80 text-[15px] font-medium">{value.pos_title}</Label>
-                            {value.pos_id === selectedPosition ? 
-                                (<DropdownLayout
-                                    trigger={<Ellipsis size={20}/>}
-                                    itemClassName="text-red-500 focus:text-red-500"
-                                    options={[
-                                        {
-                                            id: 'delete',
-                                            name: 'Delete',
-                                            icon: <Trash />
-                                        }
-                                    ]}
-                                    onSelect={deletePosition}
-                                />): 
-                                (<ChevronRight size={20} className="text-black/80"/>)
-                            }
-                        </div>
-                    ))
+                    positions.map((value: any) => {
+
+                        const exclude = ['Admin']
+
+                        if(!exclude.includes(value.name)){
+                            return (
+                                <div key={value.id} 
+                                    className={`w-full flex justify-between items-center hover:bg-lightBlue/40 p-3 rounded-md cursor-pointer 
+                                        ${value.id == selectedPosition ? "bg-lightBlue" : ""}`}
+                                    onClick={()=>{setSelectedPosition(value.id)}}
+                                >
+                                    <Label className="text-black/80 text-[15px] font-medium">{value.name}</Label>
+                                    {value.id === selectedPosition ? 
+                                        (<DropdownLayout
+                                            trigger={<Ellipsis size={20}/>}
+                                            itemClassName="text-red-500 focus:text-red-500"
+                                            options={[
+                                                {
+                                                    id: 'delete',
+                                                    name: 'Delete',
+                                                    icon: <Trash />
+                                                }
+                                            ]}
+                                            onSelect={deletePosition}
+                                        />): 
+                                        (<ChevronRight size={20} className="text-black/80"/>)
+                                    }
+                                </div>
+                            )
+                        }
+                    })
                 }
             </div>
         </div>

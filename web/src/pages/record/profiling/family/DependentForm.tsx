@@ -34,18 +34,18 @@ export default function DependentForm({ form, residents, selectedParents, depend
 
   React.useEffect(() => {
     const searchedResident = residents.default.find((value: any) => 
-      value.per_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]
+      value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]
   );
 
     if (searchedResident) {
       form.setValue('dependentsInfo.new', {
-        id: searchedResident.per_id || '',
-        lastName: searchedResident.per_lname || '',
-        firstName: searchedResident.per_fname || '',
-        middleName: searchedResident.per_mname || '',
-        suffix: searchedResident.per_suffix || '',
-        dateOfBirth: searchedResident.per_dob || '',
-        sex: searchedResident.per_sex || '',
+        id: searchedResident.rp_id || '',
+        lastName: searchedResident.per.per_lname || '',
+        firstName: searchedResident.per.per_fname || '',
+        middleName: searchedResident.per.per_mname || '',
+        suffix: searchedResident.per.per_suffix || '',
+        dateOfBirth: searchedResident.per.per_dob || '',
+        sex: searchedResident.per.per_sex || '',
       });
     } else {
       resetForm();

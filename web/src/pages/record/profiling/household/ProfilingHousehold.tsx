@@ -50,20 +50,20 @@ export default function ProfilingHousehold(){
         return households.map((item: any)=> {
 
             const sitio = item.sitio
-            const personal = item.per
+            const personal = item.rp.per
+            const staff = item.staff.rp.per
 
             return {
                 id: item.hh_id || '',
                 streetAddress: item.hh_street || '',
                 sitio: sitio?.sitio_name || '',
                 nhts: item.hh_nhts || '',
-                headNo: personal?.per_id,
-                head: personal?.per_fname + ' ' + personal?.per_lname || '',
+                headNo: item.rp.rp_id,
+                head: `${personal.per_lname}, ${personal.per_fname} ${personal.per_mname.slice(0,1)}.` || '',
                 dateRegistered: item.hh_date_registered || '',
-                registeredBy: ''
+                registeredBy: `${staff.per_lname}, ${staff.per_fname} ${staff.per_mname.slice(0,1)}.` || ''
             }
         })
-
     }
 
     const filteredHouseholds = React.useMemo(() => {

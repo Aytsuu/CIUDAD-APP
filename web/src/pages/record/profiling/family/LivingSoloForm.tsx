@@ -76,6 +76,7 @@ export default function LivingSoloForm({residents, households} : {
                         onChange={(value) => form.setValue('id', value)}
                         placeholder="Search for resident..."
                         triggerClassName="font-normal"
+                        emptyMessage="No resident found"
                     />
                     <Label className="mt-1">Household</Label>
                     <Combobox 

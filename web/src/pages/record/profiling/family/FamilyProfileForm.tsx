@@ -13,8 +13,7 @@ import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { formatHouseholds, formatResidents } from "../formatting";
-import { father } from "../restful-api/profiingPostAPI";
+import { formatHouseholds, formatResidents } from "../profilingFormats";
 
 export default function FamilyProfileForm() {
 
