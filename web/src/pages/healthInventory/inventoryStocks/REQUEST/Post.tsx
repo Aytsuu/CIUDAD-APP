@@ -34,7 +34,7 @@ export const  addCommodityInventory = async (commodityData: CommodityStockType) 
 export const  addFirstAidInventory = async (commodityData: FirstAidStockType) => {
   try {
     const res = await api.post(
-      "inventory/commodityinventorylist/",
+      "inventory/firstaidinventorylist/",
       commodityData
     );
     return res.data;

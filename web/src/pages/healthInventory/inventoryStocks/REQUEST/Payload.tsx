@@ -43,6 +43,16 @@ export const InventoryCommodityPayload = (data: any) => {
   };
 };
 
+export const InventoryFirstAidPayload = (data: any) => {
+  return {
+    expiry_date: data.expiryDate,
+    inv_type: "FirstAid",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+};
+
+
 export const MedicineTransactionPayload = (minv_id: number,string_qty :string) => {
   return {
     mdt_qty: string_qty, 

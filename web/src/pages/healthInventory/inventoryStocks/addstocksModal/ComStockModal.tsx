@@ -142,11 +142,7 @@ export default function CommodityStockForm() {
                     />
                   </FormControl>
                   <FormMessage />
-                  {!field.value && (
-                    <p className="text-red-500 text-sm">
-                      This field is required.
-                    </p>
-                  )}
+         
                 </FormItem>
               )}
             />

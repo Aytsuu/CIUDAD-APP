@@ -17,14 +17,13 @@ import {
   FirstAidStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { fetchCommodity } from "../REQUEST/fetch";
-import { useCategoriesCommodity } from "../REQUEST/Category/CommodityCategory";
+import { fetchFirstAid } from "../REQUEST/fetch";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { addFirstAidInventory, addInventory } from "../REQUEST/Post";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import {  FirstAidPayoad } from "../REQUEST/Payload";
-import { InventoryCommodityPayload } from "../REQUEST/Payload";
+import { FirstAidPayoad, InventoryFirstAidPayload } from "../REQUEST/Payload";
+import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
 
 export default function FirstAidStockForm() {
   UseHideScrollbar();
@@ -40,7 +39,7 @@ export default function FirstAidStockForm() {
     },
   });
 
-  const commodity = fetchCommodity(); // Ensure commodity is an array to avoid errors
+  const firstaid = fetchFirstAid(); // Ensure commodity is an array to avoid errors
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] =
@@ -51,7 +50,7 @@ export default function FirstAidStockForm() {
     handleDeleteConfirmation,
     categoryHandleAdd,
     ConfirmationDialogs,
-  } = useCategoriesCommodity();
+  } = useCategoriesFirstAid();
 
   const handleSubmit = async (data: FirstAidStockType) => {
     console.log("Form Data Submitted:", data);
@@ -59,7 +58,7 @@ export default function FirstAidStockForm() {
     try {
       console.log(data.fa_id);
       const inventoryResponse = await addInventory(
-        InventoryCommodityPayload(data)
+        InventoryFirstAidPayload(data)
       );
 
       if (!inventoryResponse?.inv_id) {
@@ -70,24 +69,24 @@ export default function FirstAidStockForm() {
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
       const parsefaID = parseInt(data.fa_id, 10);
       if (!data.fa_id) {
-        throw new Error("Failed to get commodity ID.");
+        throw new Error("Failed to get FirstAid ID.");
         return;
       }
 
       const firstAidPayoad = FirstAidPayoad(data, inv_id, parsefaID);
-      console.log("Commodity Payload:", firstAidPayoad);
+      console.log("FirstAid Payload:", firstAidPayoad);
       await new Promise((resolve) => setTimeout(resolve, 500));
-      const commodityInventoryResponse = await addFirstAidInventory(
+      const firstAidInventoryResponse = await addFirstAidInventory(
         firstAidPayoad
       );
-      if (!commodityInventoryResponse || commodityInventoryResponse.error) {
-        throw new Error("Failed to add commodity inventory.");
+      if (!firstAidInventoryResponse || firstAidInventoryResponse.error) {
+        throw new Error("Failed to add FirstAid inventory.");
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
+      queryClient.invalidateQueries({ queryKey: ["firstAidInventory"] });
 
-      console.log("Commodity Inventory Added Successfully");
+      console.log("FirstAid Inventory Added Successfully");
       setIsAddConfirmationOpen(false);
     } catch (error: any) {
       console.error(error);
@@ -132,7 +131,7 @@ export default function FirstAidStockForm() {
                       label=""
                       className="w-full"
                       placeholder="Select Commodity"
-                      options={commodity}
+                      options={firstaid}
                       value={field.value}
                       onChange={(value) => {
                         console.log("Selected Commodity ID:", value);
@@ -141,11 +140,6 @@ export default function FirstAidStockForm() {
                     />
                   </FormControl>
                   <FormMessage />
-                  {!field.value && (
-                    <p className="text-red-500 text-sm">
-                      This field is required.
-                    </p>
-                  )}
                 </FormItem>
               )}
             />
@@ -252,7 +246,7 @@ export default function FirstAidStockForm() {
 
           {/* Pieces per Box and Total Pieces Display */}
           {currentUnit === "boxes" && (
-            <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="finv_pcs"
@@ -276,22 +270,24 @@ export default function FirstAidStockForm() {
                 )}
               />
 
-              <FormItem className="sm:col-span-2">
-                <FormLabel>Total Pieces</FormLabel>
-                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
-                  </span>
-                </div>
-              </FormItem>
+              <div>
+                <FormItem className="sm:col-span-2">
+                  <FormLabel>Total Pieces</FormLabel>
+                  <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    {totalPieces.toLocaleString()} pieces
+                    <span className="ml-2 text-muted-foreground text-xs">
+                      ({qty} boxes × {pcs} pieces/box)
+                    </span>
+                  </div>
+                </FormItem>
+              </div>
             </div>
           )}
 
           {/* Submit Button */}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
-              Save Commodity
+              Save
             </Button>
           </div>
         </form>
@@ -301,8 +297,8 @@ export default function FirstAidStockForm() {
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
-        title="Add Commodity"
-        description={`Are you sure you want to add the commodity?`}
+        title="Add First Aid "
+        description={`Are you sure you want to add the First Aid?`}
       />
     </div>
   );
