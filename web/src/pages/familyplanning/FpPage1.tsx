@@ -51,19 +51,16 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     if (isNewAcceptor) {
       // For New Acceptor: Enable Reason for FP, disable Reason and Method Currently Used
       form.setValue("reason", "")
-      form.setValue("otherReason", "")
       form.setValue("methodCurrentlyUsed", undefined)
       form.setValue("otherMethod", "")
     } else if (isCurrentUser) {
       // For Current User: Disable Reason for FP
       form.setValue("reasonForFP", "")
-      form.setValue("otherReasonForFP", "")
 
       // Only enable Reason and Method Currently Used for Changing Method subtype
       if (!isChangingMethod) {
         // For Dropout/Restart or Changing Clinic: Disable Reason and Method Currently Used
         form.setValue("reason", "")
-        form.setValue("otherReason", "")
         form.setValue("methodCurrentlyUsed", undefined)
         form.setValue("otherMethod", "")
       }
@@ -678,7 +675,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                 <input
                                   type="radio"
                                   value={option}
-                                  checked={field.value === option}
+                                  checked={
+                                    option === "Others"
+                                      ? field.value && !["Spacing", "Limiting"].includes(field.value)
+                                      : field.value === option
+                                  }
                                   onChange={() => field.onChange(option)}
                                   disabled={isCurrentUser}
                                   className={isCurrentUser ? "opacity-50 cursor-not-allowed" : ""}
@@ -689,26 +690,24 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                           ))}
                         </div>
                         <FormMessage />
-                        {reasonForFP === "Others" && field.value === "Others" && !isCurrentUser && (
-                          <FormField
-                            control={form.control}
-                            name="otherReasonForFP"
-                            render={({ field: otherField }) => (
-                              <FormItem className="mt-2">
-                                <Label className={isCurrentUser ? "text-gray-400" : ""}>Specify:</Label>
-                                <FormControl>
-                                  <Input
-                                    className="w-full"
-                                    placeholder="Specify"
-                                    {...otherField}
-                                    disabled={isCurrentUser}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
+                        {(field.value === "Others" ||
+                          (field.value && !["Spacing", "Limiting"].includes(field.value))) &&
+                          !isCurrentUser && (
+                            <div className="mt-2">
+                              <Label className={isCurrentUser ? "text-gray-400" : ""}>Specify:</Label>
+                              <Input
+                                className="w-full mt-1"
+                                placeholder="Specify reason"
+                                value={field.value === "Others" ? "" : field.value}
+                                onChange={(e) => {
+                                  // If there's input, store the actual text
+                                  // If empty, revert to just "Others"
+                                  field.onChange(e.target.value || "Others")
+                                }}
+                                disabled={isCurrentUser}
+                              />
+                            </div>
+                          )}
                       </FormItem>
                     )}
                   />

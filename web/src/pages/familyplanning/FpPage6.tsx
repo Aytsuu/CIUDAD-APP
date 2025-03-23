@@ -278,7 +278,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   id="weight"
                   type="number"
                   defaultValue={20}
-                  value={record.weight}
+                  value={record.weight}  
                   onChange={(e) => handleInputChange("weight", e.target.value)}
                 />
               </div>

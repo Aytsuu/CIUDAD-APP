@@ -1,6 +1,7 @@
+"use client"
+
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -65,11 +66,6 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
   // Add a function to save data without navigating
   const saveFormData = () => {
     const currentValues = form.getValues()
-
-    // Clear dischargeFrom if abnormalDischarge is false
-    if (!currentValues.sexuallyTransmittedInfections.abnormalDischarge) {
-      currentValues.sexuallyTransmittedInfections.dischargeFrom = undefined
-    }
 
     console.log("Saving current form data:", currentValues)
     updateFormData(currentValues)
@@ -257,7 +253,11 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                   id={`referral-${option.toLowerCase().replace(/\s+/g, "-")}`}
                                   name="referredTo"
                                   value={option}
-                                  checked={field.value === option}
+                                  checked={
+                                    option === "Others"
+                                      ? field.value && !["DSWD", "WCPU", "NGOs"].includes(field.value)
+                                      : field.value === option
+                                  }
                                   onChange={() => field.onChange(option)}
                                   className="cursor-pointer"
                                 />
@@ -268,20 +268,21 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                             ))}
 
                             {/* Conditional Input for "Others" Option */}
-                            {field.value === "Others" && (
-                              <FormField
-                                control={form.control}
-                                name="violenceAgainstWomen.otherReferral"
-                                render={({ field: otherField }) => (
-                                  <FormItem className="ml-6 mt-2">
-                                    <FormLabel>Specify:</FormLabel>
-                                    <FormControl>
-                                      <Input {...otherField} value={otherField.value ?? ""} className="w-[50%]" />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                            {(field.value === "Others" ||
+                              (field.value && !["DSWD", "WCPU", "NGOs"].includes(field.value))) && (
+                              <div className="ml-6 mt-2">
+                                <FormLabel>Specify:</FormLabel>
+                                <Input
+                                  className="w-[50%]"
+                                  placeholder="Specify referral"
+                                  value={field.value === "Others" ? "" : field.value}
+                                  onChange={(e) => {
+                                    // If there's input, store the actual text
+                                    // If empty, revert to just "Others"
+                                    field.onChange(e.target.value || "Others")
+                                  }}
+                                />
+                              </div>
                             )}
                           </div>
                         </FormControl>

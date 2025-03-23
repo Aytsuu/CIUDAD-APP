@@ -57,7 +57,6 @@ export const FamilyPlanningSchema = z.object({
   subTypeOfClient: z.string().optional(),
 
   reasonForFP: z.string().optional(),
-  otherReasonForFP: z.string().optional(),
 
   reason: z.string().optional(),
   otherReason: z.string().optional(),
@@ -147,7 +146,6 @@ export const FamilyPlanningSchema = z.object({
     referredTo: z
       .enum(["DSWD", "WCPU", "NGOs", "Others"])
       .refine((val) => val !== undefined, { message: "Please choose referral" }),
-    otherReferral: z.string().optional().nullable(),
   }),
 
   // Physical Examination Fields
@@ -257,7 +255,6 @@ export const page1Schema = FamilyPlanningSchema.pick({
   typeOfClient: true,
   subTypeOfClient: true,
   reasonForFP: true,
-  otherReasonForFP: true,
   reason: true,
   methodCurrentlyUsed: true,
   otherMethod: true,
