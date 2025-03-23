@@ -649,219 +649,209 @@ const FamilyPlanningView: React.FC = () => {
           </div>
 
              {/* Physical Examination Section */}
-        <div className="border-l pl-3 border-black">
-          <div className="font-bold">V. PHYSICAL EXAMINATION</div>
-          <div className="grid grid-cols-2 gap-4 mt-2 ">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="flex items-center">
-                  <Label className="text-sm">Weight:</Label>
-                  <InputLine value="" className="w-16 ml-1 inline-block" />
-                  <span className="text-sm ml-1">kg</span>
-                </div>
-                <div className="flex items-center mt-2">
-                  <Label className="text-sm">Height:</Label>
-                  <InputLine value="" className="w-16 ml-1 inline-block" />
-                  <span className="text-sm ml-1">m</span>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <Label className="text-sm">Blood pressure:</Label>
-                  <InputLine value="" className="w-16 ml-1 inline-block" />
-                  <span className="text-sm ml-1">mmHg</span>
-                </div>
-                <div className="flex items-center mt-2">
-                  <Label className="text-sm">Pulse rate:</Label>
-                  <InputLine value="" className="w-16 ml-1 inline-block" />
-                  <span className="text-sm ml-1">/min</span>
-                </div>
-              </div>
-            </div>
+      <div className="border-l pl-3 border-black">
+  <div className="font-bold">V. PHYSICAL EXAMINATION</div>
+  <div className="grid grid-cols-2 gap-4 mt-2">
+    {/* Left Column: Skin to Abdomen */}
+    <div>
+      {/* Skin Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">SKIN:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="skin-normal" name="skin" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="skin-pale" name="skin" value="pale" />
+          <Label className="text-sm">pale</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="skin-yellowish" name="skin" value="yellowish" />
+          <Label className="text-sm">yellowish</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="skin-hematoma" name="skin" value="hematoma" />
+          <Label className="text-sm">hematoma</Label>
+        </div>
+      </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <div className="font-bold text-sm">SKIN:</div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="skin-normal" name="skin" value="normal" />
-                  <Label className="text-sm">normal</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="skin-pale" name="skin" value="pale" />
-                  <Label className="text-sm">pale</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="skin-yellowish" name="skin" value="yellowish" />
-                  <Label className="text-sm">yellowish</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="skin-hematoma" name="skin" value="hematoma" />
-                  <Label className="text-sm">hematoma</Label>
-                </div>
-              </div>
-              <div>
-                <div className="font-bold text-sm">EXTREMITIES</div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="extremities-normal" name="extremities" value="normal" />
-                  <Label className="text-sm">normal</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="extremities-edema" name="extremities" value="edema" />
-                  <Label className="text-sm">edema</Label>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <input type="radio" id="extremities-varicosities" name="extremities" value="varicosities" />
-                  <Label className="text-sm">varicosities</Label>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Conjunctiva Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">CONJUNCTIVA:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="conjunctiva-normal" name="conjunctiva" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="conjunctiva-pale" name="conjunctiva" value="pale" />
+          <Label className="text-sm">pale</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="conjunctiva-yellowish" name="conjunctiva" value="yellowish" />
+          <Label className="text-sm">yellowish</Label>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div>
-              <div className="font-bold text-sm">CONJUNCTIVA:</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="conjunctiva-normal" name="conjunctiva" value="normal" />
-                <Label className="text-sm">normal</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="conjunctiva-pale" name="conjunctiva" value="pale" />
-                <Label className="text-sm">pale</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="conjunctiva-yellowish" name="conjunctiva" value="yellowish" />
-                <Label className="text-sm">yellowish</Label>
-              </div>
-            </div>
-            <div>
-              <div className="font-bold text-sm">NECK:</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="neck-normal" name="neck" value="normal" />
-                <Label className="text-sm">normal</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="neck-mass" name="neck" value="neck-mass" />
-                <Label className="text-sm">neck mass</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="neck-enlarged" name="neck" value="enlarged-lymph-nodes" />
-                <Label className="text-sm">enlarged lymph nodes</Label>
-              </div>
-            </div>
-            <div>
-              <div className="font-bold text-sm">BREAST:</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="breast-normal" name="breast" value="normal" />
-                <Label className="text-sm">normal</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="breast-mass" name="breast" value="mass" />
-                <Label className="text-sm">mass</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="breast-discharge" name="breast" value="nipple-discharge" />
-                <Label className="text-sm">nipple discharge</Label>
-              </div>
-            </div>
-          </div>
+      {/* Neck Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">NECK:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="neck-normal" name="neck" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="neck-mass" name="neck" value="neck-mass" />
+          <Label className="text-sm">neck mass</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="neck-enlarged" name="neck" value="enlarged-lymph-nodes" />
+          <Label className="text-sm">enlarged lymph nodes</Label>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <div className="font-bold text-sm">ABDOMEN:</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="abdomen-normal" name="abdomen" value="normal" />
-                <Label className="text-sm">normal</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="abdomen-mass" name="abdomen" value="abdominal-mass" />
-                <Label className="text-sm">abdominal mass</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="abdomen-varicosities" name="abdomen" value="varicosities" />
-                <Label className="text-sm">varicosities</Label>
-              </div>
-            </div>
-            <div>
-              <div className="font-bold text-sm">PELVIC EXAMINATION</div>
-              <div className="text-sm">(For IUD Acceptors)</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-normal" name="pelvic" value="normal" />
-                <Label className="text-sm">normal</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-mass" name="pelvic" value="mass" />
-                <Label className="text-sm">mass</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-discharge" name="pelvic" value="abnormal-discharge" />
-                <Label className="text-sm">abnormal discharge</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-abnormalities" name="pelvic" value="cervical-abnormalities" />
-                <Label className="text-sm">cervical abnormalities</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-warts" name="pelvic" value="warts" />
-                <Label className="text-sm">warts</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-polyp" name="pelvic" value="polyp-or-cyst" />
-                <Label className="text-sm">polyp or cyst</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-inflammation" name="pelvic" value="inflammation-or-erosion" />
-                <Label className="text-sm">inflammation or erosion</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="pelvic-bloody" name="pelvic" value="bloody-discharge" />
-                <Label className="text-sm">bloody discharge</Label>
-              </div>
-            </div>
-          </div>
+      {/* Breast Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">BREAST:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="breast-normal" name="breast" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="breast-mass" name="breast" value="mass" />
+          <Label className="text-sm">mass</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="breast-discharge" name="breast" value="nipple-discharge" />
+          <Label className="text-sm">nipple discharge</Label>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div>
-              <div className="font-bold text-sm">CERVICAL CONSISTENCY:</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="cervical-firm" name="cervical-consistency" value="firm" />
-                <Label className="text-sm">firm</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="cervical-soft" name="cervical-consistency" value="soft" />
-                <Label className="text-sm">soft</Label>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center space-x-1">
-                <input type="checkbox" id="cervical-tenderness" />
-                <Label className="text-sm">cervical tenderness</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="checkbox" id="adnexal-mass" />
-                <Label className="text-sm">adnexal mass / tenderness</Label>
-              </div>
-            </div>
-            <div>
-              <div className="font-bold text-sm">UTERINE POSITION:</div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="uterine-mid" name="uterine-position" value="mid" />
-                <Label className="text-sm">mid</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="uterine-anteflexed" name="uterine-position" value="anteflexed" />
-                <Label className="text-sm">anteflexed</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <input type="radio" id="uterine-retroflexed" name="uterine-position" value="retroflexed" />
-                <Label className="text-sm">retroflexed</Label>
-              </div>
-              <div className="flex items-center mt-1">
-                <Label className="text-sm">uterine depth:</Label>
-                <InputLine value="" className="w-16 ml-1 inline-block" />
-                <span className="text-sm ml-1">cm</span>
-              </div>
-            </div>
-          </div>
+      {/* Abdomen Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">ABDOMEN:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="abdomen-normal" name="abdomen" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="abdomen-mass" name="abdomen" value="abdominal-mass" />
+          <Label className="text-sm">abdominal mass</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="abdomen-varicosities" name="abdomen" value="varicosities" />
+          <Label className="text-sm">varicosities</Label>
+        </div>
+      </div>
+    </div>
+
+    {/* Right Column: Extremities to Pelvic Exam */}
+    <div>
+      {/* Extremities Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">EXTREMITIES:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="extremities-normal" name="extremities" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="extremities-edema" name="extremities" value="edema" />
+          <Label className="text-sm">edema</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="extremities-varicosities" name="extremities" value="varicosities" />
+          <Label className="text-sm">varicosities</Label>
+        </div>
+      </div>
+
+      {/* Pelvic Examination Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">PELVIC EXAMINATION:</div>
+        <div className="text-sm">(For IUD Acceptors)</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-normal" name="pelvic" value="normal" />
+          <Label className="text-sm">normal</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-mass" name="pelvic" value="mass" />
+          <Label className="text-sm">mass</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-discharge" name="pelvic" value="abnormal-discharge" />
+          <Label className="text-sm">abnormal discharge</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-abnormalities" name="pelvic" value="cervical-abnormalities" />
+          <Label className="text-sm">cervical abnormalities</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-warts" name="pelvic" value="warts" />
+          <Label className="text-sm">warts</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-polyp" name="pelvic" value="polyp-or-cyst" />
+          <Label className="text-sm">polyp or cyst</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-inflammation" name="pelvic" value="inflammation-or-erosion" />
+          <Label className="text-sm">inflammation or erosion</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="pelvic-bloody" name="pelvic" value="bloody-discharge" />
+          <Label className="text-sm">bloody discharge</Label>
+        </div>
+      </div>
+
+      {/* Cervical Consistency Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">CERVICAL CONSISTENCY:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="cervical-firm" name="cervical-consistency" value="firm" />
+          <Label className="text-sm">firm</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="cervical-soft" name="cervical-consistency" value="soft" />
+          <Label className="text-sm">soft</Label>
+        </div>
+      </div>
+
+      {/* Cervical Tenderness and Adnexal Mass Section */}
+      <div className="mb-3">
+        <div className="flex items-center space-x-1">
+          <input type="checkbox" id="cervical-tenderness" />
+          <Label className="text-sm">cervical tenderness</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="checkbox" id="adnexal-mass" />
+          <Label className="text-sm">adnexal mass / tenderness</Label>
+        </div>
+      </div>
+
+      {/* Uterine Position Section */}
+      <div className="mb-3">
+        <div className="font-bold text-sm">UTERINE POSITION:</div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="uterine-mid" name="uterine-position" value="mid" />
+          <Label className="text-sm">mid</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="uterine-anteflexed" name="uterine-position" value="anteflexed" />
+          <Label className="text-sm">anteflexed</Label>
+        </div>
+        <div className="flex items-center space-x-1">
+          <input type="radio" id="uterine-retroflexed" name="uterine-position" value="retroflexed" />
+          <Label className="text-sm">retroflexed</Label>
+        </div>
+        <div className="flex items-center mt-1">
+          <Label className="text-sm">uterine depth:</Label>
+          <InputLine value="" className="w-16 ml-1 inline-block" />
+          <span className="text-sm ml-1">cm</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+         
         </div>
 
           </div>

@@ -150,7 +150,7 @@ class PhysicalExamination(models.Model):
         
         
 class Acknowledgement(models.Model):
-    ack_id = models.BigAutoField(primary_key=True)
+    ack_id = models.AutoField(primary_key=True)
     ack_clientSignature = models.TextField()
     ack_selectedMethod = models.CharField(max_length=50)
     ack_clientSignatureDate = models.DateField()
