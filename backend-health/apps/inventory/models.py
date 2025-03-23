@@ -60,23 +60,83 @@ class MedicineInventory(models.Model):
     minv_pcs = models.PositiveIntegerField(default=0)
     minv_distributed = models.PositiveIntegerField(default=0)
     minv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE)
+    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE,unique=True)
     med_id = models.ForeignKey('Medicinelist', on_delete=models.CASCADE)
     cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
 
     class Meta: 
         db_table = 'medicine_inventory'
-  
+
+
 
 class MedicineTransactions(models.Model):
     mdt_id =models.BigAutoField(primary_key=True)
-    mdt_qty = models.PositiveIntegerField(default=0)
+    mdt_qty = models.CharField(max_length=100)
     mdt_action = models.CharField(max_length=100)
-    mdt_staff = models.PositiveIntegerField(default=0)
+    staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     
     minv_id = models.ForeignKey('MedicineInventory', on_delete=models.CASCADE,  db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
+
+
+        
+class CommodityInventory(models.Model):
+    cinv_id = models.BigAutoField(primary_key=True)
+    cinv_qty = models.PositiveIntegerField(default=0)
+    cinv_qty_unit = models.CharField(max_length=100)
+    cinv_pcs = models.PositiveIntegerField(default=0)
+    cinv_dispensed = models.PositiveIntegerField(default=0)
+    cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
+    cinv_qty_avail = models.PositiveIntegerField(default=0)
+    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE,unique=True)   
+    com_id = models.ForeignKey('CommodityList', on_delete=models.CASCADE)
+    cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'commodity_inventory'
+        
+        
+class CommodityTransaction(models.Model):
+    comt_id =models.BigAutoField(primary_key=True)
+    comt_qty = models.CharField(max_length=100)
+    comt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.CASCADE,  db_column='cinv_id')
+
+    class Meta:
+        db_table = 'commodity_transaction'
+
+
+
+
+class FirstAidInventory(models.Model):
+    finv_id = models.BigAutoField(primary_key=True)
+    finv_qty = models.PositiveIntegerField(default=0)
+    finv_qty_unit = models.CharField(max_length=100)
+    finv_pcs = models.PositiveIntegerField(default=0)
+    finv_used = models.PositiveIntegerField(default=0)
+    finv_qty_avail = models.PositiveIntegerField(default=0)
+    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE,unique=True)   
+    fa_id = models.ForeignKey('FirstAidList', on_delete=models.CASCADE)
+    cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'firstaid_inventory'
+        
   
+
+class FirstAidTransactions(models.Model):
+    fat_id =models.BigAutoField(primary_key=True)
+    fat_qty = models.CharField(max_length=100)
+    fat_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.CASCADE,  db_column='finv_id')
+
+    class Meta:
+        db_table = 'firstaid_transaction'
+

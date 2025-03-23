@@ -1,7 +1,4 @@
-import { MedicineStockType } from "./type";
-
-
-
+import { MedicineStockType } from "../REQUEST/type";
 
 export const MedicinePayload = (
   data: any, // Replace with the correct type if available
@@ -27,23 +24,74 @@ export const MedicinePayload = (
   };
 };
 
-export const InventoryPayload= (data:any)=>{
-  return{
+export const InventoryPayload = (data: any) => {
+  return {
     expiry_date: data.expiryDate,
     inv_type: "Medicine",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  }
+  };
+};
+
+
+export const InventoryCommodityPayload = (data: any) => {
+  return {
+    expiry_date: data.expiryDate,
+    inv_type: "Commodity",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+};
+
+export const MedicineTransactionPayload = (minv_id: number,string_qty :string) => {
+  return {
+    mdt_qty: string_qty, 
+    mdt_action: "Added",
+    mdt_staff: 1, 
+    minv_id: minv_id, 
+  };
+};
+
+export const CommodityTransactionPayload = (cinv_id: number,string_qty :string) => {
+  return {
+    comt_qty: string_qty, 
+    comt_action: "Added",
+    staff: 1, 
+    comt_id: cinv_id, 
+  };
+};
+
+export const FirstAidTransactionPayload = (fa_id: number,string_qty :string) => {
+  return {
+    fat_qty: string_qty, 
+    fat_action: "Added",
+    staff: 1, 
+    fat_id: fa_id, 
+  };
+}
+
+export const CommodityPayload = (data: any, inv_id: number,parseCommodityID :number) => {
+  return {
+    com_id: parseCommodityID,
+    cat_id: data.cat_id,
+    cinv_qty: data.cinv_qty,
+    cinv_qty_unit: data.cinv_qty_unit,
+    cinv_pcs: data.cinv_pcs,
+    cinv_recevFrom: data.cinv_recevFrom,
+    expiryDate: data.expiryDate,
+    inv_id,
+  };
 }
 
 
-export const MedicineTransactionPayload = (data: any, minv_id: number) => {
-
-return{
-  mdt_qty: data.minv_qty, // Quantity added/updated
-        mdt_qty_avail: data.minv_qty, // New available quantity
-        mdt_action:"Added", // Action type (e.g., "update")
-        mdt_staff: 1, // Replace with actual staff ID (if applicable)
-        minv_id: minv_id, // Foreign key to MedicineInventory
-}
+export const FirstAidPayoad = (data: any, inv_id: number,parsefaID:number) => {
+  return {
+    fa_id: parsefaID,
+    cat_id: data.cat_id,
+    finv_qty: data.finv_qty,
+    finv_qty_unit: data.finv_qty_unit,
+    finv_pcs: data.finv_pcs,
+    expiryDate: data.expiryDate,
+    inv_id,
+  };
 }

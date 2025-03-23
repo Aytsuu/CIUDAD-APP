@@ -81,8 +81,6 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
-
-
 class MedicineTransactionSerializers(serializers.ModelSerializer):
     # Read-only fields for viewing related details
     inv_detail = InventorySerializers(source='inv_id', read_only=True)
@@ -104,3 +102,101 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     class Meta:
         model = MedicineTransactions
         fields = '__all__'
+        
+        
+        
+class CommodityInventorySerializer(serializers.ModelSerializer):
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)  
+    com_detail = CommodityListSerializers(source='com_id', read_only=True)  
+    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+    # Foreign keys (required for creation but optional for updates)
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    com_id = serializers.PrimaryKeyRelatedField(queryset=CommodityList.objects.all())
+    cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+
+
+    class Meta:
+        model = CommodityInventory
+        fields = '__all__'
+        
+
+    def to_internal_value(self, data):
+        """Allow partial updates but require all fields for creation."""
+        if self.instance:
+            # Partial update: Allow missing fields
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
+
+class CommodityTransactionSerializer(serializers.ModelSerializer):
+    # Read-only fields for viewing related details
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)
+    cinv_detail = CommodityInventorySerializer(source='cinv_id', read_only=True)
+    com_detail = CommodityListSerializers(source='com_id', read_only=True)
+    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+
+    # Write-only fields for creation
+    inv_id = serializers.PrimaryKeyRelatedField(
+        queryset=Inventory.objects.all(), write_only=True, required=False
+    )
+    com_id = serializers.PrimaryKeyRelatedField(
+        queryset=Medicinelist.objects.all(), write_only=True, required=False
+    )
+    cat_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = CommodityTransaction
+        fields = '__all__'
+        
+       
+
+class FirstAidInventorySerializer(serializers.ModelSerializer):
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)  
+    fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)  
+    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+    # Foreign keys (required for creation but optional for updates)
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    fa_id = serializers.PrimaryKeyRelatedField(queryset=FirstAidList.objects.all())
+    cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+
+
+    class Meta:
+        model = FirstAidInventory
+        fields = '__all__'
+        
+
+    def to_internal_value(self, data):
+        """Allow partial updates but require all fields for creation."""
+        if self.instance:
+            # Partial update: Allow missing fields
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
+    
+class FirstTransactionSerializer(serializers.ModelSerializer):
+    # Read-only fields for viewing related details
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)
+    finv_detail = FirstAidInventorySerializer(source='finv_id', read_only=True)
+    fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)
+    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+
+    # Write-only fields for creation
+    inv_id = serializers.PrimaryKeyRelatedField(
+        queryset=Inventory.objects.all(), write_only=True, required=False
+    )
+    fa_id = serializers.PrimaryKeyRelatedField(
+        queryset=FirstAidList.objects.all(), write_only=True, required=False
+    )
+    cat_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = FirstAidTransactions
+        fields = '__all__'
+        
+        

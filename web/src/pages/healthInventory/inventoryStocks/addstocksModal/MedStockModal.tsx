@@ -18,14 +18,14 @@ import {
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useCategoriesMedicine } from "../request/Category/Medcategory";
-import { addMedicineInventory } from "../request/Post";
+import { useCategoriesMedicine } from "../REQUEST/Category/Medcategory";
+import { addMedicineInventory } from "../REQUEST/Post";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
-import { addInventory } from "../request/Post";
-import { InventoryPayload } from "../request/Payload";
-import { MedicinePayload } from "../request/Payload";
-import { fetchMedicines } from "../request/Fetch";
+import { addInventory } from "../REQUEST/Post";
+import { InventoryPayload } from "../REQUEST/Payload";
+import { MedicinePayload } from "../REQUEST/Payload";
+import { fetchMedicines } from "../REQUEST/fetch";
 
 interface MedicineStocksProps{
   setIsDialog:(isOpen: boolean) => void
@@ -48,7 +48,9 @@ export default function MedicineStockForm({setIsDialog}:MedicineStocksProps) {
     },
   });
 
-const {categories,handleDeleteConfirmation, categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();const medicines = fetchMedicines();
+
+const {categories,handleDeleteConfirmation, categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();
+const medicines = fetchMedicines();
 const [isAddConfirmationOpen,setIsAddConfirmationOpen] =useState(false)
 const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
 const queryClient = useQueryClient()
@@ -56,13 +58,19 @@ const queryClient = useQueryClient()
 const handleSubmit = async (data: MedicineStockType) => {
   try {
     const inventoryResponse = await addInventory(InventoryPayload(data)); 
+  
     if (!inventoryResponse?.inv_id) {
       throw new Error("Failed to generate inventory ID.");
+      
     }
     const inv_id = parseInt(inventoryResponse.inv_id, 10);
+
+    // Validate Medicine ID
     if (!data.medicineID) {
       throw new Error("Medicine ID is required.");
+      
     }
+
     const medicinePayload = MedicinePayload(data, inv_id);
     await new Promise((resolve) => setTimeout(resolve, 500));
     const medicineInventoryResponse = await addMedicineInventory(medicinePayload);

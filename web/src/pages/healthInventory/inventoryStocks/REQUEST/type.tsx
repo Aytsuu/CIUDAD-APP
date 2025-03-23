@@ -30,9 +30,30 @@ export interface MedicineStockType {
    
   }
   
+  
   export interface MedicineTransactionType {
-      mdt_qty: number,
+      mdt_qty: string,
       mdt_action: string, 
       mdt_staff: number, 
       minv_id: number, 
+  }
+
+  export interface CommodityStockType{
+    com_id: number;
+    cat_id: string;
+    cinv_qty: number;
+    cinv_qty_unit: string;
+    cinv_pcs: number;
+    cinv_recevFrom: string;
+    expiryDate: string;
+
+  }   
+
+  export interface FirstAidStockType {
+    fa_id: number;
+    cat_id: string;
+    finv_qty: number;
+    finv_qty_unit: string;
+    finv_pcs: number;
+    expiryDate: string;
   }

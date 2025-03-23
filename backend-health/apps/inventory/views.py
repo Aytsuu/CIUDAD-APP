@@ -133,6 +133,25 @@ class MedicineInventoryView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     
+class CommodityInventoryVIew(generics.ListCreateAPIView):
+    serializer_class=CommodityInventorySerializer
+    queryset=CommodityInventory.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+class FirstAidInventoryVIew(generics.ListCreateAPIView):
+    serializer_class=FirstAidInventorySerializer
+    queryset=FirstAidInventory.objects.all()
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+    
+    
+    
+    
+    
+    
+    
 # ----------------------MEDICINE STOCK---RETRIEVE------------------------------------  
 class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
     serializer_class=MedicineInventorySerializer
@@ -144,6 +163,17 @@ class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
        obj = get_object_or_404(MedicineInventory, minv_id = minv_id)
        return obj
        
+class CommodityInvRetrieveView(generics.RetrieveUpdateAPIView):
+    serializer_class=CommodityListSerializers
+    queryset = CommodityInventory.objects.all()
+    lookup_field='cinv_id'
+    
+    def get_object(self):
+       cinv_id = self.kwargs.get('cinv_id')
+       obj = get_object_or_404(CommodityInventory, cinv_id = cinv_id)
+       return obj
+       
+    
     
 # ----------------------MEDICINE STOCK---DELETE------------------------------------  
 class DeleteMedicineInvView(generics.DestroyAPIView):
@@ -157,15 +187,29 @@ class DeleteMedicineInvView(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         # Get the related Inventory record
         inventory_record = instance.inv_id  # Access the related Inventory instance via ForeignKey
-
         # Delete the MedicineInventory instance
         instance.delete()
-
         # Delete the related Inventory record
         if inventory_record:
             inventory_record.delete()
    
-   
+class DeleteCommodityInvView(generics.DestroyAPIView):
+    serializer_class=CommodityInventorySerializer
+    queryset = CommodityInventory.objects.all()
+ 
+    def get_object(self):
+       cinv_id = self.kwargs.get('cinv_id')
+       obj = get_object_or_404(CommodityInventory, cinv_id = cinv_id)
+       return obj
+    def perform_destroy(self, instance):
+        # Get the related Inventory record
+        inventory_record = instance.inv_id  # Access the related Inventory instance via ForeignKey
+        # Delete the MedicineInventory instance
+        instance.delete()
+        # Delete the related Inventory record
+        if inventory_record:
+            inventory_record.delete()
+    
 
 class MedicineTransactionView(generics.ListCreateAPIView):
     serializer_class=MedicineTransactionSerializers
@@ -173,4 +217,19 @@ class MedicineTransactionView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
+class CommodityTransactionView(generics.ListCreateAPIView):
+    serializer_class=CommodityTransactionSerializer
+    queryset=CommodityTransaction.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+     
+class FirstAidTransactionView(generics.ListCreateAPIView):
+    serializer_class=FirstTransactionSerializer
+    queryset=FirstAidTransactions.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+     
      

@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,38 +17,35 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { fetchCommodity } from "../request/Fetch";
-import { useCategoriesCommodity } from "../request/Category/CommodityCategory";
+import { fetchCommodity } from "../REQUEST/fetch";
+import { useCategoriesCommodity } from "../REQUEST/Category/CommodityCategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-
+import { addCommodityInventory, addInventory } from "../REQUEST/Post";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { CommodityPayload } from "../REQUEST/Payload";
+import { InventoryCommodityPayload } from "../REQUEST/Payload";
 
 export default function CommodityStockForm() {
   UseHideScrollbar();
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
-      commodityName: "",
-      category: "",
-      unit: "",
-      qty: 0,
-      pcs: 0,
-      expiryDate: "",
-      recevFrom: "", 
+      com_id: "",
+      cat_id: "",
+      cinv_qty_unit: "boxes", // Ensure a valid default value
+      cinv_qty: 0,
+      cinv_pcs: 0, // Default to 1 to avoid multiplication issues
+      cinv_recevFrom: "",
+      expiryDate: new Date().toISOString().split("T")[0], // Default to today's date
     },
   });
 
-  const commodity = fetchCommodity();
-  const onSubmit = async (data: CommodityStockType) => {
-    try {
-      const validatedData = CommodityStocksSchema.parse(data);
-      console.log("Form submitted", validatedData);
-      form.reset();
-      alert("Commodity stock added successfully!");
-    } catch (error) {
-      console.error("Form submission error:", error);
-      alert("Submission failed. Please check the form for errors.");
-    }
-  };
+  const commodity = fetchCommodity(); // Ensure commodity is an array to avoid errors
+  const queryClient = useQueryClient();
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [submissionData, setSubmissionData] =
+    useState<CommodityStockType | null>(null);
 
   const {
     categories,
@@ -57,12 +54,67 @@ export default function CommodityStockForm() {
     ConfirmationDialogs,
   } = useCategoriesCommodity();
 
+  const handleSubmit = async (data: CommodityStockType) => {
+    console.log("Form Data Submitted:", data);
 
-  // Watch relevant fields for calculation
-  const currentUnit = form.watch("unit");
-  const qty = form.watch("qty") || 0;
-  const pcs = form.watch("pcs") || 0;
-  const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
+    try {
+      console.log(data.com_id);
+      const inventoryResponse = await addInventory(
+        InventoryCommodityPayload(data)
+      );
+
+      if (!inventoryResponse?.inv_id) {
+        throw new Error("Failed to generate inventory ID.");
+        // Removed unreachable return
+      }
+
+      const inv_id = parseInt(inventoryResponse.inv_id, 10);
+      const parseCommodityID = parseInt(data.com_id, 10);
+      if (!data.com_id) {
+        throw new Error("Failed to get commodity ID.");
+        return;
+      }
+
+      const commodityPayload = CommodityPayload(data, inv_id, parseCommodityID);
+      console.log("Commodity Payload:", commodityPayload);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const commodityInventoryResponse = await addCommodityInventory(
+        commodityPayload
+      );
+      if (!commodityInventoryResponse || commodityInventoryResponse.error) {
+        throw new Error("Failed to add commodity inventory.");
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
+
+      console.log("Commodity Inventory Added Successfully");
+      setIsAddConfirmationOpen(false);
+    } catch (error: any) {
+      console.error(error);
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        setIsAddConfirmationOpen(false);
+      }
+      setIsAddConfirmationOpen(false);
+    }
+  };
+
+  const onSubmit = (data: CommodityStockType) => {
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = () => {
+    if (submissionData) {
+      handleSubmit(submissionData);
+    }
+  };
+
+  const currentUnit = form.watch("cinv_qty_unit");
+  const qty = form.watch("cinv_qty");
+  const pcs = form.watch("cinv_pcs");
+  const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
@@ -72,7 +124,7 @@ export default function CommodityStockForm() {
             {/* Commodity Name */}
             <FormField
               control={form.control}
-              name="commodityName"
+              name="com_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Commodity Name</FormLabel>
@@ -80,48 +132,54 @@ export default function CommodityStockForm() {
                     <SelectLayout
                       label=""
                       className="w-full"
-                      placeholder="Select Category"
+                      placeholder="Select Commodity"
                       options={commodity}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        console.log("Selected Commodity ID:", value);
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  {!field.value && (
+                    <p className="text-red-500 text-sm">
+                      This field is required.
+                    </p>
+                  )}
+                </FormItem>
+              )}
+            />
+
+            {/* Category Dropdown */}
+            <FormField
+              control={form.control}
+              name="cat_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <SelectLayoutWithAdd
+                      placeholder="select"
+                      label="Select a Category"
+                      options={categories}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      onAdd={(newCategoryName) => {
+                        categoryHandleAdd(newCategoryName, (newId) => {
+                          field.onChange(newId);
+                        });
+                      }}
+                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* Category Dropdown */}
-          <FormField
-                       control={form.control}
-                       name="category"
-                       render={({ field }) => (
-                         <FormItem>
-                           <FormLabel>Category</FormLabel>
-                           <FormControl>
-                             {/* Category Dropdown with Add/Delete */}
-                             <SelectLayoutWithAdd
-                               placeholder="select"
-                               label="Select a Category"
-                               options={categories}
-                               value={field.value}
-                               onChange={(value) => field.onChange(value)}
-                               onAdd={(newCategoryName) => {
-                                 categoryHandleAdd(newCategoryName, (newId) => {
-                                   field.onChange(newId); // Update the form value with the new category ID
-                                 });
-                               }}
-                               onDelete={(id) => handleDeleteConfirmation(Number(id))}
-                             />
-                           </FormControl>
-                           <FormMessage />
-                         </FormItem>
-                       )}
-                     />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-           
             {/* Expiry Date */}
             <FormField
               control={form.control}
@@ -136,38 +194,39 @@ export default function CommodityStockForm() {
                 </FormItem>
               )}
             />
+
+            {/* Receive From */}
+            <FormField
+              control={form.control}
+              name="cinv_recevFrom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Receive From</FormLabel>
+                  <FormControl>
+                    <SelectLayout
+                      label=""
+                      className="w-full"
+                      placeholder="Select Source"
+                      options={[
+                        { id: "DOH", name: "DOH" },
+                        { id: "CHD", name: "CHD" },
+                        { id: "OTHERS", name: "OTHERS" },
+                      ]}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-          {/* Commodity Name */}
-          <FormField
-            control={form.control}
-            name="recevFrom"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Receive From</FormLabel>
-                <FormControl>
-                  <SelectLayout
-                    label=""
-                    className="w-full"
-                    placeholder="Select Category"
-                    options={[
-                      { id: "DOH", name: "DOH" },
-                      { id: "CHD", name: "CHD" },
-                      { id: "OTHERS", name: "OTHERS" },
-                    ]}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Quantity */}
             <FormField
               control={form.control}
-              name="qty"
+              name="cinv_qty"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
@@ -184,17 +243,17 @@ export default function CommodityStockForm() {
                           value === "" ? undefined : Number(value)
                         );
                       }}
-                      
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             {/* Storage Unit */}
             <FormField
               control={form.control}
-              name="unit"
+              name="cinv_qty_unit"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
@@ -202,7 +261,7 @@ export default function CommodityStockForm() {
                     <SelectLayout
                       label=""
                       className="w-full"
-                      placeholder="Select "
+                      placeholder="Select Unit"
                       options={[
                         { id: "boxes", name: "Boxes" },
                         { id: "bottles", name: "Bottles" },
@@ -223,7 +282,7 @@ export default function CommodityStockForm() {
             <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
               <FormField
                 control={form.control}
-                name="pcs"
+                name="cinv_pcs"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pieces per Box</FormLabel>
@@ -265,6 +324,13 @@ export default function CommodityStockForm() {
         </form>
       </Form>
       {ConfirmationDialogs()}
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Commodity"
+        description={`Are you sure you want to add the commodity?`}
+      />
     </div>
   );
 }

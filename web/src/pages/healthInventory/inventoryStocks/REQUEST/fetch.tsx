@@ -6,7 +6,7 @@ import {
 } from "../../InventoryList/requests/GetRequest"; // Adjust the import based on your API setup
 import { getFirstAid } from "../../InventoryList/requests/GetRequest";
 import api from "@/pages/api/api";
-import { getMedicineStocks } from "./Get";
+import { getMedicineStocks } from "../REQUEST/Get";
 
 
 export const fetchMedicines = () => {

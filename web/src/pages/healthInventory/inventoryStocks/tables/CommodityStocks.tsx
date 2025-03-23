@@ -88,7 +88,7 @@ export default function CommodityStocks() {
         <div className="flex justify-center gap-2">
           {/* <TooltipLayout
             trigger={
-              <DialogLayout
+              <DialogLayout 
                 trigger={
                   <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
                     <Edit size={16} />

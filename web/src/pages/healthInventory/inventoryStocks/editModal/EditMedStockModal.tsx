@@ -19,8 +19,8 @@ import api from "@/pages/api/api";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { addMedicineTransaction } from "../request/Post";
-import { MedicineTransactionPayload } from "../request/Payload";
+import { addMedicineTransaction } from "../REQUEST/Post";
+import { MedicineTransactionPayload } from "../REQUEST/Payload";
 
 interface AddMedProps {
   initialData: {
@@ -58,6 +58,7 @@ export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProp
     },
   });
 
+  
   const onSubmit = useCallback(async (data: addMedicineStocksType) => {
     setFormData(data);
     setIsConfirmationOpen(true);
@@ -111,16 +112,21 @@ export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProp
           minv_qty_avail: newMinvQtyAvail,
         }
       );
-
+ 
       if (inv_id) {
         await api.put(`inventory/update_inventorylist/${inv_id}/`, {
           updated_at: new Date().toISOString(),
         });
       }
      
+    const string_qty =
+      formData.minv_qty_unit === "boxes"
+      ? `${formData.minv_qty} boxes (${formData.minv_pcs} pcs per box)`
+      : `${formData.minv_qty} ${formData.minv_qty_unit}`;
+
 
     // Pass initialData to MedicineTransactionPayload
-    const MedicineTransactionpayload = MedicineTransactionPayload(formData, initialData.id);
+    const MedicineTransactionpayload = MedicineTransactionPayload( initialData.id,string_qty);
     console.log("Med", formData)
     console.log("MInv", initialData.id)
     const medicineTransactionResponse = await addMedicineTransaction(MedicineTransactionpayload);

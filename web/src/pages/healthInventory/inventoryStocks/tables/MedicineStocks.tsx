@@ -20,7 +20,7 @@ import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicineStocks } from "../request/Get";
 import { Skeleton } from "@/components/ui/skeleton";
-import { handleDeleteMedicineStocks } from "../request/Delete";
+import { handleDeleteMedicineStocks } from "../REQUEST/Delete";
 
 export default function MedicineStocks() {
   type MedicineStocksRecord = {
@@ -42,7 +42,8 @@ export default function MedicineStocks() {
     distributed: string;
   };
 
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
   const [medStockDelete, setmedStockDelete] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,27 +59,28 @@ export default function MedicineStocks() {
     staleTime: 0,
   });
 
-  const formatMedicineStocksData = React.useCallback((): MedicineStocksRecord[] => {
-    if (!medicineStocks) return [];
-    return medicineStocks.map((medicineStock: any) => ({
-      id: medicineStock.minv_id,
-      medicineInfo: {
-        medicineName: medicineStock.med_detail?.med_name,
-        dosage: medicineStock.minv_dsg,
-        dsgUnit: medicineStock.minv_dsg_unit,
-        form: medicineStock.minv_form,
-      },
-      expiryDate: medicineStock.inv_detail?.expiry_date,
-      category: medicineStock.cat_detail?.cat_name,
-      qty: {
-        qty: medicineStock.minv_qty,
-        pcs: medicineStock.minv_pcs,
-      },
-      minv_qty_unit: medicineStock.minv_qty_unit,
-      availQty: medicineStock.minv_qty_avail,
-      distributed: medicineStock.minv_distributed,
-    }));
-  }, [medicineStocks]);
+  const formatMedicineStocksData =
+    React.useCallback((): MedicineStocksRecord[] => {
+      if (!medicineStocks) return [];
+      return medicineStocks.map((medicineStock: any) => ({
+        id: medicineStock.minv_id,
+        medicineInfo: {
+          medicineName: medicineStock.med_detail?.med_name,
+          dosage: medicineStock.minv_dsg,
+          dsgUnit: medicineStock.minv_dsg_unit,
+          form: medicineStock.minv_form,
+        },
+        expiryDate: medicineStock.inv_detail?.expiry_date,
+        category: medicineStock.cat_detail?.cat_name,
+        qty: {
+          qty: medicineStock.minv_qty,
+          pcs: medicineStock.minv_pcs,
+        },
+        minv_qty_unit: medicineStock.minv_qty_unit,
+        availQty: medicineStock.minv_qty_avail,
+        distributed: medicineStock.minv_distributed,
+      }));
+    }, [medicineStocks]);
 
   const filteredData = React.useMemo(() => {
     return formatMedicineStocksData().filter((record) =>
@@ -154,9 +156,20 @@ export default function MedicineStocks() {
       accessorKey: "qty",
       header: "Stocks",
       cell: ({ row }) => {
+        const { qty, pcs } = row.original.qty;
+        const unit = row.original.minv_qty_unit;
         return (
           <div className="text-center">
-            <span className="text-blue">{row.original.qty.qty}</span>
+            {pcs > 0 ? (
+              <div className="flex flex-col">
+                <span className="text-blue">{qty} box/es</span>
+                <span className="text-red-500"> ({pcs} pcs per box)</span>
+              </div>
+            ) : (
+              <span className="text-blue">
+                {qty} {unit}
+              </span>
+            )}
           </div>
         );
       },
@@ -172,7 +185,11 @@ export default function MedicineStocks() {
       accessorKey: "availQty",
       header: "Available",
       cell: ({ row }) => (
-        <div className="text-green-700">{row.original.availQty}</div>
+        <div className="text-green-700">
+          {row.original.qty.pcs > 0
+            ? `${row.original.qty.qty * row.original.qty.pcs} pcs`
+            : `${row.original.availQty} ${row.original.minv_qty_unit}`}
+        </div>
       ),
     },
     {
@@ -200,7 +217,12 @@ export default function MedicineStocks() {
                           <Edit size={16} />
                         </div>
                       }
-                      mainContent={<EditMedicineForm initialData={row.original} setIsDialog={setIsDialog} />}
+                      mainContent={
+                        <EditMedicineForm
+                          initialData={row.original}
+                          setIsDialog={setIsDialog}
+                        />
+                      }
                     />
                   }
                   content="Edit"
@@ -219,7 +241,7 @@ export default function MedicineStocks() {
           </>
         );
       },
-    }
+    },
   ];
 
   return (
@@ -310,9 +332,10 @@ export default function MedicineStocks() {
         {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length}{" "}
-            rows
+            Showing{" "}
+            {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
           </p>
           <PaginationLayout
             currentPage={currentPage}

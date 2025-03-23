@@ -16,7 +16,7 @@ import {
   FirstAidStockSchema,
   FirstAidStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
-import { fetchFirstAid } from "../request/Fetch";
+import { fetchFirstAid } from "../REQUEST/fetch";
 import { useCategoriesFirstAid } from "../request/Category/FirstAidCategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 

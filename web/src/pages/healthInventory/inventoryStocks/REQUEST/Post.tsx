@@ -1,7 +1,8 @@
 import api from "@/pages/api/api";
-import { MedicineStockType, InventoryType,MedicineTransactionType } from "./type";
+import { MedicineStockType, InventoryType,MedicineTransactionType, FirstAidStockType } from "../REQUEST/type";
 import { log } from "console";
-
+import { addCommodity } from "../../InventoryList/requests/Postrequest";
+import { CommodityStockType } from "../REQUEST/type";
 // medicine inventory details
 export const addMedicineInventory = async (medicineData: MedicineStockType) => {
   try {
@@ -15,6 +16,33 @@ export const addMedicineInventory = async (medicineData: MedicineStockType) => {
     throw err;
   }
 };
+
+
+export const  addCommodityInventory = async (commodityData: CommodityStockType) => {
+  try {
+    const res = await api.post(
+      "inventory/commodityinventorylist/",
+      commodityData
+    );
+    return res.data;
+  } catch (err: any) {
+    console.log("Error response:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+export const  addFirstAidInventory = async (commodityData: FirstAidStockType) => {
+  try {
+    const res = await api.post(
+      "inventory/commodityinventorylist/",
+      commodityData
+    );
+    return res.data;
+  } catch (err: any) {
+    console.log("Error response:", err.response?.data || err.message);
+    throw err;
+  }
+}
 
 export const addInventory = async (inventoryData: InventoryType) => {
   try {
