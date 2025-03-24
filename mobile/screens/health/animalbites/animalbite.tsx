@@ -102,7 +102,7 @@ export default function AnimalBites() {
             </View>
             <View className="flex-1">
               <Text className="font-bold text-lg text-red-600 mb-2">Seek Medical Help</Text>
-              <Text className="text-gray-700">Visit a healthcare facility immediately for proper wound assessment and possible rabies vaccination.</Text>
+              <Text className="text-gray-700">Visit our health center immediately for animal bite referral.</Text>
             </View>
           </View>
         </View>
@@ -152,25 +152,20 @@ export default function AnimalBites() {
               <Text className="text-gray-700">Watch for signs of infection: redness, swelling, warmth, increasing pain, or pus.</Text>
             </View>
           </View>
+          
         </View>
       </View>
 
+      
       {/* Visit Health Center Section */}
-      <View className="bg-navy-900 p-6 mt-4">
-        <Text className="text-white font-bold text-lg mb-2">If bitten or any incident, go to our barangay health center</Text>
-        <Text className="text-white">Open Monday-Friday, 8:00 AM - 5:00 PM</Text>
-        
-        <TouchableOpacity className="bg-red-500 p-4 rounded-xl shadow-md mt-4">
-          <Text className="text-white font-bold text-center text-lg">GET HELP NOW</Text>
-        </TouchableOpacity>
-      </View>
-
+      
       {/* Prevention Tips */}
       <View className="mx-6 my-6">
         <View className="flex-row items-center mb-4">
           <View className="h-8 w-1 bg-green-500 mr-3" />
           <Text className="text-xl font-bold text-gray-800">PREVENTION TIPS</Text>
         </View>
+        
         
         <View className="bg-green-50 p-4 rounded-xl shadow-sm">
           <View className="flex-row items-start mb-3">
@@ -190,6 +185,13 @@ export default function AnimalBites() {
             <Text className="text-gray-700 ml-3 flex-1">Report stray animals to local authorities</Text>
           </View>
         </View>
+
+        <View className="bg-blue-900 p-4 rounded-xl shadow-md mt-6">
+        <Text className="text-white text-lg font-bold mb-2">If bitten or any incident, go to our barangay health center</Text>
+        <Text className="text-white">Open Monday-Friday, 8:00 AM - 5:00 PM</Text>
+        
+      </View>
+
       </View>
     </ScrollView>
   );
