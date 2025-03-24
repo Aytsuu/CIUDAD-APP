@@ -29,8 +29,6 @@ export const  getMedicineStocks = async()=>{
       return[]
     }
   }
-
-
   
   export const  getFirstAidStocks = async()=>{
     try{

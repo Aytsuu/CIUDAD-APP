@@ -1,24 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import MedicineStocks
- from "./MedicineStocks";
+import MedicineStocks from "./MedicineStocks";
 import VaccineStocks from "./VaccineStocks";
 import FirstAidStocks from "./FirstAidStocks";
 import CommodityStocks from "./CommodityStocks";
 
 export default function MainInventoryStocks() {
-  const [selectedView, setSelectedView] = useState("medicine");
+  // Initialize state with value from localStorage or default to "medicine"
+  const [selectedView, setSelectedView] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("selectedInventoryView") || "medicine";
+    }
+    return "medicine";
+  });
+
+  // Update localStorage whenever selectedView changes
+  useEffect(() => {
+    localStorage.setItem("selectedInventoryView", selectedView);
+  }, [selectedView]);
 
   const renderContent = () => {
     switch (selectedView) {
       case "medicine":
-        return <MedicineStocks/>;
+        return <MedicineStocks />;
       case "vaccine":
-        return <VaccineStocks/>;
+        return <VaccineStocks />;
       case "commodity":
-        return <CommodityStocks/>;
+        return <CommodityStocks />;
       case "firstaid":
-        return <FirstAidStocks/>;
+        return <FirstAidStocks />;
+      default:
+        return <MedicineStocks />;
     }
   };
 
@@ -63,8 +75,8 @@ export default function MainInventoryStocks() {
                 onClick={() => setSelectedView(view)}
                 className={`px-3 py-1.5 md:px-4 md:py-2 rounded-none transition-all duration-200 flex-shrink-0 ${
                   selectedView === view
-                    ? "border-b-2 border-b-blue text-blue font-semibold text-sm  md:text-base hover:bg-transparent"
-                    : "border-b-2 border-transparent text-gray-600  text-sm md:text-base hover:bg-transparent hover:text-blue"
+                    ? "border-b-2 border-b-blue text-blue font-semibold text-sm md:text-base hover:bg-transparent"
+                    : "border-b-2 border-transparent text-gray-600 text-sm md:text-base hover:bg-transparent hover:text-blue"
                 }`}
               >
                 {view === "firstaid"

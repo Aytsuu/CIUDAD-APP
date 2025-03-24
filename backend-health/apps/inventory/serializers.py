@@ -158,6 +158,7 @@ class FirstAidInventorySerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)  
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
+    
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     fa_id = serializers.PrimaryKeyRelatedField(queryset=FirstAidList.objects.all())

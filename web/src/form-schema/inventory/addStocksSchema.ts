@@ -18,6 +18,7 @@ export const AddMedicineStocksSchema = z
       path: ["minv_pcs"], // Corrected path
     }
   );
+  
 
 
   export const AddCommoditySchema = z
@@ -39,5 +40,27 @@ export const AddMedicineStocksSchema = z
     }
   );
 
+
+
+  export const AddFirstAidSchema = z
+  .object({
+    finv_qty: z.number().min(1, "Enter qty Name").default(0),
+    finv_qty_unit: z.string().min(1, "Unit is required").default(""),
+    finv_pcs: z.number().min(0).default(0), // Allow 0 as default
+  })
+  .refine(
+    (data) => {
+      if (data.finv_qty_unit === "boxes") {
+        return data.finv_pcs >= 1; // Only validate when using boxes
+      }
+      return true;
+    },
+    {
+      message: "Pieces per box must be at least 1",
+      path: ["minv_pcs"], // Corrected path
+    }
+  );
+
 export type addMedicineStocksType = z.infer<typeof AddMedicineStocksSchema>
 export type AddCommodityStockType = z.infer<typeof AddCommoditySchema>
+export type AddFirstAidStockType = z.infer<typeof AddFirstAidSchema>

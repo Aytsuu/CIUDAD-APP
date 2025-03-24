@@ -78,6 +78,7 @@ export default function CommodityStocks() {
         recevFrom: commodityStock.cinv_recevFrom,
       }));
     }, [commodityStocks]);
+    
 
   const filteredData = React.useMemo(() => {
     return formatCommodityStocksData().filter((record) =>

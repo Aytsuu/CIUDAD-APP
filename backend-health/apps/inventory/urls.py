@@ -48,7 +48,8 @@ urlpatterns = [
     #STOCKS UPDATE OR RETRIEVE
     path("update_medicinestocks/<int:minv_id>/", MedicineInvRetrieveView.as_view(), name="update_medicinestocks"),
     path("update_commoditystocks/<int:cinv_id>/", CommodityInvRetrieveView.as_view(), name="update_commoditystocks"),
-
+    path("update_firstaidstocks/<int:finv_id>/", FirstAidInvRetrieveView.as_view(), name="update_firstaidstocks"),
+    
     # ADD MEDICINE STOCKS  POST 
     path("medicinetransaction/", MedicineTransactionView.as_view(), name="medicine-transaction"),
     path("commoditytransaction/", CommodityTransactionView.as_view(), name="commodity-transaction"),

@@ -79,7 +79,7 @@ export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProp
       }
 
       const currentMinvQtyAvail = existingMedicine.minv_qty_avail;
-      const currentMinvQty = existingMedicine.minv_qty;
+      let qty = existingMedicine.minv_qty;
       const currentMinvPcs = existingMedicine.minv_pcs;
       const inv_id = existingMedicine.inv_detail?.inv_id;
 
@@ -95,20 +95,19 @@ export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProp
       }
 
       let newMinvQtyAvail = currentMinvQtyAvail;
-      let newQty = currentMinvQty;
 
       if (formData.minv_qty_unit === "boxes") {
-        newMinvQtyAvail += formData.minv_qty * (formData.minv_pcs || 0);
-        newQty += formData.minv_qty * (formData.minv_pcs || 0);
+        qty += formData.minv_qty ;
+        newMinvQtyAvail = qty * currentMinvPcs;
       } else {
-        newMinvQtyAvail += formData.minv_qty;
-        newQty += formData.minv_qty;
+        qty += formData.minv_qty;
+        newMinvQtyAvail = qty;
       }
 
       await api.put(
         `inventory/update_medicinestocks/${initialData.id}/`,
         {
-          minv_qty: newQty,
+          minv_qty: qty,
           minv_qty_avail: newMinvQtyAvail,
         }
       );

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
@@ -17,25 +17,122 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import FirstAidStockForm from "../addstocksModal/FirstAidStockModal";
 import UsedFAModal from "../addstocksModal/UsedFAModal";
 import EditFirstAidStockForm from "../editModal/EditFirstAidStockModal";
-type FirstAidStocksRecord = {
-  id: number;
-  itemName: string;
-  category: string;
-  qty: number;
-  availQty: number;
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { handleDeleteFirstAidStocks } from "../REQUEST/Delete";
+import { getFirstAidStocks } from "../REQUEST/Get";
+
+export type FirstAidStocksRecord = {
+  finv_id: number;
+  firstAidInfo: {
+    fa_name: string;
+  };
   expiryDate: string;
-  usedItem: number;
+  category: string;
+  qty: {
+    finv_qty: number;
+    finv_pcs: number;
+  };
+  finv_qty_unit: string;
+  availQty: string;
+  used: string;
 };
 
 export default function FirstAidStocks() {
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [firstAidStockDelete, setFirstAidStockDelete] = useState<number | null>(null);
+  const [isDialog, setIsDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
+
+  // Fetch first aid stocks using useQuery
+  const { data: firstAidStocks, isLoading: isLoadingFirstAid } = useQuery({
+    queryKey: ["firstaidinventorylist"],
+    queryFn: getFirstAidStocks,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  const formatFirstAidStocksData = React.useCallback((): FirstAidStocksRecord[] => {
+    if (!firstAidStocks) return [];
+    return firstAidStocks.map((firstAidStock: any) => ({
+      finv_id: firstAidStock.finv_id,
+      firstAidInfo: {
+        fa_name: firstAidStock.fa_detail?.fa_name,
+      },
+      expiryDate: firstAidStock.inv_detail?.expiry_date,
+      category: firstAidStock.cat_detail?.cat_name,
+      qty: {
+        finv_qty: firstAidStock.finv_qty,
+        finv_pcs: firstAidStock.finv_pcs,
+      },
+      finv_qty_unit: firstAidStock.finv_qty_unit,
+      availQty: firstAidStock.finv_qty_avail,
+      used: firstAidStock.finv_used,
+    }));
+  }, [firstAidStocks]);
+
+  const filteredData = React.useMemo(() => {
+    return formatFirstAidStocksData().filter((record) =>
+      Object.values(record.firstAidInfo)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, formatFirstAidStocksData]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleDeleteFirstAid = (finv_id: number) => {
+    setFirstAidStockDelete(finv_id);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  const confirmDeleteFirstAid = async () => {
+    if (firstAidStockDelete !== null) {
+      await handleDeleteFirstAidStocks(firstAidStockDelete, () => {
+        queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
+      });
+      setIsDeleteConfirmationOpen(false);
+      setFirstAidStockDelete(null);
+    }
+  };
+
+  if (isLoadingFirstAid) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
   const columns: ColumnDef<FirstAidStocksRecord>[] = [
     {
-      accessorKey: "id",
+      accessorKey: "finv_id",
       header: "Batch No.",
+      cell: ({ row }) => <div className="text-center">{row.original.finv_id}</div>,
     },
     {
-      accessorKey: "itemName",
+      accessorKey: "firstAidInfo",
       header: "Item Name",
+      cell: ({ row }) => {
+        const firstAid = row.original.firstAidInfo;
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{firstAid.fa_name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "category",
@@ -48,18 +145,33 @@ export default function FirstAidStocks() {
     },
     {
       accessorKey: "qty",
-      header: "Qty",
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.qty}</div>
-      )
+      header: "Stocks",
+      cell: ({ row }) => {
+        const { finv_qty, finv_pcs } = row.original.qty;
+        const unit = row.original.finv_qty_unit;
+        return (
+          <div className="text-center">
+            {finv_pcs > 0 ? (
+              <div className="flex flex-col">
+                <span className="text-blue">{finv_qty} box/es</span>
+                <span className="text-red-500"> ({finv_pcs} pcs per box)</span>
+              </div>
+            ) : (
+              <span className="text-blue">
+                {finv_qty} {unit}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "usedItem",
+      accessorKey: "used",
       header: "Used",
       cell: ({ row }) => (
         <div className="flex items-center justify-center gap-2">
-          <span className="text-sm text-gray-600">
-            {row.original.usedItem || 0}
+          <span className="text-sm text-red-700">
+            {row.original.used || 0}
           </span>
           <TooltipLayout
             trigger={
@@ -75,14 +187,18 @@ export default function FirstAidStocks() {
             content="Used Items"
           />
         </div>
-      )
+      ),
     },
     {
       accessorKey: "availQty",
       header: "Available",
       cell: ({ row }) => (
-        <div className="text-center text-green-700">{row.original.availQty}</div>
-      )
+        <div className="text-center text-green-700">
+          {row.original.qty.finv_pcs > 0
+            ? `${row.original.qty.finv_qty * row.original.qty.finv_pcs} pcs`
+            : `${row.original.availQty} ${row.original.finv_qty_unit}`}
+        </div>
+      ),
     },
     {
       accessorKey: "expiryDate",
@@ -96,114 +212,45 @@ export default function FirstAidStocks() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                    <Edit size={16} />
-                  </div>
-                }
-                mainContent={
-                  <EditFirstAidStockForm
-                    initialData={row.original}
-                  />
-                }
-              />
-            }
-            content="Edit" 
-          />
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                mainContent={<></>}
-              />
-            }
-            content="Delete"
-          />
-        </div>
-      ),
+      cell: ({ row }) => {
+        return (
+          <>
+            <div className="flex gap-2">
+              <div className="flex justify-center gap-2">
+                <TooltipLayout
+                  trigger={
+                    <DialogLayout
+                      trigger={
+                        <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                          <Edit size={16} />
+                        </div>
+                      }
+                      mainContent={
+                        <EditFirstAidStockForm
+                          initialData={row.original}
+                          setIsDialog={setIsDialog}
+                        />
+                      }
+                    />
+                  }
+                  content="Edit"
+                />
+              </div>
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteFirstAid(row.original.finv_id)}
+                >
+                  <Trash />
+                </Button>
+              </div>
+            </div>
+          </>
+        );
+      },
     },
   ];
-
-  const sampleData: FirstAidStocksRecord[] = [
-    {
-      id: 5,
-      itemName: "Sterile Gauze Pads",
-      category: "Dressings",
-      qty: 150,
-      availQty: 100,
-      usedItem: 50,
-      expiryDate: "2025-12-31"
-    },
-    {
-      id: 3,
-      itemName: "Adhesive Bandages",
-      category: "Wound Care",
-      qty: 200,
-      availQty: 150,
-      usedItem: 50,
-      expiryDate: "2024-06-30"
-    },
-    {
-      id: 2,
-      itemName: "Antiseptic Solution",
-      category: "Cleaning Supplies",
-      qty: 75,
-      availQty: 50,
-      usedItem: 25,
-      expiryDate: "2025-03-15"
-    }
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<FirstAidStocksRecord[]>(sampleData);
-  const [currentData, setCurrentData] = useState<FirstAidStocksRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const filtered = sampleData.filter((item) => {
-      const searchText = `${item.id} ${item.itemName} ${item.category} ${item.qty} ${item.availQty} ${item.usedItem} ${item.expiryDate}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    }); 
-    
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  }; 
-
- 
-
 
   return (
     <>
@@ -219,7 +266,7 @@ export default function FirstAidStocks() {
                 placeholder="Search..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <SelectLayout
@@ -227,7 +274,7 @@ export default function FirstAidStocks() {
               label=""
               className="bg-white"
               options={[
-                { id: "1", name: "All" },
+                { id: "1", name: "" },
                 { id: "2", name: "By date" },
                 { id: "3", name: "By category" },
               ]}
@@ -239,12 +286,14 @@ export default function FirstAidStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New 
+              <Plus size={15} /> New
             </div>
           }
           title="First Aid Items"
           description="Add New First Aid Item"
-          mainContent={<FirstAidStockForm/>}
+          mainContent={<FirstAidStockForm />}
+          isOpen={isDialog}
+          onOpenChange={setIsDialog}
         />
       </div>
 
@@ -256,7 +305,14 @@ export default function FirstAidStocks() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={(e) => {
+                const value = +e.target.value;
+                if (value >= 1) {
+                  setPageSize(value);
+                } else {
+                  setPageSize(1); // Reset to 1 if invalid
+                }
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
@@ -279,26 +335,32 @@ export default function FirstAidStocks() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={currentData} />
+          <DataTable columns={columns} data={paginatedData} />
         </div>
-
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
-            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
             {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
             {filteredData.length} rows
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={confirmDeleteFirstAid}
+        title="Delete First Aid Item"
+        description="Are you sure you want to delete this first aid item? This action cannot be undone."
+      />
     </>
   );
 }

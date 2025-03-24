@@ -13,10 +13,14 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+// import {
+//   AddCommodityStockType,
+//   CommodityStocksSchema,
+// } from "@/form-schema/inventory/inventoryStocksSchema";
 import {
-  CommodityStockType,
-  CommodityStocksSchema,
-} from "@/form-schema/inventory/inventoryStocksSchema";
+  AddCommoditySchema,
+  AddCommodityStockType,
+} from "@/form-schema/inventory/addStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import api from "@/pages/api/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,7 +28,6 @@ import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { CommodityStocksRecord } from "../tables/CommodityStocks";
 import { CommodityTransactionPayload } from "../REQUEST/Payload";
 import { addCommodityTransaction } from "../REQUEST/Post";
-import { AddCommoditySchema,AddCommodityStockType } from "@/form-schema/inventory/addStocksSchema";
 
 interface EditCommodityStockFormProps {
   initialData: CommodityStocksRecord;
@@ -40,7 +43,7 @@ export default function EditCommodityStockForm({
   const [formData, setFormData] = useState<AddCommodityStockType | null>(null);
   const queryClient = useQueryClient();
 
-  const form = useForm<CommodityStockType>({
+  const form = useForm<AddCommodityStockType>({
     resolver: zodResolver(AddCommoditySchema),
     defaultValues: {
       cinv_qty: 0,
@@ -49,7 +52,7 @@ export default function EditCommodityStockForm({
     },
   });
 
-  const onSubmit = useCallback((data: CommodityStockType) => {
+  const onSubmit = useCallback((data: AddCommodityStockType) => {
     setFormData(data);
     setIsConfirmationOpen(true);
   }, []);
@@ -69,17 +72,14 @@ export default function EditCommodityStockForm({
         return;
       }
 
-      const currentQtyAvail =existingCommodity.cinv_qty_avail;
-      const currentQty = existingCommodity.cinv_qty
+      const currentQtyAvail = existingCommodity.cinv_qty_avail;
+      let qty = existingCommodity.cinv_qty;
       const currentPcs = existingCommodity.cinv_pcs;
-      const currentUnit = existingCommodity.cinv_qty_unit;
       const inv_id = existingCommodity.inv_detail?.inv_id;
 
       // Validate pieces per box if adding boxes
       if (
         formData.cinv_qty_unit === "boxes" &&
-        currentUnit === "boxes" &&
-        currentPcs !== 0 &&
         Number(currentPcs) !== Number(formData.cinv_pcs)
       ) {
         form.setError("cinv_pcs", {
@@ -90,27 +90,26 @@ export default function EditCommodityStockForm({
       }
 
       let newQtyAvail = currentQtyAvail;
-      let newQty = currentQty;
+      console.log("cinv_qty_unit", formData.cinv_qty_unit);
 
       if (formData.cinv_qty_unit === "boxes") {
-        newQtyAvail += formData.cinv_qty * (formData.cinv_pcs || 0);
-        newQty += formData.cinv_qty * (formData.cinv_pcs || 0);
+        qty += formData.cinv_qty;
+        newQtyAvail = qty * currentPcs;
+        console.log(newQtyAvail);
       } else {
-        newQtyAvail += formData.cinv_qty;
-        newQty += formData.cinv_qty;
+        qty += formData.cinv_qty;
+        newQtyAvail = qty;
       }
+      console.log("NewQty", qty);
 
       await api.put(
         `inventory/update_commoditystocks/${initialData.cinv_id}/`,
         {
-          qty: {
-            cinv_qty: newQty,
-            cinv_pcs: formData.cinv_qty_unit === "boxes" ? formData.cinv_pcs : 0,
-          },
-          cinv_qty_unit: formData.cinv_qty_unit,
+          cinv_qty: qty,
           cinv_qty_avail: newQtyAvail,
         }
       );
+      
 
       if (inv_id) {
         await api.put(`inventory/update_inventorylist/${inv_id}/`, {
@@ -132,12 +131,14 @@ export default function EditCommodityStockForm({
       );
       console.log("Com", formData);
       console.log("CInv", initialData.cinv_id);
-      const commodityTransactionResponse = await addCommodityTransaction(commodityTransactionPayload);
+      const commodityTransactionResponse = await addCommodityTransaction(
+        commodityTransactionPayload
+      );
 
-      if(!commodityTransactionResponse || commodityTransactionResponse.error) {
+      if (!commodityTransactionResponse || commodityTransactionResponse.error) {
         throw new Error("Failed to add Commodity inventory.");
       }
-        
+
       setIsDialog(false);
       queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
       alert("Stock updated successfully!");
@@ -148,7 +149,6 @@ export default function EditCommodityStockForm({
             err.response.data.detail || "Unknown error"
           }`
         );
-
         console.error(err.response);
       } else {
         alert("Network error. Please try again.");

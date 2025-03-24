@@ -7,7 +7,7 @@ export const MedicineListSchema = z.object({
 
 export const CommodityListSchema = z.object({
   commodityName: z.string().min(1, "Enter Commodity Name").default(""),
- 
+  
 });
 
 

@@ -55,24 +55,6 @@ export const CommodityStocksSchema = z.object({
 );
 
 
-export const VaccineStocksSchema = z.object({
-  antigen: z.string().min(1, "Vaccine name is required").default(""),
-  category: z.string().min(1, "Category is Required").default(""),
-  batchNumber: z.string().min(1, "Batch number is required").default(""),
-  volume: z.number().min(0, "Volume must be a non-negative number").default(0),
-  vialBoxCount: z.number({ required_error: "Vial box count is Required" }).min(0, "Vial box count must be a non-negative number"),
-  dosesPcsCount: z.number({ required_error: "Doses pieces count is Required" }).min(0, "Doses pieces count must be a non-negative number"),
-  expiryDate: z.string().min(1, "Expiry date is Required").default(""),
-});
-
-
-// export const FirstAidStockSchema = z.object({
-//   itemName: z.string().min(1, "Item name is Required").default(""),
-//   category: z.string().min(1, "Category is Required").default(""),
-//   qty: z.number().min(1, "Quantity required"),
-//   expiryDate: z.string().default(""),
-// });
-
 export const FirstAidStockSchema = z.object({
   fa_id: z.string().min(1, "Commodity name is required").default(""),
   cat_id: z.string().min(1, "Category is required").default(""),
@@ -96,6 +78,27 @@ export const FirstAidStockSchema = z.object({
     path: ["pcs"],
   }
 );
+
+
+export const VaccineStocksSchema = z.object({
+  antigen: z.string().min(1, "Vaccine name is required").default(""),
+  category: z.string().min(1, "Category is Required").default(""),
+  batchNumber: z.string().min(1, "Batch number is required").default(""),
+  volume: z.number().min(0, "Volume must be a non-negative number").default(0),
+  vialBoxCount: z.number({ required_error: "Vial box count is Required" }).min(0, "Vial box count must be a non-negative number"),
+  dosesPcsCount: z.number({ required_error: "Doses pieces count is Required" }).min(0, "Doses pieces count must be a non-negative number"),
+  expiryDate: z.string().min(1, "Expiry date is Required").default(""),
+});
+
+
+// export const FirstAidStockSchema = z.object({
+//   itemName: z.string().min(1, "Item name is Required").default(""),
+//   category: z.string().min(1, "Category is Required").default(""),
+//   qty: z.number().min(1, "Quantity required"),
+//   expiryDate: z.string().default(""),
+// });
+
+
 
 export type MedicineStockType = z.infer<typeof MedicineStocksSchema>;
 export type CommodityStockType = z.infer<typeof CommodityStocksSchema>;

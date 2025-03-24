@@ -22,7 +22,7 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { addFirstAidInventory, addInventory } from "../REQUEST/Post";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { FirstAidPayoad, InventoryFirstAidPayload } from "../REQUEST/Payload";
+import { FirstAidPayload, InventoryFirstAidPayload } from "../REQUEST/Payload";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
 
 export default function FirstAidStockForm() {
@@ -67,13 +67,13 @@ export default function FirstAidStockForm() {
       }
 
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
-      const parsefaID = parseInt(data.fa_id, 10);
+      const parseFirstAidID = parseInt(data.fa_id, 10);
       if (!data.fa_id) {
         throw new Error("Failed to get FirstAid ID.");
         return;
       }
 
-      const firstAidPayoad = FirstAidPayoad(data, inv_id, parsefaID);
+      const firstAidPayoad = FirstAidPayload(data, inv_id, parseFirstAidID);
       console.log("FirstAid Payload:", firstAidPayoad);
       await new Promise((resolve) => setTimeout(resolve, 500));
       const firstAidInventoryResponse = await addFirstAidInventory(
