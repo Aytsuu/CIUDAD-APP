@@ -28,7 +28,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Separator } from "@/components/ui/separator"
 import CardLayout from "@/components/ui/card/card-layout"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 
 type Report = {
   id: string

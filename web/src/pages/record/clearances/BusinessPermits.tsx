@@ -1,10 +1,10 @@
-// import { useState } from 'react';
+import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 // import { Button } from "@/components/ui/button";
 // import TableLayout from '@/components/ui/table/table-layout.tsx';
 // import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 // import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 
 import AddBusinessDocument from '@/pages/record/clearances/CreateDocumentModal';
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";;
 
 // Updated BusinessDocument type
 type BusinessDocument = {
@@ -138,12 +139,25 @@ export const BusinessDocumentRecords: BusinessDocument[] = [
 function BusinessDocumentPage() {
     const data = BusinessDocumentRecords;
 
+    const [currentPage, setCurrentPage] = useState(1);
+
+    
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
     return (
         <div className="w-full h-full px-4 md:px-8 lg:px-16">
             <div className="mb-4 mt-10">
                 <div className="text-left font-bold text-[#394360] text-2xl md:text-3xl mb-[20px]">
-                    <h1>BUSINESS PERMIT REQUEST</h1>
+                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                    Business Permit Request
+                </h1>
+                <p className="text-xs sm:text-sm text-darkGray">
+                    Manage and view business permit request 
+                </p>
                 </div>
+                <hr className="border-gray mb-5 sm:mb-8" />
 
                 <div className="w-full bg-white border border-gray rounded-[5px]">
                     <div className='w-full flex justify-between mb-4 p-5'>
@@ -186,19 +200,28 @@ function BusinessDocumentPage() {
 
                     <DataTable columns={columns} data={data} />
                 </div>
-                <div className="flex justify-between items-center p-5 border-t border-gray-200">
-                        <span className="text-gray-500 text-[14px]">Showing 1-10 of 150 rows</span>
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" className="text-gray-600"> <ChevronLeft className="w-4 h-4 mr-2" /> Previous  </Button>
-                            <Button variant="outline" className="px-3">1</Button>
-                            <span className="text-gray-600">2</span>
-                            <span className="text-gray-600">...</span>
-                            <Button variant="ghost" className="text-gray-600">Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
-                        </div>
+                
+                {/* Pagination */}
+                <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                    {/* Showing Rows Info */}
+                    <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                        Showing 1-10 of 150 rows
+                    </p>
+                    
+                        {/* Pagination */}
+                    <div className="w-full sm:w-auto flex justify-center">
+                        <PaginationLayout 
+                            totalPages={15} 
+                            currentPage={currentPage} 
+                            onPageChange={handlePageChange} 
+                        />
                     </div>
+                </div>
             </div>
         </div>
     );
 }
 
 export default BusinessDocumentPage;
+
+

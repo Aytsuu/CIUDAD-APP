@@ -1,7 +1,7 @@
 "use client"
 
 import { ArrowLeft, Printer } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Link } from "react-router"
 
 export default function FamilyProfileView() {

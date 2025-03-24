@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 // import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
@@ -223,18 +223,17 @@ export default function MaternalAllRecords() {
 
   // const [value, setValue] = useState("");
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex-col items-center mb-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Maternal Records
+              Maternal Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
+              Manage and view patients information
           </p>
-        </div>
       </div>
-      <hr className="border-gray mb-6 sm:mb-10" />
+      <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}

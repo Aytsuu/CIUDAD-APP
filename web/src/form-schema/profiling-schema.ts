@@ -1,0 +1,77 @@
+import * as z from "zod";
+
+// Define the schema with custom validation for householdNo
+export const demographicInfoSchema = z.object({
+    id: z.string(), // For residents living independently
+    building: z.string().min(1, 'Building is required'),
+    householdNo: z.string(),
+    indigenous: z.string().min(1, 'Indigenous is required'),
+});
+
+export const personalInfoSchema = z.object({
+    per_id: z.string(),
+    per_lname: z.string().min(1, "Last Name is required"),
+    per_fname: z.string().min(1, "First Name is required"),
+    per_mname: z.string(),
+    per_suffix: z.string(),
+    per_sex: z.string().min(1, "Sex is required"),
+    per_dob: z.string().date(),
+    per_status: z.string().min(1, "Status is required"),
+    per_address: z.string().min(1, 'Address is required'),
+    per_edAttainment: z.string(),
+    per_religion: z.string().min(1, "Religion is required"),
+    per_contact: z.string().min(1, "Contact is required"),
+})                                                                                                                                                                                                                                       
+export const motherInfoSchema = z.object({
+    id: z.string(),
+    lastName: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    suffix: z.string(),
+    dateOfBirth: z.string().date(),  
+    status: z.string(),
+    religion: z.string(),
+    edAttainment: z.string(),
+    contact: z.string(),
+})
+
+export const fatherInfoSchema = z.object({
+    id: z.string(),
+    lastName: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    suffix: z.string(),
+    dateOfBirth: z.string().date(),  
+    status: z.string(),
+    religion: z.string(),
+    edAttainment: z.string(),
+    contact: z.string(),
+})
+
+export const dependentSchema = z.object({
+    id: z.string(),
+    lastName: z.string(),
+    firstName: z.string(),
+    middleName: z.string(),
+    suffix: z.string(),
+    dateOfBirth: z.string(),
+    sex: z.string(),
+})
+
+
+export const familyFormSchema = z.object({
+    demographicInfo: demographicInfoSchema,
+    motherInfo: motherInfoSchema,
+    fatherInfo: fatherInfoSchema,
+    dependentsInfo: z.object({
+        list: z.array(dependentSchema).default([]),
+        new: dependentSchema
+    }),
+})
+
+export const householdSchema = z.object({
+    nhts: z.string().min(1),
+    sitio: z.string().min(1),
+    street: z.string().min(1),
+    householdHead: z.string().min(1)
+})

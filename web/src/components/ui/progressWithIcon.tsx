@@ -1,5 +1,6 @@
 import React from 'react';
 import { BsFillPersonFill, BsFillPeopleFill, BsCheckLg, BsFillPersonPlusFill } from 'react-icons/bs';
+import { MdGroupWork } from "react-icons/md";
 import { IconType } from 'react-icons';
 
 interface ProgressProps {
@@ -18,8 +19,8 @@ interface StepIconProps {
 }
 
 const STEPS: readonly Step[] = [
-  { label: "Personal", minProgress: 33, icon: BsFillPersonFill },
-  { label: "Parent", minProgress: 66, icon: BsFillPeopleFill },
+  { label: "Demographic", minProgress: 30, icon: MdGroupWork },
+  { label: "Parent", minProgress: 60, icon: BsFillPeopleFill },
   { label: "Dependent", minProgress: 100, icon: BsFillPersonPlusFill }
 ] as const;
 
@@ -37,7 +38,7 @@ const StepIcon: React.FC<StepIconProps> = ({ progress, step }) => {
   );
 };
 
-export default function Progress({ progress }: ProgressProps) {
+export default function ProgressWithIcon({ progress }: ProgressProps) {
   return (
     <div className="flex items-center justify-center w-full px-2 md:px-4 py-2 overflow-x-auto">
       <div className="flex items-center min-w-max">
@@ -53,7 +54,7 @@ export default function Progress({ progress }: ProgressProps) {
               />
             )}
             
-            <div className="flex flex-col items-center space-y-1 md:space-y-2">
+            <div className="flex flex-col items-center space-y-1 md:space-y-2 p-4">
               <div
                 className={`
                   w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center

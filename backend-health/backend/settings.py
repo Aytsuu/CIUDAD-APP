@@ -8,26 +8,43 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
+
 """
 
 from pathlib import Path
+
+
+
+
+from pathlib import Path
+from datetime import timedelta
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
 from decouple import config
 import sys, os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
+<<<<<<<< HEAD:backend-health/backend/settings.py
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1'
+========
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+'
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -39,9 +56,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<<< HEAD:backend-health/backend/settings.py
     'apps.healthProfiling',
     'corsheaders',
     'rest_framework',
+========
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'apps.account',
+    'apps.waste',
+    'apps.profiling',
+    'apps.administration'
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
 ]
 
 MIDDLEWARE = [
@@ -53,7 +80,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+<<<<<<<< HEAD:backend-health/backend/settings.py
 
+========
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -75,10 +105,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+<<<<<<<< HEAD:backend-health/backend/settings.py
 
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+========
+
+# Database
+# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
 
 DATABASES = {
     'default': {
@@ -88,15 +124,22 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
+<<<<<<<< HEAD:backend-health/backend/settings.py
     },
     'Profiling': {
         
+========
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
     }
 }
 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+<<<<<<<< HEAD:backend-health/backend/settings.py
+========
+
+>>>>>>>> profiling:backend-health/backend/backend/settings.py
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -138,5 +181,30 @@ DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
+========
+# ---
+
+# Django REST Framework Settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# JWT Authentication Settings
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
+CORS_ALLOW_HEADERS = ["*"]

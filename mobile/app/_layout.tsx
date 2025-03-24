@@ -38,6 +38,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={LIGHT_THEME}>
       <StatusBar backgroundColor="#ECF8FF" style="dark" />
+<<<<<<< HEAD
         <Stack>
           <Stack.Screen
             name = "(tabs)"
@@ -53,8 +54,24 @@ export default function RootLayout() {
           
           />
         </Stack>
+=======
+<<<<<<< HEAD
+      <Stack>
+=======
+      <Stack initialRouteName='(auth)'>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+>>>>>>> mobile/feature/landing-page
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+>>>>>>> profiling
       <PortalHost />
     </ThemeProvider>
+<<<<<<< HEAD
     
   );
 }
+=======
+  );
+}
+>>>>>>> mobile/feature/landing-page

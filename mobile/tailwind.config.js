@@ -3,7 +3,11 @@ const { hairlineWidth } = require('nativewind/theme');
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
+<<<<<<< HEAD
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './screens/**/*.{ts,tsx}'],
+=======
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', "./screens/**/*.{ts,tsx}"],
+>>>>>>> mobile/feature/landing-page
   presets: [require('nativewind/preset')],
   theme: {
     extend: {

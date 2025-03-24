@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Form, FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form/form"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 

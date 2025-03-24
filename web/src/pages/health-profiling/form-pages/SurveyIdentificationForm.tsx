@@ -7,11 +7,11 @@ import { format } from "date-fns"
 import { CalendarIcon, CheckCircle2, ClipboardCheck, Pencil, Trash2, User } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Separator } from "@/components/ui/separator"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 
 import { cn } from "@/lib/utils"
 import { surveyFormSchema } from "@/form-schema/health-schema"
