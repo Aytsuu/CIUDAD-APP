@@ -22,3 +22,8 @@ class AuthRouter:
             return True
         return None
     
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        if app_label in self.router_app_labels:
+            return db == 'default'
+        return None
+    
