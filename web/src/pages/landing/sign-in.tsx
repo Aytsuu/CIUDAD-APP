@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom"; // For navigation after login
+import { useNavigate } from "react-router-dom"; 
 import { supabase } from "@/supabaseClient"; // Import Supabase client
 
 export default function SignIn() {
@@ -39,40 +39,22 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      // Step 1: Determine if the input is an email or username
-      const isEmail = data.usernameOrEmail.includes("@");
-
-      // Step 2: Authenticate with Supabase
-      const { data: supabaseData, error: supabaseError } = isEmail
-        ? await supabase.auth.signInWithPassword({
-            email: data.usernameOrEmail,
-            password: data.password,
-          })
-        : await supabase.auth.signInWithPassword({
-            email: data.usernameOrEmail + "@gmail.com",
-            password: data.password,
-          });
-
-      if (supabaseError) {
-        throw supabaseError;
-      }
-
-      // Step 3: Get the Supabase JWT
-      const supabaseToken = supabaseData.session.access_token;
-
-      // Step 4: Send the JWT to your Django backend for verification
-      const response = await axios.post("http://192.168.1.4/api/login/", {
-        token: supabaseToken,
+      
+      const response = await axios.post("http://192.168.199.81:8000/api/login/", {
+        username: data.usernameOrEmail, 
+        password: data.password,
       });
 
       if (response.status === 200) {
         console.log("Login successful!", response.data);
 
-        // Step 5: Store user data in localStorage (or cookies for better security)
+        // Store user data in localStorage
         localStorage.setItem("user_id", response.data.user_id);
-        localStorage.setItem("is_superuser", response.data.is_superuser);
+        localStorage.setItem("username", response.data.username);
+        localStorage.setItem("email", response.data.email);
+        localStorage.setItem("token", response.data.token);
 
-        // Step 6: Redirect to the home page or dashboard
+        // Redirect to the home page or dashboard
         navigate("/");
       }
     } catch (error) {
@@ -81,7 +63,7 @@ export default function SignIn() {
       // Handle different types of errors
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          setErrorMessage("Invalid username/email or password.");
+          setErrorMessage("Invalid username or password.");
         } else {
           setErrorMessage("An error occurred. Please try again later.");
         }

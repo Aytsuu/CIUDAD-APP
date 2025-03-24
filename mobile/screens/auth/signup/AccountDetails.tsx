@@ -10,6 +10,7 @@ import { EyeOff } from "@/lib/icons/EyeOff";
 import { useForm } from "../../../app/(auth)/FormContext";
 import { z } from "zod";
 import { FormDataSchema } from "@/form-schema/registration-schema";
+import { UserAccount } from "@/form-schema/user-account";
 import axios from "axios";
 
 export default function AccountDetails() {
@@ -22,9 +23,7 @@ export default function AccountDetails() {
 
   const handleProceed = async () => {
     // Validate user input
-    const validationResult = FormDataSchema.pick({
-      accountDetails: true,
-    }).safeParse(formData);
+    const validationResult = UserAccount.safeParse(formData);
   
     if (!formData.accountDetails.password || !rePass) {
       setErrors(null);
@@ -42,10 +41,11 @@ export default function AccountDetails() {
   
       try {
         // Send data to the backend
-        const response = await axios.post("http://192.168.1.4:8000/api/signup/", {
-          username: formData.accountDetails.userName, // Add username to the payload
+        const response = await axios.post("http://192.168.199.81:8000/api/signup/", {
+          username: formData.accountDetails.userName,
           email: formData.accountDetails.email,
           password: formData.accountDetails.password,
+          password2: formData.accountDetails.password 
         });
   
         if (response.status === 201) {

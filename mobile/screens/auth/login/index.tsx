@@ -18,53 +18,51 @@ import { EyeOff } from "@/lib/icons/EyeOff";
 import axios from "axios";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both username and password.");
       return;
     }
   
     setIsLoading(true);
   
     try {
-      // Send a GET request to the backend with email and password as query parameters
-      const response = await axios.get("http://192.168.1.4:8000/api/login/", {
-        params: {
-          email: email,
-          password: password,
-        },
+      const response = await axios.post("http://192.168.199.81:8000/api/login/", {
+        username: username,
+        password: password,
       });
-  
-      if (response.data.success) {
-        await AsyncStorage.setItem("isLoggedIn", "true");
-        await AsyncStorage.setItem("userEmail", email);
-  
+
+      if (response.data.token) { 
+        await AsyncStorage.multiSet([
+          ["authToken", response.data.token],
+          ["userId", response.data.user_id.toString()],
+          ["username", response.data.username],
+          ["email", response.data.email],
+          ["isLoggedIn", "true"]
+        ]);
+
         Alert.alert("Success", "Login successful!");
+        router.replace("/"); // Navigate to home screen after login
       } else {
-        Alert.alert("Error", response.data.message || "No Account Matched!");
+        Alert.alert("Error", "Login failed - no token received");
       }
     } catch (error) {
-      // Suppress the error logging and only show an alert
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          // Invalid password
-          Alert.alert("Error", "Invalid password.");
-        } else if (error.response?.status === 404) {
-          // User not found
-          Alert.alert("Error", "No account found with this email.");
+          Alert.alert("Error", "Invalid username or password");
+        } else if (error.response?.status === 400) {
+          Alert.alert("Error", "Invalid request format");
         } else {
-          // Other errors
-          Alert.alert("Error", "Something went wrong. Please try again.");
+          Alert.alert("Error", "Server error. Please try again later.");
         }
       } else {
-        // Non-Axios errors
-        Alert.alert("Error", "Something went wrong. Please try again.");
+        Alert.alert("Error", "Network error. Please check your connection.");
       }
     } finally {
       setIsLoading(false);
@@ -90,11 +88,10 @@ export default function LoginScreen() {
         <View className="flex-grow gap-5 mt-7">
           <Input
             className="h-[57px] font-PoppinsRegular"
-            placeholder="Username/Email"
-            value={email}
-            onChangeText={setEmail}
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
             autoCapitalize="none"
-            keyboardType="email-address"
           />
           <View className="relative">
             <Input
