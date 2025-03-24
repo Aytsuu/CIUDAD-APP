@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class HealthprofilingConfig(AppConfig):
+class WasteConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.healthProfiling'
+    name = 'apps.waste'
     

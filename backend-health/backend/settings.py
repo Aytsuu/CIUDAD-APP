@@ -58,8 +58,6 @@ INSTALLED_APPS = [
     'apps.healthProfiling',
     'corsheaders',
     'rest_framework',
-    'corsheaders',
-    'rest_framework',
     'rest_framework_simplejwt',
     'apps.account',
     'apps.waste',

@@ -55,9 +55,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.healthProfiling',
-    'corsheaders',
-    'rest_framework',
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -165,7 +162,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
