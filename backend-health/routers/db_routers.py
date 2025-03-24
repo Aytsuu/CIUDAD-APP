@@ -15,3 +15,10 @@ class AuthRouter:
             return 'Profiling'
         return None
     
+    def allow_relation(self, obj1, obj2, **hints):
+        if obj1._meta.app_label == 'healthProfiling' or obj2._meta.app_label == 'Profiling':
+            return True
+        elif 'Profiling' in [obj1._meta.app_label, obj2._meta.app_label]:
+            return True
+        return None
+    

@@ -90,7 +90,7 @@ DATABASES = {
         'PORT': config('DB_PORT')
     },
     'Profiling': {
-
+        
     }
 }
 

@@ -98,3 +98,6 @@ class Illness(models.Model):
 
     class Meta:
         db_table = 'illness'
+
+class TB_Surveilance(models.Model):
+    pass
