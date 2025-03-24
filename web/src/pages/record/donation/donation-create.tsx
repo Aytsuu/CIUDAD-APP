@@ -29,8 +29,8 @@ function ClerkDonateCreate() {
     try {
       await postdonationreq(values);
   } catch (err) {
-      console.error("Error submitting expense or income:", err);
-      alert("Failed to submit income or expense. Please check the input data and try again.");
+      console.error("Error submitting donation", err);
+      alert("Failed to submit donation entry. Please check the information entered and try again.");
   }
   };
 

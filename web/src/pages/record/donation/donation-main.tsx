@@ -258,15 +258,15 @@ import { putdonationreq } from "./request-db/donationPutRequest";
 import { deldonationreq } from "./request-db/donationDelRequest";
 
 type Donation = {
-  don_num: string; // Reference number (if needed)
-  don_donorfname: string; // Donor first name
-  don_donorlname: string; // Donor last name
-  don_item_name: string; // Item name
-  don_qty: string; // Item quantity (as a string to match the schema)
-  don_category: string; // Item category
-  don_receiver: string; // Receiver
-  don_description?: string; // Item description (optional)
-  don_date: string; // Donation date
+  don_num: string;
+  don_donorfname: string; 
+  don_donorlname: string;
+  don_item_name: string;
+  don_qty: string;
+  don_category: string;
+  don_receiver: string;
+  don_description?: string;
+  don_date: string;
 };
 
 function DonationTracker() {
@@ -322,23 +322,23 @@ function DonationTracker() {
       header: "Donor First Name",
     },
     {
-      accessorKey: "don_donorlname", // Use don_donorlname instead of donor
+      accessorKey: "don_donorlname", 
       header: "Donor Last Name",
     },
     {
-      accessorKey: "don_item_name", // Use don_item_name instead of itemName
+      accessorKey: "don_item_name", 
       header: "Item Name",
     },
     {
-      accessorKey: "don_category", // Use don_category instead of itemCat
+      accessorKey: "don_category", 
       header: "Item Category",
     },
     {
-      accessorKey: "don_qty", // Use don_qty instead of itemqty
+      accessorKey: "don_qty", 
       header: "Quantity",
     },
     {
-      accessorKey: "don_date", // Use don_date instead of datelisted
+      accessorKey: "don_date", 
       header: "Date",
     },
     {
