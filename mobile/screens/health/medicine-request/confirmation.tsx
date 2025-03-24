@@ -1,6 +1,6 @@
 "use client"
 
-import { View, ScrollView } from "react-native"
+import { View, ScrollView, TouchableWithoutFeedback } from "react-native"
 import { Check } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,11 @@ export default function Confirmation() {
   }, [orderItemsString])
 
   return (
+    
     <View className="flex-1 bg-[#ECF8FF] p-4">
+      <TouchableWithoutFeedback onPress={() => router.back()}>
+                <Text className="text-black text-[15px]">Back</Text>
+              </TouchableWithoutFeedback>
       <View className="items-center justify-center pt-8 pb-4">
         <View className="bg-green-500 w-40 h-40 rounded-full flex items-center justify-center mb-8">
           <Check size={80} color="white" strokeWidth={3} />
@@ -60,7 +64,7 @@ export default function Confirmation() {
       )}
 
       <Button className="bg-[#263D67] w-64 self-center" onPress={() => router.push("/(health)")}>
-        <Text className="text-white font-PoppinsMedium">Back to Home</Text>
+        <Text className="text-white font-PoppinsMedium">Home</Text>
       </Button>
     </View>
   )

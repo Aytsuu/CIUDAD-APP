@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { View, TouchableOpacity, TextInput, ScrollView, StatusBar } from "react-native"
-import { ChevronLeft, BriefcaseMedical, Pill, Search, ShoppingBag } from "lucide-react-native"
+import { View, TouchableOpacity, TextInput, ScrollView, StatusBar, TouchableWithoutFeedback } from "react-native"
+import { Pill, Search, ShoppingBag } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { Card } from "@/components/ui/card"
 import SelectLayout from "@/components/ui/select/select-layout"
@@ -152,16 +152,12 @@ export default function MedicineRequest() {
   return (
     <View className="flex-1 h-full bg-[#ECF8FF] p-4">
       {/* Header */}
-      <StatusBar barStyle="light-content" backgroundColor="#1e3a8a" />
-      <View className="flex-row justify-between items-center mt-8 mb-8">
-        <TouchableOpacity onPress={() => router.back()}>
-          <View className="flex-row items-center">
-            <ChevronLeft size={24} color="#263D67" />
-            <Text className="text-lg font-medium text-[#263D67] ml-1">Back</Text>
-          </View>
-        </TouchableOpacity>
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="relative mr-2">
+      <View>
+      <TouchableWithoutFeedback onPress={() => router.back()}>
+                <Text className="text-black text-[15px]">Back</Text>
+              </TouchableWithoutFeedback>
+     
+          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="relative ml-auto">
             <ShoppingBag size={24} color="#263D67" />
             {cartItems.length > 0 && (
               <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
@@ -171,9 +167,7 @@ export default function MedicineRequest() {
           </TouchableOpacity>
           
         </View>
-      </View>
-
-      {/* Title */}
+    
       <Text className="text-3xl font-PoppinsSemiBold text-[#263D67] mb-2">Request</Text>
       <Text className="text-3xl font-PoppinsSemiBold text-[#263D67] mb-4">Medicine</Text>
       <Text className="text-xs font-PoppinsRegular mb-6">Get the medicines you need with ease.</Text>

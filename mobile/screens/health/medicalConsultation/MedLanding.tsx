@@ -1,13 +1,16 @@
-import { View,Image,Text, ScrollView } from 'react-native'
+import { View,Image,Text, ScrollView, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
 import {Button} from '@/components/ui/button'
 import React from 'react'
+import { router } from 'expo-router';
 
 const MedConsultationLanding = () => {
   return (
 <ScrollView>
+         <TouchableWithoutFeedback onPress={() => router.back()}>
+                 <Text className="text-black text-[15px]">Back</Text>
+               </TouchableWithoutFeedback>
 
-        <View className='flex justify-center items-center'>
-      
+        <View className='flex justify-center items-center' >
       <Image source={require('@/assets/images/Health/Home/Medical_Consultation.png')}
       className="w-30 justify-center items-center flex h-30 mt-20"
           resizeMode="contain"

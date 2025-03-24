@@ -1,14 +1,18 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function AnimalBites() {
   return (
     <ScrollView className="bg-white">
       <View>
-        <Image 
-          source={require('@/assets/images/Health/Home/animalbites.jpg')} 
+        <TouchableWithoutFeedback onPress={() => router.back()}>
+          <Text className="text-black text-[25px]">Back</Text>
+        </TouchableWithoutFeedback>
+        <Image
+          source={require('@/assets/images/Health/Home/animalbites.jpg')}
           resizeMode="cover"
         />
         <View className="absolute inset-0 bg-black opacity-80" />
@@ -152,21 +156,21 @@ export default function AnimalBites() {
               <Text className="text-gray-700">Watch for signs of infection: redness, swelling, warmth, increasing pain, or pus.</Text>
             </View>
           </View>
-          
+
         </View>
       </View>
 
-      
+
       {/* Visit Health Center Section */}
-      
+
       {/* Prevention Tips */}
       <View className="mx-6 my-6">
         <View className="flex-row items-center mb-4">
           <View className="h-8 w-1 bg-green-500 mr-3" />
           <Text className="text-xl font-bold text-gray-800">PREVENTION TIPS</Text>
         </View>
-        
-        
+
+
         <View className="bg-green-50 p-4 rounded-xl shadow-sm">
           <View className="flex-row items-start mb-3">
             <FontAwesome name="check-circle" size={16} color="#10B981" className="mt-1" />
@@ -187,10 +191,10 @@ export default function AnimalBites() {
         </View>
 
         <View className="bg-blue-900 p-4 rounded-xl shadow-md mt-6">
-        <Text className="text-white text-lg font-bold mb-2">If bitten or any incident, go to our barangay health center</Text>
-        <Text className="text-white">Open Monday-Friday, 8:00 AM - 5:00 PM</Text>
-        
-      </View>
+          <Text className="text-white text-lg font-bold mb-2">If bitten or any incident, go to our barangay health center</Text>
+          <Text className="text-white">Open Monday-Friday, 8:00 AM - 5:00 PM</Text>
+
+        </View>
 
       </View>
     </ScrollView>

@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { ChevronLeft, Bell, Calendar } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import SelectLayout from '@/components/ui/select/select-layout';
+import { router } from 'expo-router';
 
 export default function Records() {
   const services = [
@@ -14,7 +15,7 @@ export default function Records() {
 
   // State for selected service
   const [selectedService, setSelectedService] = React.useState(services[0]);
- const [records, setRecords] = React.useState<{ id: number; date: string; time: string; }[]>([]);
+  const [records, setRecords] = React.useState<{ id: number; date: string; time: string; }[]>([]);
 
   const mockDatabase: { [key: string]: { id: number; date: string; time: string; }[] } = {
     "Medical Consultation": [
@@ -31,22 +32,19 @@ export default function Records() {
     ]
   };
 
-    React.useEffect(() => { 
+  React.useEffect(() => {
     const fetchedRecords = mockDatabase[selectedService.value] || [];
     setRecords(fetchedRecords);
   }, [selectedService]);
 
   return (
     <View className="flex-1 h-full bg-[#ECF8FF] p-4">
-      
+
       {/* Header */}
       <View className="flex-row justify-between items-center mb-6">
-        <TouchableOpacity>
-          <View className="flex-row items-center">
-            <ChevronLeft size={24} color="#263D67" />
-            <Text className="text-lg font-medium text-[#263D67] ml-1">Back</Text>
-          </View>
-        </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={() => router.back()}>
+          <Text className="text-black text-[15px]">Back</Text>
+        </TouchableWithoutFeedback>
         <Bell size={24} color="#263D67" />
       </View>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { View, TouchableOpacity, ScrollView } from "react-native"
+import { View, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from "react-native"
 import { ChevronLeft, Minus, Plus } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { Button } from "@/components/ui/button"
@@ -45,12 +45,9 @@ export default function Cart() {
     <View className="flex-1 h-full bg-[#ECF8FF] p-4">
       {/* Header */}
       <View className="flex-row justify-between items-center mb-6">
-        <TouchableOpacity onPress={() => router.back()}>
-          <View className="flex-row items-center">
-            <ChevronLeft size={24} color="#263D67" />
-            <Text className="text-lg font-medium text-[#263D67] ml-1">Back</Text>
-          </View>
-        </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={() => router.back()}>
+          <Text className="text-black text-[15px]">Back</Text>
+        </TouchableWithoutFeedback>
       </View>
 
       {/* Title */}
@@ -115,11 +112,8 @@ export default function Cart() {
             </View>
           ))
         ) : (
-          <View className="flex-1 justify-center items-center mt-10">
+          <View className="flex-1 justify-center items-center mt-20">
             <Text className="text-[#263D67] font-PoppinsMedium text-lg mb-4">Your bag is empty</Text>
-            <Button className="bg-[#263D67]" onPress={() => router.back()}>
-              <Text className="text-white font-PoppinsMedium">Browse Medicines</Text>
-            </Button>
           </View>
         )}
       </ScrollView>

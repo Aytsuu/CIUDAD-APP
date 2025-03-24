@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { ChevronLeft, MoreVertical, Calendar, Heart, Bell} from 'lucide-react-native';
+import { View, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { ChevronLeft, MoreVertical, Calendar, Heart, Bell } from 'lucide-react-native';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
+import { router } from 'expo-router';
 
 
 export default function Schedules() {
@@ -13,12 +14,9 @@ export default function Schedules() {
     <View className="flex-1 bg-[#ECF8FF] p-4">
       {/* Header */}
       <View className="flex-row justify-between items-center mb-6">
-        <TouchableOpacity>
-          <View className="flex-row items-center">
-            <ChevronLeft size={24} color="#263D67" />
-            <Text className="text-lg font-medium text-[#263D67] ml-1">Back</Text>
-          </View>
-        </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={() => router.back()}>
+          <Text className="text-black text-[15px]">Back</Text>
+        </TouchableWithoutFeedback>
         <Bell size={24} color="#263D67" />
       </View>
 
@@ -43,7 +41,7 @@ export default function Schedules() {
           </TabsTrigger>
           <TabsTrigger
             value="past"
-             className={`flex-1 p-2 rounded-full ${activeTab === 'past' ? 'bg-white shadow-lg' : 'bg-transparent'}`}
+            className={`flex-1 p-2 rounded-full ${activeTab === 'past' ? 'bg-white shadow-lg' : 'bg-transparent'}`}
             onPress={() => setActiveTab('past')}
           >
             <Text className={`font-PoppinsSemiBold ${activeTab === 'past' ? 'text-[#263D67]' : 'text-[#667085]'}`}>
