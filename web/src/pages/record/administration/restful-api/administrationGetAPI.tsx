@@ -32,3 +32,28 @@ export const getPositions = async () => {
         console.error(err)
     }
 }
+
+export const getFeatures = async () => {
+
+    try {
+
+        const res = await api.get("administration/feature/")
+        return res.data
+
+    } catch (err) {
+        console.error(err)
+    }
+
+}
+
+export const getAssignedFeatures = async (selectedPosition: string) => {
+
+    try {
+        
+      const res = await api.get( `administration/assignment/${selectedPosition}/`);
+      return res.data
+    
+    } catch (err) {
+      console.error(err);
+    }
+};

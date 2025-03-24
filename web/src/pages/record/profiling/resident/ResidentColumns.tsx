@@ -147,7 +147,15 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
   },
   {
     accessorKey: "registeredBy",
-    header: "Registered By",
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Registered By
+        <ArrowUpDown size={14} />
+      </div>
+    ),
     cell: ({ row }) => (
         <div className="hidden lg:block max-w-xs truncate">
           {row.getValue("registeredBy") ? row.getValue("registeredBy") : '-'}

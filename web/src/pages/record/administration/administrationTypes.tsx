@@ -1,3 +1,8 @@
+export type Positions = {
+    id: string,
+    name: string
+}
+
 export type Assigned = {
     position: string
     assi_id: string

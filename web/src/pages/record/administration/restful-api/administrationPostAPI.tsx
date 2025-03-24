@@ -1,14 +1,9 @@
 import api from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 
-export const staff = async(personalId: string, positionId: string, ) => {
-    try {
+export const addStaff = async(personalId: string, positionId: string, ) => {
 
-        console.log({
-            staff_id: personalId,
-            pos: positionId,
-            manager: 1
-        })
+    try {
 
         const res = await api.post('administration/staff/', {
             staff_id: personalId,
@@ -23,4 +18,61 @@ export const staff = async(personalId: string, positionId: string, ) => {
     } catch (err) {
         console.log(err)
     }
+
+}
+
+// Add new position
+export const addPosition = async (position: string) => {
+
+    try {
+
+        const res = await api.post("administration/position/", {
+            pos_title: position
+        })
+
+        return res.data
+
+    } catch (err) {
+        console.error(err)
+    }
+
+}
+
+export const assignFeature = async (selectedPosition: string, featureId: string) => {
+
+    try {
+
+        console.log({
+            feat: featureId,
+            pos: selectedPosition,
+            assi_date: formatDate(new Date())
+        })
+
+        const res = await api.post(`administration/assignment/`, {
+            feat: featureId,
+            pos: selectedPosition,
+            assi_date: formatDate(new Date())
+        })
+        return res.data
+
+    } catch (err) {
+        console.error(err)
+    }
+
+}
+
+export const setPermissions = async (assignmentId: string) => {
+
+    try {
+
+        const res = await api.post('administration/permission/', {
+            assi: assignmentId
+        })
+
+        return res.data
+
+    } catch (err) {
+        console.error(err)
+    }
+
 }
