@@ -70,7 +70,7 @@ const Homepage = () => {
             <Text className="text-white text-3xl mt-2 font-PoppinsSemiBold">Animal Bites</Text>
             <Text className="text-white text-sm font-PoppinsRegular italic mt-1">First Aid & Prevention.</Text>
           </View>
-          <TouchableOpacity className="bg-green-600 rounded-full px-4 py-2 self-start">
+          <TouchableOpacity onPress={() => router.push('/animalbite/animalbite')} className="bg-green-600 rounded-full px-4 py-2 self-start">
             <Text className="text-white text-sm font-semibold">Learn more</Text>
           </TouchableOpacity>
         </View>
