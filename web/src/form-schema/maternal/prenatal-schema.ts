@@ -147,5 +147,24 @@ export const PrenatalFormSchema = z.object({
     // assessed by
     assessedBy: z.object({
         assessedby: z.string().min(1, "Assessed by is required")
+    }),
+
+    // prenatal care table
+    prenatalCare: z.object({
+        date: z.string().date(),
+        aog: z.object({
+            aogWeeks: z.number(),
+            aogDays: z.number(),
+        }),
+        wt: z.number(),
+        bp: z.object({
+            systolic: z.number(),
+            diastolic: z.number(),
+        }),
+        leopoldsFindings: z.string(),
+        notes: z.object({
+            complaints: z.string().optional(),
+            advises: z.string().optional(),
+        })
     })
 })
