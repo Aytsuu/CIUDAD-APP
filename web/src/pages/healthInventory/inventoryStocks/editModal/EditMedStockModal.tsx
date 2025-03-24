@@ -54,7 +54,7 @@ export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProp
     defaultValues: {
       minv_qty: 0,
       minv_qty_unit: initialData.minv_qty_unit,
-      minv_pcs: initialData.qty.pcs,
+      minv_pcs: initialData.qty.pcs || 0,
     },
   });
 

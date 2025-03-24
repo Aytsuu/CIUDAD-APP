@@ -18,7 +18,7 @@ import MedicineStockForm from "../addstocksModal/MedStockModal";
 import EditMedicineForm from "../editModal/EditMedStockModal";
 import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getMedicineStocks } from "../request/Get";
+import { getMedicineStocks } from "../REQUEST/Get";
 import { Skeleton } from "@/components/ui/skeleton";
 import { handleDeleteMedicineStocks } from "../REQUEST/Delete";
 
@@ -41,6 +41,7 @@ export default function MedicineStocks() {
     availQty: string;
     distributed: string;
   };
+
 
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);

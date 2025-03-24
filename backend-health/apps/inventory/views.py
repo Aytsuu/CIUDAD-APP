@@ -152,7 +152,7 @@ class FirstAidInventoryVIew(generics.ListCreateAPIView):
     
     
     
-# ----------------------MEDICINE STOCK---RETRIEVE------------------------------------  
+# ----------------------MEDICINE STOCK---UPDATE-----------------------------------  
 class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
     serializer_class=MedicineInventorySerializer
     queryset = MedicineInventory.objects.all()
@@ -164,7 +164,7 @@ class MedicineInvRetrieveView(generics.RetrieveUpdateAPIView):
        return obj
        
 class CommodityInvRetrieveView(generics.RetrieveUpdateAPIView):
-    serializer_class=CommodityListSerializers
+    serializer_class=CommodityInventorySerializer
     queryset = CommodityInventory.objects.all()
     lookup_field='cinv_id'
     
@@ -172,7 +172,7 @@ class CommodityInvRetrieveView(generics.RetrieveUpdateAPIView):
        cinv_id = self.kwargs.get('cinv_id')
        obj = get_object_or_404(CommodityInventory, cinv_id = cinv_id)
        return obj
-       
+
     
     
 # ----------------------MEDICINE STOCK---DELETE------------------------------------  
@@ -209,6 +209,25 @@ class DeleteCommodityInvView(generics.DestroyAPIView):
         # Delete the related Inventory record
         if inventory_record:
             inventory_record.delete()
+
+
+class DeleteFirstAidInvView(generics.DestroyAPIView):
+    serializer_class=FirstAidInventorySerializer
+    queryset = FirstAidInventory.objects.all()
+ 
+    def get_object(self):
+       finv_id = self.kwargs.get('finv_id')
+       obj = get_object_or_404(FirstAidInventory, finv_id = finv_id)
+       return obj
+    def perform_destroy(self, instance):
+        # Get the related Inventory record
+        inventory_record = instance.inv_id  # Access the related Inventory instance via ForeignKey
+        # Delete the MedicineInventory instance
+        instance.delete()
+        # Delete the related Inventory record
+        if inventory_record:
+            inventory_record.delete()
+    
     
 
 class MedicineTransactionView(generics.ListCreateAPIView):

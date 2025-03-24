@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // Add this import
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,11 +27,11 @@ import { InventoryPayload } from "../REQUEST/Payload";
 import { MedicinePayload } from "../REQUEST/Payload";
 import { fetchMedicines } from "../REQUEST/fetch";
 
-interface MedicineStocksProps{
-  setIsDialog:(isOpen: boolean) => void
+interface MedicineStocksProps {
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function MedicineStockForm({setIsDialog}:MedicineStocksProps) {
+export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) {
   UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
@@ -42,83 +42,82 @@ export default function MedicineStockForm({setIsDialog}:MedicineStocksProps) {
       dsgUnit: "",
       form: "",
       qty: 0,
-      unit: "",
-      pcs: 0,
-      expiryDate: "",
+      unit: "boxes",
+      pcs: undefined,
+      expiryDate: new Date().toISOString().split("T")[0],
     },
   });
 
+  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesMedicine();
+  const medicines = fetchMedicines();
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
+  const queryClient = useQueryClient();
 
-const {categories,handleDeleteConfirmation, categoryHandleAdd,ConfirmationDialogs,} = useCategoriesMedicine();
-const medicines = fetchMedicines();
-const [isAddConfirmationOpen,setIsAddConfirmationOpen] =useState(false)
-const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
-const queryClient = useQueryClient()
+  // Watch for unit changes and reset pcs when not boxes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "unit" && value.unit !== "boxes") {
+        form.setValue("pcs", 0);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
-const handleSubmit = async (data: MedicineStockType) => {
-  try {
-    const inventoryResponse = await addInventory(InventoryPayload(data)); 
-  
-    if (!inventoryResponse?.inv_id) {
-      throw new Error("Failed to generate inventory ID.");
-      
-    }
-    const inv_id = parseInt(inventoryResponse.inv_id, 10);
+  const handleSubmit = async (data: MedicineStockType) => {
+    try {
+      const inventoryResponse = await addInventory(InventoryPayload(data)); 
+    
+      if (!inventoryResponse?.inv_id) {
+        throw new Error("Failed to generate inventory ID.");
+      }
+      const inv_id = parseInt(inventoryResponse.inv_id, 10);
 
-    // Validate Medicine ID
-    if (!data.medicineID) {
-      throw new Error("Medicine ID is required.");
-      
-    }
+      if (!data.medicineID) {
+        throw new Error("Medicine ID is required.");
+      }
 
-    const medicinePayload = MedicinePayload(data, inv_id);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const medicineInventoryResponse = await addMedicineInventory(medicinePayload);
-    if (!medicineInventoryResponse || medicineInventoryResponse.error) {
-      throw new Error("Failed to add medicine inventory.");
-    }
-    queryClient.invalidateQueries({queryKey:["medicineStocks"] })
+      const medicinePayload = MedicinePayload(data, inv_id);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const medicineInventoryResponse = await addMedicineInventory(medicinePayload);
+      if (!medicineInventoryResponse || medicineInventoryResponse.error) {
+        throw new Error("Failed to add medicine inventory.");
+      }
+      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
 
-    console.log("Medicine Inventory Response:", medicineInventoryResponse);
-    setIsAddConfirmationOpen(false); 
-    setIsDialog(false)
-
-   
-  } catch (error: any) {
-    console.error(error);
-    if (error.response) {
-      console.error("Error response:", error.response.data);
+      console.log("Medicine Inventory Response:", medicineInventoryResponse);
+      setIsAddConfirmationOpen(false); 
+      setIsDialog(false);
+    } catch (error: any) {
+      console.error(error);
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+      }
       setIsAddConfirmationOpen(false);
     }
-    setIsAddConfirmationOpen(false);
-  }
-};
+  };
 
-// Open confirmation dialog and store submission data
-const onSubmit = (data: MedicineStockType) => {
-  setSubmissionData(data);
+  const onSubmit = (data: MedicineStockType) => {
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
 
-  setIsAddConfirmationOpen(true);
-};
+  const confirmAdd = () => {
+    if (submissionData) {
+      handleSubmit(submissionData);
+      setIsDialog(false);
+    }
+  };
 
-const confirmAdd = () => {
-  if (submissionData) {
-    handleSubmit(submissionData);
-
-  }
-};
-
- 
-const currentUnit = form.watch("unit");
-const qty = form.watch("qty");
-const pcs = form.watch("pcs");
-const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
+  const currentUnit = form.watch("unit");
+  const qty = form.watch("qty") || 0;
+  const pcs = form.watch("pcs") || 0;
+  const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Main Form Content */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Medicine Name Dropdown */}
             <FormField
@@ -145,7 +144,7 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
               )}
             />
 
-            {/* Category Dropdown with Add/Delete */}
+            {/* Category Dropdown */}
             <FormField
               control={form.control}
               name="category"
@@ -153,20 +152,15 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    {/* Category Dropdown with Add/Delete */}
                     <SelectLayoutWithAdd
                       placeholder="select"
                       label="Select a Category"
-                      options={
-                        categories.length > 0
-                          ? categories
-                          : [{ id: "loading", name: "Loading..." }]
-                      }
+                      options={categories.length > 0 ? categories : [{ id: "loading", name: "Loading..." }]}
                       value={field.value}
                       onChange={(value) => field.onChange(value)}
                       onAdd={(newCategoryName) => {
                         categoryHandleAdd(newCategoryName, (newId) => {
-                          field.onChange(newId); // Update the form value with the new category ID
+                          field.onChange(newId);
                         });
                       }}
                       onDelete={(id) => handleDeleteConfirmation(Number(id))}
@@ -209,9 +203,7 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
                       value={field.value || ""}
                       onChange={(e) => {
                         const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
+                        field.onChange(value === "" ? undefined : Number(value));
                       }}
                     />
                   </FormControl>
@@ -287,9 +279,7 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
                       value={field.value || ""}
                       onChange={(e) => {
                         const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
+                        field.onChange(value === "" ? undefined : Number(value));
                       }}
                     />
                   </FormControl>
@@ -313,6 +303,7 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
                       options={[
                         { id: "boxes", name: "Boxes" },
                         { id: "bottles", name: "Bottles" },
+                        { id: "packs", name: "Packs" },
                       ]}
                       value={field.value}
                       onChange={field.onChange}
@@ -324,26 +315,23 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Pieces per Box (Conditional) */}
-            {currentUnit === "boxes" && (
+          {/* Pieces per Box and Total Pieces Display */}
+          {currentUnit === "boxes" && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="pcs"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black/65">
-                      Pieces per Box
-                    </FormLabel>
+                    <FormLabel className="text-black/65">Pieces per Box</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
+                        placeholder="Pieces per box"
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
+                          field.onChange(value === "" ? undefined : Number(value));
                         }}
                       />
                     </FormControl>
@@ -351,38 +339,37 @@ const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
                   </FormItem>
                 )}
               />
-            )}
 
-            {/* Total Pieces Display (Conditional) */}
-            {currentUnit === "boxes" && (
               <FormItem className="sm:col-span-2">
                 <FormLabel className="text-black/65">Total Pieces</FormLabel>
-                <div className="flex items-center h-10  rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
                   {totalPieces.toLocaleString()} pieces
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
-                  </span>
+                  {currentUnit === "boxes" && (
+                    <span className="ml-2 text-muted-foreground text-xs">
+                      ({qty} boxes × {pcs} pieces/box)
+                    </span>
+                  )}
                 </div>
               </FormItem>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Sticky Submit Button */}
-          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
+          {/* Submit Button */}
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Stock
             </Button>
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()} //Category
+      {ConfirmationDialogs()}
       <ConfirmationDialog
-              isOpen={isAddConfirmationOpen}
-              onOpenChange={setIsAddConfirmationOpen}
-              onConfirm={confirmAdd}
-              title="Add Medicine"
-              description={`Are you sure you want to add the medicine "?`}
-            />
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine?`}
+      />
     </div>
   );
 }

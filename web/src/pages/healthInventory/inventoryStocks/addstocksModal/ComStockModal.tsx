@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,22 +26,26 @@ import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { CommodityPayload } from "../REQUEST/Payload";
 import { InventoryCommodityPayload } from "../REQUEST/Payload";
 
-export default function CommodityStockForm() {
+interface CommodiityStockFormProps {  
+  setIsDialog:(isOpen: boolean) => void
+}
+
+export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProps ) {
   UseHideScrollbar();
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
       com_id: "",
       cat_id: "",
-      cinv_qty_unit: "boxes", // Ensure a valid default value
+      cinv_qty_unit: "boxes",
       cinv_qty: 0,
-      cinv_pcs: 0, // Default to 1 to avoid multiplication issues
+      cinv_pcs: undefined,
       cinv_recevFrom: "",
-      expiryDate: new Date().toISOString().split("T")[0], // Default to today's date
+      expiryDate: new Date().toISOString().split("T")[0],
     },
   });
 
-  const commodity = fetchCommodity(); // Ensure commodity is an array to avoid errors
+  const commodity = fetchCommodity();
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] =
@@ -54,6 +58,16 @@ export default function CommodityStockForm() {
     ConfirmationDialogs,
   } = useCategoriesCommodity();
 
+  // Watch for unit changes and reset pcs when not boxes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "cinv_qty_unit" && value.cinv_qty_unit !== "boxes") {
+        form.setValue("cinv_pcs", 0);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const handleSubmit = async (data: CommodityStockType) => {
     console.log("Form Data Submitted:", data);
 
@@ -65,7 +79,6 @@ export default function CommodityStockForm() {
 
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");
-        // Removed unreachable return
       }
 
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
@@ -90,6 +103,8 @@ export default function CommodityStockForm() {
 
       console.log("Commodity Inventory Added Successfully");
       setIsAddConfirmationOpen(false);
+      setIsDialog(false)
+
     } catch (error: any) {
       console.error(error);
       if (error.response) {
@@ -108,12 +123,13 @@ export default function CommodityStockForm() {
   const confirmAdd = () => {
     if (submissionData) {
       handleSubmit(submissionData);
+      setIsDialog(false)
     }
   };
 
   const currentUnit = form.watch("cinv_qty_unit");
-  const qty = form.watch("cinv_qty");
-  const pcs = form.watch("cinv_pcs");
+  const qty = form.watch("cinv_qty") || 0;
+  const pcs = form.watch("cinv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   return (
@@ -142,7 +158,6 @@ export default function CommodityStockForm() {
                     />
                   </FormControl>
                   <FormMessage />
-         
                 </FormItem>
               )}
             />
@@ -273,9 +288,9 @@ export default function CommodityStockForm() {
             />
           </div>
 
-          {/* Pieces per Box and Total Pieces Display */}
+          {/* Pieces per Box and Total Pieces (only shown when unit is boxes) */}
           {currentUnit === "boxes" && (
-            <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="cinv_pcs"
@@ -285,6 +300,7 @@ export default function CommodityStockForm() {
                     <FormControl>
                       <Input
                         type="number"
+                        placeholder="Pieces per box"
                         value={field.value || ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -303,9 +319,11 @@ export default function CommodityStockForm() {
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
                   {totalPieces.toLocaleString()} pieces
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
-                  </span>
+                  {currentUnit === "boxes" && (
+                    <span className="ml-2 text-muted-foreground text-xs">
+                      ({qty} boxes × {pcs} pieces/box)
+                    </span>
+                  )}
                 </div>
               </FormItem>
             </div>

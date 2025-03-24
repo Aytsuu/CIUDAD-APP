@@ -1,4 +1,4 @@
-import { MedicineStockType } from "../REQUEST/type";
+import { MedicineStockType, CommodityStockType } from "../REQUEST/type";
 
 export const MedicinePayload = (
   data: any, // Replace with the correct type if available
@@ -62,12 +62,12 @@ export const MedicineTransactionPayload = (minv_id: number,string_qty :string) =
   };
 };
 
-export const CommodityTransactionPayload = (cinv_id: number,string_qty :string) => {
+export const CommodityTransactionPayload = (cinv_id: number,string_qty :string,action:string) => {
   return {
     comt_qty: string_qty, 
-    comt_action: "Added",
+    comt_action: action,
     staff: 1, 
-    comt_id: cinv_id, 
+    cinv_id: cinv_id, 
   };
 };
 
@@ -80,18 +80,28 @@ export const FirstAidTransactionPayload = (fa_id: number,string_qty :string) => 
   };
 }
 
-export const CommodityPayload = (data: any, inv_id: number,parseCommodityID :number) => {
+export const CommodityPayload = (
+  data: any, // Replace with the correct type if available
+  inv_id: number,
+  parseCommodityID: number
+): CommodityStockType => { // Replace with your actual return type if available
+  const qty = Number(data.cinv_qty) || 0;
+  const pcs = Number(data.cinv_pcs) || 0;
+  const cinv_qty_avail = data.cinv_qty_unit === "boxes" ? qty * pcs : qty;
+
   return {
     com_id: parseCommodityID,
-    cat_id: data.cat_id,
-    cinv_qty: data.cinv_qty,
+    cat_id: Number(data.cat_id),
+    cinv_qty: qty,
     cinv_qty_unit: data.cinv_qty_unit,
-    cinv_pcs: data.cinv_pcs,
+    cinv_pcs: pcs,
     cinv_recevFrom: data.cinv_recevFrom,
-    expiryDate: data.expiryDate,
+    cinv_dispensed: data.cinv_dispensed, // Added default dispensed value
+    cinv_qty_avail: cinv_qty_avail, // Calculated available quantity
     inv_id,
+    expiryDate: data.expiryDate,
   };
-}
+};
 
 
 export const FirstAidPayoad = (data: any, inv_id: number,parsefaID:number) => {

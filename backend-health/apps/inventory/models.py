@@ -16,7 +16,7 @@ class Medicinelist(models.Model):
     med_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+ 
     class Meta:
         db_table = 'medicine_list'
      
@@ -60,7 +60,7 @@ class MedicineInventory(models.Model):
     minv_pcs = models.PositiveIntegerField(default=0)
     minv_distributed = models.PositiveIntegerField(default=0)
     minv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE,unique=True)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
     med_id = models.ForeignKey('Medicinelist', on_delete=models.CASCADE)
     cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
 
@@ -91,7 +91,7 @@ class CommodityInventory(models.Model):
     cinv_dispensed = models.PositiveIntegerField(default=0)
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE,unique=True)   
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
     com_id = models.ForeignKey('CommodityList', on_delete=models.CASCADE)
     cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
@@ -120,7 +120,7 @@ class FirstAidInventory(models.Model):
     finv_pcs = models.PositiveIntegerField(default=0)
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.ForeignKey('Inventory', on_delete=models.CASCADE,unique=True)   
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
     fa_id = models.ForeignKey('FirstAidList', on_delete=models.CASCADE)
     cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     

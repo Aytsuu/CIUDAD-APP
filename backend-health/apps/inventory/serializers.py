@@ -147,6 +147,7 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), write_only=True, required=False
     )
 
+
     class Meta:
         model = CommodityTransaction
         fields = '__all__'
@@ -176,6 +177,7 @@ class FirstAidInventorySerializer(serializers.ModelSerializer):
                 if field not in data:
                     self.fields[field].required = False
         return super().to_internal_value(data)
+    
     
 class FirstTransactionSerializer(serializers.ModelSerializer):
     # Read-only fields for viewing related details

@@ -1,5 +1,5 @@
 // EditCommodityStockForm.tsx
-import React, { useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,205 +18,159 @@ import {
   CommodityStocksSchema,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import { fetchCommodity } from "../request/Fetch";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { useCategoriesCommodity } from "../request/CommodityCategory";
+import api from "@/pages/api/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { CommodityStocksRecord } from "../tables/CommodityStocks";
+import { CommodityTransactionPayload } from "../REQUEST/Payload";
+import { addCommodityTransaction } from "../REQUEST/Post";
+import { AddCommoditySchema,AddCommodityStockType } from "@/form-schema/inventory/addStocksSchema";
 
 interface EditCommodityStockFormProps {
-  initialData: {
-    id: number;
-    commodityName: string;
-    category: string;
-    recevFrom: string;
-    qty: string;
-    availQty: string;
-    expiryDate: string;
-    dispensed: string;
-  };
+  initialData: CommodityStocksRecord;
+  setIsDialog: (isOpen: boolean) => void;
 }
 
 export default function EditCommodityStockForm({
   initialData,
+  setIsDialog,
 }: EditCommodityStockFormProps) {
   UseHideScrollbar();
-
-  const parseQuantity = (qtyString: string) => {
-    try {
-      if (!qtyString) {
-        return { qty: 0, pcs: 0, unit: "pcs" as const };
-      }
-
-      const boxMatch = qtyString.match(/(\d+) bx\/s \((\d+) pc\/s\)/);
-      if (boxMatch && boxMatch[1] && boxMatch[2]) {
-        return {
-          qty: parseInt(boxMatch[1]),
-          pcs: parseInt(boxMatch[2]),
-          unit: "boxes" as const,
-        };
-      }
-
-      const piecesMatch = qtyString.match(/(\d+)/);
-      return {
-        qty: piecesMatch ? parseInt(piecesMatch[0]) : 0,
-        pcs: 0,
-        unit: "pcs" as const,
-      };
-    } catch (error) {
-      console.error("Error parsing quantity:", error);
-      return { qty: 0, pcs: 0, unit: "pcs" as const };
-    }
-  };
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [formData, setFormData] = useState<AddCommodityStockType | null>(null);
+  const queryClient = useQueryClient();
 
   const form = useForm<CommodityStockType>({
-    resolver: zodResolver(CommodityStocksSchema),
+    resolver: zodResolver(AddCommoditySchema),
     defaultValues: {
-      commodityName: initialData?.commodityName || "",
-      category: initialData?.category || "",
-      recevFrom: initialData?.recevFrom || "",
-      ...parseQuantity(initialData?.qty || ""),
-      expiryDate: initialData?.expiryDate || "",
+      cinv_qty: 0,
+      cinv_qty_unit: initialData.cinv_qty_unit,
+      cinv_pcs: initialData.qty?.cinv_pcs || 0,
     },
   });
 
-  useEffect(() => {
-    if (initialData) {
-      const parsed = parseQuantity(initialData.qty);
-      form.reset({
-        commodityName: initialData.commodityName,
-        category: initialData.category,
-        // id: initialData.id,
-        recevFrom: initialData.recevFrom,
-        ...parsed,
-        expiryDate: initialData.expiryDate,
-      });
+  const onSubmit = useCallback((data: CommodityStockType) => {
+    setFormData(data);
+    setIsConfirmationOpen(true);
+  }, []);
+
+  const handleConfirm = useCallback(async () => {
+    console.log("Form", formData);
+    if (!formData) return;
+
+    try {
+      const res = await api.get(`inventory/commodityinventorylist/`);
+      const existingCommodity = res.data.find(
+        (item: any) => item.cinv_id === initialData.cinv_id
+      );
+
+      if (!existingCommodity) {
+        alert("Commodity ID not found. Please check the ID.");
+        return;
+      }
+
+      const currentQtyAvail =existingCommodity.cinv_qty_avail;
+      const currentQty = existingCommodity.cinv_qty
+      const currentPcs = existingCommodity.cinv_pcs;
+      const currentUnit = existingCommodity.cinv_qty_unit;
+      const inv_id = existingCommodity.inv_detail?.inv_id;
+
+      // Validate pieces per box if adding boxes
+      if (
+        formData.cinv_qty_unit === "boxes" &&
+        currentUnit === "boxes" &&
+        currentPcs !== 0 &&
+        Number(currentPcs) !== Number(formData.cinv_pcs)
+      ) {
+        form.setError("cinv_pcs", {
+          type: "manual",
+          message: `Pieces per box must match the existing stock (${currentPcs}).`,
+        });
+        return;
+      }
+
+      let newQtyAvail = currentQtyAvail;
+      let newQty = currentQty;
+
+      if (formData.cinv_qty_unit === "boxes") {
+        newQtyAvail += formData.cinv_qty * (formData.cinv_pcs || 0);
+        newQty += formData.cinv_qty * (formData.cinv_pcs || 0);
+      } else {
+        newQtyAvail += formData.cinv_qty;
+        newQty += formData.cinv_qty;
+      }
+
+      await api.put(
+        `inventory/update_commoditystocks/${initialData.cinv_id}/`,
+        {
+          qty: {
+            cinv_qty: newQty,
+            cinv_pcs: formData.cinv_qty_unit === "boxes" ? formData.cinv_pcs : 0,
+          },
+          cinv_qty_unit: formData.cinv_qty_unit,
+          cinv_qty_avail: newQtyAvail,
+        }
+      );
+
+      if (inv_id) {
+        await api.put(`inventory/update_inventorylist/${inv_id}/`, {
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      // Format the quantity string for transaction record
+      const string_qty =
+        formData.cinv_qty_unit === "boxes"
+          ? `${formData.cinv_qty} boxes (${formData.cinv_pcs} pcs per box)`
+          : `${formData.cinv_qty} ${formData.cinv_qty_unit}`;
+
+      const action = "Added";
+      const commodityTransactionPayload = CommodityTransactionPayload(
+        initialData.cinv_id,
+        string_qty,
+        action
+      );
+      console.log("Com", formData);
+      console.log("CInv", initialData.cinv_id);
+      const commodityTransactionResponse = await addCommodityTransaction(commodityTransactionPayload);
+
+      if(!commodityTransactionResponse || commodityTransactionResponse.error) {
+        throw new Error("Failed to add Commodity inventory.");
+      }
+        
+      setIsDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
+      alert("Stock updated successfully!");
+    } catch (err: any) {
+      if (err.response) {
+        alert(
+          `Failed to update stock: ${
+            err.response.data.detail || "Unknown error"
+          }`
+        );
+
+        console.error(err.response);
+      } else {
+        alert("Network error. Please try again.");
+      }
+    } finally {
+      setIsConfirmationOpen(false);
     }
-  }, [initialData, form]);
+  }, [formData, initialData.cinv_id, form, setIsDialog, queryClient]);
 
-  const commodity = fetchCommodity();
-
-  const onSubmit = async (data: CommodityStockType) => {
-    console.log(data);
-    alert("✅ Data saved successfully!");
-  };
-
-  const currentUnit = form.watch("unit");
-  const qty = form.watch("qty") || 0;
-  const pcs = form.watch("pcs") || 0;
+  const currentUnit = form.watch("cinv_qty_unit");
+  const qty = form.watch("cinv_qty") || 0;
+  const pcs = form.watch("cinv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
-  // Form options
-
-  const {
-    categories,
-    handleDeleteConfirmation,
-    categoryHandleAdd,
-    ConfirmationDialogs,
-  } = useCategoriesCommodity();
-
-  const recevFromOptions = [
-    { id: "DOH", name: "DOH" },
-    { id: "CHD", name: "CHD" },
-    { id: "OTHERS", name: "OTHERS" },
-  ];
-
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1  hide-scrollbar">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="commodityName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commodity Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Commodity"
-                      options={commodity}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    {/* Category Dropdown with Add/Delete */}
-                    <SelectLayoutWithAdd
-                      placeholder="select"
-                      label="Select a Category"
-                      options={categories}
-                      value={field.value}
-                      onChange={(value) => field.onChange(value)}
-                      onAdd={(newCategoryName) => {
-                        categoryHandleAdd(newCategoryName, (newId) => {
-                          field.onChange(newId); // Update the form value with the new category ID
-                        });
-                      }}
-                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      value={field.value?.split("T")[0] || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="recevFrom"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Received From</FormLabel>
-                <FormControl>
-                  <SelectLayout
-                    label=""
-                    className="w-full"
-                    placeholder="Select Source"
-                    options={recevFromOptions}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="qty"
+              name="cinv_qty"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
@@ -225,9 +179,8 @@ export default function EditCommodityStockForm({
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="quantity"
                       min={0}
-                      value={field.value || ""} // Handle undefined and 0
+                      value={field.value || ""}
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? 0 : Number(value));
@@ -241,22 +194,12 @@ export default function EditCommodityStockForm({
 
             <FormField
               control={form.control}
-              name="unit"
+              name="cinv_qty_unit"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Unit</FormLabel>
                   <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "pcs", name: "Pieces" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                    <Input value={field.value} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -268,15 +211,20 @@ export default function EditCommodityStockForm({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="pcs"
+                name="cinv_pcs"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pieces per Box</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
+                        min={1}
                         placeholder="pcs"
-                        value={field.value || ""} // Handle undefined and 0
+                        value={
+                          field.value === undefined || field.value === 0
+                            ? ""
+                            : field.value
+                        }
                         onChange={(e) => {
                           const value = e.target.value;
                           field.onChange(value === "" ? 0 : Number(value));
@@ -300,14 +248,21 @@ export default function EditCommodityStockForm({
             </div>
           )}
 
-          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
-              Save Changes
+              Save
             </Button>
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()}
+
+      <ConfirmationDialog
+        isOpen={isConfirmationOpen}
+        onOpenChange={setIsConfirmationOpen}
+        onConfirm={handleConfirm}
+        title="Confirm Update"
+        description="Are you sure you want to update this commodity stock? This action cannot be undone."
+      />
     </div>
   );
 }

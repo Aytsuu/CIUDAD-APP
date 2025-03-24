@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,24 +16,122 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CommodityStockForm from "../addstocksModal/ComStockModal";
 import EditCommodityStockForm from "../editModal/EditComStockModal";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { handleDeleteCommodityStocks } from "../REQUEST/Delete";
+import { getCommodityStocks } from "../REQUEST/Get";
 
-type CommodityStocksRecord = {
-  id: number;
-  commodityName: string;
-  category: string;
-  recevFrom: string;
-  qty: string;
-  availQty: string;
+export type CommodityStocksRecord = {
+  cinv_id: number;
+  commodityInfo: {
+    com_name: string;
+  };
   expiryDate: string;
+  category: string;
+  qty: {
+    cinv_qty: number;
+    cinv_pcs: number;
+  };
+  cinv_qty_unit: string;
+  availQty: string;
   dispensed: string;
+  recevFrom: string;
 };
 
 export default function CommodityStocks() {
+
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [commodityStockDelete, setCommodityStockDelete] = useState<number | null>(null);
+  const [isDialog, setIsDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const queryClient = useQueryClient();
+
+  // Fetch commodity stocks using useQuery
+  const { data: commodityStocks, isLoading: isLoadingCommodities } = useQuery({
+    queryKey: ["commodityinventorylist"],
+    queryFn: getCommodityStocks,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  const formatCommodityStocksData =
+    React.useCallback((): CommodityStocksRecord[] => {
+      if (!commodityStocks) return [];
+      return commodityStocks.map((commodityStock: any) => ({
+        cinv_id: commodityStock.cinv_id,
+        commodityInfo: {
+          com_name: commodityStock.com_detail?.com_name,
+        },
+        expiryDate: commodityStock.inv_detail?.expiry_date,
+        category: commodityStock.cat_detail?.cat_name,
+        qty: {
+          cinv_qty: commodityStock.cinv_qty,
+          cinv_pcs: commodityStock.cinv_pcs,
+        },
+        cinv_qty_unit: commodityStock.cinv_qty_unit,
+        availQty: commodityStock.cinv_qty_avail,
+        dispensed: commodityStock.cinv_dispensed,
+        recevFrom: commodityStock.cinv_recevFrom,
+      }));
+    }, [commodityStocks]);
+
+  const filteredData = React.useMemo(() => {
+    return formatCommodityStocksData().filter((record) =>
+      Object.values(record.commodityInfo)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, formatCommodityStocksData]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleDeleteCommodity = (cinv_id: number) => {
+    setCommodityStockDelete(cinv_id);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  const confirmDeleteCommodity = async () => {
+    if (commodityStockDelete !== null) {
+      await handleDeleteCommodityStocks(commodityStockDelete, () => {
+        queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
+      });
+      setIsDeleteConfirmationOpen(false);
+      setCommodityStockDelete(null);
+    }
+  };
+
+  if (isLoadingCommodities) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
   const columns: ColumnDef<CommodityStocksRecord>[] = [
-  
     {
-      accessorKey: "commodityName",
-      header: "Item Name",
+      accessorKey: "commodityInfo",
+      header: "Commodity",
+      cell: ({ row }) => {
+        const commodity = row.original.commodityInfo;
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{commodity.com_name}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "category",
@@ -49,28 +147,47 @@ export default function CommodityStocks() {
       header: "Received From",
       cell: ({ row }) => (
         <div className="text-center">{row.original.recevFrom}</div>
-      )
+      ),
     },
     {
       accessorKey: "qty",
       header: "Stocks",
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.qty}</div>
-      )
+      cell: ({ row }) => {
+        const { cinv_qty, cinv_pcs } = row.original.qty;
+        const unit = row.original.cinv_qty_unit;
+        return (
+          <div className="text-center">
+            {cinv_pcs > 0 ? (
+              <div className="flex flex-col">
+                <span className="text-blue">{cinv_qty} box/es</span>
+                <span className="text-red-500"> ({cinv_pcs} pcs per box)</span>
+              </div>
+            ) : (
+              <span className="text-blue">
+                {cinv_qty} {unit}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "dispensed",
       header: "Dispensed",
       cell: ({ row }) => (
-        <div className="text-center text-red-600">{row.original.dispensed}</div>
-      )
+        <div className="text-red-700">{row.original.dispensed}</div>
+      ),
     },
     {
       accessorKey: "availQty",
       header: "Available",
       cell: ({ row }) => (
-        <div className="text-green-700">{row.original.availQty}</div>
-      )
+        <div className="text-green-700">
+          {row.original.qty.cinv_pcs > 0
+            ? `${row.original.qty.cinv_qty * row.original.qty.cinv_pcs} pcs`
+            : `${row.original.availQty} ${row.original.cinv_qty_unit}`}
+        </div>
+      ),
     },
     {
       accessorKey: "expiryDate",
@@ -84,106 +201,45 @@ export default function CommodityStocks() {
     {
       accessorKey: "action",
       header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          {/* <TooltipLayout
-            trigger={
-              <DialogLayout 
-                trigger={
-                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                    <Edit size={16} />
-                  </div>
-                }
-                mainContent={
-                  <EditCommodityStockForm
-                    initialData={row.original}
-                  />
-                }
-              />
-            }
-            content="Edit"
-          /> */}
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                mainContent={<></>}
-              />
-            }
-            content="Delete"
-          />
-        </div>
-      ),
+      cell: ({ row }) => {
+        return (
+          <>
+            <div className="flex gap-2">
+              <div className="flex justify-center gap-2">
+                <TooltipLayout
+                  trigger={
+                    <DialogLayout
+                      trigger={
+                        <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                          <Edit size={16} />
+                        </div>
+                      }
+                      mainContent={
+                        <EditCommodityStockForm
+                          initialData={row.original}
+                          setIsDialog={setIsDialog}
+                        />
+                      }
+                    />
+                  }
+                  content="Edit"
+                />
+              </div>
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteCommodity(row.original.cinv_id)}
+                >
+                  <Trash />
+                </Button>
+              </div>
+            </div>
+          </>
+        );
+      },
     },
   ];
-
-  const initialData: CommodityStocksRecord[] = [
-    {
-      id: 2,
-      commodityName: "Condom",
-      category: "Condom",
-      recevFrom: "DOH",
-      qty: "10 bx/s (500 pc/s)",
-      availQty: "10 bx/s (500 pc/s)",
-      dispensed: "0",
-      expiryDate: "2025-12-31"
-    },
-    {
-      id: 2,
-      commodityName: "pills COC",
-      category: "Pills",
-      recevFrom: "DOH",
-      qty: "10 pcs",
-      availQty: "0",
-      dispensed: "10 pcs",
-      expiryDate: "2024-06-30"
-    },
-  ];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState<CommodityStocksRecord[]>(initialData);
-  const [filteredData, setFilteredData] = useState<CommodityStocksRecord[]>(initialData);
-  const [currentData, setCurrentData] = useState<CommodityStocksRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const filtered = data.filter((item) => {
-      const searchText = `${item.id} ${item.commodityName} ${item.category} ${item.recevFrom} ${item.qty} ${item.availQty} ${item.dispensed} ${item.expiryDate}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize, data]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
 
   return (
     <>
@@ -199,7 +255,7 @@ export default function CommodityStocks() {
                 placeholder="Search..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <SelectLayout
@@ -207,7 +263,7 @@ export default function CommodityStocks() {
               label=""
               className="bg-white"
               options={[
-                { id: "1", name: "All" },
+                { id: "1", name: "" },
                 { id: "2", name: "By date" },
                 { id: "3", name: "By category" },
               ]}
@@ -219,12 +275,14 @@ export default function CommodityStocks() {
         <DialogLayout
           trigger={
             <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New 
+              <Plus size={15} /> New
             </div>
           }
-          title="Commodity Inventory"
-          description="Add New Commodity Item"
-          mainContent={<CommodityStockForm/>}
+          title="Commodity List"
+          description="Add New Commodity"
+          mainContent={<CommodityStockForm setIsDialog={setIsDialog} />}
+          isOpen={isDialog}
+          onOpenChange={setIsDialog}
         />
       </div>
 
@@ -236,7 +294,14 @@ export default function CommodityStocks() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={(e) => {
+                const value = +e.target.value;
+                if (value >= 1) {
+                  setPageSize(value);
+                } else {
+                  setPageSize(1); // Reset to 1 if invalid
+                }
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
@@ -259,26 +324,32 @@ export default function CommodityStocks() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={currentData} />
+          <DataTable columns={columns} data={paginatedData} />
         </div>
-
+        {/* Pagination */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
-            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-{" "}
             {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} entries
+            {filteredData.length} rows
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={confirmDeleteCommodity}
+        title="Delete Commodity"
+        description="Are you sure you want to delete this commodity? This action cannot be undone."
+      />
     </>
   );
 }
