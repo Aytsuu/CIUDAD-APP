@@ -7,8 +7,7 @@ import { useForm, UseFormReturn } from "react-hook-form"
 import { useNavigate } from "react-router"
 import { Button } from "@/components/ui/button/button"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { SelectLayout } from "@/components/ui/select/select-layout"
-import { staff } from "./restful-api/administrationPostAPI"
+import { addStaff } from "./restful-api/administrationPostAPI"
 import { personal } from "../profiling/restful-api/profiingPostAPI"
 import { CircleCheck, Loader2 } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
@@ -56,14 +55,14 @@ export default function AssignPosition(
         // If resident exists, assign
         if(personalId) {
 
-            const res = await staff(personalId, positionId);
+            const res = await addStaff(personalId, positionId);
 
             if(res) deliverFeedback();
           
         } else { // Register resident before assignment, if not
             const personalInfo = personalInfoform.getValues()
             const perId = await personal(personalInfo)
-            const res = await staff(perId, positionId)
+            const res = await addStaff(perId, positionId)
 
             if(res) deliverFeedback(); 
         }

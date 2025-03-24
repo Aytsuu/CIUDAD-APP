@@ -7,26 +7,25 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"; // Assuming you're using a Radix-like accordion
-import api from "@/api/api";
 import { Separator } from "@/components/ui/separator";
 import { FixedSizeList as List } from "react-window";
 import { Assigned, Feature } from "./administrationTypes";
+import { getAssignedFeatures } from "./restful-api/administrationGetAPI";
+import { assignFeature, setPermissions } from "./restful-api/administrationPostAPI";
+import { formatDate } from "@/helpers/dateFormatter";
+import { deleteAssignedFeature } from "./restful-api/administrationDeleteAPI";
 
 export default function FeatureSelection({
   selectedPosition,
   features,
   assignedFeatures,
-  setFeatures,
   setAssignedFeatures,
 }: {
   selectedPosition: string;
   features: Feature[];
   assignedFeatures: Assigned[];
-  setFeatures: React.Dispatch<React.SetStateAction<Feature[]>>;
   setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>;
 }) {
-  // States and initializations
-  const hasFetchData = React.useRef(false);
 
   // Group features by category
   const groupedFeatures = React.useMemo(() => {
@@ -37,62 +36,41 @@ export default function FeatureSelection({
       acc[feature.feat_category].push(feature);
       return acc;
     }, {} as Record<string, Feature[]>);
-  }, [features]);
+  }, [features])
 
-  // Performs side effects
   React.useEffect(() => {
-    if (!hasFetchData.current) {
-      getAllFeatures();
-      getAssignedFeatures();
-      hasFetchData.current = true;
-    }
-  }, []);
 
-  // Function to fetch all features from db
-  const getAllFeatures = React.useCallback(() => {
-    api
-      .get("administration/features/")
-      .then((res) => res.data)
-      .then((data) => {
-        setFeatures(data);
-      });
-  }, []);
+    if(!selectedPosition) return;
+    handleGetAssignedFeatures()
+
+  }, [selectedPosition])
+
+  const handleGetAssignedFeatures = React.useCallback( async () => {
+
+    const res = await getAssignedFeatures(selectedPosition);
+    setAssignedFeatures(res)
+
+  }, [selectedPosition])
 
   // Function to assign features
-  const assignFeature = async (featureId: string, checked: boolean) => {
-    const method = checked ? "post" : "delete";
-    const now = new Date();
-    const formattedDate = now.toISOString().split("T")[0];
-
-    // Checks which API request method to perform
-    const requestConfig = checked
-      ? {
-          // POST
-          url: "administration/assignments/",
-          data: {
-            assi_date: formattedDate,
-            feat: featureId,
-            pos: selectedPosition,
-          },
-        }
-      : {
-          // DELETE
-          url: `administration/assignments/${featureId}/${selectedPosition}/`,
-        };
-
-    try {
-      const res = await api[method](requestConfig.url, requestConfig.data);
+  const handleAssignment = async (featureId: string, checked: boolean) => {
 
       if (checked) {
+
+        // Assign feature to position (default)
+        const assignment = await assignFeature(selectedPosition, featureId)
+
+        console.log(assignment.assi_id)
+
         // Set permissions (default)
-        const perm_id = await setPermissions(res.data.assi_id);
+        const perm_id = await setPermissions(assignment.assi_id)
 
         // Add the new assignment to the local state
         setAssignedFeatures((prev: any) => [
           ...prev,
           {
-            assi_id: res.data.assi_id,
-            assi_date: formattedDate,
+            assi_id: assignment.assi_id,
+            assi_date: formatDate(new Date()),
             feat: featureId,
             pos: selectedPosition,
             permissions: [{
@@ -101,49 +79,32 @@ export default function FeatureSelection({
               create: false,
               update: false,
               delete: false,
-              assi_id: res.data.assi_id
+              assi_id: assignment.assi_id
             }],
           },
         ]);
 
       } else {
+
         // Remove the assignment from the local state
         setAssignedFeatures((prev) =>
           prev.filter((assignment) => assignment.feat !== featureId)
         );
+
+        const res = await deleteAssignedFeature(selectedPosition, featureId)
+
+        if (res?.status === 204) {
+          // Remove the assignment from the local state
+          
+        }
       }
-    } catch (err) {
-      console.log(err);
-    }
   };
-
-  // Function to add permissions of the assigned feature to the db (all false by default)
-  const setPermissions = async (assignmentId: string) => {
-    try {
-      const res = await api.post("administration/permissions/", { assi: assignmentId });
-      return res.data.perm_id
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  // Function to get the assigned features of the position
-  const getAssignedFeatures = React.useCallback(async () => {
-    try {
-      const res = await api.get(
-        `administration/assignments/${selectedPosition}/`
-      );
-      setAssignedFeatures(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  }, []);
 
   // Function to check assigned features
   const checkAssignedFeatures = (featureId: string) => {
     if (assignedFeatures) {
       return assignedFeatures.some(
-        (value) => value.feat === featureId && value.pos === selectedPosition
+        (value) => value.feat === featureId && value.pos == selectedPosition
       );
     }
     return false;
@@ -165,7 +126,7 @@ export default function FeatureSelection({
         <FeatureCheckbox
           feature={feature}
           isChecked={checkAssignedFeatures(feature.feat_id)}
-          onCheckedChange={(checked) => assignFeature(feature.feat_id, checked)}
+          onCheckedChange={(checked) => handleAssignment(feature.feat_id, checked)}
         />
       </div>
     );

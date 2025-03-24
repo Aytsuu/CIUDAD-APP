@@ -6,7 +6,7 @@ urlpatterns = [
     # Position Urls 
 
     path('position/', PositionView.as_view(), name="positions-list"),
-    path('positions/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
+    path('position/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
 
     # Feature Urls 
 

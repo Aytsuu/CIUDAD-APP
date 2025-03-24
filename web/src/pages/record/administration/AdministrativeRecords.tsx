@@ -10,7 +10,7 @@ import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { getResidents } from "../profiling/restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getStaffs } from "./restful-api/administrationGetAPI";
+import { getFeatures, getPositions, getStaffs } from "./restful-api/administrationGetAPI";
 import { AdministrationRecord } from "./administrationTypes";
 
 export default function AdministrativeRecords(){
@@ -19,6 +19,8 @@ export default function AdministrativeRecords(){
     const [pageSize, setPageSize] = React.useState<number>(10);
     const [currentPage, setCurrentPage] = React.useState<number>(1);
 
+
+    // Queries
     const { data: residents, isLoading: isLoadingResidents} = useQuery({
         queryKey: ['residents'],
         queryFn: getResidents,
@@ -30,6 +32,20 @@ export default function AdministrativeRecords(){
         queryKey: ['staffs'],
         queryFn: getStaffs,
 
+    })
+
+    const { data: features, isLoading: isLoadingFeatures} = useQuery({
+        queryKey: ['features'],
+        queryFn: getFeatures,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+
+    const { data: positions, isLoading: isLoadingPositions } = useQuery({
+        queryKey: ['positions'],
+        queryFn: getPositions,
+        refetchOnMount: true,
+        staleTime: 0
     })
 
     const formatStaffData = React.useCallback((): AdministrationRecord[] => {
@@ -70,7 +86,7 @@ export default function AdministrativeRecords(){
         currentPage * pageSize
     )
 
-    if(isLoadingResidents || isLoadingStaffs) {
+    if(isLoadingResidents || isLoadingStaffs || isLoadingFeatures || isLoadingPositions) {
         return (
           <div className="w-full h-full">
             <Skeleton className="h-10 w-1/6 mb-3" />
@@ -113,7 +129,12 @@ export default function AdministrativeRecords(){
                         value=""
                         onChange={() => {}}
                     />
-                    <Link to="/role">
+                    <Link to="/role" state={{
+                        params: {
+                            features: features,
+                            positions: positions
+                        }
+                    }}>
                         <Button > 
                             <UserRoundCog /> Role
                         </Button>

@@ -4,11 +4,7 @@
     "baseUrl": ".",
     "strict": true,
     "paths": {
-<<<<<<< HEAD
-      "@/*": ["./*"]
-=======
       "@/*": ["./*"],
->>>>>>> mobile/feature/landing-page
     }
   },
   "include": [
