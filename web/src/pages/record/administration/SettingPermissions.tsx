@@ -24,11 +24,11 @@ export default function SettingPermissions(
 
     React.useEffect(() => {
         setLocalAssignedFeatures(assignedFeatures);
-    }, [assignedFeatures]);
+    }, [assignedFeatures, selectedPosition]);
 
     // Filter assignedFeatures based on the selected position
     const filteredAssignedFeatures = React.useMemo(() => {
-        return localAssignedFeatures.filter((feature) => feature.pos === selectedPosition);
+        return localAssignedFeatures.filter((feature) => feature.pos == selectedPosition);
     }, [localAssignedFeatures, selectedPosition]);
 
     const getFeatureName = (featureId: string) => {
@@ -126,7 +126,8 @@ export default function SettingPermissions(
         }
     };
 
-    console.log(filteredAssignedFeatures)
+    // console.log(localAssignedFeatures)
+     
 
     return (
         <Accordion type="single" collapsible className="w-full">
