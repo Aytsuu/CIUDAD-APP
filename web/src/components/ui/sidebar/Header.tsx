@@ -34,15 +34,15 @@ export function Header() {
   const profileOptions = [
     {
       id: "view-profile",
-      name: "View Profile",
+      name: "Manage your Account",
       icons: <User size={20} />,
-      action: () => navigate("/profile"),
+      action: () => navigate("/account-view-profile"),
     },
     {
       id: "settings",
       name: "Settings",
       icons: <Settings size={20} />,
-      action: () => navigate("/settings"),
+      action: () => navigate("/account-settings"),
     },
     {
       id: "sign-out",

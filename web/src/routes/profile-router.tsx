@@ -1,12 +1,13 @@
-import AccountSettings from "@/pages/record/acc-profile/profile-settings";
+import Settings from "@/pages/record/acc-profile/profile-settings";
+import AccountSettings from "@/pages/record/acc-profile/profile";
 
-export const profiling_router = [
+export const user_account = [
     {
-        path: "account-settings",
+        path: "/account-view-profile",
         element: <AccountSettings />
     },
     {
-        path: "resident-registration",
-        element: <ProfilingForm />
+        path: "/account-settings",
+        element: <Settings />
     },
 ];

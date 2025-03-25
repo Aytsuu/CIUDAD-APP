@@ -15,7 +15,6 @@ import { attendance_router } from './attendacePage-route';
 import { mom_router } from './MinutesOfMeetingPage-route';
 import { council_calendar_router } from './calendarPage-route';
 
-
 import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
