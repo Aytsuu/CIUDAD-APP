@@ -40,7 +40,7 @@ export default function SignIn() {
 
     try {
       
-      const response = await axios.post("http://192.168.199.81:8000/api/login/", {
+      const response = await axios.post("http://localhost:8000/api/login/", {
         username: data.usernameOrEmail, 
         password: data.password,
       });
@@ -55,7 +55,7 @@ export default function SignIn() {
         localStorage.setItem("token", response.data.token);
 
         // Redirect to the home page or dashboard
-        navigate("/");
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error("Login failed:", error);

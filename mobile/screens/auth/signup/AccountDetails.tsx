@@ -41,7 +41,7 @@ export default function AccountDetails() {
   
       try {
         // Send data to the backend
-        const response = await axios.post("http://192.168.199.81:8000/api/signup/", {
+        const response = await axios.post("http://localhost:8000/api/signup/", {
           username: formData.accountDetails.userName,
           email: formData.accountDetails.email,
           password: formData.accountDetails.password,

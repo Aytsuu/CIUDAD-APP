@@ -33,7 +33,7 @@ export default function LoginScreen() {
     setIsLoading(true);
   
     try {
-      const response = await axios.post("http://192.168.199.81:8000/api/login/", {
+      const response = await axios.post("http://localhost:8000/api/login/", {
         username: username,
         password: password,
       });
