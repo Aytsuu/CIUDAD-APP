@@ -8,38 +8,48 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CreateBudgetPlanHeader from "./treasurer_budgetplan_header_form";
-import api from "@/api/api";
-import { useEffect } from "react";
-import { deleteBudgetPlan } from "./request/deleteRequest";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteBudgetPlan } from "./restful-API/budgetPlanDeleteAPI";
+import { getBudgetPlan } from "./restful-API/budgetplanGetAPI";
+import { Skeleton } from "@mui/material";
 
-type BudgetPlan = {
+export type BudgetPlan = {
     plan_id: number,
     plan_year: string,
     plan_issue_date: string,
 }
 
 function BudgetPlan() {
-    const [budgetplans, setBudgetPlans] = useState<BudgetPlan[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = 10; // Example total number of pages
+    const queryClient = useQueryClient();
+    const totalPages = 10;
+    
+    const { data: budgetPlans, isLoading: isLoadingBudgetPlan } = useQuery<BudgetPlan[]>({
+        queryKey: ['plan'],
+        queryFn: getBudgetPlan,
+        refetchOnMount: true,
+        staleTime: 0
+    });
 
-    // Fetch data from the API
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await api.get('/treasurer/budget-plan/');
-                console.log("Fetched budget plans:", response.data);  
-                setBudgetPlans(response.data);
-            } catch (error) {
-                console.error("Failed to fetch budget plans:", error);
-            }
-        };
-        fetchData();
-    }, []);
+    // loading screen
+    if (isLoadingBudgetPlan) {
+        return (
+            <div className="w-full h-full">
+                <Skeleton className="h-10 w-1/6 mb-3" />
+                <Skeleton className="h-7 w-1/4 mb-6" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-4/5 w-full mb-4" />
+            </div>
+        );
+    }
 
-    // Handle delete
+    // delete budgetplan function
     const handleDelete = async (planId: number) => {
-        await deleteBudgetPlan(planId, setBudgetPlans);
+        const success = await deleteBudgetPlan(planId, queryClient);
+        if(success){
+            alert('Budget Plan deleted successfully.')
+        }
+
     };
 
     // Table Columns
@@ -87,7 +97,7 @@ function BudgetPlan() {
                             trigger={
                                 <div
                                     className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-                                    onClick={() => handleDelete(planId)} // Call handleDelete on click
+                                    onClick={() => handleDelete(planId)} 
                                 >
                                     <Trash size={16} />
                                 </div>
@@ -100,9 +110,11 @@ function BudgetPlan() {
         }
     ];
 
+
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
     };
+
 
     return (
         <div className="w-full h-full">
@@ -143,7 +155,7 @@ function BudgetPlan() {
                     <p className="text-xs sm:text-sm">Entries</p>
                 </div>                              
 
-                <DataTable columns={columns} data={budgetplans} />
+                <DataTable columns={columns} data={budgetPlans || []} />
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

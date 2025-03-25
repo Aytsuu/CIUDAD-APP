@@ -2,16 +2,18 @@ import CreateBudgetPlanPage1 from "./treasurer-budgetplan-Page1";
 import CreateBudgetPlanPage2 from "./treasurer-budgetplan-Page2";
 import CreateBudgetPlanPage3 from "./treasurer-budgetplan-Page3";
 import CreateBudgetPlanPage4 from "./treasurer-budgetplan-Page4";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
-import { act, useState } from "react";
+import { useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
 import { useEffect } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, CircleCheck } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { budget_plan, budget_plan_details } from "../request/budgetPlanPostRequests";
+import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
+import { toast } from "sonner";
+import { Navigate } from "react-router";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -78,6 +80,7 @@ const initialFormData4 = {
 };
 
 function CreateBudgetPlanForm() {
+    const navigate = useNavigate();
     const year = new Date().getFullYear()
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, actualIncome, actualRPT } = location.state;
@@ -217,36 +220,20 @@ function CreateBudgetPlanForm() {
             const planId = await budget_plan(budgetHeader);
             console.log("Budget Header Uploaded!")
 
-            await budget_plan_details(combinedData, planId);
+            const res = await budget_plan_details(combinedData, planId);
             console.log("Budget plan and expenditures submitted successfully!");
+
+            if(res && planId){
+                toast('Budget plan created successfully', {
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+                });
+
+                navigate('/treasurer-budget-plan');
+                
+            }
         } catch (error){
             console.error("Error submitting budget plan and expenditures:", error);
         }
-
-    
-        // try {
-        //     // Submit the Budget_Plan data to the backend
-        //     const planId = await budget_plan(budgetPlanData);
-        //     console.log("Budget plan created with ID:", planId);
-    
-        //     // Submit the Budget_Plan_Detail data to the backend
-        //     await Promise.all(
-        //         combinedData.map((item) =>
-        //             capital_outlays_and_non_office(
-        //                 {
-        //                     dtl_budget_item: item.dtl_budget_item,
-        //                     dtl_proposed_budget: item.dtl_proposed_budget,
-        //                 },
-        //                 planId
-        //             )
-        //         )
-        //     );
-    
-        //     console.log("Budget plan and expenditures submitted successfully!");
-        // } catch (err) {
-        //     console.error("Error submitting budget plan and expenditures:", err);
-        //     alert("Failed to submit budget plan. Please check the input data and try again.");
-        // }
     };
 
     

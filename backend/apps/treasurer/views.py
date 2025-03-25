@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 
 
-class Budget_PlanView(generics.ListCreateAPIView):
-    serializer_class = Budget_PlanSerializer
+class Budget_HeaderView(generics.ListCreateAPIView):
+    serializer_class = Budget_HeaderSerializer
     queryset = Budget_Plan.objects.all()
 
 class Budget_Plan_DetailView(generics.ListCreateAPIView):
@@ -26,7 +26,7 @@ class Budget_Plan_DetailView(generics.ListCreateAPIView):
         
 class Delete_Update_Retrieve_BudgetPlanView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Budget_Plan.objects.all()
-    serializer_class = Budget_PlanSerializer
+    serializer_class = Budget_HeaderSerializer
     lookup_field = 'plan_id'
 
 

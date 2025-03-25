@@ -4,7 +4,7 @@ from .views import *
 
 urlpatterns=[
 
-    path('budget-plan/', Budget_PlanView.as_view(), name = 'treasurer-budget-plan'),
+    path('budget-plan/', Budget_HeaderView.as_view(), name = 'treasurer-budget-plan'),
     path('budget-plan-details/', Budget_Plan_DetailView.as_view(), name='treasurer-budget-plan-details'),
     path('budget-plan/<int:plan_id>/', Delete_Update_Retrieve_BudgetPlanView.as_view(), name='treasurer-manage-budget-plan'),
     # path('income-file/', Income_FileView.as_view(), name = 'treasurer-income-file'),
