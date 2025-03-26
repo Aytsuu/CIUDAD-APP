@@ -1,8 +1,8 @@
 import api from '@/api/api';
+import { formatDate } from '@/helpers/dateFormatter';
 
 export const postdonationreq= async (donationInfo: Record<string, any>) => {
     try {
-        const formattedDate = new Date().toISOString().split('T')[0];
 
         console.log({
             don_num: donationInfo.don_num,
@@ -13,7 +13,7 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
             don_receiver: donationInfo.don_receiver,
-            don_date: formattedDate,  // Use the formatted date
+            don_date: formatDate(donationInfo.don_date),  // Use the formatted date
             // ra_id,
             // feat_id,
         });
@@ -27,7 +27,7 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
             don_description: donationInfo.don_description,
             don_category: donationInfo.don_category,
             don_receiver: donationInfo.don_receiver,
-            don_date: formattedDate,  // Use the formatted date
+            don_date: formatDate(donationInfo.don_date),  // Use the formatted date
             // ra_id,
             // feat_id,
         });

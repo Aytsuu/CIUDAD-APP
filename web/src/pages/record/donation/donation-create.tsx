@@ -13,7 +13,7 @@ function ClerkDonateCreate() {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
     resolver: zodResolver(ClerkDonateCreateSchema),
     defaultValues: {
-      don_num: '',
+      don_num: 0,
       don_donorfname: "",
       don_donorlname: "",
       don_item_name: "",

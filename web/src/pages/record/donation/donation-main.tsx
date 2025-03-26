@@ -258,11 +258,11 @@ import { putdonationreq } from "./request-db/donationPutRequest";
 import { deldonationreq } from "./request-db/donationDelRequest";
 
 type Donation = {
-  don_num: string;
+  don_num: number;
   don_donorfname: string; 
   don_donorlname: string;
   don_item_name: string;
-  don_qty: string;
+  don_qty: number;
   don_category: string;
   don_receiver: string;
   don_description?: string;
@@ -270,34 +270,43 @@ type Donation = {
 };
 
 function DonationTracker() {
-  const [data, setData] = useState<Donation[]>([]); // Initialize with an empty array
-  const [loading, setLoading] = useState(true); // Add a loading state
-  const [error, setError] = useState<string | null>(null); // Add an error state
+  const [data, setData] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); 
 
   // Fetch data from the backend
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const result = await getdonationreq(); // Fetch data from the API
-        setData(result); // Store the fetched data in state
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to fetch data. Please try again."); // Set error message
-      } finally {
-        setLoading(false); // Set loading to false after fetching
-      }
+        try {
+            console.log("Fetching data..."); // Debug log
+            const result = await getdonationreq();
+            console.log("Data received:", result); // Debug log
+            
+            if (!Array.isArray(result)) {
+                throw new Error("Invalid data format");
+            }
+            
+            setData(result);
+        } catch (err) {
+            console.error("Fetch error:", err);
+            setError(err instanceof Error ? err.message : "Failed to load donations");
+            setData([]); // Ensure data is always an array
+        } finally {
+            setLoading(false);
+        }
     };
-
+    
     fetchData();
-  }, []); // Empty dependency array ensures this runs only once on mount
+}, []);
 
   // Handle delete functionality
-  const handleDelete = async (don_num : string) => {
+  const handleDelete = async (don_num: number) => {  // Changed from string
+    console.log("Deleting:", don_num);
     try {
-      await deldonationreq(don_num); // Pass refNo as a string
-      setData((prevData) => prevData.filter((item) => item.don_num !== don_num));
+        await deldonationreq(don_num.toString());  // Convert to string if API requires
+        setData(prevData => prevData.filter(item => item.don_num !== don_num));
     } catch (err) {
-      console.error("Failed to delete donation:", err);
+        console.error("Delete error:", err);
     }
   };
 
@@ -368,12 +377,7 @@ function DonationTracker() {
                       don_category={row.original.don_category}
                       don_receiver={row.original.don_receiver}
                       don_description={row.original.don_description}
-                      don_date={row.original.don_date}
-                      onSave={(values) => {
-                        // Handle saving the updated donation data
-                        console.log("Updated values:", values);
-                        // Call your API to update the donation record
-                      }}
+                      don_date={row.original.don_date}               
                     />
                   </div>
                 }
@@ -502,7 +506,7 @@ function DonationTracker() {
           <p className="text-xs sm:text-sm">Entries</p>
         </div>
 
-        <DataTable columns={columns} data={currentRows} />
+        <DataTable columns={columns} data={filteredData} />
       </div>
 
       {/* Pagination Section */}

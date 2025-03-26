@@ -343,7 +343,7 @@ type ClerkDonateViewProps = {
     don_donorfname: string;
     don_donorlname: string;
     don_item_name: string;
-    don_qty: string;
+    don_qty: number;
     don_category: string;
     don_receiver: string;
     don_description?: string;
