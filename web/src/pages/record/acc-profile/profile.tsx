@@ -29,6 +29,8 @@ const AccountSettings = () => {
   });
 
   const navigate = useNavigate(); 
+  const email = localStorage.getItem("email");
+  const username = localStorage.getItem("username");
 
   const onSubmit = (data: AccountFormData) => {
     if (!emailVerified) {
@@ -45,7 +47,7 @@ const AccountSettings = () => {
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6 relative font-poppins">
       {/* Back Button */}
       <button
-        className="absolute top-6 right-10 flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer"
+        className="absolute top-6 right-10 flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer justify-start"
         onClick={() => navigate(-1)} // Navigates back to the previous page
       >
         <ArrowLeft size={20} />
@@ -76,24 +78,24 @@ const AccountSettings = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="flex items-center gap-2 text-gray-600">
-                <User size={16} /> Name
+                <User size={16} /> Username
               </span>
-              <span className="font-bold">Roque, San
+              <span className="font-bold">{username}
               </span>
             </div>
 
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span className="flex items-center gap-2 text-gray-600">
                 <Calendar size={16} /> Birthday
               </span>
               <span className="font-bold">January 1, 1999</span>
-            </div>
+            </div> */}
 
             <div className="flex justify-between">
               <span className="flex items-center gap-2 text-gray-600">
                 <Mail size={16} /> Email
               </span>
-              <span className="font-bold">sanroque@gmail.com</span>
+              <span className="font-bold">{email}</span>
             </div>
           </div>
         </div>
