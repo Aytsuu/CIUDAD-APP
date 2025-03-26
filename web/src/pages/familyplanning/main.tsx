@@ -90,7 +90,6 @@ const initialFormData: FormData = {
     partnerDisapproval: false,
     domesticViolence: false,
     referredTo: undefined,
-    otherReferral: "",
   },
   weight: "",
   height: "",
