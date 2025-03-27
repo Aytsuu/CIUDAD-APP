@@ -46,12 +46,16 @@ export default function SignIn() {
 
       if (response.status === 200) {
         console.log("Login successful!", response.data);
-
         // Store user data in localStorage
         localStorage.setItem("user_id", response.data.user_id);
         localStorage.setItem("username", response.data.username);
         localStorage.setItem("email", response.data.email);
+        localStorage.setItem("profile_image", response.data.profile_image);
         localStorage.setItem("token", response.data.token);
+
+        console.log("image: ", response.data.profile_image);
+        console.log("token: ", response.data.token);
+
 
         // Redirect to the home page or dashboard
         navigate("/dashboard");

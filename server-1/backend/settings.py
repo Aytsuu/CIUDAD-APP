@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
+    # 'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'corsheaders',
     'apps.account',
@@ -56,7 +56,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    # 'useraccount.middleware.SupabaseJWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -140,35 +139,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':(
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',  
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny', 
+        # 'rest_framework.permissions.AllowAny', 
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
 # JWT Authentication Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+# }
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:5173",
 ]
 
+# CORS_ALLOW_HEADERS = [
+#     'authorization',
+#     'content-type',
+# ]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
 CORS_ALLOW_HEADERS = ["*"]
-
-# Supabase credentials
-SUPABASE_URL = "https://bnvhzzbsqixwyevhgcol.supabase.co"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudmh6emJzcWl4d3lldmhnY29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODkwMDEsImV4cCI6MjA1ODE2NTAwMX0.CaEU6OAV3BjTZ0Lh5TDTRkHzqKQmoHlbZ2dBOlDsEjs"
-SUPABASE_JWT_SECRET = "EEDHhSbqr5GRRUZWNzJuiNAh1m6k5S4LD9JhKbQJ/UPN0WTzICDRrl7Q3Vbw05jk1SZDrNZl4ofrde2b0ihwAQ=="

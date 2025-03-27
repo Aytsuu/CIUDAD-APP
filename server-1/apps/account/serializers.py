@@ -7,9 +7,9 @@ class UserAccountSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Account
-        fields = ['id', 'username', 'email', 'password', 'password2', 'dateCreated']
+        fields = ['id', 'username', 'email', 'password', 'password2', 'date_created']
         extra_kwargs = {
-            'dateCreated': {'read_only': True}
+            'date_created': {'read_only': True}
         }
     
     def validate(self, attrs):
