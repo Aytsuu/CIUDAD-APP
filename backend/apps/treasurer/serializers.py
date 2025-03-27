@@ -8,6 +8,8 @@ class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
 
 class  Budget_HeaderSerializer(serializers.ModelSerializer):
     details = serializers.SerializerMethodField()
+
+
     class Meta:
         model = Budget_Plan
         fields = '__all__'
@@ -24,6 +26,9 @@ class  Budget_HeaderSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Disbursement_File
 #         fields = '__all__'
+
+
+
 
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     class Meta:

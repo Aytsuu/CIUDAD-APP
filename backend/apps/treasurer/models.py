@@ -55,16 +55,16 @@ class Budget_Plan_Detail(models.Model):
 
 class Income_Expense_Tracking(models.Model):
     iet_num = models.BigAutoField(primary_key=True)
-    iet_serial_num = models.IntegerField()
+    iet_serial_num = models.CharField(max_length=100, default='DEFAULT_SERIAL') 
     iet_date = models.DateField(default=date.today)
     iet_entryType = models.CharField(max_length=100)
     iet_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    iet_particulars = models.CharField(max_length=100)
     iet_receiver = models.CharField(max_length=100)
     iet_additional_notes = models.CharField(max_length=100)
     iet_receipt_image = models.CharField(null=False)
     # inv_num = models.ForeignKey('Invoice', on_delete=models.CASCADE, null=True, blank=True, default=None)
-    inv_num = models.CharField(max_length=100)
+    inv_num = models.CharField(max_length=100, default=None)
+    dtl_id = models.ForeignKey('Budget_Plan_Detail', on_delete=models.CASCADE)
 
     class Meta:
         db_table = "Income_Expense_Tracking"

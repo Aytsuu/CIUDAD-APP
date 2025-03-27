@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics
 from .serializers import *
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
@@ -39,6 +40,7 @@ class Delete_Update_Retrieve_BudgetPlanView(generics.RetrieveUpdateDestroyAPIVie
 #     queryset = Disbursement_File.objects.all()
 
 
+
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
@@ -67,3 +69,16 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class GetParticularsView(generics.ListAPIView):
+    serializer_class = Budget_Plan_DetailSerializer
+
+    def get_queryset(self):
+        current_year = timezone.now().year
+        # Get the current year's budget plan
+        current_plan = Budget_Plan.objects.filter(plan_year=str(current_year)).first()
+        
+        if current_plan:
+            # Return all details for the current year's plan
+            return Budget_Plan_Detail.objects.filter(plan=current_plan)
+        return Budget_Plan_Detail.objects.none()

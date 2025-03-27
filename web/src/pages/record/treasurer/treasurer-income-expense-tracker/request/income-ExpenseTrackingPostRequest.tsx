@@ -14,7 +14,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_date: formatDate(new Date().toISOString().split('T')[0]),
             iet_entryType: entry,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
-            iet_particulars:  capitalize(incomeExpenseInfo.iet_particulars),
+            iet_particulars:  parseInt(incomeExpenseInfo.iet_particulars),
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             iet_receipt_image: "urlfornow"
@@ -22,15 +22,14 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
         const res = await api.post('treasurer/income-expense-tracking/',{
 
-            iet_serial_num: incomeExpenseInfo.iet_serial_num,
             iet_date: formatDate(new Date().toISOString().split('T')[0]),
             iet_entryType: entry,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
-            iet_particulars:  capitalize(incomeExpenseInfo.iet_particulars),
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             iet_receipt_image: "urlfornow",
-            inv_num: "None"
+            inv_num: "None",
+            dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
 
         })
 

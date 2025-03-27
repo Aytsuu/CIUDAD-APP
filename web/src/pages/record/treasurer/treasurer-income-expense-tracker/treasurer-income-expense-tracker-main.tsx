@@ -32,6 +32,7 @@ type IncomeExpense = {
 function IncomeandExpenseTracking() {
     const [data, setData] = useState<IncomeExpense[]>([]); // Initialize with an empty array
     const [loading, setLoading] = useState(true); // Add a loading state
+    const [isDialogOpen, setIsDialogOpen] = useState(false); 
     const [error, setError] = useState<string | null>(null);// Add an error state
 
 
@@ -225,9 +226,11 @@ function IncomeandExpenseTracking() {
                     description="Fill in the details for your entry."
                     mainContent={
                         <div className="w-full h-full">
-                            <IncomeandExpenseCreateForm/>
+                            <IncomeandExpenseCreateForm onSuccess={() => setIsDialogOpen(false)}/>
                         </div>
                     }
+                    isOpen={isDialogOpen} // Controlled open state
+                    onOpenChange={setIsDialogOpen} // Controlled state setter
                 />
             </div>
 
@@ -261,7 +264,7 @@ function IncomeandExpenseTracking() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                 <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing 1-10 of {data.length} rows
+                    {/* Showing 1-10 of {data.length} rows */}
                 </p>
                 <div className="w-full sm:w-auto flex justify-center">
                     {/* <PaginationLayout className="" /> */}

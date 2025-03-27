@@ -40,7 +40,6 @@ import z from "zod"
 
 const IncomeExpenseFormSchema = z.object({
 
-    iet_serial_num: z.string().nonempty("Serial No. is required"),
     iet_entryType: z.string(z.string()).nonempty('Please select an entry type'),
     iet_particulars: z.string().nonempty('Particulars is required'),
     iet_amount: z.string().nonempty('Amount is required'),
