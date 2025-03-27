@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Sidebar,
@@ -9,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-import { Link } from "react-router";
 
 type AnotherSubMenuItem = {
   title: string;

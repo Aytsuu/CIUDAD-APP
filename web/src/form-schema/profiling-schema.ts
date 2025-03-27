@@ -22,7 +22,7 @@ export const personalInfoSchema = z.object({
     per_religion: z.string().min(1, "Religion is required"),
     per_contact: z.string().min(1, "Contact is required"),
 })                                                                                                                                                                                                                                       
-export const motherInfoSchema = z.object({
+export const motherInfoSchema = z.object({ // To be removed, use personal
     id: z.string(),
     lastName: z.string(),
     firstName: z.string(),
@@ -35,7 +35,7 @@ export const motherInfoSchema = z.object({
     contact: z.string(),
 })
 
-export const fatherInfoSchema = z.object({
+export const fatherInfoSchema = z.object({ // To be removed, use personal
     id: z.string(),
     lastName: z.string(),
     firstName: z.string(),
