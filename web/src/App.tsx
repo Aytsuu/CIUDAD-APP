@@ -1,7 +1,13 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { main_router } from './routes/main-router';
 import { landing_router } from './routes/landing-router';
 import { settings_router } from './routes/settings';
+
+// import FamilyPlanningForm from "./pages/familyplanning/FP-page1";
+// import FamilyPlanningMain from "./pages/familyplanning/main";
+
+// import FamilyPlanningForm2 from "./pages/familyplanning/FP-page2";
 
 const router = createBrowserRouter([
   ...main_router,
@@ -10,8 +16,14 @@ const router = createBrowserRouter([
   { path: "*", element: ""}
 ])
 
-function App() {
+const queryClient = new QueryClient()
 
-  return <RouterProvider router={router} />
+function App() {
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  )
 }
 export default App;

@@ -8,10 +8,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { Supplement,SupplementType } from "@/form-schema/chr-schema";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Baby } from "lucide-react";
 import { Trash2 } from "lucide-react";
@@ -25,11 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+
 } from "@/components/ui/alert-dialog/alert-dialog";
 import { ChevronLeft, Search } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/table/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 
 type Page1FormData = z.infer<typeof Supplement>;
 
@@ -231,7 +233,7 @@ export default function ChildHRPage4({
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
+    <div className=" bg-white rounded-lg shadow  md:p-4 lg:p-8">
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
           {/* Iron Given Section */}

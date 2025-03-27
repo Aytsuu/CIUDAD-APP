@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Scroll } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 export default function DRRWeeklyARReport(){
     return (

@@ -1,55 +1,36 @@
 import React from 'react';
 import { z } from 'zod';
 import { UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import DependentForm from './DependentForm';
 import { DataTable } from '@/components/ui/table/data-table';
-import { father, mother, family, familyComposition, dependents, building} from '../profilingPostRequests'
+import { father, mother, family, familyComposition, dependents, building} from '../restful-api/profiingPostAPI'
 import { DependentRecord } from '../profilingTypes';
 import { ColumnDef } from '@tanstack/react-table';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout';
-import { Trash } from 'lucide-react';
-import api from '@/api/api';
+import { CircleCheck, Trash } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router';
  
 export default function DependentsInfoLayout(
-  {form, defaultValues, back}: {
-    form: UseFormReturn<z.infer<typeof familyFormSchema>>
-    defaultValues: Record<string, any>
-    back: () => void
+  {form, residents, selectedParents, defaultValues, back}: {
+    form: UseFormReturn<z.infer<typeof familyFormSchema>>;
+    residents: any;
+    selectedParents: Record<string, string>;
+    defaultValues: Record<string, any>;
+    back: () => void;
 }){
 
-  const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>([])
-  const [residents, setResidents] = React.useState<Record<string, string>[]>([])
-  const hasFetchData = React.useRef(false)
-
-  React.useEffect(()=>{
-    if(!hasFetchData.current){
-      getResidents()
-      hasFetchData.current = true
-    }
-  }, [])
-
-  const getResidents  = React.useCallback(()=> {
-    try{
-
-      api.get('profiling/personal/')
-      .then((res) => res.data)
-      .then((data)=>{
-          setResidents(data)
-      })
-
-    } catch (err) {
-      console.log(err)
-    } 
-  }, [])
+    const navigate = useNavigate();
+    const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>([])
 
     React.useEffect(() => {
         const dependentsList = form.getValues("dependentsInfo.list");
-      
+    
         if (Array.isArray(dependentsList)) {
-          // Transform the list into an array of Dependent objects
-          const transformedData = dependentsList.map((value) => ({
+            // Transform the list into an array of Dependent objects
+            const transformedData = dependentsList.map((value) => ({
             id: value.id,
             lname: value.lastName,
             fname: value.firstName,
@@ -57,12 +38,12 @@ export default function DependentsInfoLayout(
             suffix: value.suffix,
             sex: value.sex,
             dateOfBirth: value.dateOfBirth,
-          }));
-      
-          // Update the state with the transformed data
-          setDependentsList(transformedData);
-        }
-      }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
+        }));
+    
+        // Update the state with the transformed data
+        setDependentsList(transformedData);
+      }
+    }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
     
     const dependentColumns: ColumnDef<DependentRecord>[] = [
         { accessorKey: "id", header: "#" },
@@ -114,22 +95,19 @@ export default function DependentsInfoLayout(
           // Get form values
           const demographicInfo = form.getValues().demographicInfo;
           const dependentsInfo = form.getValues().dependentsInfo.list;
-          const motherPersonalId = form.getValues().motherInfo.id;
-          const fatherPersonalId = form.getValues().fatherInfo.id;
   
           // Store mother information
-          
-          const motherId = await mother(motherPersonalId);
+          const motherId = await mother(selectedParents.mother);
   
           // Store father information
-          const fatherId = await father(fatherPersonalId);
+          const fatherId = await father(selectedParents.father);
   
           // Store family information
           const familyId = await family(demographicInfo, fatherId, motherId);
 
           // Automatically add selected mother and father in the family composition
-          familyComposition(familyId, motherPersonalId)
-          familyComposition(familyId, fatherPersonalId)
+          familyComposition(familyId, selectedParents.mother)
+          familyComposition(familyId, selectedParents.father)
   
           // Store dependents information
           dependents(dependentsInfo, familyId);
@@ -143,7 +121,13 @@ export default function DependentsInfoLayout(
           }
   
           // Provide feedback to the user
-          console.log("Profile registered successfully!");
+          toast('Record added successfully', {
+            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+            action: {
+                label: "View",
+                onClick: () => navigate(-1)
+            }
+        });
       } catch (err) {
           // Handle errors and provide feedback to the user
           console.error("Error registering profile:", err);
@@ -157,6 +141,8 @@ export default function DependentsInfoLayout(
                 <DependentForm 
                     form={form}
                     residents={residents}
+                    selectedParents={selectedParents}
+                    dependents={dependentsList}
                 />
                 <DataTable data={dependentsList} columns={dependentColumns}/>
             </div>

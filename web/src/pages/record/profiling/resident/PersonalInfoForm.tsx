@@ -1,133 +1,199 @@
+/* 
+
+  Note...
+
+  This form is being utilized for creating, viewing, and updating resident records
+  Additionally, it is being used for adminstrative position assignment or staff registration 
+
+*/
+
 import React from "react";
-import { Input } from "@/components/ui/input";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
-import { Button } from "@/components/ui/button";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { personal, registered } from "../profilingPostRequests";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import AssignPosition from "../../administration/AssignPosition";
-import { useLocation } from "react-router";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { personal, residentProfile } from "../restful-api/profiingPostAPI";
+import { updateProfile } from "../restful-api/profilingPutAPI";
 import { CircleCheck, CircleAlert } from "lucide-react";
-import api from "@/api/api";
+import { Type, Origin } from "../profilingEnums";
+import { renderActionButton } from "./actionConfig";
+import { toast } from "sonner";
+import { useNavigate } from "react-router";
+import { Form } from "@/components/ui/form/form";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { Combobox } from "@/components/ui/combobox";
+import { formatResidents } from "../profilingFormats";
 
-export default function PersonalInfoForm(){
- 
-  // Initialize states
+export default function PersonalInfoForm({ params }: { params: any }) {
 
-  const location = useLocation()
-  const defaultValues = generateDefaultValues(personalInfoSchema)
-  const { params } = location.state || { params: {}}
-  
+  const navigate = useNavigate();
+  const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema));
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    defaultValues 
-  })
-  
-  const [residents, setResidents] = React.useState<Record<string, string>[]>([])
-  const [residentSearch, setResidentSearch] = React.useState<string>('');
-  const [isResidentFound, setIsResidentFound] = React.useState<boolean>(false);
+    defaultValues: defaultValues.current,
+  });
 
-  const [staffs, setStaffs] = React.useState<Record<string, string>[]>([]);
-  const [isStaff, setIsStaff] = React.useState<boolean>(false);
+  const [formType, setFormType] = React.useState<Type>(params.type);
+  const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
+  const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false)
-  const hasFetchData = React.useRef(false)
-  
-  // Side effect to fetch residents
-  React.useEffect(()=>{
-    if(!hasFetchData.current){
+  const formattedResidents = React.useMemo(() => {
+    return formatResidents(params, false)
+  }, [params.residents])
 
-      if(params.origin === 'administration') {
-        getStaffs()
+  React.useEffect(() => {
+
+    if (formType === Type.Viewing) {
+      toast.dismiss();
+      populateFields(params.data.per);
+      form.clearErrors();
+    }
+
+    if (formType === Type.Editing) {
+      setIsReadOnly(false)
+    }
+  }, [formType])
+
+  const handleComboboxChange = React.useCallback(() => {
+    const data = params.residents.find((resident: any) => 
+      resident.rp_id === form.watch('per_id').split(" ")[0]
+    )
+
+    populateFields(data.per)
+  }, [form.watch('per_id')])
+
+  // For resident viewing, populate form fields with resident data
+  const populateFields = React.useCallback((data: any) => {
+    const resident = data;
+
+    const fields = [
+      { key: 'per_id', value: params.origin === Origin.Administration ? String(form.watch('per_id')) : String(resident?.per_id) || ''},
+      { key: 'per_lname', value: resident?.per_lname},
+      { key: 'per_fname', value: resident?.per_fname || ''},
+      { key: 'per_mname', value: resident?.per_mname || ''},
+      { key: 'per_suffix', value: resident?.per_suffix || ''},
+      { key: 'per_sex', value: resident?.per_sex || ''},
+      { key: 'per_dob', value: resident?.per_dob || ''},
+      { key: 'per_status', value: resident?.per_status || ''},
+      { key: 'per_address', value: resident?.per_address || ''},
+      { key: 'per_religion', value: resident?.per_religion || ''},
+      { key: 'per_edAttainment', value: resident?.per_edAttainment || ''},
+      { key: 'per_contact', value: resident?.per_contact || ''},
+    ];
+
+    fields.forEach(({ key, value }) => {
+      form.setValue(key as keyof z.infer<typeof personalInfoSchema>, value || '');
+    });
+
+    // Toggle read only
+    if(resident) {
+      setIsReadOnly(true)
+    } else {
+      setIsReadOnly(false)
+    }
+
+  }, [params.data || params.resident]);
+
+  // For type edit, check if values are unchanged
+  const checkDefaultValues = (values: any, params: any) => {
+    
+    // Optional fields
+    const optionalFields = ['per_id', 'per_mname', 'per_suffix', 'per_edAttainment'];
+    const keys = Object.keys(values);
+    const isDefault = keys.every((key) => {
+      if(optionalFields.includes(key)) {
+
+        const isParamEmpty = !params[key] || params[key] === '';
+        const isValueEmpty = !values[key] || values[key] === '';
+      
+        return (
+          (isParamEmpty && isValueEmpty) || // Both empty
+          (String(params[key]) === String(values[key])) // Both non-empty and equal
+        );
+      } else {
+        return params[key] === values[key] ? true : false
       }
+    });
 
-      getResidents()
-      hasFetchData.current = true
-    }
-  }, []);
+    return isDefault;
+  }
 
-  // Function to perform api GET request to staffs
-  const getStaffs = React.useCallback(async () => {
-    try {
-      const res = await api.get('administration/staffs/')
-      setStaffs(res.data)
-    } catch (err) {
-      console.log(err)
+  // For type edit, save click feedback
+  const handleEditSaved = (message: string, icon: React.ReactNode) => {
+    setFormType(Type.Viewing);
+    toast(message, {
+      icon: icon
+    });
+  }
+
+  // Handle form submission
+  const submit = async () => {
+
+    setIsSubmitting(true);
+
+    const formIsValid = await form.trigger();
+
+    if(!formIsValid) {
+      const errors = form.formState.errors;
+      console.log("Validation Errors:", errors);
+      setIsSubmitting(false);
+      toast('Please fill out all required fields', {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      })
+      return; 
     }
-  }, [])
- 
-  // Function to perform api GET request to personal
-  const getResidents = React.useCallback(async () => {
+
     try {
-      const res = await api.get('profiling/personal/')
-      setResidents(res.data)
-    } catch (err) {
-      console.log(err)
-    }
-  }, [])
+      const values = form.getValues();
+
+      if (formType === Type.Editing) {
+
+        if(checkDefaultValues(values, params.data.per)) {
+
+          handleEditSaved(
+            'No changes made', 
+            <CircleAlert size={24} className="fill-orange-500 stroke-white" />
+          );      
   
-  // Side effects for searching resident
-  React.useEffect(()=>{
+          return
+  
+        }
 
-    const searchResident = residents.find((value) => value.per_id == residentSearch)
-    const searchStaff = Boolean(staffs.some((value) => value.staff_id == searchResident?.per_id))
-    searchStaff ? setIsStaff(true) : setIsStaff(false)
+        const res = await updateProfile(params.data.per.per_id, values);
 
-    if(searchResident && searchStaff !== true){
-
-      setIsResidentFound(true)
-
-      const fields = [
-        { key: 'id', value: searchResident.per_id },
-        { key: 'lastName', value: searchResident.per_lname },
-        { key: 'firstName', value: searchResident.per_fname },
-        { key: 'middleName', value: searchResident.per_mname },
-        { key: 'suffix', value: searchResident.per_suffix },
-        { key: 'sex', value: searchResident.per_sex },
-        { key: 'dateOfBirth', value: searchResident.per_dob },
-        { key: 'status', value: searchResident.per_status },
-        { key: 'address', value: searchResident.per_address },
-        { key: 'religion', value: searchResident.per_religion },
-        { key: 'edAttainment', value: searchResident.per_edAttainment },
-        { key: 'contact', value: searchResident.per_contact },
-      ];
-
-      fields.forEach(({ key, value }) => {
-        form.setValue(key as keyof z.infer<typeof personalInfoSchema>, value || '');
-      });
+        if(res) {
+          params.data.per = values
+          handleEditSaved(
+            'Record updated successfully', 
+            <CircleCheck size={24} className="fill-green-500 stroke-white" />
+          );
+        }
 
       } else {
 
-        setIsResidentFound(false)
-        form.reset(defaultValues)
+        const personalId = await personal(values);
+        const res= await residentProfile(personalId); 
 
-      }
+        if(res) {
+          toast('New record created successfully', {
+            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+            action: {
+              label: 'View',
+              onClick: () => navigate(-1)
+            }
+          });
 
-  }, [residentSearch])
-  
-  // Handle submit
-  const submit = async () => {
-    try {
-      if (params.origin !== 'administration') {
-        const values = form.getValues();
-        const perId = await personal(values);
-        await registered(perId)
-        form.reset(defaultValues);
+          form.reset(defaultValues.current);
+        }
       }
     } catch (err) {
       console.error('Submission failed:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,227 +204,67 @@ export default function PersonalInfoForm(){
         <p className="text-xs text-black/50">Fill out all necessary fields</p>
       </div>
 
-      <div className="grid gap-4">
-        {params.origin === 'administration' && 
-          <div className="relative">
-            <Input placeholder="Search resident #..." value={residentSearch} onChange={(e)=> setResidentSearch(e.target.value)}/>
-            {isResidentFound && 
-              <CircleCheck size={24} className="absolute top-1/2 right-3 transform -translate-y-1/2 fill-green-500 stroke-white"/>
-            }
-            {isStaff && 
-              <CircleAlert size={24} className="absolute top-1/2 right-3 transform -translate-y-1/2 fill-red-500 stroke-white"/>
-            }
+      <Form {...form}>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }} className="flex flex-col gap-4">
+
+          {params.origin === Origin.Administration && (
+            <Combobox 
+              options={formattedResidents}
+              value={form.watch('per_id')}
+              onChange={(value) => {
+                form.setValue('per_id', value);
+                handleComboboxChange();
+              }}
+              placeholder="Search for resident..."
+              emptyMessage="No resident found"
+            />
+          )}
+
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <FormInput control={form.control} name="per_lname" label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_fname" label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_mname" label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_suffix" label="Suffix" placeholder="Sfx." readOnly={isReadOnly} />
           </div>
-        }
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(submit)}
-            className="flex flex-col gap-4"
-          >
-            {/* Name Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-              <FormInput 
-                control={form.control}
-                name="lastName"
-                label="Last Name"
-                placeholder="Enter Last Name"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
+          {/* Sex, Status, DOB, Address */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <FormSelect control={form.control} name="per_sex" label="Sex" options={[{ id: "female", name: "Female" }, { id: "male", name: "Male" }]} readOnly={isReadOnly} />
+            <FormDateInput control={form.control} name="per_dob" label="Date of Birth" readOnly={isReadOnly} />
+            <FormSelect control={form.control} name="per_status" label="Marital Status" options={[
+              { id: "single", name: "Single" },
+              { id: "married", name: "Married" },
+              { id: "divorced", name: "Divorced" },
+              { id: "widowed", name: "Widowed" },
+            ]} readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_address" label="Address" placeholder="Enter address" readOnly={isReadOnly} />
+          </div>
 
-              <FormInput 
-                control={form.control}
-                name="firstName"
-                label="First Name"
-                placeholder="Enter First Name"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
+          {/* Education, Religion, Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <FormInput control={form.control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_religion" label="Religion" placeholder="Enter religion" readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} />
+          </div>
 
-              <FormInput 
-                control={form.control}
-                name="middleName"
-                label="Middle Name"
-                placeholder="Enter Middle Name"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
-
-              <FormInput 
-                control={form.control}
-                name="suffix"
-                label="Suffix"
-                placeholder="Sfx."
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
-            </div>
-
-            {/* Sex, Status, DOB, Birth Place */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="sex"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-1 lg:col-span-1">
-                    <FormLabel className="font-medium text-black/65">
-                      Sex
-                    </FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        placeholder='Select'
-                        className="w-full"
-                        options={[
-                          {id: "female", name: "Female"},
-                          {id: "male", name: "Male"},
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-1 lg:col-span-1">
-                    <FormLabel className="font-medium text-black/65">
-                      Date of Birth
-                    </FormLabel>
-                    <FormControl>
-                      <input type="date" className="bg-white border w-full p-1.5 rounded-md text-[14px] shadow-sm" {...field} readOnly={isResidentFound} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-1 lg:col-span-1">
-                    <FormLabel className="font-medium text-black/65">
-                      Marital Status
-                    </FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        placeholder='Select'
-                        className="w-full"
-                        options={[
-                          {id: "single", name: "Single"},
-                          {id: "married", name: "Married"},
-                          {id: "divorced", name: "Divorced"},
-                          {id: "widowed", name: "Widowed"},
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormInput 
-                control={form.control}
-                name="address"
-                label="Address"
-                placeholder="Enter address"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
-            </div>
-
-            {/* Citizenship, Religion, Contact */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <FormInput 
-                control={form.control}
-                name="edAttainment"
-                label="Educational Attainment"
-                placeholder="Enter educational attainment"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
-
-              <FormInput 
-                control={form.control}
-                name="religion"
-                label="Religion"
-                placeholder="Enter religion"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
-
-              <FormInput 
-                control={form.control}
-                name="contact"
-                label="Contact"
-                placeholder="Enter contact"
-                readOnly={isResidentFound}
-                className="lg:col-span-1"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <div className="mt-8 flex justify-end gap-3">
-              {params.origin === 'administration' ? 
-                (
-                    <DialogLayout
-                        trigger={
-                          <Button type='submit' className="px-12">
-                              Finish
-                          </Button>
-                        }
-                        title='Position Assignment'
-                        description='Assign a position to complete the registration'
-                        mainContent={ 
-                          <AssignPosition 
-                            close={() => {
-                              setResidentSearch('')
-                              setIsAssignmentOpen(false)
-                            }} 
-                            personalInfoform={form}
-                          />
-                        } 
-                        isOpen={isAssignmentOpen}
-                        onOpenChange={setIsAssignmentOpen}
-                    />
-                ) : (
-                    
-                  <Button type="submit" className="w-full sm:w-32" > 
-                    Register
-                  </Button>
-                )
-              }                  
-            </div>
-          </form>
-        </Form>
-      </div>
+          {/* Action Button */}
+          <div className="mt-8 flex justify-end gap-3">
+            {renderActionButton(
+              form,
+              isAssignmentOpen,
+              formType,
+              params.origin,
+              isSubmitting,
+              setIsAssignmentOpen,
+              setFormType
+            )}
+          </div>
+        </form>
+      </Form>
     </div>
   );
-};
-
-const FormInput = ({ control, name, label, placeholder, readOnly, className } : 
-  {control: any, name: string, label: string, placeholder: string, readOnly: boolean, className?: string}
-) => (
-  <FormField
-    control={control}
-    name={name}
-    render={({ field }) => (
-      <FormItem className={className}>
-        <FormLabel className="font-medium text-black/65">{label}</FormLabel>
-        <FormControl>
-          <Input placeholder={placeholder} {...field} readOnly={readOnly} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-);
-
+}

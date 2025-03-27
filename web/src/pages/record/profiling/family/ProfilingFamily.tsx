@@ -1,49 +1,52 @@
 import React from "react";
 import { Search, Plus, FileInput } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { familyColumns } from "../profilingColumns";
+import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
-import LivingSoloForm from "./LivingSoloForm";
-import api from "@/api/api";
+import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
+import { getFamilies, getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilingFamily() {
 
     // Initialize states 
+    const [searchQuery, setSearchQuery] = React.useState('')
+    const [pageSize, setPageSize] = React.useState(10)
+    const [currentPage, setCurrentPage] = React.useState(1);
+
+    // Fetch families and residents using useQuery
+    const { data: families, isLoading: isLoadingFamilies } = useQuery({
+        queryKey: ['families'],
+        queryFn: getFamilies,
+        refetchOnMount: true,
+        staleTime: 0
+    });
+
+    const { data: residents, isLoading: isLoadingResidents } = useQuery({
+        queryKey: ['residents'],
+        queryFn: getResidents,
+        refetchOnMount: true,
+        staleTime: 0
+    });
+
+    const { data: households, isLoading: isLoadingHouseholds} = useQuery({
+        queryKey: ['households'],
+        queryFn: getHouseholds,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+
+    // Format family to populate data table
+    const formatFamilyData = (): FamilyRecord[] => {
+        if(!families) return [];
     
-    const [residents, setResidents] = React.useState<Record<string, string>[]>([]);
-    const [isOptionOpen, setIsOptionOpen] = React.useState(false);
-    const [isFamilyFormOpen, setIsFamilyFormOpen] = React.useState(false);
-    const [families, setFamilies] = React.useState<FamilyRecord[]>([])
-    const hasFetchData = React.useRef(false);
-
-    React.useEffect(()=>{
-    if(!hasFetchData.current){
-        getResidents() 
-        getFamilies()
-        hasFetchData.current = true
-    }
-    }, [])
-      
-    const getResidents  = React.useCallback(async ()=> {
-        try{
-
-            const res = await api.get('profiling/personal/')
-            setResidents(res.data)
-
-        } catch (err) {
-            console.log(err)
-        } 
-    }, [])
-
-    const formatFamilyData = (data: any[]): FamilyRecord[] => {
-    
-        return data.map(item => {
+        return families.map((item: any) => {
 
             const building = item.building
             
@@ -51,31 +54,41 @@ export default function ProfilingFamily() {
                 id: item.fam_id || '',
                 head: '',
                 noOfDependents: item.dependents.length,
-                building: building.build_type || '',
+                building: building?.build_type || '',
                 indigenous: item.fam_indigenous || '',
                 dateRegistered: item.fam_date_registered || '',
-                registeredBy: ''
+                registeredBy: item.staff
             }
         });
     };
 
-    const getFamilies = React.useCallback(async () => {
+    const filteredFamilies = React.useMemo(() => {
+        let filtered = formatFamilyData();
 
-        try {
+        filtered = filtered.filter((record: any) => 
+        
+            Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+        )
 
-            const res = await api.get('profiling/family/')
-            const formattedData = formatFamilyData(res.data)
-            setFamilies(formattedData)
+        return filtered;
+    }, [searchQuery, families])
 
-        } catch (err) {
-            console.log(err)
-        }
+    const totalPages = Math.ceil(filteredFamilies.length / pageSize);
 
-    }, [])
+    const paginatedFamilies = filteredFamilies.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
 
-    const handleDialogChange = () => {
-        setIsOptionOpen(false)
-        setIsFamilyFormOpen(true)
+    if (isLoadingFamilies || isLoadingResidents || isLoadingHouseholds) {
+        return (
+            <div className="w-full h-full">
+                <Skeleton className="h-10 w-1/6 mb-3" />
+                <Skeleton className="h-7 w-1/4 mb-6" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-4/5 w-full mb-4" />
+            </div>
+        )
     }
 
     return (
@@ -87,15 +100,15 @@ export default function ProfilingFamily() {
 
             <hr className="border-gray mb-6 sm:mb-8" />
 
-            <div className="hidden lg:flex justify-between items-center mb-4">
-                <div className="flex gap-2">
-                    <div className="relative flex-1 bg-white">
+            <div className="hidden lg:flex justify-between items-center mb-4 gap-2">
+                <div className="flex gap-2 w-full">
+                    <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
                         <Input
                             placeholder="Search..."
-                            className="pl-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                            value={''}
-                            onChange={() => {}}
+                            className="pl-10 bg-white"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </div>
@@ -108,18 +121,11 @@ export default function ProfilingFamily() {
                         </Button>
                     }
                     mainContent={
-                        <FamilyProfileOptions onClose={handleDialogChange} />
+                        <FamilyProfileOptions 
+                            residents={residents}  
+                            households={households}
+                        />
                     }
-                    isOpen={isOptionOpen}
-                    onOpenChange={setIsOptionOpen}
-                />
-
-                <DialogLayout 
-                    mainContent={<LivingSoloForm residents={residents}/>}
-                    title="Register Family"
-                    description="Family registration form for individuals living independently. Please fill out all required fields"
-                    isOpen={isFamilyFormOpen}
-                    onOpenChange={setIsFamilyFormOpen}
                 />
             </div>
 
@@ -130,8 +136,15 @@ export default function ProfilingFamily() {
                         <Input
                             type="number"
                             className="w-14 h-6"
-                            value={''}
-                            onChange={() => {}}
+                            value={pageSize}
+                            onChange={(e) => {
+                                const value = +e.target.value;
+                                if (value >= 1) {
+                                    setPageSize(value);
+                                } else {
+                                    setPageSize(1); // Reset to 1 if invalid
+                                }
+                            }}
                             min="1"
                         />
                         <p className="text-xs sm:text-sm">Entries</p>
@@ -150,13 +163,17 @@ export default function ProfilingFamily() {
                     />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={familyColumns} data={families} />
+                    <DataTable columns={familyColumns} data={paginatedFamilies} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">
                         Showing 0 rows
                     </p>
-                    <PaginationLayout />
+                    {filteredFamilies.length > 0 && <PaginationLayout
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />}
                 </div>
             </div>
         </div>

@@ -1,21 +1,34 @@
 import { Stack } from "expo-router";
+import { useForm } from "react-hook-form";
+import { RegistrationFormSchema } from '@/form-schema/registration-schema';
+import { z } from 'zod';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { FormProvider } from "@/contexts/RegistrationFormContext";
+
+type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
+const defaultValues = generateDefaultValues(RegistrationFormSchema)
 
 export default () => {
-    return (
-        <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="verification" options={{ headerShown: false }}  />
-            <Stack.Screen name="demographic-data" options={{ headerShown: false }}  />
-            <Stack.Screen name="account-details" options={{ headerShown: false }}  />
-            <Stack.Screen name="personal-information" options={{ headerShown: false }}  />
-            <Stack.Screen name="mother-information" options={{ headerShown: false }}  />
-            <Stack.Screen name="father-information" options={{ headerShown: false }}  />
-            <Stack.Screen name="dependents" options={{ headerShown: false }}  />
-            <Stack.Screen name="add-dependent" options={{ headerShown: false }}  />
-            <Stack.Screen name="view-dependent" options={{ headerShown: false }}  />
-            <Stack.Screen name="register-completion" options={{ headerShown: false }}  />
-            <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
-            <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
-        </Stack>
-    );
-}
+
+  const methods = useForm<RegistrationForm>({
+    resolver: zodResolver(RegistrationFormSchema),
+    defaultValues
+  })
+
+  return (
+    <FormProvider methods={methods}>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="verification" options={{ headerShown: false }} />
+        <Stack.Screen name="personal-information" options={{ headerShown: false }} />
+        <Stack.Screen name="upload-id" options={{ headerShown: false }} />
+        <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />
+        <Stack.Screen name="account-details" options={{ headerShown: false }} />
+        <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
+        <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
+      </Stack>
+    </FormProvider>
+
+  );
+};

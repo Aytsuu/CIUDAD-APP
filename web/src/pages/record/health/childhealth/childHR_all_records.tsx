@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
@@ -243,12 +243,12 @@ export default function AllChildHealthRecords() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Child Health Records
+              Child Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view child's information
           </p>
-        </div>
+      </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
 
@@ -281,7 +281,9 @@ export default function AllChildHealthRecords() {
 
 
         <div className="w-full md:w-auto">
+
           <Button onClick={toChildHealthForm}>New Record</Button>
+
         </div>
       </div>
 

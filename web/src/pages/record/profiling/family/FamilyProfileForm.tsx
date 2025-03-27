@@ -6,36 +6,53 @@ import DemographicInfo from "./DemographicInfo";
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button/button";
+import { useNavigate, useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { formatHouseholds, formatResidents } from "../profilingFormats";
 
 export default function FamilyProfileForm() {
-  const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = React.useState(1);
-  const defaultValues = generateDefaultValues(familyFormSchema)
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
+  const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
+
+  const [selectedMotherId, setSelectedMotherId] = React.useState<string>('');
+  const [selectedFatherId, setSelectedFatherId] = React.useState<string>('');
+  
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
-    defaultValues,
-    mode: 'onChange' 
+    defaultValues: defaultValues.current,
   })
 
-  const nextStep = () => {
+  const params = React.useMemo(() => {
+    return location.state?.params || {}
+  }, [location.state]);
+
+  const formattedResidents = React.useMemo(() => {
+    return formatResidents(params, false)
+  }, [params.residents]);
+
+  const households = React.useMemo(() => {
+    return formatHouseholds(params)
+  }, [params.households])
+
+  const nextStep = React.useCallback(() => {
     setCurrentStep((prev) => prev + 1);
-  };
+  }, []);
 
   // Handler for going to the previous step
-  const prevStep = () => {
+  const prevStep = React.useCallback(() => {
     setCurrentStep((prev) => prev - 1);
-  };
+  }, []);
 
   // Calculate progress based on current step
-  const calculateProgress = () => {
+  const calculateProgress = React.useCallback(() => {
     switch (currentStep) {
       case 1:
         return 30;
@@ -46,7 +63,7 @@ export default function FamilyProfileForm() {
       default:
         return 0;
     }
-  };
+  }, [currentStep]);
 
   return (
     <>
@@ -81,12 +98,17 @@ export default function FamilyProfileForm() {
           {currentStep === 1 && (
             <DemographicInfo
               form={form}
+              households={households}
               onSubmit={()=>nextStep()}
             />
           )}
           {currentStep === 2 && (
             <ParentsFormLayout
               form={form}
+              residents={{default: params.residents, formatted: formattedResidents}}
+              selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
+              setSelectedMotherId={setSelectedMotherId}
+              setSelectedFatherId={setSelectedFatherId}
               onSubmit={()=>nextStep()}
               back={()=>prevStep()}
             />
@@ -94,6 +116,8 @@ export default function FamilyProfileForm() {
           {currentStep === 3 && (
             <DependentsInfoLayout
               form={form}
+              residents={{default: params.residents, formatted: formattedResidents}}
+              selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />
