@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Hannah Sheen\Documents\CIUDAD\CIUDAD-APP\backend\venv"
+VIRTUAL_ENV="C:\Users\HI\Desktop\ACADS\CAPSTONE\CIUDAD-APP\backend\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

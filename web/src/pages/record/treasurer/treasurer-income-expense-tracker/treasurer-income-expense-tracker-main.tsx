@@ -52,6 +52,7 @@ function IncomeandExpenseTracking() {
         fetchData();
     }, []); // Empty dependency array ensures this runs only once on mount
 
+    
     const handleDelete = async (iet_num: number) => {
         try {
             await deleteIncomeExpense(iet_num);
