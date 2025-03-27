@@ -9,7 +9,7 @@
     import { useEffect } from "react";
     import { ChevronLeft } from "lucide-react";
     import { Link } from "react-router";
-    import { Button } from "@/components/ui/button";
+    import { Button } from "@/components/ui/button/button";
     import { formatNumber } from "@/helpers/currencynumberformatter";
     import { budget_plan, current_expenditures_personal, current_expenditures_maintenance, other_maint_and_operating_expenses, capital_outlays_and_non_office } from "../budgetPlanPostRequests";
 

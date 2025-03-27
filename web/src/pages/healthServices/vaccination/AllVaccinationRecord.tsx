@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -190,27 +190,8 @@ export default function AllVaccinationRecords() {
     },
   ];
 
-<<<<<<<< HEAD:web/src/pages/healthServices/vaccination/AllVaccinationRecord.tsx
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-========
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const data = sampleData;
-  const filter = [
-    { id: "0", name: "All" },
-    { id: "1", name: "Transient" },
-    { id: "2", name: "Logarta" },
-  ];
-  const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.type === selectedFilter || item.sitio === selectedFilter
-        );
->>>>>>>> frontend/feature/treasurer:web/src/pages/record/health/vaccination/allVaccinationRecord.tsx
-
   const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -255,29 +236,21 @@ export default function AllVaccinationRecords() {
   };
 
   return (
-<<<<<<<< HEAD:web/src/pages/healthServices/vaccination/AllVaccinationRecord.tsx
+
     <>
-      <div className="w-full h-full flex flex-col">
-        {/* Header Section */}
-        <div className="flex-col items-center mb-4">
-========
+
     <div className="w-full h-full flex flex-col">
       {/* Header Section */}
       <div className="flex-col items-center mb-4">
->>>>>>>> frontend/feature/treasurer:web/src/pages/record/health/vaccination/allVaccinationRecord.tsx
+
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Vaccination Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
               Manage and view patients information
           </p>
-<<<<<<<< HEAD:web/src/pages/healthServices/vaccination/AllVaccinationRecord.tsx
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
-========
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
->>>>>>>> frontend/feature/treasurer:web/src/pages/record/health/vaccination/allVaccinationRecord.tsx
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
           {/* Search Input and Filter Dropdown */}

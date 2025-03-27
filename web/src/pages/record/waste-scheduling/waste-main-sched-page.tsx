@@ -76,7 +76,6 @@ const WasteMainScheduling = () => {
       <div className="w-full bg-white">
         <EventCalendar /> 
       </div>
->>>>>>> frontend/feature/treasurer
     </div>
   );
 };

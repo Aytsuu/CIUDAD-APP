@@ -3,23 +3,39 @@ import AdministrativePositions from "./AdministrativePositions";
 import FeatureSelection from "./FeatureSelection";
 import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button/button";
+import { useNavigate, useLocation } from "react-router";
 import { ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Assigned, Feature } from "./administrationTypes";
+import { Assigned, Positions } from "./administrationTypes";
   
 export default function RoleLayout() {
+
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const params = React.useMemo(() => {
+      return location.state?.params || {}
+    }, [location.state])
+
+    const [positions, setPositions] = React.useState<Positions[]>(params.positions)
     const [selectedPosition, setSelectedPosition] = React.useState<string>('');
-    const [features, setFeatures] = React.useState<Feature[]>([]);
     const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>([]);
   
     // Handle position selection
-    const handlePositionSelect = (position: string) => {
+    const handlePositionSelect = React.useCallback((position: string) => {
       setSelectedPosition(position);
-    };
-  
+    }, []);
+
+    React.useEffect(() => {
+      if (!selectedPosition) return;
+      setAssignedFeatures(
+        Object.values(params.allAssignedFeatures as Assigned[]).filter(
+          (value) => value.pos === selectedPosition
+        )
+      );
+    }, [selectedPosition]);
+
     return (
       <div className="w-full h-full flex flex-col">
         {/* Header Section */}
@@ -43,6 +59,8 @@ export default function RoleLayout() {
           {/* Positions Section */}
           <div className="w-1/2 h-full flex flex-col p-5">
             <AdministrativePositions
+              positions={positions}
+              setPositions={setPositions}
               selectedPosition={selectedPosition}
               setSelectedPosition={handlePositionSelect}
             />
@@ -57,9 +75,8 @@ export default function RoleLayout() {
               {selectedPosition ? (
                 <FeatureSelection
                   selectedPosition={selectedPosition} 
-                  features={features}
+                  features={params.features}
                   assignedFeatures={assignedFeatures}
-                  setFeatures={setFeatures}
                   setAssignedFeatures={setAssignedFeatures}
                 />
               ) : (
@@ -82,7 +99,7 @@ export default function RoleLayout() {
                 <>
                   <SettingPermissions
                     selectedPosition={selectedPosition}
-                    features={features}
+                    features={params.features}
                     assignedFeatures={assignedFeatures}
                   />
                 </>

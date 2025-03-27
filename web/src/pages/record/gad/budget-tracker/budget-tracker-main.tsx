@@ -3,7 +3,7 @@ import { Calendar, Search, X } from 'lucide-react'; // Import X icon
 import { Progress } from "@/components/ui/progress"; 
 import { Input } from "@/components/ui/input";
 import CardLayout from "@/components/ui/card/card-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 
 export const BudgetTracker = [

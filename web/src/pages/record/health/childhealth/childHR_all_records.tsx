@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
@@ -238,11 +238,6 @@ export default function AllChildHealthRecords() {
     navigate("/newAddChildHRForm", { state: { recordType: "nonexistingPatient" } });
   }
 
-  const navigate = useNavigate();
-  function toChildHealthForm() {
-    navigate("/newAddChildHRForm", { state: { recordType: "nonexistingPatient" } });
-  }
-
   return (
     <div className="w-full bg-snow">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -251,17 +246,10 @@ export default function AllChildHealthRecords() {
               Child Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-<<<<<<<< HEAD:web/src/pages/healthServices/childservices/childhealthRecords/ChildHR_all_records.tsx
             Manage and view child's information
-========
-              Manage and view child's information
->>>>>>>> frontend/feature/treasurer:web/src/pages/record/health/childhealth/childHR_all_records.tsx
           </p>
       </div>
-<<<<<<<< HEAD:web/src/pages/healthServices/childservices/childhealthRecords/ChildHR_all_records.tsx
-========
       </div>
->>>>>>>> frontend/feature/treasurer:web/src/pages/record/health/childhealth/childHR_all_records.tsx
       <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
@@ -293,12 +281,9 @@ export default function AllChildHealthRecords() {
 
 
         <div className="w-full md:w-auto">
-<<<<<<<< HEAD:web/src/pages/healthServices/childservices/childhealthRecords/ChildHR_all_records.tsx
-          <Button onClick={toChildHealthForm}>New Record</Button>
-========
-        <Button onClick={toChildHealthForm}>New Record</Button>
 
->>>>>>>> frontend/feature/treasurer:web/src/pages/record/health/childhealth/childHR_all_records.tsx
+          <Button onClick={toChildHealthForm}>New Record</Button>
+
         </div>
       </div>
 

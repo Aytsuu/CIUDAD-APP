@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { Eye, ReceiptText, Trash, Search, FileInput } from 'lucide-react';

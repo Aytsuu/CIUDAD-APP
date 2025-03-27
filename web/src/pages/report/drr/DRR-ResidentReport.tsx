@@ -6,7 +6,7 @@ import { ArrowUpDown, Link, Plus, Search, UserRoundCog } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 
 // Define the type for the Report object

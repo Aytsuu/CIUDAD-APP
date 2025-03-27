@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Link, Outlet } from 'react-router';
 import SanRoqueLogo from '@/assets/images/sanRoqueLogo.svg';

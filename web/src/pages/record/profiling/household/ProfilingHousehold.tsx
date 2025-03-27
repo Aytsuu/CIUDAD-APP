@@ -1,134 +1,181 @@
 import React from "react";
 import { Search, Plus, FileInput} from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { householdColumns } from "../profilingColumns";
-import HouseholdProfileForm from "./HouseholdProfileForm";
+import { householdColumns } from "./HouseholdColumns";
 import { HouseholdRecord } from "../profilingTypes";
-import api from "@/api/api";
-
-
-
+import { useQuery } from "@tanstack/react-query";
+import { getHouseholds, getSitio, getResidents } from "../restful-api/profilingGetAPI";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { Link } from "react-router";
 
 export default function ProfilingHousehold(){
 
-    const [households, setHouseholds] = React.useState<HouseholdRecord[]>([])
-    const hasFetchData = React.useRef(false)
+    const [searchQuery, setSearchQuery] = React.useState<string>('')
+    const [pageSize, setPageSize] = React.useState<number>(10)
+    const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-    React.useEffect(()=> {
-        if(!hasFetchData.current){ 
-            getHouseholds()
-            hasFetchData.current = true
-        }
+    // Fetch households using useQuery
+    const { data: households, isLoading: isLoadingHouseholds } = useQuery({
+        queryKey: ['households'],
+        queryFn: getHouseholds,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+    
+    // Fetch staffs using useQuery
+    const { data: sitio, isLoading: isLoadingSitio } = useQuery({
+        queryKey: ['sitio'],
+        queryFn: getSitio,
+        refetchOnMount: true,
+        staleTime: 0
     })
 
-    const formatHouseholdData = (data: any[]): HouseholdRecord[] => {
+    // Fetch residents using useQuery
+    const { data: residents, isLoading: isLoadingResidents } = useQuery({
+        queryKey: ['residents'],
+        queryFn: getResidents,
+        refetchOnMount: true, 
+        staleTime: 0, 
+    });
 
-        return data.map((item)=> {
+    // Format households to populate data table
+    const formatHouseholdData = (): HouseholdRecord[] => {
+        if(!households) return [];
+
+        return households.map((item: any)=> {
 
             const sitio = item.sitio
-            const personal = item.per
+            const personal = item.rp.per
+            const staff = item.staff.rp.per
 
             return {
                 id: item.hh_id || '',
                 streetAddress: item.hh_street || '',
                 sitio: sitio?.sitio_name || '',
                 nhts: item.hh_nhts || '',
-                head: personal?.per_fname + ' ' + personal?.per_lname || '',
+                headNo: item.rp.rp_id,
+                head: `${personal.per_lname}, ${personal.per_fname} ${personal.per_mname.slice(0,1)}.` || '',
                 dateRegistered: item.hh_date_registered || '',
-                registeredBy: ''
+                registeredBy: `${staff.per_lname}, ${staff.per_fname} ${staff.per_mname.slice(0,1)}.` || ''
             }
         })
-
     }
 
-    const getHouseholds = React.useCallback(async () => {
-        try {
+    const filteredHouseholds = React.useMemo(() => {
+        let filtered = formatHouseholdData();
 
-            const res = await api.get('profiling/household/')
-            const formattedData = formatHouseholdData(res.data)
-            setHouseholds(formattedData)
+        filtered = filtered.filter((record: any) =>
+            Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+        )
 
-        } catch (err) {
-            console.log(err)
-        }
-    },[])
+        return filtered;
+    }, [searchQuery, households])
+
+    // Calculate total pages for pagination
+    const totalPages = Math.ceil(filteredHouseholds.length / pageSize);
+
+    // Slice the data for the current page
+    const paginatedHouseholds = filteredHouseholds.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
+
+    if(isLoadingHouseholds || isLoadingSitio || isLoadingResidents) {
+        return (
+            <div className="w-full h-full">
+                <Skeleton className="h-10 w-1/6 mb-3" />
+                <Skeleton className="h-7 w-1/4 mb-6" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-4/5 w-full mb-4" />
+            </div>
+        )
+    }
 
     return (
-        <div className="w-full">
-            <div className="mb-4">
-                <h1 className="text-xl sm:text-2xl font-semibold text-darkBlue2">Household Records</h1>
-                <p className="text-xs sm:text-sm text-darkGray">Manage and view household information</p>
-            </div>
+        <MainLayoutComponent 
+            title="Household Profiling"
+            description="Manage and view household records"
+        >
+            <div className="hidden lg:flex justify-between items-center mb-4 gap-2">
+                <div className="flex gap-2 w-full">
+                    <div className="relative flex-1">
 
-            <hr className="border-gray mb-6 sm:mb-8" />
-
-            <div className="hidden lg:flex justify-between items-center mb-4">
-        <div className="flex gap-2">
-            <div className="relative flex-1 bg-white">
-
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-                <Input
-                    placeholder="Search..." 
-                    className="pl-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    value={''}
-                    onChange={() => {}}
-                    />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+                        <Input
+                            placeholder="Search..." 
+                            className="pl-10 bg-white"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
-
-                </div>
-                <DialogLayout
-                    trigger={
-                        <Button>
-                            <Plus size={15} /> Register
-                        </Button>
-                    }
-                    title="Household Registration"
-                    description="All fields are required"
-                    mainContent={<HouseholdProfileForm/>}
-                />
+                <Link to="/household-form" 
+                    state={{
+                        params: {
+                            sitio: sitio, 
+                            residents: residents, 
+                            households: households
+                        }
+                    }}
+                >
+                    <Button>
+                        <Plus size={15} /> Register
+                    </Button>
+                </Link>
             </div>
 
             <div className="bg-white rounded-md">
                 <div className="flex justify-between p-3">
-                <div className="flex items-center gap-2">
-                    <p className="text-xs sm:text-sm">Show</p>
-                    <Input
-                        type="number"
-                        className="w-14 h-6"
-                        value={''}
-                        onChange={() => {}}
-                        min="1"
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs sm:text-sm">Show</p>
+                        <Input
+                            type="number"
+                            className="w-14 h-6"
+                            value={pageSize}
+                            onChange={(e) => {
+                                const value = +e.target.value;
+                                if (value >= 1) {
+                                    setPageSize(value);
+                                } else {
+                                    setPageSize(1); // Reset to 1 if invalid
+                                }
+                            }}
+                            min="1"
+                        />
+                        <p className="text-xs sm:text-sm">Entries</p>
+                    </div>
+                    <DropdownLayout
+                        trigger={
+                            <Button variant="outline">
+                                <FileInput className="mr-2" /> Export
+                            </Button>
+                        }
+                        options={[
+                        { id: '', name: "Export as CSV"},
+                        { id: '', name: "Export as Excel"},
+                        { id: '', name: "Export as PDF"},
+                        ]}
                     />
-                    <p className="text-xs sm:text-sm">Entries</p>
-                </div>
-                <DropdownLayout
-                    trigger={
-                        <Button variant="outline">
-                            <FileInput className="mr-2" /> Export
-                        </Button>
-                    }
-                    options={[
-                    { id: '', name: "Export as CSV"},
-                    { id: '', name: "Export as Excel"},
-                    { id: '', name: "Export as PDF"},
-                    ]}
-                />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={householdColumns} data={households} />
+                    <DataTable columns={householdColumns} data={paginatedHouseholds} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">
-                        Showing 0 rows
+                        Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredHouseholds.length)} of {filteredHouseholds.length} rows
                     </p>
-                    <PaginationLayout/>
+                    {paginatedHouseholds.length > 0 && <PaginationLayout
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />}
                 </div>
             </div>
-        </div>
+        </MainLayoutComponent>
     )
 }

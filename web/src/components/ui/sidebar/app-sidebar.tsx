@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Sidebar,
@@ -9,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-import { Link } from "react-router";
 
 type AnotherSubMenuItem = {
   title: string;
@@ -74,15 +74,11 @@ const items: MenuItem[] = [
     title: "GAD",
     subItems: true,
     url: "/",
-<<<<<<< HEAD
-    items: [{ title: "Budget Tracker", url: "/gad-budget-tracker-main" }],
-=======
     items: [
       { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
       { title: "Project Proposals", url: "/gad-project-proposal"},
       { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
     ],
->>>>>>> frontend/feature/treasurer
   },
   {
     title: "Council",
@@ -139,7 +135,6 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-<<<<<<< HEAD
       { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
@@ -165,16 +160,6 @@ const items: MenuItem[] = [
       },
     ],
   },
-=======
-      {title: "Animal Bites", url: "/Animalbite_viewing"},
-      {title: "Child Services", url: "/allChildHRTable"},
-      {title: "Maternal Services", url:"/maternalrecords"},
-      {title: "Family Planning", url: "/FamPlanning_table"},
-      {title: "Medical Consultation", url: "/"},
-      {title: "Vaccination", url: "/allVaccinationRecord"},
-    ]
-  }
->>>>>>> frontend/feature/treasurer
 ];
 
 interface SubMenuItemProps {

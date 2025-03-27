@@ -1,145 +1,115 @@
 import React from "react";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { demographicInfo } from "@/form-schema/profiling-schema";
+import { Form } from "@/components/ui/form/form";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
-import { family, familyComposition, building } from "../profilingPostRequests";
+import { family, familyComposition, building } from "../restful-api/profiingPostAPI";
+import { Combobox } from "@/components/ui/combobox";
+import { toast } from "sonner";
+import { CircleAlert, CircleCheck } from "lucide-react";
+import { LoadButton } from "@/components/ui/button/load-button";
+import { useNavigate } from "react-router";
 
-export default function LivingSoloForm(
-    {residents} : {
-        residents: Record<string, string>[]
-    }
-) {
-    const defaultValues = generateDefaultValues(demographicInfo)
-    const [residentSearch, setResidentSearch] = React.useState<string>('')
-    const [isResidentFound, setIsResidentFound] = React.useState<boolean>(false)
+export default function LivingSoloForm({residents, households} : {
+    residents: any[]; households: any[]
+}) {
 
-    React.useEffect(()=>{
-        
-        const searchedResident = residents.find((value) => value.per_id == residentSearch)
-
-        if(searchedResident){
-            setIsResidentFound(true)
-        } else {
-            setIsResidentFound(false)
-        }
-
-    }, [residentSearch, residents])
-    
-    const form = useForm<z.infer<typeof demographicInfo>>({
-        resolver: zodResolver(demographicInfo),
-        defaultValues,
+    const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+    const defaultValues = React.useRef(generateDefaultValues(demographicInfoSchema));
+    const form = useForm<z.infer<typeof demographicInfoSchema>>({
+        resolver: zodResolver(demographicInfoSchema),
+        defaultValues: defaultValues.current,
         mode: "onChange" 
-    })
+    });
 
     const submit = async () => {
-        if(isResidentFound){
-
-            const data = form.getValues()
-
-            const familyNo = await family(data, null, null)
-            familyComposition(familyNo, residentSearch)
-            const buildId = await building(familyNo,data)
-
-            if (buildId) {
-                setResidentSearch('')
-                form.reset(defaultValues)
-            }
+        setIsSubmitting(true)
+        const formIsValid = await form.trigger();
+        
+        if (!formIsValid) {
+            setIsSubmitting(false);
+            toast("Please fill out all required fields", {
+                icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+            });
+            return;
         }
+
+        const data = form.getValues()
+        const familyNo = await family(data, null, null)
+        familyComposition(familyNo, data.id.split(" ")[0])
+        const buildId = await building(familyNo, data)
+
+        if (buildId) {
+            toast('Record added successfully', {
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                action: {
+                    label: "View",
+                    onClick: () => navigate(-1)
+                }
+            });
+            setIsSubmitting(false)
+            form.reset(defaultValues.current)
+        }
+
     }
 
     return (
-        <div className="grid gap-3">
-            <Label className="text-black/70">Resident Number</Label>
-            <div className="grid gap-2">
-                <Input placeholder="Enter resident #" value={residentSearch} onChange={(e)=> setResidentSearch(e.target.value)}/>
-                {!isResidentFound && residentSearch.length > 0 &&
-                    <Label className="text-red-500 text-[13px]">Resident does not exist</Label>
-                }
-            </div>
-            <Form {...form}>
-                <form
-                    onSubmit={(form.handleSubmit(submit))}
-                    className="flex flex-col gap-10"
-                >
-                    <div className="grid gap-3">
-                        <FormField
-                            control={form.control}
-                            name='householdNo'
-                            render={({field}) => (
-                                <FormItem>
-                                <FormLabel className="font-medium text-black/65">
-                                    Household Number
-                                </FormLabel>
-                                <FormControl>
-                                    <Input placeholder='Enter your household # (e.g.,H04123)' {...field}/>
-                                </FormControl>
-                                <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name='building'
-                            render={({field}) => (
-                                <FormItem>
-                                <FormLabel className="font-medium text-black/65">
-                                    Building
-                                </FormLabel>
-                                <FormControl>
-                                    <SelectLayout
-                                        placeholder='Select'
-                                        className='w-full'
-                                        options={[
-                                            {id: "owner", name: "Owner"},
-                                            {id: "renter", name: "Renter"},
-                                            {id: "other", name: "Other"},
-                                        ]}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name='indigenous'
-                            render={({field}) => (
-                                <FormItem>
-                                <FormLabel className="font-medium text-black/65"> 
-                                    Indigenous People
-                                </FormLabel>
-                                <FormControl>
-                                    <SelectLayout
-                                        placeholder='Select'
-                                        className='w-full'
-                                        options={[
-                                            {id: "no", name: "No"},
-                                            {id: "yes", name: "Yes"}
-                                        ]}
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                    {/* Submit Button */}
-                     <Button type="submit">
+        <Form {...form}>
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    submit()
+                }}
+                className="flex flex-col gap-10"
+            >
+                <div className="grid gap-3">
+                    <Label className="mt-1">Resident</Label>
+                    <Combobox 
+                        options={residents}
+                        value={form.watch('id')}
+                        onChange={(value) => form.setValue('id', value)}
+                        placeholder="Search for resident..."
+                        triggerClassName="font-normal"
+                        emptyMessage="No resident found"
+                    />
+                    <Label className="mt-1">Household</Label>
+                    <Combobox 
+                        options={households}
+                        value={form.watch('householdNo')}
+                        onChange={(value) => form.setValue('householdNo', value)}
+                        placeholder="Search for household..."
+                        triggerClassName="font-normal"
+                        emptyMessage="No resident found"
+                    />
+                    <FormSelect control={form.control} name="building" label="Building" options={[
+                        {id: "owner", name: "Owner"},
+                        {id: "renter", name: "Renter"},
+                        {id: "other", name: "Other"},
+                    ]} readOnly={false}/>
+
+                    <FormSelect control={form.control} name="indigenous" label="Indigenous People" options={[
+                        {id: "no", name: "No"},
+                        {id: "yes", name: "Yes"}
+                    ]} readOnly={false}/>
+                    
+                </div>
+                {/* Submit Button */}
+                <div className="flex justify-end">
+                    {!isSubmitting ? (<Button type="submit">
                         Register
-                    </Button>   
-                </form>
-            </Form>
-        </div>
+                    </Button> ) : (
+                        <LoadButton>
+                            Registering...
+                        </LoadButton>
+                    )}
+                </div>
+            </form>
+        </Form>
     )
 }

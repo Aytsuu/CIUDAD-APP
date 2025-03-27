@@ -8,7 +8,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Assigned, Feature } from "./administrationTypes";
-import api from "@/api/api";
+import { updatePermission } from "./restful-api/administrationPutAPI";
 
 export default function SettingPermissions(
     { selectedPosition, features, assignedFeatures }: {
@@ -17,20 +17,18 @@ export default function SettingPermissions(
         assignedFeatures: Assigned[];
     }
 ) {
-    const permissions = React.useMemo(() => {
-        return ['view', 'create', 'update', 'delete'];
-    }, []);
+    const permissions = ['view', 'create', 'update', 'delete'];
 
     // State to manage permissions
-    const [localAssignedFeatures, setLocalAssignedFeatures] = React.useState<Assigned[]>([]);
+    const [localAssignedFeatures, setLocalAssignedFeatures] = React.useState<Assigned[]>(assignedFeatures);
 
     React.useEffect(() => {
         setLocalAssignedFeatures(assignedFeatures);
-    }, [assignedFeatures]);
+    }, [assignedFeatures, selectedPosition]);
 
     // Filter assignedFeatures based on the selected position
     const filteredAssignedFeatures = React.useMemo(() => {
-        return localAssignedFeatures.filter((feature) => feature.pos === selectedPosition);
+        return localAssignedFeatures.filter((feature) => feature.pos == selectedPosition);
     }, [localAssignedFeatures, selectedPosition]);
 
     const getFeatureName = (featureId: string) => {
@@ -39,6 +37,9 @@ export default function SettingPermissions(
     };
 
     const changePermission = async (assignmentId: string, option: string, permission: boolean) => {
+
+        const previousState = [...localAssignedFeatures]
+
         // Update the local state first using a functional update
         setLocalAssignedFeatures((prev) =>
             prev.map((feature) =>
@@ -54,26 +55,14 @@ export default function SettingPermissions(
             )
         );
     
-        // Send the API request
-        try {
-            await api.put(`administration/permissions/${assignmentId}/`, { [option]: permission });
-        } catch (err) {
-            console.error(err);
+        const res = await updatePermission(assignmentId, option, permission)
+        
+        if(!res){
+
             // Revert the local state if the API call fails
-            setLocalAssignedFeatures((prev) =>
-                prev.map((feature) =>
-                    feature.assi_id === assignmentId
-                        ? {
-                            ...feature,
-                            permissions: feature.permissions.map((perm: any) => ({
-                                ...perm,
-                                [option]: !permission, // Revert to the previous value
-                            })),
-                        }
-                        : feature
-                )
-            );
+            setLocalAssignedFeatures(previousState)
         }
+
     };
 
     // Helper function to flatten permissions
@@ -87,6 +76,7 @@ export default function SettingPermissions(
     };
 
     const handleAddAllForFeature = async (assignmentId: string, checked: boolean) => {
+        
         // Update the local state first
         setLocalAssignedFeatures((prev) =>
             prev.map((feature) =>
@@ -97,8 +87,8 @@ export default function SettingPermissions(
                             const updatedPerm: Record<string, boolean> = {};
                             Object.keys(perm).forEach((key) => {
                                 // Update all permissions except 'view'
-                                if (permissions.includes(key)) {
-                                    updatedPerm[key] = key !== 'view' ? checked : perm[key];
+                                if (permissions.includes(key) && key !== 'view') {
+                                    updatedPerm[key] = checked;
                                 } else {
                                     updatedPerm[key] = perm[key]; // Preserve other keys
                                 }
@@ -119,23 +109,25 @@ export default function SettingPermissions(
     
             // Filter permissions to include only those in the `permissions` array
             const permissionsToUpdate = Object.entries(flattenedPTU).filter(([key]) =>
-                permissions.includes(key)
+                permissions.includes(key) && key !== 'view'
             );
     
             // Make API calls to update permissions
-            for (const [key, value] of permissionsToUpdate) {
-                try {
-                    await api.put(`administration/permissions/${assignmentId}/`, {
-                        [key]: key !== 'view' ? checked : value,
-                    });
-                } catch (err) {
-                    console.error(err);
-                    // Revert the local state if the API call fails
-                    setLocalAssignedFeatures(assignedFeatures);
+            for (const [key, _] of permissionsToUpdate) {
+                
+                const res = await updatePermission(assignmentId, key, checked)
+
+                if(res?.status !== 200) {
+
+                    // Revert checked boxes
+                    setLocalAssignedFeatures(assignedFeatures)
                 }
             }
         }
     };
+
+    // console.log(localAssignedFeatures)
+     
 
     return (
         <Accordion type="single" collapsible className="w-full">

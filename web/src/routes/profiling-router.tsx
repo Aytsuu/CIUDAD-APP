@@ -1,30 +1,27 @@
-import ProfilingMain from "@/pages/record/profiling/resident/ProfilingResident";
-import ResidentProfileForm from "@/pages/record/profiling/resident/ResidentProfileForm";
+import ProfilingResident from "@/pages/record/profiling/resident/ProfilingResident";
+import ResidentFormLayout from "@/pages/record/profiling/resident/ResidentFormLayout";
 import ProfilingRequest from "@/pages/record/profiling/resident/ProfilingRequests";
-import ProfileViewInfo from "@/pages/record/profiling/resident/ProfilingViewInfo";
 import ProfilingHousehold from "@/pages/record/profiling/household/ProfilingHousehold";
 import ProfilingBusiness from "@/pages/record/profiling/business/ProfilingBusiness";
 import ProfilingFamily from "@/pages/record/profiling/family/ProfilingFamily";
 import FamilyProfileForm from "@/pages/record/profiling/family/FamilyProfileForm";
+import HouseholdFormLayout from "@/pages/record/profiling/household/HouseholdFormLayout";
+import SoloFormLayout from "@/pages/record/profiling/family/SoloFormLayout";
 
 export const profiling_router = [
 
     // Resident
     {
         path: "resident-records",
-        element: <ProfilingMain />
+        element: <ProfilingResident />
     },
     {
-        path: "resident-registration",
-        element: <ResidentProfileForm />
+        path: "resident-form",
+        element: <ResidentFormLayout />
     },
     {
         path: "registration-request",
         element: <ProfilingRequest />
-    },
-    {
-        path: "resident-information",
-        element: <ProfileViewInfo />
     },
     
     // Family
@@ -33,8 +30,12 @@ export const profiling_router = [
         element: <ProfilingFamily />
     },
     {
-        path: "family-registration",
+        path: "family-form",
         element: <FamilyProfileForm />
+    },
+    {
+        path: "family-solo-form",
+        element: <SoloFormLayout />
     },
 
 
@@ -42,6 +43,10 @@ export const profiling_router = [
     {
         path: "household-records",
         element: <ProfilingHousehold />
+    },
+    {
+        path: "household-form",
+        element: <HouseholdFormLayout />
     },
 
     // Business

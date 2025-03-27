@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Plus, ClockArrowUp, FileInput, Search } from "lucide-react";
 import { Link } from "react-router";
@@ -9,115 +9,111 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
-import { residentColumns } from "../profilingColumns";
+import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
-import api from "@/api/api";
+import { useQuery } from "@tanstack/react-query";
+import { getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
+import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const FilterComponent = ({ onFilterChange }) => {
-  const [filterType, setFilterType] = React.useState("");
-
-  const handleFilterTypeChange = (value: string) => {
-    setFilterType(value);
-    onFilterChange({ type: value });
-  };
-
-  return (
-    <div className="flex gap-2 items-start">
-      <SelectLayout
-        placeholder="Filter by"
-        className="bg-white"
-        options={[
-          { id: "1", name: "By Sitio" },
-          { id: "2", name: "By location" },
-        ]}
-        value={filterType}
-        onChange={handleFilterTypeChange}
-      />
-    </div>
-  );
-};
-
-export default function ProfilingMain() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [activeFilter, setActiveFilter] = React.useState<{
-    type: string | null;
-  }>({ type: null });
-
-    const [residents, setResidents] = React.useState<ResidentRecord[]>([]);
-    const hasFetchData = React.useRef(false);
-
-    React.useEffect(() => {
-      if (!hasFetchData.current) {
-        getResidents();
-        hasFetchData.current = true;
-      }
-    }, []);
+export default function ProfilingResident() {
   
-    const formatResidentData = (data: any[]): ResidentRecord[] => {
-    
-      return data.map(item => {
-        const [{reg_date} = {}] = item.registered
-        const [{fam_id, building} = {}] = item.family
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [pageSize, setPageSize] = React.useState<number>(10);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-        return {
-          id: item.per_id || '',
-          householdNo: building?.hh_id || '',
-          sitio: '',
-          familyNo: fam_id || '',
-          lastName: item.per_lname || '',
-          firstName: item.per_fname || '',
-          mi: item.per_mname || '',
-          suffix: item.per_suffix || '',  
-          dateRegistered: reg_date || '',
-        }
-      });
-    };
+  // Fetch residents using useQuery
+  const { data: residents, isLoading: isLoadingResidents } = useQuery({
+    queryKey: ['residents'],
+    queryFn: getResidents,
+    refetchOnMount: true, // Force refetch on mount
+    staleTime: 0, // Ensure data is never considered stale
+  });
+
+  // Fetch households using useQuery
+  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
+    queryKey: ['households'],
+    queryFn: getHouseholds,
+    refetchOnMount: true,
+    staleTime: 0
+  });
+
+  // Function to get sitio (works even if households is not fully loaded)
+  const getSitio = React.useCallback((hh_id: string) => {
+    if (!households) return ''; // Return empty string if households are not ready
+    const household = households.find((hh: any) => hh.hh_id === hh_id);
+    return household?.sitio?.sitio_name || '';
+  }, [households]);
   
-    const getResidents = async () => {
-      try {
-        const res = await api.get('profiling/personal/');
-        const formattedData = formatResidentData(res.data);
-        setResidents(formattedData);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+  // Format resident to populate data table
+  const formatResidentData = React.useCallback((): ResidentRecord[] => {
+    if (!residents) return [];
 
-  // Filter residents based on search query and active filter
+    return residents.map((item: any) => {
+
+      const personal = item?.per
+      const family = item?.per?.family
+
+      return {
+        id: item.rp_id || '',
+        householdNo: family?.building.hh_id || '',
+        sitio:  getSitio(family?.building?.hh_id),
+        familyNo: family?.fam_id || '',
+        lname: personal.per_lname || '',
+        fname: personal.per_fname || '',
+        mname: personal.per_mname || '',
+        suffix: personal.per_suffix || '',  
+        dateRegistered: item.rp_date_registered || '',
+        registeredBy: item.staff || '',
+      }
+    });
+  }, [residents]);  
+
+  // Filter residents based on search query
   const filteredResidents = React.useMemo(() => {
-    let filtered = residents;
+    const formattedData = formatResidentData();
+     if (!formattedData.length) return [];
 
-    if (searchQuery) {
-      filtered = filtered.filter((record) =>
-        Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    return formattedData.filter((record: any) =>
+      Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-    return filtered;
-  }, [residents, searchQuery, activeFilter]);
+  }, [searchQuery, residents]);
+
+  // Calculate total pages for pagination
+  const totalPages = Math.ceil(filteredResidents.length / pageSize);
+
+  // Slice the data for the current page
+  const paginatedResidents = filteredResidents.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  if(isLoadingResidents || isLoadingHouseholds) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    )
+  }
 
   return (
-    <div className="w-full">
-      <div className="mb-4">
-        <h1 className="text-xl sm:text-2xl font-semibold text-darkBlue2">Resident Records</h1>
-        <p className="text-xs sm:text-sm text-darkGray">Manage and view resident information</p>
-      </div>
-      <hr className="border-gray mb-6 sm:mb-8" />
-
+    <MainLayoutComponent
+      title="Resident Profiling"
+      description="This page displays the list of residents in the community."
+    >
       <div className="hidden lg:flex justify-between items-center mb-4">
-        <div className="flex gap-2">
-          <div className="relative flex-1 bg-white">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input
-              placeholder="Search..."
-              className="pl-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <FilterComponent onFilterChange={setActiveFilter} />
+        <div className="relative w-full flex gap-2 mr-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+          <Input
+            placeholder="Search..."
+            className="pl-10 bg-white w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
         <div className="flex gap-2">
           <Link to="/registration-request">
@@ -125,7 +121,14 @@ export default function ProfilingMain() {
               <ClockArrowUp /> Pending
             </Button>
           </Link>
-          <Link to='/resident-registration'>
+          <Link to='/resident-form' 
+            state={{
+                params: {
+                  title: 'Resident Registration', 
+                  description: 'Provide your details to complete the registration process.',
+                }
+              }}
+            >
             <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
               <Plus size={15} /> Register
             </Button>
@@ -141,15 +144,21 @@ export default function ProfilingMain() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={(e) => setPageSize(Math.max(1, +e.target.value))}
-              min="1"
+              onChange={(e) => {
+                const value = +e.target.value;
+                if (value >= 1) {
+                  setPageSize(value);
+                } else {
+                  setPageSize(1); // Reset to 1 if invalid
+                }
+              }}
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <DropdownLayout
             trigger={
-              <Button variant="outline">
-                <FileInput className="mr-2" /> Export
+              <Button variant="outline" className="h-[2rem]">
+                <FileInput /> Export
               </Button>
             }
             options={[
@@ -160,19 +169,19 @@ export default function ProfilingMain() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={residentColumns} data={residents} />
+          <DataTable columns={residentColumns(residents)} data={paginatedResidents} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredResidents.length)} of {filteredResidents.length} rows
           </p>
-          <PaginationLayout
-            currentPage={currentPage}
-            totalPages={0}
-            onPageChange={setCurrentPage}
-          />
+          {paginatedResidents.length > 0 && <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+          />}
         </div>
       </div>
-    </div>
+    </MainLayoutComponent>
   );
 }

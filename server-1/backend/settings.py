@@ -20,20 +20,18 @@ import sys, os
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+'
+SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1']
 
+ALLOWED_HOSTS = ['localhost', '*']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,13 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'apps.administration',
+    'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'apps.administration',
-    'apps.treasurer'
+    'corsheaders',
+    'apps.useraccount',
+    'apps.blotter',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    # 'useraccount.middleware.SupabaseJWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -134,30 +135,49 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ---
 
 # Django REST Framework Settings
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES':(
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny', 
+        # 'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 # JWT Authentication Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:5173",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
 CORS_ALLOW_HEADERS = ["*"]
+
+
+# AUTHENTICATION_BACKENDS = [
+#     # 'django.contrib.auth.backends.ModelBackend',  # Default backend
+#     # 'useraccount.authentication.SupabaseAuthenticationBackend',  # Supabase backend
+# ]
+
+# Supabase credentials
+# SUPABASE_URL = "https://bnvhzzbsqixwyevhgcol.supabase.co"
+# SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudmh6emJzcWl4d3lldmhnY29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODkwMDEsImV4cCI6MjA1ODE2NTAwMX0.CaEU6OAV3BjTZ0Lh5TDTRkHzqKQmoHlbZ2dBOlDsEjs"
+# SUPABASE_JWT_SECRET = "EEDHhSbqr5GRRUZWNzJuiNAh1m6k5S4LD9JhKbQJ/UPN0WTzICDRrl7Q3Vbw05jk1SZDrNZl4ofrde2b0ihwAQ=="

@@ -13,8 +13,8 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/form/form";
+import { Button } from "@/components/ui/button/button";
 
 export default function BlotterForm(){
 
