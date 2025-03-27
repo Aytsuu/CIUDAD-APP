@@ -273,29 +273,29 @@ function DonationTracker() {
   const [data, setData] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); 
+  const fetchData = async () => {
+    try {
+        console.log("Fetching data..."); // Debug log
+        const result = await getdonationreq();
+        console.log("Data received:", result); // Debug log
+        
+        if (!Array.isArray(result)) {
+            throw new Error("Invalid data format");
+        }
+        
+        setData(result);
+    } catch (err) {
+        console.error("Fetch error:", err);
+        setError(err instanceof Error ? err.message : "Failed to load donations");
+        setData([]); // Ensure data is always an array
+    } finally {
+        setLoading(false);
+    }
+};
+
 
   // Fetch data from the backend
   useEffect(() => {
-    const fetchData = async () => {
-        try {
-            console.log("Fetching data..."); // Debug log
-            const result = await getdonationreq();
-            console.log("Data received:", result); // Debug log
-            
-            if (!Array.isArray(result)) {
-                throw new Error("Invalid data format");
-            }
-            
-            setData(result);
-        } catch (err) {
-            console.error("Fetch error:", err);
-            setError(err instanceof Error ? err.message : "Failed to load donations");
-            setData([]); // Ensure data is always an array
-        } finally {
-            setLoading(false);
-        }
-    };
-    
     fetchData();
 }, []);
 
@@ -354,6 +354,7 @@ function DonationTracker() {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => (
+        
         <div className="flex flex-col sm:flex-row gap-2">
           {/* View and Edit buttons */}
           <TooltipLayout
@@ -370,6 +371,7 @@ function DonationTracker() {
                 mainContent={
                   <div className="w-full h-full">
                     <ClerkDonateView
+                      don_num={row.original.don_num}
                       don_donorfname={row.original.don_donorfname}
                       don_donorlname={row.original.don_donorlname}
                       don_item_name={row.original.don_item_name}
@@ -377,7 +379,8 @@ function DonationTracker() {
                       don_category={row.original.don_category}
                       don_receiver={row.original.don_receiver}
                       don_description={row.original.don_description}
-                      don_date={row.original.don_date}               
+                      don_date={row.original.don_date}  
+                      onSaveSuccess={fetchData}            
                     />
                   </div>
                 }

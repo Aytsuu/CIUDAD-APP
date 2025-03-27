@@ -338,8 +338,10 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import ClerkDonateViewSchema from '@/form-schema/donate-view-schema';
+import { putdonationreq } from './request-db/donationPutRequest';
 
 type ClerkDonateViewProps = {
+    don_num: number;
     don_donorfname: string;
     don_donorlname: string;
     don_item_name: string;
@@ -348,11 +350,12 @@ type ClerkDonateViewProps = {
     don_receiver: string;
     don_description?: string;
     don_date: string;
-    onSave?: (values: z.infer<typeof ClerkDonateViewSchema>) => void;
+    onSaveSuccess?: () => void;
   };
 
 function ClerkDonateView({
-    don_donorfname,
+  don_num,
+  don_donorfname,
   don_donorlname,
   don_item_name,
   don_qty,
@@ -360,9 +363,12 @@ function ClerkDonateView({
   don_receiver,
   don_description,
   don_date,
-  onSave,
+  onSaveSuccess,
 }: ClerkDonateViewProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
     resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
@@ -377,12 +383,24 @@ function ClerkDonateView({
     },
   });
 
-  const onSubmit = (values: z.infer<typeof ClerkDonateViewSchema>) => {
-    console.log(values);
-    if (onSave) {
-      onSave(values); // Pass the updated values to the parent component
+  const onSubmit = async (values: z.infer<typeof ClerkDonateViewSchema>) => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      console.log("Submitting:", { don_num, values }); 
+      // Call the PUT API
+      await putdonationreq(don_num, values);
+      
+      // On successful update
+      setIsEditing(false);
+      if (onSaveSuccess) onSaveSuccess(); // Refresh parent data if needed
+      
+    } catch (err) {
+      console.error("Update failed:", err);
+      setError(err instanceof Error ? err.message : "Failed to update donation");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsEditing(false); // Toggle back to read-only mode
   };
 
   return (
@@ -479,13 +497,36 @@ function ClerkDonateView({
 
           {/* Edit/Save Button */}
           <div className="mt-8 flex justify-end gap-3">
-            <Button
-              type="button"
-              onClick={() => setIsEditing(!isEditing)}
-              className="bg-buttonBlue hover:bg-buttonBlue/90"
-            >
-              {isEditing ? 'Save' : 'Edit'}
-            </Button>
+            {isEditing ? (
+              <>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    form.reset();
+                    setIsEditing(false);
+                    setError(null);
+                  }}
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-buttonBlue hover:bg-buttonBlue/90"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="bg-buttonBlue hover:bg-buttonBlue/90"
+              >
+                Edit
+              </Button>
+            )}
           </div>
         </form>
       </Form>
