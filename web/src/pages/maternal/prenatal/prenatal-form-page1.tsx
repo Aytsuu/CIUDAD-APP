@@ -148,6 +148,7 @@ export default function PrenatalFormFirstPg(
     return (
         <>
             <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
+                <Label className="text-black text-opacity-50 italic mb-10">Page 1</Label>
                 <div className="pb-4">
                     <h2 className="text-3xl font-bold text-center">MATERNAL HEALTH RECORD</h2>
                 </div>

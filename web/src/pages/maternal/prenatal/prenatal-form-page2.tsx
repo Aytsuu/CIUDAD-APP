@@ -9,6 +9,8 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 export default function PrenatalFormSecPg(
@@ -19,7 +21,7 @@ export default function PrenatalFormSecPg(
     }
 ){
     const submit = () => {
-        form.trigger(["previousPregnancy", "tetanusToxoid", "presentPregnancy", "labResults"]).then((isValid) => {
+        form.trigger(["previousPregnancy", "vaccineType", "tetanusToxoid", "presentPregnancy", "labResults"]).then((isValid) => {
             if(isValid){
                 onSubmit();
             }
@@ -28,6 +30,7 @@ export default function PrenatalFormSecPg(
 
     return(
         <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
+            <Label className="text-black text-opacity-50 italic mb-10">Page 2</Label>
             <Form {...form}>
                 <form onSubmit={(e) => {
                     e.preventDefault();
@@ -157,54 +160,108 @@ export default function PrenatalFormSecPg(
                     <h3 className="text-md font-bold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col">
-                            <FormField
-                                control={form.control}
-                                name="tetanusToxoid.ttStatus"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>TT Status</FormLabel>
-                                        <FormControl>
-                                            <SelectLayout 
-                                                label="TT Status"
-                                                placeholder='Select'
-                                                className="w-full"
-                                                options={[
-                                                    {id: "0", name: "TT1"},
-                                                    {id: "1", name: "TT2"},
-                                                    {id: "2", name: "TT3"},
-                                                    {id: "3", name: "TT4"},
-                                                    {id: "4", name: "TT5"},
-                                                    {id: "5", name: "FIM"},
-                                                ]}
-                                                value={field.value ?? ''}
-                                                onChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="tetanusToxoid.ttDateGiven"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Date Given</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} type="date" placeholder=""/>
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="mt-1 mb-2">
+                                <FormField
+                                        control={form.control}
+                                        name="vaccineType.ttOrtd"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Vaccine Type</FormLabel>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                        onValueChange={(value) => {
+                                                            field.onChange(value);
+                                                            // setSelectedOption(value);
+                                                        }}
+                                                        defaultValue={field.value ?? ''}
+                                                        className="flex flex-row" 
+                                                    >
+                                                        <FormItem className="flex items-center space-x-1 space-y-0 mr-2"> 
+                                                            <FormControl>
+                                                                <RadioGroupItem value="TT"/>
+                                                            </FormControl>
+                                                            <FormLabel>Tetanus Toxoid (TT)</FormLabel>
+                                                        </FormItem>
+
+                                                        {/* after 2 week option */}
+                                                        <FormItem className="flex items-center space-x-1 space-y-0"> 
+                                                            <FormControl>
+                                                                <RadioGroupItem value="TD"/>
+                                                            </FormControl>
+                                                            <FormLabel>Tetanus, Diptheria (TD)</FormLabel>
+                                                        </FormItem>
+                                                    </RadioGroup>
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                <FormField
+                                    control={form.control}
+                                    name="tetanusToxoid.ttStatus"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>TT Status</FormLabel>
+                                            <FormControl>
+                                                <SelectLayout 
+                                                    label="TT Status"
+                                                    placeholder='Select'
+                                                    className="w-full"
+                                                    options={[
+                                                        {id: "0", name: "TT1"},
+                                                        {id: "1", name: "TT2"},
+                                                        {id: "2", name: "TT3"},
+                                                        {id: "3", name: "TT4"},
+                                                        {id: "4", name: "TT5"},
+                                                        {id: "5", name: "FIM"},
+                                                    ]}
+                                                    value={field.value ?? ''}
+                                                    onChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="tetanusToxoid.ttDateGiven"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Date Given</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} type="date" placeholder=""/>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <div className="mt-4">
+                                <FormField
+                                    control={form.control}
+                                    name="tetanusToxoid.tdapDateGiven"
+                                    render={({ field }) => (
+                                        <FormItem className="flex">
+                                            <FormControl>
+                                                <Checkbox {...field} className="mr-2 mt-2"/>
+                                            </FormControl>
+                                            <FormLabel>TDAP (Tetanus, Diptheria, and Petussis)</FormLabel>
+                                            <Label className="text-black text-opacity-50 italic ml-2">Administer in 7 months or 1 month before giving birth</Label>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <Button className="mt-5">
                                 Add
                             </Button>
                         </div>
+
                         <div className="flex flex-col border rounded-md p-2">
                                 <div className="grid grid-cols-3 gap-2 m-3">
                                     <div className="border h-[80px] rounded-md text-center" id="tt1-div">
                                         <h3 className="font-bold">TT1</h3>
                                         <p className="text-[10px]">(FIRST VISIT)</p>
-                                        <Label className="tt1Input text-[18px]">02/25/2025</Label>
+                                        <Label className="tt1Input text-[18px]">TT - 02/25/2025</Label>
                                     </div>
                                     <div className="border h-[80px] rounded-md text-center" id="tt2-div">
                                         <h3 className="font-bold">TT2</h3>
@@ -436,7 +493,7 @@ export default function PrenatalFormSecPg(
                             name="labResults.ogct50Date"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>OGCT: 50GMS 24-28 WKS)</FormLabel>
+                                    <FormLabel>OGCT: 50 GMS 24-28 WKS</FormLabel>
                                     <FormControl>
                                         <Input {...field} type="date"/>
                                     </FormControl>
@@ -448,9 +505,26 @@ export default function PrenatalFormSecPg(
                             name="labResults.ogct50Date"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>100GMS</FormLabel>
+                                    <FormLabel>100 GMS</FormLabel>
                                     <FormControl>
                                         <Input {...field} type="date"/>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        
+                    </div>
+
+                    <div className="mt-8">
+                        <FormField
+                            control={form.control}
+                            name="labResults.laboratoryRemarks"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Laboratory Remarks</FormLabel>
+                                    <FormLabel className="ml-1 text-black text-opacity-50 italic">(Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} className=""/>
                                     </FormControl>
                                 </FormItem>
                             )}

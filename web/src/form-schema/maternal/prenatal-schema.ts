@@ -54,10 +54,16 @@ export const PrenatalFormSchema = z.object({
         apgarScore: z.number().optional()
     }),
 
-        // pregnant tetanus vaccine
+    // vaccine type
+    vaccineType: z.object({
+        ttOrtd: z.enum(['TT', 'TD'])
+    }),
+
+    // pregnant tetanus vaccine
     tetanusToxoid: z.object({
         ttStatus: z.string(),
-        ttDateGiven: z.string()
+        ttDateGiven: z.string(),
+        tdapDateGiven: z.string().optional()
     }),
 
     // present pregnancy
@@ -82,7 +88,8 @@ export const PrenatalFormSchema = z.object({
         hepaBDate: z.string().date().optional(),
         bloodTypingDate: z.string().date().optional(),
         ogct50Date: z.string().date().optional(),
-        ogct100Date: z.string().date().optional()
+        ogct100Date: z.string().date().optional(),
+        laboratoryRemarks: z.string().optional(),
     }),
 
     // follow-up schedule
