@@ -24,6 +24,19 @@ type Props = {
 };
 
 function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
+    // Page 1 budget items
+    const budgetItems = [
+        { name: "honorariaOfficials", label: "Honoraria for Officials" },
+        { name: "cashOfficials", label: "Cash Gift for Officials" },
+        { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials" },
+        { name: "endBonusOfficials", label: "Year-End Bonus for Officials" },
+        { name: "honorariaTanods", label: "Honoraria for Tanods" },
+        { name: "honorariaLupon", label: "Honoraria for Lupon Members" },
+        { name: "honorariaBarangay", label: "Honoraria for Barangay Workers" },
+        { name: "prodEnhancement", label: "Productivity Enhancement Incentive" },
+        { name: "leaveCredits", label: "Commutation of Leave Credits" },
+    ];
+
     const location = useLocation();
     const { actualIncome } = location.state;
 
@@ -33,7 +46,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
 
     const form = useForm<BudgetPlanPage1FormData>({
         resolver: zodResolver(CurrentExpendituresPersonalServicesSchema),
-        defaultValues: formData, 
+        defaultValues: formData,
     });
 
     const { watch } = form;
@@ -53,32 +66,25 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         setBalance(calculatedBalance);
     }, [total, personalServicesBudgetLimit]);
 
+
+    // Submit Data for page pege 1
     const onSubmit = (value: BudgetPlanPage1FormData) => {
         console.log("Submitting Page 1 Data:", value);
-        updateFormData(value); 
-        onNext2(); 
+        updateFormData(value);
+        onNext2();
     };
 
+    // Form
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}> 
+            <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="mb-4">
                     <div className="mb-5 bg-white p-5 w-full max-h-[21rem] overflow-x-auto">
-                        <div className='p-2 flex flex-col gap-1'>
-                            <h1 className='font-bold flex justify-center w-[21rem]'>CURRENT OPERATING EXPENDITURES</h1>
-                            <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Personal Services</h3>
+                        <div className="p-2 flex flex-col gap-1">
+                            <h1 className="font-bold flex justify-center w-[21rem]">CURRENT OPERATING EXPENDITURES</h1>
+                            <h3 className="font-semibold text-blue flex justify-center w-[21rem]">Personal Services</h3>
                         </div>
-                        {[
-                            { name: "honorariaOfficials", label: "Honoraria for Officials" },
-                            { name: "cashOfficials", label: "Cash Gift for Officials" },
-                            { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials" },
-                            { name: "endBonusOfficials", label: "Year-End Bonus for Officials" },
-                            { name: "honorariaTanods", label: "Honoraria for Tanods" },
-                            { name: "honorariaLupon", label: "Honoraria for Lupon Members" },
-                            { name: "honorariaBarangay", label: "Honoraria for Barangay Workers" },
-                            { name: "prodEnhancement", label: "Productivity Enhancement Incentive" },
-                            { name: "leaveCredits", label: "Commutation of Leave Credits" },
-                        ].map(({ name, label }) => (
+                        {budgetItems.map(({ name, label }) => (
                             <FormField
                                 key={name}
                                 control={form.control}
@@ -88,13 +94,15 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                                         <div className={styles.fieldStyle}>
                                             <FormLabel className="w-[20rem]">{label}</FormLabel>
                                             <FormControl>
-                                                <Input {...field}  value={field.value || ""}
+                                                <Input
+                                                    {...field}
+                                                    value={field.value || ""}
                                                     onChange={(e) => {
                                                         const value = e.target.value;
-                                                        field.onChange(value); 
+                                                        field.onChange(value);
                                                     }}
                                                     placeholder="0.00"
-                                                    type="number" 
+                                                    type="number"
                                                     className="w-[18rem]"
                                                 />
                                             </FormControl>
@@ -108,8 +116,8 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                         <div className="flex justify-end p-2">
                             <div className="flex flex-row justify-center gap-[2rem]">
                                 <Label className={styles.formfooter}>Total: {formatNumber(total)}</Label>
-                                <Label className={styles.formfooter}>{formatNumber(personalServicesBudgetLimit)}</Label> 
-                                <Label className={styles.formfooter}>{formatNumber(Balance)}</Label> 
+                                <Label className={styles.formfooter}>{formatNumber(personalServicesBudgetLimit)}</Label>
+                                <Label className={styles.formfooter}>{formatNumber(Balance)}</Label>
                             </div>
                         </div>
                     </div>
