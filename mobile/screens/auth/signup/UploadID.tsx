@@ -5,11 +5,8 @@ import { View, Text, TouchableWithoutFeedback, Image} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from "@/components/ui/button";
 import Layout from "./_layout";
-import SelectLayout from "@/components/ui/select/select-layout";
 import * as ImagePicker from 'expo-image-picker';
 import { ImagePlus } from '@/lib/icons/ImagePlus';
-import { Camera } from '@/lib/icons/Camera';
-import { Option } from "@rn-primitives/select";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
