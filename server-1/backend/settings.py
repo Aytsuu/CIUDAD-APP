@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 from datetime import timedelta
 import sys
 import os
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'corsheaders',
-    'apps.useraccount',
+    'apps.account',
     'apps.blotter',
 ]
 
@@ -85,11 +86,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'BARANGAYDB',
-        'USER': 'postgres',
-        'PASSWORD': '123',
-        'host': 'localhost',
-        'PORT': '5432'
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT')
     }
 }
 
@@ -166,12 +167,6 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
 CORS_ALLOW_HEADERS = ["*"]
-
-
-# AUTHENTICATION_BACKENDS = [
-#     # 'django.contrib.auth.backends.ModelBackend',  # Default backend
-#     # 'useraccount.authentication.SupabaseAuthenticationBackend',  # Supabase backend
-# ]
 
 # Supabase credentials
 SUPABASE_URL = "https://bnvhzzbsqixwyevhgcol.supabase.co"

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.conf import settings
 
 urlpatterns = [
     #JWT authentication
@@ -10,6 +11,7 @@ urlpatterns = [
      # Admin
     path('admin/', admin.site.urls),
     
-    path('api/', include('apps.useraccount.urls')),
-    path("blotter/", include("apps.blotter.urls"))
-]
+    path('user/', include('apps.account.urls')),
+    path("blotter/", include("apps.blotter.urls")),
+    
+]   

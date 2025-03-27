@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/supabaseClient"; // Import Supabase client
 
 export default function SignIn() {
@@ -39,9 +39,8 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      
-      const response = await axios.post("http://localhost:8000/api/login/", {
-        username: data.usernameOrEmail, 
+      const response = await axios.post("http://localhost:8000/user/login/", {
+        username: data.usernameOrEmail,
         password: data.password,
       });
 
@@ -55,7 +54,7 @@ export default function SignIn() {
         localStorage.setItem("token", response.data.token);
 
         // Redirect to the home page or dashboard
-        navigate('/dashboard');
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Login failed:", error);
