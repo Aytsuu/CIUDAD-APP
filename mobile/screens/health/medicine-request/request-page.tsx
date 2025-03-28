@@ -1,163 +1,79 @@
 "use client"
 
-import * as React from "react"
-import { View, TouchableOpacity, TextInput, ScrollView, StatusBar, TouchableWithoutFeedback } from "react-native"
-import { Pill, Search, ShoppingBag } from "lucide-react-native"
-import { Text } from "@/components/ui/text"
-import { Card } from "@/components/ui/card"
-import SelectLayout from "@/components/ui/select/select-layout"
+import { useState, useEffect } from "react"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from "react-native"
 import { router } from "expo-router"
+import { ArrowLeft, Search, ShoppingBag, ChevronDown, Pill } from "lucide-react-native"
+import { globalCartState } from "./cart-state"
 
 // Define the Medicine type
 export type Medicine = {
   id: number
   name: string
   category: string
-  quantity?: number
+  description?: string
 }
 
-// Create a global cart state that persists between component renders
-export const globalCartState = {
-  items: [] as Medicine[],
-}
+export default function MedicineRequestScreen() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("All")
+  const [showCategories, setShowCategories] = useState(false)
+  const [medicines, setMedicines] = useState<Medicine[]>([])
+  const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>([])
+  const [cartItems, setCartItems] = useState<Medicine[]>([])
 
-// Add to cart function
-export const addToCart = (medicine: Medicine) => {
-  const existingItem = globalCartState.items.find((item) => item.id === medicine.id)
-  if (existingItem) {
-    existingItem.quantity = (existingItem.quantity || 1) + 1
-  } else {
-    globalCartState.items.push({ ...medicine, quantity: 1 })
-  }
-}
-
-// Remove from cart function
-export const removeFromCart = (id: number) => {
-  globalCartState.items = globalCartState.items.filter((item) => item.id !== id)
-}
-
-// Update quantity function
-export const updateQuantity = (id: number, quantity: number) => {
-  const item = globalCartState.items.find((item) => item.id === id)
-  if (item) {
-    item.quantity = quantity
-  }
-}
-
-// Clear cart function
-export const clearCart = () => {
-  globalCartState.items = []
-}
-
-// Create a context for the cart
-export const CartContext = React.createContext({
-  cart: [] as Medicine[],
-  addToCart: (medicine: Medicine) => {},
-  removeFromCart: (id: number) => {},
-  updateQuantity: (id: number, quantity: number) => {},
-  clearCart: () => {},
-})
-
-// Cart Provider component
-export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [cart, setCart] = React.useState<Medicine[]>([])
-
-  const addToCart = (medicine: Medicine) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === medicine.id)
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === medicine.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item,
-        )
-      } else {
-        return [...prevCart, { ...medicine, quantity: 1 }]
-      }
-    })
-  }
-
-  const removeFromCart = (id: number) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== id))
-  }
-
-  const updateQuantity = (id: number, quantity: number) => {
-    setCart((prevCart) => prevCart.map((item) => (item.id === id ? { ...item, quantity } : item)))
-  }
-
-  const clearCart = () => {
-    setCart([])
-  }
-
-  return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}>
-      {children}
-    </CartContext.Provider>
-  )
-}
-
-export default function MedicineRequest() {
-  const categories = [
-    { label: "Paracetamol", value: "Paracetamol" },
-    { label: "Antibiotics", value: "Antibiotics" },
-    { label: "Vitamins", value: "Vitamins" },
+  // Mock data for medicines
+  const mockMedicines: Medicine[] = [
+    { id: 1, name: "Biogesic", category: "Paracetamol", description: "Relieves mild pain and fever." },
+    { id: 2, name: "Panadol", category: "Paracetamol", description: "Pain reliever and fever reducer." },
+    { id: 3, name: "Calpol", category: "Paracetamol", description: "Pain relief for children and infants." },
+    { id: 4, name: "Neozep", category: "Paracetamol", description: "Treats cold and flu symptoms." },
+    { id: 5, name: "Amoxicillin", category: "Antibiotics", description: "Treats bacterial infections." },
+    { id: 6, name: "Cefalexin", category: "Antibiotics", description: "Used to treat bacterial infections." },
   ]
 
-  // State for selected service
-  const [selectedService, setSelectedService] = React.useState(categories[0])
-  const [medicines, setMedicines] = React.useState<Medicine[]>([])
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [cartItems, setCartItems] = React.useState<Medicine[]>([])
+  const categories = ["All", "Paracetamol", "Antibiotics", "Vitamins"]
 
-  // Update local cart state when global cart changes
-  React.useEffect(() => {
-    const updateCartState = () => {
-      setCartItems([...globalCartState.items])
+  // Initialize medicines
+  useEffect(() => {
+    setMedicines(mockMedicines)
+    setFilteredMedicines(mockMedicines)
+  }, [])
+
+  // Filter medicines based on search query and category
+  useEffect(() => {
+    let filtered = medicines
+
+    if (searchQuery) {
+      filtered = filtered.filter((medicine) => medicine.name.toLowerCase().includes(searchQuery.toLowerCase()))
     }
 
-    const interval = setInterval(updateCartState, 500)
-    updateCartState() // Initial update
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter((medicine) => medicine.category === selectedCategory)
+    }
 
+    setFilteredMedicines(filtered)
+  }, [searchQuery, selectedCategory, medicines])
+
+  // Update cart items from global state
+  useEffect(() => {
+    const updateCartState = () => setCartItems([...globalCartState.items])
+    const interval = setInterval(updateCartState, 500)
+
+    updateCartState()
     return () => clearInterval(interval)
   }, [])
 
-  const mockDatabase: { [key: string]: Medicine[] } = {
-    Paracetamol: [
-      { id: 1, name: "Biogesic", category: "Paracetamol" },
-      { id: 2, name: "Calpol", category: "Paracetamol" },
-      { id: 3, name: "Saridon", category: "Paracetamol" },
-    ],
-    Antibiotics: [
-      { id: 4, name: "Amoxicillin", category: "Antibiotics" },
-      { id: 5, name: "Azithromycin", category: "Antibiotics" },
-      { id: 6, name: "Cefalexin", category: "Antibiotics" },
-      { id: 7, name: "Doxycycline", category: "Antibiotics" },
-      { id: 8, name: "Ciprofloxacin", category: "Antibiotics" },
-    ],
-    Vitamins: [
-      { id: 9, name: "Enervon", category: "Vitamins" },
-      { id: 10, name: "Centrum", category: "Vitamins" },
-    ],
-  }
-
-  React.useEffect(() => {
-    const fetchedMedicines = mockDatabase[selectedService.value] || []
-    setMedicines(fetchedMedicines)
-  }, [selectedService])
-
-  // Filter medicines based on search query
-  const filteredMedicines = React.useMemo(() => {
-    if (!searchQuery) return medicines
-    return medicines.filter((medicine) => medicine.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  }, [medicines, searchQuery])
-
   return (
-    <View className="flex-1 h-full bg-[#ECF8FF] p-4">
-      {/* Header */}
-      <View>
-      <TouchableWithoutFeedback onPress={() => router.back()}>
-                <Text className="text-black text-[15px]">Back</Text>
-              </TouchableWithoutFeedback>
-     
-          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="relative ml-auto">
+    <SafeAreaView className="flex-1 bg-[#ECF8FF]">
+      <View className="flex-1 p-4">
+        {/* Header */}
+        <View className="flex-row justify-between items-center mb-2">
+          <TouchableOpacity onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#000" />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push("/medicine-request/cart")} className="relative">
             <ShoppingBag size={24} color="#263D67" />
             {cartItems.length > 0 && (
               <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
@@ -165,63 +81,87 @@ export default function MedicineRequest() {
               </View>
             )}
           </TouchableOpacity>
-          
         </View>
-    
-      <Text className="text-3xl font-PoppinsSemiBold text-[#263D67] mb-2">Request</Text>
-      <Text className="text-3xl font-PoppinsSemiBold text-[#263D67] mb-4">Medicine</Text>
-      <Text className="text-xs font-PoppinsRegular mb-6">Get the medicines you need with ease.</Text>
 
-      {/* Search Bar */}
-      <View className="flex-row items-center bg-white rounded-lg px-3 py-2 mb-4 shadow-sm">
-        <Search size={20} color="#263D67" />
-        <TextInput
-          placeholder="Search medicine"
-          className="flex-1 ml-2 font-PoppinsRegular"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+        {/* Title */}
+        <View className="mb-6">
+          <Text className="text-3xl font-bold text-[#263D67]">Request Medicine</Text>
+          <Text className="text-sm text-gray-600">Get the medicines you need with ease.</Text>
+        </View>
 
-      {/* Services Dropdown */}
-      <SelectLayout
-        className="min-w-[100%] font-PoppinsRegular"
-        contentClassName="w-full"
-        options={categories}
-        selected={selectedService}
-        onValueChange={(value) => setSelectedService(value!)}
-      />
+        {/* Search Bar */}
+        <View className="flex-row items-center bg-white rounded-lg px-3 py-2 mb-4 shadow-sm">
+          <Search size={20} color="#263D67" />
+          <TextInput
+            placeholder="Search medicine"
+            className="flex-1 ml-2"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-      {/* Display medicines Dynamically */}
-      <ScrollView className="mt-6">
-        {filteredMedicines.length > 0 ? (
-          filteredMedicines.map((medicine) => (
-            <Card key={medicine.id} className="p-4 mb-3 border-0 shadow-lg bg-[#ffffff] rounded-lg">
-              <View className="flex-row items-center justify-between">
+        {/* Categories Dropdown */}
+        <View className="mb-4 relative">
+          <TouchableOpacity
+            className="flex-row justify-between items-center bg-white rounded-lg px-3 py-3 shadow-sm"
+            onPress={() => setShowCategories(!showCategories)}
+          >
+            <Text className="text-[#263D67]">{selectedCategory}</Text>
+            <ChevronDown size={20} color="#263D67" />
+          </TouchableOpacity>
+
+          {showCategories && (
+            <View className="absolute top-14 left-0 right-0 bg-white rounded-lg shadow-md z-10">
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  className="px-3 py-3 border-b border-gray-100"
+                  onPress={() => {
+                    setSelectedCategory(category)
+                    setShowCategories(false)
+                  }}
+                >
+                  <Text className={selectedCategory === category ? "text-blue-500 font-bold" : "text-[#263D67]"}>
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Medicine List */}
+        <ScrollView className="flex-1">
+          {filteredMedicines.length > 0 ? (
+            filteredMedicines.map((medicine) => (
+              <TouchableOpacity
+                key={medicine.id}
+                className="flex-row justify-between items-center bg-white p-4 mb-3 rounded-lg shadow-sm"
+                onPress={() =>
+                  router.push({
+                    pathname: "/medicine-request/details",
+                    params: { id: medicine.id.toString() },
+                  })
+                }
+              >
                 <View className="flex-row items-center">
                   <Pill size={20} color="#263D67" className="mr-2" />
-                  <View className="ml-3">
-                    <Text className="text-lg font-PoppinsSemiBold text-[#263D67]">{medicine.name}</Text>
-                    <Text className="text-sm font-PoppinsRegular text-[#263DC7]">{medicine.category}</Text>
+                  <View>
+                    <Text className="text-lg font-semibold text-[#263D67]">{medicine.name}</Text>
+                    <Text className="text-sm text-gray-500">{medicine.category}</Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    addToCart(medicine)
-                    setCartItems([...globalCartState.items]) // Immediately update local state
-                  }}
-                  className="bg-[#263D67] px-3 py-1 rounded-lg"
-                >
-                  <Text className="text-white font-PoppinsSemiBold">ADD</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          ))
-        ) : (
-          <Text className="text-lg font-PoppinsRegular text-[#263D67] mt-4">No medicines found.</Text>
-        )}
-      </ScrollView>
-    </View>
+                <ChevronDown size={20} color="#263D67" style={{ transform: [{ rotate: "-90deg" }] }} />
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View className="flex-1 justify-center items-center mt-10">
+              <Text className="text-lg text-[#263D67]">No medicines found.</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   )
 }
 
