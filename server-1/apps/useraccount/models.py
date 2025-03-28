@@ -9,7 +9,7 @@ class UserAccount(models.Model):
     password = models.CharField(max_length=128)  
     dateCreated = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
-    rp = models.ForeignKey("profiling.ResidentProfile", on_delete=models.CASCADE)
+    # rp = models.ForeignKey("profiling.ResidentProfile", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.username

@@ -44,4 +44,8 @@ urlpatterns = [
 
     path("resident/", ResidentProfileView.as_view(), name="resident-details"),
 
+    # Request Urls
+
+    path("request/", RequestView.as_view(), name="request-details")
+
 ]
