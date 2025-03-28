@@ -1,12 +1,11 @@
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, MoveRight } from "lucide-react";
+import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
-import { ResidentRecord } from "../profilingTypes";
+import { RequestRecord } from "../profilingTypes";
 
 // Define the colums for the data table
-export const requestColumns: ColumnDef<ResidentRecord>[] = [
+export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     {
         accessorKey: "id",
         header: ({ column }) => (
@@ -18,10 +17,6 @@ export const requestColumns: ColumnDef<ResidentRecord>[] = [
             <ArrowUpDown size={14} />
             </div>
         )
-    },
-    {
-        accessorKey: "address",
-        header: 'Address'
     },
     {
         accessorKey: "lname",
@@ -76,23 +71,31 @@ export const requestColumns: ColumnDef<ResidentRecord>[] = [
         )
     },
     {
+        accessorKey: "address",
+        header: 'Address'
+    },
+    {
         accessorKey: "requestDate",
         header: "Date Requested",
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-                {row.getValue("dateRegistered")}
-            </div>
-        ),
     },
     {
         accessorKey: "action",
         header: "Action",
         cell: ({ row }) => (
-            <Link to="/resident-form" 
+            <Link 
+                to="/resident-form" 
+                state={{
+                    params: {
+                        type: 'request',
+                        title: 'Registration Request',
+                        description: 'This is a registration request submitted by the user. Please review the details and approve or reject accordingly.',
+                        data: requests.find((request) => request.req_id === row.original.id)
+                    }
+                }}
             >
-            <Button variant="outline">
-                View <MoveRight/>
-            </Button>
+                <Button variant="outline">
+                    View <MoveRight/>
+                </Button>
             </Link>
         ),
         enableSorting: false,

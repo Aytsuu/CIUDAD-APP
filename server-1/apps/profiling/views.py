@@ -87,3 +87,8 @@ class ResidentProfileView(generics.ListCreateAPIView):
 class RequestView(generics.ListCreateAPIView):
     serializer_class = RequestSerializer
     queryset = Request.objects.all()
+
+class RequestDeleteView(generics.DestroyAPIView):
+    serializer_class = RequestSerializer
+    queryset = Request.objects.all()
+    lookup_field = 'req_id'
