@@ -13,7 +13,7 @@ import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
 import { useQuery } from "@tanstack/react-query";
 import { getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
-import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilingResident() {

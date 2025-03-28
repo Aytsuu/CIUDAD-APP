@@ -36,6 +36,13 @@ export const residentProfile = async (personalId: string) => {
     
     try{
 
+        console.log({
+            rp_id: await generateResidentNo(),
+            rp_date_registered: formatDate(new Date()),
+            per_id: personalId,
+            staff: "00001250323"
+        })
+
         const res = await api.post('profiling/resident/', {
             rp_id: await generateResidentNo(),
             rp_date_registered: formatDate(new Date()),

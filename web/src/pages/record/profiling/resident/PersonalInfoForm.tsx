@@ -2,7 +2,7 @@
 
   Note...
 
-  This form is being utilized for creating, viewing, and updating resident records
+  This form is being utilized for creating, viewing, and updating resident records, and handles registration requests
   Additionally, it is being used for adminstrative position assignment or staff registration 
 
 */
@@ -26,9 +26,12 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { Combobox } from "@/components/ui/combobox";
 import { formatResidents } from "../profilingFormats";
+import { deleteRequest } from "../restful-api/profilingDeleteAPI";
 
 export default function PersonalInfoForm({ params }: { params: any }) {
 
+  
+  // Initial states
   const navigate = useNavigate();
   const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema));
   const form = useForm<z.infer<typeof personalInfoSchema>>({
@@ -36,18 +39,22 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     defaultValues: defaultValues.current,
   });
 
+
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
+
   const formattedResidents = React.useMemo(() => {
     return formatResidents(params, false)
   }, [params.residents])
 
+
+  // Performs side effects when formType changes
   React.useEffect(() => {
 
-    if (formType === Type.Viewing) {
+    if (formType === Type.Viewing || formType === Type.Request) {
       toast.dismiss();
       populateFields(params.data.per);
       form.clearErrors();
@@ -58,6 +65,8 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     }
   }, [formType])
 
+
+  // Handles combox selection
   const handleComboboxChange = React.useCallback(() => {
     const data = params.residents.find((resident: any) => 
       resident.rp_id === form.watch('per_id').split(" ")[0]
@@ -65,6 +74,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
 
     populateFields(data.per)
   }, [form.watch('per_id')])
+
 
   // For resident viewing, populate form fields with resident data
   const populateFields = React.useCallback((data: any) => {
@@ -85,6 +95,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
       { key: 'per_contact', value: resident?.per_contact || ''},
     ];
 
+
     fields.forEach(({ key, value }) => {
       form.setValue(key as keyof z.infer<typeof personalInfoSchema>, value || '');
     });
@@ -97,6 +108,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     }
 
   }, [params.data || params.resident]);
+
 
   // For type edit, check if values are unchanged
   const checkDefaultValues = (values: any, params: any) => {
@@ -122,6 +134,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     return isDefault;
   }
 
+
   // For type edit, save click feedback
   const handleEditSaved = (message: string, icon: React.ReactNode) => {
     setFormType(Type.Viewing);
@@ -130,11 +143,11 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     });
   }
 
+
   // Handle form submission
   const submit = async () => {
 
     setIsSubmitting(true);
-
     const formIsValid = await form.trigger();
 
     if(!formIsValid) {
@@ -148,19 +161,16 @@ export default function PersonalInfoForm({ params }: { params: any }) {
     }
 
     try {
+      // For editing resident personal info
       const values = form.getValues();
-
+      
       if (formType === Type.Editing) {
-
         if(checkDefaultValues(values, params.data.per)) {
-
           handleEditSaved(
             'No changes made', 
             <CircleAlert size={24} className="fill-orange-500 stroke-white" />
           );      
-  
           return
-  
         }
 
         const res = await updateProfile(params.data.per.per_id, values);
@@ -172,10 +182,13 @@ export default function PersonalInfoForm({ params }: { params: any }) {
             <CircleCheck size={24} className="fill-green-500 stroke-white" />
           );
         }
-
       } else {
 
-        const personalId = await personal(values);
+        // For registration request
+        const reqPersonalId = params.data?.per.per_id
+
+        // Check if form type is request
+        const personalId = params.type === Type.Request ? reqPersonalId : await personal(values);
         const res= await residentProfile(personalId); 
 
         if(res) {
@@ -187,6 +200,15 @@ export default function PersonalInfoForm({ params }: { params: any }) {
             }
           });
 
+          // Exit registration page after request has been approved
+          if(params.type === Type.Request) {
+            const res = await deleteRequest(params.data.req_id)
+            if(res === 204){
+              navigate(-1)
+            }
+          }
+
+          // Reset the values of all fields in the form
           form.reset(defaultValues.current);
         }
       }
@@ -260,7 +282,8 @@ export default function PersonalInfoForm({ params }: { params: any }) {
               params.origin,
               isSubmitting,
               setIsAssignmentOpen,
-              setFormType
+              setFormType,
+              submit
             )}
           </div>
         </form>

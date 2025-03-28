@@ -6,4 +6,5 @@ export enum Type {
     Viewing = 'viewing',
     Registration = 'registration',
     Editing = 'editing',
+    Request = 'request',
 }

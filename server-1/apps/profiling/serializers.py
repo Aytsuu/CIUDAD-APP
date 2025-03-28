@@ -94,4 +94,10 @@ class BuildingSerializer(serializers.ModelSerializer):
         model = Building
         fields = '__all__'
 
-    
+class RequestSerializer(serializers.ModelSerializer):
+    per = PersonalSerializer(read_only=True)
+    per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
+
+    class Meta:
+        model = Request
+        fields = '__all__'
