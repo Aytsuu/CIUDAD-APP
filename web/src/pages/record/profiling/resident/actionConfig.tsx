@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import AssignPosition from "../../administration/AssignPosition";
 import { Pen } from "lucide-react";
-import { ConfirmationModal } from "@/components/confirmation-modal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Configuration Object
 export const buttonConfig = (
