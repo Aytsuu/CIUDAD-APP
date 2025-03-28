@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Info } from "lucide-react"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { Separator } from "@/components/ui/separator"
-import { nonCommunicableDiseaseFormSchema } from "@/form-schema/health-schema"
+import { nonCommunicableDiseaseFormSchema } from "@/form-schema/family-profiling-schema"
 import type { NonCommunicableDiseaseFormData, NCDRecord, TBRecord } from "@/form-schema/health-data-types"
 
 interface NonCommunicableDiseaseFormProps {

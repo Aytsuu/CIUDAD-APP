@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { DependentData, DependentsFormData } from "@/form-schema/health-data-types"
-import { dependentsFormSchema } from "@/form-schema/health-schema"
+import { dependentsFormSchema } from "@/form-schema/family-profiling-schema"
 
 interface DependentsFormProps {
   onSubmit: (data: DependentsFormData) => void

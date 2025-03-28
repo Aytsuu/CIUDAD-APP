@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
 
 import { cn } from "@/lib/utils"
-import { surveyFormSchema } from "@/form-schema/health-schema"
+import { surveyFormSchema } from "@/form-schema/family-profiling-schema"
 import type { SurveyFormData } from "@/form-schema/health-data-types"
 
 interface SurveyIdentificationFormProps {

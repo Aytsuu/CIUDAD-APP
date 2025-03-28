@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 
 import type { EnvironmentalFormData } from "@/form-schema/health-data-types"
-import { environmentalFormSchema } from "@/form-schema/health-schema"
+import { environmentalFormSchema } from "@/form-schema/family-profiling-schema"
 
 interface EnvironmentalFormProps {
   onSubmit: (data: EnvironmentalFormData) => void
