@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button/button";
 // import TableLayout from '@/components/ui/table/table-layout.tsx';
 // import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Pencil, Trash, Eye, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -20,7 +20,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";;
 // Updated BusinessDocument type
 type BusinessDocument = {
     requestNo: string;
-    businessname: string;
+    businessname: string,
     address: string;
     gross: string;
     paymentMethod: string;

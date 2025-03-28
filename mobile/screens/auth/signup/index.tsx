@@ -6,7 +6,7 @@ export default () => {
   return (
     <Layout
       header="Verifying Identity"
-      description="Please enter your date of birth and residency to continue:"
+      description="Please enter your date of birth."
     >
       <IdentityVerificationForm />
     </Layout>

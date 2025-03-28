@@ -10,7 +10,7 @@ import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { getResidents } from "../profiling/restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getFeatures, getPositions, getStaffs } from "./restful-api/administrationGetAPI";
+import { getAllAssignedFeatures, getFeatures, getPositions, getStaffs } from "./restful-api/administrationGetAPI";
 import { AdministrationRecord } from "./administrationTypes";
 
 export default function AdministrativeRecords(){
@@ -44,6 +44,13 @@ export default function AdministrativeRecords(){
     const { data: positions, isLoading: isLoadingPositions } = useQuery({
         queryKey: ['positions'],
         queryFn: getPositions,
+        refetchOnMount: true,
+        staleTime: 0
+    })
+
+    const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures} = useQuery({
+        queryKey: ['assignedFeatures'],
+        queryFn: getAllAssignedFeatures,
         refetchOnMount: true,
         staleTime: 0
     })
@@ -86,7 +93,9 @@ export default function AdministrativeRecords(){
         currentPage * pageSize
     )
 
-    if(isLoadingResidents || isLoadingStaffs || isLoadingFeatures || isLoadingPositions) {
+    if(isLoadingResidents || isLoadingStaffs || isLoadingFeatures 
+        || isLoadingPositions || isLoadingAllAssignedFeatures) {
+
         return (
           <div className="w-full h-full">
             <Skeleton className="h-10 w-1/6 mb-3" />
@@ -95,6 +104,7 @@ export default function AdministrativeRecords(){
             <Skeleton className="h-4/5 w-full mb-4" />
           </div>
         )
+        
     }
 
     return(
@@ -131,8 +141,9 @@ export default function AdministrativeRecords(){
                     />
                     <Link to="/role" state={{
                         params: {
+                            positions: positions,
                             features: features,
-                            positions: positions
+                            allAssignedFeatures: allAssignedFeatures
                         }
                     }}>
                         <Button > 

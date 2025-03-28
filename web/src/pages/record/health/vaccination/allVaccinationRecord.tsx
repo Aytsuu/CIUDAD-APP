@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./VaccinationModal";
+import VaccinationForm from "./vaccinationModal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -191,7 +191,6 @@ export default function AllVaccinationRecords() {
   ];
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
   const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -236,124 +235,122 @@ export default function AllVaccinationRecords() {
   };
 
   return (
-    <>
-      <div className="w-full h-full flex flex-col">
-        {/* Header Section */}
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Vaccination Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
-        </div>
-        <hr className="border-gray mb-5 sm:mb-8" />
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Vaccination Records
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view patients information
+        </p>
+      </div>
+      <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          {/* Search Input and Filter Dropdown */}
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <div className="flex gap-x-2">
-              <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-72 bg-white"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                />
-              </div>
-              <SelectLayout
-                placeholder="Filter records"
-                label=""
-                className="bg-white"
-                options={[
-                  { id: "1", name: "All Types" },
-                  { id: "2", name: "Recent" },
-                  { id: "3", name: "Archived" },
-                ]}
-                value=""
-                onChange={() => {}}
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        {/* Search Input and Filter Dropdown */}
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex gap-x-2">
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchQuery}
+                onChange={handleSearchChange}
               />
             </div>
-          </div>
-
-          <div className="w-full sm:w-auto">
-            <DialogLayout
-              trigger={
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => setValue("nonExistingPatient")}
-                >
-                  New Record
-                </Button>
-              }
-              className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
-              title="Vaccination"
-              mainContent={
-                <div>
-                  <VaccinationForm recordType={value} />
-                </div>
-              }
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
+            <SelectLayout
+              placeholder="Filter records"
+              label=""
+              className="bg-white"
+              options={[
+                { id: "1", name: "All Types" },
+                { id: "2", name: "Recent" },
+                { id: "3", name: "Archived" },
+              ]}
+              value=""
+              onChange={() => {}}
             />
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className="h-full w-full rounded-md">
-          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-            <div className="flex gap-x-2 items-center">
-              <p className="text-xs sm:text-sm">Show</p>
-              <Input
-                type="number"
-                className="w-14 h-8"
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                min="1"
-              />
-              <p className="text-xs sm:text-sm">Entries</p>
-            </div>
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-          <div className="bg-white w-full overflow-x-auto">
-            <DataTable columns={columns} data={currentData} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing{" "}
-              {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
-              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
-            </p>
+        <div className="w-full sm:w-auto">
+          <DialogLayout
+            trigger={
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => setValue("nonExistingPatient")}
+              >
+                New Record
+              </Button>
+            }
+            className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
+            title="Vaccination"
+            mainContent={
+              <div>
+                <VaccinationForm recordType={value} />
+              </div>
+            }
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+          />
+        </div>
+      </div>
 
-            <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
+      {/* Table Container */}
+      <div className="h-full w-full rounded-md">
+        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input
+              type="number"
+              className="w-14 h-8"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              min="1"
+            />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" aria-label="Export data">
+                  <FileInput />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="bg-white w-full overflow-x-auto">
+          <DataTable columns={columns} data={currentData} />
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+            Showing{" "}
+            {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
+          </p>
+
+          <div className="w-full sm:w-auto flex justify-center">
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

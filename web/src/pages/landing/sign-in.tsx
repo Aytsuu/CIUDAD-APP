@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,7 @@ import axios from "axios";
 import SignInSchema from "@/form-schema/sign-in-schema";
 import { Input } from "@/components/ui/input";
 import { LuEye, LuEyeOff } from "react-icons/lu";
-
+import Loading from "@/components/ui/loading";
 import {
   Form,
   FormControl,
@@ -16,17 +16,20 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
+import { useNavigate } from "react-router-dom"; 
+import { supabase } from "@/supabaseClient"; // Import Supabase client
 
 export default function SignIn() {
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const Icon = showPassword ? LuEyeOff : LuEye;
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
     defaultValues: {
-      username: "",
+      usernameOrEmail: "", // Combined field for username or email
       password: "",
     },
   });
@@ -37,21 +40,36 @@ export default function SignIn() {
 
     try {
       
-      const response = await axios.get("http://192.168.1.55:8000/api/login/", {
-        params: {
-          email: data.username,
-          password: data.password,
-        },
+      const response = await axios.post("http://localhost:8000/api/login/", {
+        username: data.usernameOrEmail, 
+        password: data.password,
       });
 
       if (response.status === 200) {
         console.log("Login successful!", response.data);
-        // Handle login success (redirect, store token, etc.)
-        
+
+        // Store user data in localStorage
+        localStorage.setItem("user_id", response.data.user_id);
+        localStorage.setItem("username", response.data.username);
+        localStorage.setItem("email", response.data.email);
+        localStorage.setItem("token", response.data.token);
+
+        // Redirect to the home page or dashboard
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error("Login failed:", error);
-      setErrorMessage("Invalid email or password.");
+
+      // Handle different types of errors
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          setErrorMessage("Invalid username or password.");
+        } else {
+          setErrorMessage("An error occurred. Please try again later.");
+        }
+      } else {
+        setErrorMessage("An unexpected error occurred.");
+      }
     }
 
     setLoading(false);
@@ -64,15 +82,15 @@ export default function SignIn() {
         className="w-full h-full flex flex-col gap-2"
       >
         <div className="w-full h-full flex flex-col gap-2">
-          {/* Email Field */}
+          {/* Username/Email Field */}
           <FormField
             control={form.control}
-            name="username"
+            name="usernameOrEmail"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Username or Email</FormLabel>
                 <FormControl>
-                <Input
+                  <Input
                     type="text"
                     placeholder="Enter your username or email..."
                     {...field}
@@ -118,7 +136,7 @@ export default function SignIn() {
         {/* Submit Button */}
         <div className="w-full flex items-end justify-end">
           <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? <Loading /> : "Log in"}
           </Button>
         </div>
       </form>

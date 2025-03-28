@@ -1,10 +1,10 @@
 export type Positions = {
+    pos_id: string
     id: string,
     name: string
 }
 
 export type Assigned = {
-    position: string
     assi_id: string
     assi_date: string
     feat: string

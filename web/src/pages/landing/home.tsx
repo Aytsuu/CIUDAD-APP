@@ -9,7 +9,6 @@ export default function Home(){
                     <img className="w-full h-full bg-gray"></img>
                 </div>
             </div>
-
             <div className="w-[90%] h-[10rem] bg-blue">
 
             </div>

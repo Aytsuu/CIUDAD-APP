@@ -42,12 +42,6 @@ export const assignFeature = async (selectedPosition: string, featureId: string)
 
     try {
 
-        console.log({
-            feat: featureId,
-            pos: selectedPosition,
-            assi_date: formatDate(new Date())
-        })
-
         const res = await api.post(`administration/assignment/`, {
             feat: featureId,
             pos: selectedPosition,

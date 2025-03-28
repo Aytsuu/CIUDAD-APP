@@ -10,21 +10,31 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Assigned, Positions } from "./administrationTypes";
   
 export default function RoleLayout() {
+
     const navigate = useNavigate();
     const location = useLocation();
-    const [selectedPosition, setSelectedPosition] = React.useState<string>('');
-    const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>([]);
-    
+
     const params = React.useMemo(() => {
       return location.state?.params || {}
     }, [location.state])
 
     const [positions, setPositions] = React.useState<Positions[]>(params.positions)
+    const [selectedPosition, setSelectedPosition] = React.useState<string>('');
+    const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>([]);
   
     // Handle position selection
-    const handlePositionSelect = (position: string) => {
+    const handlePositionSelect = React.useCallback((position: string) => {
       setSelectedPosition(position);
-    };
+    }, []);
+
+    React.useEffect(() => {
+      if (!selectedPosition) return;
+      setAssignedFeatures(
+        Object.values(params.allAssignedFeatures as Assigned[]).filter(
+          (value) => value.pos === selectedPosition
+        )
+      );
+    }, [selectedPosition]);
 
     return (
       <div className="w-full h-full flex flex-col">

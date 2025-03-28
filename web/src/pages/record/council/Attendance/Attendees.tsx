@@ -1,7 +1,7 @@
 // import { Label } from "@/components/ui/label";
-// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 // import { Checkbox } from "@/components/ui/checkbox";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button/button";
 
 // // Schema
 // import { zodResolver } from "@hookform/resolvers/zod";

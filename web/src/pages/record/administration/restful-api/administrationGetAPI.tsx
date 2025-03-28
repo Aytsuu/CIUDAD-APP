@@ -50,10 +50,23 @@ export const getAssignedFeatures = async (selectedPosition: string) => {
 
     try {
         
-      const res = await api.get( `administration/assignment/${selectedPosition}/`);
+      const res = await api.get(`administration/assignment/${selectedPosition}/`);
       return res.data
     
     } catch (err) {
       console.error(err);
     }
 };
+
+export const getAllAssignedFeatures = async () => {
+
+    try {
+
+        const res = await api.get('administration/assignment/')
+        return res.data
+
+    } catch (err) {
+        console.error(err)
+    }
+
+}
