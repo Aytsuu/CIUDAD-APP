@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -14,7 +14,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 import { VaccineSchema, VaccineType } from "@/form-schema/inventory/inventoryListSchema";
 import { addVaccine, addVaccineIntervals, addRoutineFrequency } from "../requests/Postrequest";
-// Constants kept in component file
+
 const timeUnits = [
   { id: "years", name: "Years" },
   { id: "months", name: "Months" },
@@ -36,6 +36,7 @@ const vaccineTypes = [
 ];
 
 export default function VaccinationModal() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<VaccineType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
@@ -44,17 +45,16 @@ export default function VaccinationModal() {
       timeUnits: [],
       noOfDoses: 1,
       ageGroup: "",
-      specifyAge: "", // Ensure this is empty string, not null or undefined
+      specifyAge: "",
       type: "routine",
       routineFrequency: {
         interval: 1,
         unit: "years"
       },
-    
     },
   });
 
-  const { watch, setValue, control, handleSubmit } = form;
+  const { watch, setValue, control, handleSubmit, reset } = form;
   const [type, ageGroup, noOfDoses, specifyAge] = watch(["type", "ageGroup", "noOfDoses", "specifyAge"]);
 
   useEffect(() => {
@@ -62,168 +62,152 @@ export default function VaccinationModal() {
       setValue("intervals", []);
       setValue("timeUnits", []);
     }
+    if (type === 'routine') {
+      setValue('noOfDoses', 1);
+    }
   }, [noOfDoses, type, setValue, watch]);
 
-  // const onSubmit = (data: VaccineType) => {
-  //   console.log(data);
-  //   alert("Vaccine saved successfully!");
-  // };
   const onSubmit = async (data: VaccineType) => {
+    setIsSubmitting(true);
     try {
-      // Prepare vaccine data with proper types
       const vaccineData = {
         vac_type_choices: data.type,
         vac_name: data.vaccineName,
         no_of_doses: Number(data.noOfDoses),
         age_group: data.ageGroup,
-        specify_age: data.specifyAge ? String(data.specifyAge) : 'N/A',
+        specify_age: data.ageGroup === "0-5" ? String(data.specifyAge) : data.ageGroup, // Use ageGroup value instead of N/A
       };
-  
-      console.log('Submitting vaccine data:', vaccineData);
-      
-      // Create vaccine
+
       const vaccineResponse = await addVaccine(vaccineData);
       const vaccineId = vaccineResponse.vac_id;
-  
-      // Handle intervals for primary vaccines
-      if (data.type === 'primary' && data.noOfDoses > 1) {
-        const intervals = data.intervals || [];
-        const timeUnits = data.timeUnits || [];
-        
-        await Promise.all(
-          intervals.map((interval, index) => 
-            addVaccineIntervals({
-              vac_id: vaccineId,
-              interval: Number(interval),
-              time_unit: timeUnits[index] || 'months' // default to months if missing
-            })
-          )
-        );
+
+      if (data.type === 'primary') {
+        await addVaccineIntervals({
+          vac_id: vaccineId,
+          dose_number: 1,
+          interval: data.ageGroup === "0-5" ? 
+            Number(data.specifyAge) || 0 : 0,
+          time_unit: data.ageGroup === "0-5" ? "months" : "NA"
+        });
+
+        if (data.noOfDoses > 1) {
+          await Promise.all(
+            (data.intervals || []).map((interval, index) => 
+              addVaccineIntervals({
+                vac_id: vaccineId,
+                dose_number: index + 2,
+                interval: Number(interval),
+                time_unit: (data.timeUnits || [])[index] || 'months'
+              })
+            )
+          );
+        }
       }
-  
-      // Handle routine frequency
+
       if (data.type === 'routine' && data.routineFrequency) {
         await addRoutineFrequency({
           vac_id: vaccineId,
+          dose_number: 1,
           interval: Number(data.routineFrequency.interval),
           time_unit: data.routineFrequency.unit
         });
       }
-  
+
       alert("Vaccine saved successfully!");
-      form.reset();
-    } catch (error) {
+      reset();
+    } catch (error: any) {
       console.error('Submission error:', error);
       let errorMessage = "Failed to save vaccine. Please try again.";
-      
-      if ((error as any)?.response?.data) {
-        if (typeof error === "object" && error !== null && "response" in error && typeof (error as any).response === "object") {
-          errorMessage += `\nServer error: ${JSON.stringify((error as any).response.data)}`;
-        }
+      if (error.response?.data) {
+        errorMessage += `\nError: ${JSON.stringify(error.response.data)}`;
       }
-      
       alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-
-  const getDoseLabel = (index: number) => {
-    const ordinals = ["st", "nd", "rd", "th"];
-    return `${index + 1}${ordinals[index] || "th"} Dose`;
-  };
-
-  const getFirstDoseLabel = () => {
-    if (type === "primary" && ageGroup === "0-5") {
-      return `First dose at ${specifyAge || 'specified'} months`;
-    }
-    return `First dose at ${ageGroup || 'selected age'}`;
-  };
-
-  const renderRoutineDoseFields = () => {
-    if (noOfDoses === 1) {
+  const renderDoseFields = () => {
+    if (type === 'routine') {
       return (
-        <div className="bg-gray-50 p-4 rounded-md mb-4">
-          <h4 className="font-medium">{getFirstDoseLabel()}</h4>
+        <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
+          <p className="text-sm text-blue-600 mb-2">
+            This vaccine will be repeated at the specified frequency:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name="routineFrequency.interval"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Repeat Every</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="e.g., 1"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="routineFrequency.unit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Frequency Unit</FormLabel>
+                  <FormControl>
+                    <SelectLayout
+                      options={timeUnits}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select unit"
+                      label="Time Unit"
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       );
     }
 
     return Array.from({ length: noOfDoses }).map((_, doseIndex) => {
-      const isFirstDose = doseIndex === 0;
-      
-      return (
-        <div key={doseIndex} className="bg-gray-50 p-4 rounded-md mb-4">
-          <h4 className="font-medium">
-            {isFirstDose ? getFirstDoseLabel() : getDoseLabel(doseIndex)}
-          </h4>
-
-          {!isFirstDose && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-              <FormField
-                control={control}
-                name={`intervals.${doseIndex - 1}`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Interval After Previous Dose</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="e.g., 4"
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`timeUnits.${doseIndex - 1}`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Time Unit</FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        options={timeUnits}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select unit"
-                        label="Time Unit"
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
-        </div>
-      );
-    });
-  };
-
-  const renderPrimaryDoseFields = () => {
-    return Array.from({ length: noOfDoses }).map((_, doseIndex) => {
+      const doseNumber = doseIndex + 1;
       const isFirstDose = doseIndex === 0;
       const showInterval = doseIndex > 0;
 
+      const getDoseLabel = () => {
+        if (isFirstDose) {
+          return ageGroup === "0-5" 
+            ? `First dose at ${specifyAge || "specified"} ` 
+            : `First dose for ${ageGroup}`;
+        }
+        
+        const interval = watch(`intervals.${doseIndex - 1}`);
+        const timeUnit = watch(`timeUnits.${doseIndex - 1}`);
+        return interval && timeUnit 
+          ? `Dose ${doseNumber} after ${interval} ${timeUnit}`
+          : `Dose ${doseNumber}`;
+      };
+
       return (
-        <div key={doseIndex} className="bg-gray-50 p-4 rounded-md mb-4">
-          <h4 className="font-medium">
-            {isFirstDose ? getFirstDoseLabel() : getDoseLabel(doseIndex)}
-          </h4>
-          
-          {ageGroup === "0-5" && isFirstDose && specifyAge && (
-            <p className="text-sm text-gray-600 mt-1">
-              Subsequent doses will be scheduled relative to the first dose at {specifyAge} months.
-            </p>
-          )}
+        <div key={doseIndex} className="bg-gray-50 p-2 rounded-md ">
+          <div className="flex justify-between items-center ">
+            <h4 className="text-sm bg-blue-100 text-darkBlue3 px-2 py-1 rounded bg-snow">
+              {getDoseLabel()}
+            </h4>
+          </div>
 
           {showInterval && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
               <FormField
                 control={control}
                 name={`intervals.${doseIndex - 1}`}
@@ -342,10 +326,20 @@ export default function VaccinationModal() {
                     <Input
                       type="number"
                       min="1"
+                      disabled={type === 'routine'}
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      onChange={(e) => {
+                        if (type !== 'routine') {
+                          field.onChange(parseInt(e.target.value) || 1);
+                        }
+                      }}
                     />
                   </FormControl>
+                  {type === 'routine' && (
+                    <p className="text-sm text-muted-foreground">
+                      Routine vaccines always have 1 required dose
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -360,7 +354,9 @@ export default function VaccinationModal() {
                     <FormLabel>Specify Age (months)</FormLabel>
                     <FormControl>
                       <Input
-                                               {...field}
+                       
+                      
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -371,64 +367,13 @@ export default function VaccinationModal() {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Dose Schedule</h3>
-            
-            {type === "routine" ? renderRoutineDoseFields() : renderPrimaryDoseFields()}
-
-            {type === "routine" && (
-              <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
-                <h4 className="font-medium text-blue-800">Repeat Administration</h4>
-                <p className="text-sm text-blue-600 mb-2">
-                  This vaccine will be repeated at the specified frequency:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={control}
-                    name="routineFrequency.interval"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Repeat Every</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            placeholder="e.g., 1"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={control}
-                    name="routineFrequency.unit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Frequency Unit</FormLabel>
-                        <FormControl>
-                          <SelectLayout
-                            options={timeUnits}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="Select unit"
-                            label="Time Unit"
-                            className="w-full"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            )}
+            <h3 className="text-lg font-semibold text-darkBlue1">Dose Schedule</h3>
+            {renderDoseFields()}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </div>
         </form>

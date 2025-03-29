@@ -50,3 +50,62 @@ export const updateMedicine = async (med_id: number, medicineName: string) => {
       throw err; 
     }
   };
+
+
+  // API Service functions (in separate file like vaccineApiService.ts)
+export const updateVaccine = async (vaccineId: number, data: {
+  vac_type_choices: string;
+  vac_name: string;
+  no_of_doses: number;
+  age_group: string;
+  specify_age: string;
+}) => {
+  try {
+    const response = await api.put(`/vaccines/${vaccineId}/`, {
+      ...data,
+      updated_at: new Date().toISOString()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating vaccine:', error);
+    throw error;
+  }
+};
+
+export const updateVaccineIntervals = async (vaccineId: number, intervals: Array<{
+  dose_number: number;
+  interval: number;
+  time_unit: string;
+}>) => {
+  try {
+    // First delete existing intervals
+    await api.delete(`/vaccines/${vaccineId}/intervals/`);
+    
+    // Then create new ones
+    const responses = await Promise.all(
+      intervals.map(interval => 
+        api.post(`/vaccines/${vaccineId}/intervals/`, interval)
+      )
+    );
+    return responses.map(r => r.data);
+  } catch (error) {
+    console.error('Error updating intervals:', error);
+    throw error;
+  }
+};
+
+export const updateRoutineFrequency = async (vaccineId: number, data: {
+  interval: number;
+  time_unit: string;
+}) => {
+  try {
+    const response = await api.put(`/vaccines/${vaccineId}/frequency/`, {
+      dose_number: 1,
+      ...data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating routine frequency:', error);
+    throw error;
+  }
+};

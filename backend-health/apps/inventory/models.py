@@ -155,7 +155,16 @@ class VaccineList(models.Model):
 
     class Meta:
         db_table = 'vaccines'     
+        
+class ImmunizationSupplies(models.Model):
+    imz_id =models.BigAutoField(primary_key=True)   
+    imz_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table = 'immunization_supplies'    
 
+ 
 
 class VaccineInterval(models.Model):
     vacInt_id = models.BigAutoField(primary_key=True)

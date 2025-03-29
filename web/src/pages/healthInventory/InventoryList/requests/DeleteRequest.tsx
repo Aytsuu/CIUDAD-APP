@@ -51,3 +51,20 @@ export const handleDeleteCommodityList = async (
     console.error(err);
   }
 };
+
+export const handleDeleteVaccine = async (
+  id: number,
+  onSuccess: () => void
+) => {
+  try {
+    const res = await api.delete(`inventory/vac_list/${id}`);
+    if (res.status === 200) {
+      onSuccess();
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+

@@ -1,268 +1,274 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, Edit } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import VaccineModal from "../addListModal/VaccineModal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getCombinedVaccineData } from "../requests/GetRequest";
+import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { VaccineColumns } from "./MedicineListColumsn";
+import { handleDeleteVaccine } from "../requests/DeleteRequest";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import VaccinationModal from "../addListModal/VaccineModal";
-import { FileInput } from "lucide-react";
-import EditVAccineListModal from "../editListModal/EditVaccineModal";
 
-export default function VaccinationList() {
-  type VaccinationRecords = {
-    id: number;
-    category: string;
-    vaccineName: string;
-    ageGroup: string;
-    noOfDoses: number;
-    interval: {
-      interval: number;
-      timeUnits: string;
-    };
-    specifyAge: string;
-  };
 
-  const sampleData: VaccinationRecords[] = [
-    {
-      id: 1,
-      vaccineName: "COVID-19 Vaccine",
-      category: "MedicalSupplies",
-      ageGroup: "0-5 yrs old",
-      noOfDoses: 2,
-      interval: {
-        interval: 18,
-        timeUnits: "Months",
-      },
-      specifyAge: " ",
-    },
-    {
-      id: 2,
-      vaccineName: "Influenza Vaccine",
-      category: "vaccine",
-      ageGroup: "0-5 yrs old",
-      noOfDoses: 1,
-      interval: {
-        interval: 18,
-        timeUnits: "Weeks",
-      },
-      specifyAge: "",
-    },
-  ];
+export type VaccineRecords = {
+  id: number;
+  vaccineName: string;
+  vaccineType: string;
+  ageGroup: string;
+  doses: number;
+  specifyAge: string;
+  schedule: string;
+  doseDetails: {
+    doseNumber: number;
+    interval: number | undefined;
+    unit: string;
+  }[];
+};
 
-  const columns: ColumnDef<VaccinationRecords>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "vaccineName",
-      header: "Vaccine Name",
-    },
+export default function VaccineList() {
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [pageSize, setPageSize] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    React.useState(false);
+  const [vaccineToDelete, setVaccineToDelete] = React.useState<number | null>(
+    null
+  );
+  const [isDialog, setIsDialog] = React.useState(false);
+  const [selectedOption, setSelectedOption] = React.useState<
+    "vaccine" | "supplies"
+  >("vaccine");
+  const queryClient = useQueryClient();
 
-    {
-      accessorKey:"category",
-      header:"Category"
+  // Fetch combined vaccine data
+  const { data: vaccineData, isLoading: isLoadingVaccines } = useQuery({
+    queryKey: ["vaccines"],
+    queryFn: getCombinedVaccineData,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
 
-    },
-    {
-      accessorKey: "ageGroup",
-      header: "Age Group",
-    },
-    {
-      accessorKey: "noOfDoses",
-      header: "Required Doses",
-    },
-    {
-      accessorKey: "interval",
-      header: "Interval",
-      cell: ({ row }) => {
-        const interval=row.original.interval
-        return(
-          <div>
-            {interval.interval} {" "} {interval.timeUnits}
-          </div>
-        )
+  const formatVaccineData = React.useCallback(() => {
+    if (!vaccineData) return [];
+
+    return vaccineData.map((vaccine: any) => {
+      const specifyAge = vaccine.specify_age || vaccine.age_group || "birth";
+
+      const baseData: VaccineRecords = {
+        id: vaccine.vac_id,
+        vaccineName: vaccine.vac_name,
+        vaccineType:
+          vaccine.vac_type_choices === "routine" ? "Routine" : "Primary Series",
+        ageGroup: vaccine.age_group,
+        doses: vaccine.no_of_doses,
+        specifyAge: specifyAge,
+        schedule: vaccine.schedule || "Not specified",
+        doseDetails: [],
+      };
+
+      if (vaccine.vac_type_choices === "routine" && vaccine.routine_frequency) {
+        baseData.doseDetails.push({
+          doseNumber: 1,
+          interval: vaccine.routine_frequency.interval,
+          unit: vaccine.routine_frequency.time_unit,
+        });
+        return baseData;
       }
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <DialogLayout
-            trigger={
-              <div className=" border  px-3 py-2 rounded cursor-pointer">
-                <Edit size={16} />
-              </div>
-            }
-            mainContent={<EditVAccineListModal 
-              initialData={row.original} />}
-          />
 
-          <DialogLayout
-            trigger={
-              <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                <Trash size={16} />
-              </div>
-            }
-            mainContent={<></>}
-          />
-        </div>
-      ),
-    },
-  ];
+      if (vaccine.vac_type_choices === "primary" && vaccine.intervals?.length) {
+        const sortedIntervals = [...vaccine.intervals].sort(
+          (a, b) => a.dose_number - b.dose_number
+        );
+        sortedIntervals.forEach((interval) => {
+          baseData.doseDetails.push({
+            doseNumber: interval.dose_number,
+            interval: interval.interval,
+            unit: interval.time_unit,
+          });
+        });
+      }
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<VaccinationRecords[]>(sampleData);
-  const [currentData, setCurrentData] = useState<VaccinationRecords[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const filtered = sampleData.filter((vaccine) => {
-      const searchText =
-        `${vaccine.id} ${vaccine.vaccineName} ${vaccine.ageGroup} ${vaccine.noOfDoses}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
+      return baseData;
     });
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize]);
+  }, [vaccineData]);
 
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
+  const filteredVaccines = React.useMemo(() => {
+    return formatVaccineData().filter((record: VaccineRecords) =>
+      Object.values(record)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, formatVaccineData]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
+  const totalPages = Math.ceil(filteredVaccines.length / pageSize);
+  const paginatedVaccines = filteredVaccines.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  const handleDelete = async () => {
+    if (vaccineToDelete !== null) {
+      await handleDeleteVaccine(vaccineToDelete, () => {
+        queryClient.invalidateQueries({ queryKey: ["vaccines"] });
+      });
+      setIsDeleteConfirmationOpen(false);
+      setVaccineToDelete(null);
     }
   };
 
+  const columns = VaccineColumns(
+    setIsDialog,
+    setVaccineToDelete,
+    setIsDeleteConfirmationOpen
+  );
+
+  if (isLoadingVaccines) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-72 bg-white"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-            </div>
-            <SelectLayout
-              placeholder="Filter by"
-              label=""
-              className="bg-white"
-              options={[
-                { id: "1", name: "" },
-                { id: "2", name: "By age group" },
-                { id: "3", name: "By interval" },
-              ]}
-              value=""
-              onChange={() => {}}
+    <div>
+      <div className="hidden lg:flex justify-between items-center mb-4">
+        <div className="w-full flex gap-2 mr-2">
+          <div className="relative w-full">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input
+              placeholder="Search vaccines..."
+              className="pl-10 bg-white w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
-        <DialogLayout
-          trigger={
-            <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New
-            </div>
-          }
-          title="Vaccination List"
-          description="Add New Vaccine"
-          mainContent={<VaccinationModal />}
-        />
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90 group">
+                <Plus size={15} /> New Vaccine
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="min-w-[200px]"
+              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()} // Keep menu open on hover
+            >
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedOption("vaccine");
+                  setIsDialog(true);
+                }}
+                className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+              >
+                Vaccine
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedOption("supplies");
+                  setIsDialog(true);
+                }}
+                className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+              >
+                Immunization Supplies
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DialogLayout
+            isOpen={isDialog}
+            onOpenChange={setIsDialog}
+            title={
+              selectedOption === "vaccine"
+                ? "Add New Vaccine"
+                : "Add Immunization Supplies"
+            }
+            mainContent={
+              selectedOption === "vaccine" ? (
+                <VaccineModal />
+              ) : (
+                <div>Immunization Supplies Form Here</div>
+              )
+            }
+            trigger={undefined}
+          />
+        </div>
       </div>
 
-      <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
+      <div className="bg-white rounded-md">
+        <div className="flex justify-between p-3">
+          <div className="flex items-center gap-2">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={(e) => {
+                const value = +e.target.value;
+                setPageSize(value >= 1 ? value : 1);
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DropdownLayout
+            trigger={
+              <Button variant="outline" className="h-[2rem]">
+                <FileInput /> Export
+              </Button>
+            }
+            options={[
+              { id: "", name: "Export as CSV" },
+              { id: "", name: "Export as Excel" },
+              { id: "", name: "Export as PDF" },
+            ]}
+          />
         </div>
-
-        <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={currentData} />
+        <div className="overflow-x-auto">
+          <DataTable columns={columns} data={paginatedVaccines} />
         </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing{" "}
-            {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} rows
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredVaccines.length)} of{" "}
+            {filteredVaccines.length} vaccines
           </p>
-
-          <div className="w-full sm:w-auto flex justify-center">
+          {paginatedVaccines.length > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={handlePageChange}
+              onPageChange={setCurrentPage}
             />
-          </div>
+          )}
         </div>
       </div>
-    </>
+
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onOpenChange={setIsDeleteConfirmationOpen}
+        onConfirm={handleDelete}
+        title="Delete Vaccine"
+        description="Are you sure you want to delete this vaccine? This action cannot be undone."
+      />
+    </div>
   );
 }
