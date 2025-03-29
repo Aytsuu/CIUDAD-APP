@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRequest } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ProfilingRequest() {
+export default function RegistrationRequests() {
 
   const [searchQuery, setSearchQuery] = React.useState<string>('')
   const [pageSize, setPageSize] = React.useState<number>(10);

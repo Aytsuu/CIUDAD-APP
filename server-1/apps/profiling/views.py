@@ -79,7 +79,7 @@ class BuildingView(generics.ListCreateAPIView):
 # ResidentProfile Views -----------------------------------------------------------------
 
 class ResidentProfileView(generics.ListCreateAPIView):
-    serializer_class = ResidentProfileSerializer
+    serializer_class = ResidentProfileFullSerializer
     queryset = ResidentProfile.objects.all()    
 
 # Request Views --------------------------------------------------------------------------

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import *
 from apps.administration.models import Staff
-from apps.administration.serializers import StaffSerializer
 
 class SitioSerializer(serializers.ModelSerializer):
     
@@ -9,29 +8,73 @@ class SitioSerializer(serializers.ModelSerializer):
         model = Sitio
         fields = '__all__'
 
-class MotherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Mother
-        fields = '__all__'
-
-class FatherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Father
-        fields = '__all__'
-
-class DependentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dependent
-        fields = '__all__'
-
 class FamilyCompositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = FamilyComposition
         fields = '__all__'
 
+class PersonalSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Personal
+        fields = '__all__'
+
+class ResidentProfileMinimalSerializer(serializers.ModelSerializer):
+    per = PersonalSerializer(read_only=True)
+
+    class Meta:
+        model = ResidentProfile
+        fields = '__all__'
+    
+class ResidentProfileFullSerializer(serializers.ModelSerializer):
+    per = PersonalSerializer(read_only=True)
+    compositions = FamilyCompositionSerializer(many=True, read_only=True)
+    family = serializers.SerializerMethodField()
+
+    per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
+
+    class Meta:
+        model = ResidentProfile
+        fields = '__all__'
+    
+    def get_family(self, obj):
+        # Fetch all families associated with the Personal record through FamilyComposition
+        family = Family.objects.filter(compositions__rp=obj).distinct()
+        return FamilySerializer(family, many=True).data
+
+class MotherSerializer(serializers.ModelSerializer):
+    rp = ResidentProfileMinimalSerializer(read_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
+
+    class Meta:
+        model = Mother
+        fields = '__all__'
+
+class FatherSerializer(serializers.ModelSerializer):
+    rp = ResidentProfileMinimalSerializer(read_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
+
+    class Meta:
+        model = Father
+        fields = '__all__'
+       
+
+class DependentSerializer(serializers.ModelSerializer):
+    rp = ResidentProfileMinimalSerializer(read_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
+
+    class Meta:
+        model = Dependent
+        fields = '__all__'
+
 class FamilySerializer(serializers.ModelSerializer):
     building = serializers.SerializerMethodField()
     dependents = DependentSerializer(many=True, read_only=True)
+    mother = MotherSerializer(read_only=True)
+    father = FatherSerializer(read_only=True)
+
+    mother_id = serializers.PrimaryKeyRelatedField(queryset=Mother.objects.all(), write_only=True, source="mother")
+    father_id = serializers.PrimaryKeyRelatedField(queryset=Father.objects.all(), write_only=True, source="father")
 
     class Meta:
         model = Family
@@ -48,30 +91,9 @@ class FamilySerializer(serializers.ModelSerializer):
             }
         return None
 
-class PersonalSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Personal
-        fields = '__all__'
-    
-class ResidentProfileSerializer(serializers.ModelSerializer):
-    per = PersonalSerializer(read_only=True)
-    per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
-    compositions = FamilyCompositionSerializer(many=True, read_only=True)
-    family = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ResidentProfile
-        fields = '__all__'
-    
-    def get_family(self, obj):
-        # Fetch all families associated with the Personal record through FamilyComposition
-        family = Family.objects.filter(compositions__rp=obj).distinct()
-        return FamilySerializer(family, many=True).data
-
 class HouseholdSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)  # Read-only for display
-    rp = ResidentProfileSerializer(read_only=True)  # Read-only for display
+    rp = ResidentProfileFullSerializer(read_only=True)  # Read-only for display
     staff = serializers.SerializerMethodField()
     
     sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio') 

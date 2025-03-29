@@ -13,7 +13,7 @@ import { FamilyRecord } from "../profilingTypes";
 import { getFamilies, getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ProfilingFamily() {
+export default function FamilyRecords() {
 
     // Initialize states 
     const [searchQuery, setSearchQuery] = React.useState('')
@@ -163,7 +163,7 @@ export default function ProfilingFamily() {
                     />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={familyColumns} data={paginatedFamilies} />
+                    <DataTable columns={familyColumns(families)} data={paginatedFamilies} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">

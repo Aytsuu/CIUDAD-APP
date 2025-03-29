@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import DependentForm from './DependentForm';
 import { DataTable } from '@/components/ui/table/data-table';
-import { father, mother, family, familyComposition, dependents, building} from '../restful-api/profiingPostAPI'
-import { DependentRecord } from '../profilingTypes';
+import { father, mother, family, familyComposition, dependents, building} from '../../restful-api/profiingPostAPI'
+import { DependentRecord } from '../../profilingTypes';
 import { ColumnDef } from '@tanstack/react-table';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout';
 import { CircleCheck, Trash } from 'lucide-react';

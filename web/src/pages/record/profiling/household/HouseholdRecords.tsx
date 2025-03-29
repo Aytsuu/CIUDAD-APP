@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
 
-export default function ProfilingHousehold(){
+export default function HouseholdRecords(){
 
     const [searchQuery, setSearchQuery] = React.useState<string>('')
     const [pageSize, setPageSize] = React.useState<number>(10)

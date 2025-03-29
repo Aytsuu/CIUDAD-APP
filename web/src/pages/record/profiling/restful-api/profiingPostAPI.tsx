@@ -98,7 +98,7 @@ export const dependents = (dependentsInfo: Record<string, string>[], familyId: s
         dependentsInfo.map((dependent) => { 
 
             api.post('profiling/dependent/', {
-                rp: dependent.id,
+                rp_id: dependent.id,
                 fam: familyId,
             })
 
@@ -117,10 +117,10 @@ export const family = async (demographicInfo: Record<string, string>, fatherId: 
 
         const res = await api.post('profiling/family/', {
             fam_id: await generateFamilyNo(demographicInfo.building),
-            fam_indigenous: demographicInfo.indigenous,
+            fam_indigenous: capitalize(demographicInfo.indigenous),
             fam_date_registered: formatDate(new Date()),
-            father: fatherId || null,
-            mother: motherId || null,
+            father_id: fatherId || null,
+            mother_id: motherId || null,
             staff: "00001250323"
         })
 

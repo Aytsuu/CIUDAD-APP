@@ -1,8 +1,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
-import ParentsFormLayout from "./ParentsFormLayout";
-import DependentsInfoLayout from "./DependentsInfoLayout";
-import DemographicInfo from "./DemographicInfo";
+import ParentsFormLayout from "./parent/ParentsFormLayout";
+import DependentsInfoLayout from "./dependent/DependentsInfoLayout";
+import DemographicForm from "./demographic/DemographicForm";
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
@@ -96,7 +96,7 @@ export default function FamilyProfileForm() {
       <div>
         <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
           {currentStep === 1 && (
-            <DemographicInfo
+            <DemographicForm
               form={form}
               households={households}
               onSubmit={()=>nextStep()}

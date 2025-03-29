@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function DemographicInfo(
+export default function DemographicForm(
     {form, households, onSubmit}: {
     form: UseFormReturn<z.infer<typeof familyFormSchema>>;
     households: any[]

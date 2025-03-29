@@ -5,8 +5,4 @@ export const profiling_router = [
         path: "account-settings",
         element: <AccountSettings />
     },
-    {
-        path: "resident-registration",
-        element: <ProfilingForm />
-    },
 ];

@@ -1,19 +1,20 @@
-import ProfilingResident from "@/pages/record/profiling/resident/ProfilingResident";
+import ResidentRecords from "@/pages/record/profiling/resident/ResidentRecords";
 import ResidentFormLayout from "@/pages/record/profiling/resident/ResidentFormLayout";
-import ProfilingRequest from "@/pages/record/profiling/resident/ProfilingRequests";
-import ProfilingHousehold from "@/pages/record/profiling/household/ProfilingHousehold";
+import RegistrationRequests from "@/pages/record/profiling/resident/RegistrationRequests";
+import HouseholdRecords from "@/pages/record/profiling/household/HouseholdRecords";
 import ProfilingBusiness from "@/pages/record/profiling/business/ProfilingBusiness";
-import ProfilingFamily from "@/pages/record/profiling/family/ProfilingFamily";
+import FamilyRecords from "@/pages/record/profiling/family/FamilyRecords";
 import FamilyProfileForm from "@/pages/record/profiling/family/FamilyProfileForm";
 import HouseholdFormLayout from "@/pages/record/profiling/household/HouseholdFormLayout";
-import SoloFormLayout from "@/pages/record/profiling/family/SoloFormLayout";
+import SoloFormLayout from "@/pages/record/profiling/family/living-solo/SoloFormLayout";
+import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 
 export const profiling_router = [
 
     // Resident
     {
         path: "resident-records",
-        element: <ProfilingResident />
+        element: <ResidentRecords />
     },
     {
         path: "resident-form",
@@ -21,13 +22,13 @@ export const profiling_router = [
     },
     {
         path: "registration-request",
-        element: <ProfilingRequest />
+        element: <RegistrationRequests />
     },
     
     // Family
     {
         path: "family-records",
-        element: <ProfilingFamily />
+        element: <FamilyRecords />
     },
     {
         path: "family-form",
@@ -37,12 +38,15 @@ export const profiling_router = [
         path: "family-solo-form",
         element: <SoloFormLayout />
     },
-
+    {
+        path: "family-record-view",
+        element: <FamilyRecordView />
+    },
 
     // Household
     {
         path: "household-records",
-        element: <ProfilingHousehold />
+        element: <HouseholdRecords />
     },
     {
         path: "household-form",

@@ -16,7 +16,7 @@ import { getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ProfilingResident() {
+export default function ResidentRecords() {
   
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);

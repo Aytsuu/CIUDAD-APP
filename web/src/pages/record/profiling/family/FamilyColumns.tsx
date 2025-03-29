@@ -2,12 +2,12 @@ import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { FamilyRecord} from "../profilingTypes";
+import { FamilyRecord, DependentRecord} from "../profilingTypes";
 
-// Define the columns for the data table
+// Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const familyColumns: ColumnDef<FamilyRecord>[] = [
+export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
   {
     accessorKey: 'id',
     header: ({ column }) => (
@@ -72,7 +72,14 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: 'action',
     header: 'action',
     cell: ({ row }) => (
-      <Link to="">
+      <Link 
+        to="/family-record-view"
+        state={{
+          params: {
+            data: families.find((family) => family.fam_id == row.original.id)
+          }
+        }}
+      >
         <Button variant={"outline"}>
           View <MoveRight />
         </Button>
@@ -83,3 +90,43 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
+export const DependentViewColumns = (): ColumnDef<DependentRecord>[] => [
+  {
+      accessorKey: 'id',
+      header: 'Resident (#)'
+  },
+  {
+      accessorKey: 'lname',
+      header: 'Last Name'
+  },
+  {
+      accessorKey: 'fname',
+      header: 'First Name'
+  },
+  {
+      accessorKey: 'mname',
+      header: 'Middle Name'
+  },
+  {
+      accessorKey: 'suffix',
+      header: 'Suffix',
+      cell: ({ row }) => (
+        <div className="text-center">
+          {row.original.suffix ? row.original.suffix : '-'}
+        </div>
+      )
+  },
+  {
+      accessorKey: 'sex',
+      header: 'Sex'
+  },
+  {
+      accessorKey: 'dateOfBirth',
+      header: 'Date of Birth'
+  },
+  {
+    accessorKey: 'action',
+    header: ''
+  }
+
+]
