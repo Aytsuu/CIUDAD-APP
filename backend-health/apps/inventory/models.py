@@ -142,6 +142,7 @@ class FirstAidTransactions(models.Model):
     class Meta:
         db_table = 'firstaid_transaction'
 
+# VACCINATION MODELS
 class VaccineList(models.Model):
     vac_id =models.BigAutoField(primary_key=True)
     vac_type_choices =  models.CharField(max_length=100)
@@ -159,8 +160,8 @@ class VaccineList(models.Model):
 class VaccineInterval(models.Model):
     vacInt_id = models.BigAutoField(primary_key=True)
     vac_id = models.ForeignKey('VaccineList', on_delete=models.CASCADE,  db_column='vac_id')
-    dose_number = models.PositiveIntegerField(default=0)
     interval = models.PositiveIntegerField(default=0)
+    dose_number = models.PositiveIntegerField(default=0)
     time_unit = models.CharField(max_length=100)
     class Meta:
         db_table = 'vaccine_intervals'
@@ -168,8 +169,10 @@ class VaccineInterval(models.Model):
 
 class RoutineFrequency(models.Model):
     routineF_id = models.BigAutoField(primary_key=True)
-    vac_id = models.OneToOneField('VaccineList', on_delete=models.CASCADE)
     interval = models.PositiveIntegerField(default=0)
+    dose_number = models.PositiveIntegerField(default=0)
     time_unit = models.CharField(max_length=100)
+    vac_id = models.OneToOneField('VaccineList', on_delete=models.CASCADE)
+
     class Meta:
         db_table = 'routine_frequencies'

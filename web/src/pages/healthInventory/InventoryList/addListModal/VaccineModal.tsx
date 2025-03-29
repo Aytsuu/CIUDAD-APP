@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 import { VaccineSchema, VaccineType } from "@/form-schema/inventory/inventoryListSchema";
-
+import { addVaccine, addVaccineIntervals, addRoutineFrequency } from "../requests/Postrequest";
 // Constants kept in component file
 const timeUnits = [
   { id: "years", name: "Years" },
@@ -44,9 +44,13 @@ export default function VaccinationModal() {
       timeUnits: [],
       noOfDoses: 1,
       ageGroup: "",
-      specifyAge: "",
+      specifyAge: "", // Ensure this is empty string, not null or undefined
       type: "routine",
-      routineFrequency: undefined,
+      routineFrequency: {
+        interval: 1,
+        unit: "years"
+      },
+    
     },
   });
 
@@ -60,10 +64,68 @@ export default function VaccinationModal() {
     }
   }, [noOfDoses, type, setValue, watch]);
 
-  const onSubmit = (data: VaccineType) => {
-    console.log(data);
-    alert("Vaccine saved successfully!");
+  // const onSubmit = (data: VaccineType) => {
+  //   console.log(data);
+  //   alert("Vaccine saved successfully!");
+  // };
+  const onSubmit = async (data: VaccineType) => {
+    try {
+      // Prepare vaccine data with proper types
+      const vaccineData = {
+        vac_type_choices: data.type,
+        vac_name: data.vaccineName,
+        no_of_doses: Number(data.noOfDoses),
+        age_group: data.ageGroup,
+        specify_age: data.specifyAge ? String(data.specifyAge) : 'N/A',
+      };
+  
+      console.log('Submitting vaccine data:', vaccineData);
+      
+      // Create vaccine
+      const vaccineResponse = await addVaccine(vaccineData);
+      const vaccineId = vaccineResponse.vac_id;
+  
+      // Handle intervals for primary vaccines
+      if (data.type === 'primary' && data.noOfDoses > 1) {
+        const intervals = data.intervals || [];
+        const timeUnits = data.timeUnits || [];
+        
+        await Promise.all(
+          intervals.map((interval, index) => 
+            addVaccineIntervals({
+              vac_id: vaccineId,
+              interval: Number(interval),
+              time_unit: timeUnits[index] || 'months' // default to months if missing
+            })
+          )
+        );
+      }
+  
+      // Handle routine frequency
+      if (data.type === 'routine' && data.routineFrequency) {
+        await addRoutineFrequency({
+          vac_id: vaccineId,
+          interval: Number(data.routineFrequency.interval),
+          time_unit: data.routineFrequency.unit
+        });
+      }
+  
+      alert("Vaccine saved successfully!");
+      form.reset();
+    } catch (error) {
+      console.error('Submission error:', error);
+      let errorMessage = "Failed to save vaccine. Please try again.";
+      
+      if ((error as any)?.response?.data) {
+        if (typeof error === "object" && error !== null && "response" in error && typeof (error as any).response === "object") {
+          errorMessage += `\nServer error: ${JSON.stringify((error as any).response.data)}`;
+        }
+      }
+      
+      alert(errorMessage);
+    }
   };
+
 
   const getDoseLabel = (index: number) => {
     const ordinals = ["st", "nd", "rd", "th"];
@@ -108,7 +170,8 @@ export default function VaccinationModal() {
                         type="number"
                         min="0"
                         placeholder="e.g., 4"
-                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -172,7 +235,8 @@ export default function VaccinationModal() {
                         type="number"
                         min="1"
                         placeholder="e.g., 4"
-                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -330,6 +394,7 @@ export default function VaccinationModal() {
                             min="1"
                             placeholder="e.g., 1"
                             {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                           />
                         </FormControl>
                         <FormMessage />

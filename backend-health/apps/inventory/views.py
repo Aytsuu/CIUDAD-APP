@@ -281,3 +281,28 @@ class FirstAidTransactionView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
      
      
+
+class VaccineListView(generics.ListCreateAPIView):
+    serializer_class=VacccinationListSerializer
+    queryset=VaccineList.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+
+class VaccineIntervalView(generics.ListCreateAPIView):
+    serializer_class=VaccineIntervalSerializer
+    queryset=VaccineInterval.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+class RoutineFrequencyView(generics.ListCreateAPIView):
+    serializer_class=RoutineFrequencySerializer
+    queryset=RoutineFrequency.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+     
+     
+     

@@ -1,5 +1,5 @@
 import { MedicineStockType, CommodityStockType ,FirstAidStockType} from "../REQUEST/type";
-
+ 
 export const MedicinePayload = (
   data: any, // Replace with the correct type if available
   inv_id: number

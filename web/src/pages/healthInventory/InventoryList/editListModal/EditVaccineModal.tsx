@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button";
 import {
-  VaccineListSchema,
-  VacccineType,
+  VaccineSchema,
+  VaccineType,
 } from "@/form-schema/inventory/inventoryListSchema";
 import { Label } from "@/components/ui/label";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
@@ -51,8 +51,8 @@ export default function EditVaccineListModal({
 
 
 
-  const form = useForm<VacccineType>({
-    resolver: zodResolver(VaccineListSchema),
+  const form = useForm<VaccineType>({
+    resolver: zodResolver(VaccineSchema),
     defaultValues: {
       vaccineName: initialData.vaccineName,
       category: initialData.category,
@@ -87,7 +87,7 @@ export default function EditVaccineListModal({
     fieldOnChange(selectedValue);
   };
 
-  const onSubmit = async (data: VacccineType) => {
+  const onSubmit = async (data: VaccineType) => {
     console.log(data);
     alert("Success");
   };

@@ -55,4 +55,10 @@ urlpatterns = [
     path("commoditytransaction/", CommodityTransactionView.as_view(), name="commodity-transaction"),
     path("firstaidtransaction/", FirstAidTransactionView.as_view(), name="firstaid-transaction"),
     
+    # Vaccination
+    path("vac_list/", VaccineListView.as_view(), name="vaccination-list"),
+    path("vac_intervals/", VaccineIntervalView.as_view(), name="vaccination-interval"),
+    path("routine_freq/", RoutineFrequencyView.as_view(), name="RoutineFrequency"),
+    
+    
 ]

@@ -44,3 +44,35 @@ export const addCommodity = async (commodityName: string) => {
     console.log(err);
   }
 };
+
+
+// api/inventory.ts
+export const addVaccine = async (data: any) => {
+  try {
+    const res = await api.post("inventory/vac_list/", data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    throw err; // Re-throw the error to handle it in the component
+  }
+};
+
+export const addVaccineIntervals = async (data: any) => {
+  try {
+    const res = await api.post("inventory/vac_intervals/", data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
+
+export const addRoutineFrequency = async (data: any) => {
+  try {
+    const res = await api.post("inventory/routine_freq/", data);
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
