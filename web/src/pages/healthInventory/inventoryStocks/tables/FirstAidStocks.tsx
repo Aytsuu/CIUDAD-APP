@@ -291,7 +291,7 @@ export default function FirstAidStocks() {
           }
           title="First Aid Items"
           description="Add New First Aid Item"
-          mainContent={<FirstAidStockForm />}
+          mainContent={<FirstAidStockForm setIsDialog={setIsDialog} />}
           isOpen={isDialog}
           onOpenChange={setIsDialog}
         />

@@ -6,7 +6,7 @@ class MedicineListSerializers(serializers.ModelSerializer):
     class Meta: 
         model = Medicinelist
         fields = '__all__'
-
+  
 class FirstAidListSerializers(serializers.ModelSerializer):
     class Meta:
         model = FirstAidList
@@ -88,6 +88,8 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     med_detail = MedicineListSerializers(source='med_id', read_only=True)
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
+    med_name = serializers.CharField(source='minv_id.med_id.med_name', read_only=True)
+
     # Write-only fields for creation
     inv_id = serializers.PrimaryKeyRelatedField(
         queryset=Inventory.objects.all(), write_only=True, required=False
@@ -135,6 +137,9 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
     cinv_detail = CommodityInventorySerializer(source='cinv_id', read_only=True)
     com_detail = CommodityListSerializers(source='com_id', read_only=True)
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
+
+
+    com_name = serializers.CharField(source='cinv_id.com_id.com_name', read_only=True)
 
     # Write-only fields for creation
     inv_id = serializers.PrimaryKeyRelatedField(
@@ -186,6 +191,9 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
     finv_detail = FirstAidInventorySerializer(source='finv_id', read_only=True)
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
+
+
+    fa_name = serializers.CharField(source='finv_id.fa_id.fa_name', read_only=True)
 
     # Write-only fields for creation
     inv_id = serializers.PrimaryKeyRelatedField(

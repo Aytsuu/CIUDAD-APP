@@ -122,7 +122,7 @@ class InventoryUpdateView(generics.RetrieveUpdateAPIView):
        obj = get_object_or_404(Inventory, inv_id = inv_id)
        return obj
 
-    
+     
 
 # ---------------------------------------------------------------------
 #STOCKS

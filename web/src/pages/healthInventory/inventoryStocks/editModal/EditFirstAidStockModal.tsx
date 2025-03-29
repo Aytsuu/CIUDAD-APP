@@ -161,7 +161,7 @@ export default function EditFirstAidStockForm({
 
       setIsDialog(false);
       alert("First Aid stock updated successfully!");
-      queryClient.invalidateQueries({ queryKey: ["firstAidStocks"] });
+      queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
     } catch (err: any) {
       console.error(err);
     } finally {

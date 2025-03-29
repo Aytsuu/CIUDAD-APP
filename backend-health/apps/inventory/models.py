@@ -2,7 +2,9 @@ from django.db import models, transaction
 from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone  # Import timezone for default value
- 
+from django.core.validators import MinValueValidator
+
+
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
@@ -54,7 +56,7 @@ class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
     minv_dsg = models.PositiveIntegerField(default=0)
     minv_dsg_unit = models.CharField(max_length=100)
-    minv_form = models.CharField(max_length=100)
+    minv_form = models.CharField(max_length=100) 
     minv_qty = models.PositiveIntegerField(default=0)
     minv_qty_unit = models.CharField(max_length=100) 
     minv_pcs = models.PositiveIntegerField(default=0)
@@ -140,3 +142,34 @@ class FirstAidTransactions(models.Model):
     class Meta:
         db_table = 'firstaid_transaction'
 
+class VaccineList(models.Model):
+    vac_id =models.BigAutoField(primary_key=True)
+    vac_type_choices =  models.CharField(max_length=100)
+    vac_name = models.CharField(max_length=255)
+    no_of_doses =  models.PositiveIntegerField(default=0)
+    age_group = models.CharField(max_length=50)
+    specify_age = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'vaccines'     
+
+
+class VaccineInterval(models.Model):
+    vacInt_id = models.BigAutoField(primary_key=True)
+    vac_id = models.ForeignKey('VaccineList', on_delete=models.CASCADE,  db_column='vac_id')
+    dose_number = models.PositiveIntegerField(default=0)
+    interval = models.PositiveIntegerField(default=0)
+    time_unit = models.CharField(max_length=100)
+    class Meta:
+        db_table = 'vaccine_intervals'
+       
+
+class RoutineFrequency(models.Model):
+    routineF_id = models.BigAutoField(primary_key=True)
+    vac_id = models.OneToOneField('VaccineList', on_delete=models.CASCADE)
+    interval = models.PositiveIntegerField(default=0)
+    time_unit = models.CharField(max_length=100)
+    class Meta:
+        db_table = 'routine_frequencies'

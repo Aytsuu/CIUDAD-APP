@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormField,
+  FormField, 
   FormItem,
   FormLabel,
   FormMessage,
@@ -25,7 +25,11 @@ import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
 import { FirstAidPayload, InventoryFirstAidPayload } from "../REQUEST/Payload";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
 
-export default function FirstAidStockForm() {
+interface FirstAidStockFormProps {  
+  setIsDialog:(isOpen: boolean) => void
+}
+
+export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) {
   UseHideScrollbar();
   const form = useForm<FirstAidStockType>({
     resolver: zodResolver(FirstAidStockSchema),
@@ -65,7 +69,6 @@ export default function FirstAidStockForm() {
         throw new Error("Failed to generate inventory ID.");
         // Removed unreachable return
       }
-
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
       const parseFirstAidID = parseInt(data.fa_id, 10);
       if (!data.fa_id) {
@@ -84,9 +87,9 @@ export default function FirstAidStockForm() {
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["firstAidInventory"] });
-
+      queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
       console.log("FirstAid Inventory Added Successfully");
+      setIsDialog(false)
       setIsAddConfirmationOpen(false);
     } catch (error: any) {
       console.error(error);
@@ -97,6 +100,7 @@ export default function FirstAidStockForm() {
       setIsAddConfirmationOpen(false);
     }
   };
+
 
   const onSubmit = (data: FirstAidStockType) => {
     setSubmissionData(data);

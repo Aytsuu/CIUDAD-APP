@@ -1,47 +1,47 @@
 "use client"
 
-import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
-import { Pill, Syringe, Package, Bandage } from "lucide-react";
-import VaccinationList from "./VaccineList";
-import FirstAidList from "./FirstAidList";
-import MedicineList from "./MedicineList";
-import CommodityList from "./CommodityList";
+import { useState, useEffect } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
+import { Pill, Syringe, Package, LigatureIcon as Bandage } from "lucide-react"
+import VaccinationList from "./TransactionVaccineList"
+import FirstAidList from "./TransactionFirstAidList"
+import MedicineList from "./TransactionMedicineList"
+import CommodityList from "./TransactionCommodityList"
 
-export default function MainInventoryList() {
+export default function TransactionMainInventoryList() {
   // Retrieve the selected view from local storage, default to "medicine"
   const [selectedView, setSelectedView] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedView = localStorage.getItem("selectedView");
-      return savedView || "medicine";
+      const savedView = localStorage.getItem("selectedView")
+      return savedView || "medicine"
     }
-    return "medicine";
-  });
+    return "medicine"
+  })
 
   // Save the selected view to local storage whenever it changes
   useEffect(() => {
-    localStorage.setItem("selectedView", selectedView);
-  }, [selectedView]);
+    localStorage.setItem("selectedView", selectedView)
+  }, [selectedView])
 
   const handleTabChange = (value: string) => {
-    setSelectedView(value);
-  };
+    setSelectedView(value)
+  }
 
   const getTitle = () => {
     switch (selectedView) {
       case "medicine":
-        return "Medicine List";
+        return "Medicine Transaction"
       case "vaccine":
-        return "Vaccine List";
+        return "Vaccine Transaction"
       case "commodity":
-        return "Commodity List";
+        return "Commodity Transaction"
       case "firstaid":
-        return "First Aid List";
+        return "First Aid Transaction"
       default:
-        return "Medicine List";
+        return "Medicine Transaction"
     }
-  };
+  }
 
   return (
     <div className="w-full px-3 py-4 sm:px-6 md:px-8 bg-background">
@@ -61,12 +61,7 @@ export default function MainInventoryList() {
       {/* Tabs Navigation */}
       <Card className="border shadow-sm">
         <CardHeader className="p-0">
-          <Tabs 
-            defaultValue={selectedView} 
-            value={selectedView} 
-            onValueChange={handleTabChange} 
-            className="w-full"
-          >
+          <Tabs defaultValue={selectedView} value={selectedView} onValueChange={handleTabChange} className="w-full">
             <div className="px-4 pt-4">
               <TabsList className="w-full grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
                 <TabsTrigger
@@ -118,5 +113,7 @@ export default function MainInventoryList() {
         </CardHeader>
       </Card>
     </div>
-  );
+  )
 }
+
+

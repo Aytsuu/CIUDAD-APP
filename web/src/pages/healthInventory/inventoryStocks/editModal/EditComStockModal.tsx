@@ -140,8 +140,7 @@ export default function EditCommodityStockForm({
       }
 
       setIsDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
-      alert("Stock updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
     } catch (err: any) {
       if (err.response) {
         alert(

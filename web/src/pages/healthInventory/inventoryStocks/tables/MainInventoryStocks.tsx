@@ -1,5 +1,9 @@
+"use client"
+
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
+import { Pill, Syringe, Package, Bandage } from "lucide-react";
 import MedicineStocks from "./MedicineStocks";
 import VaccineStocks from "./VaccineStocks";
 import FirstAidStocks from "./FirstAidStocks";
@@ -19,19 +23,8 @@ export default function MainInventoryStocks() {
     localStorage.setItem("selectedInventoryView", selectedView);
   }, [selectedView]);
 
-  const renderContent = () => {
-    switch (selectedView) {
-      case "medicine":
-        return <MedicineStocks />;
-      case "vaccine":
-        return <VaccineStocks />;
-      case "commodity":
-        return <CommodityStocks />;
-      case "firstaid":
-        return <FirstAidStocks />;
-      default:
-        return <MedicineStocks />;
-    }
+  const handleTabChange = (value: string) => {
+    setSelectedView(value);
   };
 
   const getTitle = () => {
@@ -50,7 +43,7 @@ export default function MainInventoryStocks() {
   };
 
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
+    <div className="w-full px-3 py-4 sm:px-6 md:px-8 bg-background">
       {/* Title Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div className="mb-4">
@@ -64,32 +57,65 @@ export default function MainInventoryStocks() {
       </div>
       <hr className="border-gray mb-4 sm:mb-6 md:mb-8" />
 
-      {/* Navigation Tabs */}
-      <div className="overflow-x-auto pb-2 -mx-2 sm:mx-0">
-        <div className="min-w-max sm:min-w-0 px-2 sm:px-0">
-          <div className="flex w-full justify-evenly bg-white p-1 rounded-md border-gray ">
-            {["medicine", "vaccine", "commodity", "firstaid"].map((view) => (
-              <Button
-                key={view}
-                variant="ghost"
-                onClick={() => setSelectedView(view)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 rounded-none transition-all duration-200 flex-shrink-0 ${
-                  selectedView === view
-                    ? "border-b-2 border-b-blue text-blue font-semibold text-sm md:text-base hover:bg-transparent"
-                    : "border-b-2 border-transparent text-gray-600 text-sm md:text-base hover:bg-transparent hover:text-blue"
-                }`}
-              >
-                {view === "firstaid"
-                  ? "First Aid"
-                  : view.charAt(0).toUpperCase() + view.slice(1)}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Tabs Navigation */}
+      <Card className="border shadow-sm">
+        <CardHeader className="p-0">
+          <Tabs
+            defaultValue={selectedView}
+            value={selectedView}
+            onValueChange={handleTabChange}
+            className="w-full"
+          >
+            <div className="px-4 pt-4">
+              <TabsList className="w-full grid grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
+                <TabsTrigger
+                  value="medicine"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Pill className="h-4 w-4" />
+                  <span>Medicine</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="vaccine"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Syringe className="h-4 w-4" />
+                  <span>Vaccine</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="commodity"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Package className="h-4 w-4" />
+                  <span>Commodity</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="firstaid"
+                  className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                >
+                  <Bandage className="h-4 w-4" />
+                  <span>First Aid</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-      {/* Content Area */}
-      <div className="pt-3 sm:pt-4 md:pt-5">{renderContent()}</div>
+            <CardContent className="p-4 pt-6">
+              <TabsContent value="medicine" className="mt-0">
+                <MedicineStocks />
+              </TabsContent>
+              <TabsContent value="vaccine" className="mt-0">
+                <VaccineStocks />
+              </TabsContent>
+              <TabsContent value="commodity" className="mt-0">
+                <CommodityStocks />
+              </TabsContent>
+              <TabsContent value="firstaid" className="mt-0">
+                <FirstAidStocks />
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        </CardHeader>
+      </Card>
     </div>
   );
 }

@@ -38,7 +38,7 @@ export type CommodityStocksRecord = {
   dispensed: string;
   recevFrom: string;
 };
-
+ 
 export default function CommodityStocks() {
 
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =

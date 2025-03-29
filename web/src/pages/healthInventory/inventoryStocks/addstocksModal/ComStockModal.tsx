@@ -103,7 +103,7 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
 
       console.log("Commodity Inventory Added Successfully");
       setIsAddConfirmationOpen(false);
-      setIsDialog(false)
+      setIsDialog(false) 
 
     } catch (error: any) {
       console.error(error);
