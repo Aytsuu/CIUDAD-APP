@@ -19,12 +19,13 @@ type IncomeExpense = {
     iet_num: number;
     iet_serial_num: string;
     iet_date: string;
-    iet_particulars: string;
+    dtl_budget_item: string;
+    dtl_id: number;
     iet_amount: number;
     iet_entryType: "Income" | "Expense";
-    iet_receiver: string;
     iet_additional_notes: string;
     iet_receipt_image: string;
+    inv_num: string;
 };
 
 
@@ -66,21 +67,6 @@ function IncomeandExpenseTracking() {
     // Define the columns for the table
     const columns: ColumnDef<IncomeExpense>[] = [
         { 
-            accessorKey: "iet_serial_num",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Serial No.
-                    <ArrowUpDown size={14}/>
-                </div>
-            ),
-            cell: ({row}) => (
-                <div className="text-center">{row.getValue("iet_serial_num")}</div>
-            )
-        },
-        { 
             accessorKey: "iet_date",
             header: ({ column }) => (
                 <div
@@ -95,10 +81,15 @@ function IncomeandExpenseTracking() {
                 <div className="text-center">{row.getValue("iet_date")}</div>
             )
         },
-        { accessorKey: "iet_particulars", header: "Particulars" },
+        { 
+            accessorKey: "dtl_budget_item", 
+            header: "Particulars",
+            cell: ({row}) => (
+                <div>{row.getValue("dtl_budget_item")}</div>
+            )
+        },
         { accessorKey: "iet_amount", header: "Amount" },
         { accessorKey: "iet_entryType", header: "Entry Type" },
-        { accessorKey: "iet_receiver", header: "Receiver" },
         { 
             accessorKey: "iet_receipt_image", 
             header: "Receipt",
@@ -141,9 +132,10 @@ function IncomeandExpenseTracking() {
                                             iet_serial_num={row.original.iet_serial_num}
                                             iet_entryType={row.original.iet_entryType}
                                             iet_amount={String(row.original.iet_amount)}
-                                            iet_particulars={row.original.iet_particulars}
-                                            iet_receiver={row.original.iet_receiver}
+                                            iet_particular_id={row.original.dtl_id}
+                                            iet_particulars_name={row.original.dtl_budget_item}
                                             iet_additional_notes={row.original.iet_additional_notes}
+                                            inv_num={row.original.inv_num}
                                         />
                                     </div>
                                 }

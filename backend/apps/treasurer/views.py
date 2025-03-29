@@ -45,7 +45,7 @@ class Delete_Update_Retrieve_BudgetPlanView(generics.RetrieveUpdateDestroyAPIVie
 
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
     serializer_class = Income_Expense_TrackingSerializers
-    queryset = Income_Expense_Tracking.objects.all()
+    queryset = Income_Expense_Tracking.objects.all().select_related('dtl_id')
 
 
 class DeleteIncomeExpenseView(generics.DestroyAPIView):

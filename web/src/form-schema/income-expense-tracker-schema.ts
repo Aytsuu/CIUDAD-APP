@@ -43,7 +43,6 @@ const IncomeExpenseFormSchema = z.object({
     iet_entryType: z.string(z.string()).nonempty('Please select an entry type'),
     iet_particulars: z.string().nonempty('Particulars is required'),
     iet_amount: z.string().nonempty('Amount is required'),
-    iet_receiver: z.string().nonempty('Receiver Name is required'),
     iet_additional_notes: z.string().optional(),
     // receipt_image: z.string().nonempty('Receipt is required.'),
     iet_receipt_image: z.instanceof(File).refine((file) => file.size > 0, {

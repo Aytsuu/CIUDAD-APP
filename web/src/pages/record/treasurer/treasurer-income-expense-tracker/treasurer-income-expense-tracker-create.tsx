@@ -294,7 +294,6 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
             iet_entryType: "",
             iet_particulars: "",
             iet_amount: "",
-            iet_receiver: "",
             iet_additional_notes: "",
             iet_receipt_image: undefined,
         },
@@ -331,14 +330,17 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
             return;
         }
     
-        const particularAccBudget = selectedParticular.proposedBudget;
-        const subtractedAmount = particularAccBudget - parseFloat(amount);
-    
-        if (subtractedAmount < 0) {
-            alert("Insufficient Budget");
-            return;
+        if(entryType === "1"){ // only validates when the entry type is Expense
+            
+            const particularAccBudget = selectedParticular.proposedBudget;
+            const subtractedAmount = particularAccBudget - parseFloat(amount);
+        
+            if (subtractedAmount < 0) {
+                alert("Insufficient Budget");
+                return;
+            }            
         }
-    
+   
         // Move to the next step
         setCurrentStep(2);
     };
@@ -348,8 +350,8 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 {/* Step 1: Amount, Entry Type, and Particulars */}
                 {currentStep === 1 && (
-                    <>
-                        {selectedParticular && (
+                    <>                    
+                        {selectedParticular && form.watch("iet_entryType") === "1" && (
                             <div className="pb-5">
                                 <div className="flex w-full h-9 bg-buttonBlue justify-center items-center rounded-md text-white">
                                     <Label>Accumulated Budget: P{selectedParticular.proposedBudget.toFixed(2)}</Label>
@@ -440,22 +442,6 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                 {/* Step 2: Remaining Fields */}
                 {currentStep === 2 && (
                     <>
-
-                        <div className="pb-5">
-                            <FormField
-                                control={form.control}
-                                name="iet_receiver"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Receiver</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter receiver name" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
 
                         <div className="pb-5">
                             <FormField

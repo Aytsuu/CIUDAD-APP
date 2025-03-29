@@ -22,14 +22,14 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
 
         const res = await api.put(`treasurer/update-income-expense-tracking/${iet_num}/`,{
 
-            iet_serial_num: incomeExpenseInfo.iet_serial_num,
+            iet_date: formatDate(new Date().toISOString().split('T')[0]),
             iet_entryType: entry,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
-            iet_particulars:  capitalize(incomeExpenseInfo.iet_particulars),
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
             iet_receipt_image: "urlfornow",
-            inv_num: "None"
+            inv_num: "None",
+            dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
 
         })
 

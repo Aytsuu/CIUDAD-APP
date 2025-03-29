@@ -31,6 +31,8 @@ class  Budget_HeaderSerializer(serializers.ModelSerializer):
 
 
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
+    dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
+    
     class Meta:
         model = Income_Expense_Tracking
         fields = '__all__'

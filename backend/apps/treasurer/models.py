@@ -1,7 +1,6 @@
 from django.db import models
 from datetime import date
 
-inv_num = 'E001'
 
 class Budget_Plan(models.Model): 
     plan_id = models.BigAutoField(primary_key=True)
@@ -59,7 +58,6 @@ class Income_Expense_Tracking(models.Model):
     iet_date = models.DateField(default=date.today)
     iet_entryType = models.CharField(max_length=100)
     iet_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    iet_receiver = models.CharField(max_length=100)
     iet_additional_notes = models.CharField(max_length=100)
     iet_receipt_image = models.CharField(null=False)
     # inv_num = models.ForeignKey('Invoice', on_delete=models.CASCADE, null=True, blank=True, default=None)
