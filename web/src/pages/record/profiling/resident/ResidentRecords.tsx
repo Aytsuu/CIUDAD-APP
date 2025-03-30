@@ -17,14 +17,13 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ResidentRecords() {
-  
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
   // Fetch residents using useQuery
   const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ['residents'],
+    queryKey: ["residents"],
     queryFn: getResidents,
     refetchOnMount: true, // Force refetch on mount
     staleTime: 0, // Ensure data is never considered stale
@@ -32,52 +31,56 @@ export default function ResidentRecords() {
 
   // Fetch households using useQuery
   const { data: households, isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ['households'],
+    queryKey: ["households"],
     queryFn: getHouseholds,
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 0,
   });
 
   // Function to get sitio (works even if households is not fully loaded)
-  const getSitio = React.useCallback((hh_id: string) => {
-    if (!households) return ''; // Return empty string if households are not ready
-    const household = households.find((hh: any) => hh.hh_id === hh_id);
-    return household?.sitio?.sitio_name || '';
-  }, [households]);
-  
+  const getSitio = React.useCallback(
+    (hh_id: string) => {
+      if (!households) return ""; // Return empty string if households are not ready
+      const household = households.find((hh: any) => hh.hh_id === hh_id);
+      return household?.sitio?.sitio_name || "";
+    },
+    [households]
+  );
+
   // Format resident to populate data table
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
     if (!residents) return [];
 
     return residents.map((item: any) => {
-
-      const personal = item?.per
-      const family = item?.per?.family
+      const personal = item?.per;
+      const family = item?.per?.family;
 
       return {
-        id: item.rp_id || '',
-        householdNo: family?.building.hh_id || '',
-        sitio:  getSitio(family?.building?.hh_id),
-        familyNo: family?.fam_id || '',
-        lname: personal.per_lname || '',
-        fname: personal.per_fname || '',
-        mname: personal.per_mname || '',
-        suffix: personal.per_suffix || '',  
-        dateRegistered: item.rp_date_registered || '',
-        registeredBy: item.staff || '',
-      }
+        id: item.rp_id || "",
+        householdNo: family?.building.hh_id || "",
+        sitio: getSitio(family?.building?.hh_id),
+        familyNo: family?.fam_id || "",
+        lname: personal.per_lname || "",
+        fname: personal.per_fname || "",
+        mname: personal.per_mname || "",
+        suffix: personal.per_suffix || "",
+        dateRegistered: item.rp_date_registered || "",
+        registeredBy: item.staff || "",
+      };
     });
-  }, [residents]);  
+  }, [residents]);
 
   // Filter residents based on search query
   const filteredResidents = React.useMemo(() => {
     const formattedData = formatResidentData();
-     if (!formattedData.length) return [];
+    if (!formattedData.length) return [];
 
     return formattedData.filter((record: any) =>
-      Object.values(record).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
+      Object.values(record)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
     );
-
   }, [searchQuery, residents]);
 
   // Calculate total pages for pagination
@@ -89,15 +92,15 @@ export default function ResidentRecords() {
     currentPage * pageSize
   );
 
-  if(isLoadingResidents || isLoadingHouseholds) {
+  if (isLoadingResidents || isLoadingHouseholds) {
     return (
       <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3" />
-        <Skeleton className="h-7 w-1/4 mb-6" />
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-4/5 w-full mb-4" />
+        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+        <Skeleton className="h-10 w-full mb-4 opacity-30" />
+        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
       </div>
-    )
+    );
   }
 
   return (
@@ -107,7 +110,10 @@ export default function ResidentRecords() {
     >
       <div className="hidden lg:flex justify-between items-center mb-4">
         <div className="relative w-full flex gap-2 mr-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+            size={17}
+          />
           <Input
             placeholder="Search..."
             className="pl-10 bg-white w-full"
@@ -121,14 +127,16 @@ export default function ResidentRecords() {
               <ClockArrowUp /> Pending
             </Button>
           </Link>
-          <Link to='/resident-form' 
+          <Link
+            to="/resident-form"
             state={{
-                params: {
-                  title: 'Resident Registration', 
-                  description: 'Provide the necessary details, and complete the registration.',
-                }
-              }}
-            >
+              params: {
+                title: "Resident Registration",
+                description:
+                  "Provide the necessary details, and complete the registration.",
+              },
+            }}
+          >
             <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
               <Plus size={15} /> Register
             </Button>
@@ -162,24 +170,31 @@ export default function ResidentRecords() {
               </Button>
             }
             options={[
-              { id: '', name: "Export as CSV"},
-              { id: '', name: "Export as Excel"},
-              { id: '', name: "Export as PDF"},
+              { id: "", name: "Export as CSV" },
+              { id: "", name: "Export as Excel" },
+              { id: "", name: "Export as PDF" },
             ]}
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={residentColumns(residents)} data={paginatedResidents} />
+          <DataTable
+            columns={residentColumns(residents)}
+            data={paginatedResidents}
+          />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
-            Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredResidents.length)} of {filteredResidents.length} rows
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredResidents.length)} of{" "}
+            {filteredResidents.length} rows
           </p>
-          {paginatedResidents.length > 0 && <PaginationLayout
+          {paginatedResidents.length > 0 && (
+            <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
-          />}
+            />
+          )}
         </div>
       </div>
     </MainLayoutComponent>

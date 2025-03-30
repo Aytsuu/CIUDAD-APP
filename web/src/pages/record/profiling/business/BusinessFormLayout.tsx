@@ -1,16 +1,92 @@
+import React from "react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import BusinessProfileForm from "./BusinessProfileForm";
 import { Card } from "@/components/ui/card/card";
+import { useLocation, useNavigate } from "react-router";
+import { formatSitio } from "../profilingFormats";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { businessFormSchema } from "@/form-schema/profiling-schema";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { toast } from "sonner";
+import { CircleAlert, CircleCheck } from "lucide-react";
+import { Form } from "@/components/ui/form/form";
+import { addBusiness } from "../restful-api/profiingPostAPI";
 
 export default function BusinessFormLayout() {
+
+  // Initializing states
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = React.useMemo(
+    () => location.state?.params || {},
+    [location.state]
+  );
+  const sitio = React.useRef(formatSitio(params));
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const defaultValues = React.useRef(generateDefaultValues(businessFormSchema));
+  const form = useForm<z.infer<typeof businessFormSchema>>({
+    resolver: zodResolver(businessFormSchema),
+    defaultValues: defaultValues.current,
+  });
+
+  // Function to handle form submission
+  const submit = React.useCallback(async () => {
+    setIsSubmitting(true);
+    const formIsValid = await form.trigger();
+
+    // Validate form
+    if (!formIsValid) {
+      setIsSubmitting(false);
+      toast("Please fill out all required fields", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+      return;
+    }
+
+    // Submit POST request
+    const businessInfo = form.getValues();
+    const res = await addBusiness(businessInfo);
+
+    if (res) {
+      setIsSubmitting(false);
+      toast("New record created successfully", {
+        icon: (
+          <CircleCheck size={24} className="fill-green-500 stroke-white" />
+        ),
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
+        },
+      });
+      form.reset(defaultValues.current);
+    }
+
+  }, []);
+
   return (
-    <LayoutWithBack 
-      title="Business Form" 
+    <LayoutWithBack
+      title="Business Form"
       description="Register a new business by filling in essential details such as name, location, 
               and respondent information. Required fields must be completed to submit successfully."
     >
-      <Card className="w-full">
-        <BusinessProfileForm />
+      <Card className="w-full p-10">
+        <Form {...form}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
+            className="flex flex-col gap-8"
+          >
+            <BusinessProfileForm
+              sitio={sitio.current}
+              control={form.control}
+              isSubmitting={isSubmitting}
+            />
+          </form>
+        </Form>
       </Card>
     </LayoutWithBack>
   );

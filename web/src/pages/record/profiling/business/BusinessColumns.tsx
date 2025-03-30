@@ -1,5 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { BusinessRecord } from "../profilingTypes";
+import { Button } from "@/components/ui/button/button";
+import { MoveRight } from "lucide-react";
+import { Link } from "react-router";
 
 export const businessColumns = (): ColumnDef<BusinessRecord>[] => [
     {
@@ -34,4 +37,15 @@ export const businessColumns = (): ColumnDef<BusinessRecord>[] => [
         accessorKey: 'registeredBy',
         header: 'Registered By'
     },
+    {
+        accessorKey: 'action',
+        header: 'Action',
+        cell: ({ row }) => (
+            <Link to="/business-form">
+                <Button variant={"outline"}>
+                    View <MoveRight />
+                </Button>
+            </Link>
+        )
+    }
 ] 

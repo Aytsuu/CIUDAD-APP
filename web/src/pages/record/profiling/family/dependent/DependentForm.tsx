@@ -9,7 +9,7 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
-import { DependentRecord } from '../profilingTypes';
+import { DependentRecord } from '../../profilingTypes';
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;

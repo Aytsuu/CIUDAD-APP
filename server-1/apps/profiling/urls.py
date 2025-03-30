@@ -33,6 +33,9 @@ urlpatterns = [
 
     # Request Urls
     path("request/", RequestView.as_view(), name="request-details"),
-    path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion")
+    path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+
+    # Business Urls
+    path("business/", BusinessView.as_view(), name="business-details")
 
 ]

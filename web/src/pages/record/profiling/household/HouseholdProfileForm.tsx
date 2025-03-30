@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router";
-import { household } from "../restful-api/profiingPostAPI";
+import { addHousehold } from "../restful-api/profiingPostAPI";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { toast } from "sonner";
@@ -41,7 +41,7 @@ export default function HouseholdProfileForm({ sitio, residents, onHouseholdRegi
         }
     
         const data = form.getValues();
-        const res = await household(data);
+        const res = await addHousehold(data);
 
         if (res) {
             onHouseholdRegistered(res); // Update residents in the parent component

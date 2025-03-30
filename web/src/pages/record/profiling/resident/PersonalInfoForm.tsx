@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { personal, residentProfile } from "../restful-api/profiingPostAPI";
+import { addPersonal, addResidentProfile } from "../restful-api/profiingPostAPI";
 import { updateProfile } from "../restful-api/profilingPutAPI";
 import { CircleCheck, CircleAlert } from "lucide-react";
 import { Type, Origin } from "../profilingEnums";
@@ -188,8 +188,8 @@ export default function PersonalInfoForm({ params }: { params: any }) {
         const reqPersonalId = params.data?.per.per_id
 
         // Check if form type is request
-        const personalId = params.type === Type.Request ? reqPersonalId : await personal(values);
-        const res= await residentProfile(personalId); 
+        const personalId = params.type === Type.Request ? reqPersonalId : await addPersonal(values);
+        const res= await addResidentProfile(personalId); 
 
         if(res) {
           toast('New record created successfully', {

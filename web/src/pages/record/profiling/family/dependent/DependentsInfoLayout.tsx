@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import DependentForm from './DependentForm';
 import { DataTable } from '@/components/ui/table/data-table';
-import { father, mother, family, familyComposition, dependents} from '../../restful-api/profiingPostAPI'
+import { addFather, addMother, addFamily, addFamilyComposition, addDependent} from '../../restful-api/profiingPostAPI'
 import { DependentRecord } from '../../profilingTypes';
 import { ColumnDef } from '@tanstack/react-table';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout';
@@ -97,16 +97,16 @@ export default function DependentsInfoLayout(
           const dependentsInfo = form.getValues().dependentsInfo.list;
   
           // Store information to the database
-          const motherId = await mother(selectedParents.mother);
-          const fatherId = await father(selectedParents.father);
-          const familyId = await family(demographicInfo, fatherId, motherId);
+          const motherId = await addMother(selectedParents.mother);
+          const fatherId = await addFather(selectedParents.father);
+          const familyId = await addFamily(demographicInfo, fatherId, motherId);
 
           // Automatically add selected mother and father in the family composition
-          familyComposition(familyId, selectedParents.mother)
-          familyComposition(familyId, selectedParents.father)
+          addFamilyComposition(familyId, selectedParents.mother)
+          addFamilyComposition(familyId, selectedParents.father)
   
           // Store dependents information
-          dependents(dependentsInfo, familyId);
+          addDependent(dependentsInfo, familyId);
           
       } catch (err) {
           // Handle errors and provide feedback to the user

@@ -108,3 +108,23 @@ class Request(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField()
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+
+    class Meta: 
+        db_table = 'request'
+
+class Business(models.Model):
+    bus_id = models.BigAutoField(primary_key=True)
+    bus_name = models.CharField(max_length=100)
+    bus_gross_sales = models.FloatField()
+    bus_province = models.CharField(max_length=50)
+    bus_city = models.CharField(max_length=50)
+    bus_barangay = models.CharField(max_length=50)
+    bus_street = models.CharField(max_length=50)
+    bus_respondentLname = models.CharField(max_length=50)
+    bus_respondentFname = models.CharField(max_length=50)
+    bus_respondentMname = models.CharField(max_length=50)
+    bus_respondentDob = models.DateField()
+    bus_date_registered = models.DateField(default=date.today)
+    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
+ 

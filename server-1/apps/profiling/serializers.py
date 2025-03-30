@@ -108,3 +108,9 @@ class RequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Request
         fields = '__all__'
+
+class BusinessSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Business
+        fields = '__all__'

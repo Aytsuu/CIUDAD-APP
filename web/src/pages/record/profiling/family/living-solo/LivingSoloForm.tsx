@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
-import { family, familyComposition } from "../../restful-api/profiingPostAPI";
+import { addFamily, addFamilyComposition } from "../../restful-api/profiingPostAPI";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
@@ -42,8 +42,8 @@ export default function LivingSoloForm({residents, households} : {
 
         try {
             const data = form.getValues()
-            const familyNo = await family(data, null, null)
-            familyComposition(familyNo, data.id.split(" ")[0])
+            const familyNo = await addFamily(data, null, null)
+            addFamilyComposition(familyNo, data.id.split(" ")[0])
 
         } catch (err) {
             console.error(err)
