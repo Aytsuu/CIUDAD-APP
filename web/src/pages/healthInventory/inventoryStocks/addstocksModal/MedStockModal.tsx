@@ -64,7 +64,7 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const handleSubmit = async (data: MedicineStockType) => {
+  const handleSubmit = async (data: MedicineStockType) =>  {
     try {
       const inventoryResponse = await addInventory(InventoryPayload(data)); 
     

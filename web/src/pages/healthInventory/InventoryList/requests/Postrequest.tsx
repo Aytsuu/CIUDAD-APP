@@ -90,5 +90,3 @@ export const addRoutineFrequency = async (data: any) => {
     throw err;
   }
 };
-
-

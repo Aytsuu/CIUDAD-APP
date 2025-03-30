@@ -248,3 +248,27 @@ class VacccinationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = VaccineList
         fields = '__all__'
+        
+class VaccineStockSerializer(serializers.ModelSerializer):
+    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
+    vaccinelist = VacccinationListSerializer(source='vac_id', read_only = True)
+
+    class Meta:
+        model = VaccineStock
+        fields = '__all__'
+        
+
+class AntigenTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntigenTransaction
+        fields = '__all__' 
+        
+class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImmunizationStock
+        fields = '__all__'
+        
+class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImmunizationTransaction
+        fields = '__all__'

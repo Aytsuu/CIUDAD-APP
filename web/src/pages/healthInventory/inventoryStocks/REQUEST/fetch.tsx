@@ -100,7 +100,7 @@ export const fetchCommodity = () => {
 //         expiryDate: medicineStock.inv_detail?.expiry_date,
 //         category: medicineStock.cat_detail?.cat_name,
 
-//         qty: {
+//         qty: { 
 //           qty:medicineStock.minv_qty,
 //           pcs:medicineStock.minv_pcs,
 

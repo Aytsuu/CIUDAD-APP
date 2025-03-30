@@ -38,3 +38,16 @@ export interface VaccineType {
     interval: number;
     time_unit: string;
   }
+
+
+
+  // src/form-schema/inventory/inventoryStocksSchema.ts
+export interface VaccineStockType {
+  antigen: string;
+  batchNumber: string;
+  solvent: "diluent" | "doses";
+  volume?: number;
+  vialBoxCount: number;
+  dosesPcsCount: number;
+  expiryDate: string;
+}

@@ -171,21 +171,6 @@ class VaccineList(models.Model):
     class Meta:
         db_table = 'vaccines'
 
-class ImmunizationSupplies(models.Model):
-    imz_id = models.BigAutoField(primary_key=True)   
-    imz_name = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    vaccat_id = models.ForeignKey(
-        'VaccineCategory', 
-        on_delete=models.CASCADE,
-        default=2,
-        db_column='vaccat_id',
-        related_name='immunization_supplies'
-    )
-    
-    class Meta:
-        db_table = 'immunization_supplies'
 
 class VaccineInterval(models.Model):
     vacInt_id = models.BigAutoField(primary_key=True)
@@ -215,3 +200,80 @@ class RoutineFrequency(models.Model):
 
     class Meta:
         db_table = 'routine_frequencies'
+        
+        
+        
+class VaccineStock(models.Model):
+    vacStck_id =models.BigAutoField(primary_key=True)
+    solvent = models.CharField(max_length=10 )
+    batch_number = models.CharField(max_length=100, verbose_name='Batch Number')
+    volume = models.PositiveIntegerField(default=0)
+    qty = models.PositiveIntegerField(default=0)
+    dose_ml = models.PositiveIntegerField(default=0)
+    vacStck_used = models.PositiveIntegerField(default=0)
+    vacStck_qty_avail = models.PositiveIntegerField(default=0)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id')
+    vac_id = models.ForeignKey('VaccineList',on_delete=models.CASCADE)
+
+   
+    class Meta:
+        db_table = 'vaccine_stocks'
+
+        
+class AntigenTransaction(models.Model):
+    antt_id =models.BigAutoField(primary_key=True)
+    antt_qty = models.CharField(max_length=100)
+    antt_type = models.CharField(max_length=100)
+    antt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)  
+    vacStck_id = models.ForeignKey('VaccineStock', on_delete=models.CASCADE,  db_column='vacStck_id')
+
+
+    class Meta:
+        db_table = 'antigen_transaction'
+
+
+class ImmunizationSupplies(models.Model):
+    imz_id = models.BigAutoField(primary_key=True)   
+    imz_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    vaccat_id = models.ForeignKey(
+        'VaccineCategory', 
+        on_delete=models.CASCADE,
+        default=2,
+        db_column='vaccat_id',
+        related_name='immunization_supplies'
+    )
+    
+    class Meta:
+        db_table = 'immunization_supplies'
+        
+class ImmunizationStock(models.Model):
+    imzStck_id = models.BigAutoField(primary_key=True)
+    imzStck_qty = models.PositiveIntegerField(default=0)
+    imzStck_pcs = models.PositiveIntegerField(default=0)
+    imzStck_unit = models.CharField(max_length=100)
+    imzStck_used = models.PositiveIntegerField(default=0)
+    imzStck_avail = models.PositiveIntegerField(default=0)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
+    imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.CASCADE)
+
+    
+    class Meta:
+        db_table = 'immunizationsupplies_stock'
+        
+  
+class ImmunizationTransaction(models.Model):
+    imzt_id =models.BigAutoField(primary_key=True)
+    imzt_qty = models.CharField(max_length=100)
+    imzt_type = models.CharField(max_length=100)
+    imzt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)  
+    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.CASCADE,  db_column='imzStck_id')
+
+
+    class Meta:
+        db_table = 'immunization_transaction'

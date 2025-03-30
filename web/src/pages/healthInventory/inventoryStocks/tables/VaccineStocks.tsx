@@ -18,6 +18,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import WastedDoseForm from "../addstocksModal/WastedDoseModal";
 import EditVacStockForm from "../editModal/EditVacStockModal";
 import VaccineStockForm from "../addstocksModal/VacStockModal";
+import ImmunizationSupplies from "../addstocksModal/ImmunizationSupplies";
 
 export default function VaccineStocks() {
   type VaccineStocksRecord = {
@@ -53,9 +54,9 @@ export default function VaccineStocks() {
     {
       batchNumber: "MED-456B",
       category: "medsupplies",
-      item: {   
+      item: {
         dosage: 0.5,
-     antigen: "Sterile Gloves",
+        antigen: "Sterile Gloves",
         unit: "pairs",
       },
       qty: "50 boxes (500 pcs)",
@@ -74,7 +75,6 @@ export default function VaccineStocks() {
     useState<VaccineStocksRecord[]>(sampleData);
   const [currentData, setCurrentData] = useState<VaccineStocksRecord[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-
 
   const columns: ColumnDef<VaccineStocksRecord>[] = [
     {
@@ -208,11 +208,7 @@ export default function VaccineStocks() {
                     <Edit size={16} />
                   </div>
                 }
-                mainContent={
-                  <EditVacStockForm
-                    vaccine={row.original}
-                  />
-                }
+                mainContent={<EditVacStockForm vaccine={row.original} />}
               />
             }
             content="Edit Item"
@@ -267,6 +263,11 @@ export default function VaccineStocks() {
     }
   };
 
+  const [isDialog, setIsDialog] = React.useState(false);
+  const [selectedOption, setSelectedOption] = React.useState<
+    "vaccine" | "supplies"
+  >("vaccine");
+
   return (
     <>
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
@@ -298,15 +299,57 @@ export default function VaccineStocks() {
             />
           </div>
         </div>
-        <DialogLayout
-          trigger={
-            <div className="w-auto flex justify-end items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-              <Plus size={15} /> New
-            </div>
-          }
-          title="Add Inventory Item"
-          mainContent={<VaccineStockForm />}
-        />
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90 group">
+                <Plus size={15} /> New Vaccine
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="min-w-[200px]"
+              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()} // Keep menu open on hover
+            >
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedOption("vaccine");
+                  setIsDialog(true);
+                }}
+                className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+              >
+                Vaccine
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedOption("supplies");
+                  setIsDialog(true);
+                }}
+                className="cursor-pointer hover:bg-gray-100 px-4 py-2"
+              >
+                Immunization Supplies
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DialogLayout
+            isOpen={isDialog}
+            onOpenChange={setIsDialog}
+            title={
+              selectedOption === "vaccine"
+                ? "Add New Vaccine"
+                : "Add Immunization Supplies"
+            }
+            mainContent={
+              selectedOption === "vaccine" ? (
+                <VaccineStockForm />
+              ) : (
+                <ImmunizationSupplies
+                setIsDialog={setIsDialog} />
+              )
+            }
+            trigger={undefined}
+          />
+        </div>
       </div>
 
       <div className="h-full w-full rounded-md">

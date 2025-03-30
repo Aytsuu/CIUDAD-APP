@@ -53,6 +53,20 @@ export const InventoryFirstAidPayload = (data: any) => {
 };
 
 
+export const InventoryAntigenPayload = (data: any) => {
+  return {
+    expiry_date: data.expiryDate,
+    inv_type: "Antigen",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+};
+
+
+
+
+
+
 export const MedicineTransactionPayload = (minv_id: number,string_qty :string) => {
   return {
     mdt_qty: string_qty, 
@@ -79,6 +93,37 @@ export const FirstAidTransactionPayload = (finv_id: number,string_qty :string,ac
     finv_id: finv_id, 
   };
 }
+
+
+export const VaccineTransactionPayload = (
+  vacStck_id: number,
+  string_qty: string,
+  action: string,
+  solvent: string,
+  dose_ml?: number
+) => {
+  let displayQty = string_qty;
+  
+  // If it's doses and dose_ml is provided, calculate total doses
+  if (solvent === "doses" && dose_ml) {
+    const totalDoses = parseInt(string_qty) * dose_ml;
+    displayQty = `${totalDoses} doses`;
+  } 
+  // If it's diluent, just show the quantity with "container(s)"
+  else if (solvent === "diluent") {
+    displayQty = `${string_qty} container${parseInt(string_qty) !== 1 ? 's' : ''}`;
+  }
+
+  return {
+    antt_qty: displayQty,
+    antt_action: action,
+    antt_type: "Vaccine",
+    staff: 1,
+    vacStck_id: vacStck_id,
+  };
+};
+
+
 
 export const CommodityPayload = (
   data: any, // Replace with the correct type if available
@@ -125,3 +170,4 @@ export const FirstAidPayload = (
     expiryDate: data.expiryDate,
   };
 };
+

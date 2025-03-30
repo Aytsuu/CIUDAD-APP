@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ImmunizationSchema } from "./inventoryListSchema";
 
 
 
@@ -80,15 +81,59 @@ export const FirstAidStockSchema = z.object({
 );
 
 
+// Updated schema
+// Updated schema
 export const VaccineStocksSchema = z.object({
-  antigen: z.string().min(1, "Vaccine name is required").default(""),
-  category: z.string().min(1, "Category is Required").default(""),
+  vac_id: z.string().min(1, "Vaccine name is required").default(""),
+  solvent: z.enum(["diluent", "doses"]).default("doses"),
   batchNumber: z.string().min(1, "Batch number is required").default(""),
   volume: z.number().min(0, "Volume must be a non-negative number").default(0),
-  vialBoxCount: z.number({ required_error: "Vial box count is Required" }).min(0, "Vial box count must be a non-negative number"),
-  dosesPcsCount: z.number({ required_error: "Doses pieces count is Required" }).min(0, "Doses pieces count must be a non-negative number"),
+  qty: z.number({ required_error: "Vial box count is Required" }).min(0, "Vial box count must be a non-negative number"),
+  dose_ml: z.number({ required_error: "Doses pieces count is Required" }).min(0, "Doses pieces count must be a non-negative number"),
   expiryDate: z.string().min(1, "Expiry date is Required").default(""),
 });
+
+// Schema definition
+export const ImmunizationSuppliesSchema = z
+  .object({
+    imz_id: z.string().min(1, "Immunization supply is required"),
+    batch_number: z.string().min(1, "Batch number is required"),
+    imzStck_qty: z.number().min(0, "Quantity cannot be negative").default(0),
+    imzStck_pcs: z.number().min(0, "Pieces cannot be negative"),
+    imzStck_unit: z.enum(["boxes", "pcs"]),
+    expiryDate: z
+      .string()
+      .min(1, "Expiry date is required")
+      .refine((date) => new Date(date) > new Date(), {
+        message: "Expiry date must be in the future",
+      }),
+  })
+  .refine(
+    (data) => {
+      if (data.imzStck_unit === "boxes") {
+        return data.imzStck_pcs > 0;
+      }
+      return true;
+    },
+    {
+      message: "Pieces per box must be at least 1 when using boxes",
+      path: ["imzStck_pcs"],
+    }
+  );
+
+export type ImmunizationSuppliesType = z.infer<
+  typeof ImmunizationSuppliesSchema
+>;
+
+
+export type MedicineStockType = z.infer<typeof MedicineStocksSchema>;
+export type CommodityStockType = z.infer<typeof CommodityStocksSchema>;
+export type VaccineStockType = z.infer<typeof VaccineStocksSchema>;
+export type FirstAidStockType = z.infer<typeof FirstAidStockSchema>;
+
+
+
+
 
 
 // export const FirstAidStockSchema = z.object({
@@ -97,10 +142,3 @@ export const VaccineStocksSchema = z.object({
 //   qty: z.number().min(1, "Quantity required"),
 //   expiryDate: z.string().default(""),
 // });
-
-
-
-export type MedicineStockType = z.infer<typeof MedicineStocksSchema>;
-export type CommodityStockType = z.infer<typeof CommodityStocksSchema>;
-export type VaccineStockType = z.infer<typeof VaccineStocksSchema>;
-export type FirstAidStockType = z.infer<typeof FirstAidStockSchema>;

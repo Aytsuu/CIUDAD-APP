@@ -72,3 +72,24 @@ export interface FirstAidStockType {
   expiryDate: string;
   inv_id: number;
 }
+
+
+// Add VaccineStockType definition and export
+export type VaccineStockType = {
+  batchNumber: string;
+  solvent: string;
+  volume?: number;
+  qty: number;
+  dose_ml?: number;
+  expiryDate: string;
+};
+
+// Add VaccineTransactionType definition and export
+export type AntigenTransactionType = {
+  antt_qty: string;
+  antt_action: string;
+  antt_type: string;
+  staff: number;
+  vacStck_id: number;
+};
+

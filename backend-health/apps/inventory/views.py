@@ -297,14 +297,16 @@ class ImmunizationSuppliesView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-
+# views.py
 class VaccineListView(generics.ListCreateAPIView):
-    serializer_class=VacccinationListSerializer
-    queryset=VaccineList.objects.all()
+    serializer_class = VacccinationListSerializer
+    
+    def get_queryset(self):
+        # Filter by vaccat_id = 1
+        return VaccineList.objects.filter(vaccat_id=1)
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
 
 class VaccineIntervalView(generics.ListCreateAPIView):
     serializer_class=VaccineIntervalSerializer
@@ -389,3 +391,34 @@ class RoutineFrequencyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAP
         routineF_id = self.kwargs.get('routineF_id')
         obj = get_object_or_404(RoutineFrequency, routineF_id=routineF_id)
         return obj
+    
+    
+
+ 
+class VaccineStocksView(generics.ListCreateAPIView):
+    serializer_class=VaccineStockSerializer
+    queryset=VaccineStock.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
+    serializer_class=ImmnunizationStockSuppliesSerializer
+    queryset=ImmunizationStock.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+
+class AntigenTransactionView(generics.ListCreateAPIView):
+    serializer_class=AntigenTransactionSerializer
+    queryset=AntigenTransaction.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+class ImmunizationTransactionView(generics.ListCreateAPIView):
+    serializer_class=ImmunizationSuppliesTransactionSerializer
+    queryset=ImmunizationTransaction.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
