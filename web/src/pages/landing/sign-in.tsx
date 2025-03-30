@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/supabaseClient"; // Import Supabase client
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);

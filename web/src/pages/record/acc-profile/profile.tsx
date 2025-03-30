@@ -23,11 +23,11 @@ import {
 type AccountFormData = z.infer<typeof accountFormSchema>;
 
 const AccountSettings = () => {
+  const image = localStorage.getItem("profile_image")
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [profileImage, setProfileImage] = useState(
-    localStorage.getItem("profile_image") ||
-      "https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg"
+    image || ""
   );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -46,46 +46,39 @@ const AccountSettings = () => {
   const username = localStorage.getItem("username");
   const token = localStorage.getItem("token");
 
-  // const handleImageClick = () => {
-  //   fileInputRef.current?.click();
-  // };
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
   
-    if (!token) {
-      setUploadError("Please login again");
-      return;
-    }
+    setIsUploading(true);
+    setUploadError("");
+  
+    const formData = new FormData();
+    formData.append("userimage", file);
   
     try {
-      setIsUploading(true);
-      setUploadError("");
-  
-      const formData = new FormData();
-      formData.append("file", file);
-  
       const response = await axios.post(
-        "http://localhost:8000/user/upload/",
+        "http://127.0.0.1:8000/user/upload/",  
         formData,
         {
           headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'multipart/form-data',
+            Authorization: `Token ${token}`, 
+            "Content-Type": "multipart/form-data",
           },
         }
       );
   
-      setProfileImage(response.data.url);
-      localStorage.setItem("profile_image", response.data.url);
+      const imageUrl = response.data.image_url;
+      setProfileImage(imageUrl);
+      localStorage.setItem("profile_image", imageUrl);
   
-    } catch (error: any) {
-      setUploadError(error.response?.data?.error || "Upload failed");
+    } catch (error) {
+      setUploadError("Image upload failed. Try again.");
     } finally {
       setIsUploading(false);
     }
   };
+  
 
   const onSubmit = (data: AccountFormData) => {
     if (!emailVerified) {
