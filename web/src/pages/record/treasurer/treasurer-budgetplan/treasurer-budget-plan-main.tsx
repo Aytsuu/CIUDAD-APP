@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Eye, Trash, ArrowUpDown, Search } from 'lucide-react';
+import { Eye, Trash, ArrowUpDown, Search, CircleCheck } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -12,6 +12,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteBudgetPlan } from "./restful-API/budgetPlanDeleteAPI";
 import { getBudgetPlan } from "./restful-API/budgetplanGetAPI";
 import { Skeleton } from "@mui/material";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { toast } from "sonner";
 
 export type BudgetPlan = {
     plan_id: number,
@@ -23,6 +26,7 @@ function BudgetPlan() {
     const [currentPage, setCurrentPage] = useState(1);
     const queryClient = useQueryClient();
     const totalPages = 10;
+
     
     const { data: budgetPlans, isLoading: isLoadingBudgetPlan } = useQuery<BudgetPlan[]>({
         queryKey: ['plan'],
@@ -45,11 +49,23 @@ function BudgetPlan() {
 
     // delete budgetplan function
     const handleDelete = async (planId: number) => {
-        const success = await deleteBudgetPlan(planId, queryClient);
-        if(success){
-            alert('Budget Plan deleted successfully.')
+        try {
+            const toastId = toast.loading("Deleting budget plan...");
+            const success = await deleteBudgetPlan(planId);
+            
+            if (success) {
+                toast.success("Budget Plan deleted successfully", {
+                    id: toastId,
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+                });
+                queryClient.invalidateQueries({queryKey: ['plan']});
+            } else {
+                toast.error("Failed to delete budget plan", { id: toastId });
+            }
+        } catch (error) {
+            toast.error("An error occurred while deleting the budget plan");
+            console.error("Delete error:", error);
         }
-
     };
 
     // Table Columns
@@ -93,16 +109,12 @@ function BudgetPlan() {
                             }
                             content="View"
                         />
-                        <TooltipLayout
-                            trigger={
-                                <div
-                                    className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-                                    onClick={() => handleDelete(planId)} 
-                                >
-                                    <Trash size={16} />
-                                </div>
-                            }
-                            content="Delete"
+                        <ConfirmationModal
+                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
+                        title="Confirm Delete"
+                        description="Are you sure you want to delete this budget plan?"
+                        actionLabel="Confirm"
+                        onClick={() => handleDelete(planId)}
                         />
                     </div>
                 );

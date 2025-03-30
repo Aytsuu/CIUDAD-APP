@@ -2,7 +2,7 @@ import CreateBudgetPlanPage1 from "./treasurer-budgetplan-Page1";
 import CreateBudgetPlanPage2 from "./treasurer-budgetplan-Page2";
 import CreateBudgetPlanPage3 from "./treasurer-budgetplan-Page3";
 import CreateBudgetPlanPage4 from "./treasurer-budgetplan-Page4";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
 import { toast } from "sonner";
-import { Navigate } from "react-router";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -134,6 +133,10 @@ function CreateBudgetPlanForm() {
 
 
     const onSubmit = async () => {
+        const toastId = toast.loading('Submitting budget plan...', {
+            duration: Infinity  // Keep open until we manually close it
+        });
+
         // Defining budget items for each page
         const budgetItemsPage1 = [
             { name: "honorariaOfficials", label: "Honoraria for Officials" },
@@ -223,16 +226,22 @@ function CreateBudgetPlanForm() {
             const res = await budget_plan_details(combinedData, planId);
             console.log("Budget plan and expenditures submitted successfully!");
 
-            if(res && planId){
-                toast('Budget plan created successfully', {
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+            if (res && planId) {
+                toast.success('Budget plan created successfully', {
+                    id: toastId, 
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000
                 });
 
                 navigate('/treasurer-budget-plan');
-                
             }
+
         } catch (error){
-            console.error("Error submitting budget plan and expenditures:", error);
+            toast.error('Failed to create budget plan', {
+                id: toastId, 
+                duration: 2000
+            });
+            console.error("Error submitting budget plan", error);
         }
     };
 
