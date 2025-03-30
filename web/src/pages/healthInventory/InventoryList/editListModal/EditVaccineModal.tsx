@@ -124,105 +124,191 @@ export default function EditVaccineModal({
     }
   }, [noOfDoses, type, setValue, watch]);
 
+  const onSubmit = async (data: VaccineType) => {
+    console.group("Vaccine Update Submission");
+    try {
+      // Check what fields have changed
+      const hasNameChanged = data.vaccineName !== vaccineData.vaccineName;
+      const hasAgeGroupChanged = data.ageGroup !== vaccineData.ageGroup;
+      const hasTypeChanged = data.type !== vaccineData.vaccineType.toLowerCase();
+      const hasDosesChanged = Number(data.noOfDoses) !== Number(vaccineData.noOfDoses === "N/A" ? 1 : vaccineData.noOfDoses);
+      const hasSpecifyAgeChanged = data.specifyAge !== vaccineData.specifyAge;
+      
+      // If only name or age group changed, don't touch intervals
+      const shouldUpdateIntervals = hasTypeChanged || hasDosesChanged || 
+                                   (data.type === "routine" && 
+                                    (data.routineFrequency?.interval !== vaccineData.doseDetails[0]?.interval || 
+                                     data.routineFrequency?.unit !== vaccineData.doseDetails[0]?.unit));
 
- 
-  
-const onSubmit = async (data: VaccineType) => {
-  console.group("Vaccine Update Submission");
-  try {
-    // 1. Delete all existing intervals/frequencies
-    if (vaccineData.vaccineType.toLowerCase() !== data.type) {
-      // Type changed - delete all existing records of the old type
-      if (vaccineData.vaccineType.toLowerCase() === 'routine') {
-        // Delete all routine frequencies for this vaccine
-        const routines: { data: Array<{ routineF_id: number }> } = await api.get(`inventory/routine_freq/`, {
-          params: { vac_id: vaccineData.id }
-        });
-        await Promise.all(routines.data.map((routine: { routineF_id: number }) => 
-          api.delete(`inventory/routine_freq/${routine.routineF_id}/`)
-        ));
-      } else {
-        // Delete all intervals for this vaccine
-        const intervals = await api.get(`inventory/vac_intervals/`, {
-          params: { vac_id: vaccineData.id }
-        });
-        await Promise.all(intervals.data.map((interval: { vacInt_id: number }) => 
-          api.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
-        ));
-      }
-    } else {
-      // Same type - just delete all intervals
-      const intervals = await api.get(`inventory/vac_intervals/`, {
-        params: { vac_id: vaccineData.id }
-      });
-      await Promise.all(intervals.data.map((interval: { vacInt_id: number }) => 
-        api.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
-      ));
-    }
-
-    // 2. Update main vaccine details
-    const updateResponse = await api.put(`inventory/vac_list/${vaccineData.id}/`, {
-      vac_name: toTitleCase(data.vaccineName),
-      vac_type_choices: data.type,
-      no_of_doses: Number(data.noOfDoses),
-      age_group: data.ageGroup,
-      specify_age: data.ageGroup === "0-5" ? String(data.specifyAge) : data.ageGroup,
-      vaccat_id: 1,
-      updated_at: new Date().toISOString(),
-    });
-
-    // 3. Create fresh intervals based on new type
-    if (data.type === "routine") {
-      // For routine vaccines - create single frequency
-      await api.post("inventory/routine_freq/", {
-        interval: Number(data.routineFrequency?.interval) || 1,
-        time_unit: data.routineFrequency?.unit || "years",
-        dose_number: 1,
-        vac_id: vaccineData.id,
+      // 1. Update main vaccine details (always do this)
+      const updateResponse = await api.put(`inventory/vac_list/${vaccineData.id}/`, {
+        vac_name: toTitleCase(data.vaccineName),
+        vac_type_choices: data.type,
+        no_of_doses: Number(data.noOfDoses),
+        age_group: data.ageGroup,
+        specify_age: data.ageGroup === "0-5" ? String(data.specifyAge) : data.ageGroup,
+        vaccat_id: 1,
         updated_at: new Date().toISOString(),
       });
-    } else {
-      // For primary vaccines - create all doses fresh
-      const totalDoses = Number(data.noOfDoses) || 1;
-      const intervals = Array.isArray(data.intervals) ? data.intervals : [];
-      const timeUnits = Array.isArray(data.timeUnits) ? data.timeUnits : [];
 
-      // Create first dose
-      if (totalDoses >= 1) {
-        await api.post("inventory/vac_intervals/", {
-          interval: data.ageGroup === "0-5" ? Number(data.specifyAge) || 0 : 0,
-          time_unit: data.ageGroup === "0-5" ? "months" : "NA",
-          dose_number: 1,
-          vac_id: vaccineData.id,
-          updated_at: new Date().toISOString(),
-        });
+      // Only proceed with interval CRUD if needed
+      if (shouldUpdateIntervals) {
+        console.log("Updating intervals due to changes in type, doses, or intervals");
+        
+        // 2. Delete existing intervals/frequencies if type changed
+        if (hasTypeChanged) {
+          if (vaccineData.vaccineType.toLowerCase() === 'routine') {
+            // Delete all routine frequencies for this vaccine
+            const routines: { data: Array<{ routineF_id: number }> } = await api.get(`inventory/routine_freq/`, {
+              params: { vac_id: vaccineData.id }
+            });
+            await Promise.all(routines.data.map((routine: { routineF_id: number }) => 
+              api.delete(`inventory/routine_freq/${routine.routineF_id}/`)
+            ));
+          } else {
+            // Delete all intervals for this vaccine
+            const intervals = await api.get(`inventory/vac_intervals/`, {
+              params: { vac_id: vaccineData.id }
+            });
+            await Promise.all(intervals.data.map((interval: { vacInt_id: number }) => 
+              api.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
+            ));
+          }
+        } else if (data.type === "primary" && hasDosesChanged) {
+          // Same type but doses changed - update intervals accordingly
+          const intervals = await api.get(`inventory/vac_intervals/`, {
+            params: { vac_id: vaccineData.id }
+          });
+          
+          // If reducing doses, delete the excess intervals
+          if (Number(data.noOfDoses) < intervals.data.length) {
+            const toDelete = intervals.data.filter((interval: { dose_number: number }) => 
+              interval.dose_number > Number(data.noOfDoses)
+            );
+            
+            await Promise.all(toDelete.map((interval: { vacInt_id: number }) => 
+              api.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
+            ));
+          }
+        }
+
+        // 3. Create or update intervals based on type
+        if (data.type === "routine") {
+          // For routine vaccines - create/update frequency
+          const routines: { data: Array<{ routineF_id: number }> } = await api.get(`inventory/routine_freq/`, {
+            params: { vac_id: vaccineData.id }
+          });
+          
+          if (routines.data.length > 0) {
+            // Update existing routine frequency
+            await api.put(`inventory/routine_freq/${routines.data[0].routineF_id}/`, {
+              interval: Number(data.routineFrequency?.interval) || 1,
+              time_unit: data.routineFrequency?.unit || "years",
+              dose_number: 1,
+              vac_id: vaccineData.id,
+              updated_at: new Date().toISOString(),
+            });
+          } else {
+            // Create new routine frequency
+            await api.post("inventory/routine_freq/", {
+              interval: Number(data.routineFrequency?.interval) || 1,
+              time_unit: data.routineFrequency?.unit || "years",
+              dose_number: 1,
+              vac_id: vaccineData.id,
+              updated_at: new Date().toISOString(),
+            });
+          }
+        } else if (hasTypeChanged || hasDosesChanged) {
+          // For primary vaccines with type or dose changes - update all doses
+          const totalDoses = Number(data.noOfDoses) || 1;
+          const intervals = Array.isArray(data.intervals) ? data.intervals : [];
+          const timeUnits = Array.isArray(data.timeUnits) ? data.timeUnits : [];
+          
+          // Get existing intervals for updating
+          const existingIntervals = await api.get(`inventory/vac_intervals/`, {
+            params: { vac_id: vaccineData.id }
+          });
+          const existingMap = existingIntervals.data.reduce((acc: any, curr: any) => {
+            acc[curr.dose_number] = curr;
+            return acc;
+          }, {});
+
+          // Create or update first dose
+          if (totalDoses >= 1) {
+            if (existingMap[1]) {
+              await api.put(`inventory/vac_intervals/${existingMap[1].vacInt_id}/`, {
+                interval: data.ageGroup === "0-5" ? Number(data.specifyAge) || 0 : 0,
+                time_unit: data.ageGroup === "0-5" ? "months" : "NA",
+                dose_number: 1,
+                vac_id: vaccineData.id,
+                updated_at: new Date().toISOString(),
+              });
+            } else {
+              await api.post("inventory/vac_intervals/", {
+                interval: data.ageGroup === "0-5" ? Number(data.specifyAge) || 0 : 0,
+                time_unit: data.ageGroup === "0-5" ? "months" : "NA",
+                dose_number: 1,
+                vac_id: vaccineData.id,
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+
+          // Create or update subsequent doses
+          for (let i = 1; i < totalDoses; i++) {
+            if (existingMap[i + 1]) {
+              await api.put(`inventory/vac_intervals/${existingMap[i + 1].vacInt_id}/`, {
+                interval: Number(intervals[i-1]) || 0,
+                time_unit: timeUnits[i-1] || "months",
+                dose_number: i + 1,
+                vac_id: vaccineData.id,
+                updated_at: new Date().toISOString(),
+              });
+            } else {
+              await api.post("inventory/vac_intervals/", {
+                interval: Number(intervals[i-1]) || 0,
+                time_unit: timeUnits[i-1] || "months",
+                dose_number: i + 1,
+                vac_id: vaccineData.id,
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+        } else if (data.type === "primary" && 
+                  (hasSpecifyAgeChanged && data.ageGroup === "0-5")) {
+          // Update first dose if specify age changed for 0-5 age group
+          const intervals = await api.get(`inventory/vac_intervals/`, {
+            params: { vac_id: vaccineData.id }
+          });
+          
+          const firstDose = intervals.data.find((interval: { dose_number: number }) => 
+            interval.dose_number === 1
+          );
+          
+          if (firstDose) {
+            await api.put(`inventory/vac_intervals/${firstDose.vacInt_id}/`, {
+              interval: Number(data.specifyAge) || 0,
+              time_unit: "months",
+              dose_number: 1,
+              vac_id: vaccineData.id,
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+      } else {
+        console.log("Skipping interval updates - only name or age group changed");
       }
 
-      // Create subsequent doses
-      for (let i = 1; i < totalDoses; i++) {
-        await api.post("inventory/vac_intervals/", {
-          interval: Number(intervals[i-1]) || 0,
-          time_unit: timeUnits[i-1] || "months",
-          dose_number: i + 1,
-          vac_id: vaccineData.id,
-          updated_at: new Date().toISOString(),
-        });
-      }
+      console.log("🎉 Update completed successfully!");
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error("❌ Update error:", error);
+      alert(`Failed to update vaccine: ${error.message || "Unknown error"}`);
+    } finally {
+      console.groupEnd();
     }
-
-    console.log("🎉 Update completed successfully!");
-    onSuccess();
-    onClose();
-  } catch (error: any) {
-    console.error("❌ Update error:", error);
-    alert(`Failed to update vaccine: ${error.message || "Unknown error"}`);
-  } finally {
-    console.groupEnd();
-  }
-};
-
-
-
+  };
 
   const renderDoseFields = () => {
     if (type === "routine") {
