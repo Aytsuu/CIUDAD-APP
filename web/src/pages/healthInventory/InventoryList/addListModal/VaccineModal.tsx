@@ -73,6 +73,7 @@ export default function VaccinationModal() {
       const vaccineData = {
         vac_type_choices: data.type,
         vac_name: data.vaccineName,
+        vaccat_id: 1,
         no_of_doses: Number(data.noOfDoses),
         age_group: data.ageGroup,
         specify_age: data.ageGroup === "0-5" ? String(data.specifyAge) : data.ageGroup, // Use ageGroup value instead of N/A

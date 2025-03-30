@@ -280,7 +280,23 @@ class FirstAidTransactionView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
      
-     
+
+
+
+class VaccineCategoryView(generics.ListCreateAPIView):
+    serializer_class=VaccineCategorySerializer
+    queryset=VaccineCategory.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+class ImmunizationSuppliesView(generics.ListCreateAPIView):
+    serializer_class=ImmunizationSuppliesSerializer
+    queryset=ImmunizationSupplies.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
 
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class=VacccinationListSerializer
@@ -305,4 +321,71 @@ class RoutineFrequencyView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
      
      
-     
+    
+# Vaccine Category Views
+class VaccineCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VaccineCategorySerializer
+    queryset = VaccineCategory.objects.all()
+    lookup_field = 'vaccat_id'
+    
+    def get_object(self):
+        vaccat_id = self.kwargs.get('vaccat_id')
+        obj = get_object_or_404(VaccineCategory, vaccat_id=vaccat_id)
+        return obj
+
+# Immunization Supplies Views
+class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ImmunizationSuppliesSerializer
+    queryset = ImmunizationSupplies.objects.all()
+    lookup_field = 'imz_id'
+    
+    def get_object(self):
+        imz_id = self.kwargs.get('imz_id')
+        obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
+        return obj
+
+# Vaccine List Views
+
+class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VacccinationListSerializer
+    queryset = VaccineList.objects.all()
+    lookup_field = 'vac_id'
+    
+    def get_object(self):
+        vac_id = self.kwargs.get('vac_id')
+        return get_object_or_404(VaccineList, vac_id=vac_id)
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_type = request.data.get('vac_type_choices')
+        
+        # If changing from routine to primary
+        if instance.vac_type_choices == 'routine' and new_type == 'primary':
+            RoutineFrequency.objects.filter(vac_id=instance).delete()
+        
+        # If changing from primary to routine
+        elif instance.vac_type_choices == 'primary' and new_type == 'routine':
+            VaccineInterval.objects.filter(vac_id=instance).delete()
+        
+        return super().update(request, *args, **kwargs)
+# Vaccine Interval Views
+class VaccineIntervalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VaccineIntervalSerializer
+    queryset = VaccineInterval.objects.all()
+    lookup_field = 'vacInt_id'
+    
+    def get_object(self):
+        vacInt_id = self.kwargs.get('vacInt_id')
+        obj = get_object_or_404(VaccineInterval, vacInt_id=vacInt_id)
+        return obj
+
+# Routine Frequency Views
+class RoutineFrequencyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = RoutineFrequencySerializer
+    queryset = RoutineFrequency.objects.all()
+    lookup_field = 'routineF_id'
+    
+    def get_object(self):
+        routineF_id = self.kwargs.get('routineF_id')
+        obj = get_object_or_404(RoutineFrequency, routineF_id=routineF_id)
+        return obj

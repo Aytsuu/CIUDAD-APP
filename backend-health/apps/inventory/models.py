@@ -143,45 +143,75 @@ class FirstAidTransactions(models.Model):
         db_table = 'firstaid_transaction'
 
 # VACCINATION MODELS
+class VaccineCategory(models.Model):
+    vaccat_id = models.BigAutoField(primary_key=True)   
+    vaccat_type = models.CharField(max_length=255, default="N/A")
+    
+    class Meta:
+        db_table = 'vaccine_category'    
+        
+
 class VaccineList(models.Model):
-    vac_id =models.BigAutoField(primary_key=True)
-    vac_type_choices =  models.CharField(max_length=100)
+    vac_id = models.BigAutoField(primary_key=True)
+    vac_type_choices = models.CharField(max_length=100)
     vac_name = models.CharField(max_length=255)
-    no_of_doses =  models.PositiveIntegerField(default=0)
+    no_of_doses = models.PositiveIntegerField(default=0)
     age_group = models.CharField(max_length=50)
     specify_age = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    vaccat_id = models.ForeignKey(
+        'VaccineCategory', 
+        on_delete=models.CASCADE,
+        default=1,
+        db_column='vaccat_id',
+        related_name='vaccines'
+    )
 
     class Meta:
-        db_table = 'vaccines'     
-        
+        db_table = 'vaccines'
+
 class ImmunizationSupplies(models.Model):
-    imz_id =models.BigAutoField(primary_key=True)   
+    imz_id = models.BigAutoField(primary_key=True)   
     imz_name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    vaccat_id = models.ForeignKey(
+        'VaccineCategory', 
+        on_delete=models.CASCADE,
+        default=2,
+        db_column='vaccat_id',
+        related_name='immunization_supplies'
+    )
+    
     class Meta:
-        db_table = 'immunization_supplies'    
-
- 
+        db_table = 'immunization_supplies'
 
 class VaccineInterval(models.Model):
     vacInt_id = models.BigAutoField(primary_key=True)
-    vac_id = models.ForeignKey('VaccineList', on_delete=models.CASCADE,  db_column='vac_id')
+    vac_id = models.ForeignKey(
+        'VaccineList', 
+        on_delete=models.CASCADE,  
+        db_column='vac_id',
+        related_name='intervals'
+    )
     interval = models.PositiveIntegerField(default=0)
     dose_number = models.PositiveIntegerField(default=0)
     time_unit = models.CharField(max_length=100)
+
     class Meta:
         db_table = 'vaccine_intervals'
-       
 
 class RoutineFrequency(models.Model):
     routineF_id = models.BigAutoField(primary_key=True)
     interval = models.PositiveIntegerField(default=0)
     dose_number = models.PositiveIntegerField(default=0)
     time_unit = models.CharField(max_length=100)
-    vac_id = models.OneToOneField('VaccineList', on_delete=models.CASCADE)
+    vac_id = models.OneToOneField(
+        'VaccineList', 
+        on_delete=models.CASCADE,
+        related_name='routine_frequency'
+    )
 
     class Meta:
         db_table = 'routine_frequencies'

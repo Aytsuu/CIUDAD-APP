@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
-
+import ImmunizationSupplies from "../addListModal/ImmunizationSupplies";
 
 export type VaccineRecords = {
   id: number;
@@ -29,6 +29,8 @@ export type VaccineRecords = {
   doses: number;
   specifyAge: string;
   schedule: string;
+  category: string; // Added category property
+  noOfDoses?: number; // Added noOfDoses property
   doseDetails: {
     doseNumber: number;
     interval: number | undefined;
@@ -61,46 +63,65 @@ export default function VaccineList() {
 
   const formatVaccineData = React.useCallback(() => {
     if (!vaccineData) return [];
-
-    return vaccineData.map((vaccine: any) => {
-      const specifyAge = vaccine.specify_age || vaccine.age_group || "birth";
-
-      const baseData: VaccineRecords = {
-        id: vaccine.vac_id,
-        vaccineName: vaccine.vac_name,
-        vaccineType:
-          vaccine.vac_type_choices === "routine" ? "Routine" : "Primary Series",
-        ageGroup: vaccine.age_group,
-        doses: vaccine.no_of_doses,
-        specifyAge: specifyAge,
-        schedule: vaccine.schedule || "Not specified",
-        doseDetails: [],
-      };
-
-      if (vaccine.vac_type_choices === "routine" && vaccine.routine_frequency) {
-        baseData.doseDetails.push({
-          doseNumber: 1,
-          interval: vaccine.routine_frequency.interval,
-          unit: vaccine.routine_frequency.time_unit,
-        });
+  
+    return vaccineData.map((item: any) => {
+      // Handle Vaccine items (keep existing logic)
+      if (item.vac_name) {
+        const specifyAge = item.specify_age || item.age_group || "birth";
+        const category = item.vaccat_details?.vaccat_type || "N/A";
+  
+        const baseData: VaccineRecords = {
+          id: item.vac_id,
+          vaccineName: item.vac_name,
+          vaccineType: item.vac_type_choices === "routine" ? "Routine" : 
+                      item.vac_type_choices === "primary" ? "Primary Series" : "N/A",
+          ageGroup: item.age_group || "N/A",
+          doses: item.no_of_doses || "N/A", // Updated to handle NA
+          specifyAge: specifyAge,
+          category: category,
+          noOfDoses: item.no_of_doses || "N/A", // Updated to handle NA
+          schedule: item.schedule || "N/A",
+          doseDetails: [],
+        };
+  
+        if (item.vac_type_choices === "routine" && item.routine_frequency) {
+          baseData.doseDetails.push({
+            doseNumber: 1,
+            interval: item.routine_frequency.interval,
+            unit: item.routine_frequency.time_unit,
+          });
+        }
+        else if (item.vac_type_choices === "primary" && item.intervals?.length) {
+          const sortedIntervals = [...item.intervals].sort(
+            (a, b) => a.dose_number - b.dose_number
+          );
+          sortedIntervals.forEach((interval) => {
+            baseData.doseDetails.push({
+              doseNumber: interval.dose_number,
+              interval: interval.interval,
+              unit: interval.time_unit,
+            });
+          });
+        }
         return baseData;
       }
-
-      if (vaccine.vac_type_choices === "primary" && vaccine.intervals?.length) {
-        const sortedIntervals = [...vaccine.intervals].sort(
-          (a, b) => a.dose_number - b.dose_number
-        );
-        sortedIntervals.forEach((interval) => {
-          baseData.doseDetails.push({
-            doseNumber: interval.dose_number,
-            interval: interval.interval,
-            unit: interval.time_unit,
-          });
-        });
+      // Handle Immunization Supplies items
+      else if (item.imz_name) {
+        return {
+          id: item.imz_id,
+          vaccineName: item.imz_name,
+          vaccineType: "N/A",
+          ageGroup: "N/A",
+          doses: "N/A", // Changed from 0 to "N/A"
+          specifyAge: "N/A",
+          category: item.vaccat_details?.vaccat_type,
+          noOfDoses: "N/A",
+          schedule: "N/A",
+          doseDetails: [],
+        };
       }
-
-      return baseData;
-    });
+      return null;
+    }).filter(Boolean);
   }, [vaccineData]);
 
   const filteredVaccines = React.useMemo(() => {
@@ -206,7 +227,9 @@ export default function VaccineList() {
               selectedOption === "vaccine" ? (
                 <VaccineModal />
               ) : (
-                <div>Immunization Supplies Form Here</div>
+                <ImmunizationSupplies
+                setIsDialog={setIsDialog}
+              />
               )
             }
             trigger={undefined}

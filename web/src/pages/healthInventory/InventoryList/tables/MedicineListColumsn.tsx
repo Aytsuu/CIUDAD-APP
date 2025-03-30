@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip/tooltip"
 import EditVaccineListModal from "../editListModal/EditVaccineModal";
+import ImmunizationSupplies from "../addListModal/ImmunizationSupplies";
 
 export type MedicineRecords = {
   id: number;
@@ -187,26 +188,23 @@ export const CommodityColumns = (
 
 
 
-
 export type VaccineRecords = {
   id: number;
   vaccineName: string;
-  vaccineType: 'Routine' | 'Primary Series';
+  vaccineType: string;
   ageGroup: string;
   doses: number;
   specifyAge: string;
+  schedule: string;
   category: string;
-  noOfDoses: number;
-  interval: {
-    interval: number;
-    timeUnits: string;
-  };
+  noOfDoses?: number | string; // Updated to allow string
   doseDetails: {
     doseNumber: number;
     interval?: number;
     unit?: string;
   }[];
 };
+
 
 export const VaccineColumns = (
   setIsDialog: (isOpen: boolean) => void,
@@ -223,35 +221,52 @@ export const VaccineColumns = (
     ),
   },
   {
+    accessorKey: "category",
+    header: "Category",
+    cell: ({ row }) => (
+      <div className="capitalize">
+        {row.getValue("category")}
+      </div>
+    ),
+  },
+  {
     accessorKey: "vaccineType",
     header: "Type",
-    cell: ({ row }) => (
-      <span className={`px-2 py-1 rounded-full text-xs ${
-        row.getValue("vaccineType") === 'Routine' 
-          ? 'bg-blue-100 text-blue-800' 
-          : 'bg-purple-100 text-purple-800'
-      }`}>
-        {row.getValue("vaccineType")}
-      </span>
-    ),
+    cell: ({ row }) => {
+      const value = row.getValue("vaccineType");
+      return (
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          value === 'Routine' 
+            ? 'bg-blue-100 text-blue-800' 
+            : value === 'Primary Series'
+              ? 'bg-purple-100 text-purple-800'
+              : 'bg-gray-100 text-gray-800'
+        }`}>
+          {String(value)}
+        </span>
+      );
+    },
   },
   {
     accessorKey: "ageGroup",
     header: "Age Group",
     cell: ({ row }) => (
       <div className="capitalize">
-        {row.getValue("ageGroup")}
+        {row.getValue("ageGroup") || "N/A"}
       </div>
     ),
   },
   {
     accessorKey: "doses",
     header: "Total Doses",
-    cell: ({ row }) => (
-      <div className="text-center">
-        {row.getValue("doses")}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const value = row.getValue("doses");
+      return (
+        <div className="text-center">
+          {value === "N/A" ? <span className="text-gray-500">N/A</span> : String(value)}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "doseDetails",
@@ -259,6 +274,10 @@ export const VaccineColumns = (
     cell: ({ row }) => {
       const vaccine = row.original;
       const doseDetails = vaccine.doseDetails;
+      
+      if (doseDetails.length === 0) {
+        return <div className="text-sm text-gray-500">N/A</div>;
+      }
       
       return (
         <div className="flex flex-col gap-1">
@@ -288,33 +307,58 @@ export const VaccineColumns = (
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        <DialogLayout
-          trigger={
-            <Button variant="outline">
-              <Edit size={16} />
-            </Button>
-          }
-          mainContent={
-            // <EditVaccineListModal
-            //   initialData={row.original}
-            //   setIsDialog={setIsDialog}
-            // />
-            <></>
-          }
-        />
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => {
-            setVaccineToDelete(row.original.id); // Set the commodity ID to delete
-            setIsDeleteConfirmationOpen(true); // Open the confirmation dialog
-          }}
-        >
-          <Trash />
-        </Button>
-      </div>
-    ),
-  },
+    cell: ({ row }) => {
+      const vaccine = row.original;
+      const isVaccine = vaccine.category !== "Immunization Supply";
+      
+      return (
+        <div className="flex justify-center gap-2">
+          {isVaccine ? (
+            <DialogLayout
+              trigger={
+                <Button variant="outline">
+                  <Edit size={16} />
+                </Button>
+              }
+              mainContent={
+                <EditVaccineListModal
+                  vaccineData={vaccine}
+                  onClose={() => setIsDialog(false)}
+                  onSuccess={() => {
+                    setIsDialog(false);
+                    // Add any success logic here (e.g., refresh data)
+                  }}
+                />
+              }
+            />
+          ) : (
+            <DialogLayout
+              trigger={
+                <Button variant="outline">
+                  <Edit size={16} />
+                </Button>
+              }
+              mainContent={
+                <ImmunizationSupplies
+                  setIsDialog={setIsDialog}
+                  // Pass any necessary props for immunization supplies
+                
+                />
+              }
+            />
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              setVaccineToDelete(row.original.id);
+              setIsDeleteConfirmationOpen(true);
+            }}
+          >
+            <Trash />
+          </Button>
+        </div>
+      );
+    },
+  }
 ];

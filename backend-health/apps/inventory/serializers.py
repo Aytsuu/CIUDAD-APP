@@ -213,11 +213,20 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
 
 
 
+class VaccineCategorySerializer(serializers.ModelSerializer):
+     
+    class Meta:
+        model = VaccineCategory
+        fields = '__all__'
 
+class ImmunizationSuppliesSerializer(serializers.ModelSerializer):
+    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
 
+    class Meta:
+        model = ImmunizationSupplies
+        fields = '__all__'
 class VaccineIntervalSerializer(serializers.ModelSerializer):
      
-
     class Meta:
         model = VaccineInterval
         fields = '__all__'
@@ -227,11 +236,15 @@ class RoutineFrequencySerializer(serializers.ModelSerializer):
         model = RoutineFrequency
         fields = '__all__'
 
-
-
 class VacccinationListSerializer(serializers.ModelSerializer):
-    intervals = VaccineIntervalSerializer(many=True, read_only=True, source='vaccineinterval_set')
-    routine_frequency = RoutineFrequencySerializer(read_only=True, source='routinefrequency')
+    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
+    
+    # All intervals for this vaccine (using the related_name)
+    intervals = VaccineIntervalSerializer(many=True, read_only=True)
+    
+    # Routine frequency for this vaccine (using the related_name)
+    routine_frequency = RoutineFrequencySerializer(read_only=True)
+    
     class Meta:
         model = VaccineList
         fields = '__all__'

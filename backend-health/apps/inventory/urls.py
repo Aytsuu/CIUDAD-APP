@@ -59,6 +59,18 @@ urlpatterns = [
     path("vac_list/", VaccineListView.as_view(), name="vaccination-list"),
     path("vac_intervals/", VaccineIntervalView.as_view(), name="vaccination-interval"),
     path("routine_freq/", RoutineFrequencyView.as_view(), name="RoutineFrequency"),
+    path("vac_categ/", VaccineCategoryView.as_view(), name="vac_cat"),
+    path("imz_supplies/", ImmunizationSuppliesView.as_view(), name="imz_supplies"),
+    
+    
+     # Vaccination - Retrieve/Update endpoints
+    path("vac_list/<int:vac_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
+    path("vac_intervals/<int:vacInt_id>/", VaccineIntervalRetrieveUpdateDestroyView.as_view(), name="vaccination-interval-detail"),
+    path("routine_freq/<int:routineF_id>/", RoutineFrequencyRetrieveUpdateDestroyView.as_view(), name="RoutineFrequency-detail"),
+    path("vac_categ/<int:vaccat_id>/", VaccineCategoryRetrieveUpdateDestroyView.as_view(), name="vac_cat-detail"),
+    path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
+    
+    
     
     
 ]

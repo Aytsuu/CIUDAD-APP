@@ -56,54 +56,44 @@ export const FirstAidSchema = z.object({
  
 });
 
+export const ImmunizationSchema = z.object({
+  imz_name: z.string().min(1, "Required").default(""),
+ 
+});
 
 
+
+// In your form schema file
 export const VaccineSchema = z.object({
   vaccineName: z.string().min(1, "Vaccine name is required"),
-  intervals: z.array(z.number().min(0, "Interval must be positive")).optional(),
-  timeUnits: z.array(z.string()).optional(),
-  noOfDoses: z.number().int().min(1, "At least 1 dose is required"),
+  noOfDoses: z.number().min(1, "At least 1 dose is required"),
   ageGroup: z.string().min(1, "Age group is required"),
   specifyAge: z.string().optional(),
   type: z.enum(["routine", "primary"]),
+  intervals: z.array(z.number().min(0)).optional(),
+  timeUnits: z.array(z.string()).optional(),
   routineFrequency: z.object({
-    interval: z.number().min(0, "Interval must be positive"),
-    unit: z.string(),
+    interval: z.number().min(1, "Interval must be at least 1"),
+    unit: z.string().min(1, "Unit is required"),
   }).optional(),
 }).superRefine((data, ctx) => {
-  if (data.type === "primary" && data.ageGroup === "0-5" && !data.specifyAge) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Specify age is required for primary vaccines for 0-5 age group",
-      path: ["specifyAge"],
-    });
-  }
-
-  if (data.type === "routine") {
-    if (!data.routineFrequency) {
+  if (data.type === "primary") {
+    // For primary vaccines, ensure intervals match the number of doses minus 1
+    const expectedIntervals = data.noOfDoses - 1;
+    if (data.intervals && data.intervals.length !== expectedIntervals) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Please specify administration frequency",
-        path: ["routineFrequency"],
-      });
-    }
-
-    if (data.noOfDoses > 1 && (!data.intervals || data.intervals.length !== data.noOfDoses - 1)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please provide intervals between doses",
+        message: `Primary vaccines require ${expectedIntervals} interval(s)`,
         path: ["intervals"],
       });
     }
-  }
-
-  if (data.type === "primary" && data.noOfDoses > 1) {
-    const expectedIntervals = data.ageGroup === "0-5" ? data.noOfDoses - 1 : data.noOfDoses - 1;
-    if (!data.intervals || data.intervals.length !== expectedIntervals) {
+  } else if (data.type === "routine") {
+    // For routine vaccines, ensure noOfDoses is 1
+    if (data.noOfDoses !== 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Please provide intervals for all doses",
-        path: ["intervals"],
+        message: "Routine vaccines must have exactly 1 dose",
+        path: ["noOfDoses"],
       });
     }
   }
@@ -115,3 +105,4 @@ export type MedicineType = z.infer<typeof MedicineListSchema>;
 export type CommodityType = z.infer<typeof CommodityListSchema>;
 // export type VacccineType = z.infer<typeof VaccineListSchema>;
 export type FirstAidType = z.infer<typeof FirstAidSchema>;
+export type ImmunizationType = z.infer<typeof ImmunizationSchema>;
