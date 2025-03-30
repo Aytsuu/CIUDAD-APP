@@ -125,7 +125,7 @@ export default function ResidentRecords() {
             state={{
                 params: {
                   title: 'Resident Registration', 
-                  description: 'Provide your details to complete the registration process.',
+                  description: 'Provide the necessary details, and complete the registration.',
                 }
               }}
             >

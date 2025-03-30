@@ -3,12 +3,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { HouseholdRecord } from "../profilingTypes";
-import { Row } from "react-day-picker";
 
-// Define the columns for the data table
+// Define the columns for household the data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const householdColumns: ColumnDef<HouseholdRecord>[] = [
+export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[] => [
   {
     accessorKey: 'id',
     header: ({ column }) => (
@@ -16,7 +15,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Household (#)
+        Household No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -54,7 +53,6 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     ),
     cell: ({ row }) => (
         <div className="flex gap-4 justify-center items-center">
-          <span className="bg-green-500 text-white py-1 px-2 text-[14px] rounded-md">{"# " + row.original.headNo}</span>
           {row.original.head}
         </div>
     )
@@ -77,12 +75,14 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   },
   {
     accessorKey: 'action',
-    header: 'action',
+    header: 'Action',
     cell: ({ row }) => (
-        <Link to="/" state={{params: {data: row.original.id}}}>
-            <Button variant={"outline"}>
-                View <MoveRight/>
-            </Button>
+        <Link to="/household-record-view" 
+          state={{params: {data: households.find((household) => household.hh_id == row.original.id)}}}
+        >
+          <Button variant={"outline"}>
+              View <MoveRight/>
+          </Button>
         </Link>
     )
   },

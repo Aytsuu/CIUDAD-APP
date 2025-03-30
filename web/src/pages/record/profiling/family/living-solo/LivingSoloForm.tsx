@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
-import { family, familyComposition, building } from "../../restful-api/profiingPostAPI";
+import { family, familyComposition } from "../../restful-api/profiingPostAPI";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
@@ -40,12 +40,15 @@ export default function LivingSoloForm({residents, households} : {
             return;
         }
 
-        const data = form.getValues()
-        const familyNo = await family(data, null, null)
-        familyComposition(familyNo, data.id.split(" ")[0])
-        const buildId = await building(familyNo, data)
+        try {
+            const data = form.getValues()
+            const familyNo = await family(data, null, null)
+            familyComposition(familyNo, data.id.split(" ")[0])
 
-        if (buildId) {
+        } catch (err) {
+            console.error(err)
+
+        } finally {
             toast('Record added successfully', {
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 action: {
@@ -55,7 +58,9 @@ export default function LivingSoloForm({residents, households} : {
             });
             setIsSubmitting(false)
             form.reset(defaultValues.current)
+
         }
+
 
     }
 

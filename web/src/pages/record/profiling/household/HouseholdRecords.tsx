@@ -8,7 +8,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { householdColumns } from "./HouseholdColumns";
 import { HouseholdRecord } from "../profilingTypes";
 import { useQuery } from "@tanstack/react-query";
-import { getHouseholds, getSitio, getResidents } from "../restful-api/profilingGetAPI";
+import { getHouseholds, getSitio, getResidents, getFamilies } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
@@ -42,6 +42,13 @@ export default function HouseholdRecords(){
         refetchOnMount: true, 
         staleTime: 0, 
     });
+
+    const { data: families, isLoading: isLoadingFamilies } = useQuery({
+        queryKey: ['families'],
+        queryFn: getFamilies,
+        refetchOnMount: true,
+        staleTime: 0
+    })
 
     // Format households to populate data table
     const formatHouseholdData = (): HouseholdRecord[] => {
@@ -85,7 +92,7 @@ export default function HouseholdRecords(){
         currentPage * pageSize
     );
 
-    if(isLoadingHouseholds || isLoadingSitio || isLoadingResidents) {
+    if(isLoadingHouseholds || isLoadingSitio || isLoadingResidents || isLoadingFamilies) {
         return (
             <div className="w-full h-full">
                 <Skeleton className="h-10 w-1/6 mb-3" />
@@ -99,7 +106,7 @@ export default function HouseholdRecords(){
     return (
         <MainLayoutComponent 
             title="Household Profiling"
-            description="Manage and view household records"
+            description="View and manage household records"
         >
             <div className="hidden lg:flex justify-between items-center mb-4 gap-2">
                 <div className="flex gap-2 w-full">
@@ -163,7 +170,7 @@ export default function HouseholdRecords(){
                     />
                 </div>
                 <div className="overflow-x-auto">
-                    <DataTable columns={householdColumns} data={paginatedHouseholds} />
+                    <DataTable columns={householdColumns(households)} data={paginatedHouseholds} />
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
                     <p className="text-xs sm:text-sm text-darkGray">

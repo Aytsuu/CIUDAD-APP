@@ -69,9 +69,20 @@ export const familyFormSchema = z.object({
     }),
 })
 
-export const householdSchema = z.object({
+export const householdFormSchema = z.object({
     nhts: z.string().min(1),
     sitio: z.string().min(1),
     street: z.string().min(1),
     householdHead: z.string().min(1)
+})
+
+export const businessFormSchema = z.object({
+    respondentLname: z.string().min(1),
+    respondentFname: z.string().min(1),
+    respondentMname: z.string().min(1),
+    respondentDob: z.string().date(),
+    name: z.string().min(1),
+    grossSales: z.string().min(1),
+    sitio: z.string().min(1),
+    street: z.string().min(1)   
 })

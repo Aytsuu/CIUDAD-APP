@@ -15,31 +15,19 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Family (#)
+        Family No.
         <ArrowUpDown size={14} />
       </div>
     ),
   },
   {
-    accessorKey: 'head',
+    accessorKey: 'noOfMembers',
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Head
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'noOfDependents',
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        (#) of Dependents
+        No. of Members
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -50,7 +38,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
   },
   {
     accessorKey: 'indigenous',
-    header: 'Indigenous?'
+    header: 'Indigenous'
   },
   {
     accessorKey: 'dateRegistered',
@@ -70,7 +58,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
   },
   {
     accessorKey: 'action',
-    header: 'action',
+    header: 'Action',
     cell: ({ row }) => (
       <Link 
         to="/family-record-view"
@@ -90,7 +78,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const DependentViewColumns = (): ColumnDef<DependentRecord>[] => [
+export const dependentViewColumns = (): ColumnDef<DependentRecord>[] => [
   {
       accessorKey: 'id',
       header: 'Resident (#)'

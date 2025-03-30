@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button/button";
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import DependentForm from './DependentForm';
 import { DataTable } from '@/components/ui/table/data-table';
-import { father, mother, family, familyComposition, dependents, building} from '../../restful-api/profiingPostAPI'
+import { father, mother, family, familyComposition, dependents} from '../../restful-api/profiingPostAPI'
 import { DependentRecord } from '../../profilingTypes';
 import { ColumnDef } from '@tanstack/react-table';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout';
@@ -96,13 +96,9 @@ export default function DependentsInfoLayout(
           const demographicInfo = form.getValues().demographicInfo;
           const dependentsInfo = form.getValues().dependentsInfo.list;
   
-          // Store mother information
+          // Store information to the database
           const motherId = await mother(selectedParents.mother);
-  
-          // Store father information
           const fatherId = await father(selectedParents.father);
-  
-          // Store family information
           const familyId = await family(demographicInfo, fatherId, motherId);
 
           // Automatically add selected mother and father in the family composition
@@ -111,27 +107,25 @@ export default function DependentsInfoLayout(
   
           // Store dependents information
           dependents(dependentsInfo, familyId);
-  
-          // Store building information
-          const buildId = await building(familyId, demographicInfo);
-  
-          // Reset form if all operations are successful
-          if(buildId) {
-            form.reset(defaultValues);
-          }
-  
-          // Provide feedback to the user
-          toast('Record added successfully', {
+          
+      } catch (err) {
+          // Handle errors and provide feedback to the user
+          console.error("Error registering profile:", err);
+          alert("An error occurred while registering the profile. Please try again.");
+      } finally {
+
+        // Reset form if all operations are successful
+        form.reset(defaultValues);
+        
+        // Provide feedback to the user
+        toast('Record added successfully', {
             icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
             action: {
                 label: "View",
                 onClick: () => navigate(-1)
             }
         });
-      } catch (err) {
-          // Handle errors and provide feedback to the user
-          console.error("Error registering profile:", err);
-          alert("An error occurred while registering the profile. Please try again.");
+        
       }
     };
 

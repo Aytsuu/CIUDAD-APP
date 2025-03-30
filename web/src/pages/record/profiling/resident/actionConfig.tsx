@@ -83,7 +83,7 @@ export const buttonConfig = (
     ),
     default: (
       <ConfirmationModal 
-          trigger={<Button className="w-full sm:w-32"> Approve </Button>}
+          trigger={<Button className="w-full sm:w-32"> Register </Button>}
           title="Confirm Registration"
           description="Do you wish to proceed with the registration?"
           actionLabel="Confirm"

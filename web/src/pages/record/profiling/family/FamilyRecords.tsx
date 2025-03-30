@@ -46,18 +46,21 @@ export default function FamilyRecords() {
     const formatFamilyData = (): FamilyRecord[] => {
         if(!families) return [];
     
-        return families.map((item: any) => {
+        return families.map((family: any) => {
 
-            const building = item.building
+            const mother = family.mother;
+            const father = family.father;
+            const dependents = family.dependents
+
+            const totalMembers = (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length
             
             return {
-                id: item.fam_id || '',
-                head: '',
-                noOfDependents: item.dependents.length,
-                building: building?.build_type || '',
-                indigenous: item.fam_indigenous || '',
-                dateRegistered: item.fam_date_registered || '',
-                registeredBy: item.staff
+                id: family.fam_id || '',
+                noOfMembers: totalMembers || 1,
+                building: family.fam_building || '',
+                indigenous: family.fam_indigenous || '',
+                dateRegistered: family.fam_date_registered || '',
+                registeredBy: family.staff
             }
         });
     };

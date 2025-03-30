@@ -118,9 +118,12 @@ export const family = async (demographicInfo: Record<string, string>, fatherId: 
         const res = await api.post('profiling/family/', {
             fam_id: await generateFamilyNo(demographicInfo.building),
             fam_indigenous: capitalize(demographicInfo.indigenous),
+            fam_building: capitalize(demographicInfo.building),
             fam_date_registered: formatDate(new Date()),
             father_id: fatherId || null,
             mother_id: motherId || null,
+            guard_id: null,
+            hh_id: demographicInfo.householdNo || null,
             staff: "00001250323"
         })
 
@@ -138,22 +141,6 @@ export const familyComposition = (familyId: string, residentId: string) => {
             fam: familyId,
             rp: residentId
         })
-
-    } catch (err) {
-        console.error(err)
-    }
-}
-
-export const building = async (familyNo: string, demographicInfo: Record<string, string>) => {
-    try {
-
-        const res = await api.post('profiling/building/', {
-            build_type: demographicInfo.building,
-            hh_id: demographicInfo.householdNo,
-            fam: familyNo
-        })
-
-        return res.data.build_id
 
     } catch (err) {
         console.error(err)

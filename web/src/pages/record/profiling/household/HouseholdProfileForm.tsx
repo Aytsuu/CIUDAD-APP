@@ -3,7 +3,7 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { householdSchema } from "@/form-schema/profiling-schema";
+import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,9 @@ export default function HouseholdProfileForm({ sitio, residents, onHouseholdRegi
 
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const defaultValues = React.useRef(generateDefaultValues(householdSchema));
-    const form = useForm<z.infer<typeof householdSchema>>({
-        resolver: zodResolver(householdSchema),
+    const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));
+    const form = useForm<z.infer<typeof householdFormSchema>>({
+        resolver: zodResolver(householdFormSchema),
         defaultValues: defaultValues.current,
     });
 

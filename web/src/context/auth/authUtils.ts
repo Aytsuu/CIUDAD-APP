@@ -1,7 +1,7 @@
 // This file contains utility functions for authentication, such as fetching the user and handling tokens.
 
 import axios from 'axios';
-import { User } from './authTypes';
+import { User } from './auth/authTypes';
 
 export const fetchUser = async (): Promise<User | null> => {
   const token = localStorage.getItem('access_token');
