@@ -68,13 +68,7 @@ class SitioView(generics.ListCreateAPIView):
 
 class HouseholdView(generics.ListCreateAPIView):
     serializer_class = HouseholdSerializer
-    queryset = Household.objects.all()
-
-# Building Views ------------------------------------------------------------------------
-
-class BuildingView(generics.ListCreateAPIView):
-    serializer_class = BuildingSerializer
-    queryset = Building.objects.all()
+    queryset = Household.objects.all()  
 
 # ResidentProfile Views -----------------------------------------------------------------
 

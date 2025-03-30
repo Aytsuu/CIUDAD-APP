@@ -35,7 +35,7 @@ class StaffSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_rp(self, obj):
-        from apps.profiling.serializers import ResidentProfileFullSerializer  # Lazy import inside the method
-        return ResidentProfileFullSerializer(obj.rp).data
+        from apps.profiling.serializers import ResidentProfileMinimalSerializer  # Lazy import inside the method
+        return ResidentProfileMinimalSerializer(obj.rp).data
 
 

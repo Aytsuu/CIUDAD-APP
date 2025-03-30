@@ -28,9 +28,6 @@ urlpatterns = [
     # Househould Urls
     path("household/", HouseholdView.as_view(), name="household-details"),
 
-    # Building Urls
-    path("building/", BuildingView.as_view(), name="building-details"),
-
     # Registered Urls
     path("resident/", ResidentProfileView.as_view(), name="resident-details"),
 

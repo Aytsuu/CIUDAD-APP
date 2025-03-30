@@ -68,7 +68,6 @@ class DependentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class FamilySerializer(serializers.ModelSerializer):
-    building = serializers.SerializerMethodField()
     dependents = DependentSerializer(many=True, read_only=True)
     mother = MotherSerializer(read_only=True)
     father = FatherSerializer(read_only=True)
@@ -79,21 +78,11 @@ class FamilySerializer(serializers.ModelSerializer):
     class Meta:
         model = Family
         fields = '__all__'
-    
-    def get_building(self, obj):
-        # Fetch the related Building for the Family
-        building = Building.objects.filter(fam=obj).first()
-        if building:
-            return {
-                'build_id': building.build_id,
-                'build_type': building.build_type,
-                'hh_id': building.hh.hh_id if building.hh else None,
-            }
-        return None
 
 class HouseholdSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)  # Read-only for display
-    rp = ResidentProfileFullSerializer(read_only=True)  # Read-only for display
+    rp = ResidentProfileMinimalSerializer(read_only=True)  # Read-only for display
+    family = serializers.SerializerMethodField()
     staff = serializers.SerializerMethodField()
     
     sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio') 
@@ -107,14 +96,10 @@ class HouseholdSerializer(serializers.ModelSerializer):
     def get_staff(self, obj):
         from apps.administration.serializers import StaffSerializer  # Lazy import inside the method
         return StaffSerializer(obj.staff).data
-
-class BuildingSerializer(serializers.ModelSerializer):
-    hh = HouseholdSerializer(read_only=True)
-    hh_id = serializers.PrimaryKeyRelatedField(queryset=Household.objects.all(), write_only=True, source='hh')
     
-    class Meta:
-        model = Building
-        fields = '__all__'
+    def get_family(self,obj):
+        family = Family.objects.filter(hh=obj)
+        return FamilySerializer(family, many=True).data
 
 class RequestSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)

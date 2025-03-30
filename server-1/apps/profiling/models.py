@@ -4,6 +4,13 @@ from datetime import date
 
 # Create your models here.
 
+class Sitio(models.Model):
+    sitio_id = models.BigAutoField(primary_key=True)
+    sitio_name = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'sitio'
+
 class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
@@ -30,6 +37,21 @@ class ResidentProfile(models.Model):
     class Meta:
         db_table = 'resident_profile'
 
+class Household(models.Model):
+    hh_id = models.CharField(max_length=50,primary_key=True)
+    hh_nhts = models.CharField(max_length=50)
+    hh_province = models.CharField(max_length=50)
+    hh_city = models.CharField(max_length=50)       
+    hh_barangay = models.CharField(max_length=50)
+    hh_street = models.CharField(max_length=50)
+    hh_date_registered = models.DateField(default=date.today)
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
+    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
+
+    class Meta:
+        db_table = 'household'
+
 class Mother(models.Model):
     mother_id = models.BigAutoField(primary_key=True)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
@@ -54,9 +76,12 @@ class Guardian(models.Model):
 class Family(models.Model):
     fam_id = models.CharField(max_length=50,primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
+    fam_building = models.CharField(max_length=50)
     fam_date_registered = models.DateField(default=date.today)
     father = models.ForeignKey(Father, on_delete=models.CASCADE, null=True)
     mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True)
+    guard = models.ForeignKey(Guardian, on_delete=models.CASCADE, null=True)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 
     class Meta:
@@ -78,37 +103,7 @@ class FamilyComposition(models.Model):
     class Meta:
         db_table = 'family_composition' 
 
-class Sitio(models.Model):
-    sitio_id = models.BigAutoField(primary_key=True)
-    sitio_name = models.CharField(max_length=100)
-
-    class Meta:
-        db_table = 'sitio'
-
-class Household(models.Model):
-    hh_id = models.CharField(max_length=50,primary_key=True)
-    hh_nhts = models.CharField(max_length=50)
-    hh_province = models.CharField(max_length=50)
-    hh_city = models.CharField(max_length=50)       
-    hh_barangay = models.CharField(max_length=50)
-    hh_street = models.CharField(max_length=50)
-    hh_date_registered = models.DateField(default=date.today)
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
-
-    class Meta:
-        db_table = 'household'
     
-class Building(models.Model): 
-    build_id = models.BigAutoField(primary_key=True)
-    build_type = models.CharField(max_length=100)
-    hh = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='buildings')
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='buildings')
-    
-    class Meta:
-        db_table = 'building'
-
 class Request(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField()
