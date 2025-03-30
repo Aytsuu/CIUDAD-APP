@@ -1,5 +1,4 @@
 import api from '@/api/api'
-import { formatDate } from '@/helpers/dateFormatter';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 
 const budget_plan = async (budgetInfo: Record<string, any>) => {
@@ -29,7 +28,7 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
-            plan_issue_date: formatDate(new Date().toISOString().split('T')[0]), 
+            plan_issue_date: new Date().toISOString().split('T')[0], 
         });
 
         return res.data.plan_id;
