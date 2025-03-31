@@ -38,15 +38,15 @@ export default function SignIn() {
     setErrorMessage("");
 
     try {
-      const response = await axios.post("http://localhost:8000/user/login/", {
-        username: data.usernameOrEmail,
+      const response = await axios.post("http://127.0.0.1:8000/user/login/", {
+        email: data.usernameOrEmail,
         password: data.password,
       });
 
       if (response.status === 200) {
         console.log("Login successful!", response.data);
         // Store user data in localStorage
-        localStorage.setItem("user_id", response.data.user_id);
+        localStorage.setItem("id", response.data.user_id);
         localStorage.setItem("username", response.data.username);
         localStorage.setItem("email", response.data.email);
         localStorage.setItem("profile_image", response.data.profile_image);
