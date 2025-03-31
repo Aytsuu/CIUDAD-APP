@@ -12,7 +12,6 @@ import {
   getHouseholds,
   getSitio,
   getResidents,
-  getFamilies,
 } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
@@ -47,41 +46,35 @@ export default function HouseholdRecords() {
     staleTime: 0,
   });
 
-  const { data: families, isLoading: isLoadingFamilies } = useQuery({
-    queryKey: ["families"],
-    queryFn: getFamilies,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
   // Format households to populate data table
-  const formatHouseholdData = (): HouseholdRecord[] => {
+  const formatHouseholdData = React.useCallback((): HouseholdRecord[] => {
     if (!households) return [];
 
-    return households.map((item: any) => {
-      const sitio = item.sitio;
-      const personal = item.rp.per;
-      const staff = item.staff.rp.per;
+    return households.map((house: any) => {
+      const sitio = house.sitio;
+      const personal = house.rp?.per;
+      const staff = house.staff?.rp?.per;
 
       return {
-        id: item.hh_id || "",
-        streetAddress: item.hh_street || "",
-        sitio: sitio?.sitio_name || "",
-        nhts: item.hh_nhts || "",
-        headNo: item.rp.rp_id,
+        id: house.hh_id || "-",
+        streetAddress: house.hh_street || "-",
+        sitio: sitio?.sitio_name || "-",
+        nhts: house.hh_nhts || "-",
+        headNo: house.rp.rp_id,
         head:
-          `${personal.per_lname}, ${
-            personal.per_fname
-          } ${personal.per_mname.slice(0, 1)}.` || "",
-        dateRegistered: item.hh_date_registered || "",
-        registeredBy:
-          `${staff.per_lname}, ${staff.per_fname} ${staff.per_mname.slice(
-            0,
-            1
-          )}.` || "",
+          (`${personal.per_lname},
+           ${personal.per_fname} 
+           ${personal.per_mname ? 
+            personal.per_mname?.slice(0, 1) + '.' : ''
+          }` || "-"),
+        dateRegistered: house.hh_date_registered || "-",
+        registeredBy: 
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname?.slice(0,1)}.` : '-')
       };
     });
-  };
+  }, [households]);
 
   const filteredHouseholds = React.useMemo(() => {
     let formattedData = formatHouseholdData();
@@ -107,8 +100,7 @@ export default function HouseholdRecords() {
   if (
     isLoadingHouseholds ||
     isLoadingSitio ||
-    isLoadingResidents ||
-    isLoadingFamilies
+    isLoadingResidents
   ) {
     return (
       <div className="w-full h-full">

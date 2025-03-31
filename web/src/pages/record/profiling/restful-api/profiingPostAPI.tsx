@@ -31,18 +31,12 @@ export const addPersonal = async (personalInfo: Record<string, string>) => {
 
 export const addResidentProfile = async (personalId: string) => {
   try {
-    console.log({
-      rp_id: await generateResidentNo(),
-      rp_date_registered: formatDate(new Date()),
-      per_id: personalId,
-      staff: "00001250323",
-    });
 
     const res = await api.post("profiling/resident/", {
       rp_id: await generateResidentNo(),
       rp_date_registered: formatDate(new Date()),
       per_id: personalId,
-      staff: "00001250323",
+      staff: null,
     });
 
     return res.data;
@@ -103,7 +97,8 @@ export const addFamily = async (
   motherId: string | null
 ) => {
   try {
-    console.log({fam_id: await generateFamilyNo(demographicInfo.building),
+    console.log({
+      fam_id: await generateFamilyNo(demographicInfo.building),
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
       fam_date_registered: formatDate(new Date()),
@@ -111,7 +106,7 @@ export const addFamily = async (
       mother_id: motherId || null,
       guard: null,
       hh: demographicInfo.householdNo || null,
-      staff: "00001250323",
+      staff: null,
     })
     const res = await api.post("profiling/family/", {
       fam_id: await generateFamilyNo(demographicInfo.building),
@@ -122,7 +117,7 @@ export const addFamily = async (
       mother_id: motherId || null,
       guard: null,
       hh: demographicInfo.householdNo || null,
-      staff: "00001250323",
+      staff: null,
     });
 
     return res.data.fam_id;
@@ -154,8 +149,9 @@ export const addHousehold = async (householdInfo: Record<string, string>) => {
       hh_barangay: "San Roque",
       hh_street: capitalize(householdInfo.street),
       hh_date_registered: formatDate(new Date()),
-      per_id: householdInfo.householdHead.split(" ")[0],
+      rp_id: householdInfo.householdHead.split(" ")[0],
       sitio_id: householdInfo.sitio,
+      staff_id: null,
     });
 
     return res.data;

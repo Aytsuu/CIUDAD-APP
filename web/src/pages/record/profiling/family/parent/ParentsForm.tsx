@@ -7,11 +7,13 @@ import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
+import { DependentRecord } from "../../profilingTypes";
 
-export default function ParentsForm({ residents, form, selectedParent, onSelect, prefix, title }: {
+export default function ParentsForm({ residents, form, dependentsList, selectedParent, onSelect, prefix, title }: {
   residents: any;
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   selectedParent: string;
+  dependentsList: DependentRecord[];
   onSelect: React.Dispatch<React.SetStateAction<string>>
   prefix: 'motherInfo' | 'fatherInfo';
   title: string;
@@ -19,10 +21,12 @@ export default function ParentsForm({ residents, form, selectedParent, onSelect,
 
 
   const filteredResidents = React.useMemo(() => {
-    return residents.formatted.filter((resident: any) => 
-      resident.id.split(" ")[0] !== selectedParent
-    )
-  }, [residents.formatted, selectedParent])
+    return residents.formatted.filter((resident: any) => {
+      const residentId = resident.id.split(" ")[0]
+      return residentId !== selectedParent && 
+          !dependentsList.some((dependent) => dependent.id == residentId)
+    }
+  )}, [residents.formatted, selectedParent, dependentsList])
 
   React.useEffect(() => {
 

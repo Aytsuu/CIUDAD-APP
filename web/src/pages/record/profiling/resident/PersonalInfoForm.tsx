@@ -270,7 +270,7 @@ export default function PersonalInfoForm({ params }: { params: any }) {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <FormInput control={form.control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} />
             <FormInput control={form.control} name="per_religion" label="Religion" placeholder="Enter religion" readOnly={isReadOnly} />
-            <FormInput control={form.control} name="per_contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} />
+            <FormInput control={form.control} name="per_contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number"/>
           </div>
 
           {/* Action Button */}

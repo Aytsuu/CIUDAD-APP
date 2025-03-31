@@ -72,18 +72,8 @@ class FamilySerializer(serializers.ModelSerializer):
     mother = MotherSerializer(read_only=True)
     father = FatherSerializer(read_only=True)
 
-    mother_id = serializers.PrimaryKeyRelatedField(
-        queryset=Mother.objects.all(), 
-        write_only=True, 
-        source="mother",
-        allow_null=True, 
-    )
-    father_id = serializers.PrimaryKeyRelatedField(
-        queryset=Father.objects.all(), 
-        write_only=True, 
-        source="father",
-        allow_null=True, 
-    )
+    mother_id = serializers.PrimaryKeyRelatedField(queryset=Mother.objects.all(), source="mother", allow_null=True)
+    father_id = serializers.PrimaryKeyRelatedField(queryset=Father.objects.all(), write_only=True, source="father", allow_null=True)
 
     class Meta:
         model = Family
@@ -97,7 +87,7 @@ class HouseholdSerializer(serializers.ModelSerializer):
     
     sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio') 
     rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source='staff')
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source='staff', allow_null=True)
     
     class Meta:
         model = Household

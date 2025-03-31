@@ -58,12 +58,12 @@ export default function FamilyRecords() {
         (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length;
 
       return {
-        id: family.fam_id || "",
+        id: family.fam_id || "-",
         noOfMembers: totalMembers || 1,
-        building: family.fam_building || "",
-        indigenous: family.fam_indigenous || "",
-        dateRegistered: family.fam_date_registered || "",
-        registeredBy: family.staff,
+        building: family.fam_building || "-",
+        indigenous: family.fam_indigenous || "-",
+        dateRegistered: family.fam_date_registered || "-",
+        registeredBy: family.staff || "-",
       };
     });
   };
@@ -184,7 +184,11 @@ export default function FamilyRecords() {
           />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-          <p className="text-xs sm:text-sm text-darkGray">Showing 0 rows</p>
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredFamilies.length)} of{" "}
+            {filteredFamilies.length} rows
+          </p>
           {filteredFamilies.length > 0 && (
             <PaginationLayout
               currentPage={currentPage}

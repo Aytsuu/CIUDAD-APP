@@ -10,8 +10,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
 import PersonalInfoForm from "./PersonalInfoForm";
-import { BsChevronLeft } from "react-icons/bs";
-import { Button } from "@/components/ui/button/button";
 import { useLocation, useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 

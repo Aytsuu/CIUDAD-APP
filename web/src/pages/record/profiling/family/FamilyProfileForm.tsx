@@ -14,6 +14,7 @@ import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { formatHouseholds, formatResidents } from "../profilingFormats";
+import { DependentRecord } from "../profilingTypes";
 
 export default function FamilyProfileForm() {
 
@@ -24,6 +25,7 @@ export default function FamilyProfileForm() {
 
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>('');
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>('');
+  const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>([]);
   
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
@@ -107,6 +109,7 @@ export default function FamilyProfileForm() {
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
               selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
+              dependentsList={dependentsList}
               setSelectedMotherId={setSelectedMotherId}
               setSelectedFatherId={setSelectedFatherId}
               onSubmit={()=>nextStep()}
@@ -118,6 +121,8 @@ export default function FamilyProfileForm() {
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
               selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
+              dependentsList={dependentsList}
+              setDependentsList={setDependentsList}
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />

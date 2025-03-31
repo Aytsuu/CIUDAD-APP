@@ -4,12 +4,14 @@ import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import ParentsForm from "./ParentsForm";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { DependentRecord } from "../../profilingTypes";
 
 export default function ParentsFormLayout(
-  { form, residents, selectedParents, setSelectedMotherId, setSelectedFatherId, onSubmit, back}: {
+  { form, residents, selectedParents, dependentsList, setSelectedMotherId, setSelectedFatherId, onSubmit, back}: {
     form: UseFormReturn<z.infer<typeof familyFormSchema>>;
     residents: any;
     selectedParents: Record<string, string>;
+    dependentsList: DependentRecord[];
     setSelectedMotherId: React.Dispatch<React.SetStateAction<string>>;
     setSelectedFatherId: React.Dispatch<React.SetStateAction<string>>;
     onSubmit: () => void;
@@ -23,6 +25,7 @@ export default function ParentsFormLayout(
         <ParentsForm 
           residents={residents}
           form={form}
+          dependentsList={dependentsList}
           selectedParent={selectedParents.father}
           onSelect={setSelectedMotherId}
           prefix="motherInfo" 
@@ -34,6 +37,7 @@ export default function ParentsFormLayout(
         <ParentsForm 
           residents={residents}
           form={form}
+          dependentsList={dependentsList}
           selectedParent={selectedParents.mother}
           onSelect={setSelectedFatherId}
           prefix="fatherInfo" 

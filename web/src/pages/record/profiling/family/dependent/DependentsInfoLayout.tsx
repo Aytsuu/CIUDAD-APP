@@ -23,26 +23,27 @@ export default function DependentsInfoLayout({
   form,
   residents,
   selectedParents,
+  dependentsList,
+  setDependentsList,
   defaultValues,
   back,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
   selectedParents: Record<string, string>;
+  dependentsList: DependentRecord[];
+  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
   defaultValues: Record<string, any>;
   back: () => void;
 }) {
   const navigate = useNavigate();
-  const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
-    []
-  );
 
   React.useEffect(() => {
-    const dependentsList = form.getValues("dependentsInfo.list");
+    const dependents = form.getValues("dependentsInfo.list");
 
-    if (Array.isArray(dependentsList)) {
+    if (Array.isArray(dependents)) {
       // Transform the list into an array of Dependent objects
-      const transformedData = dependentsList.map((value) => ({
+      const transformedData = dependents.map((value) => ({
         id: value.id.split(" ")[0],
         lname: value.lastName,
         fname: value.firstName,

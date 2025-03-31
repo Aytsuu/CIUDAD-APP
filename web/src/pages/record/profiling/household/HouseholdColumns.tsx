@@ -21,10 +21,6 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
     ),
   },
   {
-    accessorKey: 'streetAddress',
-    header: 'Street Address',
-  },
-  {
     accessorKey: 'sitio',
     header: ({ column }) => (
       <div
@@ -35,6 +31,10 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
         <ArrowUpDown size={14} />
       </div>
     ),
+  },  
+  {
+    accessorKey: 'streetAddress',
+    header: 'Street Address',
   },
   {
     accessorKey: 'nhts',
