@@ -10,7 +10,7 @@ import { HouseholdRecord } from "../profilingTypes";
 import { useQuery } from "@tanstack/react-query";
 import { getHouseholds, getSitio, getResidents } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
 
 export default function ProfilingHousehold(){

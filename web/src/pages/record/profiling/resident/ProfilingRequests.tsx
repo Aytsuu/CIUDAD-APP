@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { useNavigate } from "react-router";
-import { MainLayoutComponent } from "@/components/ui/main-layout-component";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { requestColumns } from "./RequestColumns";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
