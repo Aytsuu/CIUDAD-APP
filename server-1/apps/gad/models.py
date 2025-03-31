@@ -1,18 +1,17 @@
 from django.db import models
 from datetime import date
 
-
-class gad_budget_tracker(models.Model):
+class GAD_Budget_Tracker(models.Model):
     gbud_num = models.BigAutoField(primary_key=True)
-    don_donorfname = models.CharField(max_length=100, null=True)
-    don_donorlname = models.CharField(max_length=100, null=True)
-    don_item_name = models.CharField(max_length=100, null=True)
-    don_qty = models.IntegerField(null=True)
-    don_description = models.CharField(max_length=200, null=True)
-    don_category = models.CharField(max_length=100, null=True)
-    don_receiver = models.CharField(max_length=100, null=True)
-    don_date = models.DateField(default=date.today)
+    gbud_year = models.CharField(max_length=4)
+    gbud_total_amt_used = models.DecimalField(max_digits=10, decimal_places=2)
+    gbud_remaining_bal = models.DecimalField(max_digits=10, decimal_places=2)
+    gbud_date = models.DateField(default=date.today)
+    gbud_particulars = models.CharField(max_length=100, null=True)
+    gbud_type = models.CharField(max_length=100, null=True)
+    gbud_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    gbud_add_notes = models.CharField(max_length=200, null=True)
     # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = 'gad_budget_tracker'
+        db_table = 'GAD_Budget_Tracker'
