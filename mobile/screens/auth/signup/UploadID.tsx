@@ -50,7 +50,7 @@ export default function UploadID() {
   const handleSubmit = () => {
 
     console.log(getValues().uploadIdSchema)
-    // router.push('/(auth)/take-a-photo')
+    router.push('/(auth)/take-a-photo')
   } 
 
   return (
@@ -96,7 +96,7 @@ export default function UploadID() {
                     onPress={handleSubmit}
                     className="bg-primaryBlue native:h-[57px]"
                 >
-                    <Text className="text-white font-bold text-[16px]">Submit</Text>
+                    <Text className="text-white font-bold text-[16px]">Next</Text>
                 </Button>
             </View>
         </View>

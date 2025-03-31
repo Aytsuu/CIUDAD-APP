@@ -1,12 +1,11 @@
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, MoveRight } from "lucide-react";
+import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
-
+import { RequestRecord } from "../profilingTypes";
 
 // Define the colums for the data table
-export const requestColumns: ColumnDef<Report>[] = [
+export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     {
         accessorKey: "id",
         header: ({ column }) => (
@@ -14,73 +13,10 @@ export const requestColumns: ColumnDef<Report>[] = [
             className="flex w-full justify-center items-center gap-2 cursor-pointer"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             >
-            Resident (#)
+            Request (#)
             <ArrowUpDown size={14} />
             </div>
-        ),
-    },
-    {
-        accessorKey: "householdNo",
-        header: ({ column }) => (
-            <div
-            className="flex w-full justify-center items-center gap-2 cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-            Household (#)
-            <ArrowUpDown size={14} />
-            </div>
-        ),
-        cell: ({ row }) => {
-            const householdNo: string = row.getValue("householdNo");
-            
-            return householdNo ? (<div>{householdNo}</div>) :
-            (<TooltipLayout
-                trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-                content={"Family not registered"}
-            />)
-        },
-    },
-    {
-        accessorKey: "familyNo",
-        header: ({ column }) => (
-            <div
-            className="flex w-full justify-center items-center gap-2 cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-            Family (#)
-            <ArrowUpDown size={14} />
-            </div>
-        ),
-        cell: ({ row }) => {
-            const familyNo: string = row.getValue("familyNo");
-            
-            return familyNo ? (<div>{familyNo}</div>) :
-            (<TooltipLayout
-                trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-                content="Family not registered"
-            />)
-        },
-    },
-    {
-        accessorKey: "sitio",
-        header: ({ column }) => (
-            <div
-            className="flex w-full justify-center items-center gap-2 cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-            Sitio
-            <ArrowUpDown size={14} />
-            </div>
-        ),
-        cell: ({ row }) => {
-            const sitio: string = row.getValue("sitio");
-            
-            return sitio ? (<div>{sitio}</div>) :
-            (<TooltipLayout
-                trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-                content="Family not registered"
-            />)
-        },
+        )
     },
     {
         accessorKey: "lname",
@@ -135,40 +71,31 @@ export const requestColumns: ColumnDef<Report>[] = [
         )
     },
     {
-        accessorKey: "dateRegistered",
-        header: "Date Registered",
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-                {row.getValue("dateRegistered")}
-            </div>
-        ),
+        accessorKey: "address",
+        header: 'Address'
     },
     {
-        accessorKey: "registeredBy",
-        header: ({ column }) => (
-            <div
-            className="flex w-full justify-center items-center gap-2 cursor-pointer"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            >
-            Registered By
-            <ArrowUpDown size={14} />
-            </div>
-        ),
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-                {row.getValue("registeredBy") ? row.getValue("registeredBy") : '-'}
-            </div>
-        ),
+        accessorKey: "requestDate",
+        header: "Date Requested",
     },
     {
         accessorKey: "action",
         header: "Action",
         cell: ({ row }) => (
-            <Link to="/resident-form" 
+            <Link 
+                to="/resident-form" 
+                state={{
+                    params: {
+                        type: 'request',
+                        title: 'Registration Request',
+                        description: 'This is a registration request submitted by the user. Please review the details and approve or reject accordingly.',
+                        data: requests.find((request) => request.req_id === row.original.id)
+                    }
+                }}
             >
-            <Button variant="outline">
-                View <MoveRight/>
-            </Button>
+                <Button variant="outline">
+                    View <MoveRight/>
+                </Button>
             </Link>
         ),
         enableSorting: false,

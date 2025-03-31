@@ -54,3 +54,17 @@ export const getSitio = async () => {
   }
 
 }
+
+// Fetch registration requests
+export const getRequest = async () => {
+
+  try {
+
+    const res = await api.get('profiling/request/')
+    return res.data
+
+  } catch (err) {
+    console.error(err)
+  }
+
+}

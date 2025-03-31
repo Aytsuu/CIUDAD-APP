@@ -109,3 +109,7 @@ class Building(models.Model):
     class Meta:
         db_table = 'building'
 
+class Request(models.Model):
+    req_id = models.BigAutoField(primary_key=True)
+    req_date = models.DateField()
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
