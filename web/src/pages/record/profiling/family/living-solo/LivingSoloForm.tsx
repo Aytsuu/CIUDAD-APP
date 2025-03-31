@@ -27,7 +27,17 @@ export default function LivingSoloForm({
     <>
       <div className="grid gap-3">
         <div className="grid gap-2">
-          <Label className="text-black/70">Resident</Label>
+          <div className="flex justify-between items-center">
+            <Label className="text-black/70">Resident</Label>
+            <div className="flex gap-2 justify-end items-center">
+              <Label className="font-normal text-[13px]">Not found?</Label>
+              <Link to="/resident-form">
+                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                  Register
+                </Label>
+              </Link>
+            </div>
+          </div>
           <Combobox
             options={residents}
             value={form.watch("id")}
@@ -36,22 +46,22 @@ export default function LivingSoloForm({
             triggerClassName="font-normal"
             emptyMessage="No resident found"
           />
-          <div className="flex justify-between">
-            <Label className="text-[13px] text-red-500">
-              {invalidResident ? `Resident is required` : ""}
-            </Label>
+          <Label className="text-[13px] text-red-500">
+            {invalidResident ? `Resident is required` : ""}
+          </Label>
+        </div>
+        <div className="grid gap-2">
+        <div className="flex justify-between items-center">
+            <Label className="text-black/70">Household</Label>
             <div className="flex gap-2 justify-end items-center">
-              <Label className="font-normal">Resident not found?</Label>
-              <Link to="/resident-form">
-                <Label className="font-normal text-teal cursor-pointer hover:underline">
+              <Label className="font-normal text-[13px]">Not found?</Label>
+              <Link to="/household-form">
+                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                   Register
                 </Label>
               </Link>
             </div>
           </div>
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-black/70">Household</Label>
           <Combobox
             options={households}
             value={form.watch("householdNo")}
@@ -60,19 +70,9 @@ export default function LivingSoloForm({
             triggerClassName="font-normal"
             emptyMessage="No resident found"
           />
-          <div className="flex justify-between">
-            <Label className="text-[13px] text-red-500">
-              {invalidHousehold ? `Resident is required` : ""}
-            </Label>
-            <div className="flex gap-2 justify-end items-center">
-              <Label className="font-normal">Household not found?</Label>
-              <Link to="/household-form">
-                <Label className="font-normal text-teal cursor-pointer hover:underline">
-                  Register
-                </Label>
-              </Link>
-            </div>
-          </div>
+          <Label className="text-[13px] text-red-500">
+            {invalidHousehold ? `Resident is required` : ""}
+          </Label>
         </div>
         <FormSelect
           control={form.control}

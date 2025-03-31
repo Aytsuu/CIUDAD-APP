@@ -18,11 +18,13 @@ export default function DependentForm({ form, residents, selectedParents, depend
   dependents: DependentRecord[]
 }) {
 
+  // Initialize field array
   const { append } = useFieldArray({
     control: form.control,
     name: 'dependentsInfo.list',
   });
 
+  // Filter unselected residents before populating the search functionality
   const filteredResidents = React.useMemo(() => {
     return residents.formatted.filter((resident: any) => {
       const residentId = resident.id?.split(" ")[0]
@@ -33,12 +35,23 @@ export default function DependentForm({ form, residents, selectedParents, depend
   }, [residents.formatted, selectedParents, dependents])
 
   React.useEffect(() => {
+
+    // Get values
+    const motherId = selectedParents.mother;
+    const fatherId = selectedParents.father;
     const searchedResidentId = form.watch('dependentsInfo.new.id')
     const searchedResident = residents.default.find((value: any) => 
-      value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]
+      value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]  
     );
 
-    if (searchedResident) {
+    // Check If a resident is selected while being selected as dependent
+    const isResidentSelected = (
+      searchedResidentId.split(" ")[0] !== motherId ||
+      searchedResidentId.split(" ")[0] !== fatherId
+    );
+
+    // Condition to populate the fields if true, otherwise empty
+    if (searchedResident && !isResidentSelected) {
       form.setValue('dependentsInfo.new', {
         id: searchedResidentId || '',
         lastName: searchedResident.per.per_lname || '',
@@ -51,15 +64,16 @@ export default function DependentForm({ form, residents, selectedParents, depend
     } else {
       resetForm();
     }
-  }, [form.watch('dependentsInfo.new.id')]);
+  }, [form.watch('dependentsInfo.new.id'), selectedParents]);
 
+  // Handle adding dependent to the list
   const handleAddDependent = () => {
     const newDependent = form.getValues('dependentsInfo.new');
     append(newDependent);
-
     resetForm();
   };
 
+  // Handle form reset
   const resetForm = () => {
     form.setValue('dependentsInfo.new', {
       id: '',

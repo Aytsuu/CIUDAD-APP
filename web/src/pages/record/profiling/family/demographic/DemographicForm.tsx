@@ -20,16 +20,17 @@ export default function DemographicForm({
   households: any[];
   onSubmit: () => void;
 }) {
-  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
+  const [invalidHousehold, setInvalidHousehold] =
+    React.useState<boolean>(false);
 
   const submit = async () => {
     const formIsValid = await form.trigger("demographicInfo");
-    const householdId = form.watch("demographicInfo.householdNo")
+    const householdId = form.watch("demographicInfo.householdNo");
 
     if (formIsValid && householdId) {
       onSubmit();
     } else {
-      if(!householdId) setInvalidHousehold(true);
+      if (!householdId) setInvalidHousehold(true);
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
       });
@@ -58,8 +59,18 @@ export default function DemographicForm({
           className="grid gap-4"
         >
           <div className="grid grid-cols-4 gap-4">
-            <div className="flex flex-col justify-center pt-1">
-              <Label className="mb-3 text-black/70">Household</Label>
+            <div className="flex flex-col justify-start">
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-black/70">Household</Label>
+                <div className="flex gap-2 justify-end items-center">
+                  <Label className="font-normal text-[13px]">Not found?</Label>
+                  <Link to="/household-form">
+                    <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                      Register
+                    </Label>
+                  </Link>
+                </div>
+              </div>
               <Combobox
                 options={households}
                 value={form.watch(`demographicInfo.householdNo`)}
@@ -68,19 +79,9 @@ export default function DemographicForm({
                 contentClassName="w-[22rem]"
                 emptyMessage="No household found"
               />
-              <div className="flex justify-between mt-1">
-                <Label className="text-[13px] text-red-500">
-                  {invalidHousehold ? `Resident is required` : ""}
-                </Label>
-                <div className="flex gap-2 justify-end items-center">
-                  <Label className="font-normal">Not found?</Label>
-                  <Link to="/household-form">
-                    <Label className="font-normal text-teal cursor-pointer hover:underline">
-                      Register
-                    </Label>
-                  </Link>
-                </div>
-              </div>
+              <Label className="text-[13px] text-red-500 mt-1">
+                {invalidHousehold ? `Resident is required` : ""}
+              </Label>
             </div>
             <FormSelect
               control={form.control}
