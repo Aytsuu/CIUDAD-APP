@@ -1,35 +1,27 @@
 import { useState } from "react";
+import { Link } from "react-router";
+import { ColumnDef } from "@tanstack/react-table";
+
+import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
+import { FileInput } from "lucide-react";
+
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { FilterAccordion } from "@/components/ui/filter-accordion";
-import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
-import { Link } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { FileInput } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+
+import MotherInfo from "./prenatal/maternal-indiv-info";
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+
 
 export default function MaternalIndivRecords() {
   type maternalIndivRecords = {
     id: number;
-    patient: {
-      firstName: string;
-      lastName: string;
-      middleName: string;
-      gender: string;
-      age: number;
-      ageTime: string;
-    };
+    dateCreated: string;
     address: string;
     sitio: "Logarta" | "Bolinawan";
     type: "Transient" | "Resident";
@@ -48,31 +40,20 @@ export default function MaternalIndivRecords() {
       ),
     },
     {
-      accessorKey: "patient",
+      accessorKey: "dateCreated",
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Patient <ArrowUpDown size={15} />
+          Date <ArrowUpDown size={15} />
         </div>
       ),
-      cell: ({ row }) => {
-        const patient = row.original.patient;
-        const fullName =
-          `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
-
-        return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {patient.gender}, {patient.age} {patient.ageTime} old
-              </div>
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="flex justify-start min-w-[120px]">
+          <div className="w-full truncate">{row.original.dateCreated}</div>
+        </div>
+      )
     },
     {
       accessorKey: "address",
@@ -164,15 +145,7 @@ export default function MaternalIndivRecords() {
   const sampleData: maternalIndivRecords[] = [
     {
       id: 1,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina Shin",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
+      dateCreated: "2025-10-03",
       address: "Bonsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       type: "Transient",
@@ -181,15 +154,7 @@ export default function MaternalIndivRecords() {
 
     {
       id: 2,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
+      dateCreated: "2024-10-02",
       address: "Bonsai Bolinawan Carcar City",
       sitio: "Bolinawan",
       type: "Transient",
@@ -198,15 +163,7 @@ export default function MaternalIndivRecords() {
 
     {
       id: 3,
-
-      patient: {
-        lastName: "Caballes",
-        firstName: "Katrina",
-        middleName: "Dayuja",
-        gender: "Female",
-        age: 10,
-        ageTime: "yr",
-      },
+      dateCreated: "2023-10-01",
       address: "Bonsai Bolinawan Carcar City",
       sitio: "Logarta",
       type: "Resident",
@@ -239,7 +196,7 @@ export default function MaternalIndivRecords() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Maternal Individual Records
+            Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view mother's information
@@ -247,6 +204,10 @@ export default function MaternalIndivRecords() {
         </div>
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
+
+      <div className="mb-5">
+        <MotherInfo />
+      </div>
 
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         {/* Search Input and Filter Dropdown */}
