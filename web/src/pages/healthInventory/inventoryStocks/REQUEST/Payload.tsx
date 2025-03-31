@@ -1,5 +1,5 @@
 import { MedicineStockType, CommodityStockType ,FirstAidStockType} from "../REQUEST/type";
- 
+import { ImmunizationSuppliesType } from "@/form-schema/inventory/inventoryStocksSchema";
 export const MedicinePayload = (
   data: any, // Replace with the correct type if available
   inv_id: number
@@ -171,3 +171,61 @@ export const FirstAidPayload = (
   };
 };
 
+
+
+// IMMUNIZATION STOCKS
+
+export interface ImmunizationTransactionPayload {
+  imzt_qty: number;
+  imzt_type: string;
+  imzt_action: string;
+  staff: number;
+  imzStck_id: number;
+}
+
+export interface ImmunizationStockPayload {
+  imz_id: number;
+  inv_id: number;
+  batch_number: string;
+  imzStck_unit: string;
+  imzStck_qty: number;
+  imzStck_pcs: number;
+  imzStck_used: number;
+  imzStck_avail: number;
+  expiryDate: string;
+}
+
+export const prepareStockPayload = (
+  data: ImmunizationSuppliesType,
+  inv_id: number
+): ImmunizationStockPayload => {
+  const imz_id = Number(data.imz_id);
+  const imzStck_avail =
+    data.imzStck_unit === "boxes"
+      ? data.imzStck_qty * data.imzStck_pcs
+      : data.imzStck_qty;
+
+  return {
+    imz_id,
+    inv_id,
+    batch_number: data.batch_number,
+    imzStck_unit: data.imzStck_unit,
+    imzStck_qty: data.imzStck_qty,
+    imzStck_pcs: data.imzStck_pcs,
+    imzStck_used: 0,
+    imzStck_avail,
+    expiryDate: data.expiryDate,
+  };
+};
+
+export const prepareTransactionPayload = (
+  imzStck_avail: number,
+  imzStck_id: number,
+  staffId: number = 1 // Default to 1, should be replaced with actual staff ID
+): ImmunizationTransactionPayload => ({
+  imzt_qty: imzStck_avail,
+  imzt_type: "inventory",
+  imzt_action: "add",
+  staff: staffId,
+  imzStck_id,
+});

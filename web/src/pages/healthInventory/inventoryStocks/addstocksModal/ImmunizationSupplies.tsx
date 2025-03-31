@@ -11,25 +11,19 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { z } from "zod";
 import { useEffect, useState } from "react";
 import { addInventory } from "../REQUEST/Post";
 import { getSupplies } from "../REQUEST/Get";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
 import api from "@/pages/api/api";
-import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import {
   ImmunizationSuppliesSchema,
   ImmunizationSuppliesType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
+import { prepareStockPayload, prepareTransactionPayload } from "../REQUEST/Payload";
 
-export interface ImmunizationTransactionPayload {
-  imzt_qty: number;
-  imzt_type: string;
-  imzt_action: string;
-  staff: number; // You might want to get this from user session
-  imzStck_id: number;
-}
+
+
 
 export default function ImmunizationStockForm({
   setIsDialog,
@@ -74,39 +68,9 @@ export default function ImmunizationStockForm({
   const pcs = form.watch("imzStck_pcs");
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
-  // Updated onSubmit function in your component
   const onSubmit = async (data: ImmunizationSuppliesType) => {
     try {
       setIsSubmitting(true);
-
-      // Validate quantities
-      if (data.imzStck_qty <= 0) {
-        form.setError("imzStck_qty", {
-          type: "manual",
-          message: "Quantity must be greater than 0",
-        });
-        return;
-      }
-
-      if (currentUnit === "boxes" && data.imzStck_pcs <= 0) {
-        form.setError("imzStck_pcs", {
-          type: "manual",
-          message: "Pieces per box must be greater than 0",
-        });
-        return;
-      }
-
-      // Convert imz_id to number
-      const imz_id = Number(data.imz_id);
-      if (isNaN(imz_id)) {
-        form.setError("imz_id", {
-          type: "manual",
-          message: "Invalid immunization supply selection",
-        });
-        return;
-      }
-
-      // 1. First create inventory record
       const inventoryResponse = await addInventory(
         InventoryAntigenPayload(data)
       );
@@ -117,24 +81,7 @@ export default function ImmunizationStockForm({
       }
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
 
-      // 2. Prepare and submit immunization stock data
-      const imzStck_avail =
-        currentUnit === "boxes"
-          ? data.imzStck_qty * data.imzStck_pcs
-          : data.imzStck_qty;
-
-      const stockPayload = {
-        imz_id,
-        inv_id,
-        batch_number: data.batch_number,
-        imzStck_unit: data.imzStck_unit,
-        imzStck_qty: data.imzStck_qty,
-        imzStck_pcs: data.imzStck_pcs ,
-        imzStck_used: 0,
-        imzStck_avail,
-        expiryDate: data.expiryDate,
-      };
-
+      const stockPayload = prepareStockPayload(data, inv_id);
       const stockResponse = await api.post(
         "inventory/immunization_stock/",
         stockPayload
@@ -145,14 +92,10 @@ export default function ImmunizationStockForm({
         return;
       }
 
-      // 3. Create transaction record
-      const transactionPayload = {
-        imzt_qty: imzStck_avail , // Total pieces added
-        imzt_type: "inventory", // or "stock" depending on your needs
-        imzt_action: "add", // or "create" depending on your needs
-        staff: 1, // Replace with actual staff ID from your auth system
-        imzStck_id: stockResponse.data.imzStck_id,
-      };
+      const transactionPayload = prepareTransactionPayload(
+        stockPayload.imzStck_avail,
+        stockResponse.data.imzStck_id
+      );
 
       const transactionResponse = await api.post(
         "inventory/imz_transaction/",
@@ -161,19 +104,16 @@ export default function ImmunizationStockForm({
 
       if (!transactionResponse.data?.imzt_id) {
         console.warn("Transaction created but failed to get response");
-        // Continue anyway since the main operation succeeded
       }
-
-      form.reset();
       setIsDialog(false);
       alert("Immunization stock added successfully!");
     } catch (error) {
       console.error("Error:", error);
-      alert(`Error: ${(error as Error).message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
@@ -331,7 +271,7 @@ export default function ImmunizationStockForm({
           </div>
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+            <Button type="submit" className="w-[120px]" >
               {isSubmitting ? "Saving..." : "Save Stock"}
             </Button>
           </div>
