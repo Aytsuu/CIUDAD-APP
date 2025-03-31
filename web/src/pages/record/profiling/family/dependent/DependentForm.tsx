@@ -33,13 +33,14 @@ export default function DependentForm({ form, residents, selectedParents, depend
   }, [residents.formatted, selectedParents, dependents])
 
   React.useEffect(() => {
+    const searchedResidentId = form.watch('dependentsInfo.new.id')
     const searchedResident = residents.default.find((value: any) => 
       value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]
-  );
+    );
 
     if (searchedResident) {
       form.setValue('dependentsInfo.new', {
-        id: searchedResident.rp_id || '',
+        id: searchedResidentId || '',
         lastName: searchedResident.per.per_lname || '',
         firstName: searchedResident.per.per_fname || '',
         middleName: searchedResident.per.per_mname || '',

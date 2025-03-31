@@ -47,4 +47,4 @@ class Staff(models.Model):
 
     class Meta: 
         db_table = 'staff'
-
+    

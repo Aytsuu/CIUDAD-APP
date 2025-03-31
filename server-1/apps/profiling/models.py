@@ -78,9 +78,9 @@ class Family(models.Model):
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
     fam_date_registered = models.DateField(default=date.today)
-    father = models.ForeignKey(Father, on_delete=models.CASCADE, null=True)
-    mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True)
-    guard = models.ForeignKey(Guardian, on_delete=models.CASCADE, null=True)
+    father = models.ForeignKey(Father, on_delete=models.CASCADE, null=True, related_name="families")
+    mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True, related_name="families")
+    guard = models.ForeignKey(Guardian, on_delete=models.CASCADE, null=True, related_name="families")
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 

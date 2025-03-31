@@ -72,8 +72,18 @@ class FamilySerializer(serializers.ModelSerializer):
     mother = MotherSerializer(read_only=True)
     father = FatherSerializer(read_only=True)
 
-    mother_id = serializers.PrimaryKeyRelatedField(queryset=Mother.objects.all(), write_only=True, source="mother")
-    father_id = serializers.PrimaryKeyRelatedField(queryset=Father.objects.all(), write_only=True, source="father")
+    mother_id = serializers.PrimaryKeyRelatedField(
+        queryset=Mother.objects.all(), 
+        write_only=True, 
+        source="mother",
+        allow_null=True, 
+    )
+    father_id = serializers.PrimaryKeyRelatedField(
+        queryset=Father.objects.all(), 
+        write_only=True, 
+        source="father",
+        allow_null=True, 
+    )
 
     class Meta:
         model = Family

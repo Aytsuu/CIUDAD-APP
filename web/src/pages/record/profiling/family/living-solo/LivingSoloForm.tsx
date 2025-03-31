@@ -40,15 +40,12 @@ export default function LivingSoloForm({residents, households} : {
             return;
         }
 
-        try {
-            const data = form.getValues()
-            const familyNo = await addFamily(data, null, null)
-            addFamilyComposition(familyNo, data.id.split(" ")[0])
 
-        } catch (err) {
-            console.error(err)
+        const data = form.getValues()
+        const familyNo = await addFamily(data, null, null)
+        const res = await addFamilyComposition(familyNo, data.id.split(" ")[0])
 
-        } finally {
+        if(res) {
             toast('Record added successfully', {
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 action: {
@@ -58,9 +55,7 @@ export default function LivingSoloForm({residents, households} : {
             });
             setIsSubmitting(false)
             form.reset(defaultValues.current)
-
         }
-
 
     }
 

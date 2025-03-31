@@ -103,6 +103,16 @@ export const addFamily = async (
   motherId: string | null
 ) => {
   try {
+    console.log({fam_id: await generateFamilyNo(demographicInfo.building),
+      fam_indigenous: capitalize(demographicInfo.indigenous),
+      fam_building: capitalize(demographicInfo.building),
+      fam_date_registered: formatDate(new Date()),
+      father_id: fatherId || null,
+      mother_id: motherId || null,
+      guard: null,
+      hh: demographicInfo.householdNo || null,
+      staff: "00001250323",
+    })
     const res = await api.post("profiling/family/", {
       fam_id: await generateFamilyNo(demographicInfo.building),
       fam_indigenous: capitalize(demographicInfo.indigenous),
@@ -110,8 +120,8 @@ export const addFamily = async (
       fam_date_registered: formatDate(new Date()),
       father_id: fatherId || null,
       mother_id: motherId || null,
-      guard_id: null,
-      hh_id: demographicInfo.householdNo || null,
+      guard: null,
+      hh: demographicInfo.householdNo || null,
       staff: "00001250323",
     });
 
@@ -121,12 +131,14 @@ export const addFamily = async (
   }
 };
 
-export const addFamilyComposition = (familyId: string, residentId: string) => {
+export const addFamilyComposition = async (familyId: string, residentId: string) => {
   try {
-    api.post("profiling/family-composition/", {
+    const res = await api.post("profiling/family-composition/", {
       fam: familyId,
       rp: residentId,
     });
+
+    return res.data
   } catch (err) {
     console.error(err);
   }
