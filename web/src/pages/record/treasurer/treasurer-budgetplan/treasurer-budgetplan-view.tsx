@@ -13,16 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const styles = {
     header: "font-bold text-lg text-blue-600",
-    total: "font-bold text-blue",
-    mainCategory: "font-bold text-[19px] md:text-[22px]",
-    subCategory: "font-semibold text-[16px] md:text-[18px] text-sky-500",
-    budgetDetails: "flex text-left text-[15px] md:text-[16px]",
-    colDesign: "flex flex-col gap-4",
+    budgetItem: "flex flex-col space-y-1 p-3 rounded bg-white border-l-4 border-sky-500 shadow-sm",
+    budgetLabel: "text-sm font-semibold text-gray-600",
     budgetValue: "font-semibold",
     headerTitle: "text-center text-2xl font-bold text-blue mb-4 absolute left-1/2 transform -translate-x-1/2",
     budgetHeaderGrid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2", 
-    budgetItem: "flex flex-col space-y-1 p-3 rounded bg-white border-l-4 border-sky-500 shadow-sm",
-    budgetLabel: "text-sm font-semibold text-gray-600",
+    rowItem: "flex text-sm font-semibold text-left w-full",
+    rowValue: "text-sm",
+    budgetFooter: "text-sm font-bold text-blue"
 };
 
 interface BudgetPlan {
@@ -65,11 +63,40 @@ function ViewBudgetPlan(){
         staleTime: 0
     });
 
-    // populating the rows
-    const rowsProp = budgetDetails?.details?.map((detail: BudgetPlanDetail) => [
-        detail.dtl_budget_item,
-        formatNumber(detail.dtl_proposed_budget)
-    ]) || [];
+    // populating thee rows
+    const rowsProp = budgetDetails?.details?.reduce((acc: any[], detail: BudgetPlanDetail) => {
+        const mainRow = [
+            <span className={styles.rowItem}>{detail.dtl_budget_item}</span>,
+            <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>
+        ];
+
+        if (detail.dtl_budget_item === "Membership Dues/Contribution to Organization" || detail.dtl_budget_item == "Extraordinary & Miscellaneous Expense"|| detail.dtl_budget_item == "Subsidy to Sangguniang Kabataan (SK) FUnd") {
+            mainRow.push(
+                <span className={styles.rowValue}>{formatNumber(1000)}</span>,
+                <span className={styles.rowValue}>{formatNumber(1000)}</span>
+            );
+        }
+    
+        acc.push(mainRow);
+    
+
+        if (detail.dtl_budget_item === "Commutation of Leave Credits" || detail.dtl_budget_item == "Rehabilitation of Multi-Purpose" || detail.dtl_budget_item == "Disaster Supplies") {
+            acc.push([
+                <div ></div>, 
+                <div className={styles.budgetFooter}>Total: {formatNumber(1000)}</div>,
+                <div className={styles.budgetFooter}>{formatNumber(1000)}</div>,
+                <div className={styles.budgetFooter}>{formatNumber(1000)}</div>
+            ]);
+        } else if(detail.dtl_budget_item == "Extraordinary & Miscellaneous Expense" || detail.dtl_budget_item == "Total Capital Outlays"){
+            acc.push([
+                <div ></div>, 
+                <div className={styles.budgetFooter}>Total: {formatNumber(1000)}</div>,
+            
+            ]);
+        }
+    
+        return acc;
+    }, []) || [];
 
     //  Loading screen
     if (isLoadingBudgetDetails){

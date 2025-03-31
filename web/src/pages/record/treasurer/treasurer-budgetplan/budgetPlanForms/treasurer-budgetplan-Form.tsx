@@ -159,7 +159,7 @@ function CreateBudgetPlanForm() {
             { name: "waterExpenses", label: "Water Expenses" },
             { name: "electricityExpenses", label: "Electricity Expenses" },
             { name: "telephoneExpenses", label: "Telephone Expenses" },
-            { name: "memDues", label: "Membership Dues/Contribution to Organization" },
+            { name: "memDues", label: "Membership Dues/ Contribution to Organization" },
             { name: "officeMaintenance", label: "Repair and Maintenance of Office Equipment" },
             { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle" },
         ];
@@ -183,7 +183,7 @@ function CreateBudgetPlanForm() {
             { name: "cleanAndGreen", label: "Clean & Green Environmental" },
             { name: "streetLighting", label: "Street Lighting Project" },
             { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
-            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
+            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) Fund" },
             { name: "qrfFund", label: "Quick Response Fund (QRF)" },
             { name: "disasterTraining", label: "Disaster Training" },
             { name: "disasterSupplies", label: "Disaster Supplies" },
