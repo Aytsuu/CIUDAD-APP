@@ -177,12 +177,14 @@ class Business(models.Model):
     bus_respondentFname = models.CharField(max_length=50)
     bus_respondentMname = models.CharField(max_length=50)
     bus_respondentDob = models.DateField()
+    bus_doc_url = models.CharField(max_length=500)
     bus_date_registered = models.DateField(default=date.today)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name='businesses')
 
     class Meta:
         db_table = 'business'
 
     def __str__(self):
         return f"{self.bus_name} (Owner: {self.bus_respondentLname})"
+    

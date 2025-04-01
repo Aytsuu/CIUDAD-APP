@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import BusinessProfileForm from "./BusinessProfileForm";
 import { Card } from "@/components/ui/card/card";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { addBusiness } from "../restful-api/profiingPostAPI";
+import supabase from "@/utils/supabase";
 
 export default function BusinessFormLayout() {
   // Initializing states
@@ -32,81 +33,51 @@ export default function BusinessFormLayout() {
     defaultValues: defaultValues.current,
   });
 
-  // Create a ref for the file input
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Handler to open file dialog
-  const handleAddMediaClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  // Handler for file selection
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-
-    if (selectedFiles.length > 0) {
-      const newMediaFiles = selectedFiles.map((file, index) => {
-        // Create URL for preview
-        const previewUrl = URL.createObjectURL(file);
-
-        // Determine if file is image or video
-        const fileType = file.type.startsWith("image/")
-          ? "image"
-          : file.type.startsWith("video/")
-          ? "video"
-          : "document";
-
-        return {
-          id: mediaFiles.length + index + 1,
-          type: fileType as "image" | "video" | "document",
-          url: previewUrl,
-          file: file,
-          description: file.name,
-        };
-      });
-
-      setMediaFiles([...mediaFiles, ...newMediaFiles]);
-    }
-
-    // Reset input to allow selecting the same file again
-    e.target.value = "";
-  };
-
-  // Handler to remove a media file
-  const handleRemoveMedia = (id: string) => {
-    setMediaFiles(mediaFiles.filter((media) => media.id !== id));
-    if (activeVideoId === id) {
-      setActiveVideoId('');
-    }
-  };
-
-  // Toggle video playback
-  const toggleVideoPlayback = (id: string) => {
-    setActiveVideoId(activeVideoId === id ? '' : id);
-  };
-
   // Function to handle form submission
-  const submit = React.useCallback(async () => {
+  const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
 
     // Validate form
     if (!formIsValid) {
-      setIsSubmitting(false);
-      toast("Please fill out all required fields", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
+      errorFeedback("Please fill out all required fields");
       return;
     }
 
+    if (mediaFiles.length == 0) {
+      errorFeedback("Please submit supporting documents");
+      return;
+    }
+
+    // File upload
+    const [fileItem] = mediaFiles;
+    const file = fileItem?.file;
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 9)}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("image-bucket")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    const { data: {publicUrl}} = supabase.storage
+      .from('image-bucket')
+      .getPublicUrl(filePath)
+
     // Submit POST request
     const businessInfo = form.getValues();
-    const res = await addBusiness(businessInfo);
+    const res = await addBusiness(businessInfo, publicUrl);
 
     if (res) {
       setIsSubmitting(false);
+      setMediaFiles([])
       toast("New record created successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         action: {
@@ -116,6 +87,13 @@ export default function BusinessFormLayout() {
       });
       form.reset(defaultValues.current);
     }
+  };
+
+  const errorFeedback = React.useCallback((message: string) => {
+    setIsSubmitting(false);
+    toast(message, {
+      icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+    });
   }, []);
 
   return (
@@ -139,11 +117,9 @@ export default function BusinessFormLayout() {
               isSubmitting={isSubmitting}
               mediaFiles={mediaFiles}
               activeVideoId={activeVideoId}
-              fileInputRef={fileInputRef}
-              toggleVideoPlayback={toggleVideoPlayback}
-              handleRemoveMedia={handleRemoveMedia}
-              handleAddMediaClick={handleAddMediaClick}
-              handleFileChange={handleFileChange}
+              setMediaFiles={setMediaFiles}
+              setActiveVideoId={setActiveVideoId}
+              submit={submit}
             />
           </form>
         </Form>

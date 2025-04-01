@@ -183,8 +183,24 @@ export const addHousehold = async (householdInfo: Record<string, string>) => {
 };
 
 // POST request for business model 
-export const addBusiness = async (businessInfo: Record<string, string>) => {
+export const addBusiness = async (businessInfo: Record<string, string>, url: string) => {
   try {
+    console.log({
+      bus_name: businessInfo.name,
+      bus_gross_sales: parseFloat(businessInfo.grossSales),
+      bus_province: "Cebu",
+      bus_city: "Cebu City",
+      bus_barangay: "San Roque",
+      bus_street: businessInfo.street,
+      bus_respondentLname: businessInfo.respondentLname,
+      bus_respondentFname: businessInfo.respondentFname,
+      bus_respondentMname: businessInfo.respondentMname,
+      bus_respondentDob: businessInfo.respondentDob,
+      bus_doc_url: url,
+      bus_date_registered: formatDate(new Date()),
+      sitio: businessInfo.sitio,
+      staff: null,
+    })
     const res = await api.post("profiling/business/", {
       bus_name: businessInfo.name,
       bus_gross_sales: parseFloat(businessInfo.grossSales),
@@ -196,9 +212,10 @@ export const addBusiness = async (businessInfo: Record<string, string>) => {
       bus_respondentFname: businessInfo.respondentFname,
       bus_respondentMname: businessInfo.respondentMname,
       bus_respondentDob: businessInfo.respondentDob,
+      bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
       sitio: businessInfo.sitio,
-      staff: "00001250323",
+      staff: null,
     });
 
     return res.data;

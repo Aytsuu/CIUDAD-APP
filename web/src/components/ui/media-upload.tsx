@@ -1,45 +1,84 @@
-import { Film, Play, Image, Plus, X } from "lucide-react";
+import React from "react";
+import { Film, Play, Image, Plus, X, FileText } from "lucide-react";
 import { ChangeEvent } from "react";
 import { Label } from "./label";
-
-interface MediaFile {
-  id: string;
-  type: "image" | "video" | "document";
-  url: string;
-  file?: File;
-  description: string;
-}
 
 export const MediaUpload = ({
   title,
   description,
   mediaFiles,
   activeVideoId,
-  fileInputRef,
-  toggleVideoPlayback,
-  handleRemoveMedia,
-  handleAddMediaClick,
-  handleFileChange
+  setMediaFiles,
+  setActiveVideoId
 }: {
   title: string;
   description: string;
-  mediaFiles: MediaFile[];
+  mediaFiles: any[];
   activeVideoId: string;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  toggleVideoPlayback: (value: string) => void;
-  handleRemoveMedia: (value: string) => void;
-  handleAddMediaClick: () => void;
-  handleFileChange: (value: ChangeEvent<HTMLInputElement>) => void;
-  
+  setMediaFiles: React.Dispatch<React.SetStateAction<any[]>>
+  setActiveVideoId: React.Dispatch<React.SetStateAction<string>>
 }) => {
+  // Create a ref for the file input
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Handler for file selection
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+
+    if (selectedFiles.length > 0) {
+      const newMediaFiles = selectedFiles.map((file, index) => {
+        // Create URL for preview
+        const previewUrl = URL.createObjectURL(file);
+
+        // Determine if file is image or video
+        const fileType = file.type.startsWith("image/")
+          ? "image"
+          : file.type.startsWith("video/")
+          ? "video"
+          : "document";
+
+        return {
+          id: mediaFiles.length + index + 1,
+          type: fileType as "image" | "video" | "document",
+          url: previewUrl,
+          file: file,
+          description: file.name,
+        };
+      });
+
+      setMediaFiles([...mediaFiles, ...newMediaFiles]);
+    }
+
+    // Reset input to allow selecting the same file again
+    e.target.value = "";
+  };
+
+  // Toggle video playback
+  const toggleVideoPlayback = (id: string) => {
+    setActiveVideoId(activeVideoId === id ? "" : id);
+  };
+
+  // Handler to open file dialog
+  const handleAddMediaClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Handler to remove a media file
+  const handleRemoveMedia = (id: string) => {
+    setMediaFiles(mediaFiles.filter((media) => media.id !== id));
+    if (activeVideoId === id) {
+      setActiveVideoId("");
+    }
+  };
+
   return (
     <div className="border border-gray-300 rounded-md p-4 bg-white">
       {/*Description */}
       <div className="mb-4">
         <Label className="text-[15px]">{title}</Label>
-        <p className="text-sm text-darkGray">
-          {description}
-        </p>
+        <p className="text-sm text-darkGray">{description}</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
@@ -66,19 +105,28 @@ export const MediaUpload = ({
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : media.type === "image" ? (
                 <img
                   src={media.url}
                   alt={`Evidence ${media.id}`}
                   className="object-cover w-full h-full"
                 />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-black/5">
+                  <FileText size={48} className="text-gray-400 mb-2 stroke-1" />
+                  <p className="text-xs text-gray-500 truncate w-full">
+                    {media.file?.name || "Document"}
+                  </p>
+                </div>
               )}
             </div>
             <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
               {media.type === "video" ? (
-                <Film size={16} className="text-gray-500" />
+                <Film size={16} className="text-black" />
+              ) : media.type === "image" ? (
+                <Image size={16} className="text-black" />
               ) : (
-                <Image size={16} className="text-gray-500" />
+                <FileText size={16} className="text-black" />
               )}
             </div>
 
@@ -106,7 +154,7 @@ export const MediaUpload = ({
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
-            accept="image/*,video/*"
+            accept="image/*,video/*,.pdf,.doc,.docx"
             multiple
             className="hidden"
           />
