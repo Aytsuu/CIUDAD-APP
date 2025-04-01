@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,12 +7,12 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import VaccineModal from "../addListModal/VaccineModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCombinedVaccineData } from "../requests/GetRequest";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { getAntigen } from "../requests/get/getAntigen";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { VaccineColumns } from "./MedicineListColumsn";
-import { handleDeleteVaccine } from "../requests/DeleteRequest";
+import { VaccineColumns } from "../tables/columns/VaccineCol";
+import { handleDeleteAntigen } from "../requests/delete/DeleteAntigen";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,116 +21,128 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import ImmunizationSupplies from "../addListModal/ImmunizationSupplies";
 
+
+
 export type VaccineRecords = {
   id: number;
   vaccineName: string;
   vaccineType: string;
   ageGroup: string;
-  doses: number;
+  doses: number | string;
   specifyAge: string;
   schedule: string;
-  category: string; // Added category property
-  noOfDoses?: number; // Added noOfDoses property
+  category: string;
+  noOfDoses?: number | string;
+  type: "vaccine" | "supplies";
   doseDetails: {
     doseNumber: number;
-    interval: number | undefined;
-    unit: string;
+    interval?: number;
+    unit?: string;
   }[];
 };
 
 export default function VaccineList() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     React.useState(false);
-  const [vaccineToDelete, setVaccineToDelete] = React.useState<number | null>(
-    null
+  const [vaccineToDelete, setVaccineToDelete] = useState<number | null>(null);
+  const [isDialog, setIsDialog] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
+    "vaccine"
   );
-  const [isDialog, setIsDialog] = React.useState(false);
-  const [selectedOption, setSelectedOption] = React.useState<
-    "vaccine" | "supplies"
-  >("vaccine");
   const queryClient = useQueryClient();
 
-  // Fetch combined vaccine data
   const { data: vaccineData, isLoading: isLoadingVaccines } = useQuery({
     queryKey: ["vaccines"],
-    queryFn: getCombinedVaccineData,
+    queryFn: getAntigen,
     refetchOnMount: true,
     staleTime: 0,
   });
 
   const formatVaccineData = React.useCallback(() => {
     if (!vaccineData) return [];
-  
-    return vaccineData.map((item: any) => {
-      // Handle Vaccine items (keep existing logic)
-      if (item.vac_name) {
-        const specifyAge = item.specify_age || item.age_group || "birth";
-        const category = item.vaccat_details?.vaccat_type || "N/A";
-  
-        const baseData: VaccineRecords = {
-          id: item.vac_id,
-          vaccineName: item.vac_name,
-          vaccineType: item.vac_type_choices === "routine" ? "Routine" : 
-                      item.vac_type_choices === "primary" ? "Primary Series" : "N/A",
-          ageGroup: item.age_group || "N/A",
-          doses: item.no_of_doses || "N/A", // Updated to handle NA
-          specifyAge: specifyAge,
-          category: category,
-          noOfDoses: item.no_of_doses || "N/A", // Updated to handle NA
-          schedule: item.schedule || "N/A",
-          doseDetails: [],
-        };
-  
-        if (item.vac_type_choices === "routine" && item.routine_frequency) {
-          baseData.doseDetails.push({
-            doseNumber: 1,
-            interval: item.routine_frequency.interval,
-            unit: item.routine_frequency.time_unit,
-          });
-        }
-        else if (item.vac_type_choices === "primary" && item.intervals?.length) {
-          const sortedIntervals = [...item.intervals].sort(
-            (a, b) => a.dose_number - b.dose_number
-          );
-          sortedIntervals.forEach((interval) => {
+
+    return vaccineData
+      .map((item: any) => {
+        // Handle Vaccine items
+        if (item.vac_name) {
+          const specifyAge = item.specify_age || item.age_group || "birth";
+          const category = item.vaccat_details?.vaccat_type || "N/A";
+
+          const baseData: VaccineRecords = {
+            id: item.vac_id,
+            vaccineName: item.vac_name,
+            vaccineType:
+              item.vac_type_choices === "routine"
+                ? "Routine"
+                : item.vac_type_choices === "primary"
+                ? "Primary Series"
+                : "N/A",
+            ageGroup: item.age_group || "N/A",
+            doses: item.no_of_doses || "N/A",
+            specifyAge: specifyAge,
+            category: category,
+            noOfDoses: item.no_of_doses || "N/A",
+            schedule: item.schedule || "N/A",
+            type: "vaccine",
+            doseDetails: [],
+          };
+
+          if (item.vac_type_choices === "routine" && item.routine_frequency) {
             baseData.doseDetails.push({
-              doseNumber: interval.dose_number,
-              interval: interval.interval,
-              unit: interval.time_unit,
+              doseNumber: 1,
+              interval: item.routine_frequency.interval,
+              unit: item.routine_frequency.time_unit,
             });
-          });
+          } else if (
+            item.vac_type_choices === "primary" &&
+            item.intervals?.length
+          ) {
+            const sortedIntervals = [...item.intervals].sort(
+              (a, b) => a.dose_number - b.dose_number
+            );
+            sortedIntervals.forEach((interval) => {
+              baseData.doseDetails.push({
+                doseNumber: interval.dose_number,
+                interval: interval.interval,
+                unit: interval.time_unit,
+              });
+            });
+          }
+          return baseData;
         }
-        return baseData;
-      }
-      // Handle Immunization Supplies items
-      else if (item.imz_name) {
-        return {
-          id: item.imz_id,
-          vaccineName: item.imz_name,
-          vaccineType: "N/A",
-          ageGroup: "N/A",
-          doses: "N/A", // Changed from 0 to "N/A"
-          specifyAge: "N/A",
-          category: item.vaccat_details?.vaccat_type,
-          noOfDoses: "N/A",
-          schedule: "N/A",
-          doseDetails: [],
-        };
-      }
-      return null;
-    }).filter(Boolean);
+        // Handle Immunization Supplies items
+        else if (item.imz_name) {
+          return {
+            id: item.imz_id,
+            vaccineName: item.imz_name,
+            vaccineType: "N/A",
+            ageGroup: "N/A",
+            doses: "N/A",
+            specifyAge: "N/A",
+            category: item.vaccat_details?.vaccat_type || "Immunization Supply",
+            noOfDoses: "N/A",
+            schedule: "N/A",
+            type: "supplies",
+            doseDetails: [],
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
   }, [vaccineData]);
 
   const filteredVaccines = React.useMemo(() => {
-    return formatVaccineData().filter((record: VaccineRecords) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
+    return formatVaccineData()
+      .filter((record): record is VaccineRecords => record !== null)
+      .filter((record: VaccineRecords) =>
+        Object.values(record)
+          .join(" ")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      );
   }, [searchQuery, formatVaccineData]);
 
   const totalPages = Math.ceil(filteredVaccines.length / pageSize);
@@ -141,13 +153,25 @@ export default function VaccineList() {
 
   const handleDelete = async () => {
     if (vaccineToDelete !== null) {
-      await handleDeleteVaccine(vaccineToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["vaccines"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setVaccineToDelete(null);
+      const recordToDelete = filteredVaccines.find(record => record.id === vaccineToDelete);
+      if (recordToDelete) {
+        try {
+          await handleDeleteAntigen(
+            vaccineToDelete,
+            recordToDelete.type,
+            
+          );
+          
+          setIsDeleteConfirmationOpen(false);
+          setVaccineToDelete(null);
+        } catch (error) {
+          console.error("Delete error:", error);
+          // Show error to user if needed
+        }
+      }
     }
   };
+
 
   const columns = VaccineColumns(
     setIsDialog,
@@ -192,7 +216,7 @@ export default function VaccineList() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               className="min-w-[200px]"
-              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()} // Keep menu open on hover
+              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()}
             >
               <DropdownMenuItem
                 onClick={() => {
@@ -225,11 +249,9 @@ export default function VaccineList() {
             }
             mainContent={
               selectedOption === "vaccine" ? (
-                <VaccineModal />
+                <VaccineModal setIsDialog={setIsDialog} />
               ) : (
-                <ImmunizationSupplies
-                setIsDialog={setIsDialog}
-              />
+                <ImmunizationSupplies setIsDialog={setIsDialog} />
               )
             }
             trigger={undefined}
@@ -284,14 +306,23 @@ export default function VaccineList() {
           )}
         </div>
       </div>
-
       <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete Vaccine"
-        description="Are you sure you want to delete this vaccine? This action cannot be undone."
-      />
+  isOpen={isDeleteConfirmationOpen}
+  onOpenChange={setIsDeleteConfirmationOpen}
+  onConfirm={handleDelete}  // Use the new handler here
+  title={
+    vaccineToDelete &&
+    filteredVaccines.find((v) => v.id === vaccineToDelete)?.type === "vaccine"
+      ? "Delete Vaccine"
+      : "Delete Immunization Supply"
+  }
+  description={
+    vaccineToDelete &&
+    filteredVaccines.find((v) => v.id === vaccineToDelete)?.type === "vaccine"
+      ? "Are you sure you want to delete this vaccine? This action cannot be undone."
+      : "Are you sure you want to delete this immunization supply? This action cannot be undone."
+  }
+/>
     </div>
   );
 }

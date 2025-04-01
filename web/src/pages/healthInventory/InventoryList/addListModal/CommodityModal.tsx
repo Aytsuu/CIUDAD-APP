@@ -1,24 +1,18 @@
 import React, { useState } from "react";
-import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
-  Form,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import {
   CommodityType,
   CommodityListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { addCommodity } from "../requests/Postrequest";
-import { getCommodity } from "../requests/GetRequest";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
+import { addCommodity } from "../requests/post/commodity";
+import { getCommodity } from "../requests/get/getCommodity";
+import { FormInput } from "@/components/ui/form/form-input";
+
 interface CommodityProps {
   setIsDialog: (isOpen: boolean) => void;
 }
@@ -30,9 +24,10 @@ export default function CommodityModal({ setIsDialog }: CommodityProps) {
       commodityName: "",
     },
   });
+
   // State for add confirmation dialog
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [newCommodityName, setnewCommodityName] = useState<string>("");
+  const [newCommodityName, setNewCommodityName] = useState<string>("");
   const queryClient = useQueryClient();
 
   const confirmAdd = async () => {
@@ -41,10 +36,9 @@ export default function CommodityModal({ setIsDialog }: CommodityProps) {
         if (await addCommodity(newCommodityName)) {
           setIsAddConfirmationOpen(false);
           setIsDialog(false);
-          queryClient.invalidateQueries({queryKey:["commodities"]})
-
+          queryClient.invalidateQueries({ queryKey: ["commodities"] });
         } else {
-          console.error("Failed to add medicine.");
+          console.error("Failed to add commodity.");
         }
       } catch (err) {
         console.error(err);
@@ -52,55 +46,39 @@ export default function CommodityModal({ setIsDialog }: CommodityProps) {
     }
   };
 
-  const isDuplicateCommodity = (commoodity: any[], newCommodity: string) => {
-    return commoodity.some(
+  const isDuplicateCommodity = (commodities: any[], newCommodity: string) => {
+    return commodities.some(
       (com) => com.com_name.toLowerCase() === newCommodity.toLowerCase()
     );
   };
 
   const onSubmit = async (data: CommodityType) => {
     try {
-      const existingcommoodity = await getCommodity();
-      if (!Array.isArray(existingcommoodity))
+      const existingCommodities = await getCommodity();
+      if (!Array.isArray(existingCommodities))
         throw new Error("Invalid API response");
 
-      if (isDuplicateCommodity(existingcommoodity, data.commodityName)) {
+      if (isDuplicateCommodity(existingCommodities, data.commodityName)) {
         form.setError("commodityName", {
           type: "manual",
-          message: "Medicine already exists.",
+          message: "Commodity already exists.",
         });
         return;
       }
-      setnewCommodityName(data.commodityName);
+      setNewCommodityName(data.commodityName);
       setIsAddConfirmationOpen(true);
     } catch (err) {
       console.error(err);
     }
   };
+
   return (
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            {/* Commodity Name Field */}
-            <FormField
-              control={form.control}
-              name="commodityName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commodity Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={String(field.value)}
-                      placeholder="Commodity Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Commodity Name Field using FormInput shortcut */}
+            <FormInput control={form.control}name="commodityName" label="Commodity Name" placeholder="Enter commodity name"/>
 
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>
@@ -113,8 +91,8 @@ export default function CommodityModal({ setIsDialog }: CommodityProps) {
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
-        title="Add Medicine"
-        description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
+        title="Add Commodity"
+        description={`Are you sure you want to add the commodity "${newCommodityName}"?`}
       />
     </div>
   );

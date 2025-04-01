@@ -15,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FirstAidStocksRecord } from "../tables/FirstAidStocks";
 import api from "@/pages/api/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import {
   AddFirstAidSchema,

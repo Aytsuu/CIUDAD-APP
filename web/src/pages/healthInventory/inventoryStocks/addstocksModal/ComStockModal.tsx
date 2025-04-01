@@ -22,7 +22,7 @@ import { useCategoriesCommodity } from "../REQUEST/Category/CommodityCategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { addCommodityInventory, addInventory } from "../REQUEST/Post";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { CommodityPayload } from "../REQUEST/Payload";
 import { InventoryCommodityPayload } from "../REQUEST/Payload";
 
@@ -67,6 +67,7 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
     });
     return () => subscription.unsubscribe();
   }, [form]);
+  
 
   const handleSubmit = async (data: CommodityStockType) => {
     console.log("Form Data Submitted:", data);

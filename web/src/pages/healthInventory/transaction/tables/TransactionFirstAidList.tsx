@@ -8,7 +8,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { handleDeleteFirstAidList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { FirstAidColumns } from "./MedicineListColumsn";

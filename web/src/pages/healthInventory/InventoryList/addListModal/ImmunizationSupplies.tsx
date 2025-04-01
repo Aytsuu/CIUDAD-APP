@@ -9,24 +9,24 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Button } from "@/components/ui/button";
 import {
   ImmunizationSchema,
   ImmunizationType,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { addImzSupplies } from "../requests/Postrequest";
-import { getFirstAid } from "../requests/GetRequest";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { addImzSupplies } from "../requests/post/immunization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { getImzSup } from "../requests/get/getAntigen";
+import { FormInput } from "@/components/ui/form/form-input";
 
 interface ImmunizationSuppliesProps {
   setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function ImmunizationSupplies({  setIsDialog }: ImmunizationSuppliesProps) {
+export default function ImmunizationSupplies({
+  setIsDialog,
+}: ImmunizationSuppliesProps) {
   const form = useForm<ImmunizationType>({
     resolver: zodResolver(ImmunizationSchema),
     defaultValues: {
@@ -52,27 +52,27 @@ export default function ImmunizationSupplies({  setIsDialog }: ImmunizationSuppl
       queryClient.invalidateQueries({ queryKey: ["imz_supplies"] });
       setIsAddConfirmationOpen(false);
       setIsDialog(false);
-  
+
       setnewimz_name("");
     }
   };
 
-  const isDuplicateFirstAid = (firstaid: any[], newFirstAid: string) => {
-    return firstaid.some(
-      (fa) => fa.fa_name.toLowerCase() === newFirstAid.toLowerCase()
+  const isDuplicateImzSup = (ImzSup: any[], newImzSup: string) => {
+    return ImzSup.some(
+      (imz) => imz.imz_name.toLowerCase() === newImzSup.toLowerCase()
     );
   };
 
   const onSubmit = async (data: ImmunizationType) => {
     try {
-      const existingFirstAid = await getFirstAid();
-      if (!Array.isArray(existingFirstAid))
+      const existingImzSup = await getImzSup();
+      if (!Array.isArray(existingImzSup))
         throw new Error("Invalid API response");
 
-      if (isDuplicateFirstAid(existingFirstAid, data.imz_name)) {
+      if (isDuplicateImzSup(existingImzSup, data.imz_name)) {
         form.setError("imz_name", {
           type: "manual",
-          message: "Fa already eixst",
+          message: "already eixst",
         });
         return;
       }
@@ -88,24 +88,7 @@ export default function ImmunizationSupplies({  setIsDialog }: ImmunizationSuppl
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            <FormField
-              control={form.control}
-              name="imz_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Item Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={field.value}
-                      placeholder="Item Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="imz_name" label="Antigen" placeholder="Enter first aid item name"/>
           </div>
 
           <div className="w-full flex justify-end mt-8">
@@ -118,7 +101,7 @@ export default function ImmunizationSupplies({  setIsDialog }: ImmunizationSuppl
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
-        title="Add Immunization Supplies"
+        title="Add Antigen Supplies"
         description={`Are you sure you want to add the new  "${newimz_name}"?`}
       />
     </div>

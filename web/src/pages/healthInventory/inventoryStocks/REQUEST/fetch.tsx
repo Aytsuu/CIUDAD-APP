@@ -1,12 +1,8 @@
 // useMedicines.ts
 import { useState, useEffect } from "react";
-import {
-  getCommodity,
-  getMedicines,
-} from "../../InventoryList/requests/GetRequest"; // Adjust the import based on your API setup
-import { getFirstAid } from "../../InventoryList/requests/GetRequest";
-import api from "@/pages/api/api";
-import { getMedicineStocks } from "../REQUEST/Get";
+import { getMedicines } from "../../InventoryList/requests/get/getMedicines";
+import { getCommodity } from "../../InventoryList/requests/get/getCommodity";
+import { getFirstAid } from "../../InventoryList/requests/get/getFirstAid";
 
 
 export const fetchMedicines = () => {

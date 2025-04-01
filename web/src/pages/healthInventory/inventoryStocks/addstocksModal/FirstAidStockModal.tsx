@@ -21,7 +21,7 @@ import { fetchFirstAid } from "../REQUEST/fetch";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { addFirstAidInventory, addInventory } from "../REQUEST/Post";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { FirstAidPayload, InventoryFirstAidPayload } from "../REQUEST/Payload";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
 

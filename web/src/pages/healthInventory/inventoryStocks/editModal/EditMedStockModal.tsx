@@ -16,7 +16,7 @@ import {
   addMedicineStocksType,
 } from "@/form-schema/inventory/addStocksSchema";
 import api from "@/pages/api/api";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { addMedicineTransaction } from "../REQUEST/Post";

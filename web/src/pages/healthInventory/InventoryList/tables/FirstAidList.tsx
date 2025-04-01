@@ -8,13 +8,12 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import FirstAidModal from "../addListModal/FirstAidModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFirstAid } from "../requests/GetRequest";
-import { handleDeleteFirstAidList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { getFirstAid } from "../requests/get/getFirstAid";
+import { handleDeleteFirstAidList } from "../requests/delete/DeleteFirstAid";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { FirstAidColumns } from "./MedicineListColumsn";
-import { FirstAidRecords } from "./MedicineListColumsn";
+import { FirstAidColumns,FirstAidRecords } from "../tables/columns/FirstAidCol";
 
 export default function FirstAidList() {
   const [searchQuery, setSearchQuery] = React.useState("");

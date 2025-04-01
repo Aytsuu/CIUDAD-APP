@@ -197,7 +197,7 @@ class RoutineFrequency(models.Model):
         on_delete=models.CASCADE,
         related_name='routine_frequency'
     )
-
+ 
     class Meta:
         db_table = 'routine_frequencies'
         

@@ -12,16 +12,13 @@ import {
   CommodityType,
   CommodityListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { addCommodity } from "../requests/Postrequest";
-import { getCommodity } from "../requests/GetRequest";
-import { updateCommodity } from "../requests/UpdateRequest";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { getCommodity } from "../requests/get/getCommodity";
+import { updateCommodity } from "../requests/update/UpdateCommodity";
+import { useQueryClient } from "@tanstack/react-query";
+import { FormInput } from "@/components/ui/form/form-input";
 interface CommodityListProps {
   initialData: {
     id: number;
@@ -91,26 +88,7 @@ export default function EditCommodityModal({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            {/* Commodity Name Field */}
-            <FormField
-              control={form.control}
-              name="commodityName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commodity Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={String(field.value)}
-                      placeholder="Commodity Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+             <FormInput control={form.control} name="commodityName" label="Commodity Name" placeholder="Enter Commodity Name"/>  
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>
             </div>

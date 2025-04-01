@@ -24,7 +24,7 @@ import {
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import api from "@/pages/api/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { CommodityStocksRecord } from "../tables/CommodityStocks";
 import { CommodityTransactionPayload } from "../REQUEST/Payload";
 import { addCommodityTransaction } from "../REQUEST/Post";

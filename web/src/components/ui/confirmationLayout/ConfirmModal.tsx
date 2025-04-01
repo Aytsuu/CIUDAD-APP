@@ -29,7 +29,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+          <Button   onClick={onConfirm}>
             Confirm
           </Button>
         </div>

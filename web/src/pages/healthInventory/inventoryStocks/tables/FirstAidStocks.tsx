@@ -17,7 +17,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import FirstAidStockForm from "../addstocksModal/FirstAidStockModal";
 import UsedFAModal from "../addstocksModal/UsedFAModal";
 import EditFirstAidStockForm from "../editModal/EditFirstAidStockModal";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { handleDeleteFirstAidStocks } from "../REQUEST/Delete";

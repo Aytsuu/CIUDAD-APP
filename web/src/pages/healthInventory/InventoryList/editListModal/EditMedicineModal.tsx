@@ -15,10 +15,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { getMedicines } from "../requests/GetRequest";
-import { updateMedicine } from "../requests/UpdateRequest";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { getMedicines } from "../requests/get/getMedicines";
+import { updateMedicine } from "../requests/update/UpdateMedicine";
+import {useQueryClient } from "@tanstack/react-query";
+import { FormInput } from "@/components/ui/form/form-input";
 
 interface MedicineListProps {
   initialData: {
@@ -43,6 +44,7 @@ export default function MedicineListEdit({
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [newMedicineName, setNewMedicineName] = useState<string>("");
   const queryClient = useQueryClient();
+
   const confirmAdd = async () => {
     try {
       await updateMedicine(initialData.id, newMedicineName); // Update the medicine
@@ -61,6 +63,8 @@ export default function MedicineListEdit({
   };
 
   const onSubmit = async (data: MedicineType) => {
+    setIsDialog(false);
+
     try {
       const existingMedicines = await getMedicines();
       if (!Array.isArray(existingMedicines))
@@ -75,7 +79,6 @@ export default function MedicineListEdit({
       }
       setNewMedicineName(data.medicineName);
       setIsAddConfirmationOpen(true);
-      setIsDialog(false);
     } catch (err) {
       console.error(err);
     }
@@ -85,26 +88,8 @@ export default function MedicineListEdit({
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-3">
-            {/* Medicine Name Field */}
-            <FormField
-              control={form.control}
-              name="medicineName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Medicine Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Enter medicine name"
-                      {...field} // Spread field props for better integration
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+          <div className="flex flex-col gap-3">         
+                <FormInput control={form.control} name="medicineName" label="Medicine Name<" placeholder="Medicine Name<"/>
             {/* Submit Button */}
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>

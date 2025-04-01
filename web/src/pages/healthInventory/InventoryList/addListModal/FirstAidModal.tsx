@@ -16,17 +16,17 @@ import {
   FirstAidType,
   FirstAidSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { addFirstAid } from "../requests/Postrequest";
-import { getFirstAid } from "../requests/GetRequest";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { addFirstAid } from "../requests/post/firstaid";
+import { getFirstAid } from "../requests/get/getFirstAid";
+import { FormInput } from "@/components/ui/form/form-input";
 
 interface FirstAidProps {
   setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function FirstAidModal({  setIsDialog }: FirstAidProps) {
+export default function FirstAidModal({ setIsDialog }: FirstAidProps) {
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
@@ -52,7 +52,7 @@ export default function FirstAidModal({  setIsDialog }: FirstAidProps) {
       queryClient.invalidateQueries({ queryKey: ["firstAid"] });
       setIsAddConfirmationOpen(false);
       setIsDialog(false);
-  
+
       setnewFirstAidName("");
     }
   };
@@ -88,24 +88,7 @@ export default function FirstAidModal({  setIsDialog }: FirstAidProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            <FormField
-              control={form.control}
-              name="firstAidName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Item Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={field.value}
-                      placeholder="Item Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="firstAidName" label="Item Name" placeholder="Enter first aid item name"/>
           </div>
 
           <div className="w-full flex justify-end mt-8">

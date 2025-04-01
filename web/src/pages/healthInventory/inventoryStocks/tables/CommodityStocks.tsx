@@ -16,7 +16,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CommodityStockForm from "../addstocksModal/ComStockModal";
 import EditCommodityStockForm from "../editModal/EditComStockModal";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { handleDeleteCommodityStocks } from "../REQUEST/Delete";

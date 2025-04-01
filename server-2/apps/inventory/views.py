@@ -345,9 +345,18 @@ class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
         imz_id = self.kwargs.get('imz_id')
         obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
         return obj
+    
+    def perform_destroy(self, instance):
+        # Get and delete related inventory if exists
+        if hasattr(instance, 'inventory'):
+            inventory_record = instance.inventory
+            if inventory_record:
+                inventory_record.delete()
+        
+        # Then delete the immunization supply
+        instance.delete()
 
 # Vaccine List Views
-
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
@@ -370,6 +379,35 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
             VaccineInterval.objects.filter(vac_id=instance).delete()
         
         return super().update(request, *args, **kwargs)
+        # In VaccineListRetrieveUpdateDestroyView
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        print(f"Deleting vaccine with ID: {instance.vac_id}")  # Add logging
+        
+        try:
+            # First delete all related records
+            if hasattr(instance, 'routine_frequency') and instance.routine_frequency:
+                print(f"Deleting routine frequency for vaccine {instance.vac_id}")
+                instance.routine_frequency.delete()
+            
+            if hasattr(instance, 'vaccine_intervals'):
+                print(f"Deleting {instance.vaccine_intervals.count()} intervals for vaccine {instance.vac_id}")
+                instance.vaccine_intervals.all().delete()
+            
+            # Then delete the vaccine
+            instance.delete()
+            print(f"Successfully deleted vaccine {instance.vac_id}")
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except Exception as e:
+            print(f"Error deleting vaccine {instance.vac_id}: {str(e)}")
+            return Response(
+                {"detail": f"Error deleting vaccine: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+    
 # Vaccine Interval Views
 class VaccineIntervalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccineIntervalSerializer
@@ -392,7 +430,6 @@ class RoutineFrequencyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAP
         obj = get_object_or_404(RoutineFrequency, routineF_id=routineF_id)
         return obj
     
-    
 
  
 class VaccineStocksView(generics.ListCreateAPIView):
@@ -401,6 +438,7 @@ class VaccineStocksView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
 class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
     serializer_class=ImmnunizationStockSuppliesSerializer
     queryset=ImmunizationStock.objects.all()
@@ -422,3 +460,4 @@ class ImmunizationTransactionView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    

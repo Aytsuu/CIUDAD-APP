@@ -9,19 +9,16 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Button } from "@/components/ui/button";
 import {
   FirstAidType,
   FirstAidSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { getFirstAid } from "../requests/GetRequest";
-import { addFirstAid } from "../requests/Postrequest";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { updateFirstAid, updateMedicine } from "../requests/UpdateRequest";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import {  useQueryClient } from "@tanstack/react-query";
-
+import {getFirstAid} from "../requests/get/getFirstAid";
+import { updateFirstAid } from "../requests/update/UpdateFirstAid";
+import { FormInput } from "@/components/ui/form/form-input";
 interface FirstAidListProps {
   initialData: {
     id: number;
@@ -87,26 +84,8 @@ export default function EditFirstAidModal({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            <FormField
-              control={form.control}
-              name="firstAidName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Item Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={field.value}
-                      placeholder="Item Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="firstAidName" label="Item Name" placeholder="Item Name"/>      
           </div>
-
           <div className="w-full flex justify-end mt-8">
             <Button type="submit">Submit</Button>
           </div>

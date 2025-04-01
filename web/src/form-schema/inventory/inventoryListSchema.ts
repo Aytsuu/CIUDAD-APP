@@ -62,44 +62,56 @@ export const ImmunizationSchema = z.object({
 });
 
 
-
-// In your form schema file
-export const VaccineSchema = z.object({
-  vaccineName: z.string().min(1, "Vaccine name is required"),
-  noOfDoses: z.number().min(1, "At least 1 dose is required"),
-  ageGroup: z.string().min(1, "Age group is required"),
-  specifyAge: z.string().optional(),
-  type: z.enum(["routine", "primary"]),
-  intervals: z.array(z.number().min(0)).optional(),
-  timeUnits: z.array(z.string()).optional(),
-  routineFrequency: z.object({
-    interval: z.number().min(1, "Interval must be at least 1"),
-    unit: z.string().min(1, "Unit is required"),
-  }).optional(),
-}).superRefine((data, ctx) => {
-  if (data.type === "primary") {
-    // For primary vaccines, ensure intervals match the number of doses minus 1
-    const expectedIntervals = data.noOfDoses - 1;
-    if (data.intervals && data.intervals.length !== expectedIntervals) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Primary vaccines require ${expectedIntervals} interval(s)`,
-        path: ["intervals"],
-      });
+  export const VaccineSchema = z.object({
+    vaccineName: z.string().min(1, "Vaccine name is required"),
+    // Accept string but convert to number
+    noOfDoses: z.union([
+      z.string().min(1).transform(val => parseInt(val, 10)),
+      z.number().min(1)
+    ]).pipe(
+      z.number().min(1, "At least 1 dose is required")
+    ),
+    ageGroup: z.string().min(1, "Age group is required"),
+    specifyAge: z.string().optional().default("N/A"),
+    type: z.enum(["routine", "primary"]),
+    // Array of strings that get converted to numbers
+    intervals: z.array(
+      z.union([
+        z.string().transform(val => parseInt(val, 10)),
+        z.number()
+      ]).pipe(z.number().min(0))
+    ).optional().default([]),
+    timeUnits: z.array(z.string()).optional().default([]),
+    routineFrequency: z.object({
+      interval: z.union([
+        z.string().transform(val => parseInt(val, 10)),
+        z.number()
+      ]).pipe(z.number().min(1, "Interval must be at least 1")),
+      unit: z.string().min(1, "Unit is required"),
+    }).optional(),
+  }).superRefine((data, ctx) => {
+    if (data.type === "primary") {
+      const expectedIntervals = data.noOfDoses - 1;
+      if (data.intervals && data.intervals.length > 0 && data.intervals.length !== expectedIntervals) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Primary vaccines require ${expectedIntervals} interval(s)`,
+          path: ["intervals"],
+        });
+      }
+    } else if (data.type === "routine") {
+      if (data.noOfDoses !== 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Routine vaccines must have exactly 1 dose",
+          path: ["noOfDoses"],
+        });
+      }
     }
-  } else if (data.type === "routine") {
-    // For routine vaccines, ensure noOfDoses is 1
-    if (data.noOfDoses !== 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Routine vaccines must have exactly 1 dose",
-        path: ["noOfDoses"],
-      });
-    }
-  }
-});
+  });
 
-export type VaccineType = z.infer<typeof VaccineSchema>;
+  
+  export type VaccineType = z.infer<typeof VaccineSchema>;
 
 export type MedicineType = z.infer<typeof MedicineListSchema>;
 export type CommodityType = z.infer<typeof CommodityListSchema>;

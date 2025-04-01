@@ -13,18 +13,15 @@ import {
   MedicineType,
   MedicineListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getMedicines } from "../requests/GetRequest";
-import { addMedicine } from "../requests/Postrequest";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import {useQueryClient } from "@tanstack/react-query";
+import { addMedicine } from "../requests/post/medicine";
+import { getMedicines } from "../requests/get/getMedicines";
+import { FormInput } from "@/components/ui/form/form-input";
 interface MedicineModalProps {
-
   setIsDialog: (isOpen: boolean) => void;
 }
-
 export default function MedicineModal({
   setIsDialog,
 }: MedicineModalProps) {
@@ -88,28 +85,10 @@ export default function MedicineModal({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            <FormField
-              control={form.control}
-              name="medicineName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Medicine Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="Medicine Name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormInput control={form.control} name="medicineName" label="Medicine Name" placeholder="Enter medicine name" />
           </div>
-
           <div className="w-full flex justify-end mt-8">
-            <button
-              type="submit"
-              className="bg-blue text-white px-4 py-2 rounded"
-            >
-              Submit
-            </button>
+            <button type="submit" className="bg-blue text-white px-4 py-2 rounded"> Submit</button>
           </div>
         </form>
       </Form>
@@ -124,3 +103,4 @@ export default function MedicineModal({
     </div>
   );
 }
+ 

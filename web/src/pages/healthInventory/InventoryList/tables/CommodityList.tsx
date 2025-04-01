@@ -7,15 +7,15 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import CommodityModal from "../addListModal/CommodityModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCommodity } from "../requests/GetRequest";
-import { handleDeleteCommodityList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../confirmationLayout/ConfirmModal";
+import { getCommodity } from "../requests/get/getCommodity";
+import { handleDeleteCommodityList } from "../requests/delete/DeleteCommodityList";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { CommodityColumns } from "./MedicineListColumsn";
-import { CommodityRecords
+import { CommodityRecords,CommodityColumns } from "./columns/commodityCol";
 
- } from "./MedicineListColumsn";
+
+
 export default function CommodityList() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
