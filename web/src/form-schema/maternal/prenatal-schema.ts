@@ -1,3 +1,4 @@
+import { FaTabletAlt } from "react-icons/fa"
 import z from "zod"
 
 // mother's basic info
@@ -14,14 +15,12 @@ export const PrenatalFormSchema = z.object({
         husbandFName: z.string().optional(),
         husbandMName: z.string().optional(),
         occupation: z.string().min(1, 'Occupation is required'),
-        address: z.array(
-            z.object({
-                street: z.string().min(1, 'Street is required'),
-                barangay: z.string().min(1, 'Barangay is required'),
-                city: z.string().min(1, 'City is required'),
-                province: z.string().min(1, 'Province is required'),
-            })  
-        ),
+        address: z.object({
+            street: z.string().min(1, 'Street is required'),
+            barangay: z.string().min(1, 'Barangay is required'),
+            city: z.string().min(1, 'City is required'),
+            province: z.string().min(1, 'Province is required'),
+        }),
         motherWt: z.number().min(0, 'Weight must be a positive number'),
         motherHt: z.number().min(0, 'Height must be a positive number'),
         motherBMI: z.number().min(0, 'BMI must be a positive number'),
@@ -168,7 +167,11 @@ export const PrenatalFormSchema = z.object({
             systolic: z.number(),
             diastolic: z.number(),
         }),
-        leopoldsFindings: z.string(),
+        leopoldsFindings: z.object({
+            fundalHeight: z.string().optional(),
+            fetalHeartRate: z.string().optional(),
+            fetalPosition: z.string().optional(),
+        }),
         notes: z.object({
             complaints: z.string().optional(),
             advises: z.string().optional(),

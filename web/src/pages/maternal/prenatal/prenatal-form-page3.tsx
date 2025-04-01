@@ -455,7 +455,7 @@ export default function PrenatalFormThirdPg(
                                     </div>
 
                                     {/* deworming */}
-                                    <Label className="mt-5">DEWORMING TAB: (PREFERABLY 3RD TRIMESTER):</Label>
+                                    <Label className="mt-5">DEWORMING TAB: (preferably 3rd trimester):</Label>
                                     <FormField
                                         control={form.control}
                                         name="micronutrientSupp.deworming"

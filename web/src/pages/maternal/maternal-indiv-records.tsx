@@ -14,7 +14,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 
-import MotherInfo from "./prenatal/maternal-indiv-info";
+import MotherInfo from "./maternal-indiv-info";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 
 

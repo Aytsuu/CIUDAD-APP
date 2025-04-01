@@ -305,7 +305,7 @@ export default function PrenatalFormFirstPg(
                         <div className="grid grid-cols-4 gap-4 mt-2">
                             <FormField 
                                 control={form.control}
-                                name="motherPersonalInfo.address.0.street"
+                                name="motherPersonalInfo.address.street"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Street</FormLabel>
@@ -317,7 +317,7 @@ export default function PrenatalFormFirstPg(
                             />
                             <FormField 
                                 control={form.control}
-                                name="motherPersonalInfo.address.1.barangay"
+                                name="motherPersonalInfo.address.barangay"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Barangay</FormLabel>
@@ -329,7 +329,7 @@ export default function PrenatalFormFirstPg(
                             />
                             <FormField 
                                 control={form.control}
-                                name="motherPersonalInfo.address.2.city"
+                                name="motherPersonalInfo.address.city"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>City</FormLabel>
@@ -341,7 +341,7 @@ export default function PrenatalFormFirstPg(
                             />
                             <FormField 
                                 control={form.control}
-                                name="motherPersonalInfo.address.3.province"
+                                name="motherPersonalInfo.address.province"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Province</FormLabel>
