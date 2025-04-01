@@ -25,6 +25,7 @@ export default function FamilyProfileForm() {
 
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>('');
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>('');
+  const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>('');
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>([]);
   
   const form = useForm<z.infer<typeof familyFormSchema>>({
@@ -108,10 +109,14 @@ export default function FamilyProfileForm() {
             <ParentsFormLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
-              selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
+              selectedParents={{
+                mother: selectedMotherId, 
+                father: selectedFatherId,
+                guardian: selectedGuardianId}}
               dependentsList={dependentsList}
               setSelectedMotherId={setSelectedMotherId}
               setSelectedFatherId={setSelectedFatherId}
+              setSelectedGuardianId={setSelectedGuardianId}
               onSubmit={()=>nextStep()}
               back={()=>prevStep()}
             />
@@ -120,7 +125,7 @@ export default function FamilyProfileForm() {
             <DependentsInfoLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
-              selectedParents={{mother: selectedMotherId, father: selectedFatherId}}
+              selectedParents={[selectedMotherId, selectedFatherId, selectedGuardianId]}
               dependentsList={dependentsList}
               setDependentsList={setDependentsList}
               defaultValues={defaultValues}

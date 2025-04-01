@@ -1,13 +1,11 @@
-from django.shortcuts import render
 from rest_framework import generics
-from .serializers import *
-from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-# Create your views here.
+from .models import *
+from .serializers.base import *
+from .serializers.minimal import *
+from .serializers.full import *
 
 # Personal Views ------------------------------------------------------------------------
 class PersonalView(generics.ListCreateAPIView):
@@ -37,6 +35,11 @@ class FatherView(generics.ListCreateAPIView):
     serializer_class = FatherSerializer
     queryset = Father.objects.all()
 
+# Guardian Views ----------------------------------------------------------------------
+class GuardianView(generics.ListCreateAPIView):
+    serializer_class = GuardianSerializer
+    queryset = Guardian.objects.all()
+
 # Dependent Views ----------------------------------------------------------------------
 class DependentView(generics.ListCreateAPIView):
     serializer_class = DependentSerializer
@@ -44,7 +47,7 @@ class DependentView(generics.ListCreateAPIView):
 
 # Family Views ------------------------------------------------------------------------
 class FamilyView(generics.ListCreateAPIView):
-    serializer_class = FamilySerializer
+    serializer_class = FamilyFullSerializer
     queryset = Family.objects.all()
 
 # Family Composition Views ------------------------------------------------------------
@@ -59,7 +62,7 @@ class SitioView(generics.ListCreateAPIView):
 
 # Household Views ------------------------------------------------------------------------
 class HouseholdView(generics.ListCreateAPIView):
-    serializer_class = HouseholdSerializer
+    serializer_class = HouseholdFullSerializer
     queryset = Household.objects.all()  
 
 # ResidentProfile Views -----------------------------------------------------------------

@@ -14,8 +14,8 @@ import { DependentRecord } from '../../profilingTypes';
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any; 
-  selectedParents: Record<string, string>
-  dependents: DependentRecord[]
+  selectedParents: string[];
+  dependents: DependentRecord[];
 }) {
 
   // Initialize field array
@@ -29,7 +29,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
     return residents.formatted.filter((resident: any) => {
       const residentId = resident.id?.split(" ")[0]
 
-      return residentId !== selectedParents.mother && residentId !== selectedParents.father &&
+      return !selectedParents.includes(residentId) &&
         !dependents.some((dependent) => dependent.id === residentId)
     })
   }, [residents.formatted, selectedParents, dependents])
@@ -37,21 +37,13 @@ export default function DependentForm({ form, residents, selectedParents, depend
   React.useEffect(() => {
 
     // Get values
-    const motherId = selectedParents.mother;
-    const fatherId = selectedParents.father;
     const searchedResidentId = form.watch('dependentsInfo.new.id')
     const searchedResident = residents.default.find((value: any) => 
       value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]  
     );
 
-    // Check If a resident is selected while being selected as dependent
-    const isResidentSelected = (
-      searchedResidentId.split(" ")[0] !== motherId ||
-      searchedResidentId.split(" ")[0] !== fatherId
-    );
-
     // Condition to populate the fields if true, otherwise empty
-    if (searchedResident && !isResidentSelected) {
+    if (searchedResident && !selectedParents.includes(searchedResidentId.split(" ")[0])) {
       form.setValue('dependentsInfo.new', {
         id: searchedResidentId || '',
         lastName: searchedResident.per.per_lname || '',

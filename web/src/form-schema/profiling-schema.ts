@@ -19,25 +19,23 @@ export const personalInfoSchema = z.object({
   
   per_lname: z.string()
     .min(1, "Last Name is required")
-    .min(2, "Last Name must be at least 2 characters"),
+    .min(2, "Last Name must be at least 2 letters"),
 
   per_fname: z.string()
     .min(1, "First Name is required")
-    .min(2, "First Name must be at least 2 characters"),
+    .min(2, "First Name must be at least 2 letters"),
 
   per_mname: z.string()
-    .refine((val) => val === "" || val.length >= 2, {
-      message: "Middle Name must be at least 2 characters",
-    })
+    .refine((val) => val === "" || val.length >= 2, "Middle Name must be at least 2 letters")
     .optional(),
 
   per_address: z.string()
     .min(1, "Address is required")
-    .min(2, "Address must be at least 2 characters"),
+    .min(2, "Address must be at least 2 letters"),
 
   per_edAttainment: z.string()
     .refine((val) => val === "" || val.length >= 2, {
-      message: "Educational Attainment must be at least 2 characters",
+      message: "Educational Attainment must be at least 2 letters",
     })
     .optional(),
 
@@ -52,21 +50,7 @@ export const personalInfoSchema = z.object({
     }),
 });
 
-export const motherInfoSchema = z.object({
-  // To be removed, use personal
-  id: z.string(),
-  lastName: z.string(),
-  firstName: z.string(),
-  middleName: z.string(),
-  suffix: z.string(),
-  dateOfBirth: z.string().date(),
-  status: z.string(),
-  religion: z.string(),
-  edAttainment: z.string(),
-  contact: z.string(),
-});
-
-export const fatherInfoSchema = z.object({
+export const parentInfoSchema = z.object({
   // To be removed, use personal
   id: z.string(),
   lastName: z.string(),
@@ -92,8 +76,9 @@ export const dependentSchema = z.object({
 
 export const familyFormSchema = z.object({
   demographicInfo: demographicInfoSchema,
-  motherInfo: motherInfoSchema,
-  fatherInfo: fatherInfoSchema,
+  motherInfo: parentInfoSchema,
+  fatherInfo: parentInfoSchema,
+  guardInfo: parentInfoSchema,
   dependentsInfo: z.object({
     list: z.array(dependentSchema).default([]),
     new: dependentSchema,
@@ -105,17 +90,23 @@ export const householdFormSchema = z.object({
   sitio: z.string().min(1, "Sitio is required"),
   street: z.string()
     .min(1, "Address is required")
-    .min(2, "Address must be at least 2 characters"),
+    .min(2, "Address must be at least 2 letters"),
   householdHead: z.string()
 });
 
 export const businessFormSchema = z.object({
-  respondentLname: z.string().min(1),
-  respondentFname: z.string().min(1),
-  respondentMname: z.string().min(1),
-  respondentDob: z.string().date(),
-  name: z.string().min(1),
-  grossSales: z.string().min(1),
-  sitio: z.string().min(1),
-  street: z.string().min(1),
+  respondentLname: z.string()
+    .min(1, 'Last Name is required')
+    .min(2, 'Last Name must be atleast 2 letters'),
+  respondentFname: z.string()
+    .min(1, 'First Name is required')
+    .min(2, 'First Name must be atleast 2 letters'),
+  respondentMname: z.string()
+    .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
+    .optional(),
+  respondentDob: z.string().min(1, 'Date of Birth is required'),
+  name: z.string().min(1, 'Business Name is required'),
+  grossSales: z.string().min(1, 'Gross Sales is required'),
+  sitio: z.string().min(1, 'Sitio is required'),
+  street: z.string().min(1, 'Street Address is required'),
 });

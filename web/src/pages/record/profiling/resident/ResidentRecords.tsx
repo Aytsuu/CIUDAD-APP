@@ -12,7 +12,7 @@ import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
 import { useQuery } from "@tanstack/react-query";
-import { getHouseholds, getResidents } from "../restful-api/profilingGetAPI";
+import { getResidents } from "../restful-api/profilingGetAPI";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -29,43 +29,26 @@ export default function ResidentRecords() {
     staleTime: 0, // Ensure data is never considered stale
   });
 
-  // Fetch households using useQuery
-  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ["households"],
-    queryFn: getHouseholds,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Function to get sitio (works even if households is not fully loaded)
-  const getSitio = React.useCallback(
-    (hh_id: string) => {
-      if (!households) return ""; // Return empty string if households are not ready
-      const household = households.find((hh: any) => hh.hh_id === hh_id);
-      return household?.sitio?.sitio_name || "";
-    },
-    [households]
-  );
-
   // Format resident to populate data table
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
     if (!residents) return [];
 
-    return residents.map((item: any) => {
-      const personal = item?.per;
-      const family = item?.per?.family;
+    return residents.map((resident: any) => {
+      const personal = resident?.per;
+      const [family]  = resident?.family;
+      const household = family?.hh
 
       return {
-        id: item.rp_id || "",
-        householdNo: family?.building.hh_id || "",
-        sitio: getSitio(family?.building?.hh_id),
+        id: resident.rp_id || "",
+        householdNo: household?.hh_id || "",
+        sitio: household?.sitio.sitio_name || "",
         familyNo: family?.fam_id || "",
         lname: personal.per_lname || "",
         fname: personal.per_fname || "",
-        mname: personal.per_mname || "",
-        suffix: personal.per_suffix || "",
-        dateRegistered: item.rp_date_registered || "",
-        registeredBy: item.staff || "",
+        mname: personal.per_mname || "-",
+        suffix: personal.per_suffix || "-",
+        dateRegistered: resident.rp_date_registered || "",
+        registeredBy: resident.staff || "",
       };
     });
   }, [residents]);
@@ -92,7 +75,7 @@ export default function ResidentRecords() {
     currentPage * pageSize
   );
 
-  if (isLoadingResidents || isLoadingHouseholds) {
+  if (isLoadingResidents) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />

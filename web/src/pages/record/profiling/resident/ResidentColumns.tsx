@@ -16,7 +16,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Resident (#)
+        Resident No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -28,7 +28,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Household (#)
+        Household No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -49,7 +49,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Family (#)
+        Family No.
         <ArrowUpDown size={14} />
       </div>
     ),

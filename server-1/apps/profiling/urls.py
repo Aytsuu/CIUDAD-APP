@@ -13,6 +13,9 @@ urlpatterns = [
     # Father Urls
     path("father/", FatherView.as_view(), name="father-details"),
 
+    # Guardian Urls
+    path("guardian/", GuardianView.as_view(), name="guardian-details"),
+
     # Dependent Urls
     path("dependent/", DependentView.as_view(), name="dependent-details"),
 

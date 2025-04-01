@@ -32,7 +32,7 @@ export default function DemographicForm({
     } else {
       if (!householdId) setInvalidHousehold(true);
       toast("Please fill out all required fields", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
       });
     }
   };

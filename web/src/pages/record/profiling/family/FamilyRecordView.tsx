@@ -50,7 +50,7 @@ export default function FamilyRecordView(){
                         <div className="w-full flex justify-between">
                             <Label>Family No. : {params.data.fam_id}</Label>
                             <Label>Indigenous : {params.data.fam_indigenous}</Label>
-                            <Label>Household No. : {params.data.hh}</Label>
+                            <Label>Household No. : {params.data.hh.hh_id}</Label>
                             <Label>Date Registered : {params.data.fam_date_registered}</Label>
                             <Label>Registered By: {params.data.staff}</Label>
                         </div>

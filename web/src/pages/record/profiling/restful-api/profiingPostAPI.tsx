@@ -7,6 +7,7 @@ import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
+// POST request for personal model 
 export const addPersonal = async (personalInfo: Record<string, string>) => {
   try {
     const res = await api.post("profiling/personal/", {
@@ -29,6 +30,7 @@ export const addPersonal = async (personalInfo: Record<string, string>) => {
   }
 };
 
+// POST request for resident_profile model 
 export const addResidentProfile = async (personalId: string) => {
   try {
 
@@ -45,6 +47,7 @@ export const addResidentProfile = async (personalId: string) => {
   }
 };
 
+// POST request for mother model 
 export const addMother = async (residentId: string) => {
   try {
     const res = await api.post("profiling/mother/", {
@@ -57,6 +60,7 @@ export const addMother = async (residentId: string) => {
   }
 };
 
+// POST request for father model 
 export const addFather = async (residentId: string) => {
   try {
     console.log({
@@ -73,6 +77,20 @@ export const addFather = async (residentId: string) => {
   }
 };
 
+// POST request for guardian model 
+export const addGuardian = async (residentId: string) => {
+  try {
+    const res = await api.post("profiling/guardian/", {
+      rp_id: residentId
+    });
+    
+    return res.data.guard_id
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+// POST request for dependent model 
 export const addDependent = (
   dependentsInfo: Record<string, string>[],
   familyId: string
@@ -91,10 +109,12 @@ export const addDependent = (
   }
 };
 
+// POST request for family model 
 export const addFamily = async (
   demographicInfo: Record<string, string>,
   fatherId: string | null,
-  motherId: string | null
+  motherId: string | null,
+  guardId: string | null
 ) => {
   try {
     console.log({
@@ -104,7 +124,7 @@ export const addFamily = async (
       fam_date_registered: formatDate(new Date()),
       father_id: fatherId || null,
       mother_id: motherId || null,
-      guard: null,
+      guard: guardId || null,
       hh: demographicInfo.householdNo || null,
       staff: null,
     })
@@ -115,8 +135,8 @@ export const addFamily = async (
       fam_date_registered: formatDate(new Date()),
       father_id: fatherId || null,
       mother_id: motherId || null,
-      guard: null,
-      hh: demographicInfo.householdNo || null,
+      guard_id: guardId || null,
+      hh_id: demographicInfo.householdNo || null,
       staff: null,
     });
 
@@ -126,6 +146,7 @@ export const addFamily = async (
   }
 };
 
+// POST request for family_composition model 
 export const addFamilyComposition = async (familyId: string, residentId: string) => {
   try {
     const res = await api.post("profiling/family-composition/", {
@@ -139,6 +160,7 @@ export const addFamilyComposition = async (familyId: string, residentId: string)
   }
 };
 
+// POST request for household model 
 export const addHousehold = async (householdInfo: Record<string, string>) => {
   try {
     const res = await api.post("profiling/household/", {
@@ -160,6 +182,7 @@ export const addHousehold = async (householdInfo: Record<string, string>) => {
   }
 };
 
+// POST request for business model 
 export const addBusiness = async (businessInfo: Record<string, string>) => {
   try {
     const res = await api.post("profiling/business/", {

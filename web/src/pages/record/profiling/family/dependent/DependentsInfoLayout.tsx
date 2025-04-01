@@ -11,13 +11,15 @@ import {
   addFamily,
   addFamilyComposition,
   addDependent,
+  addGuardian
 } from "../../restful-api/profiingPostAPI";
 import { DependentRecord } from "../../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { CircleCheck, Trash } from "lucide-react";
+import { CircleAlert, CircleCheck, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function DependentsInfoLayout({
   form,
@@ -30,7 +32,7 @@ export default function DependentsInfoLayout({
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
-  selectedParents: Record<string, string>;
+  selectedParents: string[];
   dependentsList: DependentRecord[];
   setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
   defaultValues: Record<string, any>;
@@ -108,20 +110,30 @@ export default function DependentsInfoLayout({
     });
   };
 
-  const registerProfile = async () => {
+  const registerProfile = async () => { 
+
+    if(dependentsList.length === 0){
+      toast('Family Registration', {
+        description: "Must have atleast one dependent.",
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      })
+      return;
+    }
+
     try {
       // Get form values
       const demographicInfo = form.getValues().demographicInfo;
       const dependentsInfo = form.getValues().dependentsInfo.list;
 
       // Store information to the database
-      const motherId = await addMother(selectedParents.mother);
-      const fatherId = await addFather(selectedParents.father);
-      const familyId = await addFamily(demographicInfo, fatherId, motherId);
+      const motherId = await addMother(selectedParents[0]);
+      const fatherId = await addFather(selectedParents[1]);
+      const guardId = await addGuardian(selectedParents[3]);
+      const familyId = await addFamily(demographicInfo, fatherId, motherId, guardId);
 
       // Automatically add selected mother and father in the family composition
-      addFamilyComposition(familyId, selectedParents.mother);
-      addFamilyComposition(familyId, selectedParents.father);
+      addFamilyComposition(familyId, selectedParents[0]);
+      addFamilyComposition(familyId, selectedParents[1]);
 
       // Store dependents information
       addDependent(dependentsInfo, familyId);
@@ -161,9 +173,17 @@ export default function DependentsInfoLayout({
         <Button variant="outline" className="w-full sm:w-32" onClick={back}>
           Prev
         </Button>
-        <Button className="w-full sm:w-32" onClick={registerProfile}>
-          Register
-        </Button>
+        <ConfirmationModal 
+          trigger={
+            <Button className="w-full sm:w-32">
+              Register
+            </Button>
+          }
+          title="Confirm Registration"
+          description="Do you wish to proceed with the registration?"
+          actionLabel="Confirm"
+          onClick={registerProfile}
+        />
       </div>
     </div>
   );

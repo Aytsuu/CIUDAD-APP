@@ -9,13 +9,13 @@ import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
 import { DependentRecord } from "../../profilingTypes";
 
-export default function ParentsForm({ residents, form, dependentsList, selectedParent, onSelect, prefix, title }: {
+export default function ParentsForm({ residents, form, dependentsList, selectedParents, onSelect, prefix, title }: {
   residents: any;
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
-  selectedParent: string;
+  selectedParents: string[];
   dependentsList: DependentRecord[];
   onSelect: React.Dispatch<React.SetStateAction<string>>
-  prefix: 'motherInfo' | 'fatherInfo';
+  prefix: 'motherInfo' | 'fatherInfo' | 'guardInfo';
   title: string;
 }) {
 
@@ -23,10 +23,10 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
   const filteredResidents = React.useMemo(() => {
     return residents.formatted.filter((resident: any) => {
       const residentId = resident.id.split(" ")[0]
-      return residentId !== selectedParent && 
+      return !selectedParents.includes(residentId) && 
           !dependentsList.some((dependent) => dependent.id == residentId)
     }
-  )}, [residents.formatted, selectedParent, dependentsList])
+  )}, [residents.formatted, selectedParents, dependentsList])
 
   React.useEffect(() => {
 
