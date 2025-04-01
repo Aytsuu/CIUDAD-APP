@@ -12,8 +12,3 @@ class Account(AbstractUser):
     
     class Meta:
         db_table = 'account'
-        
-    # def update_profile_image(self, image_url):
-    #     self.profile_image = image_url
-    #     self.save()
-    #     return self.profile_image

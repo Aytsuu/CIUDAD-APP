@@ -1,5 +1,7 @@
+import type React from "react";
+
 import { useState, useRef } from "react";
-import * as z from "zod";
+import type * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { accountFormSchema } from "@/form-schema/accountSettings";
@@ -9,26 +11,22 @@ import axios from "axios";
 import {
   User,
   Mail,
-  Calendar,
   Lock,
   KeyRound,
   CheckCircle,
   AlertCircle,
   ArrowLeft,
   Info,
-  Image,
   Upload,
 } from "lucide-react";
 
 type AccountFormData = z.infer<typeof accountFormSchema>;
 
 const AccountSettings = () => {
-  const image = localStorage.getItem("profile_image")
+  const image = localStorage.getItem("profile_image");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
-  const [profileImage, setProfileImage] = useState(
-    image || ""
-  );
+  const [profileImage, setProfileImage] = useState(image || "");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,36 +47,46 @@ const AccountSettings = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
+
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setUploadError("Only JPG/PNG/WEBP allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("File must be <5MB");
+      return;
+    }
+
     setIsUploading(true);
     setUploadError("");
-  
+
     const formData = new FormData();
-    formData.append("userimage", file);
-  
+    formData.append("profile_image", file);
+
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/user/upload/",  
+        "http://127.0.0.1:8000/user/upload-image/",
         formData,
         {
           headers: {
-            Authorization: `Token ${token}`, 
+            Authorization: `Token ${token}`,
             "Content-Type": "multipart/form-data",
           },
         }
       );
-  
-      const imageUrl = response.data.image_url;
-      setProfileImage(imageUrl);
-      localStorage.setItem("profile_image", imageUrl);
-  
+
+      const finalUrl = `${response.data.url}?t=${Date.now()}`;
+      setProfileImage(finalUrl);
+      localStorage.setItem("profile_image", finalUrl);
     } catch (error) {
+      console.log("token: ", token);
       setUploadError("Image upload failed. Try again.");
     } finally {
       setIsUploading(false);
     }
   };
-  
 
   const onSubmit = (data: AccountFormData) => {
     if (!emailVerified) {
@@ -93,9 +101,9 @@ const AccountSettings = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6 relative font-poppins">
-      {/* Back Button */}
+      {/* Back Button - Modified to be on the left side */}
       <button
-        className="absolute top-6 right-10 flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer justify-start"
+        className="absolute top-6 left-10 flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer justify-start"
         onClick={() => navigate(-1)}
       >
         <ArrowLeft size={20} />
@@ -134,7 +142,7 @@ const AccountSettings = () => {
               className="relative cursor-pointer" // Make sure cursor changes
             >
               <img
-                src={profileImage}
+                src={profileImage || "/placeholder.svg"}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover"
               />

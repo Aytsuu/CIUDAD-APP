@@ -13,7 +13,7 @@ export const accountFormSchema = z.object({
     .regex(/[0-9]/, { message: "Password must contain at least one number" })
     .optional(),
 
-  profileImage: z
+  profile_image: z
     .instanceof(File, { message: "Please upload a file" })
     .refine(
       file => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type),
@@ -24,7 +24,7 @@ export const accountFormSchema = z.object({
       { message: "Image must be less than 5MB" }
     )
     .optional()
-}).refine(data => data.newPassword || data.profileImage, {
+}).refine(data => data.newPassword || data.profile_image, {
   message: "Either password or profile image must be provided",
   path: ["form"]
 });

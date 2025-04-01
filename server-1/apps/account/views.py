@@ -1,10 +1,15 @@
 from rest_framework import generics, status, permissions
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token  # Import Django's built-in token model
+from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser 
 from .models import Account
 from .serializers import UserAccountSerializer, UserLoginSerializer
 from rest_framework.views import APIView
+import uuid
+import os
+from utils.supabase_client import supabase
 
 class SignInView(generics.CreateAPIView):
     queryset = Account.objects.all()
@@ -58,43 +63,61 @@ class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         # implement custom permission class or authentication here
         return [permissions.AllowAny()]
-
+    
 class UserProfileView(APIView):
     parser_classes = [MultiPartParser]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
     
-    
-# class UpdateProfileImageView(APIView):
-#     authentication_classes = [TokenAuthentication]
-#     permission_classes = [IsAuthenticated]
-#     parser_classes = [MultiPartParser]
+    def post(self, request, *args, **kwargs):
+        print("Incoming token:", request.auth)
+        print("Authenticated user:", request.user)
+        
+        if 'profile_image' not in request.FILES:
+            return Response({"error": "No file provided"}, status=400)
 
-#     def post(self, request):
-#         try:
-#             print(f"Uploading for user ID: {request.user.id}")  # Debug
+        file = request.FILES['profile_image']
+        user = request.user
+        
+        try:
+            # Generate unique filename
+            file_ext = os.path.splitext(file.name)[1]
+            filename = f"user_{user.id}/{uuid.uuid4()}{file_ext}"
             
-#             if 'file' not in request.FILES:
-#                 return Response({"error": "No file provided"}, status=400)
+            # Read file content ONCE and store in memory
+            file_content = file.read()
+            
+            # Debug prints
+            print(f"Attempting to upload {filename} ({len(file_content)} bytes)")
+            print(f"Content type: {file.content_type}")
+            
+            # Upload to Supabase
+            upload_result = supabase.storage.from_("userimage").upload(
+                path=filename,
+                file=file_content,  # Use the stored content
+                file_options={"content-type": file.content_type},
+            )
+            print("Upload result:", upload_result)
+            
+            # Get public URL
+            url = supabase.storage.from_("userimage").get_public_url(filename)
+            print("Generated URL:", url)
 
-#             file = request.FILES['file']
-            
-#             # Validate file type
-#             allowed_types = ['image/jpeg', 'image/png', 'image/gif']
-#             if file.content_type not in allowed_types:
-#                 return Response(
-#                     {"error": f"Invalid file type. Allowed: {', '.join(allowed_types)}"},
-#                     status=400
-#                 )
+            # Update user profile
+            user.profile_image = url
+            user.save()
+            print("User profile updated")
 
-#             # Upload to Supabase
-#             public_url = upload_file(request.user.id, file)
-#             request.user.profile_image = public_url
-#             request.user.save()
-            
-#             return Response({
-#                 "url": public_url,
-#                 "user_id": request.user.id,
-#                 "message": "Profile image updated successfully"
-#             }, status=200)
-            
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=400)
+            return Response({
+                "message": "Image uploaded successfully", 
+                "url": url
+            }, status=200)
+
+        except Exception as e:
+            print(f"ERROR: {str(e)}")
+            import traceback
+            traceback.print_exc()  # This will show the full traceback
+            return Response({
+                "error": "Upload failed",
+                "details": str(e)
+            }, status=500)
