@@ -7,10 +7,10 @@ import {
   LogOut,
   Ellipsis,
 } from "lucide-react";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@radix-ui/react-popover";
 import {
   AlertDialog,
@@ -34,15 +34,15 @@ export function Header() {
   const profileOptions = [
     {
       id: "view-profile",
-      name: "View Profile",
+      name: "Manage your Account",
       icons: <User size={20} />,
-      action: () => navigate("/profile"),
+      action: () => navigate("/account-view-profile"),
     },
     {
       id: "settings",
       name: "Settings",
       icons: <Settings size={20} />,
-      action: () => navigate("/settings"),
+      action: () => navigate("/account-settings"),
     },
     {
       id: "sign-out",
@@ -54,12 +54,17 @@ export function Header() {
 
   const username = localStorage.getItem("username");
   const email = localStorage.getItem("email");
+  const profilePicture = localStorage.getItem("profile_image");
 
   const notificationPopover = (
     <div>
       <hr className="mb-2" />
       <div className="flex items-center p-3 hover:bg-lightBlue hover:rounded-md cursor-pointer">
-        <img src={sanRoqueLogo} alt="Barangay Logo" className="w-10 h-10" />
+        <img
+          src={profilePicture || "Profile Picture"}
+          alt="Barangay Logo"
+          className="w-10 h-10"
+        />
         <div className="ml-3 flex-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-x-2">
@@ -111,7 +116,7 @@ export function Header() {
     localStorage.removeItem("username");
     localStorage.removeItem("email");
     localStorage.removeItem("token");
-    
+
     // Redirect to login page
     navigate("/home");
     setShowLogoutAlert(false);
@@ -136,10 +141,18 @@ export function Header() {
 
   const profilePopOverHeaderDesc = (
     <div className="flex items-center gap-x-2">
-      <img src={sanRoqueLogo} alt="Barangay Logo" className="h-10 w-10 rounded-full" />
-      <div className="flex flex-col">
-        <p className="font-medium">{username}</p>
-        <p className="text-sm text-muted-foreground">{email}</p>
+      <img
+        src={profilePicture || "Profile Picture"}
+        alt="Profile Picture"
+        className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
+      />
+      <div className="flex flex-col max-w-[180px]">
+        <p className="font-medium truncate">
+          {username}
+        </p>
+        <p className="text-sm text-muted-foreground truncate">
+          {email}
+        </p>
       </div>
     </div>
   );
@@ -149,7 +162,11 @@ export function Header() {
       <header className="w-full h-14 bg-white text-[#263D67] flex items-center justify-between px-6 drop-shadow-md">
         <div className="flex items-center space-x-4 text-lg font-semibold cursor-pointer">
           <div className="h-[30px] w-[30px] rounded-full">
-            <img src={sanRoqueLogo} alt="Barangay Logo" className="rounded-full" />
+            <img
+              src={sanRoqueLogo}
+              alt="Barangay Logo"
+              className="rounded-full"
+            />
           </div>
           <p>CIUDAD</p>
         </div>
@@ -163,30 +180,32 @@ export function Header() {
             <PopoverContent className="absolute right-0 top-2 p-0 w-80 z-50 bg-white rounded-md shadow-lg">
               <CardLayout
                 cardClassName="px-2"
-                cardHeaderClassName="p-2"
-                cardDescription={notificationPopoverHeader}
-                cardContentClassName="p-0"
-                cardContent={notificationPopover}
+                headerClassName="p-2"
+                description={notificationPopoverHeader}
+                contentClassName="p-0"
+                content={notificationPopover}
               />
             </PopoverContent>
           </Popover>
 
           <Popover>
             <PopoverTrigger className="flex items-center space-x-2">
-              <img 
-                src={sanRoqueLogo} 
-                alt="Profile" 
-                className="w-8 h-8 rounded-full" 
+              <img
+                src={profilePicture || "Profile Picture"}
+                alt="Profile"
+                className="w-8 h-8 rounded-full"
               />
-              <h2 className="hidden sm:block text-sm font-medium">{username}</h2>
+              <h2 className="hidden sm:block text-sm font-medium">
+                {username}
+              </h2>
             </PopoverTrigger>
             <PopoverContent className="absolute right-0 top-2 p-0 w-64 z-50 bg-white rounded-md shadow-lg">
               <CardLayout
                 cardClassName="w-full"
-                cardHeaderClassName="pb-0 pt-2 px-4"
-                cardDescription={profilePopOverHeaderDesc}
-                cardContentClassName="gap-4 mt-2 pb-2 px-2"
-                cardContent={profilePopoverContent}
+                headerClassName="pb-0 pt-2 px-4"
+                description={profilePopOverHeaderDesc}
+                contentClassName="gap-4 mt-2 pb-2 px-2"
+                content={profilePopoverContent}
               />
             </PopoverContent>
           </Popover>
@@ -198,12 +217,13 @@ export function Header() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to sign out? You'll need to log in again to access your account.
+              Are you sure you want to sign out? You'll need to log in again to
+              access your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleLogout}
               className="bg-red-600 hover:bg-red-700"
             >

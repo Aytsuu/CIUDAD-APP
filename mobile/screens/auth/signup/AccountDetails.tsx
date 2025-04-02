@@ -38,6 +38,7 @@ export default function AccountDetails() {
   //   if (validationResult.success) {
   //     setErrors(null);
   
+<<<<<<< HEAD
   //     try {
   //       // Send data to the backend
   //       const response = await axios.post("http://localhost:8000/api/signup/", {
@@ -46,6 +47,16 @@ export default function AccountDetails() {
   //         password: formData.accountDetails.password,
   //         password2: formData.accountDetails.password 
   //       });
+=======
+      try {
+        // Send data to the backend
+        const response = await axios.post("http://localhost:8000/user/signup/", {
+          username: formData.accountDetails.userName,
+          email: formData.accountDetails.email,
+          password: formData.accountDetails.password,
+          password2: formData.accountDetails.password 
+        });
+>>>>>>> general/account
   
   //       if (response.status === 201) {
   //         Alert.alert("Success", "Account created successfully!");

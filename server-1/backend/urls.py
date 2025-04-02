@@ -23,10 +23,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('waste/', include('apps.waste.urls')),
     path('profiling/', include("apps.profiling.urls")),
-    path('administration/', include("apps.administration.urls")),
-]
+    path('administration/', include("apps.administration.urls")), 
+    path('user/', include('apps.account.urls')),
+    
+]   
