@@ -11,6 +11,7 @@ import { CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DemographicInfo(
+    
     {form, households, onSubmit}: {
     form: UseFormReturn<z.infer<typeof familyFormSchema>>;
     households: any[]

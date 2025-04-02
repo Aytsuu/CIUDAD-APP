@@ -1,6 +1,6 @@
 "use client"
+import React from "react";
 
-import { useState } from "react"
 import { Card } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
 import { DemographicData } from "./DemographicData"
@@ -9,6 +9,12 @@ import EnvironmentalForm from "./EnvironmentalForm"
 import NonCommunicableDiseaseForm from "./NonCommunicableDisease"
 import SurveyIdentificationForm from "./SurveyIdentificationForm"
 import { Progress } from "@/components/ui/progress"
+import { useForm } from "react-hook-form";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DemographicSchema } from "@/form-schema/family-profiling-schema";
+import { z } from "zod";
+
 
 import type {
   DemographicFormData,
@@ -20,8 +26,16 @@ import type {
 } from "@/form-schema/health-data-types"
 
 export function FamilyProfileForm() {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [formData, setFormData] = useState<HealthSurveyData>({
+  
+   const defaultValues = React.useRef(generateDefaultValues(DemographicSchema));
+
+  const form = useForm<z.infer<typeof DemographicSchema>>({
+    resolver: zodResolver(DemographicSchema),
+    defaultValues: defaultValues.current,
+  })
+
+  const [currentStep, setCurrentStep] = React.useState(1)
+  const [formData, setFormData] = React.useState<HealthSurveyData>({
     demographic: {} as DemographicFormData,
     dependents: {} as DependentsFormData,
     environmental: {} as EnvironmentalFormData,
@@ -73,8 +87,10 @@ export function FamilyProfileForm() {
       <Card className="p-6">
         {currentStep === 1 && (
           <DemographicData
-            onSubmit={(data) => handleStepSubmit({ demographic: data })}
-            initialData={formData.demographic}
+            form = {form}
+            households={households}
+            onSubmit={()=>nextStep()}
+
           />
         )}
         {currentStep === 2 && (

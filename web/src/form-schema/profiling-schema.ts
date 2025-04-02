@@ -13,7 +13,6 @@ export const personalInfoSchema = z.object({
     per_lname: z.string().min(1, "Last Name is required"),
     per_fname: z.string().min(1, "First Name is required"),
     per_mname: z.string(),
-    per_suffix: z.string(),
     per_sex: z.string().min(1, "Sex is required"),
     per_dob: z.string().date(),
     per_status: z.string().min(1, "Status is required"),
