@@ -47,7 +47,7 @@ const AccountSettings = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    console.log(file)
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
       setUploadError("Only JPG/PNG/WEBP allowed");
@@ -64,7 +64,7 @@ const AccountSettings = () => {
 
     const formData = new FormData();
     formData.append("profile_image", file);
-
+    console.log(formData.values())
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/user/upload-image/",
@@ -142,7 +142,7 @@ const AccountSettings = () => {
               className="relative cursor-pointer" // Make sure cursor changes
             >
               <img
-                src={profileImage || "/placeholder.svg"}
+                src={profileImage || "Profile Picture"}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover"
               />
