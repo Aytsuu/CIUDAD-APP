@@ -15,7 +15,7 @@ export const LayoutWithBack = ({
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className="w-full">
       <div className="flex gap-2 justify-between pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           {/* Header - Stacks vertically on mobile */}
@@ -37,6 +37,6 @@ export const LayoutWithBack = ({
 
       <hr className="border-gray mb-6 sm:mb-8" />
       {children}
-    </>
+    </div>
   );
 };

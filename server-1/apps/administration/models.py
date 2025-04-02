@@ -44,7 +44,7 @@ class Staff(models.Model):
     rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, related_name="staff_assignments")
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
     manager = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subordinates')
-
+    
     class Meta: 
         db_table = 'staff'
 

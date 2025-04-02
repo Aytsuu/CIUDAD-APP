@@ -45,21 +45,21 @@ INSTALLED_APPS = [
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'corsheaders',
-    'apps.useraccount',
-    'apps.blotter',
+    'apps.administration',
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    # 'useraccount.middleware.SupabaseJWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'

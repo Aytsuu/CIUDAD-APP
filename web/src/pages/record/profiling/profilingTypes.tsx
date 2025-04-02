@@ -1,3 +1,4 @@
+
 // Define the type for the Report object
 export type ResidentRecord = {
   id: string;
@@ -25,8 +26,7 @@ export type DependentRecord = {
 
 export type FamilyRecord = {
   id: string;
-  head: string;
-  noOfDependents: string;
+  noOfMembers: string;
   building: string;
   indigenous: string;
   dateRegistered: string;
@@ -56,4 +56,16 @@ export type RequestRecord = {
   mname: string;
   suffix: string;
   requestDate: string;
+}
+
+export type BusinessRecord = {
+  id: string;
+  name: string;
+  grossSales: string;
+  sitio: string;
+  street: string;
+  respondent: string;
+  dateRegistered: string;
+  registeredBy: string;
+
 }

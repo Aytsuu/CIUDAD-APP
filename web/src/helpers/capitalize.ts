@@ -11,9 +11,11 @@ export const capitalizeAllFields = (data: any) => {
     return Object.fromEntries(
       Object.entries(data).map(([key, value]) => {
         if (typeof value === 'string') {
-          return [key, capitalize(value)]; // Capitalize string values
+          return [key, capitalize(value)];
         }
-        return [key, value]; // Leave non-string values unchanged
+        return [key, value]; 
       })
     );
-};
+};    
+
+
