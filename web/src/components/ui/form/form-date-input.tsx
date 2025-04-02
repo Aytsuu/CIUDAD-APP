@@ -16,7 +16,7 @@ export const FormDateInput = React.memo(({ control, name, label, readOnly }:
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-black/70">{label}</FormLabel>
           <FormControl>
             <input
               type="date"

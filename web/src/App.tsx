@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { main_router } from './routes/main-router';
-import { landing_router } from './routes/landing-router';
-import { settings_router } from './routes/settings';
+import { main_router } from './routers/main-router';
+import { landing_router } from './routers/landing-router';
+import { settings_router } from './routers/settings';
 
 // import FamilyPlanningForm from "./pages/familyplanning/FP-page1";
 // import FamilyPlanningMain from "./pages/familyplanning/main";
