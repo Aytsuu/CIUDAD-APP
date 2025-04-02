@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,7 +13,7 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import GADAddEntrySchema from "@/form-schema/gad-budget-track-create-form-schema";
 
 function GADAddEntryForm() {
@@ -50,8 +50,8 @@ function GADAddEntryForm() {
                   label="Entry Type"
                   placeholder="Select Type"
                   options={[
-                    { id: "1", name: "Entry 1" },
-                    { id: "2", name: "Entry 2" },
+                    { id: "Income", name: "Income" },
+                    { id: "Expense", name: "Expense" },
                   ]}
                   value={field.value}
                   onChange={field.onChange}

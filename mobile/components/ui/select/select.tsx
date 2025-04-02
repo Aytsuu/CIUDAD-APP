@@ -170,8 +170,5 @@ export {
   SelectTrigger,
   SelectValue,
   type Option,
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> mobile/feature/landing-page
+

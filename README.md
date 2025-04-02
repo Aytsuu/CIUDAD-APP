@@ -27,21 +27,16 @@
    git clone https://github.com/aytsuu008/CIUDAD-APP.git
    ```
    
-2. Navigate to the project directory:
- 
-   ```bash
-   cd apps
-   ```
-3. Install frontend dependencies:
+2. Install frontend dependencies:
    
    ```bash
-   cd frontend
+   cd web
    npm install
    npm install -D tailwindcss postcss autoprefixer
    npm install -D @types/node
    ```
    
-4. Install mobile dependencies:
+3. Install mobile dependencies:
 
    ```bash
    cd mobile
@@ -55,15 +50,15 @@
 #### Frontend
 
 ```bash
-cd frontend
+cd web
 npm run dev
 ```
 
 #### Mobile
 
 ```bash
-cd barangay-mobile
-npx expo start
+cd mobile
+npm start
 ```
 
 ### Updating your Main Branch
@@ -73,7 +68,13 @@ git fetch origin
 git checkout main
 git pull
 ```
+### Merging to Master Branch
 
+```bash
+git checkout master
+git pull
+git merge [yourbranchname]
+```
 ---
 
 <br></br>

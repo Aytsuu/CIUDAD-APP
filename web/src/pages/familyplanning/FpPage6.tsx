@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,7 +13,7 @@ import type { FormData, ServiceProvisionRecord } from "@/form-schema/FamilyPlann
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { page6Schema } from "@/form-schema/FamilyPlanningSchema"
-import { Form } from "@/components/ui/form"
+import { Form } from "@/components/ui/form/form"
 import SignatureCanvas from "react-signature-canvas"
 
 // Fix the props type
@@ -432,4 +432,3 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
 }
 
 export default FamilyPlanningForm6
-

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"

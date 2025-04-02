@@ -1,7 +1,7 @@
 // // Dashboard.tsx
 // import { useState } from 'react';
 // import DialogLayout from "@/components/ui/dialog/dialog-layout"
-// import { Button } from "@/components/ui/button"
+// import { Button } from "@/components/ui/button/button"
 // import TableLayout from '@/components/ui/table/table-layout.tsx';
 // import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 // import { Pencil, Trash, Eye, Plus } from 'lucide-react';
@@ -112,7 +112,7 @@
 
 // import { useState } from 'react';
 // import DialogLayout from "@/components/ui/dialog/dialog-layout";
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button/button";
 // import TableLayout from '@/components/ui/table/table-layout.tsx';
 // import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 // import { Pencil, Trash, Eye, Plus } from 'lucide-react';
@@ -220,7 +220,7 @@
 
 import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Pencil, Trash, Eye, Plus, Search } from 'lucide-react';

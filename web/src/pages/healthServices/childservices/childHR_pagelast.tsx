@@ -4,16 +4,16 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Pencil, Trash } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChildHealthFormSchema,
   FormData,
-  VitalSignFormData,
+  VitalSignType,
 } from "@/form-schema/chr-schema";
 import { VitalSignsDialogForm } from "./VitalSignsDialogForm";
-import { UpdateVitalSigns } from "./updateVitalSigns";
+import { UpdateVitalSigns } from "./UpdateVitalSigns";
 
 export default function LastPage({
   onPrevious4,
@@ -42,7 +42,7 @@ export default function LastPage({
     console.log("Updated formData:", formData);
   }, [formData]);
 
-  const handleUpdateVitalSign = (index: number, values: VitalSignFormData) => {
+  const handleUpdateVitalSign = (index: number, values: VitalSignType) => {
     console.log("Updating vital sign at index:", index, "with values:", values); // Debugging
 
     // Create a copy of the vitalSigns array
@@ -54,7 +54,7 @@ export default function LastPage({
     updateFormData({ vitalSigns: updatedVitalSigns }); // Update parent state
   };
 
-  const handleDialogSubmit = (values: VitalSignFormData) => {
+  const handleDialogSubmit = (values: VitalSignType) => {
     console.log("handleDialogSubmit called"); // Debugging
 
     // Add the new vital sign to the existing list
@@ -91,16 +91,24 @@ export default function LastPage({
       { accessorKey: "ht", header: "Ht" },
       { accessorKey: "wt", header: "Wt" },
       { accessorKey: "temp", header: "Temp" },
-      { accessorKey: "notes", header: "Notes" },
+      {
+        accessorKey: "notes",
+        header: "Notes",
+        cell: ({ row }) => {
+          const notes = row.original.notes || "No notes";
+          const followUpVisit = row.original.followUpVisit
+            ? ` (Follow Up: ${row.original.followUpVisit})`
+            : "";
+          return `${notes}${followUpVisit}`;
+        },
+      },
       {
         accessorKey: "findings",
         header: "Findings",
         cell: ({ row }) => {
           const findings = row.original.findings || "No findings";
-          const followUpVisit = row.original.followUpVisit
-            ? ` (Follow Up: ${row.original.followUpVisit})`
-            : "";
-          return `${findings}${followUpVisit}`;
+          
+          return `${findings}`;
         },
       },
       {
@@ -134,12 +142,26 @@ export default function LastPage({
             />
             <TooltipLayout
               trigger={
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteVitalSign(row.index)}
-                >
-                  <Trash size={16} />
-                </Button>
+                <div
+                role="button"
+                tabIndex={0}
+                className="destructive-button-style" // Add your CSS class here
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  // Add hover styles if needed
+                }}
+                onClick={() => handleDeleteVitalSign(row.index)}
+              >
+                <Trash size={16} />
+              </div>
               }
               content="Delete"
             />

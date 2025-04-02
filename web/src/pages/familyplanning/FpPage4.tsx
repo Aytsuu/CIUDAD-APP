@@ -2,11 +2,11 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { type FormData, page4Schema } from "@/form-schema/FamilyPlanningSchema"
 import { useEffect } from "react"
 

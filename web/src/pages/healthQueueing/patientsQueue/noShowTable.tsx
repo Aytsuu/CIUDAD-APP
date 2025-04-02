@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { FilterAccordion } from "@/components/ui/filter-accordion";
 import { ColumnDef } from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PatientQueueForm from "./patientQueueForm";
 import { Check, TimerOff, ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput, Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -22,7 +20,6 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 export default function NoShowTable() {
   type noShowRec = {
     id: string;
-    // patientName: string;
     patient: {
       firstName: string;
       lastName: string;
@@ -37,6 +34,7 @@ export default function NoShowTable() {
     mode: string;
     time: string;
   };
+
   const columns: ColumnDef<noShowRec>[] = [
     {
       accessorKey: "id",
@@ -87,12 +85,11 @@ export default function NoShowTable() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex  px-2">
+        <div className="flex px-2">
           <div className="w-full truncate">{row.original.address}</div>
         </div>
       ),
     },
-
     {
       accessorKey: "service",
       header: "Service",
@@ -125,7 +122,6 @@ export default function NoShowTable() {
   const sampleData: noShowRec[] = [
     {
       id: "S11",
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina",
@@ -135,16 +131,13 @@ export default function NoShowTable() {
         ageTime: "yr",
         category: "Senior",
       },
-      address: "BOnsai  Carcar City",
-
+      address: "BOnsai Carcar City",
       service: "Prenatal",
       mode: "Walkin",
       time: "AM",
     },
-
     {
       id: "P12",
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina",
@@ -155,15 +148,12 @@ export default function NoShowTable() {
         category: "Senior",
       },
       address: "BOnsai Bolinawan Carcar City",
-
       service: "Prenatal",
-
       mode: "Walkin",
       time: "AM",
     },
     {
       id: "R1",
-
       patient: {
         lastName: "Caballes",
         firstName: "Katrina",
@@ -173,20 +163,20 @@ export default function NoShowTable() {
         ageTime: "yr",
         category: "Senior",
       },
-
       address: "BOnsai Bolinawan Carcar City",
-
       service: "Prenatal",
-
       mode: "Walkin",
-
       time: "AM",
     },
+    // Add more sample data as needed
   ];
 
   const [searchTerm, setSearchTerm] = useState("");
-
-  const data = sampleData;
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState<noShowRec[]>(sampleData);
+  const [currentData, setCurrentData] = useState<noShowRec[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
 
   const filter = [
     { id: "0", name: "All" },
@@ -195,13 +185,48 @@ export default function NoShowTable() {
   ];
   const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
 
-  const filteredData =
-    selectedFilter === "All"
-      ? data
-      : data.filter(
-          (item) =>
-            item.service === selectedFilter || item.mode === selectedFilter
-        );
+  // Filter data based on search query and selected filter
+  useEffect(() => {
+    const filtered = sampleData.filter((item) => {
+      const matchesFilter =
+        selectedFilter === "All" ||
+        item.service === selectedFilter ||
+        item.mode === selectedFilter;
+      const matchesSearch = `${item.patient.firstName} ${item.patient.lastName} ${item.patient.middleName} ${item.address} ${item.service} ${item.mode} ${item.time}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
+    setFilteredData(filtered);
+    setTotalPages(Math.ceil(filtered.length / pageSize));
+    setCurrentPage(1); // Reset to first page when search or filter changes
+  }, [searchTerm, selectedFilter, pageSize]);
+
+  // Update data based on page and page size
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setCurrentData(filteredData.slice(startIndex, endIndex));
+  }, [currentPage, pageSize, filteredData]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value);
+    if (!isNaN(value) && value > 0) {
+      setPageSize(value);
+    } else {
+      setPageSize(10); // Default to 10 if invalid input
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <>
@@ -214,7 +239,12 @@ export default function NoShowTable() {
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                 size={17}
               />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
             </div>
             <SelectLayout
               className="w-full md:w-[200px] bg-white"
@@ -237,7 +267,13 @@ export default function NoShowTable() {
         <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
+            <Input
+              type="number"
+              className="w-14 h-8"
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              min="1"
+            />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
@@ -258,17 +294,22 @@ export default function NoShowTable() {
         </div>
         <div className="bg-white w-full overflow-x-auto">
           {/* Table Placement */}
-          <DataTable columns={columns} data={filteredData} />
+          <DataTable columns={columns} data={currentData} />
         </div>
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           {/* Showing Rows Info */}
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of 150 rows
+            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
           </p>
 
           {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       </div>

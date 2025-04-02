@@ -41,6 +41,7 @@ class Permission(models.Model):
 class Staff(models.Model):
     staff_id = models.CharField(primary_key=True,max_length=50)
     staff_assign_date = models.DateField(default=date.today)
+    rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, related_name="staff_assignments")
     pos = models.ForeignKey(Position, on_delete=models.CASCADE)
     manager = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subordinates')
 

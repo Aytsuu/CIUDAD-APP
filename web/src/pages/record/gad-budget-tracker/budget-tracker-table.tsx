@@ -1,18 +1,18 @@
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Trash, Eye, Search } from "lucide-react";
+import { Trash, Eye, Search, FileInput, ChevronLeft, Calendar, ArrowUpDown} from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ArrowUpDown } from "lucide-react";
 import GADAddEntryForm from "./budget-tracker-create-form";
 import { Input } from "@/components/ui/input";
 import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Calendar } from 'lucide-react';
-
+import { Link } from "react-router";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem} from "@/components/ui/dropdown/dropdown-menu";
+import { Button } from "@/components/ui/button/button";
 
 type header = {
   date: string;
@@ -140,11 +140,18 @@ function BudgetTracker() {
   const filteredData = selectedFilter === "All Entry Types" ? data 
   : data.filter((item) => item.type === selectedFilter);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 10; // Example total number of pages
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   return (
-    <div className="w-full h-full">
+    <div className="bg-snow w-full h-full">
           <div className="flex flex-col gap-3 mb-4">
                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
+                    <Link to="/gad-budget-tracker-main"><div><ChevronLeft/></div></Link>
                     <div className="rounded-full border-2 border-solid border-darkBlue2 p-2 flex items-center"><Calendar></Calendar> </div>
                     <div className="ml-2">{year}</div>
                 </h1>
@@ -172,11 +179,11 @@ function BudgetTracker() {
                                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
                                 size={17}
                             />
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" />
                         </div>
                         <div className="flex flex-row gap-2 justify-center items-center">
                             <Label>Filter: </Label>
-                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="" onChange={setSelectedFilter}></SelectLayout>
+                            <SelectLayout className="bg-white" options={filter} placeholder="Filter" value={selectedFilter} label="Payment Status" onChange={setSelectedFilter}></SelectLayout>
                         </div>                            
                   </div>
                 <div className="">
@@ -197,15 +204,32 @@ function BudgetTracker() {
           </div>
                   
           <div className="bg-white">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
-                    <div className="flex gap-x-2 items-center">
-                        <p className="text-xs sm:text-sm">Show</p>
-                        <Input type="number" className="w-14 h-8" defaultValue="10" />
-                        <p className="text-xs sm:text-sm">Entries</p>
-                    </div>
-              </div>
-                <DataTable columns={columns} data={filteredData} />
-          </div>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
+                <div className="flex gap-x-2 items-center">
+                    <p className="text-xs sm:text-sm">Show</p>
+                    <Input type="number" className="w-14 h-8" defaultValue="10" />
+                    <p className="text-xs sm:text-sm">Entries</p>
+                </div>
+
+                <div>
+                    <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                        <FileInput />
+                        Export
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                        <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                        <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                    </DropdownMenuContent>
+                    </DropdownMenu>                    
+                </div>
+            </div>
+
+            <DataTable columns={columns} data={filteredData}></DataTable>
+        </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
                 {/* Showing Rows Info */}
@@ -215,7 +239,7 @@ function BudgetTracker() {
 
                 {/* Pagination */}
                 <div className="w-full sm:w-auto flex justify-center">
-                  <PaginationLayout className="" />
+                <PaginationLayout className="" totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange}/>                
                 </div>
           </div>
     </div>

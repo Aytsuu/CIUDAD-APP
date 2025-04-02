@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Form,
   FormControl,
@@ -6,7 +6,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -77,7 +77,6 @@ export default function VaccinationForm({ recordType }: VaccinationFormProps) {
       alert("Form submission failed. Please check the form for errors.");
     }
   };
-
 
   // Canvas state for signature
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -234,7 +233,6 @@ export default function VaccinationForm({ recordType }: VaccinationFormProps) {
                 </div>
               )}
 
-         
               <div className="flex justify-end w-full sm:w-auto sm:ml-auto">
                 <FormField
                   control={form.control}
@@ -335,7 +333,21 @@ export default function VaccinationForm({ recordType }: VaccinationFormProps) {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" />
+                      <Input {...field} type="number" placeholder="Age" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date of Birth</FormLabel>
+                    <FormControl>
+                      <Input type="date" className="w-full" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -365,22 +377,8 @@ export default function VaccinationForm({ recordType }: VaccinationFormProps) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="dob"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl>
-                      <Input type="date" className="w-full" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-            <h2 className="font-bold">Address</h2>
+            <h2 className="font-bold text-blue">Address</h2>
             {/* Address Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {addressFields.map(({ name, label, placeholder }) => (
@@ -455,7 +453,7 @@ export default function VaccinationForm({ recordType }: VaccinationFormProps) {
                     <FormLabel>Assigned Step 2 to</FormLabel>
                     <FormControl>
                       <SelectLayout
-                        className=""
+                        className="w-[250px]"
                         label="Assigned to"
                         placeholder="Select"
                         options={[{ id: "1", name: "Keneme" }]}

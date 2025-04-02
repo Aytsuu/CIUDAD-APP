@@ -1,6 +1,6 @@
 import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
-import AnnouncementDashboard from '@/pages/announcement/overall';
+import AnnouncementDashboard from '@/pages/announcement/AnnouncementList';
 
 import { RouteObject} from "react-router";
 import { Navigate } from 'react-router';
@@ -14,8 +14,8 @@ import { res_router } from './resolutionPage-route';
 import { attendance_router } from './attendacePage-route';
 import { mom_router } from './MinutesOfMeetingPage-route';
 import { council_calendar_router } from './calendarPage-route';
-
-
+import { patientQueue } from './patientsQueue';
+import { healthinventory } from './inventory';
 import { donation_router } from './donation-router';
 import { waste_router } from './waste-router';
 import { treasurer_router } from './treasurer-router';
@@ -24,8 +24,14 @@ import { vaccination } from './vaccination';
 import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
+import { familyProfilingRoute } from './family-profiling-route';
+import { patientsRecordRouter } from './patients-record-router';
 import { announcement_route } from './Announcement-route';
 import { famplanning_route } from './FamilyPlanning-route';
+import { medicalConsultation } from './medConsultation';
+import { doctorRouting } from './doctor-router';
+
+
 
 export const main_router: RouteObject[] = [
     {
@@ -63,6 +69,13 @@ export const main_router: RouteObject[] = [
             ...bites_route,
             ...announcement_route,
             ...famplanning_route,
+            ...healthinventory,
+            ...medicalConsultation,
+            ...patientQueue,
+            ...doctorRouting,
+            ...familyProfilingRoute,
+            ...patientsRecordRouter,
+            
         ]
     }
 ]

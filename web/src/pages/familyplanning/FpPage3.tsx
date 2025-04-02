@@ -3,11 +3,11 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
-import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card/card"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 
 // Referral options constant
 const referralOptions = {

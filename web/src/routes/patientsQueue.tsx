@@ -3,7 +3,7 @@ import MainPatientQueueTable from "@/pages/healthQueueing/patientsQueue/mainPati
 import ProcessingQueueTable from "@/pages/healthQueueing/processingQueue/processingQueueTable";
     export const patientQueue=[
         {
-            path: '/healthQueueing',
+            path: '/patientsQueue',
             element: <MainPatientQueueTable/>
           },
           {

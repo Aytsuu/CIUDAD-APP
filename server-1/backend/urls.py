@@ -3,7 +3,7 @@ URL configuration for backend project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
-========
+    
 URL configuration for {{ project_name }} project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -32,4 +32,16 @@ urlpatterns = [
     path('waste/', include('apps.waste.urls')),
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
+    path('admin/', admin.site.urls),
+    path('waste/', include('apps.waste.urls')),
+    path('profiling/', include("apps.profiling.urls")),
+    path('administration/', include("apps.administration.urls")),
+    path('treasurer/', include('apps.treasurer.urls')),
+
+    #JWT authentication
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    path('api/', include('apps.useraccount.urls')),
+    path("blotter/", include("apps.blotter.urls"))
 ]
