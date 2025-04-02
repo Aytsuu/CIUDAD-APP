@@ -25,6 +25,19 @@ type Props = {
 };
 
 function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}: Props) {
+    const budgetItems = [
+        { name: "travelingExpenses", label: "Traveling Expense" },
+        { name: "trainingExpenses", label: "Training Expenses" },
+        { name: "officeExpenses", label: "Office Supplies Expenses" },
+        { name: "accountableExpenses", label: "Accountable Forms Expenses" },
+        { name: "medExpenses", label: "Drugs and Medicine Expense" },
+        { name: "waterExpenses", label: "Water Expenses" },
+        { name: "electricityExpenses", label: "Electricity Expenses" },
+        { name: "telephoneExpenses", label: "Telephone Expenses" },
+        { name: "memDues", label: "Membership Dues/Contribution to Organization" },
+        { name: "officeMaintenance", label: "Repair and Maintenance of Office Equipment" },
+        { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle" },
+    ]
     
     const [total, setTotal] = useState(0);
     const [budgetLimit, setBudgetLimit] = useState(0.00); 
@@ -72,19 +85,7 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}
                         <div className='p-2'>
                             <h3 className='font-semibold text-blue w-[21rem] flex justify-center'>Maint. & Other Operating Expenses</h3>
                         </div>
-                        {[
-                            { name: "travelingExpenses", label: "Traveling Expense" },
-                            { name: "trainingExpenses", label: "Training Expenses" },
-                            { name: "officeExpenses", label: "Office Supplies Expenses" },
-                            { name: "accountableExpenses", label: "Accountable Forms Expenses" },
-                            { name: "medExpenses", label: "Drugs and Medicine Expense" },
-                            { name: "waterExpenses", label: "Water Expenses" },
-                            { name: "electricityExpenses", label: "Electricity Expenses" },
-                            { name: "telephoneExpenses", label: "Telephone Expenses" },
-                            { name: "memDues", label: "Membership Dues/Contribution to Organization" },
-                            { name: "officeMaintenance", label: "Repair and Maintenance of Office Equipment" },
-                            { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle" },
-                        ].map(({ name, label }) => (
+                        {budgetItems.map(({ name, label }) => (
                             <FormField
                                 key={name}
                                 control={form.control}
