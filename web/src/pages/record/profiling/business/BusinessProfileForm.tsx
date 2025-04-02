@@ -4,28 +4,36 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button/button";
-import { LoadButton } from "@/components/ui/button/load-button";
 import { Control } from "react-hook-form";
 import { businessFormSchema } from "@/form-schema/profiling-schema";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { renderActionButton } from "../actionConfig";
+import { Type } from "../profilingEnums";
+import React from "react";
 
 export default function BusinessProfileForm({
+  formType,
   sitio,
   control,
   isSubmitting,
+  isReadOnly,
   mediaFiles,
   activeVideoId,
+  url,
+  setFormType,
   setMediaFiles,
   setActiveVideoId,
   submit
 }: {
+  formType: Type;
   sitio: any[];
   control: Control<z.infer<typeof businessFormSchema>>;
   isSubmitting: boolean;
+  isReadOnly: boolean;
   mediaFiles: any[];
   activeVideoId: string;
+  url: string;
+  setFormType: React.Dispatch<React.SetStateAction<Type>>;
   setMediaFiles: React.Dispatch<React.SetStateAction<any[]>>;
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
   submit: () => void;
@@ -36,11 +44,15 @@ export default function BusinessProfileForm({
         <Label className="text-lg font-semibold">Respondent Information</Label>
         <p className="text-xs text-black/50 mb-4">Fill out all necessary fields</p>
 
-        <div className="grid grid-cols-4 gap-4">
-          <FormInput control={control} name="respondentLname" label="Last Name" placeholder="Enter last name" />
-          <FormInput control={control} name="respondentFname" label="First Name" placeholder="Enter first name" />
-          <FormInput control={control} name="respondentMname" label="Middle Name" placeholder="Enter middle name" />
-          <FormDateInput control={control} name="respondentDob" label="Date of Birth" />
+        <div className="grid grid-cols-5 gap-4">
+          <FormInput control={control} name="bus_respondentLname" label="Last Name" placeholder="Enter last name" readOnly={isReadOnly}/>
+          <FormInput control={control} name="bus_respondentFname" label="First Name" placeholder="Enter first name" readOnly={isReadOnly}/>
+          <FormInput control={control} name="bus_respondentMname" label="Middle Name" placeholder="Enter middle name" readOnly={isReadOnly}/>
+          <FormSelect control={control} name="bus_respondentSex" label="Sex" options={[
+            {id: "female", name: "Female"},
+            {id: "male", name: "Male"}
+          ]} readOnly={isReadOnly}/>
+          <FormDateInput control={control} name="bus_respondentDob" label="Date of Birth" readOnly={isReadOnly}/>
         </div>
       </div>
 
@@ -51,14 +63,14 @@ export default function BusinessProfileForm({
         <p className="text-xs text-black/50 mb-4">Fill out all necessary fields</p>
 
         <div className="grid grid-cols-4 gap-4">
-          <FormInput control={control} name="name" label="Business Name" placeholder="Enter business name" />
-          <FormInput control={control} name="grossSales" label="Gross Sales" placeholder="Enter gross sales" />
-          <FormSelect control={control} name="sitio" label="Sitio" options={sitio} />
-          <FormInput control={control} name="street" label="Street Address" placeholder="Enter street address" />
+          <FormInput control={control} name="bus_name" label="Business Name" placeholder="Enter business name" readOnly={isReadOnly}/>
+          <FormInput control={control} name="bus_gross_sales" label="Gross Sales" placeholder="Enter gross sales" readOnly={isReadOnly}/>
+          <FormSelect control={control} name="sitio" label="Sitio" options={sitio} readOnly={isReadOnly}/>
+          <FormInput control={control} name="bus_street" label="Street Address" placeholder="Enter street address" readOnly={isReadOnly}/>
         </div>
       </div>
 
-      <MediaUpload
+      {formType !== Type.Viewing ? (<MediaUpload
         title="Supporting Documents"
         description="Upload supporting documents that verify your reported gross sales. 
               Acceptable files include Official sales receipts or invoices, 
@@ -67,18 +79,18 @@ export default function BusinessProfileForm({
         activeVideoId={activeVideoId}
         setMediaFiles={setMediaFiles}
         setActiveVideoId={setActiveVideoId}
-      />
+      />) : (
+          <img src={url} className="w-52 h-52"/>
+      )}
 
       <div className="flex justify-end mt-8">
-        {!isSubmitting ? 
-         (<ConfirmationModal
-            trigger= {<Button className="w-32">Register</Button>}
-            title="Confirm Registration"
-            description="Do you wish to proceed with the registration?"
-            actionLabel="Confirm"
-            onClick={submit}
-         />) : (
-         <LoadButton>Registering...</LoadButton>)}
+        {renderActionButton({
+          formType,
+          origin: 'defaultOrigin',
+          isSubmitting,
+          setFormType,
+          submit  
+        })}
       </div>
     </>
   );

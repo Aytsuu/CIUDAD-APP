@@ -95,18 +95,19 @@ export const householdFormSchema = z.object({
 });
 
 export const businessFormSchema = z.object({
-  respondentLname: z.string()
+  bus_respondentLname: z.string()
     .min(1, 'Last Name is required')
     .min(2, 'Last Name must be atleast 2 letters'),
-  respondentFname: z.string()
+  bus_respondentFname: z.string()
     .min(1, 'First Name is required')
     .min(2, 'First Name must be atleast 2 letters'),
-  respondentMname: z.string()
+  bus_respondentMname: z.string()
     .refine((val) => val === "" || val.length >= 0, 'Middle Name must be atleast 2 letters')
     .optional(),
-  respondentDob: z.string().min(1, 'Date of Birth is required'),
-  name: z.string().min(1, 'Business Name is required'),
-  grossSales: z.string().min(1, 'Gross Sales is required'),
-  sitio: z.string().min(1, 'Sitio is required'),
-  street: z.string().min(1, 'Street Address is required'),
+  bus_respondentSex: z.string().min(1, 'Sex is required'),
+  bus_respondentDob: z.string().min(1, 'Date of Birth is required'),
+  bus_name: z.string().min(1, 'Business Name is required'),
+  bus_gross_sales: z.string().min(1, 'Gross Sales is required'),
+  bus_street: z.string().min(1, 'Street Address is required'),
+  sitio: z.string().min(1, 'Sitio is required')
 });

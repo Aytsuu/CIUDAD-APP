@@ -185,36 +185,21 @@ export const addHousehold = async (householdInfo: Record<string, string>) => {
 // POST request for business model 
 export const addBusiness = async (businessInfo: Record<string, string>, url: string) => {
   try {
-    console.log({
-      bus_name: businessInfo.name,
-      bus_gross_sales: parseFloat(businessInfo.grossSales),
-      bus_province: "Cebu",
-      bus_city: "Cebu City",
-      bus_barangay: "San Roque",
-      bus_street: businessInfo.street,
-      bus_respondentLname: businessInfo.respondentLname,
-      bus_respondentFname: businessInfo.respondentFname,
-      bus_respondentMname: businessInfo.respondentMname,
-      bus_respondentDob: businessInfo.respondentDob,
-      bus_doc_url: url,
-      bus_date_registered: formatDate(new Date()),
-      sitio: businessInfo.sitio,
-      staff: null,
-    })
     const res = await api.post("profiling/business/", {
-      bus_name: businessInfo.name,
-      bus_gross_sales: parseFloat(businessInfo.grossSales),
+      bus_name: businessInfo.bus_name,
+      bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
       bus_province: "Cebu",
       bus_city: "Cebu City",
       bus_barangay: "San Roque",
-      bus_street: businessInfo.street,
-      bus_respondentLname: businessInfo.respondentLname,
-      bus_respondentFname: businessInfo.respondentFname,
-      bus_respondentMname: businessInfo.respondentMname,
-      bus_respondentDob: businessInfo.respondentDob,
+      bus_street: businessInfo.bus_street,
+      bus_respondentLname: businessInfo.bus_respondentLname,
+      bus_respondentFname: businessInfo.bus_respondentFname,
+      bus_respondentMname: businessInfo.bus_respondentMname,
+      bus_respondentSex: businessInfo.bus_respondentSex,
+      bus_respondentDob: businessInfo.bus_respondentDob,
       bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
-      sitio: businessInfo.sitio,
+      sitio_id: businessInfo.sitio,
       staff: null,
     });
 

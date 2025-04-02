@@ -10,7 +10,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Origin, Type } from "../profilingEnums";
-import { renderActionButton } from "./actionConfig";
+import { renderActionButton } from "../actionConfig";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
@@ -158,7 +158,7 @@ export default function PersonalInfoForm({
 
       {/* Action Button */}
       <div className="mt-8 flex justify-end gap-3">
-        {renderActionButton(
+        {renderActionButton({
           form,
           isAssignmentOpen,
           formType,
@@ -167,7 +167,7 @@ export default function PersonalInfoForm({
           setIsAssignmentOpen,
           setFormType,
           submit
-        )}
+        })}
       </div>
     </>
   );

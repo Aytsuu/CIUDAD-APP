@@ -1,18 +1,18 @@
-import { Type, Origin } from "../profilingEnums";
+import { Type, Origin } from "./profilingEnums";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
-import AssignPosition from "../../administration/AssignPosition";
+import AssignPosition from "../administration/AssignPosition";
 import { Pen } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Configuration Object
 export const buttonConfig = (
-    form: any,
-    isAssignmentOpen: boolean,
-    setIsAssignmentOpen: (value: boolean) => void,
-    setFormType: (value: Type) => void,
-    submit: () => void
+  form: any,
+  isAssignmentOpen: boolean,
+  setIsAssignmentOpen: (value: boolean) => void,
+  setFormType: (value: Type) => void,
+  submit: () => void
 ) => ({
   [Origin.Administration]: {
     [Type.Viewing]: null, // No button for viewing in administration
@@ -38,7 +38,7 @@ export const buttonConfig = (
     [Type.Viewing]: (
       <Button
         onClick={() => {
-          setFormType(Type.Editing)
+          setFormType(Type.Editing);
         }}
       >
         <Pen size={24} /> Edit
@@ -46,33 +46,30 @@ export const buttonConfig = (
     ),
     [Type.Editing]: (
       <div className="flex gap-2">
-        <Button 
-            className="w-full sm:w-32" 
-            variant={"outline"}
-            onClick={() => {
-                setFormType(Type.Viewing)
-            }}
-        >
-            Cancel
-        </Button>
-        <Button 
+        <Button
           className="w-full sm:w-32"
-          type="submit"
+          variant={"outline"}
+          onClick={() => {
+            setFormType(Type.Viewing);
+          }}
         >
+          Cancel
+        </Button>
+        <Button className="w-full sm:w-32" type="submit">
           Save
         </Button>
       </div>
     ),
     [Type.Request]: (
       <div className="flex gap-2">
-        <Button 
+        <Button
           type="button"
-          className="w-full sm:w-32 text-red-500 hover:text-red-500" 
+          className="w-full sm:w-32 text-red-500 hover:text-red-500"
           variant={"outline"}
         >
           Reject
         </Button>
-        <ConfirmationModal 
+        <ConfirmationModal
           trigger={<Button className="w-full sm:w-32"> Approve </Button>}
           title="Confirm Approval"
           description="Do you wish to proceed approving this request?"
@@ -82,13 +79,13 @@ export const buttonConfig = (
       </div>
     ),
     default: (
-      <ConfirmationModal 
-          trigger={<Button className="w-full sm:w-32"> Register </Button>}
-          title="Confirm Registration"
-          description="Do you wish to proceed with the registration?"
-          actionLabel="Confirm"
-          onClick={submit}
-        />
+      <ConfirmationModal
+        trigger={<Button className="w-full sm:w-32"> Register </Button>}
+        title="Confirm Registration"
+        description="Do you wish to proceed with the registration?"
+        actionLabel="Confirm"
+        onClick={submit}
+      />
     ),
   },
 });
@@ -96,19 +93,35 @@ export const buttonConfig = (
 // Render Function
 type OriginKeys = keyof ReturnType<typeof buttonConfig>;
 
-export const renderActionButton = (
-  form: any,
-  isAssignmentOpen: boolean,
-  formType: Type,
-  Origin: OriginKeys,
-  isSubmitting: boolean,
-  setIsAssignmentOpen: (value: boolean) => void,
-  setFormType: (value: Type) => void,
-  submit: () => void
-) => {
-  const config = buttonConfig(form, isAssignmentOpen, setIsAssignmentOpen, setFormType, submit);
-  const originConfig = config[Origin] || config.defaultOrigin;
-  const button = originConfig[formType as keyof typeof originConfig] || originConfig.default;
+export const renderActionButton = ({
+  form,
+  isAssignmentOpen,
+  formType,
+  origin,
+  isSubmitting,
+  setIsAssignmentOpen,
+  setFormType,
+  submit,
+}: {
+  form?: any;
+  isAssignmentOpen?: boolean;
+  formType: Type;
+  origin: OriginKeys;
+  isSubmitting: boolean;
+  setIsAssignmentOpen?: (value: boolean) => void;
+  setFormType: (value: Type) => void;
+  submit: () => void;
+}) => {
+  const config = buttonConfig(
+    form,
+    isAssignmentOpen || false,
+    setIsAssignmentOpen || (() => {}),
+    setFormType,
+    submit
+  );
+  const originConfig = config[origin] || config.defaultOrigin;
+  const button =
+    originConfig[formType as keyof typeof originConfig] || originConfig.default;
 
   // Add loading state to the button
   if (isSubmitting) {

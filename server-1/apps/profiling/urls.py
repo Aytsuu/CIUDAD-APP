@@ -35,7 +35,7 @@ urlpatterns = [
     path("resident/", ResidentProfileView.as_view(), name="resident-details"),
 
     # Request Urls
-    path("request/", RequestView.as_view(), name="request-details"),
+    path("request/", RequestRegistrationView.as_view(), name="request-details"),
     path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
 
     # Business Urls

@@ -17,6 +17,7 @@ export default function BusinessRecords() {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
+  // Fetching businesses from database
   const { data: businesses, isLoading: isLoadingBusinesses } = useQuery({
     queryKey: ["businesses"],
     queryFn: getBusiness,
@@ -24,6 +25,7 @@ export default function BusinessRecords() {
     staleTime: 0,
   });
 
+  // Fetching sitio from database
   const { data: sitio, isLoading: isLoadingSitio } = useQuery({
     queryKey: ["sitio"],
     queryFn: getSitio,
@@ -31,6 +33,7 @@ export default function BusinessRecords() {
     staleTime: 0,
   });
 
+  // Formatting business data (for table)
   const formatBusinessData = React.useCallback(() => {
     if (!businesses) return [];
 
@@ -47,7 +50,7 @@ export default function BusinessRecords() {
         id: business.bus_id || "-",
         name: business.bus_name || "-",
         grossSales: String(business.bus_gross_sales) || "-",
-        sitio: business.sitio || "-",
+        sitio: business.sitio.sitio_name || "-",
         street: business.bus_street || "-",
         respondent: fullName || "-",
         dateRegistered: business.bus_date_registered || "-",
@@ -56,6 +59,8 @@ export default function BusinessRecords() {
     });
   }, [businesses]);
 
+
+  // Filtering business data (for searching)
   const filteredBusinesses = React.useMemo(() => {
     const formattedData = formatBusinessData();
     if (!formattedData.length) return [];
@@ -68,8 +73,10 @@ export default function BusinessRecords() {
     );
   }, [searchQuery, businesses]);
 
+  // Total pages 
   const totalPages = Math.ceil(filteredBusinesses.length / pageSize);
 
+  // Slicing the data for pagination
   const paginatedBusinesses = filteredBusinesses.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -77,7 +84,7 @@ export default function BusinessRecords() {
 
   if (isLoadingBusinesses || isLoadingSitio) {
     return (
-      <div className="w-full h-full">
+      <div className="w-full h-full"> 
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
         <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
         <Skeleton className="h-10 w-full mb-4 opacity-30" />
@@ -109,7 +116,8 @@ export default function BusinessRecords() {
           to="/business-form"
           state={{
             params: {
-              sitio: sitio,
+              type: "registration",
+              sitio: sitio
             },
           }}
         >
@@ -152,7 +160,7 @@ export default function BusinessRecords() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={businessColumns()} data={paginatedBusinesses} />
+          <DataTable columns={businessColumns(businesses, sitio)} data={paginatedBusinesses} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">

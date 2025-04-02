@@ -29,7 +29,6 @@ import {
 } from "../restful-api/profiingPostAPI";
 
 export default function ResidentFormLayout() {
-
   // Initializing states
   const location = useLocation();
   const navigate = useNavigate();
@@ -120,7 +119,12 @@ export default function ResidentFormLayout() {
   // For type edit, check if values are unchanged
   const checkDefaultValues = (values: any, params: any) => {
     // Optional fields
-    const optionalFields = ["per_id", "per_mname", "per_suffix", "per_edAttainment",];
+    const optionalFields = [
+      "per_id",
+      "per_mname",
+      "per_suffix",
+      "per_edAttainment",
+    ];
     const keys = Object.keys(values);
     const isDefault = keys.every((key) => {
       if (optionalFields.includes(key)) {

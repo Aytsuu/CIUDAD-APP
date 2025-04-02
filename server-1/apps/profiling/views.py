@@ -72,13 +72,13 @@ class ResidentProfileView(generics.ListCreateAPIView):
 
 # Request Views --------------------------------------------------------------------------
 
-class RequestView(generics.ListCreateAPIView):
-    serializer_class = RequestSerializer
-    queryset = Request.objects.all()
+class RequestRegistrationView(generics.ListCreateAPIView):
+    serializer_class = RequestRegistrationSerializer
+    queryset = RequestRegistration.objects.all()
 
 class RequestDeleteView(generics.DestroyAPIView):
-    serializer_class = RequestSerializer
-    queryset = Request.objects.all()
+    serializer_class = RequestRegistrationSerializer
+    queryset = RequestRegistration.objects.all()
     lookup_field = 'req_id'
 
 # Business Views --------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { addBusiness } from "../restful-api/profiingPostAPI";
+import { Type } from "../profilingEnums";
 import supabase from "@/utils/supabase";
 
 export default function BusinessFormLayout() {
@@ -27,11 +28,52 @@ export default function BusinessFormLayout() {
   const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
+  const [formType, setFormType] = React.useState<Type>(params.type)
   const defaultValues = React.useRef(generateDefaultValues(businessFormSchema));
   const form = useForm<z.infer<typeof businessFormSchema>>({
     resolver: zodResolver(businessFormSchema),
     defaultValues: defaultValues.current,
   });
+
+  React.useEffect(() => {
+    if(formType === Type.Viewing){
+      setIsReadOnly(true)
+      populateFields()
+    } else {
+      setIsReadOnly(false)
+    }
+  }, [formType])
+
+  const populateFields = React.useCallback(() => {
+    const businessInfo = params.business
+    if(!businessInfo) return;
+
+    const fields = [
+      {key: "bus_respondentLname" , value: businessInfo.bus_respondentLname},
+      {key: "bus_respondentFname" , value: businessInfo.bus_respondentFname},
+      {key: "bus_respondentMname" , value: businessInfo.bus_respondentMname},
+      {key: "bus_respondentSex" , value: businessInfo.bus_respondentSex},
+      {key: "bus_respondentDob" , value: businessInfo.bus_respondentDob},
+      {key: "bus_name" , value: businessInfo.bus_name},
+      {key: "bus_gross_sales" , value: String(businessInfo.bus_gross_sales)},
+      {key: "bus_province" , value: businessInfo.bus_province},
+      {key: "bus_city" , value: businessInfo.bus_city},
+      {key: "bus_barangay" , value: businessInfo.bus_barangay},
+      {key: "bus_street" , value: businessInfo.bus_street},
+      {key: "sitio" , value: businessInfo.sitio.sitio_name},
+    ]
+
+    fields.forEach(({key, value}) => {
+      form.setValue(
+        key as keyof z.infer<typeof businessFormSchema>,
+        value || ""
+      )
+    })
+
+    setMediaFiles((prev) => [...prev,])
+
+  }, [params.business])
 
   // Function to handle form submission
   const submit = async () => {
@@ -112,11 +154,15 @@ export default function BusinessFormLayout() {
             className="flex flex-col gap-8"
           >
             <BusinessProfileForm
+              formType={formType}
               sitio={sitio.current}
               control={form.control}
               isSubmitting={isSubmitting}
+              isReadOnly={isReadOnly}
               mediaFiles={mediaFiles}
               activeVideoId={activeVideoId}
+              url={params.business.bus_doc_url}
+              setFormType={setFormType}
               setMediaFiles={setMediaFiles}
               setActiveVideoId={setActiveVideoId}
               submit={submit}

@@ -3,7 +3,7 @@ from django.conf import settings
 from datetime import date
 
 class Sitio(models.Model):
-    sitio_id = models.BigAutoField(primary_key=True)
+    sitio_id = models.CharField(max_length=100, primary_key=True)
     sitio_name = models.CharField(max_length=100)
 
     class Meta:
@@ -11,7 +11,6 @@ class Sitio(models.Model):
 
     def __str__(self):
         return self.sitio_name
-
 
 class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
@@ -153,13 +152,13 @@ class FamilyComposition(models.Model):
         return f"{self.rp} in Family {self.fam.fam_id}"
 
     
-class Request(models.Model):
+class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
     req_date = models.DateField()
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
 
     class Meta: 
-        db_table = 'request'
+        db_table = 'request_registration'
 
     def __str__(self):
         return f"Request #{self.req_id} by {self.per} on {self.req_date}"
@@ -176,8 +175,9 @@ class Business(models.Model):
     bus_respondentLname = models.CharField(max_length=50)
     bus_respondentFname = models.CharField(max_length=50)
     bus_respondentMname = models.CharField(max_length=50)
+    bus_respondentSex = models.CharField(max_length=50)
     bus_respondentDob = models.DateField()
-    bus_doc_url = models.CharField(max_length=500)
+    bus_doc_url = models.TextField()
     bus_date_registered = models.DateField(default=date.today)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name='businesses')
