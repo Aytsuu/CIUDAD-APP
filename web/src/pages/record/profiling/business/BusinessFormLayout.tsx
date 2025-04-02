@@ -94,6 +94,7 @@ export default function BusinessFormLayout() {
     // File upload
     const [fileItem] = mediaFiles;
     const file = fileItem?.file;
+    console.log(file)
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random()
       .toString(36)
@@ -161,7 +162,7 @@ export default function BusinessFormLayout() {
               isReadOnly={isReadOnly}
               mediaFiles={mediaFiles}
               activeVideoId={activeVideoId}
-              url={params.business.bus_doc_url}
+              url={params.business?.bus_doc_url}
               setFormType={setFormType}
               setMediaFiles={setMediaFiles}
               setActiveVideoId={setActiveVideoId}

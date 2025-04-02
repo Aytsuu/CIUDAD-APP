@@ -116,6 +116,7 @@ export default function BusinessRecords() {
           to="/business-form"
           state={{
             params: {
+               
               type: "registration",
               sitio: sitio
             },

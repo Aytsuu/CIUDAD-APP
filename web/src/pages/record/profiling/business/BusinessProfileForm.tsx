@@ -80,7 +80,12 @@ export default function BusinessProfileForm({
         setMediaFiles={setMediaFiles}
         setActiveVideoId={setActiveVideoId}
       />) : (
-          <img src={url} className="w-52 h-52"/>
+        <div className="flex flex-col gap-4 border p-5 rounded-md">
+            <Label className="text-[15px]">Supporting Documents</Label>
+            <div>
+              <img src={url} className="w-52 h-52 border shadow-sm"/>
+            </div>
+        </div>
       )}
 
       <div className="flex justify-end mt-8">
