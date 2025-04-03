@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 
 interface DialogProps {
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
     className?: string;
     title?: string;
     description?: string;

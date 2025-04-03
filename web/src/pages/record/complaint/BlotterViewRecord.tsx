@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Image, Film, Plus, X, ArrowUp, Play } from "lucide-react";
 import { BsChevronLeft } from "react-icons/bs";
 import { useState, useRef, ChangeEvent } from "react";

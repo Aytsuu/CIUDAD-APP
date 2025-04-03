@@ -1,23 +1,28 @@
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import { main_router } from './routes/main-router';
-import { landing_router } from './routes/landing-router';
-import { user_account } from './routes/profile-router';
-// import FamilyPlanningForm from "./pages/familyplanning/FP-page1";
-// import FamilyPlanningMain from "./pages/familyplanning/main";
-
-// import FamilyPlanningForm2 from "./pages/familyplanning/FP-page2";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { main_router } from "./routers/main-router";
+import { landing_router } from "./routers/landing-router";
+import { settings_router } from "./routers/settings";
+import { AuthProvider } from "./context/AuthContext";
+import { user_account } from "./routers/profile-router";
 
 const router = createBrowserRouter([
   ...main_router,
   ...user_account,
-  { path: "*", element: ""},
-  ...landing_router
-])
+  ...landing_router,
+  ...settings_router,
+  { path: "*", element: "" },
+]);
+
+const queryClient = new QueryClient();
 
 function App() {
-
-  return <RouterProvider router={router} />
-  
-  // return <FamilyPlanningMa></FamilyPlanningMain>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }
 export default App;

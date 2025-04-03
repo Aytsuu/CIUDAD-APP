@@ -80,43 +80,50 @@ class UserProfileView(APIView):
         user = request.user
         
         try:
-            # Generate unique filename
+            #  Delete previous image if exists
+            if user.profile_image:
+                try:
+                    # Extract the filename from the URL
+                    old_url = user.profile_image
+                    old_filename = old_url.split('userimage/')[1].split('?')[0]
+                    
+                    print(f"Attempting to delete old image: {old_filename}")
+                    delete_result = supabase.storage.from_("userimage").remove([old_filename])
+                    print("Delete result:", delete_result)
+                except Exception as delete_error:
+                    print(f"WARNING: Failed to delete old image - {str(delete_error)}")
+
+            #  Generate new filename and upload
             file_ext = os.path.splitext(file.name)[1]
             filename = f"user_{user.id}/{uuid.uuid4()}{file_ext}"
-            
-            # Read file content ONCE and store in memory
             file_content = file.read()
             
-            # Debug prints
-            print(f"Attempting to upload {filename} ({len(file_content)} bytes)")
+            print(f"Uploading new image {filename} ({len(file_content)} bytes)")
             print(f"Content type: {file.content_type}")
             
-            # Upload to Supabase
             upload_result = supabase.storage.from_("userimage").upload(
                 path=filename,
-                file=file_content,  # Use the stored content
+                file=file_content,
                 file_options={"content-type": file.content_type},
             )
             print("Upload result:", upload_result)
             
-            # Get public URL
+            #  Get public URL and update user
             url = supabase.storage.from_("userimage").get_public_url(filename)
             print("Generated URL:", url)
 
-            # Update user profile
             user.profile_image = url
             user.save()
             print("User profile updated")
 
             return Response({
                 "message": "Image uploaded successfully", 
-                "url": url
+                "url": url,
+                "old_image_deleted": bool(user.profile_image)  # True if old image existed
             }, status=200)
 
         except Exception as e:
             print(f"ERROR: {str(e)}")
-            import traceback
-            traceback.print_exc()  # This will show the full traceback
             return Response({
                 "error": "Upload failed",
                 "details": str(e)

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Image, Film, Plus, X, Calendar, Play } from "lucide-react";
 import { BsChevronLeft } from "react-icons/bs";
 import { useState, useRef, ChangeEvent } from "react";
@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 

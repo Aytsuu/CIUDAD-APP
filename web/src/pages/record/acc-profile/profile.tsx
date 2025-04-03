@@ -1,5 +1,3 @@
-import type React from "react";
-
 import { useState, useRef } from "react";
 import type * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -7,29 +5,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { accountFormSchema } from "@/form-schema/accountSettings";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
-import {
-  User,
-  Mail,
-  Lock,
-  KeyRound,
-  CheckCircle,
-  AlertCircle,
-  ArrowLeft,
-  Info,
-  Upload,
-} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { User, Mail, Lock, KeyRound, CheckCircle, AlertCircle, ArrowLeft, Info, Upload } from "lucide-react";
 
 type AccountFormData = z.infer<typeof accountFormSchema>;
 
 const AccountSettings = () => {
-  const image = localStorage.getItem("profile_image");
+  const { user, updateUser } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
-  const [profileImage, setProfileImage] = useState(image || "");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -37,17 +25,15 @@ const AccountSettings = () => {
     formState: { errors },
   } = useForm<AccountFormData>({
     resolver: zodResolver(accountFormSchema),
+    defaultValues: {
+      email: user?.email || "",
+    }
   });
-
-  const navigate = useNavigate();
-  const email = localStorage.getItem("email");
-  const username = localStorage.getItem("username");
-  const token = localStorage.getItem("token");
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    console.log(file)
+    if (!file || !user) return;
+
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
       setUploadError("Only JPG/PNG/WEBP allowed");
@@ -64,24 +50,23 @@ const AccountSettings = () => {
 
     const formData = new FormData();
     formData.append("profile_image", file);
-    console.log(formData.values())
+
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/user/upload-image/",
         formData,
         {
           headers: {
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${user.token}`,
             "Content-Type": "multipart/form-data",
           },
         }
       );
 
       const finalUrl = `${response.data.url}?t=${Date.now()}`;
-      setProfileImage(finalUrl);
-      localStorage.setItem("profile_image", finalUrl);
+      updateUser({ profile_image: finalUrl }); // Use context to update user
     } catch (error) {
-      console.log("token: ", token);
+      console.error("Upload failed:", error);
       setUploadError("Image upload failed. Try again.");
     } finally {
       setIsUploading(false);
@@ -101,7 +86,6 @@ const AccountSettings = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6 relative font-poppins">
-      {/* Back Button - Modified to be on the left side */}
       <button
         className="absolute top-6 left-10 flex items-center gap-2 text-gray-500 hover:text-gray-700 cursor-pointer justify-start"
         onClick={() => navigate(-1)}
@@ -116,7 +100,6 @@ const AccountSettings = () => {
       </div>
 
       <div className="bg-white shadow-md rounded-md w-full max-w-2xl p-6">
-        {/* Basic Info Section */}
         <div className="border-b pb-4 mb-4">
           <h2 className="text-xl font-bold flex items-center gap-2 mb-2">
             <User size={20} /> Basic Info
@@ -126,23 +109,18 @@ const AccountSettings = () => {
           </p>
 
           <div className="flex flex-col items-center my-4 relative">
-            {/* Hidden file input */}
             <input
               type="file"
               ref={fileInputRef}
               onChange={handleImageUpload}
               accept="image/*"
               className="hidden"
-              id="profile-image-upload" // Added ID for better targeting
+              id="profile-image-upload"
             />
 
-            {/* Clickable image with label */}
-            <label
-              htmlFor="profile-image-upload" // Connect label to input
-              className="relative cursor-pointer" // Make sure cursor changes
-            >
+            <label htmlFor="profile-image-upload" className="relative cursor-pointer">
               <img
-                src={profileImage || "Profile Picture"}
+                src={user?.profile_image || "/default-profile.png"}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover"
               />
@@ -151,9 +129,7 @@ const AccountSettings = () => {
               </div>
             </label>
 
-            {isUploading && (
-              <p className="text-blue-500 text-sm mt-2">Uploading...</p>
-            )}
+            {isUploading && <p className="text-blue-500 text-sm mt-2">Uploading...</p>}
             {uploadError && (
               <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
                 <AlertCircle size={16} /> {uploadError}
@@ -166,19 +142,18 @@ const AccountSettings = () => {
               <span className="flex items-center gap-2 text-gray-600">
                 <User size={16} /> Username
               </span>
-              <span className="font-bold">{username}</span>
+              <span className="font-bold">{user?.username}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="flex items-center gap-2 text-gray-600">
                 <Mail size={16} /> Email
               </span>
-              <span className="font-bold">{email}</span>
+              <span className="font-bold">{user?.email}</span>
             </div>
           </div>
         </div>
 
-        {/* Password Section */}
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2 mb-2">
             <Lock size={20} /> Password
@@ -202,17 +177,19 @@ const AccountSettings = () => {
               )}
 
               {emailVerified && (
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  {...register("newPassword")}
-                  className="w-full p-2 border rounded-md mt-2"
-                />
-              )}
-              {errors.newPassword?.message && (
-                <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
-                  <AlertCircle size={16} /> {errors.newPassword.message}
-                </p>
+                <>
+                  <input
+                    type="password"
+                    placeholder="Enter new password"
+                    {...register("newPassword")}
+                    className="w-full p-2 border rounded-md mt-2"
+                  />
+                  {errors.newPassword?.message && (
+                    <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+                      <AlertCircle size={16} /> {errors.newPassword.message}
+                    </p>
+                  )}
+                </>
               )}
 
               <button
@@ -243,7 +220,6 @@ const AccountSettings = () => {
         </div>
       </div>
 
-      {/* Footer Section */}
       <div className="mt-8 text-sm text-gray-500 text-center flex items-center gap-2">
         <Info size={18} className="text-blue-500" />
         <span>

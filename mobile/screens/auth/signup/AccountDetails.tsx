@@ -7,97 +7,66 @@ import { Button } from "@/components/ui/button";
 import Layout from "./_layout";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
-import { useForm } from "../../../app/(auth)/FormContext";
 import { z } from "zod";
-import { FormDataSchema } from "@/form-schema/registration-schema";
-import { UserAccount } from "@/form-schema/user-account";
-import axios from "axios";
+// import { FormDataSchema } from "@/form-schema/registration-schema";
+// import { UserAccount } from "@/form-schema/user-account-schema";
+// import axios from "axios";
 
 export default function AccountDetails() {
   const router = useRouter();
-  const { formData, setFormData } = useForm();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
   const [rePass, setRePass] = useState("");
   const [errors, setErrors] = useState<z.ZodError | null>(null);
 
-  const handleProceed = async () => {
-    // Validate user input
-    const validationResult = UserAccount.safeParse(formData);
+  // const handleProceed = async () => {
+  //   // Validate user input
+  //   const validationResult = UserAccount.safeParse(formData);
   
-    if (!formData.accountDetails.password || !rePass) {
-      setErrors(null);
-      alert("Please complete all required fields.");
-      return;
-    }
+  //   if (!formData.accountDetails.password || !rePass) {
+  //     setErrors(null);
+  //     alert("Please complete all required fields.");
+  //     return;
+  //   }
   
-    if (formData.accountDetails.password !== rePass) {
-      alert("Passwords do not match.");
-      return;
-    }
+  //   if (formData.accountDetails.password !== rePass) {
+  //     alert("Passwords do not match.");
+  //     return;
+  //   }
   
-    if (validationResult.success) {
-      setErrors(null);
+  //   if (validationResult.success) {
+  //     setErrors(null);
   
-      try {
-        // Send data to the backend
-        const response = await axios.post("http://localhost:8000/user/signup/", {
-          username: formData.accountDetails.userName,
-          email: formData.accountDetails.email,
-          password: formData.accountDetails.password,
-          password2: formData.accountDetails.password 
-        });
+  //     try {
+  //       // Send data to the backend
+  //       const response = await axios.post("http://localhost:8000/api/signup/", {
+  //         username: formData.accountDetails.userName,
+  //         email: formData.accountDetails.email,
+  //         password: formData.accountDetails.password,
+  //         password2: formData.accountDetails.password 
+  //       });
   
-        if (response.status === 201) {
-          Alert.alert("Success", "Account created successfully!");
-          router.push("/personal-information");
-        } else {
-          Alert.alert("Error", "Failed to create account.");
-        }
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          const errorMessage = error.response?.data?.message || "Something went wrong.";
-          Alert.alert("Error", errorMessage);
-        } else {
-          console.error("Error:", error);
-          Alert.alert("Error", "Something went wrong. Please try again.");
-        }
-      }
-    } else {
-      setErrors(validationResult.error);
-      alert("Please complete all required fields correctly.");
-    }
-  };
-
-  const handleUsernameChange = (value: string) => {
-    setFormData({
-      ...formData,
-      accountDetails: {
-        ...formData.accountDetails,
-        userName: value,
-      },
-    });
-  };
-
-  const handleEmailChange = (value: string) => {
-    setFormData({
-      ...formData,
-      accountDetails: {
-        ...formData.accountDetails,
-        email: value,
-      },
-    });
-  };
-
-  const handlePasswordChange = (value: string) => {
-    setFormData({
-      ...formData,
-      accountDetails: {
-        ...formData.accountDetails,
-        password: value,
-      },
-    });
-  };
+  //       if (response.status === 201) {
+  //         Alert.alert("Success", "Account created successfully!");
+  //         router.push("/personal-information");
+  //       } else {
+  //         Alert.alert("Error", "Failed to create account.");
+  //       }
+  //     } catch (error) {
+  //       if (axios.isAxiosError(error)) {
+  //         const errorMessage = error.response?.data?.message || "Something went wrong.";
+  //         Alert.alert("Error", errorMessage);
+  //       } else {
+  //         console.error("Error:", error);
+  //         Alert.alert("Error", "Something went wrong. Please try again.");
+  //       }
+  //     }
+  //   } else {
+  //     setErrors(validationResult.error);
+  //     alert("Please complete all required fields correctly.");
+  //   }
+  // };
 
   return (
     <Layout header={"Account Details"} description={"Please fill out all required fields."}>
@@ -110,7 +79,7 @@ export default function AccountDetails() {
               className="h-[57px] font-PoppinsRegular"
               placeholder="Username"
               value={formData.accountDetails.userName}
-              onChangeText={handleUsernameChange}
+              onChangeText={()=>{}}
             />
           </View>
 
@@ -121,7 +90,7 @@ export default function AccountDetails() {
               className="h-[57px] font-PoppinsRegular"
               placeholder="Email"
               value={formData.accountDetails.email}
-              onChangeText={handleEmailChange}
+              onChangeText={()=>{}}
             />
           </View>
 
@@ -133,7 +102,7 @@ export default function AccountDetails() {
                 className="h-[57px] font-PoppinsRegular"
                 placeholder="Password"
                 value={formData.accountDetails.password}
-                onChangeText={handlePasswordChange}
+                onChangeText={() => {}}
                 secureTextEntry={!showPassword}
               />
 

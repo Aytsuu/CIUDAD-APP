@@ -91,7 +91,7 @@ export function Header() {
       </div>
       <div className="flex items-center">
         <DropdownLayout
-          label={
+          trigger={
             <div className="flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 cursor-pointer hover:text-white hover:bg-darkBlue2">
               <Ellipsis size={16} />
             </div>
@@ -101,10 +101,10 @@ export function Header() {
             {
               id: "mark-as-read",
               name: "Mark as Read",
-              icons: <CheckCheck size={16} />,
+              icon: <CheckCheck size={16} />,
             },
           ]}
-          onChange={(id) => console.log(`Selected: ${id}`)}
+          onSelect={(id: any) => console.log(`Selected: ${id}`)}
         />
       </div>
     </div>
@@ -137,6 +137,7 @@ export function Header() {
       ))}
     </div>
   );
+  
 
   const profilePopOverHeaderDesc = (
     <div className="flex items-center gap-x-2">
@@ -179,10 +180,10 @@ export function Header() {
             <PopoverContent className="absolute right-0 top-2 p-0 w-80 z-50 bg-white rounded-md shadow-lg">
               <CardLayout
                 cardClassName="px-2"
-                cardHeaderClassName="p-2"
-                cardDescription={notificationPopoverHeader}
-                cardContentClassName="p-0"
-                cardContent={notificationPopover}
+                headerClassName="p-2"
+                description={notificationPopoverHeader}
+                contentClassName="p-0"
+                content={notificationPopover}
               />
             </PopoverContent>
           </Popover>
@@ -201,10 +202,10 @@ export function Header() {
             <PopoverContent className="absolute right-0 top-2 p-0 w-64 z-50 bg-white rounded-md shadow-lg">
               <CardLayout
                 cardClassName="w-full"
-                cardHeaderClassName="pb-0 pt-2 px-4"
-                cardDescription={profilePopOverHeaderDesc}
-                cardContentClassName="gap-4 mt-2 pb-2 px-2"
-                cardContent={profilePopoverContent}
+                headerClassName="pb-0 pt-2 px-4"
+                description={profilePopOverHeaderDesc}
+                contentClassName="gap-4 mt-2 pb-2 px-2"
+                content={profilePopoverContent}
               />
             </PopoverContent>
           </Popover>

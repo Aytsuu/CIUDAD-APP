@@ -34,7 +34,7 @@ export default ({
               {header}
             </Text>
             {description && (
-              <Text className="text-black text-[16px] font-PoppinsRegular mb-3">
+              <Text className="text-black text-[15px] font-PoppinsRegular mb-3 opacity-50 text-justify">
                 {description}
               </Text>
             )}

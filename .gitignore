@@ -17,7 +17,7 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
@@ -28,7 +28,7 @@ web-build/
 expo-env.d.ts
 
 # Native
-*.orig.*
+.orig.
 *.jks
 *.p8
 *.p12
@@ -43,6 +43,7 @@ expo-env.d.ts
 *.pem
 
 # local env files
+.env
 .env*.local
 .env.local
 .env.development
@@ -54,3 +55,13 @@ expo-env.d.ts
 
 app-example
 
+# Byte-compiled / optimized files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.venv/

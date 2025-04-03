@@ -9,7 +9,7 @@ import {
     DrawerTrigger,
   } from "@/components/ui/drawer/drawer"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 interface ComponentProps{
     trigger: string;

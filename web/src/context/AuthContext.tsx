@@ -1,56 +1,83 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContextType, User } from './authTypes';
-import { login, register, fetchUser } from '../api/authApi';
-import { clearTokens } from './authUtils';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  profile_image: string;
+  token: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  login: (userData: User) => void;
+  logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      fetchUser().then((user) => setUser(user));
-    }
+    const storedUser = localStorage.getItem("token")
+      ? {
+          id: localStorage.getItem("id") || "",
+          username: localStorage.getItem("username") || "",
+          email: localStorage.getItem("email") || "",
+          profile_image: localStorage.getItem("profile_image") || "",
+          token: localStorage.getItem("token") || "",
+        }
+      : null;
+
+    setUser(storedUser);  
   }, []);
 
-  const handleLogin = async (username: string, password: string) => {
-    const tokens = await login(username, password);
-    localStorage.setItem('access_token', tokens.access);
-    localStorage.setItem('refresh_token', tokens.refresh);
-    const user = await fetchUser();
-    setUser(user);
-    navigate('/');
+  const login = (userData: User) => {
+    localStorage.setItem("id", userData.id);
+    localStorage.setItem("username", userData.username);
+    localStorage.setItem("email", userData.email);
+    localStorage.setItem("profile_image", userData.profile_image);
+    localStorage.setItem("token", userData.token);
+    setUser(userData);
   };
 
-  const handleRegister = async (username: string, email: string, password: string) => {
-    await register(username, email, password);
-    await handleLogin(username, password);
-  };
-
-  const handleLogout = () => {
-    clearTokens();
+  const logout = () => {
+    localStorage.clear();
     setUser(null);
-    navigate('/login');
   };
 
-  const value = {
-    user,
-    login: handleLogin,
-    register: handleRegister,
-    logout: handleLogout,
+  const updateUser = (updates: Partial<User>) => { 
+    setUser(prev => {
+      if (!prev) return prev;
+
+      const updatedUser = { ...prev, ...updates }; 
+
+      Object.entries(updates).forEach(([key, value]) => {
+        localStorage.setItem(key, value || "");
+      });
+      
+      return updatedUser; 
+    });
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
 
-export const useAuth = () => {
+  return (
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
+}

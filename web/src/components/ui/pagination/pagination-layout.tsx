@@ -41,7 +41,7 @@ export default function PaginationLayout({
     const pageNumbers = [];
     
     // Calculate end page (ensuring we don't exceed totalPages)
-    const visibleEnd = Math.min(visibleStart + 2);
+    const visibleEnd = Math.min(visibleStart + 2, totalPages);
     
     // Add the 3 (or fewer) visible page numbers
     for (let i = visibleStart; i <= visibleEnd; i++) {
