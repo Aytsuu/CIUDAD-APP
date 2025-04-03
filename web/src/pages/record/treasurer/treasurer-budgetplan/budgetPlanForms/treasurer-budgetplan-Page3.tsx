@@ -45,9 +45,9 @@
         const [balance, setBalance] = useState(0);
 
         const location = useLocation();
-        const { actualRPT } = location.state;
+        const { actualRPT, miscExpenseLimit } = location.state;
 
-        const budgetLimitValue = actualRPT * 0.02;
+        const budgetLimitValue = actualRPT * (miscExpenseLimit/100);
 
         const form = useForm<BudgetPlanPage3FormData>({
             resolver: zodResolver(CurrentExpenditureMaintandOtherExpensesSchema2),

@@ -1,6 +1,6 @@
 from django.db import models
 from datetime import date
-
+from django.core.validators import MaxValueValidator
 
 class Budget_Plan(models.Model): 
     plan_id = models.BigAutoField(primary_key=True)
@@ -15,9 +15,14 @@ class Budget_Plan(models.Model):
     plan_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
+    plan_personalService_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_miscExpense_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_localDev_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_skFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_calamityFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        db_table = "Budget_Plan"
+        db_table = 'budget_plan'
 
 class Budget_Plan_Detail(models.Model):
     dtl_id = models.BigAutoField(primary_key = True)
@@ -26,7 +31,7 @@ class Budget_Plan_Detail(models.Model):
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
  
     class Meta: 
-        db_table = "Budget_Plan_Detail"
+        db_table = 'budget_plan_detail'
 
 # class Income_File(models.Model):
 #     inc_num = models.BigAutoField(primary_key=True)

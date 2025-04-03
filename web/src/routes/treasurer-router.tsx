@@ -12,47 +12,47 @@ import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rat
 
 export const treasurer_router = [
     {
-        path: "/treasurer-budget-plan",
+        path: "treasurer-budget-plan",
         element: <BudgetPlan/>,
     },
     {
-        path: "/treasurer-budgetplan-form",
+        path: "treasurer-budgetplan-form",
         element: <CreateBudgetPlanForm/>
     },
     {
-        path: '/treasurer-budgetplan-view/:plan_id',
+        path: 'treasurer-budgetplan-view/:plan_id',
         element: <ViewBudgetPlan/>
     },
     {
-        path: "/treasurer-donation",
+        path: "treasurer-donation",
         element: <TreasurerDonationTable/>
     },
     {
-        path: "/treasurer-income-and-expense-tracking",
+        path: "treasurer-income-and-expense-tracking",
         element: <IncomeandExpenseTracking/>
     },
     {
-        path: '/treasurer-income-and-disbursement',
+        path: 'treasurer-income-and-disbursement',
         element: <IncomeandDisbursementView/>
     },
     {
-        path: '/treasurer-personal-and-others',
+        path: 'treasurer-personal-and-others',
         element: <PersonalClearance/>,
     },
     {
-        path: '/treasurer-permit',
+        path: 'treasurer-permit',
         element: <PermitClearance/>
     },
     {
-        path: '/treasurer-service-charge',
+        path: 'treasurer-service-charge',
         element: <ServiceCharge/>
     },
     {
-        path: '/treasurer-barangay-service',
+        path: 'treasurer-barangay-service',
         element: <BarangayService/>
     },
     {
-        path: '/treasurer-rates',
+        path: 'treasurer-rates',
         element: <RatesForm/>
     },
 ]

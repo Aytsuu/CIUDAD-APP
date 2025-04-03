@@ -38,11 +38,11 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
     ];
 
     const location = useLocation();
-    const { actualIncome } = location.state;
+    const { actualIncome, personalServicesLimit } = location.state;
 
     const [total, setTotal] = useState(0);
     const [Balance, setBalance] = useState(0);
-    const personalServicesBudgetLimit = actualIncome * 0.55;
+    const personalServicesBudgetLimit = actualIncome * (personalServicesLimit/100);
 
     const form = useForm<BudgetPlanPage1FormData>({
         resolver: zodResolver(CurrentExpendituresPersonalServicesSchema),

@@ -40,7 +40,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     ];
 
     const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome} = location.state
+    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit} = location.state
 
     const availableResources =
     (parseFloat(balance) || 0) +
@@ -56,11 +56,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [calamityFundBalance ,setcalamityFundBalance] = useState(0.00);
     const [localDevBalance, setlocalDevBalance] = useState(0.00);
 
-    const localDevBudgetLimit = taxAllotment * 0.20;
-    const skBudgetLimit = availableResources * 0.10;
-    const calamityFundBudgetLimit = availableResources* 0.05;
-
-
+    const localDevBudgetLimit = taxAllotment * (localDevLimit/100);
+    const skBudgetLimit = availableResources * (skFundLimit/100);
+    const calamityFundBudgetLimit = availableResources * (calamityFundLimit/100);
 
     const form = useForm<BudgetPlanPage4FormData>({
         resolver: zodResolver(CapitalOutlaysAndNonOfficeSchema),

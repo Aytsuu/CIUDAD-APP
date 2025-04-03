@@ -12,9 +12,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteBudgetPlan } from "./restful-API/budgetPlanDeleteAPI";
 import { getBudgetPlan } from "./restful-API/budgetplanGetAPI";
 import { Skeleton } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+// import { useNavigate, useLocation } from "react-router-dom";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
+import { treasurer_router } from "@/routes/treasurer-router";
 
 export type BudgetPlan = {
     plan_id: number,

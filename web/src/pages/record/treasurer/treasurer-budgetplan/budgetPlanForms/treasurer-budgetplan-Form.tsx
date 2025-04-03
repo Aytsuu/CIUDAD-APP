@@ -79,10 +79,12 @@ const initialFormData4 = {
 };
 
 function CreateBudgetPlanForm() {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const year = new Date().getFullYear()
     const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, actualIncome, actualRPT } = location.state;
+    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
+            actualIncome, actualRPT, personalServicesLimit, miscExpenseLimit, 
+            localDevLimit, skFundLimit, calamityFundLimit } = location.state;
     const availableResources =
     (parseFloat(balance) || 0) +
     (parseFloat(realtyTaxShare) || 0) +
@@ -217,7 +219,12 @@ function CreateBudgetPlanForm() {
                 clearanceAndCertFees,
                 otherSpecificIncome,
                 totalBudgetObligations, 
-                balUnappropriated
+                balUnappropriated,
+                personalServicesLimit,
+                miscExpenseLimit,
+                localDevLimit, 
+                skFundLimit,
+                calamityFundLimit
             };
     
             const planId = await budget_plan(budgetHeader);
@@ -233,7 +240,7 @@ function CreateBudgetPlanForm() {
                     duration: 2000
                 });
 
-                navigate('/treasurer-budget-plan');
+                window.location.href = '/treasurer-budget-plan';
             }
 
         } catch (error){

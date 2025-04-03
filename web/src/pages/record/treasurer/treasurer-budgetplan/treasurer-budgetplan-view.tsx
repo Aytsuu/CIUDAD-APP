@@ -63,7 +63,11 @@ function ViewBudgetPlan(){
         staleTime: 0
     });
 
-    // populating thee rows
+    const rowsWithFooters = ["Membership Dues/Contribution to Organization", "Extraordinary & Miscellaneous Expense", "Subsidy to Sangguniang Kabataan (SK) FUnd"];
+    const rowsWithLimitandBal = ["Commutation of Leave Credits", "Rehabilitation of Multi-Purpose", "Disaster Supplies"];
+    const rowsWithTotal = ["Extraordinary & Miscellaneous Expense", "Total Capital Outlays"];
+
+    // populating the rows
     const rowsProp = budgetDetails?.details?.reduce((acc: any[], detail: BudgetPlanDetail) => {
         const mainRow = [
             <span className={styles.rowItem}>{detail.dtl_budget_item}</span>,
