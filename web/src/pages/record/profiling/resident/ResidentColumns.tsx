@@ -4,7 +4,7 @@ import { ArrowUpDown, CircleAlert, MoveRight } from "lucide-react";
 import { ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-
+import { User, UserCircle } from "lucide-react";
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 

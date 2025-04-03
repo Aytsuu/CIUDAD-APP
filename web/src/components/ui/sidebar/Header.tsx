@@ -26,10 +26,12 @@ import CardLayout from "../card/card-layout";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import DropdownLayout from "../dropdown/dropdown-layout";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export function Header() {
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const navigate = useNavigate();
+  const {user, logout} = useAuth();
 
   const profileOptions = [
     {
@@ -52,16 +54,12 @@ export function Header() {
     },
   ];
 
-  const username = localStorage.getItem("username");
-  const email = localStorage.getItem("email");
-  const profilePicture = localStorage.getItem("profile_image");
-
   const notificationPopover = (
     <div>
       <hr className="mb-2" />
       <div className="flex items-center p-3 hover:bg-lightBlue hover:rounded-md cursor-pointer">
         <img
-          src={profilePicture || "Profile Picture"}
+          src={user?.profile_image || "Profile Picture"}
           alt="Barangay Logo"
           className="w-10 h-10"
         />
@@ -111,11 +109,8 @@ export function Header() {
   );
 
   const handleLogout = () => {
-    // Clear all user data from storage
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("username");
-    localStorage.removeItem("email");
-    localStorage.removeItem("token");
+    
+    logout()
 
     // Redirect to login page
     navigate("/home");
@@ -142,16 +137,16 @@ export function Header() {
   const profilePopOverHeaderDesc = (
     <div className="flex items-center gap-x-2">
       <img
-        src={profilePicture || "Profile Picture"}
+        src={user?.profile_image || "Profile Picture"}
         alt="Profile Picture"
         className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
       />
       <div className="flex flex-col max-w-[180px]">
         <p className="font-medium truncate">
-          {username}
+          {user?.username}
         </p>
         <p className="text-sm text-muted-foreground truncate">
-          {email}
+          {user?.email}
         </p>
       </div>
     </div>
@@ -191,12 +186,12 @@ export function Header() {
           <Popover>
             <PopoverTrigger className="flex items-center space-x-2">
               <img
-                src={profilePicture || "Profile Picture"}
+                src={user?.profile_image || "Profile Picture"}
                 alt="Profile"
                 className="w-8 h-8 rounded-full"
               />
               <h2 className="hidden sm:block text-sm font-medium">
-                {username}
+                {user?.username}
               </h2>
             </PopoverTrigger>
             <PopoverContent className="absolute right-0 top-2 p-0 w-64 z-50 bg-white rounded-md shadow-lg">

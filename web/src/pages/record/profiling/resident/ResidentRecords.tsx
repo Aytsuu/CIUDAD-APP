@@ -35,8 +35,8 @@ export default function ResidentRecords() {
 
     return residents.map((resident: any) => {
       const personal = resident?.per;
-      const [family]  = resident?.family;
-      const household = family?.hh
+      const [family] = resident?.family;
+      const household = family?.hh;
 
       return {
         id: resident.rp_id || "",
@@ -120,7 +120,7 @@ export default function ResidentRecords() {
               },
             }}
           >
-            <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
+            <Button variant="default">
               <Plus size={15} /> Register
             </Button>
           </Link>

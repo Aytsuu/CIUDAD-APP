@@ -38,12 +38,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(storedUser);  
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("id", user.id);
+      localStorage.setItem("username", user.username);
+      localStorage.setItem("email", user.email);
+      localStorage.setItem("profile_image", user.profile_image);
+      localStorage.setItem("token", user.token);
+    } else {
+      localStorage.clear();
+    }
+  }, [user])
+
   const login = (userData: User) => {
-    localStorage.setItem("id", userData.id);
-    localStorage.setItem("username", userData.username);
-    localStorage.setItem("email", userData.email);
-    localStorage.setItem("profile_image", userData.profile_image);
-    localStorage.setItem("token", userData.token);
     setUser(userData);
   };
 
