@@ -27,9 +27,8 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('user/', include('apps.account.urls')),
     path('waste/', include('apps.waste.urls')),
     path('profiling/', include("apps.profiling.urls")),
-    path('administration/', include("apps.administration.urls")), 
-    path('user/', include('apps.account.urls')),
-    
-]   
+    path('administration/', include("apps.administration.urls")),
+]

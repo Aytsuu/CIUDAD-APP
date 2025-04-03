@@ -8,9 +8,9 @@ import Layout from "./_layout";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
 import { z } from "zod";
-import { FormDataSchema } from "@/form-schema/registration-schema";
-import { UserAccount } from "@/form-schema/user-account-schema";
-import axios from "axios";
+// import { FormDataSchema } from "@/form-schema/registration-schema";
+// import { UserAccount } from "@/form-schema/user-account-schema";
+// import axios from "axios";
 
 export default function AccountDetails() {
   const router = useRouter();
@@ -38,7 +38,6 @@ export default function AccountDetails() {
   //   if (validationResult.success) {
   //     setErrors(null);
   
-<<<<<<< HEAD
   //     try {
   //       // Send data to the backend
   //       const response = await axios.post("http://localhost:8000/api/signup/", {
@@ -47,16 +46,6 @@ export default function AccountDetails() {
   //         password: formData.accountDetails.password,
   //         password2: formData.accountDetails.password 
   //       });
-=======
-      try {
-        // Send data to the backend
-        const response = await axios.post("http://localhost:8000/user/signup/", {
-          username: formData.accountDetails.userName,
-          email: formData.accountDetails.email,
-          password: formData.accountDetails.password,
-          password2: formData.accountDetails.password 
-        });
->>>>>>> general/account
   
   //       if (response.status === 201) {
   //         Alert.alert("Success", "Account created successfully!");
