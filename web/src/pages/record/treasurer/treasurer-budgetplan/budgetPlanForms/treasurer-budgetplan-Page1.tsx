@@ -79,7 +79,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="mb-4">
-                    <div className="mb-5 bg-white p-5 w-full max-h-[21rem] overflow-x-auto">
+                    <div className="mb-5 bg-white p-5 w-full">
                         <div className="p-2 flex flex-col gap-1">
                             <h1 className="font-bold flex justify-center w-[21rem]">CURRENT OPERATING EXPENDITURES</h1>
                             <h3 className="font-semibold text-blue flex justify-center w-[21rem]">Personal Services</h3>

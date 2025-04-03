@@ -123,7 +123,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
                 <div className="mb-4">
-                    <div className="mb-5 bg-white p-5 w-full max-h-[21rem] overflow-x-auto">
+                    <div className="mb-5 bg-white p-5 w-full">
                         <div className='p-2 flex flex-col gap-1'>
                             <h1 className='font-bold flex justify-center w-[21rem]'>CAPITAL OUTLAYS</h1>
                         </div>
