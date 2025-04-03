@@ -3,7 +3,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from rest_framework.parsers import MultiPartParser 
+from rest_framework.parsers import MultiPartParser
+from django.db.models import Q
 from .models import Account
 from .serializers import UserAccountSerializer, UserLoginSerializer
 from rest_framework.views import APIView
@@ -32,29 +33,46 @@ class SignInView(generics.CreateAPIView):
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
     
-    def post(self, request, *args, **kwargs):
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            password = serializer.validated_data['password']
-            
-            try:
-                user = Account.objects.get(email=email)
-                if user.check_password(password):
-                    token, _ = Token.objects.get_or_create(user=user)
-                    return Response({
-                        "token": token.key,
-                        "id": user.id,
-                        "username": user.username,
-                        "email": user.email,
-                        "profile_image": user.profile_image,
-                    })
-                else:
-                    return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-            except Account.DoesNotExist:
-                return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        email_or_username = request.data.get('email_or_username')
+        password = request.data.get('password')
+        
+        if not email_or_username or not password:
+            return Response(
+                {"error": "Both email/username and password are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        try:
+            user = Account.objects.get(
+                Q(email=email_or_username) | Q(username=email_or_username)
+            )
+            
+            if not user.check_password(password):
+                return Response(
+                    {"error": "Invalid credentials"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+                
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({
+                "token": token.key,
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "profile_image": user.profile_image,
+            })
+            
+        except Account.DoesNotExist:
+            return Response(
+                {"error": "Invalid credentials"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except Exception as e:
+            return Response(
+                {"error": "An unexpected error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
@@ -119,7 +137,7 @@ class UserProfileView(APIView):
             return Response({
                 "message": "Image uploaded successfully", 
                 "url": url,
-                "old_image_deleted": bool(user.profile_image)  # True if old image existed
+                "old_image_deleted": bool(user.profile_image) 
             }, status=200)
 
         except Exception as e:

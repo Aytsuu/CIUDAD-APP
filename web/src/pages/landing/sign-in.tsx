@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router-dom";
-import { LogIn } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function SignIn() {
@@ -26,7 +25,7 @@ export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState("");
   const Icon = showPassword ? LuEyeOff : LuEye;
   const navigate = useNavigate();
-  const { login }= useAuth();  
+  const { login } = useAuth();
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
@@ -42,13 +41,11 @@ export default function SignIn() {
 
     try {
       const response = await axios.post("http://127.0.0.1:8000/user/login/", {
-        email: data.usernameOrEmail,
+        email_or_username: data.usernameOrEmail, // Send as one field
         password: data.password,
       });
 
       if (response.status === 200) {
-        console.log("Login successful!", response.data);
-        
         login({
           id: response.data.id,
           username: response.data.username,
@@ -56,28 +53,21 @@ export default function SignIn() {
           profile_image: response.data.profile_image,
           token: response.data.token,
         });
-        
-        // Redirect to the home page or dashboard
         navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Login failed:", error);
-
-      // Handle different types of errors
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          setErrorMessage("Invalid username or password.");
-        } else {
-          setErrorMessage("An error occurred. Please try again later.");
-        }
+        setErrorMessage(
+          error.response?.data?.error ||
+            "Invalid credentials. Please try again."
+        );
       } else {
         setErrorMessage("An unexpected error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
-
   return (
     <Form {...form}>
       <form
