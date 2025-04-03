@@ -1,5 +1,35 @@
 from django.db import models
 
+class FP_Record(models.Model):
+    fprecord_id = models.AutoField(primary_key=True)
+    nhts = models.BooleanField(default=False)
+    four_ps = models.BooleanField(default=False)
+    plan_more_children = models.BooleanField(default=False)
+    avg_monthly_income = models.CharField(max_length=15)
+    patient_id = models.ForeignKey(,on_delete=models.CASCADE)
+
+class FP_type(models.Model):
+    fpt_id = models.AutoField(primary_key=True)
+    fpt_client_type = models.CharField(max_length=20)
+    fpt_subtype = models.CharField(max_length=20)
+    fpt_reason_fp = models.CharField(max_length=20)
+    fpt_reason = models.CharField(max_length=20)
+    fpt_method_used = models.CharField(max_length=30)
+    record = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
+    
+class Spouse(models.Model):
+    sp_id = models.AutoField(primary_key=True)
+
+class PelvicExam(models.Model):
+    pel_id = models.AutoField(primary_key=True)
+    cervical_consistency = models.CharField(max_length=5)
+    cervical_tenderness = models.CharField(max_length=20)
+    cervical_adnexal = models.CharField(max_length=20)
+    cervical_position = models.CharField(max_length=20)
+    uterine_depth = models.CharField(max_length=20)
+    fpt_id = models.ForeignKey(FP_type,on_delete=True)
+
+      
 class ObstetricalHistory(models.Model):
     obs_id = models.AutoField(primary_key=True)
     obs_living_children = models.PositiveIntegerField(default=0)
@@ -158,6 +188,38 @@ class Acknowledgement(models.Model):
     clientName = models.CharField(max_length=50)
     guardianSignature = models.TextField()
     guardianSignatureDate = models.DateField()
-    
+    method = models.ForeignKey(FP_type, on_delete=True)
     class Meta:
         db_table = "acknowledgement"
+
+
+class FP_Obstetrical_History(models.Model):
+    fpob_id = models.AutoField(primary_key=True)
+    fpob_last_delivery = models.CharField(max_length=30)
+    fpob_type_last_delivery = models.CharField(max_length=30)
+    fpob_last_period = models.CharField(max_length=30)
+    fpob_previous_period = models.CharField(max_length=30)
+    fpob_mens_flow = models.CharField(max_length=20)
+    fpob_last_delivery = models.CharField(max_length=30)
+    fpob_dysme = models.CharField(max_length=10)
+    fpob_hydatidiform = models.CharField(max_length=10)
+    fpob_ectopic_pregnancy = models.CharField(max_length=10)
+    
+    fpt_id = models.ForeignKey(FP_type,on_delete=True)
+    obs_id = models.ForeignKey(ObstetricalHistory,on_delete=True)
+    
+    
+class Assessment_Record(models.Model):
+    as_id = models.AutoField(primary_key=True)
+    quantity = models.IntegerField(default=0)
+    as_followup_date = models.CharField(default=15)
+    as_provider_signature = models.CharField()
+    as_provider_name= models.CharField(default=35)
+    ack = models.ForeignKey(Acknowledgement,on_delete=True)
+    fpt = models.ForeignKey(FP_type,on_delete=True)
+    staff_id = models.ForeignKey(Staff,on_delete=True)
+    
+class FP_finding(models.Model):
+    fpf_id = models.AutoField(primary_key=True)
+    fpf_details = models.CharField(max_length=50)
+    as_id = models.ForeignKey(Assessment_Record,on_delete=True) 
