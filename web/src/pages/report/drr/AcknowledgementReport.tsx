@@ -61,7 +61,7 @@ export const reports: Report[] = [
 ];
 
 // Main component for the DRR Acknowledgement Report
-export default function DRRAcknowledgementReport() {
+export default function AcknowledgementReport() {
     const data = reports; // Assign sample data to `data`
 
     return (

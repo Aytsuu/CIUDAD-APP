@@ -9,6 +9,7 @@ class Account(AbstractUser):
         null=True,
         default='https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg'
     )
+    rp = models.ForeignKey("profiling.ResidentProfile", on_delete=models.CASCADE, unique=True)
     
     class Meta:
         db_table = 'account'

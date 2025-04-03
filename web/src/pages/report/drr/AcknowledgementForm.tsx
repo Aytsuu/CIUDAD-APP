@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/form/form';
 
 // Main component for the DRR AR Form
-export default function DRRARForm() {
+export default function AcknowledgementForm() {
 
     // Initialize the form using react-hook-form and Zod for validation
     const form = useForm<z.infer<typeof ARSchema>>({

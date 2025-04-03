@@ -51,7 +51,7 @@ const RecentRecord = ({ title, status }: RecentRecordProps) => (
 );
 
 // Main component for the DRR Monthly AR Report
-export default function DRRMonthlyARReport() {
+export default function MonthlyARReport() {
     return (
         <div className="w-full h-full flex flex-col">
             {/* Header Section */}
