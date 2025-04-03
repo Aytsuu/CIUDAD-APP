@@ -3,12 +3,10 @@
 // imports
 import React from "react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup } from "@/components/ui/radio-group"
+// import { RadioGroup } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { intlFormat } from "date-fns"
-import { EarthIcon } from "lucide-react"
 
 // personal info 
 const personalInfo = [
@@ -437,11 +435,6 @@ export const InputLine = ({className}: {className: string}) => (
     <Input className={cn("w-1/2 mr-2 border-0 border-b border-black rounded-none", className)} readOnly/>
 
 )
-
-// // checkbox component
-// export const CheckBox = ({label, checked}: {label: string; checked: boolean}) => (
-//     <Checkbox className={cn("mt-4 mr-2", { 'checked-class' : checked })} checked={checked} disabled></Checkbox>
-// )
 
 
 // default funtion
