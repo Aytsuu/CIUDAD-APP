@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils import timezone
+from apps.administration.models import Staff
+
 
 class Account(AbstractUser): 
     profile_image = models.URLField(
@@ -11,7 +12,6 @@ class Account(AbstractUser):
     )
     
     rp = models.OneToOneField("profiling.ResidentProfile", on_delete=models.CASCADE, null=True, related_name="account")
-    staff = models.OneToOneField("administration.Staff", on_delete=models.CASCADE, null=True, related_name="account")
     
     class Meta:
         db_table = 'account'

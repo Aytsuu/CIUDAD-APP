@@ -53,7 +53,7 @@ export default function SoloFormLayout() {
       }
   
       const data = form.getValues();
-      const familyNo = await addFamily(data, null, null);
+      const familyNo = await addFamily(data, null, null, null);
       const res = await addFamilyComposition(familyNo, data.id.split(" ")[0]);
   
       if (res) {
