@@ -30,6 +30,7 @@ urlpatterns = [
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
     path('treasurer/', include('apps.treasurer.urls')),
+    path('gad/', include('apps.gad.urls')),
 
     #JWT authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

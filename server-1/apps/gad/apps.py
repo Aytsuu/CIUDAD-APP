@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class GadConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'gad'
+    name = 'apps.gad'

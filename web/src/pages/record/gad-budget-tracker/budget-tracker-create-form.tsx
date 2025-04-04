@@ -20,10 +20,10 @@ function GADAddEntryForm() {
   const form = useForm<z.infer<typeof GADAddEntrySchema>>({
     resolver: zodResolver(GADAddEntrySchema),
     defaultValues: {
-      entryType: "",
-      additionalNotes: "",
-      entryAmount: "",
-      entryParticulars: "",
+      gbud_type: "",
+      gbud_add_notes: "",
+      gbud_amount: "",
+      gbud_particulars: "",
     },
   });
 

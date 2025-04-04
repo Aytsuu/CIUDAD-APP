@@ -11,12 +11,14 @@ import { Input } from "@/components/ui/input";
 
 // Reusable Form Select Component
 export const FormSelect = React.memo(({ control, name, label, options, readOnly }: 
-    { control: any; name: string; label?: string; options: { id: string; name: string }[]; readOnly?: boolean }
+    { control: any; name: string; label: string; options: { id: string; name: string }[]; readOnly: boolean }
   ) => (
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
+      render={({ field }) => {
+        const selectedOption = options.find(option => option.id === field.value);
+        return (
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
@@ -25,14 +27,19 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
                 placeholder="Select"
                 className="w-full"
                 options={options}
-                value={field.value.toLowerCase()}
+                value={field.value}
                 onChange={field.onChange}
               />
             ) : (
-              <Input {...field} readOnly />
+              // <Input {...field} readOnly />
+              <Input
+              value={selectedOption ? selectedOption.name : field.value}
+              readOnly
+          />
             )}
           </FormControl>
         </FormItem>
-      )}
-    />
-  ));
+      );
+    }}
+/>
+));
