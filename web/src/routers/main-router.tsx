@@ -38,7 +38,7 @@ export const main_router: RouteObject[] = [
         children: [
             {
                 path: "/",
-                element: <Navigate to="/dashboard" />
+                element: <Navigate to="/home" />
             },
             {
                 path: "dashboard",

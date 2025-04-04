@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from .models import Account
-from .serializers import UserAccountSerializer, UserLoginSerializer
+from .serializers import UserAccountSerializer, ChangePasswordSerializer
 from rest_framework.views import APIView
 import uuid
 import os
@@ -14,6 +14,7 @@ from utils.supabase_client import supabase
 from apps.administration.serializers import StaffSerializer
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.models import Staff
+from django.contrib.auth import update_session_auth_hash
 
 class SignInView(generics.CreateAPIView):
     queryset = Account.objects.all()
@@ -57,7 +58,7 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
                 
-            token, _ = Token.objects.get_or_create(user=user)
+            token, _ = Token.objects.get_or_create(user=user)   
             
             # Fetch ResidentProfile data
             rp_data = ResidentProfileFullSerializer(user.rp).data if user.rp else None
@@ -159,3 +160,32 @@ class UserProfileView(APIView):
                 "error": "Upload failed",
                 "details": str(e)
             }, status=500)
+
+import json
+    
+class ChangePassword(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    
+    def post(self, request):
+        print("Raw Request Data:", json.dumps(request.data, indent=2))  
+        serializer = ChangePasswordSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Check if old password is correct
+            user = request.user
+            if not user.check_password(serializer.data.get('old_password')):
+                return Response({'old_password': ['Wrong password.']}, 
+                                status=status.HTTP_400_BAD_REQUEST)
+            
+            # Set the new password
+            user.set_password(serializer.data.get('new_password'))
+            user.save()
+            
+            # Update session after password change to prevent logout
+            update_session_auth_hash(request, user)
+            
+            return Response({'message': 'Password updated successfully'}, 
+                            status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
