@@ -53,6 +53,7 @@ export default function SignIn() {
           profile_image: response.data.profile_image,
           token: response.data.token,
         });
+        console.log(response.data)
         navigate("/dashboard");
       }
     } catch (error) {

@@ -11,6 +11,8 @@ from rest_framework.views import APIView
 import uuid
 import os
 from utils.supabase_client import supabase
+from apps.administration.serializers import StaffSerializer
+from apps.profiling.serializers.full import ResidentProfileFullSerializer
 
 class SignInView(generics.CreateAPIView):
     queryset = Account.objects.all()
@@ -55,13 +57,19 @@ class LoginView(APIView):
                 )
                 
             token, _ = Token.objects.get_or_create(user=user)
+            
+            rp_data = ResidentProfileFullSerializer(user.rp).data if user.rp else None
+            staff_data = StaffSerializer(user.staff).data if user.staff else None
+
             return Response({
                 "token": token.key,
-                "id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "profile_image": user.profile_image,
+                "rp": rp_data,
+                "staff": staff_data,
             })
+            
             
         except Account.DoesNotExist:
             return Response(

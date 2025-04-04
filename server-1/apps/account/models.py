@@ -10,5 +10,8 @@ class Account(AbstractUser):
         default='https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/userimage//sanRoqueLogo.svg'
     )
     
+    rp = models.OneToOneField("profiling.ResidentProfile", on_delete=models.CASCADE, null=True, related_name="account")
+    staff = models.OneToOneField("administration.Staff", on_delete=models.CASCADE, null=True, related_name="account")
+    
     class Meta:
         db_table = 'account'
