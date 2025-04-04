@@ -236,6 +236,8 @@ import { income_expense_tracking } from "./request/income-ExpenseTrackingPostReq
 import { useEffect, useState } from "react";
 import { getParticulars } from "./request/particularsGetRequest";
 import { Combobox } from "@/components/ui/combobox";
+import { CircleCheck } from "lucide-react";
+import { toast } from "sonner";
 
 
 interface IncomeandExpenseCreateFormProps {
@@ -299,13 +301,51 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
         },
     });
 
+    // const onSubmit = async (values: z.infer<typeof IncomeExpenseFormSchema>) => {
+    //     try {
+    //         await income_expense_tracking(values);
+    //         if (onSuccess) onSuccess(); 
+
+    //     } catch (err) {
+    //         console.error("Error submitting expense or income:", err);
+    //         alert("Failed to submit income or expense. Please check the input data and try again.");
+    //     }
+    // };
+
     const onSubmit = async (values: z.infer<typeof IncomeExpenseFormSchema>) => {
+
+        const toastId = toast.loading('Submitting entry...', {
+            duration: Infinity  
+        });
+
         try {
             await income_expense_tracking(values);
+
+            toast.success(
+                form.watch("iet_entryType") === "0" 
+                    ? "Income submitted successfully" 
+                    : "Expense submitted successfully",
+                {
+                    id: toastId,
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000,
+                    onAutoClose: () => {
+                        window.location.reload(); // This will reload the page when toast closes
+                    }
+                }
+            );
+
             if (onSuccess) onSuccess(); 
+
         } catch (err) {
             console.error("Error submitting expense or income:", err);
-            alert("Failed to submit income or expense. Please check the input data and try again.");
+            toast.error(
+                "Failed to submit income or expense. Please check the input data and try again.",
+                {
+                    id: toastId,
+                    duration: 2000
+                }
+            );
         }
     };
 
@@ -367,15 +407,6 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                                     <FormItem>
                                         <FormLabel>Particulars</FormLabel>
                                         <FormControl>
-                                            {/* <SelectLayout
-                                                {...field}
-                                                options={particularSelector}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                label="Particulars"
-                                                placeholder="Select Particulars"
-                                                className="w-full"
-                                            /> */}
                                             <Combobox
                                                 options={particularSelector}
                                                 value={field.value}

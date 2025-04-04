@@ -111,11 +111,11 @@ function BudgetPlan() {
                             content="View"
                         />
                         <ConfirmationModal
-                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
-                        title="Confirm Delete"
-                        description="Are you sure you want to delete this budget plan?"
-                        actionLabel="Confirm"
-                        onClick={() => handleDelete(planId)}
+                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
+                            title="Confirm Delete"
+                            description="Are you sure you want to delete this budget plan?"
+                            actionLabel="Confirm"
+                            onClick={() => handleDelete(planId)}
                         />
                     </div>
                 );

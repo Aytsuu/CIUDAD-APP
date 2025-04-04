@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus } from 'lucide-react';
+import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, CircleCheck } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeandExpenseCreateForm from "./treasurer-income-expense-tracker-create";
@@ -13,6 +14,10 @@ import IncomeandExpenseEditForm from "./treasurer-income-expense-tracker-edit";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { getIncomeExpense } from "./request/income-ExpenseTrackingGetRequest"; 
 import { deleteIncomeExpense } from "./request/income-ExpenseTrackingDeleteRequest";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { toast } from "sonner";
+
+
 
 // Define the type for the data
 type IncomeExpense = {
@@ -34,6 +39,7 @@ function IncomeandExpenseTracking() {
     const [data, setData] = useState<IncomeExpense[]>([]); // Initialize with an empty array
     const [loading, setLoading] = useState(true); // Add a loading state
     const [isDialogOpen, setIsDialogOpen] = useState(false); 
+    const [editingRowId, setEditingRowId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);// Add an error state
 
 
@@ -55,14 +61,42 @@ function IncomeandExpenseTracking() {
     }, []); // Empty dependency array ensures this runs only once on mount
 
     
+    // const handleDelete = async (iet_num: number) => {
+    //     try {
+    //         await deleteIncomeExpense(iet_num);
+    //         setData((prevData) => prevData.filter((item) => item.iet_num !== iet_num)); // Remove the deleted row
+    //     } catch (err) {
+    //         console.error("Failed to delete entry:", err);
+    //     }
+    // };
+
+
     const handleDelete = async (iet_num: number) => {
         try {
+            const toastId = toast.loading("Deleting entry...");
             await deleteIncomeExpense(iet_num);
-            setData((prevData) => prevData.filter((item) => item.iet_num !== iet_num)); // Remove the deleted row
+            
+            toast.success(
+                `${
+                    data.find(item => item.iet_num === iet_num)?.iet_entryType === "Income" 
+                    ? "Income" 
+                    : "Expense"
+                } deleted successfully`, 
+                {
+                    id: toastId,
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000
+                }
+            );
+            
+            setData((prevData) => prevData.filter((item) => item.iet_num !== iet_num));
         } catch (err) {
+            toast.error("Failed to delete entry", {
+                duration: 2000
+            });
             console.error("Failed to delete entry:", err);
         }
-    };
+    };    
 
     // Define the columns for the table
     const columns: ColumnDef<IncomeExpense>[] = [
@@ -135,10 +169,13 @@ function IncomeandExpenseTracking() {
                                             iet_particular_id={row.original.dtl_id}
                                             iet_particulars_name={row.original.dtl_budget_item}
                                             iet_additional_notes={row.original.iet_additional_notes}
-                                            inv_num={row.original.inv_num}
+                                            inv_num={row.original.inv_num}    
+                                            onSuccess={() => setEditingRowId(null)}                                        
                                         />
                                     </div>
                                 }
+                                isOpen={editingRowId === row.original.iet_num}
+                                onOpenChange={(open) => setEditingRowId(open ? row.original.iet_num : null)}
                             />
                         }  
                         content="View"
@@ -146,12 +183,13 @@ function IncomeandExpenseTracking() {
                     <TooltipLayout 
                         trigger={
                             <div className="flex items-center h-8">
-                                <div 
-                                    className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"
+                                <ConfirmationModal
+                                    trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+                                    title="Confirm Delete"
+                                    description="Are you sure you want to delete this entry?"
+                                    actionLabel="Confirm"
                                     onClick={() => handleDelete(row.original.iet_num)} 
-                                >
-                                    <Trash size={16} />
-                                </div>
+                                />                    
                             </div>                   
                         }  
                         content="Delete"
@@ -267,3 +305,4 @@ function IncomeandExpenseTracking() {
 }
 
 export default IncomeandExpenseTracking;
+

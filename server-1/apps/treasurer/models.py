@@ -67,7 +67,7 @@ class Income_Expense_Tracking(models.Model):
     iet_receipt_image = models.CharField(null=False)
     # inv_num = models.ForeignKey('Invoice', on_delete=models.CASCADE, null=True, blank=True, default=None)
     inv_num = models.CharField(max_length=100, default=None)
-    dtl_id = models.ForeignKey('Budget_Plan_Detail', on_delete=models.CASCADE)
+    dtl_id = models.ForeignKey('budget_plan_detail', on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "Income_Expense_Tracking"
+        db_table = "income_expense_tracking"
