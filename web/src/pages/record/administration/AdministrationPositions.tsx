@@ -2,65 +2,34 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import {
   ChevronRight,
-  Plus,
-  Check,
   Ellipsis,
   Trash,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Separator } from "@/components/ui/separator";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { Input } from "@/components/ui/input";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { addPosition } from "./restful-api/administrationPostAPI";
 import { deletePosition } from "./restful-api/administrationDeleteAPI";
-import { toast } from "sonner";
-import { Positions } from "./administrationTypes";
+import { Position } from "./administrationTypes";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import AddPosition from "./AddPosition";
+import { Link } from "react-router";
 
-export default function AdministrativePositions({
+export default function AdministrationPositions({
   positions,
   setPositions,
   selectedPosition,
   setSelectedPosition,
 }: {
-  positions: Record<string, string>[];
-  setPositions: React.Dispatch<React.SetStateAction<Positions[]>>;
+  positions: Position[];
+  setPositions: React.Dispatch<React.SetStateAction<Position[]>>;
   selectedPosition: string;
   setSelectedPosition: (value: string) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  
   const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
-  const [addClicked, setAddClicked] = React.useState<boolean>(false);
-  const [position, setPosition] = React.useState<string>("");
-
-  // Add new position
-  const handleAddPosition = React.useCallback(async () => {
-    setIsSubmitting(true);
-
-    if (!position) {
-      setIsSubmitting(false);
-      setAddClicked(false);
-      return;
-    }
-
-    const res = await addPosition(position);
-
-    if (res) {
-      toast("");
-      setIsSubmitting(false);
-      setAddClicked(false);
-      setPosition("");
-
-      setPositions((prev: any) => [
-        ...prev,
-        {
-          id: String(res.pos_id),
-          name: res.pos_title,
-        },
-      ]);
-    }
-  }, [position]);
+  const [isFormOpen, setIsFormOpen] = React.useState<boolean>(false)
 
   // Delete a position
   const handleDeletePosition = React.useCallback(async () => {
@@ -81,49 +50,16 @@ export default function AdministrativePositions({
     <div className="w-full h-full flex flex-col gap-3">
       <div className="w-full flex justify-between items-start">
         <Label className="text-[20px] text-darkBlue1">Positions</Label>
-        {!addClicked && (
-          <Button onClick={() => setAddClicked(true)}>
-            <Plus /> Add
+        <Link to='/administration/role/add-position'>
+          <Button>
+            <Plus/>Add Position
           </Button>
-        )}
+        </Link>
       </div>
 
       <Separator />
-
-      <div
-        className={`transition-all duration-300 ease-in-out  ${
-          addClicked
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-2 h-0"
-        }`}
-      >
-        {addClicked && (
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Enter position title"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-            />
-
-            {!isSubmitting ? (
-              <TooltipLayout
-                trigger={
-                  <Check
-                    size={26}
-                    className="cursor-pointer text-black/60 stroke-[1.5] hover:text-black"
-                    onClick={handleAddPosition}
-                  />
-                }
-                content={"Save"}
-              />
-            ) : (
-              <Loader2 size={26} className="animate-spin opacity-50" />
-            )}
-          </div>
-        )}
-      </div>
-      <div className="w-full flex flex-col">
-        {positions.map((value: any) => {
+      <div className="w-full flex flex-col">   
+        {positions?.length > 1 ? (positions.map((value: any) => {
           const exclude = ["Admin"];
 
           if (!exclude.includes(value.name)) {
@@ -163,7 +99,11 @@ export default function AdministrativePositions({
               </div>
             );
           }
-        })}
+        })) : (
+          <Label className="text-[15px] text-black/60">
+            No position added
+          </Label>
+        )}
       </div>
     </div>
   );

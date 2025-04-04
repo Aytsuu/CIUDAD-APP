@@ -17,7 +17,7 @@ export function ConfirmationModal({
   description,
   actionLabel,
   type,
-  onClick,
+  onClick
 }: {
   trigger: React.ReactNode;
   title: string;

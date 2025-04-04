@@ -61,7 +61,7 @@ class Household(models.Model):
     hh_date_registered = models.DateField(default=date.today)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name="households")
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
 
     class Meta:
         db_table = 'household'
@@ -112,7 +112,7 @@ class Family(models.Model):
     mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True, related_name="families")
     guard = models.ForeignKey(Guardian, on_delete=models.CASCADE, null=True, related_name="families")
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name="families")
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 
     class Meta:
         db_table = 'family' 
@@ -180,7 +180,7 @@ class Business(models.Model):
     bus_doc_url = models.TextField()
     bus_date_registered = models.DateField(default=date.today)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name='businesses')
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
 
     class Meta:
         db_table = 'business'

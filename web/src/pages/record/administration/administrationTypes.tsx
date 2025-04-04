@@ -1,7 +1,7 @@
-export type Positions = {
-    pos_id: string
+export type Position = {
     id: string,
-    name: string
+    name: string,
+    maximum: number,
 }
 
 export type Assigned = {

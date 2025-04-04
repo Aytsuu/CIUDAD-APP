@@ -5,7 +5,6 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { getResidents } from "../profiling/restful-api/profilingGetAPI";
@@ -18,7 +17,7 @@ import {
 } from "./restful-api/administrationGetAPI";
 import { AdministrationRecord } from "./administrationTypes";
 
-export default function AdministrativeRecords() {
+export default function AdministrationRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -141,16 +140,8 @@ export default function AdministrativeRecords() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <SelectLayout
-            placeholder="Filter by"
-            label=""
-            className="bg-white w-1/6"
-            options={[]}
-            value=""
-            onChange={() => {}}
-          />
           <Link
-            to="/role"
+            to="/administration/role"
             state={{
               params: {
                 positions: positions,

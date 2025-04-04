@@ -41,11 +41,11 @@ const items: MenuItem[] = [
   },
   {
     title: "Administration",
-    url: "/administrative",
+    url: "/administration",
   },
   {
     title: "Profiling",
-    subItems: true,
+    subItems: true, 
     url: "/",
     items: [
       { title: "Resident", url: "/resident-records"},

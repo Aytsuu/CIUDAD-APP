@@ -1,9 +1,9 @@
-import { Header } from "@/components/ui/sidebar/Header";
+import { Header } from "@/components/ui/menubar/Header";
 import {
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar/sidebar";
-import AppSidebar from "@/components/ui/sidebar/app-sidebar";
+} from "@/components/ui/menubar/sidebar";
+import AppSidebar from "@/components/ui/menubar/app-sidebar";
 import { Outlet } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useState } from "react";
