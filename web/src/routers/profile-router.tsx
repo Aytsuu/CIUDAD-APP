@@ -6,8 +6,8 @@ export const user_account = [
         path: "/account-view-profile",
         element: <AccountSettings />
     },
-    {
-        path: "/account-settings",
-        element: <Settings />
-    },
+    // {
+    //     path: "/account-settings",
+    //     element: <Settings />
+    // },
 ];

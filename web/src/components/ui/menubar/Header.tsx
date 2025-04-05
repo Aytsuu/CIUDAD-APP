@@ -40,12 +40,12 @@ export function Header() {
       icons: <User size={20} />,
       action: () => navigate("/account-view-profile"),
     },
-    {
-      id: "settings",
-      name: "Settings",
-      icons: <Settings size={20} />,
-      action: () => navigate("/account-settings"),
-    },
+    // {
+    //   id: "settings",
+    //   name: "Settings",
+    //   icons: <Settings size={20} />,
+    //   action: () => navigate("/account-settings"),
+    // },
     {
       id: "sign-out",
       name: "Sign out",
