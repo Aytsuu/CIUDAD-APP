@@ -1,5 +1,5 @@
-import Settings from "@/pages/record/acc-profile/profile-settings";
-import AccountSettings from "@/pages/record/acc-profile/profile";
+import Settings from "@/pages/settings/settings";
+import AccountSettings from "@/pages/record/acc-profile/user-account";
 
 export const user_account = [
     {

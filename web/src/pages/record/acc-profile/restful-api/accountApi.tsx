@@ -27,7 +27,7 @@ export const updateProfilePicture = async(file: File, token: string) => {
     formData.append("profile_image", file);
 
     try{
-        const response = await api.post("/user/upload-image", formData, {
+        const response = await api.post("/user/upload-image/", formData, {
             headers: {
                 Authorization: `Token ${token}`,
                 "Content-Type": "multipart/form-data",
