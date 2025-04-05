@@ -2,13 +2,13 @@ import { useState, useRef } from "react";
 import type * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { accountFormSchema } from "@/form-schema/accountSettings";
+import { accountUpdateSchema } from "@/form-schema/account-schema";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { User, Mail, Lock, KeyRound, CheckCircle, AlertCircle, ArrowLeft, Info, Upload } from "lucide-react";
 
-type AccountFormData = z.infer<typeof accountFormSchema>;
+type AccountFormData = z.infer<typeof accountUpdateSchema>;
 
 const AccountSettings = () => {
   const { user, updateUser } = useAuth();
@@ -24,7 +24,7 @@ const AccountSettings = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<AccountFormData>({
-    resolver: zodResolver(accountFormSchema),
+    resolver: zodResolver(accountUpdateSchema),
     defaultValues: {
       email: user?.email || "",
     }

@@ -1,6 +1,13 @@
-import * as z from 'zod';
+import { z } from "zod"
 
 export const accountFormSchema = z.object({
+  username: z.string(),
+  email: z.string(),
+  password: z.string(),
+  confirmPassword: z.string()
+})
+
+export const accountUpdateSchema = z.object({
   email: z
     .string()
     .email({ message: "Invalid email address" }),

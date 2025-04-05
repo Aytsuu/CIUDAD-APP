@@ -6,14 +6,13 @@ import {
   Trash,
   Loader2,
   Plus,
+  Pen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Separator } from "@/components/ui/separator";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { deletePosition } from "./restful-api/administrationDeleteAPI";
 import { Position } from "./administrationTypes";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import AddPosition from "./AddPosition";
 import { Link } from "react-router";
 
 export default function AdministrationPositions({
@@ -29,7 +28,6 @@ export default function AdministrationPositions({
 }) {
   
   const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
-  const [isFormOpen, setIsFormOpen] = React.useState<boolean>(false)
 
   // Delete a position
   const handleDeletePosition = React.useCallback(async () => {
@@ -82,11 +80,8 @@ export default function AdministrationPositions({
                       trigger={<Ellipsis size={20} />}
                       itemClassName="text-red-500 focus:text-red-500"
                       options={[
-                        {
-                          id: "delete",
-                          name: "Delete",
-                          icon: <Trash />,
-                        },
+                        { id: "delete", name: "Delete", icon: <Trash />,},
+                        { id: "edit", name: "Edit", icon: <Pen />,},
                       ]}
                       onSelect={handleDeletePosition}
                     />

@@ -15,10 +15,12 @@ import { Card } from "@/components/ui/card/card";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function AddPosition() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { user }  = React.useRef(useAuth()).current;
   const form = useForm<z.infer<typeof positionFormSchema>>({
     resolver: zodResolver(positionFormSchema),
     defaultValues: {
@@ -53,7 +55,7 @@ export default function AddPosition() {
     }
 
     const values = form.getValues()
-    const res = await addPosition(values);
+    const res = await addPosition(values, user?.staff.staff_id);
 
     if (res) {
       setIsSubmitting(false);

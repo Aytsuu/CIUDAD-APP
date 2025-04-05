@@ -47,13 +47,13 @@ export default function SignIn() {
 
       if (response.status === 200) {
         login({
-          id: response.data.id,
           username: response.data.username,
           email: response.data.email,
           profile_image: response.data.profile_image,
           token: response.data.token,
+          rp: response.data.rp,
+          staff: response.data.staff
         });
-        console.log(response.data)
         navigate("/dashboard");
       }
     } catch (error) {

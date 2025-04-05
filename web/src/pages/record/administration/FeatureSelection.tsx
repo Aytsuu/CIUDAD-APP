@@ -14,6 +14,7 @@ import { getAssignedFeatures } from "./restful-api/administrationGetAPI";
 import { assignFeature, setPermissions } from "./restful-api/administrationPostAPI";
 import { formatDate } from "@/helpers/dateFormatter";
 import { deleteAssignedFeature } from "./restful-api/administrationDeleteAPI";
+import { useAuth } from "@/context/AuthContext";
 
 interface FeatureSelectionProps {
   selectedPosition: string;
@@ -30,6 +31,9 @@ export default function FeatureSelection({
   setAssignedFeatures,
   featuresCache,
 }: FeatureSelectionProps) {
+
+  const { user } = React.useRef(useAuth()).current;
+
   // Group features by category
   const groupedFeatures = React.useMemo(() => {
     const groups: Record<string, Feature[]> = {};
@@ -110,10 +114,11 @@ export default function FeatureSelection({
           featuresCache.current[selectedPosition] = [...currentCache, newAssignment];
         }
   
-        // Make API calls
-        const assignment = await assignFeature(selectedPosition, featureId);
+        // Make API calls to assign the feature
+        const staffId = user?.staff.staff_id;
+        const assignment = await assignFeature(selectedPosition, featureId, staffId);
         const perm_id = await setPermissions(assignment.assi_id);
-  
+        
         // Update with real data
         setAssignedFeatures(prev => 
           prev.map(item => 
@@ -217,7 +222,7 @@ export default function FeatureSelection({
           </AccordionTrigger>
           <AccordionContent>
             <List
-              height={Math.min(140, categoryFeatures.length * 35)}
+              height={categoryFeatures.length * 35}
               itemCount={categoryFeatures.length}
               itemSize={35}
               width="100%"

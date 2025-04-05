@@ -37,6 +37,7 @@ export default function ResidentRecords() {
       const personal = resident?.per;
       const [family] = resident?.family;
       const household = family?.hh;
+      const staff = resident?.staff?.rp?.per;
 
       return {
         id: resident.rp_id || "",
@@ -48,7 +49,10 @@ export default function ResidentRecords() {
         mname: personal.per_mname || "-",
         suffix: personal.per_suffix || "-",
         dateRegistered: resident.rp_date_registered || "",
-        registeredBy: resident.staff || "",
+        registeredBy:
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   }, [residents]);
@@ -105,13 +109,13 @@ export default function ResidentRecords() {
           />
         </div>
         <div className="flex gap-2">
-          <Link to="/registration-request">
+          <Link to="/resident/pending">
             <Button variant="outline">
               <ClockArrowUp /> Pending
             </Button>
           </Link>
           <Link
-            to="/resident-form"
+            to="/resident/form"
             state={{
               params: {
                 title: "Resident Registration",

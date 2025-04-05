@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
-  id: string;
   username: string;
   email: string;
   profile_image: string;
   token: string;
+  rp: any;
+  staff: any
 }
 
 interface AuthContextType {
@@ -27,30 +28,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const storedUser = localStorage.getItem("token")
       ? {
-          id: localStorage.getItem("id") || "",
           username: localStorage.getItem("username") || "",
           email: localStorage.getItem("email") || "",
           profile_image: localStorage.getItem("profile_image") || "",
           token: localStorage.getItem("token") || "",
+          rp: JSON.parse(localStorage.getItem("rp") || "null"),
+          staff: JSON.parse(localStorage.getItem("staff") || "null"),
         }
       : null;
 
     setUser(storedUser);  
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("id", user.id);
-      localStorage.setItem("username", user.username);
-      localStorage.setItem("email", user.email);
-      localStorage.setItem("profile_image", user.profile_image);
-      localStorage.setItem("token", user.token);
-    } else {
-      localStorage.clear();
-    }
-  }, [user])
-
   const login = (userData: User) => {
+    localStorage.setItem("username", userData.username);
+    localStorage.setItem("email", userData.email);
+    localStorage.setItem("profile_image", userData.profile_image);
+    localStorage.setItem("token", userData.token);
+    localStorage.setItem("rp", JSON.stringify(userData.rp));
+    localStorage.setItem("staff", JSON.stringify(userData.staff));
     setUser(userData);
   };
 

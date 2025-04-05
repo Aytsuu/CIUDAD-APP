@@ -50,9 +50,10 @@ export default function FamilyRecords() {
     if (!families) return [];
 
     return families.map((family: any) => {
-      const mother = family.mother;
-      const father = family.father;
-      const dependents = family.dependents;
+      const mother = family?.mother;
+      const father = family?.father;
+      const dependents = family?.dependents;
+      const staff = family?.staff?.rp?.per;
 
       const totalMembers =
         (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length;
@@ -63,7 +64,10 @@ export default function FamilyRecords() {
         building: family.fam_building || "-",
         indigenous: family.fam_indigenous || "-",
         dateRegistered: family.fam_date_registered || "-",
-        registeredBy: family.staff || "-",
+        registeredBy: 
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   };

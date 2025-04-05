@@ -46,6 +46,8 @@ export default function BusinessRecords() {
         mname ? mname.slice(0, 1) + "." : ""
       }`;
 
+      const staff = business?.staff?.rp?.per;
+
       return {
         id: business.bus_id || "-",
         name: business.bus_name || "-",
@@ -54,7 +56,10 @@ export default function BusinessRecords() {
         street: business.bus_street || "-",
         respondent: fullName || "-",
         dateRegistered: business.bus_date_registered || "-",
-        registeredBy: business.staff || "-",
+        registeredBy: 
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   }, [businesses]);
@@ -113,7 +118,7 @@ export default function BusinessRecords() {
           />
         </div>
         <Link
-          to="/business-form"
+          to="/business/form"
           state={{
             params: {
                

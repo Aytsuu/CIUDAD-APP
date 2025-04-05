@@ -71,7 +71,7 @@ export default function HouseholdRecords() {
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname?.slice(0,1)}.` : '-')
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   }, [households]);
@@ -133,7 +133,7 @@ export default function HouseholdRecords() {
           </div>
         </div>
         <Link
-          to="/household-form"
+          to="/household/form"
           state={{
             params: {
               sitio: sitio,

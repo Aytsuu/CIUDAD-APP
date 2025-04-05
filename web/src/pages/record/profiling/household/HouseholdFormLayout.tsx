@@ -12,11 +12,13 @@ import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { addHousehold } from "../restful-api/profiingPostAPI";
 import { Form } from "@/components/ui/form/form";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HouseholdFormLayout() {
 
   const navigate = useNavigate()
   const location = useLocation();
+  const { user } = React.useRef(useAuth()).current;
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));
@@ -56,7 +58,7 @@ export default function HouseholdFormLayout() {
     }
 
     const data = form.getValues();
-    const res = await addHousehold(data);
+    const res = await addHousehold(data, user?.staff.staff_id);
 
     if (res) {
       updateResidents(res); // Update residents in the parent component

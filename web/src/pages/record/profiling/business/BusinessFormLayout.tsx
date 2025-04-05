@@ -15,6 +15,7 @@ import { Form } from "@/components/ui/form/form";
 import { addBusiness } from "../restful-api/profiingPostAPI";
 import { Type } from "../profilingEnums";
 import supabase from "@/utils/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 export default function BusinessFormLayout() {
   // Initializing states
@@ -24,6 +25,7 @@ export default function BusinessFormLayout() {
     () => location.state?.params || {},
     [location.state]
   );
+  const { user } = React.useRef(useAuth()).current;
   const sitio = React.useRef(formatSitio(params));
   const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
@@ -116,8 +118,7 @@ export default function BusinessFormLayout() {
 
     // Submit POST request
     const businessInfo = form.getValues();
-    const res = await addBusiness(businessInfo, publicUrl);
-
+    const res = await addBusiness(businessInfo, publicUrl, user?.staff.staff_id);
     if (res) {
       setIsSubmitting(false);
       setMediaFiles([])

@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 import uuid
 import os
 from utils.supabase_client import supabase
-from apps.administration.serializers import StaffSerializer
+from apps.administration.serializers.full import StaffFullSerializer
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.models import Staff
 
@@ -64,7 +64,7 @@ class LoginView(APIView):
 
             # Fetch Staff where staff_id == rp_id
             staff = Staff.objects.filter(staff_id=user.rp.rp_id).first() if user.rp else None
-            staff_data = StaffSerializer(staff).data if staff else None
+            staff_data = StaffFullSerializer(staff).data if staff else None
             
             return Response({
                 "token": token.key,

@@ -23,19 +23,21 @@ import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { updateProfile } from "../restful-api/profilingPutAPI";
 import { deleteRequest } from "../restful-api/profilingDeleteAPI";
-import {
-  addPersonal,
-  addResidentProfile,
-} from "../restful-api/profiingPostAPI";
+import { addPersonal, addResidentProfile } from "../restful-api/profiingPostAPI";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ResidentFormLayout() {
+
+  // Get user information from useContext
+  const { user } = React.useRef(useAuth()).current;
+
   // Initializing states
   const location = useLocation();
   const navigate = useNavigate();
-  const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema));
+  const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema)).current;
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    defaultValues: defaultValues.current,
+    defaultValues
   });
   const params = React.useMemo(() => {
     return location.state?.params || {};
@@ -196,7 +198,7 @@ export default function ResidentFormLayout() {
         params.type === Type.Request
           ? reqPersonalId
           : await addPersonal(values);
-      const res = await addResidentProfile(personalId);
+      const res = await addResidentProfile(personalId, user?.staff.staff_id);
 
       if (res) {
         setIsSubmitting(false);
@@ -219,6 +221,7 @@ export default function ResidentFormLayout() {
         }
 
         // Reset the values of all fields in the form
+        navigate('/account/create')
         form.reset(defaultValues.current);
       }
     }

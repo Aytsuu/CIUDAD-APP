@@ -2,7 +2,9 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from .serializers import *
+from .serializers.base import *
+from .serializers.minimal import *
+from .serializers.full import *
 
 # Create your views here.
 
@@ -67,7 +69,7 @@ class PermissionUpdateView(generics.RetrieveUpdateAPIView):
 # Staff Views ------------------------------------------------------------------------
 
 class StaffView(generics.ListCreateAPIView):
-    serializer_class = StaffSerializer
+    serializer_class = StaffFullSerializer
     queryset = Staff.objects.all()
 
     

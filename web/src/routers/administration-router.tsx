@@ -7,7 +7,7 @@ export const administration_router = [
         path: 'administration',
         element: <AdministrationRecords /> 
     },
-    {
+    {   
         path: 'administration/role',
         element: <RoleLayout /> 
     }, 

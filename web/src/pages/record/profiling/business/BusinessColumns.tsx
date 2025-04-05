@@ -45,7 +45,7 @@ export const businessColumns = (
     header: "Action",
     cell: ({ row }) => (
       <Link
-        to="/business-form"
+        to="/business/form"
         state={{
           params: {
             type: "viewing",
