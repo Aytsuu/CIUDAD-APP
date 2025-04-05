@@ -10,4 +10,4 @@ class GAD_Budget_TrackerView(generics.ListCreateAPIView):
 class GAD_Budget_TrackerDetailView(generics.RetrieveUpdateDestroyAPIView):  # Handles DELETE
     queryset = GAD_Budget_Tracker.objects.all()
     serializer_class = GAD_Budget_TrackerSerializer
-    lookup_field = 'don_num' 
+    lookup_field = 'gbud_num' 
