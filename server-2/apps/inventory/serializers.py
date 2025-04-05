@@ -252,10 +252,22 @@ class VacccinationListSerializer(serializers.ModelSerializer):
 class VaccineStockSerializer(serializers.ModelSerializer):
     vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     vaccinelist = VacccinationListSerializer(source='vac_id', read_only = True)
+    # Foreign keys (required for creation but optional for updates)
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    vac_id = serializers.PrimaryKeyRelatedField(queryset=VaccineList.objects.all())
 
     class Meta:
         model = VaccineStock
         fields = '__all__'
+        
+    def to_internal_value(self, data):
+        """Allow partial updates but require all fields for creation."""
+        if self.instance:
+            # Partial update: Allow missing fields
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
         
 
 class AntigenTransactionSerializer(serializers.ModelSerializer):
@@ -267,6 +279,16 @@ class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImmunizationStock
         fields = '__all__'
+        
+    def to_internal_value(self, data):
+        """Allow partial updates but require all fields for creation."""
+        if self.instance:
+            # Partial update: Allow missing fields
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
+        
         
 class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
     class Meta:

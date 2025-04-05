@@ -47,6 +47,7 @@ class Inventory(models.Model):
     expiry_date = models.DateField()
     inv_type = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    is_Archived = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -206,12 +207,16 @@ class RoutineFrequency(models.Model):
 class VaccineStock(models.Model):
     vacStck_id =models.BigAutoField(primary_key=True)
     solvent = models.CharField(max_length=10 )
-    batch_number = models.CharField(max_length=100, verbose_name='Batch Number')
+    batch_number = models.CharField(max_length=100, default=" N/A")
     volume = models.PositiveIntegerField(default=0)
     qty = models.PositiveIntegerField(default=0)
     dose_ml = models.PositiveIntegerField(default=0)
     vacStck_used = models.PositiveIntegerField(default=0)
     vacStck_qty_avail = models.PositiveIntegerField(default=0)
+    wasted_dose =models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id')
     vac_id = models.ForeignKey('VaccineList',on_delete=models.CASCADE)
 
@@ -250,13 +255,19 @@ class ImmunizationSupplies(models.Model):
     class Meta:
         db_table = 'immunization_supplies'
         
+        
 class ImmunizationStock(models.Model):
     imzStck_id = models.BigAutoField(primary_key=True)
+    batch_number = models.CharField(max_length=100, default=" N/A")
     imzStck_qty = models.PositiveIntegerField(default=0)
+    imzStck_per_pcs = models.PositiveIntegerField(default=0)
     imzStck_pcs = models.PositiveIntegerField(default=0)
     imzStck_unit = models.CharField(max_length=100)
     imzStck_used = models.PositiveIntegerField(default=0)
     imzStck_avail = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
     imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.CASCADE)
 

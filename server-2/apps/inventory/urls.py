@@ -64,11 +64,12 @@ urlpatterns = [
     
     
      # Vaccination - Retrieve/Update endpoints
-    path("vac_list/<int:vac_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
+    path("vac_list/<int:inv_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
     path("vac_intervals/<int:vacInt_id>/", VaccineIntervalRetrieveUpdateDestroyView.as_view(), name="vaccination-interval-detail"),
     path("routine_freq/<int:routineF_id>/", RoutineFrequencyRetrieveUpdateDestroyView.as_view(), name="RoutineFrequency-detail"),
     path("vac_categ/<int:vaccat_id>/", VaccineCategoryRetrieveUpdateDestroyView.as_view(), name="vac_cat-detail"),
-    path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
+    path("imz_supplies/<int:inv_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
+    
     
     # VACCINE STOCKS
     path("vaccine_stocks/", VaccineStocksView.as_view(), name="vaccine_stocks"),
@@ -78,5 +79,7 @@ urlpatterns = [
     path("imz_transaction/", ImmunizationTransactionView.as_view(), name="imz_transaction"),
     
     
+    path("vaccine_stocks/<int:vacStck_id>/", VaccineStockRetrieveUpdateDestroyView.as_view(), name="vaccine_stocks-detail"),
+    path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
     
 ]

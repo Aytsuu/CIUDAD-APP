@@ -25,6 +25,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { CommodityPayload } from "../REQUEST/Payload";
 import { InventoryCommodityPayload } from "../REQUEST/Payload";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
 
 interface CommodiityStockFormProps {  
   setIsDialog:(isOpen: boolean) => void
@@ -138,32 +141,7 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Commodity Name */}
-            <FormField
-              control={form.control}
-              name="com_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commodity Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Commodity"
-                      options={commodity}
-                      value={field.value}
-                      onChange={(value) => {
-                        console.log("Selected Commodity ID:", value);
-                        field.onChange(value);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category Dropdown */}
+            <FormSelect control={form.control} name="com_id"  label="Commodity Name" options={commodity} />
             <FormField
               control={form.control}
               name="cat_id"
@@ -190,132 +168,20 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
               )}
             />
           </div>
-
+  
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Expiry Date */}
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Receive From */}
-            <FormField
-              control={form.control}
-              name="cinv_recevFrom"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Receive From</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Source"
-                      options={[
-                        { id: "DOH", name: "DOH" },
-                        { id: "CHD", name: "CHD" },
-                        { id: "OTHERS", name: "OTHERS" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormDateInput control={form.control}  name="expiryDate" label="Expiry Date"/>
+            <FormSelect control={form.control} name="cinv_recevFrom" label="Receive From" options={[{ id: "doh", name: "DOH" },{ id: "chd", name: "CHD" },{ id: "others", name: "OTHERS" },]}/>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Quantity */}
-            <FormField
-              control={form.control}
-              name="cinv_qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Quantity"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Storage Unit */}
-            <FormField
-              control={form.control}
-              name="cinv_qty_unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
-                        { id: "packs", name: "Packs" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="cinv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}  type="number"  placeholder="Quantity"  />
+            <FormSelect control={form.control}  name="cinv_qty_unit"  label="Unit"options={[{ id: "boxes", name: "Boxes" }, { id: "bottles", name: "Bottles" }, { id: "packs", name: "Packs" }, ]} />
           </div>
-
+  
           {/* Pieces per Box and Total Pieces (only shown when unit is boxes) */}
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="cinv_pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Pieces per box"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              <FormInput control={form.control} name="cinv_pcs"  label="Pieces per Box" type="number" placeholder="Pieces per box"/>
               <FormItem className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -329,8 +195,7 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
               </FormItem>
             </div>
           )}
-
-          {/* Submit Button */}
+  
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]">
               Save Commodity
@@ -338,6 +203,7 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
           </div>
         </form>
       </Form>
+      
       {ConfirmationDialogs()}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
@@ -346,6 +212,6 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
         title="Add Commodity"
         description={`Are you sure you want to add the commodity?`}
       />
-    </div>
-  );
-}
+      </div>
+    );
+  }

@@ -1,13 +1,9 @@
 // VaccineStockForm.tsx
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+
+import { Form } from "@/components/ui/form/form";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +20,7 @@ import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
 import { addInventory } from "../REQUEST/Post";
+import {FormDateInput} from "@/components/ui/form/form-date-input";
 
 export default function VaccineStockForm() {
   UseHideScrollbar();
@@ -39,8 +36,8 @@ export default function VaccineStockForm() {
       vac_id: "",
       batchNumber: "",
       volume: undefined,
-      qty: 0,
-      dose_ml: 0,
+      qty: 0, // Now as number
+      dose_ml: 0, // Now as number
       expiryDate: "",
       solvent: "doses",
     },
@@ -121,180 +118,42 @@ export default function VaccineStockForm() {
     }
   };
 
+ 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-6 p-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="vac_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vaccine Name</FormLabel>
-                    <FormControl>
-                      {loading ? (
-                        <Input placeholder="Loading vaccines..." disabled />
-                      ) : (
-                        <SelectLayout
-                          label=""
-                          className="w-full"
-                          placeholder="Select Vaccine"
-                          options={vaccineOptions}
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
-                      )}
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="batchNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Batch Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Batch number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="solvent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Solvent Type</FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        label=""
-                        className="w-full"
-                        placeholder="Select Solvent Type"
-                        options={[
-                          { id: "diluent", name: "Diluent" },
-                          { id: "doses", name: "Doses" },
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {solvent === "diluent" && (
-                <FormField
-                  control={form.control}
-                  name="volume"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Dosage (ml)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(
-                              value === "" ? undefined : Number(value)
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="qty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {solvent === "doses"
-                        ? "Number of Vials"
-                        : "Number of Containers"}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {solvent === "doses" && (
-                <FormField
-                  control={form.control}
-                  name="dose_ml"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Doses per Vial</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(
-                              value === "" ? undefined : Number(value)
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="expiryDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expiry Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-6 p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormSelect control={form.control} name="vac_id" label="Vaccine Name" options={vaccineOptions}/>
+            <FormInput control={form.control} name="batchNumber" label="Batch Number" placeholder="Batch number"/>
           </div>
 
-          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Stock"}
-            </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormSelect control={form.control} name="solvent" label="Solvent Type" options={[{ id: "diluent", name: "Diluent" },{ id: "doses", name: "Doses" },]}/> 
+            {solvent === "diluent" && (
+              <FormInput control={form.control} name="dose_ml" label="Dosage (ml)" type="number" />
+            )}
           </div>
-        </form>
-      </Form>
-    </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormInput control={form.control} name="qty" label={solvent === "doses" ? "Number of Vials" : "Number of Containers"} type="number"/>
+            {solvent === "doses" && (
+              <FormInput control={form.control} name="dose_ml" label="Doses per Vial" type="number"/>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormDateInput control={form.control} name="expiryDate" label="Expiry Date"/>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+          <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save Stock"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  </div>
   );
 }

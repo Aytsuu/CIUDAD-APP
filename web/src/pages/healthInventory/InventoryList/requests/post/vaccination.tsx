@@ -44,6 +44,7 @@ export const addVaccineIntervals = async (data: {
   dose_number: number;
   interval: number;
   time_unit: string;
+  
 }): Promise<any> => {
   try {
     const res = await api.post("inventory/vac_intervals/", data);
@@ -97,8 +98,10 @@ export const handlePrimaryVaccine = async (data: VaccineType, vaccineId: number)
           vac_id: vaccineId,
           dose_number: index + 2,
           interval: Number(interval),
-          time_unit: timeUnits[index] || 'months'
+          time_unit: timeUnits[index] || 'months',
+          
         })
+        
       )
     );
   }

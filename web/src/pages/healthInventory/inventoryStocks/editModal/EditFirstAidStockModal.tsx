@@ -169,6 +169,8 @@ export default function EditFirstAidStockForm({
     }
   }, [formData, initialData.finv_id, form, setIsDialog, queryClient]);
 
+
+  
   const currentUnit = form.watch("finv_qty_unit");
   const qty = form.watch("finv_qty") || 0;
   const pcs = form.watch("finv_pcs") || 0;

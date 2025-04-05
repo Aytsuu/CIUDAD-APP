@@ -102,6 +102,7 @@ class CommodityListUpdateView(generics.RetrieveUpdateAPIView):
        return obj
        
        
+       
 
 
 # ----------------------INVENTORY---VIEW------------------------------------  
@@ -131,6 +132,10 @@ class MedicineInventoryView(generics.ListCreateAPIView):
     queryset=MedicineInventory.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    def get_queryset(self):
+        # Filter out MedicineInventory entries where the related Inventory is archived
+        queryset = MedicineInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        return queryset
     
     
 class CommodityInventoryVIew(generics.ListCreateAPIView):
@@ -138,12 +143,22 @@ class CommodityInventoryVIew(generics.ListCreateAPIView):
     queryset=CommodityInventory.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    def get_queryset(self):
+        queryset = CommodityInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        return queryset
+    
+    
+    
     
 class FirstAidInventoryVIew(generics.ListCreateAPIView):
     serializer_class=FirstAidInventorySerializer
     queryset=FirstAidInventory.objects.all()
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    def get_queryset(self):
+        # Filter out MedicineInventory entries where the related Inventory is archived
+        queryset = FirstAidInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        return queryset
     
     
     
@@ -174,6 +189,7 @@ class CommodityInvRetrieveView(generics.RetrieveUpdateAPIView):
        return obj
 
 
+
 class FirstAidInvRetrieveView(generics.RetrieveUpdateAPIView):
     serializer_class=FirstAidInventorySerializer
     queryset = FirstAidInventory.objects.all()
@@ -183,11 +199,9 @@ class FirstAidInvRetrieveView(generics.RetrieveUpdateAPIView):
        finv_id = self.kwargs.get('finv_id')
        obj = get_object_or_404(FirstAidInventory, finv_id = finv_id)
        return obj
-
     
-    
-    
-# ----------------------MEDICINE STOCK---DELETE------------------------------------  
+# ----------------------MEDICINE STOCK---DELETE------------------------------------ 
+#DELETE THIS  
 class DeleteMedicineInvView(generics.DestroyAPIView):
     serializer_class=MedicineInventorySerializer
     queryset = MedicineInventory.objects.all()
@@ -204,7 +218,8 @@ class DeleteMedicineInvView(generics.DestroyAPIView):
         # Delete the related Inventory record
         if inventory_record:
             inventory_record.delete()
-   
+            
+#DELETE THIS 
 class DeleteCommodityInvView(generics.DestroyAPIView):
     serializer_class=CommodityInventorySerializer
     queryset = CommodityInventory.objects.all()
@@ -221,7 +236,8 @@ class DeleteCommodityInvView(generics.DestroyAPIView):
         # Delete the related Inventory record
         if inventory_record:
             inventory_record.delete()
-            
+   
+#DELETE THIS 
 class DeleteFirstAidInvView(generics.DestroyAPIView):
     serializer_class=FirstAidInventorySerializer
     queryset = FirstAidInventory.objects.all()
@@ -240,6 +256,8 @@ class DeleteFirstAidInvView(generics.DestroyAPIView):
             inventory_record.delete()
 
 
+
+# DELETE THIS
 class DeleteFirstAidInvView(generics.DestroyAPIView):
     serializer_class=FirstAidInventorySerializer
     queryset = FirstAidInventory.objects.all()
@@ -282,7 +300,6 @@ class FirstAidTransactionView(generics.ListCreateAPIView):
      
 
 
-
 class VaccineCategoryView(generics.ListCreateAPIView):
     serializer_class=VaccineCategorySerializer
     queryset=VaccineCategory.objects.all()
@@ -300,13 +317,12 @@ class ImmunizationSuppliesView(generics.ListCreateAPIView):
 # views.py
 class VaccineListView(generics.ListCreateAPIView):
     serializer_class = VacccinationListSerializer
-    
     def get_queryset(self):
         # Filter by vaccat_id = 1
-        return VaccineList.objects.filter(vaccat_id=1)
-    
+        return VaccineList.objects.filter(vaccat_id=1)   
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
 
 class VaccineIntervalView(generics.ListCreateAPIView):
     serializer_class=VaccineIntervalSerializer
@@ -335,6 +351,7 @@ class VaccineCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPI
         obj = get_object_or_404(VaccineCategory, vaccat_id=vaccat_id)
         return obj
 
+
 # Immunization Supplies Views
 class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ImmunizationSuppliesSerializer
@@ -346,67 +363,12 @@ class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
         obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
         return obj
     
-    def perform_destroy(self, instance):
-        # Get and delete related inventory if exists
-        if hasattr(instance, 'inventory'):
-            inventory_record = instance.inventory
-            if inventory_record:
-                inventory_record.delete()
-        
-        # Then delete the immunization supply
-        instance.delete()
-
+    
 # Vaccine List Views
 class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
     lookup_field = 'vac_id'
-    
-    def get_object(self):
-        vac_id = self.kwargs.get('vac_id')
-        return get_object_or_404(VaccineList, vac_id=vac_id)
-    
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        new_type = request.data.get('vac_type_choices')
-        
-        # If changing from routine to primary
-        if instance.vac_type_choices == 'routine' and new_type == 'primary':
-            RoutineFrequency.objects.filter(vac_id=instance).delete()
-        
-        # If changing from primary to routine
-        elif instance.vac_type_choices == 'primary' and new_type == 'routine':
-            VaccineInterval.objects.filter(vac_id=instance).delete()
-        
-        return super().update(request, *args, **kwargs)
-        # In VaccineListRetrieveUpdateDestroyView
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        print(f"Deleting vaccine with ID: {instance.vac_id}")  # Add logging
-        
-        try:
-            # First delete all related records
-            if hasattr(instance, 'routine_frequency') and instance.routine_frequency:
-                print(f"Deleting routine frequency for vaccine {instance.vac_id}")
-                instance.routine_frequency.delete()
-            
-            if hasattr(instance, 'vaccine_intervals'):
-                print(f"Deleting {instance.vaccine_intervals.count()} intervals for vaccine {instance.vac_id}")
-                instance.vaccine_intervals.all().delete()
-            
-            # Then delete the vaccine
-            instance.delete()
-            print(f"Successfully deleted vaccine {instance.vac_id}")
-            
-            return Response(status=status.HTTP_204_NO_CONTENT)
-            
-        except Exception as e:
-            print(f"Error deleting vaccine {instance.vac_id}: {str(e)}")
-            return Response(
-                {"detail": f"Error deleting vaccine: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
     
 # Vaccine Interval Views
 class VaccineIntervalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -438,14 +400,30 @@ class VaccineStocksView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    def get_queryset(self):
+        # Filter out MedicineInventory entries where the related Inventory is archived
+        queryset = VaccineStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        return queryset 
+    
+class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VaccineStockSerializer
+    queryset = VaccineStock.objects.all()
+    lookup_field = 'vacStck_id'
+    def get_object(self):
+        vacStck_id = self.kwargs.get('vacStck_id')
+        obj = get_object_or_404(VaccineStock, vacStck_id=vacStck_id)
+        return obj
+    
+    
     
 class ImmunizationStockSuppliesView(generics.ListCreateAPIView):
     serializer_class=ImmnunizationStockSuppliesSerializer
     queryset=ImmunizationStock.objects.all()
-    
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
+    def get_queryset(self):
+        queryset = ImmunizationStock.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
+        return queryset
 
 class AntigenTransactionView(generics.ListCreateAPIView):
     serializer_class=AntigenTransactionSerializer
@@ -456,8 +434,20 @@ class AntigenTransactionView(generics.ListCreateAPIView):
     
 class ImmunizationTransactionView(generics.ListCreateAPIView):
     serializer_class=ImmunizationSuppliesTransactionSerializer
-    queryset=ImmunizationTransaction.objects.all()
+    queryset=ImmunizationTransaction.objects.all() 
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+
+# Immunization Supplies Views
+class ImmunizationSuppliesStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ImmnunizationStockSuppliesSerializer
+    queryset = ImmunizationStock.objects.all()
+    lookup_field = 'imzStck_id'
+    
+    def get_object(self):
+        imzStck_id = self.kwargs.get('imzStck_id')
+        obj = get_object_or_404(ImmunizationStock, imzStck_id=imzStck_id)
+        return obj
     

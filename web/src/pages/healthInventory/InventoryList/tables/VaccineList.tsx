@@ -150,6 +150,7 @@ export default function VaccineList() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+  
 
   const handleDelete = async () => {
     if (vaccineToDelete !== null) {

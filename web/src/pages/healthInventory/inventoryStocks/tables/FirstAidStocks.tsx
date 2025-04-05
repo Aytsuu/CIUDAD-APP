@@ -20,8 +20,8 @@ import EditFirstAidStockForm from "../editModal/EditFirstAidStockModal";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { handleDeleteFirstAidStocks } from "../REQUEST/Delete";
 import { getFirstAidStocks } from "../REQUEST/Get";
+import { archiveInventory } from "../REQUEST/archive";
 
 export type FirstAidStocksRecord = {
   finv_id: number;
@@ -37,18 +37,18 @@ export type FirstAidStocksRecord = {
   finv_qty_unit: string;
   availQty: string;
   used: string;
+  inv_id: number;
 };
 
 export default function FirstAidStocks() {
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
-  const [firstAidStockDelete, setFirstAidStockDelete] = useState<number | null>(null);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
+  const [firstAidToArchive, setFirstAidToArchive] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
 
-  // Fetch first aid stocks using useQuery
   const { data: firstAidStocks, isLoading: isLoadingFirstAid } = useQuery({
     queryKey: ["firstaidinventorylist"],
     queryFn: getFirstAidStocks,
@@ -58,21 +58,24 @@ export default function FirstAidStocks() {
 
   const formatFirstAidStocksData = React.useCallback((): FirstAidStocksRecord[] => {
     if (!firstAidStocks) return [];
-    return firstAidStocks.map((firstAidStock: any) => ({
-      finv_id: firstAidStock.finv_id,
-      firstAidInfo: {
-        fa_name: firstAidStock.fa_detail?.fa_name,
-      },
-      expiryDate: firstAidStock.inv_detail?.expiry_date,
-      category: firstAidStock.cat_detail?.cat_name,
-      qty: {
-        finv_qty: firstAidStock.finv_qty,
-        finv_pcs: firstAidStock.finv_pcs,
-      },
-      finv_qty_unit: firstAidStock.finv_qty_unit,
-      availQty: firstAidStock.finv_qty_avail,
-      used: firstAidStock.finv_used,
-    }));
+    return firstAidStocks
+      .filter((stock: any) => !stock.inv_detail?.is_Archived)
+      .map((firstAidStock: any) => ({
+        finv_id: firstAidStock.finv_id,
+        firstAidInfo: {
+          fa_name: firstAidStock.fa_detail?.fa_name,
+        },
+        expiryDate: firstAidStock.inv_detail?.expiry_date,
+        category: firstAidStock.cat_detail?.cat_name,
+        qty: {
+          finv_qty: firstAidStock.finv_qty,
+          finv_pcs: firstAidStock.finv_pcs,
+        },
+        finv_qty_unit: firstAidStock.finv_qty_unit,
+        availQty: firstAidStock.finv_qty_avail,
+        used: firstAidStock.finv_used,
+        inv_id: firstAidStock.inv_id,
+      }));
   }, [firstAidStocks]);
 
   const filteredData = React.useMemo(() => {
@@ -90,18 +93,22 @@ export default function FirstAidStocks() {
     currentPage * pageSize
   );
 
-  const handleDeleteFirstAid = (finv_id: number) => {
-    setFirstAidStockDelete(finv_id);
-    setIsDeleteConfirmationOpen(true);
+  const handleArchiveInventory = (inv_id: number) => {
+    setFirstAidToArchive(inv_id);
+    setIsArchiveConfirmationOpen(true);
   };
 
-  const confirmDeleteFirstAid = async () => {
-    if (firstAidStockDelete !== null) {
-      await handleDeleteFirstAidStocks(firstAidStockDelete, () => {
+  const confirmArchiveInventory = async () => {
+    if (firstAidToArchive !== null) {
+      try {
+        await archiveInventory(firstAidToArchive);
         queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setFirstAidStockDelete(null);
+      } catch (error) {
+        console.error("Failed to archive inventory:", error);
+      } finally {
+        setIsArchiveConfirmationOpen(false);
+        setFirstAidToArchive(null);
+      }
     }
   };
 
@@ -214,39 +221,33 @@ export default function FirstAidStocks() {
       header: "Action",
       cell: ({ row }) => {
         return (
-          <>
-            <div className="flex gap-2">
-              <div className="flex justify-center gap-2">
-                <TooltipLayout
+          <div className="flex gap-2">
+            <TooltipLayout
+              trigger={
+                <DialogLayout
                   trigger={
-                    <DialogLayout
-                      trigger={
-                        <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                          <Edit size={16} />
-                        </div>
-                      }
-                      mainContent={
-                        <EditFirstAidStockForm
-                          initialData={row.original}
-                          setIsDialog={setIsDialog}
-                        />
-                      }
+                    <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                      <Edit size={16} />
+                    </div>
+                  }
+                  mainContent={
+                    <EditFirstAidStockForm
+                      initialData={row.original}
+                      setIsDialog={setIsDialog}
                     />
                   }
-                  content="Edit"
                 />
-              </div>
-              <div className="flex justify-center gap-2">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteFirstAid(row.original.finv_id)}
-                >
-                  <Trash />
-                </Button>
-              </div>
-            </div>
-          </>
+              }
+              content="Edit"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleArchiveInventory(row.original.inv_id)}
+            >
+              <Trash />
+            </Button>
+          </div>
         );
       },
     },
@@ -307,11 +308,7 @@ export default function FirstAidStocks() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                if (value >= 1) {
-                  setPageSize(value);
-                } else {
-                  setPageSize(1); // Reset to 1 if invalid
-                }
+                setPageSize(value >= 1 ? value : 1);
               }}
               min="1"
             />
@@ -337,7 +334,7 @@ export default function FirstAidStocks() {
         <div className="bg-white w-full overflow-x-auto">
           <DataTable columns={columns} data={paginatedData} />
         </div>
-        {/* Pagination */}
+        
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
@@ -353,13 +350,12 @@ export default function FirstAidStocks() {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={confirmDeleteFirstAid}
-        title="Delete First Aid Item"
-        description="Are you sure you want to delete this first aid item? This action cannot be undone."
+        isOpen={isArchiveConfirmationOpen}
+        onOpenChange={setIsArchiveConfirmationOpen}
+        onConfirm={confirmArchiveInventory}
+        title="Archive Inventory Item"
+        description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
       />
     </>
   );

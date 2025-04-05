@@ -94,24 +94,24 @@ export const FirstAidTransactionPayload = (finv_id: number,string_qty :string,ac
   };
 }
 
-
 export const VaccineTransactionPayload = (
   vacStck_id: number,
   string_qty: string,
   action: string,
   solvent: string,
-  dose_ml?: number
+  dose_ml: number
 ) => {
   let displayQty = string_qty;
+  const quantity = parseInt(string_qty);
   
-  // If it's doses and dose_ml is provided, calculate total doses
   if (solvent === "doses" && dose_ml) {
-    const totalDoses = parseInt(string_qty) * dose_ml;
-    displayQty = `${totalDoses} doses`;
+    // Format as "X vial(s) Y mL" (just showing the input values)
+    const vialText = `${quantity} vial${quantity !== 1 ? 's' : ''}`;
+    displayQty = `${vialText} ${dose_ml} dose${dose_ml !== 1 ? 's' : ''}`; // pluralize "doses" based on dose_ml
   } 
-  // If it's diluent, just show the quantity with "container(s)"
   else if (solvent === "diluent") {
-    displayQty = `${string_qty} container${parseInt(string_qty) !== 1 ? 's' : ''}`;
+    // Format as "X container(s)"
+    displayQty = `${quantity} container${quantity !== 1 ? 's' : ''}`;
   }
 
   return {
@@ -122,7 +122,6 @@ export const VaccineTransactionPayload = (
     vacStck_id: vacStck_id,
   };
 };
-
 
 
 export const CommodityPayload = (
@@ -175,14 +174,6 @@ export const FirstAidPayload = (
 
 // IMMUNIZATION STOCKS
 
-export interface ImmunizationTransactionPayload {
-  imzt_qty: number;
-  imzt_type: string;
-  imzt_action: string;
-  staff: number;
-  imzStck_id: number;
-}
-
 export interface ImmunizationStockPayload {
   imz_id: number;
   inv_id: number;
@@ -195,7 +186,7 @@ export interface ImmunizationStockPayload {
   expiryDate: string;
 }
 
-export const prepareStockPayload = (
+export const AddImmunizationSupplyStock = (
   data: ImmunizationSuppliesType,
   inv_id: number
 ): ImmunizationStockPayload => {
@@ -218,14 +209,34 @@ export const prepareStockPayload = (
   };
 };
 
-export const prepareTransactionPayload = (
+
+
+export interface ImmunizationTransactionPayload {
+  imzt_qty: string;
+  imzt_type: string;
+  imzt_action: string;
+  staff: number;
+  imzStck_id: number;
+}
+
+
+export const ImmunizationStockTransaction = (
   imzStck_avail: number,
   imzStck_id: number,
-  staffId: number = 1 // Default to 1, should be replaced with actual staff ID
-): ImmunizationTransactionPayload => ({
-  imzt_qty: imzStck_avail,
-  imzt_type: "inventory",
-  imzt_action: "add",
-  staff: staffId,
-  imzStck_id,
-});
+  unit: string, // Add unit parameter
+  boxes?: number, // Optional boxes count
+  pcsPerBox?: number // Optional pcs per box
+): ImmunizationTransactionPayload => {
+  // Format the quantity based on the unit
+  const formattedQty = unit === "boxes" && boxes && pcsPerBox 
+    ? `${boxes} boxes - ${imzStck_avail}pcs` 
+    : `${imzStck_avail}pcs`;
+
+  return {
+    imzt_qty: formattedQty, // Use the formatted string
+    imzt_type: "inventory",
+    imzt_action: "added",
+    staff: 1, // Default to 1, should be replaced with actual staff ID
+    imzStck_id,
+  };
+};

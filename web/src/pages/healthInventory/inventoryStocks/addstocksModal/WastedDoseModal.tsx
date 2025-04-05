@@ -13,6 +13,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+
+
+
+interface WastedDoseFormProps {
+  wasted:number// Optional initial value for the input
+}
 // ✅ Define Zod Schema for Wasted Doses
 const formSchema = z.object({
   wastedDose: z.number()
@@ -20,7 +26,7 @@ const formSchema = z.object({
     .int("Must be a whole number"),
 });
 
-export default function WastedDoseForm() {
+export default function WastedDoseForm({wasted}:WastedDoseFormProps) {
   // ✅ Initialize form with validation
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -31,6 +37,7 @@ export default function WastedDoseForm() {
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     console.log("Submitted Data:", data);
+    console.log(wasted)
     // Handle form submission (store data, send to API, etc.)
   };
 

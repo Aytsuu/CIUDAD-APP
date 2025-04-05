@@ -20,51 +20,51 @@ import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMedicineStocks } from "../REQUEST/Get";
 import { Skeleton } from "@/components/ui/skeleton";
-import { handleDeleteMedicineStocks } from "../REQUEST/Delete";
+import { archiveInventory } from "../REQUEST/archive";
+
+export type MedicineStocksRecord = {
+  id: number; // Added id property
+  minv_id: number;
+  medicineInfo: {
+    medicineName: string;
+    dosage: number;
+    dsgUnit: string;
+    form: string;
+  };
+  expiryDate: string;
+  category: string;
+  qty: {
+    qty: number;
+    pcs: number;
+  };
+  minv_qty_unit: string;
+  availQty: string;
+  distributed: string;
+  inv_id: number;
+};
 
 export default function MedicineStocks() {
-  type MedicineStocksRecord = {
-    id: number;
-    medicineInfo: {
-      medicineName: string;
-      dosage: number;
-      dsgUnit: string;
-      form: string;
-    };
-    expiryDate: string;
-    category: string;
-    qty: {
-      qty: number;
-      pcs: number;
-    };
-    minv_qty_unit: string;
-    availQty: string;
-    distributed: string;
-  };
-
-
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    useState(false);
-  const [medStockDelete, setmedStockDelete] = useState<number | null>(null);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
+  const [medicineToArchive, setMedicineToArchive] = useState<number | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
 
-  // Fetch medicine stocks using useQuery
   const { data: medicineStocks, isLoading: isLoadingMedicines } = useQuery({
-    queryKey: ["medicineStocks"],
+    queryKey: ["medicineinventorylist"],
     queryFn: getMedicineStocks,
     refetchOnMount: true,
     staleTime: 0,
   });
 
-  const formatMedicineStocksData =
-    React.useCallback((): MedicineStocksRecord[] => {
-      if (!medicineStocks) return [];
-      return medicineStocks.map((medicineStock: any) => ({
-        id: medicineStock.minv_id,
+  const formatMedicineStocksData = React.useCallback((): MedicineStocksRecord[] => {
+    if (!medicineStocks) return [];
+    return medicineStocks
+      .map((medicineStock: any) => ({
+        id: medicineStock.minv_id, // Populate id property
+        minv_id: medicineStock.minv_id,
         medicineInfo: {
           medicineName: medicineStock.med_detail?.med_name,
           dosage: medicineStock.minv_dsg,
@@ -80,8 +80,9 @@ export default function MedicineStocks() {
         minv_qty_unit: medicineStock.minv_qty_unit,
         availQty: medicineStock.minv_qty_avail,
         distributed: medicineStock.minv_distributed,
+        inv_id: medicineStock.inv_id,
       }));
-    }, [medicineStocks]);
+  }, [medicineStocks]);
 
   const filteredData = React.useMemo(() => {
     return formatMedicineStocksData().filter((record) =>
@@ -98,18 +99,22 @@ export default function MedicineStocks() {
     currentPage * pageSize
   );
 
-  const handleDeleteMed = (med_id: number) => {
-    setmedStockDelete(med_id);
-    setIsDeleteConfirmationOpen(true);
+  const handleArchiveInventory = (inv_id: number) => {
+    setMedicineToArchive(inv_id);
+    setIsArchiveConfirmationOpen(true);
   };
 
-  const confirmDeleteMed = async () => {
-    if (medStockDelete !== null) {
-      await handleDeleteMedicineStocks(medStockDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setmedStockDelete(null);
+  const confirmArchiveInventory = async () => {
+    if (medicineToArchive !== null) {
+      try {
+        await archiveInventory(medicineToArchive);
+        queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
+      } catch (error) {
+        console.error("Failed to archive inventory:", error);
+      } finally {
+        setIsArchiveConfirmationOpen(false);
+        setMedicineToArchive(null);
+      }
     }
   };
 
@@ -127,7 +132,7 @@ export default function MedicineStocks() {
   const columns: ColumnDef<MedicineStocksRecord>[] = [
     {
       accessorKey: "medicineInfo",
-      header: "Medicine ",
+      header: "Medicine",
       cell: ({ row }) => {
         const medicine = row.original.medicineInfo;
         return (
@@ -207,39 +212,33 @@ export default function MedicineStocks() {
       header: "Action",
       cell: ({ row }) => {
         return (
-          <>
-            <div className="flex gap-2">
-              <div className="flex justify-center gap-2">
-                <TooltipLayout
+          <div className="flex gap-2">
+            <TooltipLayout
+              trigger={
+                <DialogLayout
                   trigger={
-                    <DialogLayout
-                      trigger={
-                        <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                          <Edit size={16} />
-                        </div>
-                      }
-                      mainContent={
-                        <EditMedicineForm
-                          initialData={row.original}
-                          setIsDialog={setIsDialog}
-                        />
-                      }
+                    <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                      <Edit size={16} />
+                    </div>
+                  }
+                  mainContent={
+                    <EditMedicineForm
+                      initialData={row.original}
+                      setIsDialog={setIsDialog}
                     />
                   }
-                  content="Edit"
                 />
-              </div>
-              <div className="flex justify-center gap-2">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteMed(row.original.id)}
-                >
-                  <Trash />
-                </Button>
-              </div>
-            </div>
-          </>
+              }
+              content="Edit"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleArchiveInventory(row.original.inv_id)}
+            >
+              <Trash />
+            </Button>
+          </div>
         );
       },
     },
@@ -300,11 +299,7 @@ export default function MedicineStocks() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                if (value >= 1) {
-                  setPageSize(value);
-                } else {
-                  setPageSize(1); // Reset to 1 if invalid
-                }
+                setPageSize(value >= 1 ? value : 1);
               }}
               min="1"
             />
@@ -330,7 +325,7 @@ export default function MedicineStocks() {
         <div className="bg-white w-full overflow-x-auto">
           <DataTable columns={columns} data={paginatedData} />
         </div>
-        {/* Pagination */}
+        
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
@@ -346,13 +341,12 @@ export default function MedicineStocks() {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={confirmDeleteMed}
-        title="Delete Medicine"
-        description="Are you sure you want to delete this medicine? This action cannot be undone."
+        isOpen={isArchiveConfirmationOpen}
+        onOpenChange={setIsArchiveConfirmationOpen}
+        onConfirm={confirmArchiveInventory}
+        title="Archive Medicine Item"
+        description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
       />
     </>
   );

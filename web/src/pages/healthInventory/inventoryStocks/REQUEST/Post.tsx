@@ -2,9 +2,9 @@ import api from "@/pages/api/api";
 import {MedicineStockType, InventoryType,MedicineTransactionType, FirstAidStockType, CommodityTransactionType, FirstAidTransactionType, VaccineStockType, AntigenTransactionType } from "../REQUEST/type";
 
 import { log } from "console";
-import { addCommodity } from "../../InventoryList/requests/Postrequest";
+
+
 import { CommodityStockType } from "../REQUEST/type";
-import { ImmunizationSuppliesType,  } from "@/form-schema/inventory/inventoryStocksSchema";
 // medicine inventory details
 export const addMedicineInventory = async (medicineData: MedicineStockType) => {
   try {
@@ -96,23 +96,33 @@ export const addFirstAidTransaction = async (FirstAidTransacindata: FirstAidTran
 
 
 // REQUEST/Post.ts
-export const addVaccineStock = async (vaccineStockData: VaccineStockType, vac_id: number, inv_id : number) => {
+// REQUEST/Post.ts
+export const addVaccineStock = async (vaccineStockData: VaccineStockType, vac_id: number, inv_id: number) => {
+  // Calculate available quantity based on solvent type
+  const availqty = vaccineStockData.solvent === 'doses' 
+    ? vaccineStockData.qty * (vaccineStockData.dose_ml || 0) 
+    : vaccineStockData.qty;
+
   try {
     const payload = {
-      inv_id: inv_id, // Ensure this is a number
-      vac_id: vac_id, // Ensure this is a number
+      inv_id: inv_id,
+      vac_id: vac_id,
       batch_number: vaccineStockData.batchNumber,
       solvent: vaccineStockData.solvent,
       volume: vaccineStockData.volume || 0,
       qty: vaccineStockData.qty,
-      dose_ml: vaccineStockData.solvent === 'doses' ? vaccineStockData.dose_ml : 0,
-      expiry_date: vaccineStockData.expiryDate, // Should already be in YYYY-MM-DD format
+      dose_ml: vaccineStockData.dose_ml || 0,
+      vacStck_qty_avail: availqty,  // Use the calculated available quantity
+      wasted_dose: 0,  // Initialize wasted doses to 0
+      expiry_date: vaccineStockData.expiryDate,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const res = await api.post("inventory/vaccine_stocks/", payload);
     return res.data;
   } catch (err) {
-    console.error(err); // Log the full error response
+    console.error(err);
     throw err;
   }
 };
@@ -129,3 +139,5 @@ export const AntigenTransaction = async (AntigenData: AntigenTransactionType ) =
     throw err;
   }
 };
+
+

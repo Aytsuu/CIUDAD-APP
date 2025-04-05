@@ -1,5 +1,4 @@
-// VaccineStocks.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,64 +18,238 @@ import WastedDoseForm from "../addstocksModal/WastedDoseModal";
 import EditVacStockForm from "../editModal/EditVacStockModal";
 import VaccineStockForm from "../addstocksModal/VacStockModal";
 import ImmunizationSupplies from "../addstocksModal/ImmunizationSupplies";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import api from "@/pages/api/api";
+import EditImmunizationForm from "../editModal/EditImzSupply";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { archiveInventory } from "../REQUEST/archive";
 
-export default function VaccineStocks() {
-  type VaccineStocksRecord = {
-    batchNumber: string;
-    category: string;
-    item: {
-      antigen: string;
-      dosage: number;
-      unit: string;
-    };
-    qty: string;
-    administered: string;
-    wastedDose: string;
-    availableStock: string;
-    expiryDate: string;
+export const getCombinedStock = async () => {
+  try {
+    const [vaccineStocks, supplyStocks, vaccines, supplies, inventory] =
+      await Promise.all([
+        api.get("inventory/vaccine_stocks/"),
+        api.get("inventory/immunization_stock/"),
+        api.get("inventory/vac_list/"),
+        api.get("inventory/imz_supplies/"),
+        api.get("inventory/inventorylist/"),
+      ]);
+
+    const vaccineData = vaccineStocks.data.map((stock: any) => {
+      const vaccine = vaccines.data.find((v: any) => v.vac_id === stock.vac_id);
+      const inventoryData = inventory.data.find(
+        (i: any) => i.inv_id === stock.inv_id
+      );
+      
+      // Calculate vial and dose information
+      const dosesPerVial = stock.dose_ml;
+      const totalDoses = dosesPerVial * stock.qty;
+      const remainingDoses = stock.vacStck_qty_avail;
+      const remainingVials = Math.floor(remainingDoses / dosesPerVial);
+      const remainingPartialDoses = remainingDoses % dosesPerVial;
+      
+      // Format available stock as "vials-doses"
+      const availableStock = remainingPartialDoses === 0 
+        ? `${remainingVials} vials -${remainingVials * dosesPerVial} doses`
+        : `${remainingVials} vials -${remainingDoses} doses`;
+
+      if (stock.solvent === "diluent") {
+        return {
+          type: "vaccine" as const,
+          id: stock.vacStck_id,
+          batchNumber: stock.batch_number,
+          category: "vaccine",
+          item: {
+            antigen: vaccine?.vac_name || "Unknown Vaccine",
+            dosage: stock.volume,
+            unit: "container",
+          },
+          qty: `${stock.qty} containers`,
+          administered: `${stock.vacStck_used} containers`,
+          wastedDose: stock.wasted_doses?.toString() || "0",
+          availableStock: `${stock.vacStck_qty_avail} containers`,
+          expiryDate: inventoryData?.expiry_date,
+          inv_id: stock.inv_id,
+          solvent: stock.solvent,
+          volume: stock.volume,
+          vacStck_id: stock.vacStck_id,
+          vac_id: stock.vac_id,
+        };
+      }
+
+      return {
+        type: "vaccine" as const,
+        id: stock.vacStck_id,
+        batchNumber: stock.batch_number,
+        category: "Vaccine",
+        item: {
+          antigen: vaccine?.vac_name || "Unknown Vaccine",
+          dosage: stock.dose_ml,
+          unit: "ml",
+        },
+        qty: `${stock.qty} vials (${totalDoses} doses)`,
+        administered: `${stock.vacStck_used} doses`,
+        wastedDose: stock.wasted_doses?.toString() || "0",
+        availableStock: availableStock,
+        expiryDate: inventoryData?.expiry_date,
+        solvent: stock.solvent,
+        inv_id: stock.inv_id,
+        dose_ml: stock.dose_ml,
+        vacStck_id: stock.vacStck_id,
+        dosesPerVial: dosesPerVial,
+        vac_id: stock.vac_id,
+      };
+    });
+
+    const supplyData = supplyStocks.data.map((stock: any) => {
+      const supply = supplies.data.find((s: any) => s.imz_id === stock.imz_id);
+      const inventoryData = inventory.data.find(
+        (i: any) => i.inv_id === stock.inv_id
+      );
+
+      const pcsPerBox = stock.imzStck_per_pcs || 1;
+      const totalPcs = stock.imzStck_pcs || (stock.imzStck_qty * pcsPerBox);
+      const availablePcs = stock.imzStck_avail || (totalPcs - stock.imzStck_used);
+      const remainingBoxes = Math.floor(availablePcs / pcsPerBox);
+      const remainingPieces = availablePcs % pcsPerBox;
+
+      let qtyDisplay;
+      if (stock.imzStck_unit === "pcs") {
+        qtyDisplay = `${totalPcs} pcs`;
+      } else {
+        qtyDisplay = `${stock.imzStck_qty} ${stock.imzStck_unit} (${totalPcs} pcs)`;
+      }
+
+      let availableStockDisplay;
+      if (stock.imzStck_unit === "pcs") {
+        availableStockDisplay = `${availablePcs} pcs`;
+      } else {
+        availableStockDisplay = `${remainingBoxes} ${stock.imzStck_unit} - ${availablePcs} pcs`;
+      }
+
+      return {
+        type: "supply" as const,
+        id: stock.imzStck_id,
+        batchNumber: stock.batch_number || "N/A",
+        category: "Immunization Supplies",
+        item: {
+          antigen: supply?.imz_name || "Unknown Supply",
+          dosage: 1,
+          unit: stock.imzStck_unit,
+        },
+        qty: qtyDisplay,
+        administered: `${stock.imzStck_used} pcs`,
+        wastedDose: stock.wasted_items?.toString() || "0",
+        availableStock: availableStockDisplay,
+        expiryDate: inventoryData?.expiry_date || "N/A",
+        inv_id: stock.inv_id,
+        imz_id: stock.imz_id,
+        imzStck_id: stock.imzStck_id,
+        imzStck_unit: stock.imzStck_unit,
+        imzStck_per_pcs: pcsPerBox
+      };
+    });
+
+    return [...vaccineData, ...supplyData].sort((a, b) => b.id - a.id);
+  } catch (err) {
+    console.error("Error fetching combined stock data:", err);
+    throw err;
+  }
+};
+
+type StockRecords = {
+  id: number;
+  batchNumber: string;
+  category: string;
+  item: {
+    antigen: string;
+    dosage: number;
+    unit: string;
   };
+  qty: string;
+  administered: string;
+  wastedDose: string;
+  availableStock: string;
+  expiryDate: string;
+  type: "vaccine" | "supply";
+  inv_id: number;
+  vac_id: number;
+  imz_id: number;
+  vacStck_id: number;
+  solvent: string;
+  volume: number;
+  dose_ml: number;
+  imzStck_id: number;
+  imzStck_unit: string;
+  imzStck_per_pcs: number;
+};
 
-  const sampleData: VaccineStocksRecord[] = [
-    {
-      batchNumber: "VAX-122A",
-      category: "vaccine",
-      item: {
-        antigen: "COVID-19 mRNA Vaccine",
-        dosage: 0.5,
-        unit: "ml",
-      },
-      qty: "100 vials (200 doses)",
-      administered: "20 vials (40 doses)",
-      wastedDose: "20",
-      availableStock: "80 vials (160 doses)",
-      expiryDate: "2025-12-31",
-    },
-    {
-      batchNumber: "MED-456B",
-      category: "medsupplies",
-      item: {
-        dosage: 0.5,
-        antigen: "Sterile Gloves",
-        unit: "pairs",
-      },
-      qty: "50 boxes (500 pcs)",
-      administered: "10 boxes (100 pcs)",
-      wastedDose: "5",
-      availableStock: "35 boxes (350 pcs)",
-      expiryDate: "2026-01-01",
-    },
-  ];
+function isVaccine(record: StockRecords): record is StockRecords & { type: 'vaccine' } {
+  return record.type === 'vaccine';
+}
 
-  const [vaccines, setVaccines] = useState<VaccineStocksRecord[]>(sampleData);
+function isSupply(record: StockRecords): record is StockRecords & { type: 'supply' } {
+  return record.type === 'supply';
+}
+
+export default function CombinedStockTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] =
-    useState<VaccineStocksRecord[]>(sampleData);
-  const [currentData, setCurrentData] = useState<VaccineStocksRecord[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
+  const [isDialog, setIsDialog] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<"vaccine" | "supply">("vaccine");
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
+  const [inventoryToArchive, setInventoryToArchive] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
-  const columns: ColumnDef<VaccineStocksRecord>[] = [
+  const {
+    data: stockData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["combinedStocks"],
+    queryFn: getCombinedStock,
+    refetchOnMount: true,
+  });
+
+  const filteredStocks = React.useMemo(() => {
+    if (!stockData) return [];
+    return stockData.filter((record: StockRecords) => {
+      const searchText =
+        `${record.batchNumber} ${record.item.antigen}`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
+  }, [searchQuery, stockData]);
+
+  const totalPages = Math.ceil(filteredStocks.length / pageSize);
+  const paginatedStocks = filteredStocks.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleArchiveInventory = (inv_id: number) => {
+    setInventoryToArchive(inv_id);
+    setIsArchiveConfirmationOpen(true);
+  };
+
+  const confirmArchiveInventory = async () => {
+    if (inventoryToArchive !== null) {
+      try {
+        await archiveInventory(inventoryToArchive);
+        queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
+        alert("Inventory item archived successfully");
+      } catch (error) {
+        console.error("Failed to archive inventory:", error);
+        alert("Failed to archive inventory item");
+      } finally {
+        setIsArchiveConfirmationOpen(false);
+        setInventoryToArchive(null);
+      }
+    }
+  };
+
+  const columns: ColumnDef<StockRecords>[] = [
     {
       accessorKey: "batchNumber",
       header: "Batch Number",
@@ -89,7 +262,7 @@ export default function VaccineStocks() {
         return (
           <div className="flex flex-col">
             <div className="font-medium text-center">{item.antigen}</div>
-            {row.original.category === "vaccine" && (
+            {row.original.type === "vaccine" && (
               <div className="text-sm text-gray-600 text-center">
                 {item.dosage} {item.unit}
               </div>
@@ -101,38 +274,16 @@ export default function VaccineStocks() {
     {
       accessorKey: "qty",
       header: "Stock Quantity",
-      cell: ({ row }) => {
-        const isMedicalSupply = row.original.category === "medsupplies";
-        const [quantity, units] = row.original.qty.split(" (");
-        return (
-          <div className="text-center">
-            {isMedicalSupply
-              ? `${quantity.replace("vials", "boxes")} (${units.replace(
-                  "doses",
-                  "pcs"
-                )}`
-              : row.original.qty}
-          </div>
-        );
-      },
+      cell: ({ row }) => <div className="text-center">{row.original.qty}</div>,
     },
     {
       accessorKey: "administered",
       header: "Units Used",
-      cell: ({ row }) => {
-        const isMedicalSupply = row.original.category === "medsupplies";
-        const [quantity, units] = row.original.administered.split(" (");
-        return (
-          <div className="text-center text-red-600">
-            {isMedicalSupply
-              ? `${quantity.replace("vials", "boxes")} (${units.replace(
-                  "doses",
-                  "pcs"
-                )}`
-              : row.original.administered}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-center text-red-600">
+          {row.original.administered}
+        </div>
+      ),
     },
     {
       accessorKey: "wastedDose",
@@ -155,7 +306,7 @@ export default function VaccineStocks() {
                     ? "Wasted Items"
                     : "Wasted Dose"
                 }
-                mainContent={<WastedDoseForm />}
+                mainContent={<WastedDoseForm wasted={row.original.id} />}
               />
             }
             content={
@@ -170,20 +321,11 @@ export default function VaccineStocks() {
     {
       accessorKey: "availableStock",
       header: "Available Stock",
-      cell: ({ row }) => {
-        const isMedicalSupply = row.original.category === "medsupplies";
-        const [quantity, units] = row.original.availableStock.split(" (");
-        return (
-          <div className="text-center text-green-600">
-            {isMedicalSupply
-              ? `${quantity.replace("vials", "boxes")} (${units.replace(
-                  "doses",
-                  "pcs"
-                )}`
-              : row.original.availableStock}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-center text-green-600">
+          {row.original.availableStock}
+        </div>
+      ),
     },
     {
       accessorKey: "expiryDate",
@@ -195,78 +337,72 @@ export default function VaccineStocks() {
       ),
     },
     {
-      accessorKey: "action",
+      id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          {/* Maintained original TooltipLayout structure */}
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                    <Edit size={16} />
-                  </div>
-                }
-                mainContent={<EditVacStockForm vaccine={row.original} />}
-              />
-            }
-            content="Edit Item"
-          />
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
-                    <Trash size={16} />
-                  </div>
-                }
-                mainContent={<div>Confirm deletion</div>}
-              />
-            }
-            content="Delete Item"
-          />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const record = row.original;
+        return (
+          <div className="flex gap-2">
+            <TooltipLayout
+              trigger={
+                <DialogLayout
+                  trigger={
+                    <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
+                      <Edit size={16} />
+                    </div>
+                  }
+                  title={
+                    record.type === "vaccine"
+                      ? "Edit Vaccine Stock"
+                      : "Edit Supply Stock"
+                  }
+                  mainContent={
+                    isVaccine(record) ? (
+                      <EditVacStockForm vaccine={record} setIsDialog={setIsDialog} />
+                    ) : isSupply(record) ? (
+                      <EditImmunizationForm supply={record} />
+                    ) : null
+                  }
+                />
+              }
+              content="Edit"
+            />
+            <TooltipLayout
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleArchiveInventory(record.inv_id)}
+                >
+                  <Trash />
+                </Button>
+              }
+              content="Archive"
+            />
+          </div>
+        );
+      },
     },
   ];
 
-  useEffect(() => {
-    const filtered = vaccines.filter((record) => {
-      const searchText =
-        `${record.batchNumber} ${record.item.antigen}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1);
-  }, [searchQuery, pageSize, vaccines]);
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setPageSize(!isNaN(value) && value > 0 ? value : 10);
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const [isDialog, setIsDialog] = React.useState(false);
-  const [selectedOption, setSelectedOption] = React.useState<
-    "vaccine" | "supplies"
-  >("vaccine");
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-red-500">Error loading stock data</div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -282,7 +418,7 @@ export default function VaccineStocks() {
                 placeholder="Search inventory..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <SelectLayout
@@ -308,7 +444,7 @@ export default function VaccineStocks() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               className="min-w-[200px]"
-              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()} // Keep menu open on hover
+              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()}
             >
               <DropdownMenuItem
                 onClick={() => {
@@ -321,7 +457,7 @@ export default function VaccineStocks() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  setSelectedOption("supplies");
+                  setSelectedOption("supply");
                   setIsDialog(true);
                 }}
                 className="cursor-pointer hover:bg-gray-100 px-4 py-2"
@@ -343,8 +479,7 @@ export default function VaccineStocks() {
               selectedOption === "vaccine" ? (
                 <VaccineStockForm />
               ) : (
-                <ImmunizationSupplies
-                setIsDialog={setIsDialog} />
+                <ImmunizationSupplies setIsDialog={setIsDialog} />
               )
             }
             trigger={undefined}
@@ -360,7 +495,10 @@ export default function VaccineStocks() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={(e) => {
+                const value = +e.target.value;
+                setPageSize(value >= 1 ? value : 1);
+              }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
@@ -383,23 +521,31 @@ export default function VaccineStocks() {
         </div>
 
         <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={currentData} />
+          <DataTable columns={columns} data={paginatedStocks} />
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
-            {Math.min((currentPage - 1) * pageSize + 1, filteredData.length)}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-            {filteredData.length} items
+            {Math.min((currentPage - 1) * pageSize + 1, filteredStocks.length)}-
+            {Math.min(currentPage * pageSize, filteredStocks.length)} of{" "}
+            {filteredStocks.length} items
           </p>
           <PaginationLayout
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={handlePageChange}
+            onPageChange={setCurrentPage}
           />
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={isArchiveConfirmationOpen}
+        onOpenChange={setIsArchiveConfirmationOpen}
+        onConfirm={confirmArchiveInventory}
+        title="Archive Inventory Item"
+        description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
+      />
     </>
   );
 }
