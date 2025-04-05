@@ -21,7 +21,8 @@
         budgetHeaderGrid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2", 
         rowItem: "flex text-sm font-semibold text-left w-full",
         rowValue: "text-sm",
-        budgetFooter: "text-sm font-bold text-blue"
+        budgetFooter: "text-sm font-bold text-blue",
+        indentedRowItem: "ml-6 text-sm flex font-semibold text-left w-full text-gray-700",
     };
 
     interface BudgetPlan {
@@ -69,6 +70,7 @@
             staleTime: 0
         });
 
+
         // calculating net available resources
         const availableResources =
         (parseFloat(budgetDetails?.plan_balance) || 0) +
@@ -78,7 +80,7 @@
         (parseFloat(budgetDetails?.plan_other_income) || 0);
 
 
-        // calculating totals
+        // calculating totals per category
         const personalServiceTotal = budgetDetails?.details
                                     ?.filter((d: BudgetPlanDetail) => d.dtl_budget_category === "Personal Service")
                                     ?.reduce((sum: number, d: BudgetPlanDetail) => sum + Number(d.dtl_proposed_budget || 0), 0) || 0;
@@ -117,12 +119,23 @@
                 )
             }
 
-            // populating the table
+            const isIndented = [
+                "GAD Program",
+                "Senior Citizen/ PWD Program",
+                "BCPC (Juvenile Justice System)",
+                "BADAC Program",
+                "Nutrition Program",
+                "Combating AIDS Program",
+                "Barangay Assembly Expenses",
+                "Disaster Response Program"
+            ].includes(detail.dtl_budget_item);
+
             const mainRow = [
-                <span className={styles.rowItem}>{detail.dtl_budget_item}</span>,
+                <span className={isIndented ? styles.indentedRowItem : styles.rowItem}>{detail.dtl_budget_item} </span>,
                 <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>
             ];
 
+            // addding necessary footers(totals, budget limits, and balances)
             if (detail.dtl_budget_item === "Membership Dues/ Contribution to Organization") {
                 mainRow.push(
                     <span className={styles.rowValue}>{formatNumber(detail.dtl_proposed_budget)}</span>,
@@ -163,7 +176,6 @@
             } else if(detail.dtl_budget_item == "Repair and Maintenance of Motor Vehicle"){
 
                 acc.push( 
-                    // [],
                     [<span className={styles.subCategory}>Maint. & Other Operating Expenses</span>],
                     
                 )
