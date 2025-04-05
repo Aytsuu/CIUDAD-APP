@@ -47,11 +47,12 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
     }
 };
 
-const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; dtl_proposed_budget: string }>, planId: number) => {
+const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; dtl_proposed_budget: string, dtl_budget_category: string }>, planId: number) => {
     try {
         const transformedDetails = detailInfo.map((item) => ({
             dtl_budget_item: item.dtl_budget_item,
             dtl_proposed_budget: parseFloatSafe(item.dtl_proposed_budget) || 0.00,
+            dtl_budget_category: item.dtl_budget_category,
             plan: planId,
         }));
         console.log("Submitting Budget Plan Details:", transformedDetails);

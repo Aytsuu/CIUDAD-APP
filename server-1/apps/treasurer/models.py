@@ -28,6 +28,7 @@ class Budget_Plan_Detail(models.Model):
     dtl_id = models.BigAutoField(primary_key = True)
     dtl_budget_item = models.CharField(max_length=200)
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
  
     class Meta: 
