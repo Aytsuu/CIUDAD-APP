@@ -5,24 +5,17 @@ import SettingPermissions from "./SettingPermissions";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "react-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Assigned, Position } from "./administrationTypes";
+import { Assigned } from "./administrationTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 
 export default function RoleLayout() {
   const location = useLocation();
-
   const params = React.useMemo(() => {
-    return location.state?.params || {};
+    return location.state?.params || {}
   }, [location.state]);
-
-  const [positions, setPositions] = React.useState<Position[]>(
-    params.positions
-  );
   const [selectedPosition, setSelectedPosition] = React.useState<string>("");
-  const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>(
-    []
-  );
+  const [assignedFeatures, setAssignedFeatures] = React.useState<Assigned[]>([]);
 
   // Handle position selection
   const handlePositionSelect = React.useCallback((position: string) => {
@@ -32,7 +25,7 @@ export default function RoleLayout() {
   React.useEffect(() => {
     if (!selectedPosition) return;
     setAssignedFeatures(
-      Object.values(params.allAssignedFeatures as Assigned[]).filter(
+      Object.values(params.allAssignedFeatures as any[]).filter(
         (value) => value.pos === selectedPosition
       )
     );
@@ -44,8 +37,6 @@ export default function RoleLayout() {
         {/* Positions Section */}
         <div className="w-full h-full flex flex-col p-5">
           <AdministrationPositions
-            positions={positions}
-            setPositions={setPositions}
             selectedPosition={selectedPosition}
             setSelectedPosition={handlePositionSelect}
           />
@@ -90,7 +81,6 @@ export default function RoleLayout() {
               <>
                 <SettingPermissions
                   selectedPosition={selectedPosition}
-                  features={params.features}
                   assignedFeatures={assignedFeatures}
                 />
               </>

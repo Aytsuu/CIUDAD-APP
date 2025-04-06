@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Control } from "react-hook-form";
 import { businessFormSchema } from "@/form-schema/profiling-schema";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { renderActionButton } from "../actionConfig";
+import { renderActionButton } from "../profilingActionConfig";
 import { Type } from "../profilingEnums";
 import React from "react";
 

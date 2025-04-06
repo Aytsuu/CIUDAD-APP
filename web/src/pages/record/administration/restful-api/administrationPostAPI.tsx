@@ -26,7 +26,7 @@ export const addStaff = async (personalId: string, positionId: string, staffId: 
 };
 
 // Add new position
-export const addPosition = async (data: Record<string, string>, staffId: string) => {
+export const addPosition = async (data: any, staffId: string) => {
   try {
     console.log({
       pos_title: data.title,
@@ -46,14 +46,20 @@ export const addPosition = async (data: Record<string, string>, staffId: string)
 };
 
 export const assignFeature = async (
-  selectedPosition: string,
+  selectedPositionId: string,
   featureId: string,
   staffId: string
 ) => {
   try {
+    console.log({
+      feat_id: featureId,
+      pos: selectedPositionId,
+      assi_date: formatDate(new Date()),
+      staff: staffId
+    })
     const res = await api.post(`administration/assignment/`, {
-      feat: featureId,
-      pos: selectedPosition,
+      feat_id: featureId,
+      pos: selectedPositionId,
       assi_date: formatDate(new Date()),
       staff: staffId
     });

@@ -120,8 +120,7 @@ export const renderActionButton = ({
     submit
   );
   const originConfig = config[origin] || config.defaultOrigin;
-  const button =
-    originConfig[formType as keyof typeof originConfig] || originConfig.default;
+  const button = originConfig[formType as keyof typeof originConfig] || originConfig.default;
 
   // Add loading state to the button
   if (isSubmitting) {

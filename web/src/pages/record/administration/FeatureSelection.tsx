@@ -1,12 +1,6 @@
 import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { FixedSizeList as List } from "react-window";
 import { Assigned, Feature } from "./administrationTypes";
@@ -15,13 +9,18 @@ import { assignFeature, setPermissions } from "./restful-api/administrationPostA
 import { formatDate } from "@/helpers/dateFormatter";
 import { deleteAssignedFeature } from "./restful-api/administrationDeleteAPI";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface FeatureSelectionProps {
   selectedPosition: string;
   features: Feature[];
   assignedFeatures: Assigned[];
   setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>;
-  featuresCache?: React.MutableRefObject<Record<string, Assigned[]>>;
 }
 
 export default function FeatureSelection({
@@ -29,10 +28,9 @@ export default function FeatureSelection({
   features,
   assignedFeatures,
   setAssignedFeatures,
-  featuresCache,
 }: FeatureSelectionProps) {
-
-  const { user } = React.useRef(useAuth()).current;
+  
+  const { user } = useAuth();
 
   // Group features by category
   const groupedFeatures = React.useMemo(() => {
@@ -50,7 +48,7 @@ export default function FeatureSelection({
   const assignedFeatureIds = React.useMemo(() => {
     const ids = new Set<string>();
     for (const af of assignedFeatures) {
-      ids.add(af.feat);
+      ids.add(af.feat.feat_id);
     }
     return ids;
   }, [assignedFeatures]);
@@ -62,39 +60,31 @@ export default function FeatureSelection({
     try {
       const res = await getAssignedFeatures(selectedPosition);
       setAssignedFeatures(res);
-      if (featuresCache) {
-        featuresCache.current[selectedPosition] = res;
-      }
     } catch (error) {
       console.error("Failed to load assigned features:", error);
     }
-  }, [selectedPosition, setAssignedFeatures, featuresCache]);
+  }, [selectedPosition, setAssignedFeatures]);
 
   // Initial load and cache check
   React.useEffect(() => {
-    if (featuresCache?.current[selectedPosition]) {
-      setAssignedFeatures(featuresCache.current[selectedPosition]);
-    } else {
       loadAssignedFeatures();
-    }
-  }, [selectedPosition, loadAssignedFeatures, featuresCache, setAssignedFeatures]);
+  }, [selectedPosition, loadAssignedFeatures, setAssignedFeatures]);
 
   // Optimistic update for feature assignment
-  const handleAssignment = React.useCallback(async (featureId: string, checked: boolean) => {
+  const handleAssignment = React.useCallback(async (feature: any, checked: boolean) => {
     // Create a reference to the current state to avoid stale closures
     const currentAssignedFeatures = assignedFeatures;
-    const currentCache = featuresCache?.current[selectedPosition] || [];
     
     try {
       if (checked) {
         // Generate a stable temporary ID
-        const tempId = `temp-${featureId}-${Date.now()}`;
+        const tempId = `temp-${feature.feat_id}-${Date.now()}`;
         
         // Create the optimistic update
         const newAssignment: Assigned = {
           assi_id: tempId,
           assi_date: formatDate(new Date()),
-          feat: featureId,
+          feat: feature,
           pos: selectedPosition,
           permissions: [{
             perm_id: `perm-${tempId}`,
@@ -109,20 +99,14 @@ export default function FeatureSelection({
         // Update state immediately
         setAssignedFeatures(prev => [...prev, newAssignment]);
         
-        // Update cache immediately
-        if (featuresCache) {
-          featuresCache.current[selectedPosition] = [...currentCache, newAssignment];
-        }
-  
-        // Make API calls to assign the feature
-        const staffId = user?.staff.staff_id;
-        const assignment = await assignFeature(selectedPosition, featureId, staffId);
+        // Make API calls
+        const assignment = await assignFeature(selectedPosition, feature.feat_id, user?.staff.staff_id);
         const perm_id = await setPermissions(assignment.assi_id);
-        
+  
         // Update with real data
         setAssignedFeatures(prev => 
           prev.map(item => 
-            item.feat === featureId && item.assi_id === tempId
+            item.feat.feat_id === feature.feat_id && item.assi_id === tempId
               ? { 
                   ...item, 
                   assi_id: assignment.assi_id,
@@ -139,52 +123,22 @@ export default function FeatureSelection({
           )
         );
   
-        // Update cache with real data
-        if (featuresCache) {
-          featuresCache.current[selectedPosition] = 
-            featuresCache.current[selectedPosition].map(item => 
-              item.feat === featureId && item.assi_id === tempId
-                ? { 
-                    ...item, 
-                    assi_id: assignment.assi_id,
-                    permissions: [{
-                      perm_id,
-                      view: true,
-                      create: false,
-                      update: false,
-                      delete: false,
-                      assi_id: assignment.assi_id
-                    }]
-                  } 
-                : item
-            );
-        }
       } else {
         // Find the exact assignment to remove
-        const assignmentToRemove = currentAssignedFeatures.find(af => af.feat === featureId);
+        const assignmentToRemove = currentAssignedFeatures.find(af => af.feat.feat_id === feature.feat_id);
         if (!assignmentToRemove) return;
   
         // Optimistic update - remove from state
-        setAssignedFeatures(prev => prev.filter(item => item.feat !== featureId));
-        
-        // Optimistic update - remove from cache
-        if (featuresCache) {
-          featuresCache.current[selectedPosition] = 
-            currentCache.filter(item => item.feat !== featureId);
-        }
+        setAssignedFeatures(prev => prev.filter(item => item.feat.feat_id !== feature.feat_id));
   
         // API call
-        await deleteAssignedFeature(selectedPosition, featureId);
+        await deleteAssignedFeature(selectedPosition, feature.feat_id);
       }
     } catch (error) {
-      console.error("Operation failed:", error);
       // Rollback to previous state
       setAssignedFeatures(currentAssignedFeatures);
-      if (featuresCache) {
-        featuresCache.current[selectedPosition] = currentCache;
-      }
     }
-  }, [selectedPosition, assignedFeatures, featuresCache]);
+  }, [selectedPosition, assignedFeatures]);
 
   // Check if a feature is assigned
   const isFeatureAssigned = React.useCallback((featureId: string) => {
@@ -194,7 +148,7 @@ export default function FeatureSelection({
   // Memoized row component
   const Row = React.memo(({ index, style, data }: { index: number; style: React.CSSProperties; data: Feature[] }) => {
     const feature = data[index];
-    const handleChange = (checked: boolean) => handleAssignment(feature.feat_id, checked);
+    const handleChange = (checked: boolean) => handleAssignment(feature, checked);
     
     return (
       <div style={style}>

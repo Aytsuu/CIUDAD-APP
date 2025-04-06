@@ -4,6 +4,7 @@ from apps.profiling.models import ResidentProfile
 class AssignmentSerializer(serializers.ModelSerializer):
     permissions = PermissionSerializer(many=True, read_only=True)  
     feat = FeatureSerializer(read_only=True)
+    feat_id = serializers.PrimaryKeyRelatedField(queryset=Feature.objects.all(), write_only=True, source="feat")
 
     class Meta:
         model = Assignment

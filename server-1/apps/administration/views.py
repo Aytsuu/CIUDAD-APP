@@ -19,6 +19,19 @@ class PositionDeleteView(generics.DestroyAPIView):
     queryset = Position.objects.all()
     lookup_field = 'pos_id'
 
+class PositionUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = PositionSerializer
+    queryset = Position.objects.all()
+    lookup_field = 'pos_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
+
 # Feature Views ------------------------------------------------------------------------
 
 class FeatureView(generics.ListCreateAPIView):
@@ -35,6 +48,13 @@ class FeatureDataView(generics.RetrieveAPIView):
 class AssignmentView(generics.ListCreateAPIView):
     serializer_class = AssignmentSerializer
     queryset = Assignment.objects.all()
+
+class AssignmentFilteredView(generics.ListAPIView):
+    serializer_class = AssignmentSerializer
+    
+    def get_queryset(self):
+        pos = self.kwargs.get('pos')
+        return Assignment.objects.filter(pos=pos)
     
 class AssignmentDeleteView(generics.DestroyAPIView):
     serializer_class = AssignmentSerializer
@@ -62,7 +82,7 @@ class PermissionUpdateView(generics.RetrieveUpdateAPIView):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save()   
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -4,58 +4,22 @@ import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
-import { getResidents } from "../profiling/restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  getAllAssignedFeatures,
-  getFeatures,
-  getPositions,
-  getStaffs,
-} from "./restful-api/administrationGetAPI";
 import { AdministrationRecord } from "./administrationTypes";
+import { useFeatures, useStaffs, useResidents, useAllAssignedFeatures } from "./queries/administrationQueries";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function AdministrationRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Queries
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: staffs, isLoading: isLoadingStaffs } = useQuery({
-    queryKey: ["staffs"],
-    queryFn: getStaffs,
-  });
-
-  const { data: features, isLoading: isLoadingFeatures } = useQuery({
-    queryKey: ["features"],
-    queryFn: getFeatures,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: positions, isLoading: isLoadingPositions } = useQuery({
-    queryKey: ["positions"],
-    queryFn: getPositions,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } =
-    useQuery({
-      queryKey: ["assignedFeatures"],
-      queryFn: getAllAssignedFeatures,
-      refetchOnMount: true,
-      staleTime: 0,
-    });
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: staffs, isLoading: isLoadingStaffs } = useStaffs();
+  const { data: features, isLoading: isLoadingFeatures } = useFeatures();
+  const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } = useAllAssignedFeatures();
 
   const formatStaffData = React.useCallback((): AdministrationRecord[] => {
     if (!staffs) return [];
@@ -96,12 +60,8 @@ export default function AdministrationRecords() {
     currentPage * pageSize
   );
 
-  if (
-    isLoadingResidents ||
-    isLoadingStaffs ||
-    isLoadingFeatures ||
-    isLoadingPositions ||
-    isLoadingAllAssignedFeatures
+  if (isLoadingResidents || isLoadingStaffs
+    || isLoadingFeatures || isLoadingAllAssignedFeatures
   ) {
     return (
       <div className="w-full h-full">
@@ -114,18 +74,10 @@ export default function AdministrationRecords() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Header Section */}
-      <div className="flex-col items-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Administrative Records
-        </h1>
-        <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view staff information
-        </p>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
+    <MainLayoutComponent
+      title="Administrative Records"
+      description="Manage and view staff information"
+    >
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 ">
           <div className="relative w-full">
@@ -140,11 +92,9 @@ export default function AdministrationRecords() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Link
-            to="/administration/role"
+          <Link to="/administration/role"
             state={{
               params: {
-                positions: positions,
                 features: features,
                 allAssignedFeatures: allAssignedFeatures,
               },
@@ -218,6 +168,6 @@ export default function AdministrationRecords() {
           </div>
         </div>
       </div>
-    </div>
+    </MainLayoutComponent>
   );
 }
