@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Link, useNavigate } from "react-router";
 import { Action, Type } from "./administrationEnums";
-import { usePositions, useDeletePosition } from "./queries/administrationQueries";
+import { useDeletePosition } from "./queries/administrationQueries";
 import {
   ChevronRight,
   Ellipsis,
@@ -16,14 +16,15 @@ import {
 } from "lucide-react";
 
 export default function AdministrationPositions({
+  positions,
   selectedPosition,
   setSelectedPosition,
 }: {
+  positions: any[]
   selectedPosition: string;
   setSelectedPosition: (value: string) => void;
 }) {
   const navigate = useNavigate();
-  const { data: positions, isLoading } = usePositions();
   const { mutate: deletePosition, isPending: isDeleting } = useDeletePosition();
 
   // Delete a position
@@ -52,10 +53,6 @@ export default function AdministrationPositions({
       }}
     )
   }, [selectedPosition]);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div className="w-full h-full flex flex-col gap-3">

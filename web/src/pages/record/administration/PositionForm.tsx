@@ -2,8 +2,7 @@ import { Form } from "@/components/ui/form/form";
 import React from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
-import { positionFormSchema } from "@/form-schema/administration-schema";
-import { z } from "zod";
+import { positionFormSchema, useValidatePosition } from "@/form-schema/administration-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -25,8 +24,9 @@ export default function PositionForm() {
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params || {}, [location.state])
   const formType = React.useMemo(() => params?.type || '', [params])
-  const form = useForm<z.infer<typeof positionFormSchema>>({
-    resolver: zodResolver(positionFormSchema),
+  const { isPositionUnique } = useValidatePosition();
+  const form = useForm({
+    resolver: zodResolver(positionFormSchema(isPositionUnique, formType)),
     defaultValues: {
       pos_title: '',
       pos_max: '1'
@@ -41,7 +41,8 @@ export default function PositionForm() {
   // Prevent typing negative values and 0
   React.useEffect(() => {
     const max_holders = form.watch('pos_max')
-    if(max_holders === '0' || +max_holders < 0) {
+    const maxHoldersNumber = Number(max_holders);
+    if (max_holders === '0' || maxHoldersNumber < 0) {
       form.setValue('pos_max', '1');
     }
 
@@ -55,7 +56,7 @@ export default function PositionForm() {
   const populateFields = React.useCallback(() => {
     const position = params.data;
     form.setValue("pos_title", position.pos_title);
-    form.setValue("pos_max", position.pos_max);
+    form.setValue("pos_max", String(position.pos_max));
 
   }, [params.data]);
 
@@ -63,9 +64,11 @@ export default function PositionForm() {
   const submit = React.useCallback(async () => {
     const formIsValid = await form.trigger()
     if(!formIsValid){
+      (!form.watch('pos_title') || !form.watch('pos_max')) && 
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
       });
+    
       return;
     }
     

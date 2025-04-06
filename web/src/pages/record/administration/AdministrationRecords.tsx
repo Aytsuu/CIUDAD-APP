@@ -8,10 +8,11 @@ import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdministrationRecord } from "./administrationTypes";
-import { useFeatures, useStaffs, useResidents, useAllAssignedFeatures } from "./queries/administrationQueries";
+import { useFeatures, useStaffs, useResidents } from "./queries/administrationQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function AdministrationRecords() {
+  // Initializing states
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -19,8 +20,8 @@ export default function AdministrationRecords() {
   const { data: residents, isLoading: isLoadingResidents } = useResidents();
   const { data: staffs, isLoading: isLoadingStaffs } = useStaffs();
   const { data: features, isLoading: isLoadingFeatures } = useFeatures();
-  const { data: allAssignedFeatures, isLoading: isLoadingAllAssignedFeatures } = useAllAssignedFeatures();
 
+  // Format staff data for table
   const formatStaffData = React.useCallback((): AdministrationRecord[] => {
     if (!staffs) return [];
 
@@ -42,6 +43,7 @@ export default function AdministrationRecords() {
     });
   }, [staffs]);
 
+  // Filtering formatted staff data (searching)
   const filteredStaffs = React.useMemo(() => {
     let filtered = formatStaffData();
 
@@ -55,13 +57,14 @@ export default function AdministrationRecords() {
 
   const totalPage = Math.ceil(filteredStaffs.length / pageSize);
 
+  // Dividing the data according to specified entries
   const paginatedStaffs = filteredStaffs.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
   if (isLoadingResidents || isLoadingStaffs
-    || isLoadingFeatures || isLoadingAllAssignedFeatures
+    || isLoadingFeatures
   ) {
     return (
       <div className="w-full h-full">
@@ -96,7 +99,6 @@ export default function AdministrationRecords() {
             state={{
               params: {
                 features: features,
-                allAssignedFeatures: allAssignedFeatures,
               },
             }}
           >

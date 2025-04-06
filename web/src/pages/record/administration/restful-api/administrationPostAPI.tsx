@@ -3,14 +3,6 @@ import { formatDate } from "@/helpers/dateFormatter";
 
 export const addStaff = async (personalId: string, positionId: string, staffId: string) => {
   try {
-    console.log({
-      staff_id: personalId,
-      staff_assign_date: formatDate(new Date()),
-      rp: personalId,
-      pos: positionId,
-      manager: staffId,
-    })
-
     const res = await api.post("administration/staff/", {
       staff_id: personalId,
       staff_assign_date: formatDate(new Date()),
@@ -28,14 +20,9 @@ export const addStaff = async (personalId: string, positionId: string, staffId: 
 // Add new position
 export const addPosition = async (data: any, staffId: string) => {
   try {
-    console.log({
-      pos_title: data.title,
-      pos_max: data.maximum,
-      staff: staffId,
-    })
     const res = await api.post("administration/position/", {
-      pos_title: data.title,
-      pos_max: data.maximum,
+      pos_title: data.pos_title,
+      pos_max: data.pos_max,
       staff: staffId,
     });
 
@@ -51,12 +38,6 @@ export const assignFeature = async (
   staffId: string
 ) => {
   try {
-    console.log({
-      feat_id: featureId,
-      pos: selectedPositionId,
-      assi_date: formatDate(new Date()),
-      staff: staffId
-    })
     const res = await api.post(`administration/assignment/`, {
       feat_id: featureId,
       pos: selectedPositionId,
@@ -69,7 +50,7 @@ export const assignFeature = async (
   }
 };
 
-export const setPermissions = async (assignmentId: string) => {
+export const setPermission = async (assignmentId: string) => {
   try {
     const res = await api.post("administration/permission/", {
       assi: assignmentId,

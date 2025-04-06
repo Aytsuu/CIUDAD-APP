@@ -1,9 +1,9 @@
 // administrationQueries.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPosition } from "../restful-api/administrationPostAPI";
-import { deletePosition } from "../restful-api/administrationDeleteAPI";
+import { addPosition, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
+import { deleteAssignedFeature, deletePosition } from "../restful-api/administrationDeleteAPI";
 import { getResidents } from "../../profiling/restful-api/profilingGetAPI";
-import { updatePosition } from "../restful-api/administrationPutAPI";
+import { updatePermission, updatePosition } from "../restful-api/administrationPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -54,7 +54,6 @@ export const useAllAssignedFeatures = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
-1;
 
 // Adding
 export const useAddPosition = () => {
@@ -80,6 +79,26 @@ export const useAddPosition = () => {
     },
   });
 };
+
+export const useAssignFeature = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({positionId, featureId, staffId} : {
+      positionId: string;
+      featureId: string;
+      staffId: string;
+    }) => assignFeature(positionId, featureId, staffId),
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+  })
+}
+
+export const useSetPermission = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({assi_id} : {assi_id: string}) => setPermission(assi_id),
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+  })
+}
 
 // Updating
 export const useEditPosition = () => {
@@ -109,6 +128,18 @@ export const useEditPosition = () => {
   })
 }
 
+export const useUpdatePermission = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({assignmentId, option, permission} : {
+      assignmentId: string,
+      option: string,
+      permission: boolean
+    }) => updatePermission(assignmentId, option, permission),
+    onSuccess: () => {}
+  })
+}
+
 // Deleting
 export const useDeletePosition = () => {
   const queryClient = useQueryClient();
@@ -121,3 +152,14 @@ export const useDeletePosition = () => {
     },
   });
 };
+
+export const useDeleteAssignedFeature = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({positionId, featureId} : {
+      positionId: string,
+      featureId: string
+    }) => deleteAssignedFeature(positionId, featureId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allAssignedFeatures']})
+  })
+}
