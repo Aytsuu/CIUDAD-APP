@@ -10,7 +10,7 @@ class Blotter(models.Model):
     bc_incident_type = models.CharField(max_length=100, null=False, blank=False)
     bc_allegation = models.TextField(null=False, blank=False)
     bc_datetime = models.DateTimeField(null=False, blank=False)
-    bc_evidence = models.FileField(upload_to="blotter_evidence/")
+    bc_evidence = models.FileField(max_length=255, blank=True, null=True)
     
     class Meta:
         db_table = "blotter"

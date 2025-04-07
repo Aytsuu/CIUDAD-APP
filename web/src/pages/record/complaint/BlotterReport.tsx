@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button/button";
-import { Image, Film, Plus, X, Play } from "lucide-react";
 import { BsChevronLeft } from "react-icons/bs";
-import { useState, useRef, ChangeEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import {
@@ -19,7 +18,7 @@ import { toast } from "sonner";
 import { MediaUpload } from "@/components/ui/media-upload";
 
 interface MediaFile {
-  id: number;
+  id: number | string;
   type: "image" | "video" | "document";
   url: string;
   file?: File;
@@ -35,12 +34,23 @@ interface BlotterFormValues {
   bc_allegation: string;
   bc_datetime: string;
   bc_evidence: FileList | null;
-};
+}
+
+// Function to format date for API
+function formatDateForAPI(dateString: string) {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return original if invalid
+    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+  } catch (error) {
+    console.error("Date format error:", error);
+    return dateString;
+  }
+}
 
 export function BlotterReport() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
-  const [activeVideoId, setActiveVideoId] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeVideoId, setActiveVideoId] = useState<string>("");
   const navigate = useNavigate();
   
   const postBlotterMutation = usePostBlotter();
@@ -58,81 +68,42 @@ export function BlotterReport() {
     }
   });
 
-  const handleAddMediaClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    if (selectedFiles.length === 0) return;
-
-    const newMediaFiles = selectedFiles.map((file, index) => {
-      const previewUrl = URL.createObjectURL(file);
-      const fileType = file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-        ? "video"
-        : "document";
-
-      return {
-        id: mediaFiles.length + index + 1,
-        type: fileType,
-        url: previewUrl,
-        file,
-        description: file.name,
-      };
-    });
-
-    setMediaFiles([...mediaFiles, ...newMediaFiles as MediaFile[]]);
-    
-    // Update the form's bc_evidence field
-    form.setValue("bc_evidence", e.target.files);
-    
-    e.target.value = "";
-  };
-
-  const handleRemoveMedia = (id: number) => {
-    setMediaFiles(mediaFiles.filter((media) => media.id !== id));
-    if (activeVideoId === id) setActiveVideoId(null);
-    
-    // If all media files are removed, reset the form's bc_evidence field
-    if (mediaFiles.length <= 1) {
-      form.setValue("bc_evidence", null);
-    }
-  };
-
-  const toggleVideoPlayback = (id: number) => {
-    setActiveVideoId(activeVideoId === id ? null : id);
-  };
-
   const onSubmit = async (data: BlotterFormValues) => {
     const formData = new FormData();
     
+    // Format the date to match expected format
+    const formattedData = {
+      ...data,
+      bc_datetime: formatDateForAPI(data.bc_datetime)
+    };
+    
     // Append form data
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(formattedData).forEach(([key, value]) => {
       if (key !== "bc_evidence" && value !== null && value !== undefined) {
         formData.append(key, value.toString());
       }
     });
 
     // Append media files
-    mediaFiles.forEach((file) => {
+    mediaFiles.forEach((file, index) => {
       if (file.file) {
-        formData.append("mediaFiles", file.file);
+        // Use a consistent key name pattern for server processing
+        formData.append(`mediaFiles`, file.file);
       }
     });
-
+    
+    // Debug information
+    console.log("Form data keys:", [...formData.keys()]);
+    
     try {
       await postBlotterMutation.mutateAsync(formData, {
         onSuccess: () => {
-          toast(
-            "Blotter report submitted successfully"
-          );
+          toast("Blotter report submitted successfully");
           navigate("/blotter-record");
         },
-        onError: (error) => {
+        onError: (error: any) => {
           console.error("Submission failed:", error);
-          toast("Failed to submit blotter report. Please try again.");
+          toast(`Failed to submit report: ${error.response?.data?.message || error.message || "Unknown error"}`);
         }
       });
     } catch (error) {
@@ -298,9 +269,13 @@ export function BlotterReport() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        type="date"
+                        type="text"
+                        placeholder="dd/mm/yyyy --:-- --"
                         {...field}
-                        max={currentDate}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          // You could add date format validation here if needed
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -334,70 +309,14 @@ export function BlotterReport() {
             <h2 className="font-medium text-lg mb-4 text-darkBlue2">
               Supporting Documents
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {mediaFiles.map((media) => (
-                <div key={media.id} className="relative group">
-                  <div className="aspect-square bg-gray-100 rounded-md overflow-hidden">
-                    {media.type === "video" ? (
-                      <div className="w-full h-full relative">
-                        <video
-                          src={media.url}
-                          className="w-full h-full object-cover"
-                          controls={activeVideoId === media.id}
-                          muted={activeVideoId !== media.id}
-                          onClick={() => toggleVideoPlayback(media.id)}
-                        />
-                        {activeVideoId !== media.id && (
-                          <div
-                            className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                            onClick={() => toggleVideoPlayback(media.id)}
-                          >
-                            <div className="bg-black bg-opacity-50 rounded-full p-2">
-                              <Play size={24} className="text-white" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt={`Evidence ${media.id}`}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleRemoveMedia(media.id)}
-                    className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    type="button"
-                  >
-                    <X size={16} />
-                  </button>
-                  <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
-                    {media.type === "video" ? (
-                      <Film size={16} />
-                    ) : (
-                      <Image size={16} />
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div
-                onClick={handleAddMediaClick}
-                className="aspect-square border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
-              >
-                <Plus size={24} className="text-gray-400 mb-1" />
-                <p className="text-xs text-gray-500">Add Media</p>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*,video/*"
-                  multiple
-                  className="hidden"
-                />
-              </div>
-            </div>
+            <MediaUpload 
+              title="Supporting Evidence"
+              description="Upload images, videos or documents related to the incident"
+              mediaFiles={mediaFiles}
+              activeVideoId={activeVideoId}
+              setMediaFiles={setMediaFiles}
+              setActiveVideoId={setActiveVideoId}
+            />
           </div>
 
           <div className="flex justify-end gap-4">
