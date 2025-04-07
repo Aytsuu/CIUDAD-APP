@@ -20,7 +20,7 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
         const selectedOption = options.find(option => option.id === field.value);
         return (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel className="text-black/70">{label}</FormLabel>
           <FormControl>
             {!readOnly ? (
               <SelectLayout
@@ -38,6 +38,7 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
           />
             )}
           </FormControl>
+          <FormMessage />
         </FormItem>
       );
     }}
