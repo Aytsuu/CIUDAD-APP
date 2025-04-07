@@ -1,177 +1,82 @@
-import React from "react";
-import { Input } from "@/components/ui/input";
-import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { householdSchema } from "@/form-schema/profiling-schema";
-import { Form, FormControl, FormField, FormItem, FormLabel} from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { household } from "../profilingPostRequests";
-import api from "@/api/api";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { Combobox } from "@/components/ui/combobox";
+import { LoadButton } from "@/components/ui/button/load-button";
+import { householdFormSchema } from "@/form-schema/profiling-schema";
+import { UseFormReturn } from "react-hook-form";
 
-
-const defaultValues = generateDefaultValues(householdSchema)
-
-export default function HouseholdProfileForm(){
-
-    const form = useForm<z.infer<typeof householdSchema>>({
-        resolver: zodResolver(householdSchema),
-        defaultValues
-    })
-
-    const [sitio, setSitio] = React.useState<{id: string, name: string}[]>([])
-    const hasFetchData = React.useRef(false)
-
-    React.useEffect(()=>{
-        if(!hasFetchData.current){
-            getSitio()
-            hasFetchData.current = true
-        }
-    }, [])
-
-    const getSitio = React.useCallback(() => {
-
-        api
-            .get('profiling/sitio/')
-            .then((res) => res.data)
-            .then((data) => {
-                
-                const sitioList = data.map((item: { sitio_id: string, sitio_name: string }) => ({ 
-                    id: String(item.sitio_id), 
-                    name: item.sitio_name 
-                }));
-
-                setSitio(sitioList);
-            })
-    }, []);
-
-    const submit = async () => {
-        const res = await household(form.getValues());
-
-        if (res) {
-            form.reset(defaultValues)
-        }
-    }
-
-    return (
-        <Form {...form}>
-            <form 
-                onSubmit={form.handleSubmit(submit)}
-                className="grid gap-4"
-            >
-
-                <FormField
-                    control={form.control}
-                    name="householdNo"
-                    render={({field}) => (
-                        <FormItem>
-                        <FormLabel>Generated House No.</FormLabel>
-                        <FormControl>
-                            <Input {...field}/>
-                        </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="existingHouseNo"
-                    render={({field}) => (
-                        <FormItem>
-                        <FormLabel>Existing House No.</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter existing house no. (e.g.,H0232)" {...field}/>
-                        </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="nhts"
-                    render={({field}) => (
-                        <FormItem>
-                        <FormLabel className="font-medium text-black/65">
-                            NHTS Household
-                        </FormLabel>
-                        <FormControl>
-                            <SelectLayout
-                                placeholder='Select'
-                                className='w-full'
-                                options={[
-                                    {id: "no", name: "No"},
-                                    {id: "yes", name: "Yes"}
-                                ]}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name='sitio'
-                    render={({field}) => (
-                        <FormItem>
-                        <FormLabel className="font-medium text-black/65">
-                            Sitio
-                        </FormLabel>
-                        <FormControl>
-                            <SelectLayout
-                                placeholder='Select'
-                                className='w-full'
-                                options={sitio}
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="street"
-                    render={({field}) => (
-                        <FormItem>
-                        <FormLabel>House Street Address</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter your house's street address" {...field}/>
-                        </FormControl>
-                        </FormItem>
-                    )}
-                />
-                <div className="grid gap-4">
-                    <FormField
-                        control={form.control}
-                        name="householdHead"
-                        render={({field}) => (
-                            <FormItem>
-                            <FormLabel>Household Head</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Enter resident no." {...field}/>
-                            </FormControl>  
-                            </FormItem>
-                        )}  
-                    />
-                    <div className="flex gap-2 items-center">
-                        <Label className="font-normal">Resident not found?</Label>
-                        <Link to='/resident-registration' state={{params: {origin: 'household', householdInfo: form.getValues()}}}>
-                            <Label 
-                                className="font-normal text-teal cursor-pointer hover:underline"
-                            >
-                                Redirect to Registration
-                            </Label>
-                        </Link>
-                    </div>
-                </div>
-                        
-                <Button type="submit" className="mt-5">
-                    Register
-                </Button>
-            </form>
-        </Form>
-    )
+export default function HouseholdProfileForm({
+  sitio,
+  residents,
+  isSubmitting,
+  invalidHouseHead,
+  form
+}: {
+  sitio: any[];
+  residents: any[];
+  isSubmitting: boolean;
+  invalidHouseHead: boolean;
+  form: UseFormReturn<z.infer<typeof householdFormSchema>>;
+}) {
+  return (
+    <>
+      <div className="grid gap-2">
+        <Combobox
+          options={residents}
+          value={form.watch("householdHead")}
+          onChange={(value) => form.setValue("householdHead", value)}
+          placeholder="Search for household head (by resident #)"
+          emptyMessage="No resident found"
+        />
+        <div className="flex justify-between">
+          <Label className="text-[13px] text-red-500">{invalidHouseHead ? `Household head is required` : ''} </Label>
+          <div className="flex gap-2 justify-end items-center">
+            <Label className="font-normal">Resident not found?</Label>
+            <Link to="/resident-form">
+              <Label className="font-normal text-teal cursor-pointer hover:underline">
+                Register
+              </Label>
+            </Link>
+          </div>
+        </div>
+      </div>
+      <FormSelect
+        control={form.control}
+        name="nhts"
+        label="NHTS Household"
+        options={[
+          { id: "no", name: "No" },
+          { id: "yes", name: "Yes" },
+        ]}
+        readOnly={false}
+      />
+      <FormSelect
+        control={form.control}
+        name="sitio"
+        label="Sitio"
+        options={sitio}
+        readOnly={false}
+      />
+      <FormInput
+        control={form.control}
+        name="street"
+        label="House Street Address"
+        placeholder="Enter your house's street address"
+        readOnly={false}
+      />
+      <div className="flex justify-end">
+        {!isSubmitting ? (
+          <Button type="submit" className="mt-5">
+            Register
+          </Button>
+        ) : (
+          <LoadButton>Registering...</LoadButton>
+        )}
+      </div>
+    </>
+  );
 }

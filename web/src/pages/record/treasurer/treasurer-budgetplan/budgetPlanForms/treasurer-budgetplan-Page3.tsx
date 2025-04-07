@@ -4,7 +4,7 @@
     import { z } from "zod";
     import { Input } from "@/components/ui/input";
     import { FormData, CurrentExpenditureMaintandOtherExpensesSchema2 } from "@/form-schema/budgetplan-create-schema";
-    import { Button } from "@/components/ui/button";
+    import { Button } from "@/components/ui/button/button";
     import { Label } from "@/components/ui/label";
     import { useEffect, useState } from "react";
     import { useLocation } from "react-router";
@@ -26,6 +26,21 @@
     };
 
     function CreateBudgetPlanPage3({ onPrevious2, onNext4, updateFormData, formData }: Props) {
+        // page 3 budget items
+        const budgetItems = [
+            { name: "fidelityBond", label: "Fidelity Bond Premiums" },
+            { name: "insuranceExpense", label: "Insurance Expenses" },
+            { name: "gadProg", label: "GAD Program" },
+            { name: "seniorProg", label: "Senior Citizen/ PWD Program" },
+            { name: "juvJustice", label: "BCPC (Juvenile Justice System)" },
+            { name: "badacProg", label: "BADAC Program" },
+            { name: "nutritionProg", label: "Nutrition Program" },
+            { name: "aidsProg", label: "Combating AIDS Program" },
+            { name: "assemblyExpenses", label: "Barangay Assembly Expenses" },
+            { name: "disasterProg", label: "Disaster Response Program" },
+            { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense" },
+        ]
+
         const [total, setTotal] = useState(0.00);
         const [balance, setBalance] = useState(0);
 
@@ -58,11 +73,14 @@
             setBalance(remainingBal);
         },[miscExpenseVal, budgetLimitValue]);
 
+        // Submit button function
         const onSubmit = (value: BudgetPlanPage3FormData) => {
+            console.log('Submitting data for page 3:', value)
             updateFormData(value);
             onNext4();
         };
 
+        // previous button function
         const handlePrevious = () => {
             updateFormData(form.getValues()); 
             onPrevious2(); 
@@ -79,19 +97,7 @@
                                     Maint. & Other Operating Expenses
                                 </h3>
                             </div>
-                            {[
-                                { name: "fidelityBond", label: "Fidelity Bond Premiums" },
-                                { name: "insuranceExpense", label: "Insurance Expenses" },
-                                { name: "gadProg", label: "GAD Program" },
-                                { name: "seniorProg", label: "Senior Citizen/ PWD Program" },
-                                { name: "juvJustice", label: "BCPC (Juvenile Justice System)" },
-                                { name: "badacProg", label: "BADAC Program" },
-                                { name: "nutritionProg", label: "Nutrition Program" },
-                                { name: "aidsProg", label: "Combating AIDS Program" },
-                                { name: "assemblyExpenses", label: "Barangay Assembly Expenses" },
-                                { name: "disasterProg", label: "Disaster Response Program" },
-                                { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense" },
-                            ].map(({ name, label }) => (
+                            {budgetItems.map(({ name, label }) => (
                                 <div key={name}>
                                     <FormField
                                         control={form.control}

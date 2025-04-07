@@ -1,5 +1,5 @@
 // VaccineStockForm.tsx
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";

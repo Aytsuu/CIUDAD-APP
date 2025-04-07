@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import RatesFormPage1 from "./rates-form-page1"
 import { DataTable } from "@/components/ui/table/data-table"

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import BarangayServiceForm from "./treasurer-barangayService-form";
 import ReceiptForm from "./treasurer-create-receipt-form";

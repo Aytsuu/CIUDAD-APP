@@ -16,14 +16,15 @@ type Option = {
 }
 
 type SelectLayoutProps = {
-  className: string;
-  contentClassName: string;
+  className?: string;
+  contentClassName?: string;
   options: Option[];
   selected: Option | undefined;
+  placeholder?: string;
   onValueChange: (value: Option | undefined) => void;
 };
 
-export default function SelectLayout({ className, contentClassName, options, selected, onValueChange } : SelectLayoutProps) {
+export default function SelectLayout({  className, contentClassName, options, selected, placeholder, onValueChange } : SelectLayoutProps) {
   const insets = useSafeAreaInsets();
   const contentInsets = {
     top: insets.top,

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { BasicInfoType, BasicInfoSchema } from "@/form-schema/chr-schema";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@radix-ui/react-label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { UserPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect } from "react";

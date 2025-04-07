@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import addImage from "/src/assets/images/addimage.png";
 import { announcementFormSchema } from "../../form-schema/AnnouncementSchema";

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import RatesFormPage4 from "./rates-form-page4"
 import { DataTable } from "@/components/ui/table/data-table"

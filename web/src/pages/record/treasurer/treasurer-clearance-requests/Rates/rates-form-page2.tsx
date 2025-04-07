@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input"
 import { Form, FormLabel, FormItem, FormField, FormControl, FormMessage } from "@/components/ui/form/form"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { PersonalClearanceSchema, FormData } from "@/form-schema/rates-form-schema"
 import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"

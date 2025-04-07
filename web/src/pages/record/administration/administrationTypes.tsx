@@ -1,5 +1,10 @@
+export type Positions = {
+    pos_id: string
+    id: string,
+    name: string
+}
+
 export type Assigned = {
-    position: string
     assi_id: string
     assi_date: string
     feat: string
@@ -20,4 +25,16 @@ export type Permission = {
     update: boolean
     delete: boolean
     assi_id: string
+}
+
+export type AdministrationRecord = {
+    id: string
+    lname: string
+    fname: string
+    mname: string
+    suffix: string
+    dateOfBirth: string
+    contact: number
+    position: string
+    dateAssigned: string
 }

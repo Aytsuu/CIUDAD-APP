@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import { View, Text, TouchableWithoutFeedback, Alert } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
-import { Eye } from '@/lib/icons/Eye';  
+import { Eye } from '@/lib/icons/Eye';    
 import { EyeOff } from '@/lib/icons/EyeOff';
 
 export default function ForgetPassword() {

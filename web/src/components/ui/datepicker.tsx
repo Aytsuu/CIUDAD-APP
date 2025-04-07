@@ -1,49 +1,17 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
 import * as React from "react";
 import { format, getMonth, getYear, setMonth, setYear, addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Calendar } from "@/components/ui/calendar";
-=======
->>>>>>> master
-import * as React from "react"
-import { format, getMonth, getYear, setMonth, setYear } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-<<<<<<< HEAD
-=======
->>>>>>> mobile/feature/landing-page
->>>>>>> master
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-<<<<<<< HEAD
 } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select/select"
-=======
-<<<<<<< HEAD
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./select/select";
-=======
-} from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select/select"
->>>>>>> mobile/feature/landing-page
->>>>>>> master
 
 interface DatePickerProps {
   startYear?: number;
@@ -53,26 +21,6 @@ export function DatePicker({
   startYear = getYear(new Date()) - 100,
   endYear = getYear(new Date()) + 100,
 }: DatePickerProps) {
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-  const [date, setDate] = React.useState<Date>(new Date());
-
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-=======
->>>>>>> master
 
   const [date, setDate] = React.useState<Date>(new Date());
 
@@ -89,10 +37,6 @@ export function DatePicker({
     'October',
     'November',
     'December',
-<<<<<<< HEAD
-=======
->>>>>>> mobile/feature/landing-page
->>>>>>> master
   ];
   const years = Array.from(
     { length: endYear - startYear + 1 },
@@ -102,9 +46,6 @@ export function DatePicker({
   const handleMonthChange = (month: string) => {
     const newDate = setMonth(date, months.indexOf(month));
     setDate(newDate);
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
   };
 
   const handleYearChange = (year: string) => {
@@ -117,24 +58,6 @@ export function DatePicker({
       setDate(selectedData);
     }
   };
-=======
->>>>>>> master
-  }
-
-  const handleYearChange = (year: string) => {
-    const newDate = setYear(date, parseInt(year));
-    setDate(newDate)
-  }
-
-  const handleSelect = (selectedData: Date | undefined) => {
-    if (selectedData) {
-      setDate(selectedData)
-    }
-  }
-<<<<<<< HEAD
-=======
->>>>>>> mobile/feature/landing-page
->>>>>>> master
 
   return (
     <Popover>
@@ -160,20 +83,9 @@ export function DatePicker({
               <SelectValue placeholder="Month" />
             </SelectTrigger>
             <SelectContent>
-<<<<<<< HEAD
+
               {months.map(month => (
                 <SelectItem key={month} value={month}>{month}</SelectItem>
-=======
-<<<<<<< HEAD
-              {months.map((month) => (
-                <SelectItem key={month} value={month}>
-                  {month}
-                </SelectItem>
-=======
-              {months.map(month => (
-                <SelectItem key={month} value={month}>{month}</SelectItem>
->>>>>>> mobile/feature/landing-page
->>>>>>> master
               ))}
             </SelectContent>
           </Select>
@@ -185,20 +97,8 @@ export function DatePicker({
               <SelectValue placeholder="Year" />
             </SelectTrigger>
             <SelectContent>
-<<<<<<< HEAD
               {years.map(year => (
                 <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-=======
-<<<<<<< HEAD
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-=======
-              {years.map(year => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
->>>>>>> mobile/feature/landing-page
->>>>>>> master
               ))}
             </SelectContent>
           </Select>
@@ -214,10 +114,6 @@ export function DatePicker({
         />
       </PopoverContent>
     </Popover>
-<<<<<<< HEAD
-  )
-=======
-<<<<<<< HEAD
   );
 }
 
@@ -291,8 +187,4 @@ export function DatePickerWithRange({
       </Popover>
     </div>
   );
-=======
-  )
->>>>>>> mobile/feature/landing-page
->>>>>>> master
 }

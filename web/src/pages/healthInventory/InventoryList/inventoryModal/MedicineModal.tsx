@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 interface Option {
   id: string;

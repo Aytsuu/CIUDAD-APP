@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from apps.profiling.models import ResidentProfile
 
 class PositionSerializer(serializers.ModelSerializer):  
     class Meta: 
@@ -24,9 +25,17 @@ class AssignmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class StaffSerializer(serializers.ModelSerializer):
+    pos = PositionSerializer(read_only=True)
+    rp = serializers.SerializerMethodField()
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
+    pos_id = serializers.PrimaryKeyRelatedField(queryset=Position.objects.all(), write_only=True, source="pos")
 
     class Meta:
         model = Staff
         fields = '__all__'
+
+    def get_rp(self, obj):
+        from apps.profiling.serializers import ResidentProfileMinimalSerializer  # Lazy import inside the method
+        return ResidentProfileMinimalSerializer(obj.rp).data
 
 

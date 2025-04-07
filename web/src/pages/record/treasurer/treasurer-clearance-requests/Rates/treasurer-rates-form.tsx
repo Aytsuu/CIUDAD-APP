@@ -3,7 +3,7 @@ import RatesPage2 from "./rates-page2"
 import RatesPage3 from "./rates-page3"
 import RatesPage4 from "./rates-page4"
 import RatesPage5 from "./rates-page5"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { useState } from "react"
 
 function RatesForm(){

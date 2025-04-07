@@ -8,7 +8,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Link } from "react-router";
 import { Search } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 // Define the type for the record object
 type Record = {

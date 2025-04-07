@@ -11,9 +11,6 @@ from .serializers import *
 class PositionView(generics.ListCreateAPIView):
     serializer_class = PositionSerializer
     queryset = Position.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     
 class PositionDeleteView(generics.DestroyAPIView):
     serializer_class = FeatureSerializer
@@ -25,9 +22,6 @@ class PositionDeleteView(generics.DestroyAPIView):
 class FeatureView(generics.ListCreateAPIView):
     serializer_class = FeatureSerializer
     queryset = Feature.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     
 class FeatureDataView(generics.RetrieveAPIView):
     serializer_class = FeatureSerializer
@@ -39,10 +33,6 @@ class FeatureDataView(generics.RetrieveAPIView):
 class AssignmentView(generics.ListCreateAPIView):
     serializer_class = AssignmentSerializer
     queryset = Assignment.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        print(request.data)
-        return super().create(request, *args, **kwargs)
     
 class AssignmentDeleteView(generics.DestroyAPIView):
     serializer_class = AssignmentSerializer
@@ -61,19 +51,10 @@ class PermissionView(generics.ListCreateAPIView):
     serializer_class = PermissionSerializer
     queryset = Permission.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
 class PermissionUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PermissionSerializer
     queryset = Permission.objects.all()
     lookup_field = 'assi'
-
-    def get_object(self):
-        assi = self.kwargs.get('assi')
-        
-        obj = get_object_or_404(Permission, assi=assi)
-        return obj
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -89,6 +70,4 @@ class StaffView(generics.ListCreateAPIView):
     serializer_class = StaffSerializer
     queryset = Staff.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     

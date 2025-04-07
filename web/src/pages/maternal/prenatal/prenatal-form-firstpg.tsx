@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { DatePicker } from "@/components/ui/datepicker";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select/select";
 
 export default function PrenatalFormFirstPg(){

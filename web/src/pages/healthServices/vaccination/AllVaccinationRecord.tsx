@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -190,8 +190,8 @@ export default function AllVaccinationRecords() {
     },
   ];
 
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
   const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -236,10 +236,13 @@ export default function AllVaccinationRecords() {
   };
 
   return (
+
     <>
-      <div className="w-full h-full flex flex-col">
-        {/* Header Section */}
-        <div className="flex-col items-center mb-4">
+
+    <div className="w-full h-full flex flex-col">
+      {/* Header Section */}
+      <div className="flex-col items-center mb-4">
+
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Vaccination Records
           </h1>

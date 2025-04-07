@@ -14,7 +14,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 export default function BlotterForm(){
 

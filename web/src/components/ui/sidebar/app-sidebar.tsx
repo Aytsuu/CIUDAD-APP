@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Sidebar,
@@ -9,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-import { Link } from "react-router";
 
 type AnotherSubMenuItem = {
   title: string;
@@ -135,14 +135,31 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      {title: "Animal Bites", url: "/Animalbite_viewing"},
-      {title: "Child Services", url: "/allChildHRTable"},
-      {title: "Maternal Services", url:"/maternalrecords"},
-      {title: "Family Planning", url: "/FamPlanning_table"},
-      {title: "Medical Consultation", url: "/"},
-      {title: "Vaccination", url: "/allVaccinationRecord"},
-    ]
-  }
+      { title: "Doctor", url: "/mainMedicalForm" },
+      { title: "Animal Bites", url: "/Animalbite_viewing" },
+      { title: "Child Services", url: "/allChildHRTable" },
+      { title: "Maternal Services", url: "/maternalrecords" },
+      { title: "Family Planning", url: "/FamPlanning_table" },
+      { title: "Medical Consultation", url: "/allMedRecords" },
+      { title: "Vaccination", url: "/allRecordsForVaccine" },
+      {
+        title: "Inventory",
+        url: "/",
+        anotherItems: [
+          { title: "Inventory List", url: "/mainInventoryList" },
+          { title: "Inventory Stocks", url: "/mainInventoryStocks" },
+        ],
+      },
+      {
+        title: "Queueing",
+        url: "/",
+        anotherItems: [
+          { title: "Patients Queue", url: "/patientsQueue" },
+          { title: "Processing Queue", url: "/processingQueue" },
+        ],
+      },
+    ],
+  },
 ];
 
 interface SubMenuItemProps {

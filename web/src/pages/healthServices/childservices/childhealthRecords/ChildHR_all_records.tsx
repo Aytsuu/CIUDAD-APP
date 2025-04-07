@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { FileInput } from "lucide-react"; 
+import { FileInput } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -197,9 +197,10 @@ export default function AllChildHealthRecords() {
         selectedFilter === "All" ||
         item.type === selectedFilter ||
         item.sitio === selectedFilter;
-      const matchesSearch = `${item.patient.firstName} ${item.patient.lastName} ${item.patient.middleName} ${item.address} ${item.sitio} ${item.type}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        `${item.patient.firstName} ${item.patient.lastName} ${item.patient.middleName} ${item.address} ${item.sitio} ${item.type}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     });
     setFilteredData(filtered);
@@ -235,7 +236,9 @@ export default function AllChildHealthRecords() {
 
   const navigate = useNavigate();
   function toChildHealthForm() {
-    navigate("/newAddChildHRForm", { state: { recordType: "nonexistingPatient" } });
+    navigate("/newAddChildHRForm", {
+      state: { recordType: "nonexistingPatient" },
+    });
   }
 
   return (
@@ -243,101 +246,97 @@ export default function AllChildHealthRecords() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Child Health Records
+            Child Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view child's information
           </p>
-      </div>
+        </div>
+        <hr className="border-gray mb-5 sm:mb-8" />
 
-      </div>
-
-      <hr className="border-gray mb-5 sm:mb-8" />
-
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-72 bg-white"
-                value={searchQuery}
-                onChange={handleSearchChange}
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+          {/* Search Input and Filter Dropdown */}
+          <div className="flex flex-col md:flex-row gap-4 w-full">
+            <div className="flex gap-x-2">
+              <div className="relative flex-1">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                  size={17}
+                />
+                <Input
+                  placeholder="Search..."
+                  className="pl-10 w-72 bg-white"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                />
+              </div>
+              <SelectLayout
+                className="w-full md:w-[200px] bg-white"
+                label=""
+                placeholder="Select"
+                options={filter}
+                value={selectedFilter}
+                onChange={setSelectedFilter}
               />
             </div>
-            <SelectLayout
-              className="w-full md:w-[200px] bg-white"
-              label=""
-              placeholder="Select"
-              options={filter}
-              value={selectedFilter}
-              onChange={setSelectedFilter}
-            />
+          </div>
+
+          <div className="w-full md:w-auto">
+            <Button onClick={toChildHealthForm}>New Record</Button>
           </div>
         </div>
 
-
-        <div className="w-full md:w-auto">
-
-          <Button onClick={toChildHealthForm}>New Record</Button>
-        <Button onClick={toChildHealthForm}>New Record</Button>
-
-        </div>
-      </div>
-
-      {/* Table Container */}
-      <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-8"
-              value={pageSize}
-              onChange={handlePageSizeChange}
-              min="1"
-            />
-            <p className="text-xs sm:text-sm">Entries</p>
+        {/* Table Container */}
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                min="1"
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileInput />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="bg-white w-full overflow-x-auto">
+            {/* Table Placement */}
+            <DataTable columns={columns} data={currentData} />
           </div>
-        </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {/* Table Placement */}
-          <DataTable columns={columns} data={currentData} />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            {/* Showing Rows Info */}
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing{" "}
+              {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+              {filteredData.length} rows
+            </p>
 
-          {/* Pagination */}
-          <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+            {/* Pagination */}
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
           </div>
         </div>
       </div>

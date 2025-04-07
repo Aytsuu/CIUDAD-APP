@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/budgetplan-create-schema";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useEffect } from "react";
@@ -27,6 +27,18 @@ type Props = {
 };
 
 function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData }: Props) {
+    // page 4 budget items
+    const budgetItems = [
+        { name: "capitalOutlays", label: "Total Capital Outlays" },
+        { name: "cleanAndGreen", label: "Clean & Green Environmental" },
+        { name: "streetLighting", label: "Street Lighting Project" },
+        { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
+        { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
+        { name: "qrfFund", label: "Quick Response Fund (QRF)" },
+        { name: "disasterTraining", label: "Disaster Training" },
+        { name: "disasterSupplies", label: "Disaster Supplies" },
+    ];
+
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome} = location.state
 
@@ -99,7 +111,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
 
     // next and previous handlers
     const handleSubmit = (value: BudgetPlanPage4FormData) => {
-        console.log("Submitting Page 4 Data:", value);
+        console.log('Submitting data for page 4:', value)
         updateFormData(value);
         onSubmit();
     };
@@ -117,16 +129,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                         <div className='p-2 flex flex-col gap-1'>
                             <h1 className='font-bold flex justify-center w-[21rem]'>CAPITAL OUTLAYS</h1>
                         </div>
-                        {[
-                            { name: "capitalOutlays", label: "Total Capital Outlays" },
-                            { name: "cleanAndGreen", label: "Clean & Green Environmental" },
-                            { name: "streetLighting", label: "Street Lighting Project" },
-                            { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
-                            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
-                            { name: "qrfFund", label: "Quick Response Fund (QRF)" },
-                            { name: "disasterTraining", label: "Disaster Training" },
-                            { name: "disasterSupplies", label: "Disaster Supplies" },
-                        ].map(({ name, label }) => (
+                        {budgetItems.map(({ name, label }) => (
                             <div key={name}>
                                 <FormField
                                     control={form.control}

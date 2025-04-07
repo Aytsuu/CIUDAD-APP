@@ -6,170 +6,206 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"; // Assuming you're using a Radix-like accordion
-import api from "@/api/api";
+} from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { FixedSizeList as List } from "react-window";
 import { Assigned, Feature } from "./administrationTypes";
+import { getAssignedFeatures } from "./restful-api/administrationGetAPI";
+import { assignFeature, setPermissions } from "./restful-api/administrationPostAPI";
+import { formatDate } from "@/helpers/dateFormatter";
+import { deleteAssignedFeature } from "./restful-api/administrationDeleteAPI";
+
+interface FeatureSelectionProps {
+  selectedPosition: string;
+  features: Feature[];
+  assignedFeatures: Assigned[];
+  setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>;
+  featuresCache?: React.MutableRefObject<Record<string, Assigned[]>>;
+}
 
 export default function FeatureSelection({
   selectedPosition,
   features,
   assignedFeatures,
-  setFeatures,
   setAssignedFeatures,
-}: {
-  selectedPosition: string;
-  features: Feature[];
-  assignedFeatures: Assigned[];
-  setFeatures: React.Dispatch<React.SetStateAction<Feature[]>>;
-  setAssignedFeatures: React.Dispatch<React.SetStateAction<Assigned[]>>;
-}) {
-  // States and initializations
-  const hasFetchData = React.useRef(false);
-
+  featuresCache,
+}: FeatureSelectionProps) {
   // Group features by category
   const groupedFeatures = React.useMemo(() => {
-    return features.reduce((acc, feature) => {
-      if (!acc[feature.feat_category]) {
-        acc[feature.feat_category] = [];
+    const groups: Record<string, Feature[]> = {};
+    for (const feature of features) {
+      if (!groups[feature.feat_category]) {
+        groups[feature.feat_category] = [];
       }
-      acc[feature.feat_category].push(feature);
-      return acc;
-    }, {} as Record<string, Feature[]>);
+      groups[feature.feat_category].push(feature);
+    }
+    return groups;
   }, [features]);
 
-  // Performs side effects
-  React.useEffect(() => {
-    if (!hasFetchData.current) {
-      getAllFeatures();
-      getAssignedFeatures();
-      hasFetchData.current = true;
+  // Create a set for quick lookup of assigned feature IDs
+  const assignedFeatureIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (const af of assignedFeatures) {
+      ids.add(af.feat);
     }
-  }, []);
+    return ids;
+  }, [assignedFeatures]);
 
-  // Function to fetch all features from db
-  const getAllFeatures = React.useCallback(() => {
-    api
-      .get("administration/features/")
-      .then((res) => res.data)
-      .then((data) => {
-        setFeatures(data);
-      });
-  }, []);
-
-  // Function to assign features
-  const assignFeature = async (featureId: string, checked: boolean) => {
-    const method = checked ? "post" : "delete";
-    const now = new Date();
-    const formattedDate = now.toISOString().split("T")[0];
-
-    // Checks which API request method to perform
-    const requestConfig = checked
-      ? {
-          // POST
-          url: "administration/assignments/",
-          data: {
-            assi_date: formattedDate,
-            feat: featureId,
-            pos: selectedPosition,
-          },
-        }
-      : {
-          // DELETE
-          url: `administration/assignments/${featureId}/${selectedPosition}/`,
-        };
+  // Load assigned features with error handling
+  const loadAssignedFeatures = React.useCallback(async () => {
+    if (!selectedPosition) return;
 
     try {
-      const res = await api[method](requestConfig.url, requestConfig.data);
-
-      if (checked) {
-        // Set permissions (default)
-        const perm_id = await setPermissions(res.data.assi_id);
-
-        // Add the new assignment to the local state
-        setAssignedFeatures((prev: any) => [
-          ...prev,
-          {
-            assi_id: res.data.assi_id,
-            assi_date: formattedDate,
-            feat: featureId,
-            pos: selectedPosition,
-            permissions: [{
-              perm_id: perm_id,
-              view: true,
-              create: false,
-              update: false,
-              delete: false,
-              assi_id: res.data.assi_id
-            }],
-          },
-        ]);
-
-      } else {
-        // Remove the assignment from the local state
-        setAssignedFeatures((prev) =>
-          prev.filter((assignment) => assignment.feat !== featureId)
-        );
+      const res = await getAssignedFeatures(selectedPosition);
+      setAssignedFeatures(res);
+      if (featuresCache) {
+        featuresCache.current[selectedPosition] = res;
       }
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.error("Failed to load assigned features:", error);
     }
-  };
+  }, [selectedPosition, setAssignedFeatures, featuresCache]);
 
-  // Function to add permissions of the assigned feature to the db (all false by default)
-  const setPermissions = async (assignmentId: string) => {
+  // Initial load and cache check
+  React.useEffect(() => {
+    if (featuresCache?.current[selectedPosition]) {
+      setAssignedFeatures(featuresCache.current[selectedPosition]);
+    } else {
+      loadAssignedFeatures();
+    }
+  }, [selectedPosition, loadAssignedFeatures, featuresCache, setAssignedFeatures]);
+
+  // Optimistic update for feature assignment
+  const handleAssignment = React.useCallback(async (featureId: string, checked: boolean) => {
+    // Create a reference to the current state to avoid stale closures
+    const currentAssignedFeatures = assignedFeatures;
+    const currentCache = featuresCache?.current[selectedPosition] || [];
+    
     try {
-      const res = await api.post("administration/permissions/", { assi: assignmentId });
-      return res.data.perm_id
-    } catch (err) {
-      console.log(err);
+      if (checked) {
+        // Generate a stable temporary ID
+        const tempId = `temp-${featureId}-${Date.now()}`;
+        
+        // Create the optimistic update
+        const newAssignment: Assigned = {
+          assi_id: tempId,
+          assi_date: formatDate(new Date()),
+          feat: featureId,
+          pos: selectedPosition,
+          permissions: [{
+            perm_id: `perm-${tempId}`,
+            view: true,
+            create: false,
+            update: false,
+            delete: false,
+            assi_id: tempId
+          }],
+        };
+  
+        // Update state immediately
+        setAssignedFeatures(prev => [...prev, newAssignment]);
+        
+        // Update cache immediately
+        if (featuresCache) {
+          featuresCache.current[selectedPosition] = [...currentCache, newAssignment];
+        }
+  
+        // Make API calls
+        const assignment = await assignFeature(selectedPosition, featureId);
+        const perm_id = await setPermissions(assignment.assi_id);
+  
+        // Update with real data
+        setAssignedFeatures(prev => 
+          prev.map(item => 
+            item.feat === featureId && item.assi_id === tempId
+              ? { 
+                  ...item, 
+                  assi_id: assignment.assi_id,
+                  permissions: [{
+                    perm_id,
+                    view: true,
+                    create: false,
+                    update: false,
+                    delete: false,
+                    assi_id: assignment.assi_id
+                  }]
+                } 
+              : item
+          )
+        );
+  
+        // Update cache with real data
+        if (featuresCache) {
+          featuresCache.current[selectedPosition] = 
+            featuresCache.current[selectedPosition].map(item => 
+              item.feat === featureId && item.assi_id === tempId
+                ? { 
+                    ...item, 
+                    assi_id: assignment.assi_id,
+                    permissions: [{
+                      perm_id,
+                      view: true,
+                      create: false,
+                      update: false,
+                      delete: false,
+                      assi_id: assignment.assi_id
+                    }]
+                  } 
+                : item
+            );
+        }
+      } else {
+        // Find the exact assignment to remove
+        const assignmentToRemove = currentAssignedFeatures.find(af => af.feat === featureId);
+        if (!assignmentToRemove) return;
+  
+        // Optimistic update - remove from state
+        setAssignedFeatures(prev => prev.filter(item => item.feat !== featureId));
+        
+        // Optimistic update - remove from cache
+        if (featuresCache) {
+          featuresCache.current[selectedPosition] = 
+            currentCache.filter(item => item.feat !== featureId);
+        }
+  
+        // API call
+        await deleteAssignedFeature(selectedPosition, featureId);
+      }
+    } catch (error) {
+      console.error("Operation failed:", error);
+      // Rollback to previous state
+      setAssignedFeatures(currentAssignedFeatures);
+      if (featuresCache) {
+        featuresCache.current[selectedPosition] = currentCache;
+      }
     }
-  };
+  }, [selectedPosition, assignedFeatures, featuresCache]);
 
-  // Function to get the assigned features of the position
-  const getAssignedFeatures = React.useCallback(async () => {
-    try {
-      const res = await api.get(
-        `administration/assignments/${selectedPosition}/`
-      );
-      setAssignedFeatures(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  }, []);
+  // Check if a feature is assigned
+  const isFeatureAssigned = React.useCallback((featureId: string) => {
+    return assignedFeatureIds.has(featureId);
+  }, [assignedFeatureIds]);
 
-  // Function to check assigned features
-  const checkAssignedFeatures = (featureId: string) => {
-    if (assignedFeatures) {
-      return assignedFeatures.some(
-        (value) => value.feat === featureId && value.pos === selectedPosition
-      );
-    }
-    return false;
-  };
-
-  // Render only the visible items on the list
-  const Row = ({
-    index,
-    style,
-    data,
-  }: {
-    index: number;
-    style: React.CSSProperties;
-    data: Feature[];
-  }) => {
+  // Memoized row component
+  const Row = React.memo(({ index, style, data }: { index: number; style: React.CSSProperties; data: Feature[] }) => {
     const feature = data[index];
+    const handleChange = (checked: boolean) => handleAssignment(feature.feat_id, checked);
+    
     return (
       <div style={style}>
-        <FeatureCheckbox
-          feature={feature}
-          isChecked={checkAssignedFeatures(feature.feat_id)}
-          onCheckedChange={(checked) => assignFeature(feature.feat_id, checked)}
-        />
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id={feature.feat_id}
+            checked={isFeatureAssigned(feature.feat_id)}
+            onCheckedChange={handleChange}
+          />
+          <Label htmlFor={feature.feat_id} className="text-black/80 text-[14px] cursor-pointer">
+            {feature.feat_name}
+          </Label>
+        </div>
       </div>
     );
-  };
+  });
 
   return (
     <Accordion type="multiple" className="w-full">
@@ -181,11 +217,12 @@ export default function FeatureSelection({
           </AccordionTrigger>
           <AccordionContent>
             <List
-              height={140} // Adjust based on your needs
+              height={Math.min(140, categoryFeatures.length * 35)}
               itemCount={categoryFeatures.length}
-              itemSize={35} // Adjust based on your needs
+              itemSize={35}
               width="100%"
               itemData={categoryFeatures}
+              overscanCount={10}
             >
               {Row}
             </List>
@@ -195,32 +232,3 @@ export default function FeatureSelection({
     </Accordion>
   );
 }
-
-// Checkbox component tailored for feature selection
-const FeatureCheckbox = React.memo(
-  ({
-    feature,
-    isChecked,
-    onCheckedChange,
-  }: {
-    feature: Feature;
-    isChecked: boolean;
-    onCheckedChange: (checked: boolean) => void;
-  }) => {
-    return (
-      <div className="flex items-center gap-3">
-        <Checkbox
-          id={feature.feat_id}
-          onCheckedChange={onCheckedChange}
-          checked={isChecked}
-        />
-        <Label
-          htmlFor={feature.feat_id}
-          className="text-black/80 text-[14px] cursor-pointer"
-        >
-          {feature.feat_name}
-        </Label>
-      </div>
-    );
-  }
-);

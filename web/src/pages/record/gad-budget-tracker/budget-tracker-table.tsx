@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Link } from "react-router";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem} from "@/components/ui/dropdown/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 type header = {
   date: string;

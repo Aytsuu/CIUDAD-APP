@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Calendar, Syringe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { VaccineType ,VaccinesSchema} from "@/form-schema/chr-schema";

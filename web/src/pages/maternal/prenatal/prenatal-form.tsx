@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form/form"
 import CardLayout from "@/components/ui/card/card-layout"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 
 
 // interface PrenatalFormProps {

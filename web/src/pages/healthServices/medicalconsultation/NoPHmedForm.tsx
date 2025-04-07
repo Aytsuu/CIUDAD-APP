@@ -14,7 +14,7 @@ import {
 } from "@/form-schema/medicalConsultation/nonPhilhealthSchema";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
 import { ArrowLeft, UserPlus, ChevronLeft, Search } from "lucide-react";
