@@ -6,3 +6,12 @@ from .serializer import *
 from datetime import datetime
 
 # Create your views here.
+
+# **Prenatal View List**
+class PrenatalFormView(generics.ListCreateAPIView):
+    serializer_class = PrenatalFormSerializer
+    queryset = Prenatal_Form.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    

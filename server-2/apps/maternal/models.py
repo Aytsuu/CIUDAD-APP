@@ -18,7 +18,7 @@ class Prenatal_Form(models.Model):
         db_table = 'prenatal_form'
     
 
-class Obstretical_History(models.Model):
+class Obstetrical_History(models.Model):
     obs_id = models.BigAutoField(primary_key=True)
     obs_ch_born_alive = models.PositiveIntegerField()
     obs_living_ch = models.PositiveIntegerField()

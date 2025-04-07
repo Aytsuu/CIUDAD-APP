@@ -22,6 +22,15 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
 
 export default function MaternalAllRecords() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleDialogOpen = () => {
+    setIsDialogOpen(true);
+  }
+  const handleDialogCLose = () => {
+    setIsDialogOpen(true);
+  }
+
   type maternalRecords = {
     id: number;
     // patientName: string;

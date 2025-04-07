@@ -41,6 +41,7 @@ export default function PrenatalFormFirstPg(
 
     type previousHospitalization= {
         prevHospitalization: string;
+        prevHospitalizationYr: number;
     }
 
     const [prevIllnessData, setprevIllnessData] = useState<previousIllness[]>([])
@@ -94,6 +95,15 @@ export default function PrenatalFormFirstPg(
             )
         },
         {
+            accessorKey: "prevHospitalizationYr",
+            header: "Year",
+            cell: ({ row }) => (
+                <div className="flex justify-start min-w-[200px] px-2">
+                    <div className="w-full truncate">{row.original.prevHospitalization}</div>
+                </div>
+            )
+        },
+        {
             accessorKey: "action",
             header: "Action",
             cell: ({}) => (
@@ -135,11 +145,12 @@ export default function PrenatalFormFirstPg(
     // functionality to handle adding of previous hopsitalization
     const addPrevHospitalization = () => {
         const hospitalization = getValues("medicalHistory.prevHospitalization");
+        const hospitalizationYr = getValues("medicalHistory.prevHospitalizationYr");
 
         console.log(hospitalization);
 
         if(hospitalization){
-            setprevHospitalizationData((prev) => [...prev, {prevHospitalization: hospitalization}]);
+            setprevHospitalizationData((prev) => [...prev, {prevHospitalization: hospitalization, prevHospitalizationYr: hospitalizationYr}]);
             setValue("medicalHistory.prevHospitalization", "");
         }   
     }
@@ -509,12 +520,27 @@ export default function PrenatalFormFirstPg(
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormControl>
-                                                            <Input {...field} placeholder="Enter Previous Hospitalization" />
+                                                            <Input {...field} placeholder="Enter revious hospitalization" />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            
+                                        </div>
+                                        <div className="flex-1">
+                                            <FormField
+                                                control={form.control}
+                                                name="medicalHistory.prevHospitalizationYr"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormControl>
+                                                            <Input {...field} placeholder="Enter year" />
                                                         </FormControl>
                                                     </FormItem>
                                                 )}
                                             />
                                         </div>
+                                        
                                         <Button onClick={addPrevHospitalization} type="button" variant="default">Add</Button>
                                     </div>
                                     <div className="flex bg-white w-full overflow-x-auto mt-4">

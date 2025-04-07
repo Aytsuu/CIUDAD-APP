@@ -1,4 +1,3 @@
-import { FaTabletAlt } from "react-icons/fa"
 import z from "zod"
 
 // mother's basic info
@@ -28,18 +27,19 @@ export const PrenatalFormSchema = z.object({
 
     // obstretic history
     obstreticHistory: z.object({
-        noOfChBornAlive: z.number().optional(),
-        noOfLivingCh: z.number().optional(),
-        noOfAbortion: z.number().optional(),
-        noOfStillBirths: z.number().optional(),
-        historyOfLBabies: z.number().optional(),
-        historyOfDiabetes: z.string().optional()
+        noOfChBornAlive: z.number().min(0).optional(),
+        noOfLivingCh: z.number().min(0).optional(),
+        noOfAbortion: z.number().min(0).optional(),
+        noOfStillBirths: z.number().min(0).optional(),
+        historyOfLBabies: z.number().min(0).optional(),
+        historyOfDiabetes: z.string().min(0).optional()
     }),
 
     // medical history
     medicalHistory: z.object({
         prevIllness: z.string().optional(),
         prevHospitalization: z.string().optional(),
+        prevHospitalizationYr: z.number().optional(),
     }),
 
     // previous pregnancy
