@@ -259,6 +259,7 @@ import { deldonationreq } from "./request-db/donationDelRequest";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Donation = {
   don_num: number;
@@ -277,41 +278,30 @@ function DonationTracker() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
+
   const fetchData = async () => {
     try {
-        console.log("Fetching data..."); // Debug log
-        const result = await getdonationreq();
-        console.log("Data received:", result); // Debug log
-        
-        if (!Array.isArray(result)) {
-            throw new Error("Invalid data format");
-        }
-        
-        setData(result);
+      console.log("Fetching data...");
+      const result = await getdonationreq();
+      console.log("Data received:", result);
+      
+      if (!Array.isArray(result)) {
+        throw new Error("Invalid data format");
+      }
+      
+      setData(result);
     } catch (err) {
-        console.error("Fetch error:", err);
-        setError(err instanceof Error ? err.message : "Failed to load donations");
-        setData([]); // Ensure data is always an array
+      console.error("Fetch error:", err);
+      setError(err instanceof Error ? err.message : "Failed to load donations");
+      setData([]);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
-
-  // Fetch data from the backend
   useEffect(() => {
     fetchData();
-}, []);
-
-  // const handleDelete = async (don_num: number) => {  // Changed from string
-  //   console.log("Deleting:", don_num);
-  //   try {
-  //       await deldonationreq(don_num.toString());  // Convert to string if API requires
-  //       setData(prevData => prevData.filter(item => item.don_num !== don_num));
-  //   } catch (err) {
-  //       console.error("Delete error:", err);
-  //   }
-  // };
+  }, []);
 
   const handleDelete = async (don_num: number) => {
     try {
@@ -335,7 +325,7 @@ function DonationTracker() {
 
   const columns: ColumnDef<Donation>[] = [
     {
-      accessorKey: "don_num", // Use don_num instead of refNo
+      accessorKey: "don_num",
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -350,7 +340,7 @@ function DonationTracker() {
       ),
     },
     {
-      accessorKey: "don_donorfname", // Use don_donorfname instead of donor
+      accessorKey: "don_donorfname",
       header: "Donor First Name",
     },
     {
@@ -377,9 +367,7 @@ function DonationTracker() {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => (
-        
         <div className="flex flex-col sm:flex-row gap-2">
-          {/* View and Edit buttons */}
           <TooltipLayout
             trigger={
               <DialogLayout
@@ -411,24 +399,17 @@ function DonationTracker() {
             }
             content="View"
           />
-          {/* Delete button */}
           <TooltipLayout
             trigger={
-              // <div
-              //   className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"
-              //   onClick={() => handleDelete(row.original.don_num)} 
-              // >
-              //   <Trash size={16} />
-              // </div>
               <div className="flex items-center h-8">
-              <ConfirmationModal
-                  trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+                <ConfirmationModal
+                  trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Trash size={16} /></div>}
                   title="Confirm Delete"
                   description="Are you sure you want to delete this entry?"
                   actionLabel="Confirm"
                   onClick={() => handleDelete(row.original.don_num)} 
-              />                    
-          </div>   
+                />                    
+              </div>   
             }
             content="Delete"
           />
@@ -437,7 +418,6 @@ function DonationTracker() {
     },
   ];
 
-  // Filter options
   const filterOptions = [
     { id: "All Donation Category", name: "All Donation Category" },
     { id: "Monetary Donations", name: "Monetary Donations" },
@@ -452,15 +432,13 @@ function DonationTracker() {
   ];
 
   const [selectedFilter, setSelectedFilter] = useState(filterOptions[0].name);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter the data based on the selected filter
   const filteredData =
     selectedFilter === "All Donation Category"
       ? data
       : data.filter((item) => item.don_category === selectedFilter);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(filteredData.length / 12);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -470,12 +448,17 @@ function DonationTracker() {
   const endIndex = startIndex + 12;
   const currentRows = filteredData.slice(startIndex, endIndex);
 
-  // Show loading state
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+        <Skeleton className="h-10 w-full mb-4 opacity-30" />
+        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+      </div>
+    );
   }
 
-  // Show error state
   if (error) {
     return <div className="text-red-500">{error}</div>;
   }
@@ -492,9 +475,7 @@ function DonationTracker() {
       </div>
       <hr className="border-gray mb-6 sm:mb-8" />
 
-      {/* Combined Search, Filter, and Create Button Section */}
       <div className="relative w-full hidden lg:flex items-center gap-2 mb-4 justify-between">
-        {/* Search Input with Icon */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search
@@ -504,7 +485,6 @@ function DonationTracker() {
             <Input placeholder="Search..." className="pl-10 w-full bg-white" />
           </div>
 
-          {/* Filter Dropdown */}
           <div className="w-full sm:w-[200px]">
             <SelectLayout
               className="w-full bg-white"
@@ -530,12 +510,11 @@ function DonationTracker() {
               <ClerkDonateCreate onSuccess={() => setIsDialogOpen(false)}/>
             </div>
           }
-          isOpen={isDialogOpen} // Controlled open state
-          onOpenChange={setIsDialogOpen} // Controlled state setter
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
         />
       </div>
 
-      {/* Table Section */}
       <div className="w-full border-none bg-white rounded-[5px]">
         <div className="flex gap-x-2 items-center p-3">
           <p className="text-xs sm:text-sm">Show</p>
@@ -546,7 +525,6 @@ function DonationTracker() {
         <DataTable columns={columns} data={filteredData} />
       </div>
 
-      {/* Pagination Section */}
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
           Showing {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of {filteredData.length} rows
