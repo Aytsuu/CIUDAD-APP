@@ -458,7 +458,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
                 )}
 
 
-                {inv_num !== "None" && (
+                {(inv_num !== "None" && form.watch("iet_entryType") === "1") && (
                     <div className="pb-5">
                         <FormField
                             control={form.control}

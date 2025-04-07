@@ -16,6 +16,7 @@ import { getIncomeExpense } from "./request/income-ExpenseTrackingGetRequest";
 import { deleteIncomeExpense } from "./request/income-ExpenseTrackingDeleteRequest";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 
@@ -215,7 +216,14 @@ function IncomeandExpenseTracking() {
 
     // Show loading state
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="w-full h-full">
+              <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+              <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+              <Skeleton className="h-10 w-full mb-4 opacity-30" />
+              <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+            </div>
+          );
     }
 
     // Show error state

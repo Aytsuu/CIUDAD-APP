@@ -718,28 +718,6 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                             </div>
                         )}
 
-                        <div className="pb-5">
-                            <FormField
-                                control={form.control}
-                                name="iet_particulars"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Particulars</FormLabel>
-                                        <FormControl>
-                                            <Combobox
-                                                options={particularSelector}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                placeholder="Select Particulars"
-                                                emptyMessage="No particulars found"
-                                                contentClassName="w-full"
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
 
                         <div className="pb-5">
                             <FormField
@@ -764,6 +742,33 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                                 )}
                             />
                         </div>
+                        
+                        <div className="pb-5">
+                            <FormField
+                                control={form.control}
+                                name="iet_particulars"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Particulars</FormLabel>
+                                    <FormControl>
+                                    {form.watch("iet_entryType") === "1" ? (
+                                        <Combobox
+                                        options={particularSelector}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select Particulars"
+                                        emptyMessage="No particulars found"
+                                        contentClassName="w-full"
+                                        />
+                                    ) : (
+                                        <Input type="text" {...field} />
+                                    )}
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>                                             
 
                         <div className="pb-5">
                             <FormField
