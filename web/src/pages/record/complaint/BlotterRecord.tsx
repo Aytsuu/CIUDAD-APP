@@ -128,7 +128,7 @@ export default function BlotterRecord() {
       setPageSize(value);
     } else {
       setPageSize(10); // Default to 10 if invalid input
-    }
+    }    
   };
 
   // Handle page change from the PaginationLayout component

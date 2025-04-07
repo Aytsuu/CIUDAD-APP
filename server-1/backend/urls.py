@@ -31,4 +31,5 @@ urlpatterns = [
     path('waste/', include('apps.waste.urls')),
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
+    path('blotter/', include("apps.blotter.urls")),
 ]
