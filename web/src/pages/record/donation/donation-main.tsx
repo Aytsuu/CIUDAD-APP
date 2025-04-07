@@ -256,6 +256,9 @@ import { Input } from "@/components/ui/input"
 import { getdonationreq } from "./request-db/donationGetRequest";
 import { putdonationreq } from "./request-db/donationPutRequest";
 import { deldonationreq } from "./request-db/donationDelRequest";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 type Donation = {
   don_num: number;
@@ -273,6 +276,7 @@ function DonationTracker() {
   const [data, setData] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); 
+  const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const fetchData = async () => {
     try {
         console.log("Fetching data..."); // Debug log
@@ -299,14 +303,33 @@ function DonationTracker() {
     fetchData();
 }, []);
 
-  // Handle delete functionality
-  const handleDelete = async (don_num: number) => {  // Changed from string
-    console.log("Deleting:", don_num);
+  // const handleDelete = async (don_num: number) => {  // Changed from string
+  //   console.log("Deleting:", don_num);
+  //   try {
+  //       await deldonationreq(don_num.toString());  // Convert to string if API requires
+  //       setData(prevData => prevData.filter(item => item.don_num !== don_num));
+  //   } catch (err) {
+  //       console.error("Delete error:", err);
+  //   }
+  // };
+
+  const handleDelete = async (don_num: number) => {
     try {
-        await deldonationreq(don_num.toString());  // Convert to string if API requires
-        setData(prevData => prevData.filter(item => item.don_num !== don_num));
+      const toastId = toast.loading("Deleting donation...");
+      await deldonationreq(don_num.toString());
+      
+      toast.success("Donation deleted successfully", {
+        id: toastId,
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+      
+      setData(prevData => prevData.filter(item => item.don_num !== don_num));
     } catch (err) {
-        console.error("Delete error:", err);
+      toast.error("Failed to delete donation", {
+        duration: 2000
+      });
+      console.error("Delete error:", err);
     }
   };
 
@@ -391,12 +414,21 @@ function DonationTracker() {
           {/* Delete button */}
           <TooltipLayout
             trigger={
-              <div
-                className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"
-                onClick={() => handleDelete(row.original.don_num)} 
-              >
-                <Trash size={16} />
-              </div>
+              // <div
+              //   className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"
+              //   onClick={() => handleDelete(row.original.don_num)} 
+              // >
+              //   <Trash size={16} />
+              // </div>
+              <div className="flex items-center h-8">
+              <ConfirmationModal
+                  trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+                  title="Confirm Delete"
+                  description="Are you sure you want to delete this entry?"
+                  actionLabel="Confirm"
+                  onClick={() => handleDelete(row.original.don_num)} 
+              />                    
+          </div>   
             }
             content="Delete"
           />
@@ -495,9 +527,11 @@ function DonationTracker() {
           description=""
           mainContent={
             <div className="w-full h-full">
-              <ClerkDonateCreate />
+              <ClerkDonateCreate onSuccess={() => setIsDialogOpen(false)}/>
             </div>
           }
+          isOpen={isDialogOpen} // Controlled open state
+          onOpenChange={setIsDialogOpen} // Controlled state setter
         />
       </div>
 

@@ -1,189 +1,3 @@
-// // import { useState } from 'react';
-// // import { Input } from '@/components/ui/input';
-// // import { Label } from '@/components/ui/label';
-// // import { Textarea } from '@/components/ui/textarea';
-// // import { Button } from '@/components/ui/button';
-// // import { SelectLayout } from '@/components/ui/select/select-layout';
-// // import { zodResolver } from '@hookform/resolvers/zod';
-// // import { useForm } from 'react-hook-form';
-// // import { z } from 'zod';
-// // import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
-// // import ClerkDonateViewSchema from '@/form-schema/donate-view-schema';
-
-// // function ClerkDonateView() {
-// //     const [isEditing, setIsEditing] = useState(false); // State to track edit mode
-// //     const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
-// //         resolver: zodResolver(ClerkDonateViewSchema),
-// //         defaultValues: {
-// //             donorName: '',
-// //             donItemname: '',
-// //             donItemqty: '',
-// //             donItemcategory:'',
-// //             donReceiver:'',
-// //             donItemDescription: '',
-// //         },
-// //     });
-
-// //     const onSubmit = (values: z.infer<typeof ClerkDonateViewSchema>) => {
-// //         console.log(values);
-// //         // Handle form submission (e.g., send data to the server)
-// //         // After saving, you can toggle back to read-only mode
-// //         setIsEditing(false);
-// //     };
-
-// //     return (
-// //         <Form {...form}>
-// //             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 max-w-4xl mx-auto">
-// //                 <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">DONATION DETAILS</Label>
-
-// //                 <FormField
-// //                     control={form.control}
-// //                     name="donorName"
-// //                     render={({ field }) => (
-// //                         <FormItem>
-// //                             <Label>Donor:</Label>
-// //                             <FormControl>
-// //                                 <Input placeholder="Enter donor's name" {...field} readOnly={!isEditing} />
-// //                             </FormControl>
-// //                             <FormMessage />
-// //                         </FormItem>
-// //                     )}
-// //                 /><br/>
-
-// //                 <FormField
-// //                     control={form.control}
-// //                     name="donItemname"
-// //                     render={({ field }) => (
-// //                         <FormItem>
-// //                             <Label>Item Name:</Label>
-// //                             <FormControl>
-// //                                 <Input placeholder='Enter item name' {...field} readOnly={!isEditing} />
-// //                             </FormControl>
-// //                             <FormMessage />
-// //                         </FormItem>
-// //                     )}
-// //                 /><br/>
-
-// //                 <FormField
-// //                     control={form.control}
-// //                     name="donItemqty"
-// //                     render={({ field }) => (
-// //                         <FormItem>
-// //                             <Label>Quantity:</Label>
-// //                             <FormControl>
-// //                                 <Input placeholder='Enter quantity' {...field} readOnly={!isEditing} />
-// //                             </FormControl>
-// //                             <FormMessage />
-// //                         </FormItem>
-// //                     )}
-// //                 /><br/>
-
-// //                 <FormField
-// //                     control={form.control}
-// //                     name="donItemcategory"
-// //                     render={({ field }) => (
-// //                         <FormItem>
-// //                             <Label>Category:</Label>
-// //                             <FormControl>
-// //                                 {/* <SelectLayout className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-// //                                     label=""
-// //                                     placeholder="Select Item Category"
-// //                                     options={[
-// //                                         { id: 'Category 1', name: 'Category 1' },
-// //                                         { id: 'Category 2', name: 'Category 2' }
-// //                                     ]}
-// //                                     value={field.value || ''}
-// //                                     onChange={field.onChange}
-// //                                 /> */}
-// //                                 {isEditing ? (
-// //                                     <SelectLayout 
-// //                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-// //                                         label=""
-// //                                         placeholder="Select Item Category"
-// //                                         options={[
-// //                                             { id: 'Category 1', name: 'Category 1' },
-// //                                             { id: 'Category 2', name: 'Category 2' }
-// //                                         ]}
-// //                                         value={field.value || ''}
-// //                                         onChange={field.onChange}
-// //                                     />
-// //                                 ) : (
-// //                                     <div className="flex items-center h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base">
-// //                                         {field.value || 'No category selected'}
-// //                                     </div>
-// //                                 )}
-// //                             </FormControl>
-// //                             <FormMessage />
-// //                         </FormItem>
-// //                     )}
-// //                 /><br/>
-
-// //                 <FormField
-// //                     control={form.control}
-// //                     name="donReceiver"
-// //                     render={({ field }) => (
-// //                         <FormItem>
-// //                             <Label>Donation Received By:</Label>
-// //                             <FormControl>
-// //                                 {/* <SelectLayout className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-// //                                     label=""
-// //                                     placeholder="Select employee name who received the donation"
-// //                                     options={[
-// //                                         { id: 'Employee 1', name: 'Employee 1' },
-// //                                         { id: 'Employee 2', name: 'Employee 2' }
-// //                                     ]}
-// //                                     value={field.value || ''}
-// //                                     onChange={field.onChange}
-// //                                 /> */}
-// //                                 {isEditing ? (
-// //                                     <SelectLayout 
-// //                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-// //                                         label=""
-// //                                         placeholder="Select employee name who received the donation"
-// //                                         options={[
-// //                                             { id: 'Employee 1', name: 'Employee 1' },
-// //                                             { id: 'Employee 2', name: 'Employee 2' }
-// //                                         ]}
-// //                                         value={field.value || ''}
-// //                                         onChange={field.onChange}
-// //                                     />
-// //                                 ) : (
-// //                                     <div className="flex items-center h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base">
-// //                                         {field.value || 'No receiver selected'}
-// //                                     </div>
-// //                                 )}
-// //                             </FormControl>
-// //                             <FormMessage />
-// //                         </FormItem>
-// //                     )}
-// //                 /><br/>
-
-// //                 <FormField
-// //                     control={form.control}
-// //                     name="donItemDescription"
-// //                     render ={({ field }) => (
-// //                         <FormItem>
-// //                             <Label>Item Description:</Label>
-// //                             <FormControl>
-// //                                 <Textarea placeholder='Enter item description' {...field} readOnly={!isEditing} />
-// //                             </FormControl>
-// //                             <FormMessage />
-// //                         </FormItem>
-// //                     )}
-// //                 /><br/>
-
-// //                 <div className="flex items-center justify-end">
-// //                     <Button type="button" onClick={() => setIsEditing(!isEditing)} className="bg-blue hover:bg-blue hover:opacity-[95%]">
-// //                         {isEditing ? 'Save' : 'Edit'}
-// //                     </Button>
-// //                 </div>
-// //             </form>
-// //         </Form>
-// //     );
-// // }
-
-// // export default ClerkDonateView;
-
 // import { useState } from 'react';
 // import { Button } from '@/components/ui/button';
 // import { zodResolver } from '@hookform/resolvers/zod';
@@ -328,6 +142,8 @@
 
 // export default ClerkDonateView;
 
+
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button/button";
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -339,6 +155,9 @@ import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import ClerkDonateViewSchema from '@/form-schema/donate-view-schema';
 import { putdonationreq } from './request-db/donationPutRequest';
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 
 type ClerkDonateViewProps = {
     don_num: number;
@@ -383,23 +202,73 @@ function ClerkDonateView({
     },
   });
 
+  // const onSubmit = async (values: z.infer<typeof ClerkDonateViewSchema>) => {
+  //   try {
+  //     setIsSubmitting(true);
+  //     setError(null);
+  //     console.log("Submitting:", { don_num, values }); 
+  //     // Call the PUT API
+  //     await putdonationreq(don_num, values);
+      
+  //     // On successful update
+  //     setIsEditing(false);
+  //     if (onSaveSuccess) onSaveSuccess(); // Refresh parent data if needed
+      
+  //   } catch (err) {
+  //     console.error("Update failed:", err);
+  //     setError(err instanceof Error ? err.message : "Failed to update donation");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
   const onSubmit = async (values: z.infer<typeof ClerkDonateViewSchema>) => {
+    const toastId = toast.loading('Updating donation...', {
+      duration: Infinity
+    });
+
     try {
-      setIsSubmitting(true);
-      setError(null);
-      console.log("Submitting:", { don_num, values }); 
-      // Call the PUT API
       await putdonationreq(don_num, values);
       
-      // On successful update
-      setIsEditing(false);
-      if (onSaveSuccess) onSaveSuccess(); // Refresh parent data if needed
+      toast.success('Donation updated successfully', {
+        id: toastId,
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+        onAutoClose: () => {
+          setIsEditing(false);
+          if (onSaveSuccess) onSaveSuccess();
+        }
+      });
       
     } catch (err) {
+      toast.error('Failed to update donation', {
+        id: toastId,
+        duration: 2000
+      });
       console.error("Update failed:", err);
       setError(err instanceof Error ? err.message : "Failed to update donation");
-    } finally {
-      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmSave = async () => {
+    const values = form.getValues();
+    const toastId = toast.loading('Updating donation...', { duration: Infinity });
+  
+    try {
+      await putdonationreq(don_num, values);
+      
+      toast.success('Donation updated successfully', {
+        id: toastId,
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+      
+      setIsEditing(false);
+      if (onSaveSuccess) onSaveSuccess();
+      
+    } catch (err) {
+      toast.error('Failed to update donation', { id: toastId, duration: 2000 });
+      console.error("Update failed:", err);
+      setError(err instanceof Error ? err.message : "Failed to update donation");
     }
   };
 
@@ -499,7 +368,7 @@ function ClerkDonateView({
           <div className="mt-8 flex justify-end gap-3">
             {isEditing ? (
               <>
-                <Button
+                {/* <Button
                   type="button"
                   onClick={() => {
                     form.reset();
@@ -525,7 +394,43 @@ function ClerkDonateView({
                 className="bg-buttonBlue hover:bg-buttonBlue/90"
               >
                 Edit
-              </Button>
+              </Button> */}
+              <Button
+        type="button"
+        onClick={() => {
+          form.reset();
+          setIsEditing(false);
+          setError(null);
+        }}
+        variant="outline"
+      >
+        Cancel
+      </Button>
+      
+      <ConfirmationModal
+        trigger={
+          <Button 
+            type="button" 
+            className="bg-buttonBlue hover:bg-buttonBlue/90"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </Button>
+        }
+        title="Confirm Save"
+        description="Are you sure you want to save the changes?"
+        actionLabel="Confirm"
+        onClick={handleConfirmSave}
+      />
+    </>
+  ) : (
+    <Button
+      type="button"
+      onClick={() => setIsEditing(true)}
+      className="bg-buttonBlue hover:bg-buttonBlue/90"
+    >
+      Edit
+    </Button>
             )}
           </div>
         </form>

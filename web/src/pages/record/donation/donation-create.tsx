@@ -8,8 +8,14 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 import { postdonationreq } from "./request-db/donationPostRequest";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
-function ClerkDonateCreate() {
+interface ClerkDonateCreateFormProps {
+  onSuccess?: () => void; // Add this prop type
+}
+
+function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
     resolver: zodResolver(ClerkDonateCreateSchema),
     defaultValues: {
@@ -24,12 +30,32 @@ function ClerkDonateCreate() {
       don_date: new Date().toISOString().split("T")[0],
     },
   });
+  
 
   const onSubmit = async (values: z.infer<typeof ClerkDonateCreateSchema>) => {
+    const toastId = toast.loading('Submitting entry...', {
+      duration: Infinity  
+  });
     try {
       await postdonationreq(values);
+      toast.success('Donation entry recorded successfully', {
+        id: toastId, 
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+        onAutoClose: () => {
+          window.location.reload();
+        }
+    });
+    if (onSuccess) onSuccess();
   } catch (err) {
       console.error("Error submitting donation", err);
+      toast.error(
+        "Failed to submit income or expense. Please check the input data and try again.",
+        {
+            id: toastId,
+            duration: 2000
+        }
+    );
   }
   };
 
