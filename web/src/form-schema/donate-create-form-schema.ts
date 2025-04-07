@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const ClerkDonateCreateSchema = z.object({
-    don_num: z.number().optional(), 
+    // don_num: z.number().optional(), 
     don_donorfname: z.string().nonempty("Donor first name is required"), 
     don_donorlname: z.string().nonempty("Donor last name is required"), 
     don_item_name: z.string().nonempty("Item name is required"), 

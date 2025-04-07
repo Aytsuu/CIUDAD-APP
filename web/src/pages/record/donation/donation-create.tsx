@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,7 +13,7 @@ function ClerkDonateCreate() {
   const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
     resolver: zodResolver(ClerkDonateCreateSchema),
     defaultValues: {
-      don_num: 0,
+      // don_num: 0,
       don_donorfname: "",
       don_donorlname: "",
       don_item_name: "",
@@ -30,7 +30,6 @@ function ClerkDonateCreate() {
       await postdonationreq(values);
   } catch (err) {
       console.error("Error submitting donation", err);
-      alert("Failed to submit donation entry. Please check the information entered and try again.");
   }
   };
 
@@ -47,13 +46,13 @@ function ClerkDonateCreate() {
             className="flex flex-col gap-4"
           >
             {/* Reference Number*/}
-            <FormInput
+            {/* <FormInput
               control={form.control}
               name="don_num"
               label="Reference Number"
               placeholder="Please enter reference number"
               readOnly={false}
-            />
+            /> */}
 
             {/* Donor First Name */}
             <FormInput
