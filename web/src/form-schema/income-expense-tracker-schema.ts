@@ -45,9 +45,30 @@ const IncomeExpenseFormSchema = z.object({
     iet_amount: z.string().nonempty('Amount is required'),
     iet_additional_notes: z.string().optional(),
     // receipt_image: z.string().nonempty('Receipt is required.'),
-    iet_receipt_image: z.instanceof(File).refine((file) => file.size > 0, {
-        message: "Receipt is required.",
-    }), // Make this required
+    // iet_receipt_image: z.instanceof(File).refine((file) => file.size > 0, {
+    //     message: "Receipt is required.",
+    // }), 
+    iet_receipt_image: z.any()
+    .refine((file) => {
+        if (!file) return false;
+        
+        if (file instanceof File) {
+            return file.size > 0;
+        }
+        
+        if (file?.file instanceof File) {
+            return file.file.size > 0;
+        }
+        
+        if (typeof file === 'string') {
+            // If it's already a URL string from server
+            return true;
+        }
+        
+        return false;
+    }, {
+        message: "Please upload a valid receipt image"
+    })
 })
 
 export default IncomeExpenseFormSchema

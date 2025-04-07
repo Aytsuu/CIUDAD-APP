@@ -17,7 +17,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_particulars:  parseInt(incomeExpenseInfo.iet_particulars),
             iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
-            iet_receipt_image: "urlfornow",
+            iet_receipt_image: incomeExpenseInfo.iet_receipt_image,
             dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
         })
 
