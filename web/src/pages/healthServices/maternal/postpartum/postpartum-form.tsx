@@ -34,18 +34,8 @@ export default function PostpartumForm(
                 }}
                 >
                     <div>
-                        <FormInput
-                            control={form.control}
-                            label="Last Name"
-                            name="mothersPersonalInfo.motherLName"
-                            placeholder="Last Name"
-                        />
-                        <FormInput
-                            control={form.control}
-                            label="First Name"
-                            name="mothersPersonalInfo.motherFName"
-                            placeholder="First Name"
-                        />
+                        <FormInput control={form.control} label="Last Name" name="mothersPersonalInfo.motherLName" placeholder="Last Name"/>
+                        <FormInput control={form.control} label="First Name" name="mothersPersonalInfo.motherFName" placeholder="First Name"/>
                         <FormInput
                             control={form.control}
                             label="Middle Name"
