@@ -8,27 +8,14 @@ import LivingSoloForm from "./LivingSoloForm";
 import { formatHouseholds, formatResidents } from "../../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
-import {
-  addFamily,
-  addFamilyComposition,
-} from "../../restful-api/profiingPostAPI";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
-
+import { useAddFamily } from "../../queries/profilingAddQueries";
 
 export default function SoloFormLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = React.useRef(useAuth()).current;
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
-  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
-  const params = React.useMemo(() => location?.state.params || {}, [location.state]);
-  const residents = React.useMemo(() => formatResidents(params, false), [params.residents]);
-  const households = React.useMemo(() => formatHouseholds(params), [params.households]);
-
   const defaultValues = React.useRef(
     generateDefaultValues(demographicInfoSchema)
   );
@@ -37,6 +24,15 @@ export default function SoloFormLayout() {
     defaultValues: defaultValues.current,
     mode: "onChange",
   });
+
+  const { user } = React.useRef(useAuth()).current;
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
+  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
+  const params = React.useMemo(() => location?.state.params || {}, [location.state]);
+  const residents = React.useMemo(() => formatResidents(params, false), [params.residents]);
+  const households = React.useMemo(() => formatHouseholds(params), [params.households]);
+  const { mutateAsync: addFamily} = useAddFamily(form.getValues());
 
   const submit = async () => {
       setIsSubmitting(true);
@@ -53,22 +49,16 @@ export default function SoloFormLayout() {
         });
         return;
       }
+
+      await addFamily({
+        fatherId: null, 
+        motherId: null, 
+        guardId: null, 
+        staffId: user?.staff.staff_id
+      });
   
-      const data = form.getValues();
-      const familyNo = await addFamily(data, null, null, null, user?.staff.staff_id);
-      const res = await addFamilyComposition(familyNo, data.id.split(" ")[0]);
-  
-      if (res) {
-        toast("Record added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          action: {
-            label: "View",
-            onClick: () => navigate(-1),
-          },
-        });
-        setIsSubmitting(false);
-        form.reset(defaultValues.current);
-      }
+      setIsSubmitting(false);
+      form.reset(defaultValues.current);
     };
 
   return (
