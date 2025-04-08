@@ -1,7 +1,7 @@
 // This file contains all the API calls related to authentication.
 
 import axios from 'axios';
-import { User } from '../context/authTypes';
+import { User } from '../context/auth/authTypes';
 
 export const login = async (username: string, password: string) => {
   const response = await axios.post('http://localhost:8000/api/auth/login/', {

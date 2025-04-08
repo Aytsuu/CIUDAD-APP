@@ -29,6 +29,7 @@ export function DemographicData({
 }: {
   form: UseFormReturn<z.infer<typeof DemographicSchema>>;
   onSubmit: () => void;
+  households: any[];
 }) {
   const submit = async () => {
     const formIsValid = await form.trigger();
@@ -52,9 +53,9 @@ export function DemographicData({
   return (
     <div className="w-full">
       <CardLayout
-        cardTitle="Demographic Data"
-        cardDescription="Fill in all the required fields to complete the demographic data."
-        cardContent={
+        title="Demographic Data"
+        description="Fill in all the required fields to complete the demographic data."
+        content={
           <div className="w-full mx-auto border-none">
             <Separator className="w-full bg-gray"></Separator>
             <div className="pt-4">
@@ -81,8 +82,9 @@ export function DemographicData({
                         placeholder="Enter quarter"
                       />
                       <Combobox
-                        options={households}
-                        value={form.watch(`demographicInfo.householdNo`)}
+                        options={[]}
+                        // value={form.watch(`demographicInfo.householdNo`)}
+                        value={form.watch(`demographicInfo.householdNo`) || ""}
                         onChange={handleHouseholdChange}
                         placeholder="Search for household..."
                         contentClassName="w-full"
@@ -476,7 +478,7 @@ export function DemographicData({
 
                       <FormField
                         control={form.control}
-                        name="noFamilyPlanning"
+                        name="healthInfo.noFamilyPlanning"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                             <FormControl>
@@ -494,7 +496,7 @@ export function DemographicData({
                         )}
                       />
 
-                      {!form.watch("noFamilyPlanning") && (
+                      {!form.watch("healthInfo.noFamilyPlanning") && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormSelect
                             control={form.control}
@@ -531,8 +533,8 @@ export function DemographicData({
           </div>
         }
         cardClassName="border-0 shadow-none pb-2 rounded-lg"
-        cardHeaderClassName="pb-2 bt-2 text-xl"
-        cardContentClassName="pt-0"
+        headerClassName="pb-2 bt-2 text-xl"
+        contentClassName="pt-0"
       />
     </div>
   );

@@ -50,6 +50,7 @@ const items: MenuItem[] = [
     items: [
       { title: "Resident", url: "/resident-records"},
       { title: "Family", url: "/family-records" },
+      
       { title: "Household", url: "/household-records" },
       { title: "Business", url: "/business-records" },
     ],

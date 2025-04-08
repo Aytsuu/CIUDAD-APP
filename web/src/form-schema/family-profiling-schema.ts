@@ -91,13 +91,16 @@ export const demographicFormSchema = z.object({
   //   healthRelDetails: healthRelDetails.optional(),
   // }),
 
-  healthRiskClassification: z.string(),
-  immunizationStatus: z.string(),
-  familyPlanning: z.object({
-    method: z.string(),
-    source: z.string(),
+  healthInfo: z.object({
+    healthRiskClassification: z.string(),
+    immunizationStatus: z.string(),
+    familyPlanning: z.object({
+      method: z.string().optional(),
+      source: z.string().optional(),
+    }).optional(),
+    noFamilyPlanning: z.boolean().optional(),
   }),
-  noFamilyPlanning: z.boolean().default(false),
+
 });
 
 // Dependent Data Schema

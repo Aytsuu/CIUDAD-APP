@@ -8,7 +8,7 @@ import { useNavigate } from "react-router"
 import { Button } from "@/components/ui/button/button"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
 import { addStaff } from "./restful-api/administrationPostAPI"
-import { personal } from "../profiling/restful-api/profiingPostAPI"
+import { addPersonal } from "../profiling/restful-api/profiingPostAPI"
 import { CircleCheck, Loader2 } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { FormSelect } from "@/components/ui/form/form-select"
@@ -61,7 +61,7 @@ export default function AssignPosition(
           
         } else { // Register resident before assignment, if not
             const personalInfo = personalInfoform.getValues()
-            const perId = await personal(personalInfo)
+            const perId = await addPersonal(personalInfo)
             const res = await addStaff(perId, positionId)
 
             if(res) deliverFeedback(); 

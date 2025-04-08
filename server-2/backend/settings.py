@@ -59,10 +59,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'apps.account',
-    'apps.waste',
-    'apps.profiling',
-    'apps.administration'
+    # 'apps.account',
+    # 'apps.waste',
+    # 'apps.profiling',
+    # 'apps.administration'
 ]
 
 MIDDLEWARE = [
