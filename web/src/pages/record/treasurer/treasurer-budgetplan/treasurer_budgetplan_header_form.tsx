@@ -68,7 +68,7 @@ function CreateBudgetPlanHeader(){
                         name="balance"
                         render={({field}) =>(
                             <FormItem>
-                                <FormLabel>Balance</FormLabel>
+                                <FormLabel>Balance From Previous Year</FormLabel>
                                 <FormControl>
                                     <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
                                 </FormControl>

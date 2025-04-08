@@ -8,12 +8,13 @@ import { useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
 import { useEffect } from "react";
 import { ChevronLeft, CircleCheck } from "lucide-react";
-// import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import DisplayBreakdown from "../display_breakdown";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -253,7 +254,6 @@ function CreateBudgetPlanForm() {
             console.error("Error submitting budget plan", error);
         }
     };
-
     
     return (
         <div className='w-full h-full bg-snow'>
@@ -283,10 +283,21 @@ function CreateBudgetPlanForm() {
             <div className='flex flex-col gap-5'>
                 {/* Header */}
                 <div className='w-full  grid grid-cols-3 gap-3'>
-                    <div className='p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow'>
-                        <Label className={styles.labelDesign}>NET Available Resources: </Label>
-                        <Label>{formatNumber(availableResources.toString())}</Label>
-                    </div>
+                    {/* Displays the breakdown of Net available resources when clicked */}
+                        <DialogLayout
+                            trigger={ 
+                                <div className='p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow cursor-pointer'>
+                                        <Label className={styles.labelDesign}>NET Available Resources:</Label>
+                                        <Label> {formatNumber(availableResources.toString())}</Label>
+                                </div>
+                            }
+                            title="Breakdown of NET Available Resources"
+                            description="Detailed breakdown of available funds from all income sources"
+                            mainContent={
+                                <DisplayBreakdown></DisplayBreakdown>
+                            }
+                        />
+                   
 
                     <div className='p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow'>
                         <Label className={styles.labelDesign}>Year: </Label>
