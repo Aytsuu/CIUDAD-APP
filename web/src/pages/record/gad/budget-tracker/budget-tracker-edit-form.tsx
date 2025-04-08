@@ -292,6 +292,10 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import GADEditEntrySchema from '@/form-schema/gad-budget-tracker-edit-form-schema';
 import { putbudgettrackreq } from './requestAPI/BTPutRequest'; // Import your PUT request function
 
+// interface GADEditEntryFormPropsConf {
+//   onSuccess?: () => void; // Add this prop type
+// }
+
 type GADEditEntryFormProps = {
   gbud_num: number; // Required identifier for the entry
   gbud_type?: string;

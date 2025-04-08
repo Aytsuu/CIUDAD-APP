@@ -45,8 +45,8 @@ INSTALLED_APPS = [
     'apps.waste',
     'apps.profiling',
     'corsheaders',
-    'apps.useraccount',
-    'apps.blotter',
+    # 'apps.useraccount',
+    # 'apps.blotter',
     'apps.gad',
 ]
 
