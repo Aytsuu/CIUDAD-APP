@@ -1,7 +1,7 @@
-import AppointmentTable from "./appoinmentTable";
-import RequestTable from "./medrequestTable";
-import MedicineRequestStatusTable from "./toReceivedMedicineTable";
-import { Button } from "@/components/ui/button";
+import AppointmentTable from "./AppoinmentTable";
+import RequestTable from "./MedrequestTable";
+import MedicineRequestStatusTable from "./ToReceivedMedicineTable";
+import { Button } from "@/components/ui/button/button";
 import { useState } from "react";
 
 export default function AppRequestMain() {

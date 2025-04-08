@@ -3,9 +3,9 @@ import { z } from 'zod'; // Schema validation library
 import { zodResolver } from '@hookform/resolvers/zod'; // Resolver for integrating Zod with React Hook Form
 import { Input } from '@/components/ui/input'; // Input component
 import { Textarea } from '@/components/ui/textarea'; // Textarea component
-import { Button } from '@/components/ui/button'; // Button component
+import { Button } from '@/components/ui/button/button'; // Button component
 import { useForm } from 'react-hook-form'; // Hook for managing forms
-import ARSchema from '@/form-schema/ar-scheme'; // Zod schema for form validation
+import ARSchema from '@/form-schema/acknowledgement-report-schema'; // Zod schema for form validation
 import { SelectLayout } from '@/components/ui/select/select-layout'; // Custom select dropdown component
 
 // Import Form components from shadcn/ui
@@ -92,8 +92,6 @@ export default function DRRARForm() {
                                     <FormControl>
                                         <SelectLayout
                                             placeholder='Select a Sitio'
-                                            label=''
-                                            className=''
                                             options={[{ id: '1', name: 'bahog tae' }]} // Sample options
                                             value={field.value}
                                             onChange={field.onChange}

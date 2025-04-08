@@ -1,0 +1,105 @@
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { VitalSignSchema, VitalSignType } from "@/form-schema/chr-schema";
+
+interface VitalSignsDialogFormProps {
+  onSubmit: (values: VitalSignType) => void;
+  onCancel: () => void;
+}
+
+export function VitalSignsDialogForm({
+  onSubmit,
+  onCancel,
+}: VitalSignsDialogFormProps) {
+  const currentDate = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+
+  const form = useForm<VitalSignType>({
+    resolver: zodResolver(VitalSignSchema),
+    defaultValues: {
+      age: "",
+      wt: 0,
+      ht: 0,
+      temp: 0,
+      date: currentDate,
+      followUpVisit: "", // Remove default value for followUpVisit
+      findings: "",
+      notes: "",
+    },
+  });
+
+  const formFields = [
+    { name: "age", label: "Age", type: "text" },
+    { name: "wt", label: "Weight (kg)", type: "number" },
+    { name: "ht", label: "Height (cm)", type: "number" },
+    { name: "temp", label: "Temperature (°C)", type: "number" },
+    { name: "date", label: "Date", type: "date" },
+    { name: "followUpVisit", label: "Follow Up Visit", type: "date" },
+    { name: "findings", label: "Findings", type: "text" },
+    { name: "notes", label: "Notes", type: "text" },
+  ];
+
+  return (
+    <Form {...form}>
+      <form
+        className="space-y-4"
+        onSubmit={form.handleSubmit(
+          (data) => {
+            console.log("Form data submitted:", data); // Debugging
+            onSubmit(data);
+          },
+          (errors) => {
+            console.error("Form validation errors:", errors); // Debugging
+          }
+        )}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {formFields.map(({ name, label, type }) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name as keyof VitalSignType}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type={type}
+                      step={type === "number" ? "0.01" : undefined}
+                      onChange={
+                        type === "number"
+                          ? (e) => field.onChange(Number(e.target.value))
+                          : field.onChange
+                      }
+                      value={
+                        field.value as
+                          | string
+                          | number
+                          | readonly string[]
+                          | undefined
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button type="submit" className="bg-green-600 w-[120px] hover:bg-green-700">Add </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Form,
   FormControl,
@@ -26,8 +26,11 @@ export default function VaccinationForm() {
     defaultValues: {
       pr: "",
       temp: "",
-      bp: "",
       o2: "",
+      bpsystolic:0,
+      bpdiastolic:0
+      
+
     },
   });
 
@@ -57,7 +60,6 @@ export default function VaccinationForm() {
   const vitalSignsFields = [
     { name: "pr", label: "PR", placeholder: "Enter PR" },
     { name: "temp", label: "Temp", placeholder: "Enter Temperature" },
-    { name: "bp", label: "BP", placeholder: "Enter Blood Pressure" },
     { name: "o2", label: "O2", placeholder: "Enter O2" },
   ];
 
@@ -92,14 +94,14 @@ export default function VaccinationForm() {
       <DialogLayout
         trigger={
           <div className="border-green-600 text-green-700 border border-green h-9 px-4 py-2 rounded-md">
-           Assess
+            Assess
           </div>
         }
         className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
         title="Vaccination Form"
         description=""
         mainContent={
-          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+          <div className="max-h-[calc(100vh-8rem)]  overflow-y-auto px-1 ">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(() => {
@@ -160,6 +162,16 @@ export default function VaccinationForm() {
                   {/* Age and Sex Fields (Read-Only) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
                     <div>
+                      <Label>Date of Birth</Label>
+                      <Input
+                        type="date"
+                        value={dob}
+                        readOnly
+                        className="w-full bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
                       <Label>Age</Label>
                       <Input
                         value={age}
@@ -177,19 +189,9 @@ export default function VaccinationForm() {
                         className="bg-gray-100 cursor-not-allowed"
                       />
                     </div>
-
-                    <div>
-                      <Label>Date of Birth</Label>
-                      <Input
-                        type="date"
-                        value={dob}
-                        readOnly
-                        className="w-full bg-gray-100 cursor-not-allowed"
-                      />
-                    </div>
                   </div>
 
-                  <h2 className="font-bold">Address</h2>
+                  <h2 className="font-bold text-blue">Address</h2>
 
                   {/* Address Fields (Read-Only) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
@@ -243,7 +245,7 @@ export default function VaccinationForm() {
                       control={form.control}
                       name={name as keyof VitalSignsType}
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem> 
                           <FormLabel>{label}</FormLabel>
                           <FormControl>
                             <Input
@@ -258,6 +260,56 @@ export default function VaccinationForm() {
                       )}
                     />
                   ))}
+                </div>
+
+                {/* Blood Pressure */}
+                <div className="flex flex-col sm:flex-row gap-4 items-center pt-3">
+                  <FormLabel className="font-medium text-black/65">
+                    Blood Pressure
+                  </FormLabel>
+                  <div className="flex gap-2">
+                    <FormField
+                      control={form.control}
+                      name="bpsystolic"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              placeholder="Systolic"
+                              value={field.value || ""}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-2xl">/</span>
+                    <FormField
+                      control={form.control}
+                      name="bpdiastolic"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              value={field.value || ""}
+                              placeholder="Diastolic"
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {/* Action Buttons */}

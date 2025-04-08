@@ -8,41 +8,41 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Option {
-  id?: string;
+  id: string;
   name: React.ReactNode;
-  icons?: React.ReactNode;
+  icon?: React.ReactNode
 }
 
 interface DropdownProps {
-  label: React.ReactNode;
+  trigger: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  itemClassName?: string
   options: Option[];
-  value?: string;
-  onChange?: (value: string) => void;
+  onSelect?: (value: string) => void;
 }
 
 export default function DropdownLayout({ 
-  label, 
+  trigger, 
   className, 
   contentClassName, 
+  itemClassName,
   options, 
-  value, 
-  onChange 
+  onSelect 
 }: DropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={cn("border-white focus:outline-none", className)}>
-        {label}
+        {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>
         {options.map((option, index) => (
           <DropdownMenuItem 
-            className="cursor-pointer flex items-center gap-x-2" 
+            className={cn("cursor-pointer flex items-center gap-x-2", itemClassName)}
             key={option.id || index} 
-            onSelect={() => option.id && onChange && onChange(option.id)}
+            onSelect={() => option.id && onSelect && onSelect(option.id)}
           >
-            {option.icons}
+            {option.icon}
             {option.name}
           </DropdownMenuItem>
         ))}

@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 function ClerkDonateDeleteConf() {
 

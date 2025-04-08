@@ -1,5 +1,3 @@
-// components/DialogLayout.tsx
-import React, { useState } from "react";
 import {
     Dialog,
     DialogHeader,
@@ -8,9 +6,10 @@ import {
     DialogContent,
     DialogTrigger,
 } from "@/components/ui/dialog/dialog";
+import { useState } from "react";
 
 interface DialogProps {
-    trigger: React.ReactNode;
+    trigger?: React.ReactNode;
     className?: string;
     title?: string;
     description?: string;

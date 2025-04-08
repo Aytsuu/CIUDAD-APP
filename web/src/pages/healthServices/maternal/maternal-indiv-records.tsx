@@ -6,7 +6,7 @@ import { ArrowUpDown, Eye, Trash, Search } from "lucide-react";
 import { FileInput } from "lucide-react";
 
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";

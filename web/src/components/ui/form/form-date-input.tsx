@@ -16,7 +16,11 @@ export const FormDateInput = React.memo(({ control, name, label, readOnly }:
       name={name}
       render={({ field }) => (
         <FormItem>
+<<<<<<< HEAD
           <FormLabel className="text-black/70">{label}</FormLabel>
+=======
+          <FormLabel>{label}</FormLabel>
+>>>>>>> backend/feature/healthinventory
           <FormControl>
             <input
               type="date"

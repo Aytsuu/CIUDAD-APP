@@ -7,6 +7,7 @@ import AppSidebar from "@/components/ui/sidebar/app-sidebar";
 import { Outlet } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function MainLayout() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,6 +31,7 @@ export default function MainLayout() {
         </div>
         <main className="py-10 pl-8 pr-14 overflow-y-auto flex-1 bg-[#F3F4F8]">
           <Outlet />
+          <Toaster />
         </main>
       </div>
     </div>

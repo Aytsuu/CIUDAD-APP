@@ -5,7 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 // Define the type for the Report object
 type Report = {

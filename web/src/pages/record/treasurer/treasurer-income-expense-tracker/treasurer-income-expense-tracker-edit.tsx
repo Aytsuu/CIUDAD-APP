@@ -1,6 +1,10 @@
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+<<<<<<< HEAD
 import { Button } from "@/components/ui/button";
+=======
+import { Button } from "@/components/ui/button/button";
+>>>>>>> backend/feature/healthinventory
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,7 +34,8 @@ function IncomeandExpenseEditForm() {
             particulars: "",
             amount: "",
             receiver: "",
-            addNotes: ""
+            addNotes: "",
+            receipt_image: undefined
         }
     });
 
@@ -38,7 +43,7 @@ function IncomeandExpenseEditForm() {
     return (
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <div>
+                    <div className="pb-5">
                         <FormField
                             control={form.control}
                             name="serialNo"
@@ -54,7 +59,7 @@ function IncomeandExpenseEditForm() {
                         </FormField>
                     </div>
 
-                    <div>
+                    <div className="pb-5">
                         <FormField
                         control={form.control}
                         name="entryType"
@@ -69,7 +74,7 @@ function IncomeandExpenseEditForm() {
                         )}></FormField>
                     </div>
 
-                    <div>
+                    <div className="pb-5">
                         <FormField
                         control={form.control}
                         name="particulars"
@@ -84,7 +89,7 @@ function IncomeandExpenseEditForm() {
                         )}></FormField>
                     </div>
 
-                    <div>
+                    <div className="pb-5">
                         <FormField
                         control={form.control}
                         name="amount"
@@ -99,7 +104,7 @@ function IncomeandExpenseEditForm() {
                         )}></FormField>
                     </div>
 
-                    <div>
+                    <div className="pb-5">
                         <FormField
                         control={form.control}
                         name="receiver"
@@ -114,7 +119,7 @@ function IncomeandExpenseEditForm() {
                         )}></FormField>
                     </div>
 
-                    <div>
+                    <div className="pb-5">
                         <FormField
                         control={form.control}
                         name="addNotes"
@@ -123,6 +128,34 @@ function IncomeandExpenseEditForm() {
                                 <FormLabel>Additional Notes</FormLabel>
                                     <FormControl>
                                         <Textarea {...field} placeholder="Add more details (Optional)" readOnly={!isEditing} ></Textarea>
+                                    </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}></FormField>
+                    </div>
+
+
+                    <div className="pb-5">
+                        <FormField
+                        control={form.control}
+                        name="receipt_image"
+                        render={({field}) =>(
+                            <FormItem>
+                                <FormLabel>Receipt</FormLabel>
+                                    <FormControl>
+                                        <input
+                                            className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md"
+                                            type="file"
+                                            accept="image/*" // This restricts the file types to images only
+                                            onChange={(e) => {
+                                                const files = e.target.files; // Get the files
+                                                if (files && files.length > 0) { // Check if files is not null and has at least one file
+                                                    const file = files[0]; // Get the first file
+                                                    field.onChange(file); // Set the file to the form state
+                                                }                              
+                                            }}
+                                            disabled={!isEditing}
+                                        />
                                     </FormControl>
                                 <FormMessage/>
                             </FormItem>

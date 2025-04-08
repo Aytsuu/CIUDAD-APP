@@ -10,12 +10,10 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
-import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
-import { Button } from "@/components/ui/button";
+import { Supplement,SupplementType } from "@/form-schema/chr-schema";
+import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Baby } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card/card";
-import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -27,15 +25,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog/alert-dialog";
+import { ChevronLeft, Search } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/table/data-table";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-type Page1FormData = z.infer<typeof ChildHealthFormSchema>;
+
+
+type Page1FormData = z.infer<typeof Supplement>;
 
 type Page1Props = {
   onPrevious3: () => void;
   onNext5: () => void;
   updateFormData: (data: Partial<Page1FormData>) => void;
   formData: Page1FormData;
+};
+
+type IronRecord = {
+  ironType: string;
+  givenDate: string;
+  completedDate: string;
+};
+
+type VitaminRecord = {
+  vitaminType: string;
+  date: string;
 };
 
 export default function ChildHRPage4({
@@ -45,6 +60,7 @@ export default function ChildHRPage4({
   formData,
 }: Page1Props) {
   const form = useForm<Page1FormData>({
+    resolver:zodResolver(Supplement),
     defaultValues: {
       ...formData,
       ironDates: formData.ironDates || [],
@@ -155,12 +171,73 @@ export default function ChildHRPage4({
   const isIronAddButtonDisabled = !selectedIronType || !currentIronDate || !Date.parse(currentIronDate);
   const isVitaminAddButtonDisabled = !selectedVitaminType || !currentVitaminDate || !Date.parse(currentVitaminDate);
 
+  // Define columns for the DataTable
+  const ironColumns: ColumnDef<IronRecord>[] = [
+    {
+      accessorKey: "ironType",
+      header: "Iron Type",
+    },
+    {
+      accessorKey: "givenDate",
+      header: "Given Date",
+    },
+    {
+      accessorKey: "completedDate",
+      header: "Completed Date",
+      cell: ({ row }) => (
+      <div className="flex justify-center">
+          <Input
+          type="date"
+          className="w-full sm:w-[150px]"
+          value={row.original.completedDate || ""}
+          onChange={(e) => {
+            handleUpdateCompletedDate(row.index, e.target.value);
+          }}
+        />
+      </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button
+          variant="destructive"
+          onClick={() => handleDeleteIronDate(row.index)}
+        >
+          <Trash2 size={16} />
+        </Button>
+      ),
+    },
+  ];
+
+  const vitaminColumns: ColumnDef<VitaminRecord>[] = [
+    {
+      accessorKey: "vitaminType",
+      header: "Vitamin Type",
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button
+          variant="destructive"
+          onClick={() => handleDeleteVitaminDate(row.index)}
+        >
+          <Trash2 size={16} />
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <div className="w-full max-w-6xl h-full my-10 mx-auto bg-white rounded-lg shadow p-4 md:p-6 lg:p-8">
+    <div className="bg-white rounded-lg shadow md:p-4 lg:p-8">
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
           {/* Iron Given Section */}
-          <div className="flex flex-col lg:flex-row gap-2 lg:gap-10">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-10  mb-10">
             <div className="flex flex-col space-y-4 w-full lg:w-auto">
               <FormLabel className="font-semibold text-gray-700">
                 Date Iron Given:
@@ -224,68 +301,15 @@ export default function ChildHRPage4({
             </div>
 
             {/* Iron Given History Section */}
-            <Card className="w-full bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Baby className="h-6 w-6 text-blue" />
-                  Iron Given History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-2 pl-2">
-                  {watch("ironDates").length === 0 ? (
-                    <div className="p-2 text-gray-500">No records found.</div>
-                  ) : (
-                    watch("ironDates").map((iron, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 border bg-gray-100 rounded-md gap-2"
-                      >
-                        <span className="text-sm sm:text-base">
-                          Type: {iron.ironType} | Given: {iron.givenDate} | Completed:{" "}
-                          {iron.completedDate || "Pending"}
-                        </span>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                          <FormField
-                            control={control}
-                            name={`ironDates.${index}.completedDate`}
-                            render={({ field }) => (
-                              <FormItem className="w-full sm:w-auto">
-                                <FormControl>
-                                  <Input
-                                    type="date"
-                                    {...field}
-                                    value={field.value || ""}
-                                    onChange={(e) => {
-                                      field.onChange(e.target.value);
-                                      handleUpdateCompletedDate(index, e.target.value);
-                                    }}
-                                    className="w-full px-4 py-2 border rounded-lg"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={() => handleDeleteIronDate(index)}
-                            className="w-full sm:w-auto"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="w-full">
+              <DataTable columns={ironColumns} data={watch("ironDates")} />
+            </div>
           </div>
+          <hr className="border-gray mb-10 sm:mb-8 " />
+
 
           {/* Vitamin Given Section */}
-          <div className="flex flex-col lg:flex-row gap-2 lg:gap-10">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-10 mt- ">
             <div className="flex flex-col space-y-4 w-full lg:w-auto">
               <FormLabel className="font-semibold text-gray-700">
                 Vitamin A Given:
@@ -349,40 +373,9 @@ export default function ChildHRPage4({
             </div>
 
             {/* Vitamin Given History Section */}
-            <Card className="w-full bg-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Baby className="h-6 w-6 text-blue" />
-                  Vitamin Given History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-2 pl-2">
-                  {watch("vitaminRecords").length === 0 ? (
-                    <div className="p-2 text-gray-500">No records found.</div>
-                  ) : (
-                    watch("vitaminRecords").map((record, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 border bg-gray-100 rounded-md gap-2"
-                      >
-                        <span className="text-sm sm:text-base break-words">
-                          {record.vitaminType} - {record.date}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => handleDeleteVitaminDate(index)}
-                          className="w-full sm:w-auto"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="w-full">
+              <DataTable columns={vitaminColumns} data={watch("vitaminRecords")} />
+            </div>
           </div>
 
           {/* Navigation Buttons */}

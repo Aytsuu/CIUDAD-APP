@@ -9,17 +9,17 @@ import {
 import { Input } from "@/components/ui/input";
 
 // Reusable Form Input Component
-export const FormInput = React.memo(({ control, name, label, placeholder, type="text", readOnly, className }: 
-    { control: any; name: string; label: string; placeholder?: string; type?:string; readOnly?: boolean; className?: string }
+export const FormInput = React.memo(({ control, name, label,type="text" , placeholder, readOnly, className }: 
+    { control: any; name: string; label: string; type?: string; placeholder?: string; readOnly?: boolean; className?: string }
   ) => (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem className={className}>
-          <FormLabel className="text-black/70">{label}</FormLabel>
+          <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input type={type} placeholder={placeholder} {...field} readOnly={readOnly}/>
+            <Input placeholder={placeholder}  type={type} {...field} readOnly={readOnly}/>
           </FormControl>
           <FormMessage />
         </FormItem>

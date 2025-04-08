@@ -1,0 +1,133 @@
+import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import BudgetHeaderSchema from "@/form-schema/budgetplan-header-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod"
+import { useForm } from "react-hook-form";
+import {useNavigate } from "react-router";
+
+function CreateBudgetPlanHeader(){
+    const navigate = useNavigate();
+    const form = useForm<z.infer<typeof BudgetHeaderSchema>>({
+        resolver: zodResolver(BudgetHeaderSchema),
+        defaultValues:{
+            balance: "",
+            realtyTaxShare: "",
+            taxAllotment: "",
+            clearanceAndCertFees: "",
+            otherSpecificIncome: "",
+            actualIncome: "",
+            actualRPT: ""
+        }
+    })
+
+    const onSubmit = (values: z.infer<typeof BudgetHeaderSchema>) => {
+        console.log(values)
+        navigate("/treasurer-budgetplan-form", {state : values});
+    }
+    return(
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="flex flex-col gap-4">
+                <FormField
+                    control={form.control}
+                    name="balance"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Balance</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                )}></FormField>
+
+                <FormField
+                    control={form.control}
+                    name="realtyTaxShare"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Realty Tax Share</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="taxAllotment"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>National Tax Allotment</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="clearanceAndCertFees"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Clearance & Certification Fees</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="otherSpecificIncome"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Other Specific Income</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter NET Available Resources"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="actualIncome"
+                    render={({field}) =>(
+                        <FormItem>
+                            <FormLabel>Actual Income</FormLabel>
+                            <FormControl>
+                                <Input {...field} type="number" placeholder="Enter Actual Income" ></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+
+                    <FormField
+                    control={form.control}
+                    name="actualRPT"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Actual RPT Income</FormLabel>
+                            <FormControl>
+                                <Input {...field} type='number' placeholder="Enter Actual RPT Income"></Input>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}></FormField>
+                    
+                    <div className="flex justify-end mt-[20px]">
+                        <Button>Proceed</Button>
+                    </div>
+                </div>
+            </form>
+        </Form>
+    )
+}
+
+export default CreateBudgetPlanHeader

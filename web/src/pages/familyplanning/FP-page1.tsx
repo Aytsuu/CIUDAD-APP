@@ -1,6 +1,11 @@
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+<<<<<<< HEAD
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -10,36 +15,43 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form/form";
+=======
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form";
+>>>>>>> backend/feature/healthinventory
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import FamillyPlanningSchema from "@/form-schema/FamilyPlanningSchema";
+import { Button } from "@/components/ui/button/button";
+import FamilyPlanningSchema from "@/form-schema/FamilyPlanningSchema";
+import { Link } from "react-router";
 
-export default function FamilyPlanningForm() {
-  const form = useForm<z.infer<typeof FamillyPlanningSchema>>({
-    defaultValues: {
-      clientID: "", philhealthNo: "", nhts_status: false, pantawid_4ps: false, lastName: "", givenName: "",
-      middleInitial: "", dateOfBirth: "", age: 0, educationalAttainment: "", occupation: "",
-      address: {
-        houseNumber: "",
-        street: "",
-        barangay: "",
-        municipality: "",
-        province: "",
-      },
-      spouse: {
-        s_lastName: "",
-        s_givenName: "",
-        s_middleInitial: "",
-        s_dateOfBirth: "",
-        s_age: 0,
-        s_occupation: ""
-      },
-      numOfLivingChildren: 0,
-      planToHaveMoreChildren: false,
-      averageMonthlyIncome: "",
-      typeOfClient: [],
-      subTypeOfClient: undefined,
-    }
+
+type Page1FormData = z.infer<typeof FamilyPlanningSchema>;
+
+type Page1Props = {
+  onNext2: () => void;
+  updateFormData: (data: Partial<Page1FormData>) => void;
+  formData: Page1FormData;
+};
+
+export default function FamilyPlanningForm({
+  onNext2,
+  updateFormData,
+  formData,
+}: Page1Props) {
+  const form = useForm<Page1FormData>({
+    resolver: zodResolver(FamilyPlanningSchema),
+    defaultValues: formData,
   });
+
+  useEffect(() => {
+    console.log("Form data updated:", formData);
+  }, [formData]);
+
+  const onSubmitForm = (data: Page1FormData) => {
+    console.log("PAGE 1:", data);
+    updateFormData(data);
+    onNext2();
+  };
+
   const methodCurrentlyUsed = [
     { id: "COC", name: "COC" }, { id: "IUD", name: "IUD" },
     { id: "BOM/CMM", name: "BOM/CMM" }, { id: "LAM", name: "LAM" }, { id: "POP", name: "POP" }, { id: "Interval", name: "Interval" }, { id: "BBT", name: "BBT" },
@@ -48,13 +60,13 @@ export default function FamilyPlanningForm() {
   ];
 
   return (
-    <div className="flex justify-center mt-10 h-full w-full px-4">
-      <div className="p-8 h-full w-full border border-gray-300 shadow-xl rounded-lg">
-        <h2 className="text-3xl font-bold mb-4 border-l-4 p-4 text-center">
+    <div className="bg-white h-full flex w-full overflow-auto">
+  <div className="rounded-lg w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 border-l-4 p-4 text-center">
           Family Planning (FP) Form 1
         </h2>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => console.log(data))} className="p-4 space-y-4">
+          <form onSubmit={form.handleSubmit((onSubmit) => console.log(data))} className="p-4 space-y-4">
             <div>
               <strong>FAMILY PLANNING CLIENT ASSESSMENT RECORD</strong>
               <p>
@@ -69,14 +81,13 @@ export default function FamilyPlanningForm() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 w sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {/* Client Information */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormField
                 control={form.control} name="clientID" render={({ field }) => (
                   <FormItem>
                     <Label>CLIENT ID:</Label>
                     <FormControl>
-                      <Input {...field} className="border-black w-[250px]grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" />
+                      <Input {...field} className="border-black w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -87,7 +98,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>PHILHEALTH NO:</Label>
                     <FormControl>
-                      <Input {...field} className="border-black w-[250px]" />
+                      <Input {...field} className="border-black w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -96,9 +107,9 @@ export default function FamilyPlanningForm() {
 
               {/* NHTS Checkbox */}
               <FormField control={form.control} name="nhts_status" render={({ field }) => (
-                <FormItem className="flex items-center space-x-2">
+                <FormItem className="flex items-center space-x-2 ">
                   <Label className="mt-2">NHTS?</Label>
-                  <FormControl>
+                  <FormControl className="border border-black">
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={() => field.onChange(true)}
@@ -107,6 +118,7 @@ export default function FamilyPlanningForm() {
                   <Label>Yes</Label>
                   <FormControl>
                     <Checkbox
+                      className="border border-black"
                       checked={!field.value}
                       onCheckedChange={() => field.onChange(false)}
                     />
@@ -123,6 +135,7 @@ export default function FamilyPlanningForm() {
                   <Label className="mt-3">Pantawid Pamilya Pilipino (4Ps)</Label>
                   <FormControl>
                     <Checkbox
+                      className="border border-black"
                       checked={field.value}
                       onCheckedChange={() => field.onChange(true)}
                     />
@@ -130,6 +143,7 @@ export default function FamilyPlanningForm() {
                   <Label>Yes</Label>
                   <FormControl>
                     <Checkbox
+                      className="border border-black"
                       checked={!field.value}
                       onCheckedChange={() => field.onChange(false)}
                     />
@@ -141,7 +155,7 @@ export default function FamilyPlanningForm() {
               />
             </div>
 
-            <div className="flex grid-cols-4 gap-6 mt-10 ">
+            <div className="flex grid-cols-6 w-full gap-3 mt-10">
               <FormField
                 control={form.control}
                 name="lastName"
@@ -149,7 +163,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>NAME OF CLIENT</Label>
                     <FormControl>
-                      <Input {...field} placeholder="Last name" className=" border-black w-[300px]" />
+                      <Input {...field} placeholder="Last name" className="border-black w-[180px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,8 +174,9 @@ export default function FamilyPlanningForm() {
                 name="givenName"
                 render={({ field }) => (
                   <FormItem>
+
                     <FormControl>
-                      <Input {...field} placeholder="Given name" className="border-black w-[300px] mt-8" />
+                      <Input {...field} placeholder="Given name" className="mt-8 border-black w-[180px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,12 +188,19 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="M.I" className="border-black w-[50px] mt-8" />
+                      <Input {...field} placeholder="M.I" className="mt-8 border-black max-w-[85px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+
+
+
+
+
+              
               <FormField
                 control={form.control}
                 name="dateOfBirth"
@@ -195,12 +217,11 @@ export default function FamilyPlanningForm() {
               <FormField
                 control={form.control}
                 name="age"
-
                 render={({ field }) => (
                   <FormItem>
                     <Label>Age</Label>
                     <FormControl>
-                      <Input {...field} placeholder="Age" className="border-black w-[50px] mt-8" />
+                      <Input {...field} placeholder="Age" className="border-black w-[100px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -216,7 +237,7 @@ export default function FamilyPlanningForm() {
                       <SelectLayout
                         placeholder="Choose"
                         label=""
-                        className="custom-class border-black"
+                        className="custom-class mt-3 border-black w-full"
                         options={[
                           { id: "elementary", name: "Elementary" },
                           { id: "highschool", name: "High school" },
@@ -236,9 +257,9 @@ export default function FamilyPlanningForm() {
                 control={form.control}
                 name="occupation"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 mt-8">
+                  <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Occupation" className="border-black w-[200px] " />
+                      <Input {...field} placeholder="Occupation" className="mt-8 border-black w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -246,7 +267,7 @@ export default function FamilyPlanningForm() {
               />
             </div>
 
-            <div className="flex grid-cols-5 gap-6">
+            <div className="flex grid-cols-5  gap-4">
               <FormField
                 control={form.control}
                 name="address.houseNumber"
@@ -254,7 +275,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>ADDRESS</Label>
                     <FormControl>
-                      <Input {...field} placeholder="No." className="border-black w-[200px] " />
+                      <Input {...field} placeholder="No." className="border-black w-[100px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -266,7 +287,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Street" className="border-black w-[300px] mt-8" />
+                      <Input {...field} placeholder="Street" className="border-black w-[200px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -278,7 +299,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Barangay" className="border-black w-[300px] mt-8" />
+                      <Input {...field} placeholder="Barangay" className="border-black w-[200px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -290,7 +311,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Municipality/City" className="border-black w-[250px] mt-8" />
+                      <Input {...field} placeholder="Municipality/City" className="border-black w-[180px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -300,9 +321,9 @@ export default function FamilyPlanningForm() {
                 control={form.control}
                 name="address.province"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 mt-8">
+                  <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Province" className="border-black w-[200px] " />
+                      <Input {...field} placeholder="Province" className="border-black w-[180px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -310,7 +331,7 @@ export default function FamilyPlanningForm() {
               />
             </div>
 
-            <div className="flex grid-cols-4 gap-7">
+            <div className="flex grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="spouse.s_lastName"
@@ -318,7 +339,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>NAME OF SPOUSE</Label>
                     <FormControl>
-                      <Input {...field} placeholder="Last name" className="border-black w-[300px]" />
+                      <Input {...field} placeholder="Last name" className="border-black w-[180px]" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -330,7 +351,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Given name" className="border-black w-[300px] mt-8" />
+                      <Input {...field} placeholder="Given name" className="border-black w-[180px] mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -342,7 +363,7 @@ export default function FamilyPlanningForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="M.I" className="border-black w-[50px] mt-8" />
+                      <Input {...field} placeholder="M.I" className="border-black w-full mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -355,7 +376,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>Date of Birth:</Label>
                     <FormControl>
-                      <Input type="date" {...field} className="w-[150px] border-black" />
+                      <Input type="date" {...field} className="w-full border-black" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -368,7 +389,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>Age</Label>
                     <FormControl>
-                      <Input {...field} placeholder="Age" className="border-black w-[100px] mt-8" />
+                      <Input {...field} placeholder="Age" className="border-black w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -378,9 +399,9 @@ export default function FamilyPlanningForm() {
                 control={form.control}
                 name="spouse.s_occupation"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 mt-8">
+                  <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Occupation" className="border-black w-[250px] " />
+                      <Input {...field} placeholder="Occupation" className="border-black w-full mt-8" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -388,7 +409,7 @@ export default function FamilyPlanningForm() {
               />
             </div>
 
-            <div className="flex grid-cols-4 gap-7">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <FormField
                 control={form.control}
                 name="numOfLivingChildren"
@@ -396,7 +417,7 @@ export default function FamilyPlanningForm() {
                   <FormItem>
                     <Label>NO. OF LIVING CHILDREN</Label>
                     <FormControl>
-                      <Input {...field} placeholder="" className="border-black w-[300px]" />
+                      <Input {...field} placeholder="" className="border-black w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -406,10 +427,11 @@ export default function FamilyPlanningForm() {
                 control={form.control}
                 name="planToHaveMoreChildren"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2 mt-5">
+                  <FormItem className="flex items-center space-x-2">
                     <Label className="mt-2">PLAN TO HAVE MORE CHILDREN?</Label>
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={field.value}
                         onCheckedChange={() => field.onChange(true)}
                       />
@@ -417,6 +439,7 @@ export default function FamilyPlanningForm() {
                     <Label>Yes</Label>
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={!field.value}
                         onCheckedChange={() => field.onChange(false)}
                       />
@@ -436,7 +459,7 @@ export default function FamilyPlanningForm() {
                       <SelectLayout
                         placeholder="Choose"
                         label=""
-                        className="custom-class border-black "
+                        className="custom-class border-black w-full"
                         options={[
                           { id: "5k-10k", name: "5k-10k" },
                           { id: "10k-30k", name: "10k-30k" },
@@ -456,8 +479,8 @@ export default function FamilyPlanningForm() {
               />
             </div>
 
-            <div className="border border-t-black grid grid-cols-3 p-4 rounded-md">
-              <div>
+            <div className="border border-t-black w-full flex grid-cols-3 p-4 rounded-md">
+              <div className=" w-[200px]">
                 <h3 className="font-semibold">Type of Client</h3>
                 {['New Acceptor', 'Current User'].map((type) => (
                   <FormField
@@ -511,12 +534,15 @@ export default function FamilyPlanningForm() {
                 )}
 
               </div>
+
+              
               <div className=" grid-rows-2">
-                <FormField control={form.control} name="reasonFP" render={({ field }) => (
+                <FormField control={form.control} name="reasonForFP" render={({ field }) => (
                   <FormItem className="w-full flex items-center space-x-2">
                     <Label className="mt-2 w-full">Reason for FP</Label>
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={field.value}
                         onCheckedChange={() => field.onChange(true)}
                       />
@@ -524,6 +550,7 @@ export default function FamilyPlanningForm() {
                     <Label>Spacing</Label>
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={!field.value}
                         onCheckedChange={() => field.onChange(false)}
                       />
@@ -533,6 +560,7 @@ export default function FamilyPlanningForm() {
 
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={!field.value}
                         onCheckedChange={() => field.onChange(false)}
                       />
@@ -553,6 +581,7 @@ export default function FamilyPlanningForm() {
                     <Label className="mt-2 mr-10">Reason</Label>
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={field.value}
                         onCheckedChange={() => field.onChange(true)}
                       />
@@ -562,6 +591,7 @@ export default function FamilyPlanningForm() {
 
                     <FormControl>
                       <Checkbox
+                        className="border border-black"
                         checked={!field.value}
                         onCheckedChange={() => field.onChange(false)}
                       />
@@ -586,8 +616,8 @@ export default function FamilyPlanningForm() {
                       control={form.control}
                       name={`methodCurrentlyUsed.${method.id}`}
                       render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
+                        <FormItem className="flex items-center">
+                          <FormControl className="border border-black">
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={(checked) => field.onChange(checked)}
@@ -599,15 +629,16 @@ export default function FamilyPlanningForm() {
                     />
                   ))}
 
-              
+
                   <div className="col-span-4 flex items-center space-x-2 mt-2">
                     <FormField
                       control={form.control}
-                      name="methodCurrentlyUsed.others"
+                      name="methodCurrentlyUsed"
                       render={({ field }) => (
                         <FormItem className="flex items-center space-x-2">
                           <FormControl>
                             <Checkbox
+                              className="border border-black"
                               checked={field.value}
                               onCheckedChange={(checked) => field.onChange(checked)}
                             />
@@ -627,12 +658,20 @@ export default function FamilyPlanningForm() {
               </div>
 
             </div>
-           
+            <div className="flex justify-end">
+              <Link to={"/FamilyPlanning_form2"}>
+              
+              <Button type="submit" className="w-[100px]">Next</Button>
+              </Link>
+            </div>
           </form>
         </Form>
       </div>
-      
+      <div>
+
+      </div>
     </div>
 
+
   );
-}
+};

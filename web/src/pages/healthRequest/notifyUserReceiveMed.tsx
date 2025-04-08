@@ -14,7 +14,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 // Define the messsage schema
 const NotifyResidentSchema = z.object({

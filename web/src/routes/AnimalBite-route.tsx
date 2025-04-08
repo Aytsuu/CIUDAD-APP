@@ -1,5 +1,5 @@
 import Viewing from "@/pages/animalbites/history";
-import AnimalBites from "@/pages/animalbites/individual";
+import AnimalBites from "@/pages/animalbites/overall";
 
 export const bites_route = [
     {

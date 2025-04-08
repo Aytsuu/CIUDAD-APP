@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Check, X, Search, Pill } from "lucide-react";
 
