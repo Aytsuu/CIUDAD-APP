@@ -4,7 +4,6 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Trash, Plus, Search, Eye } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import ClerkDonateCreate from "./donation-create";
 import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
