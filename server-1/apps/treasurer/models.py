@@ -72,3 +72,6 @@ class Income_Expense_Tracking(models.Model):
 
     class Meta:
         db_table = "income_expense_tracking"
+
+
+
