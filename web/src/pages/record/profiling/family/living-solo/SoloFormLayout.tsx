@@ -15,11 +15,13 @@ import {
   addFamilyComposition,
 } from "../../restful-api/profiingPostAPI";
 import { Form } from "@/components/ui/form/form";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function SoloFormLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = React.useRef(useAuth()).current;
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
@@ -53,7 +55,7 @@ export default function SoloFormLayout() {
       }
   
       const data = form.getValues();
-      const familyNo = await addFamily(data, null, null);
+      const familyNo = await addFamily(data, null, null, null, user?.staff.staff_id);
       const res = await addFamilyComposition(familyNo, data.id.split(" ")[0]);
   
       if (res) {

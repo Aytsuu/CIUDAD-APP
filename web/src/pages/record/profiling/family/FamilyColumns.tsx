@@ -61,7 +61,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
     header: 'Action',
     cell: ({ row }) => (
       <Link 
-        to="/family-record-view"
+        to="/family/view"
         state={{
           params: {
             data: families.find((family) => family.fam_id == row.original.id)

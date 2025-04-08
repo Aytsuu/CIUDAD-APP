@@ -10,7 +10,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Origin, Type } from "../profilingEnums";
-import { renderActionButton } from "../actionConfig";
+import { renderActionButton } from "../profilingActionConfig";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
@@ -54,7 +54,7 @@ export default function PersonalInfoForm({
             form.setValue("per_id", value);
             handleComboboxChange();
           }}
-          placeholder="Search for resident..."
+          placeholder="Select a resident"
           emptyMessage="No resident found"
         />
       )}

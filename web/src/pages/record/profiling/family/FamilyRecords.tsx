@@ -8,15 +8,10 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
-import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
-import { Link } from "react-router-dom";
-import {
-  getFamilies,
-  getHouseholds,
-  getResidents,
-} from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFamilies, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
+import { Link } from "react-router-dom";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -24,36 +19,19 @@ export default function FamilyRecords() {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
-  // Fetch families and residents using useQuery
-  const { data: families, isLoading: isLoadingFamilies } = useQuery({
-    queryKey: ["families"],
-    queryFn: getFamilies,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ["households"],
-    queryFn: getHouseholds,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: families, isLoading: isLoadingFamilies } = useFamilies();
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format family to populate data table
   const formatFamilyData = (): FamilyRecord[] => {
     if (!families) return [];
 
     return families.map((family: any) => {
-      const mother = family.mother;
-      const father = family.father;
-      const dependents = family.dependents;
+      const mother = family?.mother;
+      const father = family?.father;
+      const dependents = family?.dependents;
+      const staff = family?.staff?.rp?.per;
 
       const totalMembers =
         (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length;
@@ -64,7 +42,10 @@ export default function FamilyRecords() {
         building: family.fam_building || "-",
         indigenous: family.fam_indigenous || "-",
         dateRegistered: family.fam_date_registered || "-",
-        registeredBy: family.staff || "-",
+        registeredBy: 
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   };

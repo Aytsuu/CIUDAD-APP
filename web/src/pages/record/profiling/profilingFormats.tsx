@@ -61,7 +61,7 @@ export const formatHouseholds = (params: any) => {
         </span>
         <div className="flex items-center gap-2">
           <Label>Head:</Label>
-          {`${household.rp.per.per_lname}, ${household.rp.per.per_fname}, ${
+          {`${household.rp.per.per_lname}, ${household.rp.per.per_fname} ${
             household.rp.per.per_mname
               ? household.rp.per.per_mname.charAt(0) + "."
               : ""

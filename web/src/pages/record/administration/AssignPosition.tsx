@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getPositions } from "./restful-api/administrationGetAPI"
 import { toast } from "sonner"
 import { LoadButton } from "@/components/ui/button/load-button"
+import { useAuth } from "@/context/AuthContext"
 
 
 export default function AssignPosition(
@@ -25,9 +26,10 @@ export default function AssignPosition(
     }
 ){
     const navigate = useNavigate()
+    const { user } = React.useRef(useAuth()).current
     const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-    const personalDefaults = generateDefaultValues(personalInfoSchema)
-    const defaultValues = generateDefaultValues(positionAssignmentSchema)
+    const personalDefaults = React.useRef(generateDefaultValues(personalInfoSchema)).current
+    const defaultValues = React.useRef(generateDefaultValues(positionAssignmentSchema)).current
     const form = useForm<z.infer<typeof positionAssignmentSchema>>({
         resolver: zodResolver(positionAssignmentSchema),
         defaultValues
@@ -55,14 +57,14 @@ export default function AssignPosition(
         // If resident exists, assign
         if(personalId) {
 
-            const res = await addStaff(personalId, positionId);
+            const res = await addStaff(personalId, positionId, user?.staff.staff_id);
 
             if(res) deliverFeedback();
           
         } else { // Register resident before assignment, if not
             const personalInfo = personalInfoform.getValues()
             const perId = await addPersonal(personalInfo)
-            const res = await addStaff(perId, positionId)
+            const res = await addStaff(perId, positionId, user?.staff.staff_id)
 
             if(res) deliverFeedback(); 
         }

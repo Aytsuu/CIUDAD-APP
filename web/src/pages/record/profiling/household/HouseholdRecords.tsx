@@ -7,44 +7,19 @@ import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { householdColumns } from "./HouseholdColumns";
 import { HouseholdRecord } from "../profilingTypes";
-import { useQuery } from "@tanstack/react-query";
-import {
-  getHouseholds,
-  getSitio,
-  getResidents,
-} from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
+import { useHouseholds, useRequests, useSitio } from "../queries/profilingFetchQueries";
 
 export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Fetch households using useQuery
-  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ["households"],
-    queryFn: getHouseholds,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Fetch staffs using useQuery
-  const { data: sitio, isLoading: isLoadingSitio } = useQuery({
-    queryKey: ["sitio"],
-    queryFn: getSitio,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Fetch residents using useQuery
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
+  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
+  const { data: residents, isLoading: isLoadingResidents } = useRequests();
 
   // Format households to populate data table
   const formatHouseholdData = React.useCallback((): HouseholdRecord[] => {
@@ -71,7 +46,7 @@ export default function HouseholdRecords() {
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname?.slice(0,1)}.` : '-')
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   }, [households]);
@@ -133,7 +108,7 @@ export default function HouseholdRecords() {
           </div>
         </div>
         <Link
-          to="/household-form"
+          to="/household/form"
           state={{
             params: {
               sitio: sitio,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { accountFormSchema } from '@/form-schema/accountSettings';
+import { accountUpdateSchema } from '@/form-schema/account-schema';
 import { useNavigate } from 'react-router-dom'; // For navigation
 
 import {
@@ -18,14 +18,14 @@ import {
 } from 'lucide-react';
 
 // Email & Password verification
-type AccountFormData = z.infer<typeof accountFormSchema>;
+type AccountFormData = z.infer<typeof accountUpdateSchema>;
 
 const AccountSettings = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<AccountFormData>({
-    resolver: zodResolver(accountFormSchema)
+    resolver: zodResolver(accountUpdateSchema)
   });
 
   const navigate = useNavigate(); 

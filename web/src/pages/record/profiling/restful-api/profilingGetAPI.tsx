@@ -41,7 +41,7 @@ export const getSitio = async () => {
 };
 
 // Fetch registration requests
-export const getRequest = async () => {
+export const getRequests = async () => {
   try {
     const res = await api.get("profiling/request/");
     return res.data;
@@ -51,7 +51,7 @@ export const getRequest = async () => {
 };
 
 // Fetch businesses
-export const getBusiness = async () => {
+export const getBusinesses = async () => {
   try {
     const res = await api.get("profiling/business/");
     return res.data;

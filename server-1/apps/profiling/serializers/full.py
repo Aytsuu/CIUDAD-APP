@@ -1,8 +1,8 @@
-from rest_framework import serializers
 from apps.administration.models import Staff
 from ..models import *
 from .base import *
 from .minimal import *
+from apps.account.serializers import UserAccountSerializer
 
 class ResidentProfileFullSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -13,6 +13,9 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         write_only=True, 
         source='per'
     )
+    account = UserAccountSerializer(read_only=True)
+    staff = serializers.SerializerMethodField()
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff")
 
     class Meta:
         model = ResidentProfile
@@ -21,6 +24,10 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
     def get_family(self, obj):
         family = Family.objects.filter(compositions__rp=obj).distinct()
         return FamilyFullSerializer(family, many=True, context=self.context).data
+    
+    def get_staff(self, obj):
+        from apps.administration.serializers.full import StaffFullSerializer
+        return StaffFullSerializer(obj.staff).data
 
 class HouseholdFullSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)
@@ -37,8 +44,8 @@ class HouseholdFullSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_staff(self, obj):
-        from apps.administration.serializers import StaffSerializer
-        return StaffSerializer(obj.staff, context=self.context).data
+        from apps.administration.serializers.minimal import StaffMinimalSerializer
+        return StaffMinimalSerializer(obj.staff, context=self.context).data
     
     def get_family(self, obj):
         return FamilyFullSerializer(obj.family_set.all(), many=True).data
@@ -49,6 +56,7 @@ class FamilyFullSerializer(serializers.ModelSerializer):
     father = FatherSerializer(read_only=True)
     guard = GuardianSerializer(read_only=True)
     hh = HouseholdMinimalSerializer(read_only=True)
+    staff = serializers.SerializerMethodField()
 
     mother_id = serializers.PrimaryKeyRelatedField(queryset=Mother.objects.all(), write_only=True, source="mother", allow_null=True)
     father_id = serializers.PrimaryKeyRelatedField(queryset=Father.objects.all(), write_only=True, source="father", allow_null=True)
@@ -58,3 +66,7 @@ class FamilyFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = Family
         fields = '__all__'
+    
+    def get_staff(self, obj):
+        from apps.administration.serializers.minimal import StaffMinimalSerializer
+        return StaffMinimalSerializer(obj.staff).data

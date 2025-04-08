@@ -6,10 +6,11 @@ import { Form } from '@/components/ui/form/form';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormSelect } from '@/components/ui/form/form-select';
-import { Plus } from 'lucide-react';
+import { CircleAlert, Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
 import { DependentRecord } from '../../profilingTypes';
+import { toast } from 'sonner';
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -61,6 +62,13 @@ export default function DependentForm({ form, residents, selectedParents, depend
   // Handle adding dependent to the list
   const handleAddDependent = () => {
     const newDependent = form.getValues('dependentsInfo.new');
+    const isDefault = Object.values(newDependent).every((value) => value === '')
+    if (isDefault) {
+      toast('Please select a resident to add as a dependent.', {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+      })
+      return;
+    }
     append(newDependent);
     resetForm();
   };

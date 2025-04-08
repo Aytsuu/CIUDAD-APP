@@ -31,14 +31,20 @@ export const addPersonal = async (personalInfo: Record<string, string>) => {
 };
 
 // POST request for resident_profile model 
-export const addResidentProfile = async (personalId: string) => {
+export const addResidentProfile = async (personalId: string, staffId: string) => {
   try {
 
+    console.log({
+      rp_id: await generateResidentNo(),
+      rp_date_registered: formatDate(new Date()),
+      per_id: personalId,
+      staff: staffId,
+    })
     const res = await api.post("profiling/resident/", {
       rp_id: await generateResidentNo(),
       rp_date_registered: formatDate(new Date()),
       per_id: personalId,
-      staff: null,
+      staff_id: staffId,
     });
 
     return res.data;
@@ -114,20 +120,10 @@ export const addFamily = async (
   demographicInfo: Record<string, string>,
   fatherId: string | null,
   motherId: string | null,
-  guardId: string | null
+  guardId: string | null,
+  staffId: string
 ) => {
   try {
-    console.log({
-      fam_id: await generateFamilyNo(demographicInfo.building),
-      fam_indigenous: capitalize(demographicInfo.indigenous),
-      fam_building: capitalize(demographicInfo.building),
-      fam_date_registered: formatDate(new Date()),
-      father_id: fatherId || null,
-      mother_id: motherId || null,
-      guard: guardId || null,
-      hh: demographicInfo.householdNo || null,
-      staff: null,
-    })
     const res = await api.post("profiling/family/", {
       fam_id: await generateFamilyNo(demographicInfo.building),
       fam_indigenous: capitalize(demographicInfo.indigenous),
@@ -137,7 +133,7 @@ export const addFamily = async (
       mother_id: motherId || null,
       guard_id: guardId || null,
       hh_id: demographicInfo.householdNo || null,
-      staff: null,
+      staff: staffId,
     });
 
     return res.data.fam_id;
@@ -161,7 +157,7 @@ export const addFamilyComposition = async (familyId: string, residentId: string)
 };
 
 // POST request for household model 
-export const addHousehold = async (householdInfo: Record<string, string>) => {
+export const addHousehold = async (householdInfo: Record<string, string>, staffId: string) => {
   try {
     const res = await api.post("profiling/household/", {
       hh_id: await generateHouseholdNo(),
@@ -173,7 +169,7 @@ export const addHousehold = async (householdInfo: Record<string, string>) => {
       hh_date_registered: formatDate(new Date()),
       rp_id: householdInfo.householdHead.split(" ")[0],
       sitio_id: householdInfo.sitio,
-      staff_id: null,
+      staff_id: staffId,
     });
 
     return res.data;
@@ -183,7 +179,7 @@ export const addHousehold = async (householdInfo: Record<string, string>) => {
 };
 
 // POST request for business model 
-export const addBusiness = async (businessInfo: Record<string, string>, url: string) => {
+export const addBusiness = async (businessInfo: Record<string, string>, url: string, staffId: string) => {
   try {
     const res = await api.post("profiling/business/", {
       bus_name: businessInfo.bus_name,
@@ -200,7 +196,7 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
       bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
       sitio_id: businessInfo.sitio,
-      staff: null,
+      staff: staffId,
     });
 
     return res.data;
