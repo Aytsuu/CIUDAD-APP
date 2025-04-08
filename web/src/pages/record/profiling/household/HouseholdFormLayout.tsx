@@ -1,7 +1,7 @@
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation } from "react-router";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 import { formatResidents, formatSitio } from "../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -9,14 +9,12 @@ import { useForm } from "react-hook-form";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
-import { addHousehold } from "../restful-api/profiingPostAPI";
+import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
+import { useAddHousehold } from "../queries/profilingAddQueries";
 
 export default function HouseholdFormLayout() {
-
-  const navigate = useNavigate()
   const location = useLocation();
   const { user } = React.useRef(useAuth()).current;
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
@@ -26,14 +24,12 @@ export default function HouseholdFormLayout() {
       resolver: zodResolver(householdFormSchema),
       defaultValues: defaultValues.current,
   });
-  const params = React.useMemo(() => {
-    return location.state?.params || {};
-  }, [location.state]);
-
+  const params = React.useMemo(() => location.state?.params || {}, [location.state]);
+  const sitio = React.useRef(formatSitio(params));
   const [residents, setResidents] = React.useState(() =>
     formatResidents(params, true)
   );
-  const sitio = React.useRef(formatSitio(params));
+
 
   // Function to update residents after a new household is registered
   const updateResidents = React.useCallback((newHousehold: any) => {
@@ -43,6 +39,8 @@ export default function HouseholdFormLayout() {
       );
     });
   }, []);
+
+  const { mutateAsync: addHousehold} = useAddHousehold(updateResidents);
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -57,21 +55,14 @@ export default function HouseholdFormLayout() {
       return;
     }
 
-    const data = form.getValues();
-    const res = await addHousehold(data, user?.staff.staff_id);
+    const householdInfo = form.getValues();
+    await addHousehold({
+      householdInfo: householdInfo, 
+      staffId: user?.staff.staff_id
+    });
 
-    if (res) {
-      updateResidents(res); // Update residents in the parent component
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
-      setIsSubmitting(false);
-      form.reset(defaultValues.current);
-    }
+    setIsSubmitting(false);
+    form.reset(defaultValues.current);
   };
 
   return (
@@ -95,6 +86,7 @@ export default function HouseholdFormLayout() {
                 isSubmitting={isSubmitting}
                 invalidHouseHead={invalidHouseHead}
                 form={form}
+                onSubmit={submit}
               />
             </form>
           </Form>

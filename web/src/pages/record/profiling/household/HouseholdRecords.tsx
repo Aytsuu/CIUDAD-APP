@@ -10,7 +10,7 @@ import { HouseholdRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
-import { useHouseholds, useRequests, useSitio } from "../queries/profilingFetchQueries";
+import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
 
 export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -19,7 +19,7 @@ export default function HouseholdRecords() {
 
   const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
   const { data: sitio, isLoading: isLoadingSitio } = useSitio();
-  const { data: residents, isLoading: isLoadingResidents } = useRequests();
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
 
   // Format households to populate data table
   const formatHouseholdData = React.useCallback((): HouseholdRecord[] => {
