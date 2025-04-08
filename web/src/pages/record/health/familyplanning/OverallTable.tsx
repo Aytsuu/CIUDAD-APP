@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 type FamPlanningPatient = {
   id: number;
@@ -208,7 +209,9 @@ function FamPlanningTable() {
         </p>
 
         {/* Pagination */}
-        <div className="w-full sm:w-auto flex justify-center"></div>
+         <div className="w-full sm:w-auto flex justify-center">
+                    <PaginationLayout className="" />
+                  </div>
       </div>
     </div>
   );
