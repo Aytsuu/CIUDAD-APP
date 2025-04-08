@@ -108,9 +108,7 @@ export const useAddFamilyComposition = () => {
   })
 }
 
-export const useAddHousehold = (
-  updateResidents: (value: Record<string, string>) => void
-) => {
+export const useAddHousehold = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
@@ -136,8 +134,6 @@ export const useAddHousehold = (
           onClick: () => navigate(-1),
         },
       });
-
-      updateResidents(newData);
     },
   });
 };

@@ -10,17 +10,13 @@ import { HouseholdRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
-import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
-import { useAuth } from "@/context/AuthContext";
+import { useHouseholds } from "../queries/profilingFetchQueries";
 
 export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-
   const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
-  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
 
   // Format households to populate data table
   const formatHouseholdData = React.useCallback((): HouseholdRecord[] => {
@@ -73,11 +69,7 @@ export default function HouseholdRecords() {
     currentPage * pageSize
   );
 
-  if (
-    isLoadingHouseholds ||
-    isLoadingSitio ||
-    isLoadingResidents
-  ) {
+  if ( isLoadingHouseholds ) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -108,16 +100,7 @@ export default function HouseholdRecords() {
             />
           </div>
         </div>
-        <Link
-          to="/household/form"
-          state={{
-            params: {
-              sitio: sitio,
-              residents: residents,
-              households: households,
-            },
-          }}
-        >
+        <Link to="/household/form">
           <Button>
             <Plus size={15} /> Register
           </Button>

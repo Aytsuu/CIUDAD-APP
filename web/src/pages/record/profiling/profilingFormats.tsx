@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 
 // Format residents for searching
-export const formatResidents = (params: any, isHousehold: boolean) => {
+export const formatResidents = (params: any) => {
   if (!params.residents) return [];
 
   // Begin formatting
@@ -18,18 +18,6 @@ export const formatResidents = (params: any, isHousehold: boolean) => {
       </div>
     ),
   }));
-
-  // Filter unassigned residents for household registration
-  if (isHousehold) {
-    const filtered = formatted.filter(
-      (resident: any) =>
-        !params.households?.some(
-          (household: any) => household.rp.rp_id === resident.id.split(" ")[0]
-        )
-    );
-
-    return filtered;
-  }
 
   return formatted;
 };

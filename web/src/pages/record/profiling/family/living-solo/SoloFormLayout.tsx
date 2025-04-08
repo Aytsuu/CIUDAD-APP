@@ -1,6 +1,6 @@
 import React from "react";
 import { z } from "zod";
-import { useLocation } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
 import { useAddFamily } from "../../queries/profilingAddQueries";
+import { useHouseholds, useResidents } from "../../queries/profilingFetchQueries";
 
 export default function SoloFormLayout() {
   const location = useLocation();
@@ -24,15 +25,20 @@ export default function SoloFormLayout() {
     defaultValues: defaultValues.current,
     mode: "onChange",
   });
-
+  
   const { user } = React.useRef(useAuth()).current;
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
+  const { mutateAsync: addFamily} = useAddFamily(form.getValues());
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
-  const params = React.useMemo(() => location?.state.params || {}, [location.state]);
-  const residents = React.useMemo(() => formatResidents(params, false), [params.residents]);
-  const households = React.useMemo(() => formatHouseholds(params), [params.households]);
-  const { mutateAsync: addFamily} = useAddFamily(form.getValues());
+  const [formattedResidents, setFormattedResidents] = React.useState(() => 
+    formatResidents({residents: residents})
+  )
+  const [formattedHouseholds, setFormattedHouseholds] = React.useState(() => 
+    formatHouseholds({households: households})
+  )
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -50,7 +56,6 @@ export default function SoloFormLayout() {
       return;
     }
 
-    console.log(user?.staff.staff_id)
     await addFamily({
       fatherId: null, 
       motherId: null, 
@@ -62,7 +67,11 @@ export default function SoloFormLayout() {
     form.reset(defaultValues.current);
   };
 
-  console.log(user)
+  if(isLoadingResidents || isLoadingHouseholds) {
+    return (
+      <div>Loading...</div>
+    )
+  }
 
   return (
     <div className="w-full flex justify-center">
@@ -80,8 +89,8 @@ export default function SoloFormLayout() {
               className="flex flex-col gap-10"
             >
               <LivingSoloForm 
-                residents={residents} 
-                households={households} 
+                residents={formattedResidents} 
+                households={formattedHouseholds} 
                 isSubmitting={isSubmitting}
                 invalidResident={invalidResdent}
                 invalidHousehold={invalidHousehold}
