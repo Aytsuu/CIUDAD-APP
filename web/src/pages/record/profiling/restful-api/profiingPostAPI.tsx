@@ -133,7 +133,7 @@ export const addFamily = async (
       mother_id: motherId || null,
       guard_id: guardId || null,
       hh_id: demographicInfo.householdNo || null,
-      staff: staffId,
+      staff_id: staffId,
     });
 
     return res.data;

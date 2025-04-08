@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
 import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");

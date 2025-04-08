@@ -7,6 +7,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { Link } from "react-router";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function LivingSoloForm({
   residents,
@@ -15,6 +16,7 @@ export default function LivingSoloForm({
   invalidResident,
   invalidHousehold,
   form,
+  onSubmit
 }: {
   residents: any[];
   households: any[];
@@ -22,6 +24,7 @@ export default function LivingSoloForm({
   invalidResident: boolean;
   invalidHousehold: boolean;
   form: UseFormReturn<z.infer<typeof demographicInfoSchema>>;
+  onSubmit: () => void;
 }) {
   return (
     <>
@@ -100,7 +103,13 @@ export default function LivingSoloForm({
       {/* Submit Button */}
       <div className="flex justify-end">
         {!isSubmitting ? (
-          <Button type="submit">Register</Button>
+          <ConfirmationModal 
+            trigger={<Button>Register</Button>}
+            title="Confirm Register"
+            description="Are you sure you want to register a family?"
+            actionLabel="Confirm"
+            onClick={onSubmit}
+          />
         ) : (
           <LoadButton>Registering...</LoadButton>
         )}

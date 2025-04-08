@@ -1,6 +1,6 @@
 import React from "react";
 import { z } from "zod";
-import { useNavigate, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,31 +35,34 @@ export default function SoloFormLayout() {
   const { mutateAsync: addFamily} = useAddFamily(form.getValues());
 
   const submit = async () => {
-      setIsSubmitting(true);
-      const formIsValid = await form.trigger();
-      const residentId = form.watch("id");
-      const householdId = form.watch("householdNo");
-  
-      if (!formIsValid && !residentId && !householdId) {
-        setIsSubmitting(false);
-        setInvalidResident(true);
-        setInvalidHousehold(true);
-        toast("Please fill out all required fields", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        });
-        return;
-      }
+    setIsSubmitting(true);
+    const formIsValid = await form.trigger();
+    const residentId = form.watch("id");
+    const householdId = form.watch("householdNo");
 
-      await addFamily({
-        fatherId: null, 
-        motherId: null, 
-        guardId: null, 
-        staffId: user?.staff.staff_id
-      });
-  
+    if (!formIsValid && !residentId && !householdId) {
       setIsSubmitting(false);
-      form.reset(defaultValues.current);
-    };
+      setInvalidResident(true);
+      setInvalidHousehold(true);
+      toast("Please fill out all required fields", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+      return;
+    }
+
+    console.log(user?.staff.staff_id)
+    await addFamily({
+      fatherId: null, 
+      motherId: null, 
+      guardId: null, 
+      staffId: user?.staff.staff_id
+    });
+
+    setIsSubmitting(false);
+    form.reset(defaultValues.current);
+  };
+
+  console.log(user)
 
   return (
     <div className="w-full flex justify-center">
@@ -83,6 +86,7 @@ export default function SoloFormLayout() {
                 invalidResident={invalidResdent}
                 invalidHousehold={invalidHousehold}
                 form={form}
+                onSubmit={submit}
               />
             </form>
           </Form>

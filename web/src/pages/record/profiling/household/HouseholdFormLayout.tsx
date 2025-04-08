@@ -16,7 +16,7 @@ import { useAddHousehold } from "../queries/profilingAddQueries";
 
 export default function HouseholdFormLayout() {
   const location = useLocation();
-  const { user } = React.useRef(useAuth()).current;
+  const { user } = useAuth()
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));

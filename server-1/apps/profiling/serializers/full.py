@@ -61,7 +61,8 @@ class FamilyFullSerializer(serializers.ModelSerializer):
     mother_id = serializers.PrimaryKeyRelatedField(queryset=Mother.objects.all(), write_only=True, source="mother", allow_null=True)
     father_id = serializers.PrimaryKeyRelatedField(queryset=Father.objects.all(), write_only=True, source="father", allow_null=True)
     guard_id = serializers.PrimaryKeyRelatedField(queryset=Guardian.objects.all(), write_only=True, source="guard", allow_null=True)
-    hh_id = serializers.PrimaryKeyRelatedField(queryset=Household.objects.all(), write_only=True, source="hh", allow_null=True)
+    hh_id = serializers.PrimaryKeyRelatedField(queryset=Household.objects.all(), write_only=True, source="hh")
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff")    
 
     class Meta:
         model = Family
