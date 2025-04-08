@@ -28,7 +28,7 @@ export default function DependentsInfoLayout({
   dependentsList,
   setDependentsList,
   defaultValues,
-  back,
+
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
