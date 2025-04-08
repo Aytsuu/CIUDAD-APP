@@ -11,23 +11,16 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
-import { useQuery } from "@tanstack/react-query";
-import { getResidents } from "../restful-api/profilingGetAPI";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useResidents } from "../queries/profilingFetchQueries";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Fetch residents using useQuery
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true, // Force refetch on mount
-    staleTime: 0, // Ensure data is never considered stale
-  });
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
 
   // Format resident to populate data table
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
@@ -49,8 +42,7 @@ export default function ResidentRecords() {
         mname: personal.per_mname || "-",
         suffix: personal.per_suffix || "-",
         dateRegistered: resident.rp_date_registered || "",
-        registeredBy:
-          (staff ? `${staff.per_lname}, 
+        registeredBy: (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
           ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };

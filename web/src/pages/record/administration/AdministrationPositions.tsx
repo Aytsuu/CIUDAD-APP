@@ -91,7 +91,7 @@ export default function AdministrationPositions({
                   <Label className="text-black/80 text-[15px] font-medium">
                     {value.pos_title}  
                     <div className="flex items-center gap-2 text-black/60">
-                      <Label className="text-[13px]">Max Holders: </Label> {value.pos_max}
+                      <Label className="text-[13px]">Max Holders : </Label> {value.pos_max}
                     </div>
                   </Label>
                   {value.pos_id === selectedPosition ? (

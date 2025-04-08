@@ -140,38 +140,31 @@ export default function FeatureSelection({
   );
 
   // Memoized row component
-  const Row = React.memo(
-    ({
-      index,
-      style,
-      data,
-    }: {
-      index: number;
-      style: React.CSSProperties;
-      data: Feature[];
-    }) => {
-      const feature = data[index];
-      const handleChange = (checked: boolean) =>
-        handleAssignment(feature, checked);
-      return (
-        <div style={style}>
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id={feature.feat_id}
-              checked={isFeatureAssigned(feature.feat_id)}
-              onCheckedChange={handleChange}
-            />
-            <Label
-              htmlFor={feature.feat_id}
-              className="text-black/80 text-[14px] cursor-pointer"
-            >
-              {feature.feat_name}
-            </Label>
-          </div>
+  const Row = React.memo(({ index, style, data } : {
+    index: number;
+    style: React.CSSProperties;
+    data: Feature[];
+  }) => {
+    const feature = data[index];
+    const handleChange = (checked: boolean) => handleAssignment(feature, checked);
+    return (
+      <div style={style}>
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id={feature.feat_id}
+            checked={isFeatureAssigned(feature.feat_id)}
+            onCheckedChange={handleChange}
+          />
+          <Label
+            htmlFor={feature.feat_id}
+            className="text-black/80 text-[14px] cursor-pointer"
+          >
+            {feature.feat_name}
+          </Label>
         </div>
-      );
-    }
-  );
+      </div>
+    );
+  });
 
   return (
     <Accordion type="multiple" className="w-full">

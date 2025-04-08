@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPosition, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
 import { deleteAssignedFeature, deletePosition } from "../restful-api/administrationDeleteAPI";
 import { getResidents } from "../../profiling/restful-api/profilingGetAPI";
-import { updatePermission, updatePosition } from "../restful-api/administrationPutAPI";
+import { batchPermissionUpdate, updatePermission, updatePosition } from "../restful-api/administrationPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -136,9 +136,21 @@ export const useUpdatePermission = () => {
       option: string,
       permission: boolean
     }) => updatePermission(assignmentId, option, permission),
-    onSuccess: () => {}
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
   })
 }
+
+export const useBatchPermissionUpdate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({assignmentId, checked} : {
+      assignmentId: string,
+      checked: boolean
+    }) => batchPermissionUpdate(assignmentId, checked),
+    onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
+  })
+}
+
 
 // Deleting
 export const useDeletePosition = () => {

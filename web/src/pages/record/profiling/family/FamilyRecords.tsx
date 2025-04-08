@@ -8,14 +8,9 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
-import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
-import {
-  getFamilies,
-  getHouseholds,
-  getResidents,
-} from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFamilies, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -23,27 +18,9 @@ export default function FamilyRecords() {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
-  // Fetch families and residents using useQuery
-  const { data: families, isLoading: isLoadingFamilies } = useQuery({
-    queryKey: ["families"],
-    queryFn: getFamilies,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ["households"],
-    queryFn: getHouseholds,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: families, isLoading: isLoadingFamilies } = useFamilies();
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format family to populate data table
   const formatFamilyData = (): FamilyRecord[] => {

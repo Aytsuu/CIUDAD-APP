@@ -107,7 +107,7 @@ export default function AdministrationRecords() {
             </Button>
           </Link>
           <Link
-            to="/resident-form"
+            to="/resident/form"
             state={{
               params: {
                 title: "Staff Registration",

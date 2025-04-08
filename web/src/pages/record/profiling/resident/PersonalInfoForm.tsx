@@ -54,7 +54,7 @@ export default function PersonalInfoForm({
             form.setValue("per_id", value);
             handleComboboxChange();
           }}
-          placeholder="Search for resident..."
+          placeholder="Select a resident"
           emptyMessage="No resident found"
         />
       )}

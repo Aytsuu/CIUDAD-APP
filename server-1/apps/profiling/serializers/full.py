@@ -15,6 +15,7 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
     )
     account = UserAccountSerializer(read_only=True)
     staff = serializers.SerializerMethodField()
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff")
 
     class Meta:
         model = ResidentProfile
