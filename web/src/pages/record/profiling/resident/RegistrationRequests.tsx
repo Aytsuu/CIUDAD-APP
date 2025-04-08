@@ -1,17 +1,12 @@
 import React from "react";
-import { ClockArrowUp, FileInput, Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { requestColumns } from "./RequestColumns";
-import { Link } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { useQuery } from "@tanstack/react-query";
-import { getRequest } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRequests } from "../queries/profilingFetchQueries";
 
 export default function RegistrationRequests() {
 
@@ -19,20 +14,13 @@ export default function RegistrationRequests() {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  const { data: requests, isLoading: isLoadingRequests} = useQuery({
-    queryKey: ['requests'],
-    queryFn: getRequest,
-    refetchOnMount: true,
-    staleTime: 0
-  })
+  const { data: requests, isLoading: isLoadingRequests} = useRequests();
 
   const formatRequestData = React.useCallback(() => {
     if(!requests) return[];
 
     return requests.map((request: any) => {
-      
       const personal = request.per
-
       return ({
         id: request.req_id || '',
         address: personal.per_address || '',
@@ -47,22 +35,19 @@ export default function RegistrationRequests() {
 
   const filteredRequests = React.useMemo(() => {
     const formattedData = formatRequestData()
-
     if(!formattedData.length) return [];
 
     return formattedData.filter((request: any) => 
       Object.values(request).join(" ").toLowerCase().includes(searchQuery.toLowerCase())
     );
-
   }, [searchQuery, requests])
 
   const totalPages = Math.ceil(filteredRequests.length / pageSize);
-
+  
   const paginatedRequests = filteredRequests.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   )
-
 
   if(isLoadingRequests) {
     return (

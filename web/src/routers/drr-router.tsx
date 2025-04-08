@@ -1,18 +1,18 @@
-import DRRMonthlyARReport from '@/pages/report/drr/DRR-MonthlyARReport';
-import DRRWeeklyARReport from '@/pages/report/drr/DRR-WeeklyARReport';
-import DRRResidentReport from '@/pages/report/drr/DRR-ResidentReport';
-import DRRAcknowledgementReport from '@/pages/report/drr/DRR-AcknowledgementReport';
+import MonthlyARReport from '@/pages/report/drr/MonthlyARReport';
+import WeeklyARReport from '@/pages/report/drr/WeeklyARReport';
+import DRRResidentReport from '@/pages/report/drr/DRRResidentReport';
+import AcknowledgementReport from '@/pages/report/drr/AcknowledgementReport';
 import DRRStaffRecord from '@/pages/record/drr/DRR-StaffRecord';
 
 // Creating routes
 export const drr_router = [
   {
     path: "/drr-monthly-report", 
-    element: <DRRMonthlyARReport/>,
+    element: <MonthlyARReport/>,
   },
   {
     path: '/drr-weekly-report',
-    element: <DRRWeeklyARReport/>
+    element: <WeeklyARReport/>
   },
   {
     path: '/drr-resident-report',
@@ -20,7 +20,7 @@ export const drr_router = [
   },
   {
     path: '/drr-acknowledgement-report',
-    element: <DRRAcknowledgementReport/>
+    element: <AcknowledgementReport/>
   },
   {
     path: "/drr-staff",

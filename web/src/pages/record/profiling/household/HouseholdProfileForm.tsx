@@ -8,19 +8,22 @@ import { Combobox } from "@/components/ui/combobox";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function HouseholdProfileForm({
   sitio,
   residents,
   isSubmitting,
   invalidHouseHead,
-  form
+  form,
+  onSubmit
 }: {
   sitio: any[];
   residents: any[];
   isSubmitting: boolean;
   invalidHouseHead: boolean;
   form: UseFormReturn<z.infer<typeof householdFormSchema>>;
+  onSubmit: () => void;
 }) {
   return (
     <>
@@ -29,7 +32,7 @@ export default function HouseholdProfileForm({
           options={residents}
           value={form.watch("householdHead")}
           onChange={(value) => form.setValue("householdHead", value)}
-          placeholder="Search for household head (by resident #)"
+          placeholder="Select a household head"
           emptyMessage="No resident found"
         />
         <div className="flex justify-between">
@@ -70,9 +73,13 @@ export default function HouseholdProfileForm({
       />
       <div className="flex justify-end">
         {!isSubmitting ? (
-          <Button type="submit" className="mt-5">
-            Register
-          </Button>
+          <ConfirmationModal 
+            trigger={<Button>Register</Button>}
+            title="Confirm Register"
+            description="Are you sure you want to register a household?"
+            actionLabel="Confirm"
+            onClick={onSubmit}
+          />
         ) : (
           <LoadButton>Registering...</LoadButton>
         )}

@@ -1,7 +1,6 @@
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocation, useNavigate } from "react-router";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 import { formatResidents, formatSitio } from "../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -9,14 +8,14 @@ import { useForm } from "react-hook-form";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
-import { addHousehold } from "../restful-api/profiingPostAPI";
+import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
+import { useAuth } from "@/context/AuthContext";
+import { useAddHousehold } from "../queries/profilingAddQueries";
+import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
 
 export default function HouseholdFormLayout() {
-
-  const navigate = useNavigate()
-  const location = useLocation();
+  const { user } = useAuth()
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));
@@ -24,23 +23,22 @@ export default function HouseholdFormLayout() {
       resolver: zodResolver(householdFormSchema),
       defaultValues: defaultValues.current,
   });
-  const params = React.useMemo(() => {
-    return location.state?.params || {};
-  }, [location.state]);
-
-  const [residents, setResidents] = React.useState(() =>
-    formatResidents(params, true)
+  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
+  const { mutateAsync: addHousehold} = useAddHousehold();
+  const [formattedSitio, setSitio] = React.useState(() => formatSitio({sitio: sitio}));
+  const [formattedResidents, setFormattedResidents] = React.useState(() =>
+    formatResidents({residents: residents, households: households})
   );
-  const sitio = React.useRef(formatSitio(params));
 
-  // Function to update residents after a new household is registered
-  const updateResidents = React.useCallback((newHousehold: any) => {
-    setResidents((prevResidents: any) => {
-      return prevResidents.filter(
-        (resident: any) => resident.id.split(" ")[0] !== newHousehold.rp.rp_id
-      );
-    });
-  }, []);
+  React.useEffect(()=>{
+    setFormattedResidents(() =>
+      formatResidents({residents: residents, households: households})
+    );
+    
+    setSitio(() => formatSitio({sitio: sitio}));
+  }, [residents, households, sitio])
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -55,22 +53,23 @@ export default function HouseholdFormLayout() {
       return;
     }
 
-    const data = form.getValues();
-    const res = await addHousehold(data);
+    const householdInfo = form.getValues();
+    await addHousehold({
+      householdInfo: householdInfo, 
+      staffId: user?.staff.staff_id
+    });
 
-    if (res) {
-      updateResidents(res); // Update residents in the parent component
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
-      setIsSubmitting(false);
-      form.reset(defaultValues.current);
-    }
+    setIsSubmitting(false);
+    form.reset(defaultValues.current);
   };
+
+  if(isLoadingResidents || isLoadingHouseholds 
+    || isLoadingSitio
+  ) {
+    return (
+      <div>Loading...</div>
+    )
+  }
 
   return (
     <div className="w-full flex justify-center">
@@ -88,11 +87,12 @@ export default function HouseholdFormLayout() {
               className="grid gap-4"
             >
               <HouseholdProfileForm
-                sitio={sitio.current}
-                residents={residents}
+                sitio={formattedSitio}
+                residents={formattedResidents}
                 isSubmitting={isSubmitting}
                 invalidHouseHead={invalidHouseHead}
                 form={form}
+                onSubmit={submit}
               />
             </form>
           </Form>

@@ -20,6 +20,7 @@ import { CircleAlert, CircleCheck, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DependentsInfoLayout({
   form,
@@ -28,7 +29,7 @@ export default function DependentsInfoLayout({
   dependentsList,
   setDependentsList,
   defaultValues,
-
+  back,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -39,6 +40,7 @@ export default function DependentsInfoLayout({
   back: () => void;
 }) {
   const navigate = useNavigate();
+  const { user } = React.useRef(useAuth()).current;
 
   React.useEffect(() => {
     const dependents = form.getValues("dependentsInfo.list");
@@ -129,7 +131,7 @@ export default function DependentsInfoLayout({
       const motherId = await addMother(selectedParents[0]);
       const fatherId = await addFather(selectedParents[1]);
       const guardId = await addGuardian(selectedParents[3]);
-      const familyId = await addFamily(demographicInfo, fatherId, motherId, guardId);
+      const familyId = await addFamily(demographicInfo, fatherId, motherId, guardId, user?.staff.staff_id);
 
       // Automatically add selected mother and father in the family composition
       addFamilyComposition(familyId, selectedParents[0]);
@@ -162,15 +164,15 @@ export default function DependentsInfoLayout({
     <div className="flex flex-col min-h-0 h-auto gap-10 md:p-10 rounded-lg overflow-auto">
       <div className="mt-8 flex flex-col justify-end gap-2 sm:gap-3">
         <DependentForm
+          title="Dependents Information"
           form={form}
           residents={residents}
           selectedParents={selectedParents}
           dependents={dependentsList}
-          title="Dependents Information"
         />
         <DataTable data={dependentsList} columns={dependentColumns} />
       </div>
-      {/* <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3">
         <Button variant="outline" className="w-full sm:w-32" onClick={back}>
           Prev
         </Button>
@@ -185,7 +187,7 @@ export default function DependentsInfoLayout({
           actionLabel="Confirm"
           onClick={registerProfile}
         />
-      </div> */}
+      </div>
     </div>
   );
 }

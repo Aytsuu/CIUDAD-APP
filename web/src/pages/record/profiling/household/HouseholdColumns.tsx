@@ -77,7 +77,7 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
     accessorKey: 'action',
     header: 'Action',
     cell: ({ row }) => (
-        <Link to="/household-record-view" 
+        <Link to="/household/view" 
           state={{params: {data: households.find((household) => household.hh_id == row.original.id)}}}
         >
           <Button variant={"outline"}>

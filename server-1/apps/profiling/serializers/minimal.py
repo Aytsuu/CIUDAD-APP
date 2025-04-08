@@ -1,4 +1,3 @@
-from rest_framework import serializers
 from ..models import *
 from .base import *
 
@@ -27,8 +26,8 @@ class HouseholdMinimalSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_staff(self, obj):
-        from apps.administration.serializers import StaffSerializer
-        return StaffSerializer(obj.staff, context=self.context).data
+        from apps.administration.serializers.minimal import StaffMinimalSerializer
+        return StaffMinimalSerializer(obj.staff, context=self.context).data
     
 class RequestRegistrationSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -61,3 +60,16 @@ class GuardianSerializer(serializers.ModelSerializer):
     class Meta:
         model = Guardian
         fields = '__all__'
+
+class BusinessSerializer(serializers.ModelSerializer):
+    sitio = SitioSerializer(read_only=True)
+    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source="sitio")
+    staff = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Business
+        fields = '__all__'
+
+    def get_staff(self,obj):
+        from apps.administration.serializers.minimal import StaffMinimalSerializer
+        return StaffMinimalSerializer(obj.staff).data

@@ -47,7 +47,7 @@ export default function HealthFamilyForm() {
   }, [location.state]);
 
   const formattedResidents = React.useMemo(() => {
-    return formatResidents(params, false);
+    return formatResidents(params);
   }, [params.residents]);
 
   const households = React.useMemo(() => {
