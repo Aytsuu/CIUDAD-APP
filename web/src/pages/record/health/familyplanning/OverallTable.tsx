@@ -9,6 +9,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import React from "react";
 
 type FamPlanningPatient = {
   id: number;
@@ -52,30 +53,33 @@ const samplePatients: FamPlanningPatient[] = [
 ];
 
 function FamPlanningTable() {
+
+  const [pageSize, setPageSize] = React.useState<number>(10);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [patients, setPatients] = useState<FamPlanningPatient[]>(samplePatients);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Table Columns
   const columns: ColumnDef<FamPlanningPatient>[] = [
-    {accessorKey: "id", header: "#"},
+    { accessorKey: "id", header: "#" },
     {
       accessorKey: "fullName", header: "Patient",
-    cell: ({ row }) => {
-      const patient = row.original;
-      const fullName = `${patient.lname}, ${patient.fname}`;
-      return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {patient.gender}, {patient.age} years old
+      cell: ({ row }) => {
+        const patient = row.original;
+        const fullName = `${patient.lname}, ${patient.fname}`;
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {patient.gender}, {patient.age} years old
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      },
     },
-  },
-    
+
     { accessorKey: "address", header: "Address" },
     { accessorKey: "purok", header: "Purok" },
     { accessorKey: "type", header: "Type" },
@@ -129,6 +133,12 @@ function FamPlanningTable() {
     return searchString.includes(searchQuery.toLowerCase());
   });
 
+  // Paginate patients
+  const paginatedPatients = filteredPatients.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Page Header */}
@@ -146,37 +156,37 @@ function FamPlanningTable() {
 
       {/* Search & New Record Button */}
       <div className="relative w-full flex justify-between items-center mb-4">
-  <div className="flex flex-col md:flex-row gap-4 w-full">
-    <div className="flex gap-x-2">
-      {/* Search Input */}
-      <div className="relative flex-1">
-        <Search
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-          size={17}
-        />
-        <Input
-          placeholder="Search..."
-          className="pl-10 w-72 bg-white"
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
-      </div>
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex gap-x-2">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
+            </div>
 
-      {/* Filter Dropdown */}
-      <SelectLayout
-        className="w-full md:w-[200px] bg-white"
-        label=""
-        placeholder="Select"
-        options={[
-          { id: "All", name: "All" },
-          { id: "Resident", name: "Resident" },
-          { id: "Non-Resident", name: "Non-Resident" },
-        ]}
-        value={selectedFilter}
-        onChange={setSelectedFilter}
-      />
-    </div>
-  </div>
+            {/* Filter Dropdown */}
+            <SelectLayout
+              className="w-full md:w-[200px] bg-white"
+              label=""
+              placeholder="Select"
+              options={[
+                { id: "All", name: "All" },
+                { id: "Resident", name: "Resident" },
+                { id: "Non-Resident", name: "Non-Resident" },
+              ]}
+              value={selectedFilter}
+              onChange={setSelectedFilter}
+            />
+          </div>
+        </div>
 
 
         {/* New Record Button */}
@@ -205,15 +215,20 @@ function FamPlanningTable() {
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         {/* Showing Rows Info */}
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing 1-{filteredPatients.length} of {patients.length} records
+          Showing {(currentPage - 1) * pageSize + 1}–
+          {Math.min(currentPage * pageSize, filteredPatients.length)} of{" "}
+          {filteredPatients.length} records
         </p>
 
-        {/* Pagination */}
-         <div className="w-full sm:w-auto flex justify-center">
-                    <PaginationLayout className="" />
-                  </div>
-      </div>
+        {paginatedPatients.length > 0 && (
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredPatients.length / pageSize)}
+            onPageChange={setCurrentPage}
+          />
+        )}
     </div>
+    </div >
   );
 }
 

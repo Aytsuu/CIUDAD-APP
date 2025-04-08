@@ -38,7 +38,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   // Get current values for conditional rendering
   const typeOfClient = form.watch("typeOfClient")
   const subTypeOfClient = form.watch("subTypeOfClient")
-  const reasonForFP = form.watch("reasonForFP")
+  // const reasonForFP = form.watch("reasonForFP")
   // const reason = form.watch("reason")
   // const methodCurrentlyUsedValue = form.watch("methodCurrentlyUsed")
 
@@ -75,21 +75,21 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   }
 
   // Method options array
-  const methodCurrentlyUsed = [
-    { id: "COC", name: "COC" },
-    { id: "IUD", name: "IUD" },
-    { id: "BOM/CMM", name: "BOM/CMM" },
-    { id: "LAM", name: "LAM" },
-    { id: "POP", name: "POP" },
-    { id: "Interval", name: "Interval" },
-    { id: "BBT", name: "BBT" },
-    { id: "SDM", name: "SDM" },
-    { id: "Injectable", name: "Injectable" },
-    { id: "Post Partum", name: "Post Partum" },
-    { id: "STM", name: "STM" },
-    { id: "Implant", name: "Implant" },
-    { id: "Condom", name: "Condom" },
-  ]
+  // const methodCurrentlyUsed = [
+  //   { id: "COC", name: "COC" },
+  //   { id: "IUD", name: "IUD" },
+  //   { id: "BOM/CMM", name: "BOM/CMM" },
+  //   { id: "LAM", name: "LAM" },
+  //   { id: "POP", name: "POP" },
+  //   { id: "Interval", name: "Interval" },
+  //   { id: "BBT", name: "BBT" },
+  //   { id: "SDM", name: "SDM" },
+  //   { id: "Injectable", name: "Injectable" },
+  //   { id: "Post Partum", name: "Post Partum" },
+  //   { id: "STM", name: "STM" },
+  //   { id: "Implant", name: "Implant" },
+  //   { id: "Condom", name: "Condom" },
+  // ]
 
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
@@ -793,9 +793,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                               <SelectItem value="POP">POP</SelectItem>
                               <SelectItem value="Injectable">Injectable</SelectItem>
                               <SelectItem value="Implant">Implant</SelectItem>
-                              <SelectItem value="IUD">IUD</SelectItem>
-                              <SelectItem value="Interval">Interval</SelectItem>
-                              <SelectItem value="Post Partum">Post Partum</SelectItem>
+                              <SelectItem value="IUD-Interval">IUD-Interval</SelectItem>
+                              <SelectItem value="IUD-Post Partum">IUD-Post Partum</SelectItem>
                               <SelectItem value="Condom">Condom</SelectItem>
                               <SelectItem value="BOM/CMM">BOM/CMM</SelectItem>
                               <SelectItem value="BBT">BBT</SelectItem>
@@ -828,8 +827,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                               <SelectItem value="Pills">1. Pills</SelectItem>
                               <SelectItem value="DMPA">2. DMPA</SelectItem>
                               <SelectItem value="Condom">3. Condom</SelectItem>
-                              <SelectItem value="IUD-i">4. IUD-i</SelectItem>
-                              <SelectItem value="IUD-pp">5. IUD-pp</SelectItem>
+                              <SelectItem value="IUD-Interval">4. IUD-Interval</SelectItem>
+                              <SelectItem value="IUD-Post Partum">5. IUD-Post Partum</SelectItem>
                               <SelectItem value="Implant">6. Implant</SelectItem>
                               <SelectItem value="Lactating Amenorrhea">7. Lactating Amenorrhea</SelectItem>
                               <SelectItem value="Bilateral Tubal Ligation">8. Bilateral Tubal Ligation</SelectItem>
@@ -904,4 +903,3 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     </div>
   )
 }
-

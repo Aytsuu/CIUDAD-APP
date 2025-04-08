@@ -10,41 +10,38 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import SignatureCanvas from "react-signature-canvas"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
-import { page5Schema } from "@/form-schema/FamilyPlanningSchema"
 
 type FamilyPlanningMethod =
   | "coc"
-  | "iud"
+  | "iud-interval"
+  | "iud-postpartum"
   | "bom/cmm"
   | "lam"
   | "pop"
-  | "interval"
   | "bbt"
   | "sdm"
   | "injectable"
-  | "postpartum"
   | "stm"
   | "implant"
   | "condom"
   | "others"
 
-const methodLabels: Record<FamilyPlanningMethod, string> = {
-  coc: "Combined Oral Contraceptives (COC)",
-  iud: "Intrauterine Device (IUD)",
-  "bom/cmm": "Billings Ovulation Method/Cervical Mucus Method",
-  lam: "Lactational Amenorrhea Method",
-  pop: "Progestin-only Pills",
-  interval: "Interval Method",
-  bbt: "Basal Body Temperature",
-  sdm: "Standard Days Method",
-  injectable: "Injectable Contraceptives",
-  postpartum: "Postpartum Family Planning",
-  stm: "Symptothermal Method",
-  implant: "Contraceptive Implant",
-  condom: "Condom",
-  others: "Others",
-}
-
+  const methodLabels: Record<FamilyPlanningMethod, string> = {
+    coc: "Combined Oral Contraceptives (COC)",
+    "iud-interval": "Intrauterine Device - Interval (IUD)",
+    "iud-postpartum": "Intrauterine Device - Post Partum (IUD)",
+    "bom/cmm": "Billings Ovulation Method/Cervical Mucus Method",
+    lam: "Lactational Amenorrhea Method",
+    pop: "Progestin-only Pills",
+    bbt: "Basal Body Temperature",
+    sdm: "Standard Days Method",
+    injectable: "Injectable Contraceptives",
+    stm: "Symptothermal Method",
+    implant: "Contraceptive Implant",
+    condom: "Condom",
+    others: "Others",
+  }
+  
 // Fix the props type
 interface AcknowledgementFormProps {
   onPrevious4: () => void

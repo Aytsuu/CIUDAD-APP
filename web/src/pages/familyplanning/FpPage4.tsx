@@ -1,13 +1,13 @@
 "use client"
 
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+// import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
-import { type FormData, page4Schema } from "@/form-schema/FamilyPlanningSchema"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { useEffect } from "react"
 
 // Add props type to the component
@@ -28,9 +28,13 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
   })
 
   // Check if user selected IUD in page 1
+  // Check if user selected IUD-Interval or IUD-Post Partum in page 1
   const isIUDSelected =
-    formData.methodCurrentlyUsed === "IUD" ||
-    (formData.typeOfClient === "New Acceptor" && formData.acknowledgement?.selectedMethod === "iud")
+    formData.methodCurrentlyUsed === "IUD-Interval" ||
+    formData.methodCurrentlyUsed === "IUD-Post Partum" ||
+    (formData.typeOfClient === "New Acceptor" &&
+      (formData.acknowledgement?.selectedMethod === "iud-interval" ||
+        formData.acknowledgement?.selectedMethod === "iud-postpartum"))
 
   // Add form submission handler to update parent form data
   const onSubmit = async (data: FormData) => {
@@ -388,4 +392,3 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
 }
 
 export default FamilyPlanningForm4
-
