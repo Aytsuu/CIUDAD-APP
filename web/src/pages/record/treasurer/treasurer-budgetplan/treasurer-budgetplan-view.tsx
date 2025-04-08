@@ -1,7 +1,7 @@
     import TableLayout from "@/components/ui/table/table-layout";
     import PaginationLayout from "@/components/ui/pagination/pagination-layout";
     import { useState } from "react";
-    import { ChevronLeft } from "lucide-react";
+    import { ChevronLeft, Pen } from "lucide-react";
     import { Link } from "react-router-dom";
     import { Button } from "@/components/ui/button/button";
     import { useParams } from "react-router-dom";
@@ -246,9 +246,12 @@
             <div className="w-full h-full bg-snow flex flex-col gap-3 p-4">
             {/* Budget Header */}
             <div className="w-full">
-                <div className='flex items-center relative mb-4'>
-                    <Link to='/treasurer-budget-plan'><Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button></Link>  
-                    <h1 className={styles.headerTitle}>ANNUAL BUDGET PLAN {budgetDetails?.plan_year}</h1>
+                <div className="flex items-center justify-between mb-4">
+                    <Link to="/treasurer-budget-plan"> <Button className="text-black p-2" variant="outline"><ChevronLeft /> </Button> </Link>
+                    <h1 className={`${styles.headerTitle} text-center flex-grow`}>
+                        ANNUAL BUDGET PLAN {budgetDetails?.plan_year}
+                    </h1>
+                    <Button><Pen size={16} /> <span>Edit</span></Button>
                 </div>
                 
                 <div className={styles.budgetHeaderGrid}>

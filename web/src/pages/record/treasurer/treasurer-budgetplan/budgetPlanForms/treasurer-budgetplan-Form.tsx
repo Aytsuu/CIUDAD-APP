@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
 import { toast } from "sonner";
-import { MdCategory } from "react-icons/md";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -80,7 +80,7 @@ const initialFormData4 = {
 };
 
 function CreateBudgetPlanForm() {
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
     const year = new Date().getFullYear()
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
@@ -97,6 +97,7 @@ function CreateBudgetPlanForm() {
     const [balUnappropriated, setbalUnappropriated] = useState(0.00);
 
     const [currentPage, setCurrentPage] = useState(1);
+    const [isEditing, setEditing] = useState(false);
     const [formData1, setFormData1] = useState(initialFormData1);
     const [formData2, setFormData2] = useState(initialFormData2);
     const [formData3, setFormData3] = useState(initialFormData3);
@@ -259,7 +260,15 @@ function CreateBudgetPlanForm() {
         <div className='w-full h-full bg-snow'>
             <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
-                    <Link to='/treasurer-budget-plan'><Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button></Link>
+                    {/* Confirmation message when users aborts budget plan creation by clicking the back button */}
+                    <ConfirmationModal
+                    trigger={<Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button>}
+                    title="Unsaved Changes"
+                    description="Are you sure you want to go back? All progress on your budget plan will be lost."
+                    actionLabel="Confirm"
+                    onClick={() => (
+                        window.location.href = '/treasurer-budget-plan'
+                    )}/>
                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
                         <div>Create Budget Plan</div>
                     </h1>
