@@ -92,7 +92,9 @@ function FamPlanningTable() {
           <TooltipLayout
             trigger={
               <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                <Eye size={15} />
+                 <Link to="/FamPlanning_individual">
+                                  <Eye size={15} />
+                                </Link>
               </div>
             }
             content="View"

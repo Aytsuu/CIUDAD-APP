@@ -25,25 +25,16 @@ import sys, os
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1'
 
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+'
-
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1']
+
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -63,6 +54,7 @@ INSTALLED_APPS = [
     # 'apps.waste',
     # 'apps.profiling',
     # 'apps.administration'
+    'apps.familyplanning',
 ]
 
 MIDDLEWARE = [
@@ -123,7 +115,6 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -156,8 +147,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
-DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

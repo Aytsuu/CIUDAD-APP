@@ -1,4 +1,5 @@
 """
+<<<<<<< HEAD
 
 
 server-1/venv/Lib/site-packages/django/conf/project_template/project_name/urls.py-tpl
@@ -8,12 +9,12 @@ The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/{{ docs_version }}/topics/http/urls/
 
 >>>>>>> health-profiling-page
+=======
+>>>>>>> mobile/health/resident
 URL configuration for backend project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
-
-
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -31,4 +32,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('health-profiling/', include("apps.healthProfiling.urls"))
+    path ('familyplanning/', include("apps.familyplanning.urls"))
 ]
