@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { z } from "zod";
 
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -41,7 +41,7 @@ export default function PrenatalFormFirstPg(
 
     type previousHospitalization= {
         prevHospitalization: string;
-        prevHospitalizationYr: number;
+        prevHospitalizationYr: string;
     }
 
     const [prevIllnessData, setprevIllnessData] = useState<previousIllness[]>([])

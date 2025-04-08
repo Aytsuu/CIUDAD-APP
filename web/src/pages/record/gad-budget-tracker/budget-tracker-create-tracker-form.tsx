@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";

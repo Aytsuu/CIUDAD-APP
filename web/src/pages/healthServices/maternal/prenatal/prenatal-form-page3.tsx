@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarCheck } from 'lucide-react';
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";

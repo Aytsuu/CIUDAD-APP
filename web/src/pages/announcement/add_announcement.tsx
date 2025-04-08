@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import addImage from "/src/assets/images/addimage.png";
 import { announcementFormSchema } from "../../form-schema/Announcement/AnnouncementSchema";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form";
 
 const options = {
   modes: ["ALL", "SMS", "APP"],

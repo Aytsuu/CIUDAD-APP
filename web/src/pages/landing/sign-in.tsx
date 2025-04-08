@@ -13,7 +13,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button";
 
 

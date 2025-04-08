@@ -6,7 +6,7 @@ import {Textarea} from '../../../../components/ui/textarea.tsx';
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem,SelectLabel,SelectSeparator,SelectGroup} from "../../../../components/ui/select/select.tsx";
 import {Button} from '../../../../components/ui/button.tsx';
 import {FilterAccordion} from '../../../../components/ui/filter-accordion.tsx'
-import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
+import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 

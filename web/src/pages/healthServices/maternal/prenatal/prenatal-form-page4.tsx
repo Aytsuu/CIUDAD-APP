@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema";
 import { DataTable } from "@/components/ui/table/data-table";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

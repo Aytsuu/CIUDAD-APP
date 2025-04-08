@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 // import { Textarea } from '@/components/ui/textarea.tsx';
 // import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectLabel, SelectSeparator, SelectGroup } from "@/components/ui/select/select.tsx";
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 // import { SelectLayout } from "@/components/ui/select/select-layout";
 
 import { zodResolver } from "@hookform/resolvers/zod";

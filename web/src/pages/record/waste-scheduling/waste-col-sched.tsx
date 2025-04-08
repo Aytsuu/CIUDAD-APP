@@ -7,7 +7,7 @@ import { FilterAccordion } from '@/components/ui/filter-accordion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 
 const sitioOptions = [

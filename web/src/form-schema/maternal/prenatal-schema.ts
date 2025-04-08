@@ -8,7 +8,7 @@ export const PrenatalFormSchema = z.object({
         motherLName: z.string().min(1, 'Last name is required'),
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional(),
-        motherAge: z.number().min(0, 'Age must be a positive number'),
+        motherAge: z.string().min(0, 'Age must be a positive number'),
         motherDOB: z.string().date(),
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
@@ -20,18 +20,18 @@ export const PrenatalFormSchema = z.object({
             city: z.string().min(1, 'City is required'),
             province: z.string().min(1, 'Province is required'),
         }),
-        motherWt: z.number().min(0, 'Weight must be a positive number'),
-        motherHt: z.number().min(0, 'Height must be a positive number'),
-        motherBMI: z.number().min(0, 'BMI must be a positive number'),
+        motherWt: z.string().min(0, 'Weight must be a positive number'),
+        motherHt: z.string().min(0, 'Height must be a positive number'),
+        motherBMI: z.string().min(0, 'BMI must be a positive number'),
     }),
 
     // obstretic history
     obstreticHistory: z.object({
-        noOfChBornAlive: z.number().min(0).optional(),
-        noOfLivingCh: z.number().min(0).optional(),
-        noOfAbortion: z.number().min(0).optional(),
-        noOfStillBirths: z.number().min(0).optional(),
-        historyOfLBabies: z.number().min(0).optional(),
+        noOfChBornAlive: z.string().min(0).optional(),
+        noOfLivingCh: z.string().min(0).optional(),
+        noOfAbortion: z.string().min(0).optional(),
+        noOfStillBirths: z.string().min(0).optional(),
+        historyOfLBabies: z.string().min(0).optional(),
         historyOfDiabetes: z.string().min(0).optional()
     }),
 
@@ -39,7 +39,7 @@ export const PrenatalFormSchema = z.object({
     medicalHistory: z.object({
         prevIllness: z.string().optional(),
         prevHospitalization: z.string().optional(),
-        prevHospitalizationYr: z.number().optional(),
+        prevHospitalizationYr: z.string().optional(),
     }),
 
     // previous pregnancy
@@ -47,10 +47,10 @@ export const PrenatalFormSchema = z.object({
         dateOfDelivery: z.string().date().optional(),
         outcome: z.string().optional(),
         typeOfDelivery: z.string().optional(),
-        babysWt: z.number().optional(),
+        babysWt: z.string().optional(),
         gender: z.string().optional(),
-        ballardScore: z.number().optional(),
-        apgarScore: z.number().optional()
+        ballardScore: z.string().optional(),
+        apgarScore: z.string().optional()
     }),
 
     // vaccine type
@@ -67,10 +67,10 @@ export const PrenatalFormSchema = z.object({
 
     // present pregnancy
     presentPregnancy: z.object({
-        gravida: z.number().default(1),
-        para: z.number().default(0),
-        fullterm: z.number().default(0),
-        preterm: z.number().default(0),
+        gravida: z.string(),
+        para: z.string(),
+        fullterm: z.string(),
+        preterm: z.string(),
         lmp: z.string().date(),
         edc: z.string().date(),
     }),
@@ -159,13 +159,13 @@ export const PrenatalFormSchema = z.object({
     prenatalCare: z.object({
         date: z.string().date(),
         aog: z.object({
-            aogWeeks: z.number(),
-            aogDays: z.number(),
+            aogWeeks: z.string(),
+            aogDays: z.string(),
         }),
-        wt: z.number(),
+        wt: z.string(),
         bp: z.object({
-            systolic: z.number(),
-            diastolic: z.number(),
+            systolic: z.string(),
+            diastolic: z.string(),
         }),
         leopoldsFindings: z.object({
             fundalHeight: z.string().optional(),

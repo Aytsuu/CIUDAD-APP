@@ -8,7 +8,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { ChildHealthFormSchema } from "@/form-schema/chr-schema";
 import { Button } from "@/components/ui/button";

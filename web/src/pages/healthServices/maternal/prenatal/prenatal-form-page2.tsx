@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form"
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { z } from "zod"
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
