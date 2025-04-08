@@ -2,13 +2,13 @@ import CreateBudgetPlanPage1 from "./treasurer-budgetplan-Page1";
 import CreateBudgetPlanPage2 from "./treasurer-budgetplan-Page2";
 import CreateBudgetPlanPage3 from "./treasurer-budgetplan-Page3";
 import CreateBudgetPlanPage4 from "./treasurer-budgetplan-Page4";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
 import { useEffect } from "react";
 import { ChevronLeft, CircleCheck } from "lucide-react";
-import { Link } from "react-router";
+// import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
@@ -80,7 +80,6 @@ const initialFormData4 = {
 };
 
 function CreateBudgetPlanForm() {
-    const navigate = useNavigate();
     const year = new Date().getFullYear()
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
@@ -97,7 +96,6 @@ function CreateBudgetPlanForm() {
     const [balUnappropriated, setbalUnappropriated] = useState(0.00);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [isEditing, setEditing] = useState(false);
     const [formData1, setFormData1] = useState(initialFormData1);
     const [formData2, setFormData2] = useState(initialFormData2);
     const [formData3, setFormData3] = useState(initialFormData3);
@@ -136,6 +134,7 @@ function CreateBudgetPlanForm() {
     };
 
 
+    // Data insertion
     const onSubmit = async () => {
         const toastId = toast.loading('Submitting budget plan...', {
             duration: Infinity  // Keep open until we manually close it
@@ -258,6 +257,7 @@ function CreateBudgetPlanForm() {
     
     return (
         <div className='w-full h-full bg-snow'>
+            {/* Header Title */}
             <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
                     {/* Confirmation message when users aborts budget plan creation by clicking the back button */}
@@ -279,6 +279,7 @@ function CreateBudgetPlanForm() {
             </div>
             <hr className="border-gray mb-7 sm:mb-8" /> 
 
+            {/* Budgetplan Header */}
             <div className='flex flex-col gap-5'>
                 {/* Header */}
                 <div className='w-full  grid grid-cols-3 gap-3'>

@@ -6,9 +6,10 @@
     import { FormData, CurrentExpenditureMaintandOtherExpensesSchema2 } from "@/form-schema/budgetplan-create-schema";
     import { Button } from "@/components/ui/button/button";
     import { Label } from "@/components/ui/label";
-    import { useEffect, useState } from "react";
+    import { useEffect, useState, useRef } from "react";
     import { useLocation } from "react-router";
     import { formatNumber } from "@/helpers/currencynumberformatter";
+    import { toast } from "sonner";
 
     const styles = {
         fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -43,6 +44,7 @@
 
         const [total, setTotal] = useState(0.00);
         const [balance, setBalance] = useState(0);
+        const [isOverLimit, setOverLimit] = useState(false);
 
         const location = useLocation();
         const { actualRPT, miscExpenseLimit } = location.state;
@@ -57,6 +59,7 @@
         const { watch } = form;
         const formValues = watch();
         const miscExpenseVal = watch("miscExpense");
+        const toastId = useRef<string | number | null> (null);
 
         useEffect(() => {
             updateFormData(formValues);
@@ -71,6 +74,25 @@
             const MiscExpenseNum = Number(miscExpenseVal) || 0;
             const remainingBal = budgetLimitValue - MiscExpenseNum;
             setBalance(remainingBal);
+             if (remainingBal < 0) {
+                        setOverLimit(true);
+                        // Only show toast if one isn't already showing
+                        if (!toastId.current) {
+                            toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                                duration: Infinity, 
+                                style: {
+                                    border: '1px solid #f87171',
+                                    padding: '16px',
+                                    color: '#b91c1c',
+                                    background: '#fef2f2',
+                                },
+                            });
+                        }
+                    } else {
+                        setOverLimit(false);
+                        toast.dismiss();
+                        toastId.current = null;
+                    }
         },[miscExpenseVal, budgetLimitValue]);
 
         // Submit button function
@@ -85,7 +107,6 @@
             updateFormData(form.getValues()); 
             onPrevious2(); 
         };
-
 
         return (
             <Form {...form}>
@@ -105,7 +126,7 @@
                                         render={({ field }) => (
                                             <FormItem>
                                                 <div className={styles.fieldStyle}>
-                                                    <FormLabel className={name.startsWith("gadProg") || name.startsWith("seniorProg") || name.startsWith("juvJustice") || name.startsWith("badacProg") || name.startsWith("nutritionProg") || name.startsWith("aidsProg") || name.startsWith("assemblyExpenses") || name.startsWith("disasterProg") ? "w-[18rem] ml-8" : "w-[20rem]"}>
+                                                    <FormLabel className={name.startsWith("gadProg") || name.startsWith("seniorProg") || name.startsWith("juvJustice") || name.startsWith("badacProg") || name.startsWith("nutritionProg") || name.startsWith("aidsProg") || name.startsWith("assemblyExpenses") || name.startsWith("disasterProg") ? "w-[18rem] ml-8 text-black" : "w-[20rem] text-black"}>
                                                         {label}
                                                     </FormLabel>
                                                     <FormControl>
@@ -150,10 +171,10 @@
 
                         {/* Buttons */}
                         <div className="flex justify-between">
-                            <Button type="button" onClick={handlePrevious} className="w-[100px]">
+                            <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit}>
                                 Previous
                             </Button>
-                            <Button type="submit" className="w-[100px]">
+                            <Button type="submit" className="w-[100px]" disabled={isOverLimit}>
                                 Next
                             </Button>
                         </div>

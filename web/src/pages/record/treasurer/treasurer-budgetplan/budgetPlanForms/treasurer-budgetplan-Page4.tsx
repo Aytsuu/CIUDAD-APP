@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
+import { toast } from "sonner";
 
 const styles = {
     fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -55,7 +55,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [skFundBalance, setskFundBalance] = useState(0.00);
     const [calamityFundBalance ,setcalamityFundBalance] = useState(0.00);
     const [localDevBalance, setlocalDevBalance] = useState(0.00);
+    const [isOverLimit, setOverLimit] = useState(false);
 
+    const toastId = useRef<string | number | null>(null);
+    const isOverBudget = useRef(false);
     const localDevBudgetLimit = taxAllotment * (localDevLimit/100);
     const skBudgetLimit = availableResources * (skFundLimit/100);
     const calamityFundBudgetLimit = availableResources * (calamityFundLimit/100);
@@ -82,6 +85,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         const remainingBal = localDevBudgetLimit - calculatedTotal;
         settotalDevFund(calculatedTotal);
         setlocalDevBalance(remainingBal);
+        displayToast();
     }, [localDevVal, localDevBudgetLimit]);
     
 
@@ -91,6 +95,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         const remainingBal = calamityFundBudgetLimit - calculatedTotal;
         settotalCalamityFund(calculatedTotal);
         setcalamityFundBalance(remainingBal);
+        displayToast();
     }, [calamityFundVal, calamityFundBudgetLimit]);
 
 
@@ -98,6 +103,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     useEffect(() => {
         const remainingBal = skBudgetLimit - (Number(skVal) || 0)
         setskFundBalance(remainingBal)
+        displayToast();
     }, [skVal, skBudgetLimit])
 
     // Capital Outlays
@@ -113,6 +119,37 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         updateFormData(value);
         onSubmit();
     };
+
+    function displayToast() {
+        const currentlyExceeded = isAnyBudgetExceeded();
+        
+        if (currentlyExceeded) {
+            setOverLimit(true);
+            if (!toastId.current) {  
+                console.log('toast displayed');
+                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                    duration: Infinity, 
+                    style: {
+                        border: '1px solid #f87171',
+                        padding: '16px',
+                        color: '#b91c1c',
+                        background: '#fef2f2',
+                    },
+                });
+            }
+        } else {
+            setOverLimit(false);
+            if (toastId.current) {  
+                toast.dismiss(toastId.current);
+                toastId.current = null;
+            }
+        }
+    }
+    
+    function isAnyBudgetExceeded(): boolean {
+        return localDevBalance < 0 || skFundBalance < 0 || calamityFundBalance < 0 ? true : false;
+    }
+
 
     const handlePrevious = () => {
         updateFormData(form.getValues()); 
@@ -217,10 +254,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                     </div>
 
                     <div className="flex justify-between">
-                        <Button type="button" onClick={handlePrevious} className="w-[100px]">
+                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit}>
                             Previous
                         </Button>
-                        <Button type="submit" className="w-[100px]">
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>
                             Submit
                         </Button>
                     </div>

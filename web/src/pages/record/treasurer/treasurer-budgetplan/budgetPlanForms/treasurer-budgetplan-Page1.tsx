@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { CurrentExpendituresPersonalServicesSchema, FormData } from "@/form-schema/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
+import { toast } from "sonner";
 
 const styles = {
     fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -37,11 +38,14 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         { name: "leaveCredits", label: "Commutation of Leave Credits" },
     ];
 
+    // receiving the passed values
     const location = useLocation();
     const { actualIncome, personalServicesLimit } = location.state;
 
+    // budgetLimit and initializing states for total and balance
     const [total, setTotal] = useState(0);
     const [Balance, setBalance] = useState(0);
+    const [isOverLimit, setOverLimit] = useState(false);
     const personalServicesBudgetLimit = actualIncome * (personalServicesLimit/100);
 
     const form = useForm<BudgetPlanPage1FormData>({
@@ -51,6 +55,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
 
     const { watch } = form;
     const formValues = watch();
+    const toastId = useRef<string | number | null> (null);
 
     useEffect(() => {
         updateFormData(formValues);
@@ -64,6 +69,26 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
     useEffect(() => {
         const calculatedBalance = personalServicesBudgetLimit - total;
         setBalance(calculatedBalance);
+        
+        if (calculatedBalance < 0) {
+            setOverLimit(true);
+            // Only show toast if one isn't already showing
+            if (!toastId.current) {
+                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                    duration: Infinity, 
+                    style: {
+                        border: '1px solid #f87171',
+                        padding: '16px',
+                        color: '#b91c1c',
+                        background: '#fef2f2',
+                    },
+                });
+            }
+        } else {
+            setOverLimit(false);
+            toast.dismiss();
+            toastId.current = null;
+        }
     }, [total, personalServicesBudgetLimit]);
 
 
@@ -92,7 +117,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className={styles.fieldStyle}>
-                                            <FormLabel className="w-[20rem]">{label}</FormLabel>
+                                            <FormLabel className="w-[20rem] text-black">{label}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     {...field}
@@ -123,7 +148,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                     </div>
 
                     <div className="flex justify-end">
-                        <Button type="submit" className="w-[100px]">Next</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>Next</Button>
                     </div>
                 </div>
             </form>
