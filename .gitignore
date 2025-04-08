@@ -45,6 +45,10 @@ expo-env.d.ts
 # local env files
 .env
 .env*.local
+.env.local
+.env.development
+.env.production
+
 
 # typescript
 *.tsbuildinfo

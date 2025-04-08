@@ -25,7 +25,7 @@ import type {
   HealthSurveyData,
 } from "@/form-schema/health-data-types"
 
-export function FamilyProfileForm() {
+export function FamilyProfileForm({ households }: { households?: any[] }) {
   
    const defaultValues = React.useRef(generateDefaultValues(DemographicSchema));
 
@@ -88,7 +88,7 @@ export function FamilyProfileForm() {
         {currentStep === 1 && (
           <DemographicData
             form = {form}
-            households={households}
+            households={[]}
             onSubmit={()=>nextStep()}
 
           />

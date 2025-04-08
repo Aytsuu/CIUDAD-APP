@@ -13,6 +13,9 @@ urlpatterns = [
     # Father Urls
     path("father/", FatherView.as_view(), name="father-details"),
 
+    # Guardian Urls
+    path("guardian/", GuardianView.as_view(), name="guardian-details"),
+
     # Dependent Urls
     path("dependent/", DependentView.as_view(), name="dependent-details"),
 
@@ -28,14 +31,14 @@ urlpatterns = [
     # Househould Urls
     path("household/", HouseholdView.as_view(), name="household-details"),
 
-    # Building Urls
-    path("building/", BuildingView.as_view(), name="building-details"),
-
     # Registered Urls
     path("resident/", ResidentProfileView.as_view(), name="resident-details"),
 
     # Request Urls
-    path("request/", RequestView.as_view(), name="request-details"),
-    path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion")
+    path("request/", RequestRegistrationView.as_view(), name="request-details"),
+    path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+
+    # Business Urls
+    path("business/", BusinessView.as_view(), name="business-details")
 
 ]

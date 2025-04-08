@@ -4,7 +4,7 @@ import api from "@/api/api"
 export const deletePosition = async (selectedPosition: string) => {
 
     try {
-        const res = await api.delete(`administration/position/${selectedPosition}/`)
+        const res = await api.delete(`administration/position/delete/${selectedPosition}/`)
         return res
     } catch (err) {
         console.log(err)
@@ -15,7 +15,7 @@ export const deleteAssignedFeature = async (selectedPosition: string, featureId:
 
     try {
 
-        const res = await api.delete(`administration/assignment/${featureId}/${selectedPosition}/`)
+        const res = await api.delete(`administration/assignment/delete/${featureId}/${selectedPosition}/`)
         return res
 
     } catch (err) {
