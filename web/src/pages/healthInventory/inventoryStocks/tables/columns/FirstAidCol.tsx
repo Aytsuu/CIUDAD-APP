@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

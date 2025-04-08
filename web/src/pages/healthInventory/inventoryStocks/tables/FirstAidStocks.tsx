@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,

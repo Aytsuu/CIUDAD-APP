@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Sidebar,
@@ -9,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-import { Link } from "react-router";
 
 type AnotherSubMenuItem = {
   title: string;
@@ -40,12 +40,19 @@ const items: MenuItem[] = [
     url: "/waste-calendar-scheduling",
   },
   {
-    title: "Resident",
-    url: "/resident-records",
-  },
-  {
     title: "Administration",
     url: "/administrative",
+  },
+  {
+    title: "Profiling",
+    subItems: true,
+    url: "/",
+    items: [
+      { title: "Resident", url: "/resident-records"},
+      { title: "Family", url: "/family-records" },
+      { title: "Household", url: "/household-records" },
+      { title: "Business", url: "/business-records" },
+    ],
   },
   {
     title: "Blotter",
@@ -67,7 +74,11 @@ const items: MenuItem[] = [
     title: "GAD",
     subItems: true,
     url: "/",
-    items: [{ title: "Budget Tracker", url: "/gad-budget-tracker-main" }],
+    items: [
+      { title: "Budget Tracker", url: "/gad-budget-tracker-main"},
+      { title: "Project Proposals", url: "/gad-project-proposal"},
+      { title: "Annual Development Plan", url: "/gad-annual-development-plan"}  
+    ],
   },
   {
     title: "Council",
@@ -102,6 +113,7 @@ const items: MenuItem[] = [
           { title: "Permit", url: "/treasurer-permit" },
           { title: "Service Charge", url: "/treasurer-service-charge" },
           { title: "Barangay Service", url: "/treasurer-barangay-service" },
+          { title: "Rates", url: "/treasurer-rates" },
         ],
       },
     ],
@@ -130,6 +142,8 @@ const items: MenuItem[] = [
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
+      {title: "Family Profile Form", url: "/family-profiling-main"},
+      {title: "Patients Records", url: "patients-record-main"},
       {
         title: "Inventory",
         url: "/",
@@ -137,7 +151,8 @@ const items: MenuItem[] = [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
           { title: "Transaction", url: "/transactionMainInventoryList" },
-        ],
+         
+    ],
       },
       {
         title: "Queueing",

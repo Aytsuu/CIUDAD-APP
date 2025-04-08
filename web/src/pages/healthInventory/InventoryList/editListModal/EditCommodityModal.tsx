@@ -6,19 +6,20 @@ import {
   FormControl,
   FormLabel,
   Form,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import {
   CommodityType,
   CommodityListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { getCommodity } from "../requests/get/getCommodity";
 import { updateCommodity } from "../requests/update/UpdateCommodity";
 import { useQueryClient } from "@tanstack/react-query";
-import { FormInput } from "@/components/ui/form/form-input";
+import { FormInput } from "@/components/ui//form/form-input";
+
 interface CommodityListProps {
   initialData: {
     id: number;
@@ -88,7 +89,7 @@ export default function EditCommodityModal({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-             <FormInput control={form.control} name="commodityName" label="Commodity Name" placeholder="Enter Commodity Name"/>  
+             <FormInput control={form.control} name="commodityName" label="Commodity Name" placeholder="Enter Commodity Name" />  
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>
             </div>

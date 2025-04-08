@@ -1,8 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
-import { Search, Trash, Edit } from "lucide-react";
+import { Button } from "@/components/ui/button/button";
+import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
 
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

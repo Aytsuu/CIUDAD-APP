@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";

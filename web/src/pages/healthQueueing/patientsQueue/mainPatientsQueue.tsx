@@ -2,7 +2,7 @@ import { useState } from "react";
 import PatientsQueueTable from "./patientsQueueTable";
 import NoShowTable from "./noShowTable";
 import NotArrivedTable from "./notArrivedTable";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 
 export default function MainPatientQueueTable() {
   const [selectedView, setSelectedView] = useState("queue");

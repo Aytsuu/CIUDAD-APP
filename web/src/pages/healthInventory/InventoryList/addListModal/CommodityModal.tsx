@@ -6,7 +6,7 @@ import {
   CommodityListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { addCommodity } from "../requests/post/commodity";

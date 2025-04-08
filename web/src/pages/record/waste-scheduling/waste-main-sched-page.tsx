@@ -74,7 +74,7 @@ const WasteMainScheduling = () => {
 
       {/* Calendar Section */}
       <div className="w-full bg-white">
-        <EventCalendar />
+        <EventCalendar /> 
       </div>
     </div>
   );

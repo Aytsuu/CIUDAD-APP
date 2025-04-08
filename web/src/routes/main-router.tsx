@@ -1,6 +1,6 @@
 import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
-import AnnouncementDashboard from '@/pages/announcement/overall';
+import AnnouncementDashboard from '@/pages/announcement/AnnouncementList';
 
 import { RouteObject} from "react-router";
 import { Navigate } from 'react-router';
@@ -24,10 +24,13 @@ import { vaccination } from './vaccination';
 import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-route';
+import { familyProfilingRoute } from './family-profiling-route';
+import { patientsRecordRouter } from './patients-record-router';
 import { announcement_route } from './Announcement-route';
 import { famplanning_route } from './FamilyPlanning-route';
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
+
 
 
 export const main_router: RouteObject[] = [
@@ -69,7 +72,10 @@ export const main_router: RouteObject[] = [
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
-            ...doctorRouting
+            ...doctorRouting,
+            ...familyProfilingRoute,
+            ...patientsRecordRouter,
+            
         ]
     }
 ]

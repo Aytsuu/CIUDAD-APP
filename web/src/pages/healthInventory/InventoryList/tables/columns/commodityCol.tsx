@@ -1,6 +1,6 @@
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EditCommodityModal from "../../editListModal/EditCommodityModal";

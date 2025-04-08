@@ -1,7 +1,4 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 // -----------------------MEDICINE
 export type MedicineRecords = {

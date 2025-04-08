@@ -6,10 +6,10 @@ import {
   FormControl,
   FormLabel,
   Form,
-} from "@/components/ui/form";
+} from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   ImmunizationSchema,
   ImmunizationType,

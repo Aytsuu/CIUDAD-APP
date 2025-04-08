@@ -1,13 +1,13 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
 import WasteEventSchedSchema from '@/form-schema/waste-event-form-schema';
 
 const announcementOptions = [
@@ -32,6 +32,7 @@ function WasteEventSched() {
             invitees: '',
             eventDescription: '',
             selectedAnnouncements: [],
+            eventSubject: '',
         },
     });
 
@@ -41,8 +42,9 @@ function WasteEventSched() {
 
     const onSubmit = (values: z.infer<typeof WasteEventSchedSchema>) => {
         console.log(values);
-        // Handle form submission
     };
+
+    const selectedAnnouncements = form.watch('selectedAnnouncements') || [];
 
     return (
         <Form {...form}>
@@ -188,6 +190,22 @@ function WasteEventSched() {
                         </FormItem>
                     )}
                 />
+
+                {selectedAnnouncements.length > 0 && (
+                    <FormField
+                        control={form.control}
+                        name="eventSubject"
+                        render={({ field }) => (
+                            <FormItem className="mt-4">
+                                <Label>Event Subject:</Label>
+                                <FormControl>
+                                    <Textarea placeholder="Enter event subject" {...field} className="w-full" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">

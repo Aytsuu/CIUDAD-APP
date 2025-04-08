@@ -4,7 +4,7 @@ import { CommodityStocksRecord } from "../CommodityStocks";
 import { Trash, Edit } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import EditCommodityStockForm from "../../editModal/EditComStockModal";
 
 export const CommodityStocksColumns = (

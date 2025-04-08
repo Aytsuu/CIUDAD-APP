@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Form,
   FormControl,
@@ -7,7 +7,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";import { useForm } from "react-hook-form";
+} from "@/components/ui/form/form";import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   MedicineStocksSchema,
@@ -20,7 +20,7 @@ import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
+import { CircleCheck} from "lucide-react";
 import { fetchMedicines } from "../REQUEST/fetch";
 import { submitMedicineStock } from "../REQUEST/Post/Medicine/AddPostMedicine";
 import { FormInput } from "@/components/ui/form/form-input";
