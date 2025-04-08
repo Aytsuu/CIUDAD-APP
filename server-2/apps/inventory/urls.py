@@ -12,7 +12,6 @@ urlpatterns = [
     path("commoditylist/", CommodityListView.as_view(), name="commoditylist"),
     path("firstaidlist/", FirstAidListView.as_view(), name="firstaidlist"),
   
-
     # DELETE CATEGORY
     path("category/<int:cat_id>/", DeleteCategoryView.as_view(), name="delete_category"),
     

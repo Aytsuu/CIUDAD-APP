@@ -28,11 +28,7 @@ export const getColumns = (
   handleArchiveInventory: (inv_id: number) => void,
   setIsDialog: (value: boolean) => void
 ): ColumnDef<FirstAidStocksRecord>[] => [
-  // {
-  //   accessorKey: "finv_id",
-  //   header: "#.",
-  //   cell: ({ row }) => <div className="text-center">{row.original.finv_id}</div>,
-  // },
+  
   {
     accessorKey: "firstAidInfo",
     header: "Item Name",

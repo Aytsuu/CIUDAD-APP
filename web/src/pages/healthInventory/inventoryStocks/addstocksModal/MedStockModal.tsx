@@ -7,11 +7,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
+} from "@/components/ui/form";import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   MedicineStocksSchema,
   MedicineStockType,
@@ -19,17 +16,18 @@ import {
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useCategoriesMedicine } from "../REQUEST/Category/Medcategory";
-import { addMedicineInventory } from "../REQUEST/Post";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
-import { addInventory } from "../REQUEST/Post";
-import { InventoryPayload } from "../REQUEST/Payload";
-import { MedicinePayload } from "../REQUEST/Payload";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck, Loader2 } from "lucide-react";
 import { fetchMedicines } from "../REQUEST/fetch";
-
-interface MedicineStocksProps {
-  setIsDialog: (isOpen: boolean) => void;
-}
+import { submitMedicineStock } from "../REQUEST/Post/Medicine/AddPostMedicine";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
+import {formOptions, unitOptions, dosageUnitOptions} from "./options"
+interface MedicineStocksProps {setIsDialog: (isOpen: boolean) => void;}
 
 export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) {
   UseHideScrollbar();
@@ -52,6 +50,7 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
   const medicines = fetchMedicines();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
   // Watch for unit changes and reset pcs when not boxes
@@ -64,36 +63,27 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const handleSubmit = async (data: MedicineStockType) =>  {
-    try {
-      const inventoryResponse = await addInventory(InventoryPayload(data)); 
+  const handleSubmit = async (data: MedicineStockType) => {
+    setIsSubmitting(true);
+    const toastId = toast.loading('Adding medicine item...', {
+      duration: Infinity
+    });
     
-      if (!inventoryResponse?.inv_id) {
-        throw new Error("Failed to generate inventory ID.");
-      }
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
-
-      if (!data.medicineID) {
-        throw new Error("Medicine ID is required.");
-      }
-
-      const medicinePayload = MedicinePayload(data, inv_id);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const medicineInventoryResponse = await addMedicineInventory(medicinePayload);
-      if (!medicineInventoryResponse || medicineInventoryResponse.error) {
-        throw new Error("Failed to add medicine inventory.");
-      }
-      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
-
-      console.log("Medicine Inventory Response:", medicineInventoryResponse);
-      setIsAddConfirmationOpen(false); 
-      setIsDialog(false);
+    try {
+      await submitMedicineStock(data, queryClient);
+      toast.success('Medicine item added successfully', {
+        id: toastId,
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+        onAutoClose: () => { setIsDialog(false); }
+      });
     } catch (error: any) {
-      console.error(error);
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-      }
-      setIsAddConfirmationOpen(false);
+      console.error("Error in handleSubmit:", error);
+      toast.error(error.message || "Failed to add medicine item", { 
+        id: toastId, 
+        duration: 3000
+      });
+      setIsSubmitting(false);
     }
   };
 
@@ -104,8 +94,8 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
 
   const confirmAdd = () => {
     if (submissionData) {
+      setIsAddConfirmationOpen(false);
       handleSubmit(submissionData);
-      setIsDialog(false);
     }
   };
 
@@ -116,35 +106,11 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Medicine Name Dropdown */}
-            <FormField
-              control={form.control}
-              name="medicineID"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Medicine Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Medicine"
-                      options={medicines}
-                      value={field.value}
-                      onChange={(value) => {
-                        console.log("Selected Medicine ID:", value);
-                        field.onChange(value);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category Dropdown */}
+            <FormSelect  control={form.control} name="medicineID" label="Medicine Name" options={medicines}/>
             <FormField
               control={form.control}
               name="category"
@@ -173,192 +139,41 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Expiry Date */}
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormDateInput  control={form.control} name="expiryDate" label="Expiry Date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Dosage */}
-            <FormField
-              control={form.control}
-              name="dosage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Dosage</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? undefined : Number(value));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dosage Unit */}
-            <FormField
-              control={form.control}
-              name="dsgUnit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Dosage Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "mg", name: "mg" },
-                        { id: "ml", name: "ml" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Form */}
-            <FormField
-              control={form.control}
-              name="form"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Form</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Form"
-                      options={[
-                        { id: "tablet", name: "Tablet" },
-                        { id: "capsule", name: "Capsule" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput  control={form.control}  name="dosage"  label="Dosage"  type="number"/>
+            <FormSelect control={form.control} name="dsgUnit" label="Dosage Unit" options={dosageUnitOptions} />
+            <FormSelect control={form.control} name="form" label="Form" options={formOptions}/>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Quantity Input */}
-            <FormField
-              control={form.control}
-              name="qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? undefined : Number(value));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Quantity Unit */}
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
-                        { id: "packs", name: "Packs" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} type="number" />
+            <FormSelect control={form.control}  name="unit"  label="Unit"  options={unitOptions}/>
           </div>
 
           {/* Pieces per Box and Total Pieces Display */}
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-black/65">Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Pieces per box"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? undefined : Number(value));
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormItem className="sm:col-span-2">
-                <FormLabel className="text-black/65">Total Pieces</FormLabel>
-                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
-                  {currentUnit === "boxes" && (
+              <FormInput  control={form.control}  name="pcs"  label="Pieces per Box"  type="number"  placeholder="Pieces per box"/>
+              <div className="sm:col-span-2">
+                <FormItem>
+                  <FormLabel className="text-black/65">Total Pieces</FormLabel>
+                  <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    {totalPieces.toLocaleString()} pieces
                     <span className="ml-2 text-muted-foreground text-xs">
                       ({qty} boxes × {pcs} pieces/box)
                     </span>
-                  )}
-                </div>
-              </FormItem>
+                  </div>
+                </FormItem>
+              </div>
             </div>
           )}
 
           {/* Submit Button */}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save Stock
-            </Button>
+            <Button  type="submit"  className="w-[120px]"  disabled={isSubmitting} > Save</Button>
           </div>
         </form>
       </Form>

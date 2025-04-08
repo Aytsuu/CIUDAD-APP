@@ -31,7 +31,7 @@ export default function EditFirstAidStockForm({
   const form = useForm<AddFirstAidStockType>({
     resolver: zodResolver(AddFirstAidSchema),
     defaultValues: {
-      finv_qty: initialData.qty.finv_qty,
+      finv_qty: 0,
       finv_qty_unit: initialData.finv_qty_unit,
       finv_pcs: initialData.qty.finv_pcs || 0,
     },
@@ -123,6 +123,7 @@ export default function EditFirstAidStockForm({
                 label="Pieces per Box"
                 type="number"
                 placeholder="pcs"
+                readOnly
               />
 
               <div className="sm:col-span-2">

@@ -20,7 +20,7 @@ export const MedicinePayload = (
     minv_qty_avail,
     med_id,
     cat_id: Number(data.category),
-    inv_id,
+    inv_id, 
   };
 };
 
