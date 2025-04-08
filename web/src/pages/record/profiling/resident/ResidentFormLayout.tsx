@@ -48,7 +48,7 @@ export default function ResidentFormLayout() {
     React.useState<boolean>(false);
 
   const formattedResidents = React.useMemo(() => {
-    return formatResidents(params, false);
+    return formatResidents(params);
   }, [params.residents]);
 
   const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);

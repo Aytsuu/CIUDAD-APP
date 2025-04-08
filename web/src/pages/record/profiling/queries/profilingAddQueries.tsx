@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  addBusiness,
   addFamily,
   addFamilyComposition,
   addHousehold,
@@ -11,7 +12,7 @@ import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Type } from "../profilingEnums";
 import { useDeleteRequest } from "./profilingDeleteQueries";
-import { z } from "zod";
+import { string, z } from "zod";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 
 export const useAddPersonal = (values: z.infer<typeof personalInfoSchema>) => {
@@ -62,7 +63,7 @@ export const useAddResidentProfile = (params: any) => {
 export const useAddFamily = (demographicInfo: Record<string, string>) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { mutateAsync: addFamilyComposition} = useAddFamilyComposition();
+  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   return useMutation({
     mutationFn: ({
       fatherId,
@@ -77,8 +78,8 @@ export const useAddFamily = (demographicInfo: Record<string, string>) => {
     }) => addFamily(demographicInfo, fatherId, motherId, guardId, staffId),
     onSuccess: async (newData) => {
       await addFamilyComposition({
-        familyId: newData.fam_id, 
-        residentId: demographicInfo.id.split(" ")[0]
+        familyId: newData.fam_id,
+        residentId: demographicInfo.id.split(" ")[0],
       });
 
       queryClient.setQueryData(["families"], (old: any[] = []) => [
@@ -101,12 +102,15 @@ export const useAddFamily = (demographicInfo: Record<string, string>) => {
 
 export const useAddFamilyComposition = () => {
   return useMutation({
-    mutationFn: ({familyId, residentId} : {
-      familyId: string,
-      residentId: string
-    }) => addFamilyComposition(familyId, residentId)
-  })
-}
+    mutationFn: ({
+      familyId,
+      residentId,
+    }: {
+      familyId: string;
+      residentId: string;
+    }) => addFamilyComposition(familyId, residentId),
+  });
+};
 
 export const useAddHousehold = () => {
   const navigate = useNavigate();
@@ -128,6 +132,38 @@ export const useAddHousehold = () => {
       queryClient.invalidateQueries({ queryKey: ["households"] });
 
       toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
+        },
+      });
+    },
+  });
+};
+
+export const useAddBusiness = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      businessInfo,
+      url,
+      staffId,
+    }: {
+      businessInfo: Record<string, string>;
+      url: string;
+      staffId: string;
+    }) => addBusiness(businessInfo, url, staffId),
+    onSuccess: (newData) => {
+      queryClient.setQueryData(["businesses"], (old: any[] = []) => [
+        ...old,
+        newData
+      ]);
+
+      queryClient.invalidateQueries({queryKey: ["businesses"]});
+
+      toast("New record created successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         action: {
           label: "View",

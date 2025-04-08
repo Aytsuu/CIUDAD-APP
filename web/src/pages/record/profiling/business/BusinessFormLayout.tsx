@@ -2,7 +2,7 @@ import React from "react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import BusinessProfileForm from "./BusinessProfileForm";
 import { Card } from "@/components/ui/card/card";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation } from "react-router";
 import { formatSitio } from "../profilingFormats";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,16 +10,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { businessFormSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
-import { addBusiness } from "../restful-api/profiingPostAPI";
 import { Type } from "../profilingEnums";
 import supabase from "@/utils/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useAddBusiness } from "../queries/profilingAddQueries";
 
 export default function BusinessFormLayout() {
   // Initializing states
-  const navigate = useNavigate();
   const location = useLocation();
   const params = React.useMemo(
     () => location.state?.params || {},
@@ -37,6 +36,7 @@ export default function BusinessFormLayout() {
     resolver: zodResolver(businessFormSchema),
     defaultValues: defaultValues.current,
   });
+  const { mutateAsync: addBusiness } = useAddBusiness();
 
   React.useEffect(() => {
     if(formType === Type.Viewing){
@@ -118,19 +118,15 @@ export default function BusinessFormLayout() {
 
     // Submit POST request
     const businessInfo = form.getValues();
-    const res = await addBusiness(businessInfo, publicUrl, user?.staff.staff_id);
-    if (res) {
-      setIsSubmitting(false);
-      setMediaFiles([])
-      toast("New record created successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
-      form.reset(defaultValues.current);
-    }
+    await addBusiness({
+      businessInfo: businessInfo,
+      url: publicUrl, 
+      staffId: user?.staff.staff_id
+    });
+
+    setIsSubmitting(false);
+    setMediaFiles([])
+    form.reset(defaultValues.current);
   };
 
   const errorFeedback = React.useCallback((message: string) => {

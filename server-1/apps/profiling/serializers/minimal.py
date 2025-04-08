@@ -1,5 +1,6 @@
 from ..models import *
 from .base import *
+from apps.administration.models import Staff
 
 class ResidentProfileMinimalSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -63,8 +64,9 @@ class GuardianSerializer(serializers.ModelSerializer):
 
 class BusinessSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)
-    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source="sitio")
+    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio')
     staff = serializers.SerializerMethodField()
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source='staff')
 
     class Meta:
         model = Business

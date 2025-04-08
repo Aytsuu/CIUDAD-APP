@@ -15,8 +15,8 @@ import { useAddHousehold } from "../queries/profilingAddQueries";
 import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
 
 export default function HouseholdFormLayout() {
-  const { user } = useAuth()
-  const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
+  const { user } = useAuth();
+  const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));
   const form = useForm<z.infer<typeof householdFormSchema>>({
@@ -44,7 +44,7 @@ export default function HouseholdFormLayout() {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
 
-    if (!formIsValid && form.watch("householdHead") === '') {
+    if (!formIsValid || form.watch("householdHead") === '') {
       setInvalidHouseHead(true)
       setIsSubmitting(false);
       toast("Please fill out all required fields", {

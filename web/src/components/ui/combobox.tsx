@@ -23,7 +23,7 @@ export const Combobox = React.memo(({ options, value, onChange, placeholder, con
   placeholder: string;
   contentClassName?: string;
   triggerClassName?: string;
-  emptyMessage: string;
+  emptyMessage: React.ReactNode;
 }) => {
   const [open, setOpen] = React.useState(false);
 
