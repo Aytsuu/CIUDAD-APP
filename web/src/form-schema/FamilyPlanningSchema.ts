@@ -8,11 +8,21 @@ const ServiceProvisionRecordSchema = z.object({
   dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
   methodQuantity: z.string().nonempty("Method quantity is required"),
   methodUnit: z.string().nonempty("Method unit is required"),
-  serviceProviderSignature: z.string(),
+  serviceProviderSignature: z.string().optional(),
   medicalFindings: z.string().optional(),
   weight: z.number().min(1, "Weight is required"),
   bp_systolic: z.number().min(1, "Systolic BP is required"),
   bp_diastolic: z.number().min(1, "Diastolic BP is required"),
+})
+
+// Define the pregnancy check schema
+const PregnancyCheckSchema = z.object({
+  baby_breastfeeding_no_menses: z.boolean().default(false),
+  abstained_since_last_period: z.boolean().default(false),
+  had_baby_last_4_weeks: z.boolean().default(false),
+  period_within_7_days: z.boolean().default(false),
+  miscarriage_or_abortion_7_days: z.boolean().default(false),
+  using_contraceptive_consistently: z.boolean().default(false),
 })
 
 // Define the complete schema for all pages
@@ -144,8 +154,9 @@ export const FamilyPlanningSchema = z.object({
     partnerDisapproval: z.boolean(),
     domesticViolence: z.boolean(),
     referredTo: z
-      .enum(["DSWD", "WCPU", "NGOs", "Others"])
-      .refine((val) => val !== undefined, { message: "Please choose referral" }),
+    .enum(["DSWD", "WCPU", "NGOs", "Others"])
+    .refine((val) => val !== undefined, { message: "Please choose referral" }),
+
   }),
 
   // Physical Examination Fields
@@ -223,14 +234,18 @@ export const FamilyPlanningSchema = z.object({
       ])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
     clientSignature: z.string().optional(),
-    clientSignatureDate: z.string().nonempty("Client signature date is required"),
     clientName: z.string().optional(),
+    clientSignatureDate: z.string().nonempty("Client signature date is required"),
+    guardianName: z.string().optional(),
     guardianSignature: z.string().optional(),
     guardianSignatureDate: z.string().optional(),
   }),
 
   // Page 6 fields
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
+
+  // Pregnancy Check fields
+  pregnancyCheck: PregnancyCheckSchema.optional(),
 })
 
 // Create page-specific schemas by picking fields from the main schema
@@ -296,10 +311,11 @@ export const page5Schema = FamilyPlanningSchema.pick({
 
 export const page6Schema = FamilyPlanningSchema.pick({
   serviceProvisionRecords: true,
+  pregnancyCheck: true,
 })
 
 // Exporting the schemas properly
 export default FamilyPlanningSchema
 export type FormData = z.infer<typeof FamilyPlanningSchema>
 export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>
-
+export type PregnancyCheck = z.infer<typeof PregnancyCheckSchema>

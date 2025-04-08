@@ -11,10 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import type { FormData, ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { page6Schema } from "@/form-schema/FamilyPlanningSchema"
-import { Form } from "@/components/ui/form/form"
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form"
 import SignatureCanvas from "react-signature-canvas"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Separator } from "@/components/ui/separator"
 
 // Fix the props type
 interface ServiceProvisionFormProps {
@@ -23,6 +23,34 @@ interface ServiceProvisionFormProps {
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
 }
+
+const pregnancyQuestions = [
+  {
+    id: "baby_breastfeeding_no_menses",
+    question:
+      "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?",
+  },
+  {
+    id: "abstained_since_last_period",
+    question: "Have you abstained from sexual intercourse since your last menstrual period or delivery?",
+  },
+  {
+    id: "had_baby_last_4_weeks",
+    question: "Have you had a baby in the last four (4) weeks?",
+  },
+  {
+    id: "period_within_7_days",
+    question: "Did your last menstrual period start within the past seven (7) days?",
+  },
+  {
+    id: "miscarriage_or_abortion_7_days",
+    question: "Have you had miscarriage or abortion in the last seven (7) days?",
+  },
+  {
+    id: "using_contraceptive_consistently",
+    question: "Have you been using a reliable contraceptive method consistently and correctly?",
+  },
+]
 
 const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
   onPrevious5,
@@ -39,6 +67,14 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     // resolver: zodResolver(page6Schema),
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
+      pregnancyCheck: formData?.pregnancyCheck || {
+        baby_breastfeeding_no_menses: false,
+        abstained_since_last_period: false,
+        had_baby_last_4_weeks: false,
+        period_within_7_days: false,
+        miscarriage_or_abortion_7_days: false,
+        using_contraceptive_consistently: false,
+      },
     },
     mode: "onBlur",
   })
@@ -49,7 +85,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     nameOfServiceProvider: "",
     dateOfFollowUp: "",
     methodQuantity: "",
-    methodUnit: "box/pcs",
+    methodUnit: "",
     serviceProviderSignature: "",
     medicalFindings: "",
     weight: 0,
@@ -127,7 +163,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
         nameOfServiceProvider: "",
         dateOfFollowUp: "",
         methodQuantity: "",
-        methodUnit: "box/pcs",
+        methodUnit: "",
         serviceProviderSignature: "",
         medicalFindings: "",
         weight: 0,
@@ -158,9 +194,10 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     // Use the updated records (including the one just added if applicable)
     const updatedRecords = recordAdded ? [...records, record] : records
 
-    // Save current records before final submission
+    // Save current records and pregnancy check data before final submission
     updateFormData({
       serviceProvisionRecords: updatedRecords,
+      pregnancyCheck: data.pregnancyCheck,
     })
 
     // Log the final data being submitted
@@ -171,6 +208,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
 
     onSubmitFinal()
   }
+
 
   return (
     <Card className="w-full">
@@ -227,6 +265,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   <Input
                     id="methodQuantity"
                     value={record.methodQuantity || ""}
+                    type="number"
                     onChange={(e) => handleInputChange("methodQuantity", e.target.value)}
                     placeholder="Enter qty"
                     className="rounded-r-none"
@@ -238,7 +277,6 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                     <SelectContent>
                       <SelectItem value="box">box</SelectItem>
                       <SelectItem value="pcs">pcs</SelectItem>
-                     
                     </SelectContent>
                   </Select>
                 </div>
@@ -267,8 +305,6 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                 />
               </div>
 
-           
-
               <div className="space-y-2">
                 <Label htmlFor="weight">
                   Weight
@@ -278,7 +314,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   id="weight"
                   type="number"
                   defaultValue={20}
-                  value={record.weight}  
+                  value={record.weight}
                   onChange={(e) => handleInputChange("weight", e.target.value)}
                 />
               </div>
@@ -312,7 +348,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   onChange={(e) => handleInputChange("bp_diastolic", e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
                 <div className="border border-gray-300 rounded p-2 h-32 bg-white">
@@ -332,7 +368,7 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   </Button>
                 </div>
               </div>
-              
+
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="medicalFindings">Medical Findings</Label>
                 <Textarea
@@ -395,6 +431,57 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
               </Table>
             </div>
 
+            {/* Pregnancy Check Section */}
+            <div className="mt-10">
+              <Separator className="mb-6" />
+              <h2 className="text-lg font-semibold mb-4">How to be Reasonably Sure a Client is Not Pregnant</h2>
+              <div className="space-y-6">
+                {pregnancyQuestions.map((question, index) => (
+                  <FormField
+                    key={question.id}
+                    control={form.control}
+                    name={`pregnancyCheck.${question.id}` as any}
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <div className="flex items-start gap-4">
+                          <span className="font-medium min-w-[24px]">{index + 1}.</span>
+                          <div className="flex-1">
+                            <FormLabel className="font-normal text-base">{question.question}</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={(value) => field.onChange(value === "yes")}
+                                defaultValue={field.value ? "yes" : "no"}
+                                className="flex gap-6 mt-2"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="yes" id={`${question.id}-yes`} />
+                                  <Label htmlFor={`${question.id}-yes`}>Yes</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="no" id={`${question.id}-no`} />
+                                  <Label htmlFor={`${question.id}-no`}>No</Label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Pregnancy Check Result */}
+              <div className="mt-6 p-4 rounded-md bg-gray-50">
+                <div className="font-medium mb-2">■
+                  If the client answered YES to at least one of the questions and she is free of signs or symptoms of pregnancy, provide client with desired method.
+                </div>
+                <div className="font-medium mb-2">
+                  ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should await menses or use a pregnancy test.</div>
+
+              </div>
+            </div>
+
             <div className="flex justify-end mt-6 space-x-4">
               <Button variant="outline" type="button" onClick={onPrevious5}>
                 Previous
@@ -418,7 +505,6 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   console.log("Submitting data:", {
                     serviceProvisionRecords: updatedRecords,
                   })
-
                 }}
               >
                 Submit
