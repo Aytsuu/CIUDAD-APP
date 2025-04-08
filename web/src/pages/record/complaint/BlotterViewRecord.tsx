@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { usePostBlotter } from "./restful-api/blotter-api";
+import { postBlotter } from "./restful-api/blotter-api";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
@@ -44,7 +44,7 @@ export function BlotterViewRecord() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   
-  const postBlotterMutation = usePostBlotter();
+  const postBlotterMutation = postBlotter();
 
   const form = useForm<BlotterFormValues>({
     defaultValues: {

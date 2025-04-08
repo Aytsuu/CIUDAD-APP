@@ -13,89 +13,78 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { usePostBlotter } from "./restful-api/blotter-api";
+import { postBlotter } from "./restful-api/blotter-api";
 import { toast } from "sonner";
 import { MediaUpload } from "@/components/ui/media-upload";
-
-interface MediaFile {
-  id: number | string;
-  type: "image" | "video" | "document";
-  url: string;
-  file?: File;
-  description: string;
-}
-
-interface BlotterFormValues {
-  bc_complainant: string;
-  bc_cmplnt_address: string;
-  bc_accused: string;
-  bc_accused_address: string;
-  bc_incident_type: string;
-  bc_allegation: string;
-  bc_datetime: string;
-  bc_evidence: FileList | null;
-}
-
-// Function to format date for API
-function formatDateForAPI(dateString: string) {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString; // Return original if invalid
-    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-  } catch (error) {
-    console.error("Date format error:", error);
-    return dateString;
-  }
-}
+import { BlotterFormValues, MediaFile } from "./blotter-type";
+import { useMutation } from "@tanstack/react-query";
+import supabase from "@/utils/supabase";
 
 export function BlotterReport() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
   const navigate = useNavigate();
-  
-  const postBlotterMutation = usePostBlotter();
 
-  const form = useForm<BlotterFormValues>({
-    defaultValues: {
-      bc_complainant: "",
-      bc_cmplnt_address: "",
-      bc_accused: "",
-      bc_accused_address: "",
-      bc_incident_type: "",
-      bc_allegation: "",
-      bc_datetime: new Date().toISOString().split("T")[0],
-      bc_evidence: null
-    }
+  const postBlotterMutation = useMutation({
+    mutationFn: (formData: FormData) => postBlotter(formData),
   });
 
-  const onSubmit = async (data: BlotterFormValues) => {
-    const formData = new FormData();
-    
-    // Format the date to match expected format
-    const formattedData = {
-      ...data,
-      bc_datetime: formatDateForAPI(data.bc_datetime)
-    };
-    
-    // Append form data
-    Object.entries(formattedData).forEach(([key, value]) => {
-      if (key !== "bc_evidence" && value !== null && value !== undefined) {
-        formData.append(key, value.toString());
-      }
-    });
+  const form = useForm<BlotterFormValues>();
 
-    // Append media files
-    mediaFiles.forEach((file, index) => {
-      if (file.file) {
-        // Use a consistent key name pattern for server processing
-        formData.append(`mediaFiles`, file.file);
-      }
-    });
-    
-    // Debug information
-    console.log("Form data keys:", [...formData.keys()]);
-    
+  const onSubmit = async (data: BlotterFormValues) => {
     try {
+      const mediaUrls = await Promise.all(
+        mediaFiles.map(async (file) => {
+          if (!file.file) return null;
+
+          // Create unique filename
+          const fileExt = file.file.name.split(".").pop();
+          const fileName = `${Date.now()}-${Math.random()
+            .toString(36)
+            .substring(2, 15)}.${fileExt}`;
+          const filePath = `blotter-evidence/${fileName}`;
+
+          // Upload to Supabase bucket
+          const { data: uploadData, error } = await supabase.storage
+            .from("blotter-files") // Replace with your bucket name
+            .upload(filePath, file.file);
+
+          if (error) {
+            console.error("Error uploading file:", error);
+            throw error;
+          }
+
+          // Get public URL
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("blotter-files").getPublicUrl(filePath);
+
+          return {
+            originalName: file.file.name,
+            storagePath: filePath,
+            url: publicUrl,
+            type: file.file.type,
+          };
+        })
+      );
+
+      // Filter out nulls from failed uploads
+      const validMediaUrls = mediaUrls.filter((url) => url !== null);
+
+      // 2. Create form data for your API
+      const formData = new FormData();
+
+      // Append form data
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      });
+
+      // Add media URLs as JSON string
+      formData.append("media_urls", JSON.stringify(validMediaUrls));
+
+      // 3. Submit to your Django API
       await postBlotterMutation.mutateAsync(formData, {
         onSuccess: () => {
           toast("Blotter report submitted successfully");
@@ -103,11 +92,16 @@ export function BlotterReport() {
         },
         onError: (error: any) => {
           console.error("Submission failed:", error);
-          toast(`Failed to submit report: ${error.response?.data?.message || error.message || "Unknown error"}`);
-        }
+          toast(
+            `Failed to submit report: ${
+              error.response?.data?.message || error.message || "Unknown error"
+            }`
+          );
+        },
       });
     } catch (error) {
       console.error("Submission failed:", error);
+      toast("Failed to submit report");
     }
   };
 
@@ -137,7 +131,7 @@ export function BlotterReport() {
       </div>
 
       <hr className="border-gray mb-6 sm:mb-8" />
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -309,7 +303,7 @@ export function BlotterReport() {
             <h2 className="font-medium text-lg mb-4 text-darkBlue2">
               Supporting Documents
             </h2>
-            <MediaUpload 
+            <MediaUpload
               title="Supporting Evidence"
               description="Upload images, videos or documents related to the incident"
               mediaFiles={mediaFiles}
@@ -325,11 +319,10 @@ export function BlotterReport() {
                 Cancel
               </Button>
             </Link>
-            <Button 
-              type="submit" 
-              disabled={postBlotterMutation.isPending}
-            >
-              {postBlotterMutation.isPending ? "Submitting..." : "Submit Report"}
+            <Button type="submit" disabled={postBlotterMutation.isPending}>
+              {postBlotterMutation.isPending
+                ? "Submitting..."
+                : "Submit Report"}
             </Button>
           </div>
         </form>

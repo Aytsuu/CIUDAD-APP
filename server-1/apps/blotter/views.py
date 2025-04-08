@@ -7,7 +7,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 class BlotterCreateView(generics.CreateAPIView):
     queryset = Blotter.objects.all()
     serializer_class = BlotterSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]  # For file uploads
 
     def perform_create(self, serializer):
