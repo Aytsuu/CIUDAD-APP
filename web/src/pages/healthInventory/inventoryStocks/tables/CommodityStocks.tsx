@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Edit } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,17 +10,18 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import CommodityStockForm from "../addstocksModal/ComStockModal";
-import EditCommodityStockForm from "../editModal/EditComStockModal";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCommodityStocks } from "../REQUEST/Get";
 import { archiveInventory } from "../REQUEST/archive";
-
+import {CommodityStocksColumns} from "./columns/CommodityCol";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 export type CommodityStocksRecord = {
   cinv_id: number;
@@ -89,32 +89,42 @@ export default function CommodityStocks() {
     );
   }, [searchQuery, formatCommodityStocksData]);
 
+
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handleArchiveInventory = (inv_id: number) => {
-    setCommodityToArchive(inv_id);
-    setIsArchiveConfirmationOpen(true);
-  };
+
 
   const confirmArchiveInventory = async () => {
-    console.log(commodityToArchive) 
     if (commodityToArchive !== null) {
+      const toastId = toast.loading('Archiving inventory...', {
+        duration: Infinity
+      });
+      
       try {
         await archiveInventory(commodityToArchive);
         queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
+        
+        toast.success('Inventory archived successfully', {
+          id: toastId,
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000
+        });
       } catch (error) {
         console.error("Failed to archive inventory:", error);
+        toast.error('Failed to archive inventory', {
+          id: toastId,
+          duration: 3000
+        });
       } finally {
         setIsArchiveConfirmationOpen(false);
         setCommodityToArchive(null);
       }
     }
   };
-
   if (isLoadingCommodities) {
     return (
       <div className="w-full h-full">
@@ -126,123 +136,12 @@ export default function CommodityStocks() {
     );
   }
 
-  const columns: ColumnDef<CommodityStocksRecord>[] = [
-    {
-      accessorKey: "commodityInfo",
-      header: "Commodity",
-      cell: ({ row }) => {
-        const commodity = row.original.commodityInfo;
-        return (
-          <div className="flex flex-col">
-            <span className="font-medium">{commodity.com_name}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.category}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "recevFrom",
-      header: "Received From",
-      cell: ({ row }) => (
-        <div className="text-center">{row.original.recevFrom}</div>
-      ),
-    },
-    {
-      accessorKey: "qty",
-      header: "Stocks",
-      cell: ({ row }) => {
-        const { cinv_qty, cinv_pcs } = row.original.qty;
-        const unit = row.original.cinv_qty_unit;
-        return (
-          <div className="text-center">
-            {cinv_pcs > 0 ? (
-              <div className="flex flex-col">
-                <span className="text-blue">{cinv_qty} box/es</span>
-                <span className="text-red-500"> ({cinv_pcs} pcs per box)</span>
-              </div>
-            ) : (
-              <span className="text-blue">
-                {cinv_qty} {unit}
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "dispensed",
-      header: "Dispensed",
-      cell: ({ row }) => (
-        <div className="text-red-700">{row.original.dispensed}</div>
-      ),
-    },
-    {
-      accessorKey: "availQty",
-      header: "Available",
-      cell: ({ row }) => (
-        <div className="text-green-700">
-          {row.original.qty.cinv_pcs > 0
-            ? `${row.original.qty.cinv_qty * row.original.qty.cinv_pcs} pcs`
-            : `${row.original.availQty} ${row.original.cinv_qty_unit}`}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "expiryDate",
-      header: "Expiry Date",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.expiryDate}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        return (
-          <div className="flex gap-2">
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                      <Edit size={16} />
-                    </div>
-                  }
-                  mainContent={
-                    <EditCommodityStockForm
-                      initialData={row.original}
-                      setIsDialog={setIsDialog}
-                    />
-                  }
-                />
-              }
-              content="Edit"
-            />
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleArchiveInventory(row.original.inv_id)}
-            >
-              <Trash />
-            </Button>
-          </div>
-        );
-      },
-    },
-  ];
-
+ // Replace the columns definition in your component with:
+const columns = CommodityStocksColumns(setIsDialog,setCommodityToArchive,setIsArchiveConfirmationOpen);
   return (
     <>
+        <Toaster position="top-center" richColors />
+
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="flex gap-x-2">
@@ -319,9 +218,7 @@ export default function CommodityStocks() {
           </div>
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
-          <DataTable columns={columns} data={paginatedData} />
-        </div>
+        <div className="bg-white w-full overflow-x-auto"><DataTable columns={columns} data={paginatedData} /></div>
         
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">

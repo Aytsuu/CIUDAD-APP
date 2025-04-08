@@ -1,11 +1,7 @@
 import { z } from "zod";
+import { positiveNumberSchema } from "./addStocksSchema";
 
 
-
-const positiveNumberSchema = z.union([
-  z.string().min(1, "Value is required").transform(val => parseFloat(val)),
-  z.number()
-])
 export const VaccineStocksSchema = z.object({
   qty: positiveNumberSchema,
   dose_ml: positiveNumberSchema,
@@ -62,3 +58,8 @@ export const ImmunizationStocksSchema = z.object({
 });
 
 export type ImmunizationStockType = z.infer<typeof ImmunizationStocksSchema>;
+
+export const usedFaSchema = z.object({
+  usedItem: positiveNumberSchema,
+});
+export type usedFaSchemaType = z.infer<typeof usedFaSchema>;

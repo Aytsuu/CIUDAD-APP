@@ -1,10 +1,27 @@
 import { z } from "zod";
 
+// Create a reusable positive number schema that accepts both strings and numbers
+export const positiveNumberSchema = z.union([
+  z.string()
+    .min(1, "Value is required")
+    .transform(val => {
+      const num = parseFloat(val);
+      if (isNaN(num)) throw new Error("Invalid number");
+      return num;
+    }),
+  z.number()
+]).refine(val => val >= 0, {
+  message: "Value must be a positive number"
+});
+
+
+
+
 export const AddMedicineStocksSchema = z
   .object({
-    minv_qty: z.number().min(1, "Enter qty Name").default(0),
+    minv_qty: positiveNumberSchema.refine(val => val >= 1, "Enter qty Name"),
     minv_qty_unit: z.string().min(1, "Unit is required").default(""),
-    minv_pcs: z.number().min(0).default(0), // Allow 0 as default
+    minv_pcs: positiveNumberSchema.default(0), // Allow 0 as default
   })
   .refine(
     (data) => {
@@ -15,17 +32,15 @@ export const AddMedicineStocksSchema = z
     },
     {
       message: "Pieces per box must be at least 1",
-      path: ["minv_pcs"], // Corrected path
+      path: ["minv_pcs"],
     }
   );
-  
 
-
-  export const AddCommoditySchema = z
+export const AddCommoditySchema = z
   .object({
-    cinv_qty: z.number().min(1, "Enter qty Name").default(0),
+    cinv_qty: positiveNumberSchema.refine(val => val >= 1, "Enter qty Name"),
     cinv_qty_unit: z.string().min(1, "Unit is required").default(""),
-    cinv_pcs: z.number().min(0).default(0), // Allow 0 as default
+    cinv_pcs: positiveNumberSchema.default(0), // Allow 0 as default
   })
   .refine(
     (data) => {
@@ -36,17 +51,15 @@ export const AddMedicineStocksSchema = z
     },
     {
       message: "Pieces per box must be at least 1",
-      path: ["minv_pcs"], // Corrected path
+      path: ["cinv_pcs"], // Fixed path from minv_pcs to cinv_pcs
     }
   );
 
-
-
-  export const AddFirstAidSchema = z
+export const AddFirstAidSchema = z
   .object({
-    finv_qty: z.number().min(1, "Enter qty Name").default(0),
+    finv_qty: positiveNumberSchema.refine(val => val >= 1, "Enter qty Name"),
     finv_qty_unit: z.string().min(1, "Unit is required").default(""),
-    finv_pcs: z.number().min(0).default(0), // Allow 0 as default
+    finv_pcs: positiveNumberSchema.default(0), // Allow 0 as default
   })
   .refine(
     (data) => {
@@ -57,10 +70,10 @@ export const AddMedicineStocksSchema = z
     },
     {
       message: "Pieces per box must be at least 1",
-      path: ["minv_pcs"], // Corrected path
+      path: ["finv_pcs"], // Fixed path from minv_pcs to finv_pcs
     }
   );
 
-export type addMedicineStocksType = z.infer<typeof AddMedicineStocksSchema>
-export type AddCommodityStockType = z.infer<typeof AddCommoditySchema>
-export type AddFirstAidStockType = z.infer<typeof AddFirstAidSchema>
+export type addMedicineStocksType = z.infer<typeof AddMedicineStocksSchema>;
+export type AddCommodityStockType = z.infer<typeof AddCommoditySchema>;
+export type AddFirstAidStockType = z.infer<typeof AddFirstAidSchema>;

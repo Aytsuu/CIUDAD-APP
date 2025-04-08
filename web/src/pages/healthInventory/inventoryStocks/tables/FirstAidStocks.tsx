@@ -22,6 +22,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFirstAidStocks } from "../REQUEST/Get";
 import { archiveInventory } from "../REQUEST/archive";
+import { getColumns } from "../tables/columns/FirstAidCol";
 
 export type FirstAidStocksRecord = {
   finv_id: number;
@@ -41,8 +42,11 @@ export type FirstAidStocksRecord = {
 };
 
 export default function FirstAidStocks() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [firstAidToArchive, setFirstAidToArchive] = useState<number | null>(null);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+    useState(false);
+  const [firstAidToArchive, setFirstAidToArchive] = useState<number | null>(
+    null
+  );
   const [isDialog, setIsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -56,27 +60,28 @@ export default function FirstAidStocks() {
     staleTime: 0,
   });
 
-  const formatFirstAidStocksData = React.useCallback((): FirstAidStocksRecord[] => {
-    if (!firstAidStocks) return [];
-    return firstAidStocks
-      .filter((stock: any) => !stock.inv_detail?.is_Archived)
-      .map((firstAidStock: any) => ({
-        finv_id: firstAidStock.finv_id,
-        firstAidInfo: {
-          fa_name: firstAidStock.fa_detail?.fa_name,
-        },
-        expiryDate: firstAidStock.inv_detail?.expiry_date,
-        category: firstAidStock.cat_detail?.cat_name,
-        qty: {
-          finv_qty: firstAidStock.finv_qty,
-          finv_pcs: firstAidStock.finv_pcs,
-        },
-        finv_qty_unit: firstAidStock.finv_qty_unit,
-        availQty: firstAidStock.finv_qty_avail,
-        used: firstAidStock.finv_used,
-        inv_id: firstAidStock.inv_id,
-      }));
-  }, [firstAidStocks]);
+  const formatFirstAidStocksData =
+    React.useCallback((): FirstAidStocksRecord[] => {
+      if (!firstAidStocks) return [];
+      return firstAidStocks
+        .filter((stock: any) => !stock.inv_detail?.is_Archived)
+        .map((firstAidStock: any) => ({
+          finv_id: firstAidStock.finv_id,
+          firstAidInfo: {
+            fa_name: firstAidStock.fa_detail?.fa_name,
+          },
+          expiryDate: firstAidStock.inv_detail?.expiry_date,
+          category: firstAidStock.cat_detail?.cat_name,
+          qty: {
+            finv_qty: firstAidStock.finv_qty,
+            finv_pcs: firstAidStock.finv_pcs,
+          },
+          finv_qty_unit: firstAidStock.finv_qty_unit,
+          availQty: firstAidStock.finv_qty_avail,
+          used: firstAidStock.finv_used,
+          inv_id: firstAidStock.inv_id,
+        }));
+    }, [firstAidStocks]);
 
   const filteredData = React.useMemo(() => {
     return formatFirstAidStocksData().filter((record) =>
@@ -122,136 +127,7 @@ export default function FirstAidStocks() {
       </div>
     );
   }
-
-  const columns: ColumnDef<FirstAidStocksRecord>[] = [
-    {
-      accessorKey: "finv_id",
-      header: "Batch No.",
-      cell: ({ row }) => <div className="text-center">{row.original.finv_id}</div>,
-    },
-    {
-      accessorKey: "firstAidInfo",
-      header: "Item Name",
-      cell: ({ row }) => {
-        const firstAid = row.original.firstAidInfo;
-        return (
-          <div className="flex flex-col">
-            <span className="font-medium">{firstAid.fa_name}</span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.category}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "qty",
-      header: "Stocks",
-      cell: ({ row }) => {
-        const { finv_qty, finv_pcs } = row.original.qty;
-        const unit = row.original.finv_qty_unit;
-        return (
-          <div className="text-center">
-            {finv_pcs > 0 ? (
-              <div className="flex flex-col">
-                <span className="text-blue">{finv_qty} box/es</span>
-                <span className="text-red-500"> ({finv_pcs} pcs per box)</span>
-              </div>
-            ) : (
-              <span className="text-blue">
-                {finv_qty} {unit}
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "used",
-      header: "Used",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm text-red-700">
-            {row.original.used || 0}
-          </span>
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
-                    <Minus size={15} />
-                  </button>
-                }
-                mainContent={<UsedFAModal />}
-              />
-            }
-            content="Used Items"
-          />
-        </div>
-      ),
-    },
-    {
-      accessorKey: "availQty",
-      header: "Available",
-      cell: ({ row }) => (
-        <div className="text-center text-green-700">
-          {row.original.qty.finv_pcs > 0
-            ? `${row.original.qty.finv_qty * row.original.qty.finv_pcs} pcs`
-            : `${row.original.availQty} ${row.original.finv_qty_unit}`}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "expiryDate",
-      header: "Expiry Date",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.expiryDate}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        return (
-          <div className="flex gap-2">
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                      <Edit size={16} />
-                    </div>
-                  }
-                  mainContent={
-                    <EditFirstAidStockForm
-                      initialData={row.original}
-                      setIsDialog={setIsDialog}
-                    />
-                  }
-                />
-              }
-              content="Edit"
-            />
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleArchiveInventory(row.original.inv_id)}
-            >
-              <Trash />
-            </Button>
-          </div>
-        );
-      },
-    },
-  ];
+  const columns = getColumns(handleArchiveInventory, setIsDialog);
 
   return (
     <>
@@ -259,16 +135,8 @@ export default function FirstAidStocks() {
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="flex gap-x-2">
             <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-72 bg-white"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17}  />
+              <Input placeholder="Search..." className="pl-10 w-72 bg-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <SelectLayout
               placeholder="Filter by"
@@ -334,7 +202,7 @@ export default function FirstAidStocks() {
         <div className="bg-white w-full overflow-x-auto">
           <DataTable columns={columns} data={paginatedData} />
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}
@@ -356,7 +224,7 @@ export default function FirstAidStocks() {
         onConfirm={confirmArchiveInventory}
         title="Archive Inventory Item"
         description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
-      />
+      />nfdf
     </>
   );
 }

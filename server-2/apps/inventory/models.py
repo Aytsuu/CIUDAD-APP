@@ -283,7 +283,7 @@ class ImmunizationTransaction(models.Model):
     imzt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
-    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.CASCADE,  db_column='imzStck_id')
+    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.CASCADE, db_column='imzStck_id')
 
 
     class Meta:

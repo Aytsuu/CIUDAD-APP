@@ -191,8 +191,6 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
     finv_detail = FirstAidInventorySerializer(source='finv_id', read_only=True)
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)
     cat_detail = CategorySerializers(source='cat_id', read_only=True)
-
-
     fa_name = serializers.CharField(source='finv_id.fa_id.fa_name', read_only=True)
 
     # Write-only fields for creation

@@ -34,12 +34,6 @@ export interface MedicineTransactionType {
   minv_id: number;
 }
 
-export interface CommodityTransactionType {
-  comt_qty: string;
-  comt_action: string;
-  staff: number;
-  cinv_id: number;
-}
 
 export interface FirstAidTransactionType {
   fat_qty: string;

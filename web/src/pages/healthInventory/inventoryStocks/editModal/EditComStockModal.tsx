@@ -1,47 +1,34 @@
 // EditCommodityStockForm.tsx
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-// import {
-//   AddCommodityStockType,
-//   CommodityStocksSchema,
-// } from "@/form-schema/inventory/inventoryStocksSchema";
-import {
-  AddCommoditySchema,
-  AddCommodityStockType,
-} from "@/form-schema/inventory/addStocksSchema";
+import { AddCommoditySchema, AddCommodityStockType } from "@/form-schema/inventory/addStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import api from "@/pages/api/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { CommodityStocksRecord } from "../tables/CommodityStocks";
-import { CommodityTransactionPayload } from "../REQUEST/Payload";
-import { addCommodityTransaction } from "../REQUEST/Post";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { updateCommodityStock } from "../REQUEST/Post/Commodity/EditModalCommodity";
+import { set } from "date-fns";
 
 interface EditCommodityStockFormProps {
   initialData: CommodityStocksRecord;
   setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function EditCommodityStockForm({
-  initialData,
-  setIsDialog,
-}: EditCommodityStockFormProps) {
+export default function EditCommodityStockForm({initialData,setIsDialog,}: EditCommodityStockFormProps) {
+  
   UseHideScrollbar();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [formData, setFormData] = useState<AddCommodityStockType | null>(null);
   const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AddCommodityStockType>({
     resolver: zodResolver(AddCommoditySchema),
@@ -52,110 +39,29 @@ export default function EditCommodityStockForm({
     },
   });
 
-  const onSubmit = useCallback((data: AddCommodityStockType) => {
-    setFormData(data);
-    setIsConfirmationOpen(true);
-  }, []);
+  const onSubmit = useCallback((data: AddCommodityStockType) => {setFormData(data);setIsConfirmationOpen(true);}, []);
 
   const handleConfirm = useCallback(async () => {
-    console.log("Form", formData);
+    setIsConfirmationOpen(false); // Close confirmation dialog first
+    set
     if (!formData) return;
-
+    const toastId = toast.loading('Updating commodity stock...', {duration: Infinity });
+    
     try {
-      const res = await api.get(`inventory/commodityinventorylist/`);
-      const existingCommodity = res.data.find(
-        (item: any) => item.cinv_id === initialData.cinv_id
-      );
-
-      if (!existingCommodity) {
-        alert("Commodity ID not found. Please check the ID.");
-        return;
-      }
-
-      const currentQtyAvail = existingCommodity.cinv_qty_avail;
-      let qty = existingCommodity.cinv_qty;
-      const currentPcs = existingCommodity.cinv_pcs;
-      const inv_id = existingCommodity.inv_detail?.inv_id;
-
-      // Validate pieces per box if adding boxes
-      if (
-        formData.cinv_qty_unit === "boxes" &&
-        Number(currentPcs) !== Number(formData.cinv_pcs)
-      ) {
-        form.setError("cinv_pcs", {
-          type: "manual",
-          message: `Pieces per box must match the existing stock (${currentPcs}).`,
-        });
-        return;
-      }
-
-      let newQtyAvail = currentQtyAvail;
-      console.log("cinv_qty_unit", formData.cinv_qty_unit);
-
-      if (formData.cinv_qty_unit === "boxes") {
-        qty += formData.cinv_qty;
-        newQtyAvail = qty * currentPcs;
-        console.log(newQtyAvail);
-      } else {
-        qty += formData.cinv_qty;
-        newQtyAvail = qty;
-      }
-      console.log("NewQty", qty);
-
-      await api.put(
-        `inventory/update_commoditystocks/${initialData.cinv_id}/`,
-        {
-          cinv_qty: qty,
-          cinv_qty_avail: newQtyAvail,
-        }
-      );
+      const result = await updateCommodityStock(formData, initialData, queryClient);
       
-
-      if (inv_id) {
-        await api.put(`inventory/update_inventorylist/${inv_id}/`, {
-          updated_at: new Date().toISOString(),
+      if (result.success) {
+        toast.success('Commodity stock updated successfully', {id: toastId,icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,duration: 2000,
+          onAutoClose: () => {setIsDialog(false); }
         });
-      }
-
-      // Format the quantity string for transaction record
-      const string_qty =
-        formData.cinv_qty_unit === "boxes"
-          ? `${formData.cinv_qty} boxes (${formData.cinv_pcs} pcs per box)`
-          : `${formData.cinv_qty} ${formData.cinv_qty_unit}`;
-
-      const action = "Added";
-      const commodityTransactionPayload = CommodityTransactionPayload(
-        initialData.cinv_id,
-        string_qty,
-        action
-      );
-      console.log("Com", formData);
-      console.log("CInv", initialData.cinv_id);
-      const commodityTransactionResponse = await addCommodityTransaction(
-        commodityTransactionPayload
-      );
-
-      if (!commodityTransactionResponse || commodityTransactionResponse.error) {
-        throw new Error("Failed to add Commodity inventory.");
-      }
-
-      setIsDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
-    } catch (err: any) {
-      if (err.response) {
-        alert(
-          `Failed to update stock: ${
-            err.response.data.detail || "Unknown error"
-          }`
-        );
-        console.error(err.response);
       } else {
-        alert("Network error. Please try again.");
+        toast.error('Failed to update commodity stock', {id: toastId,duration: 3000});
       }
-    } finally {
-      setIsConfirmationOpen(false);
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error("An unexpected error occurred", {id: toastId,duration: 3000});
     }
-  }, [formData, initialData.cinv_id, form, setIsDialog, queryClient]);
+  }, [formData, initialData, setIsDialog, queryClient]);
 
   const currentUnit = form.watch("cinv_qty_unit");
   const qty = form.watch("cinv_qty") || 0;
@@ -164,93 +70,29 @@ export default function EditCommodityStockForm({
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="cinv_qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? 0 : Number(value));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="cinv_qty_unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <Input value={field.value} disabled />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="cinv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} type="number"  />
+            <FormSelect control={form.control}  name="cinv_qty_unit" label="Unit"  options={[ { id: "boxes", name: "Boxes" },  { id: "bottles", name: "Bottles" },  { id: "packs", name: "Packs" },  ]}  readOnly />
           </div>
 
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="cinv_pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="pcs"
-                        value={
-                          field.value === undefined || field.value === 0
-                            ? ""
-                            : field.value
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormItem className="sm:col-span-2">
-                <FormLabel>Total Pieces</FormLabel>
+              <FormInput control={form.control}  name="cinv_pcs"  label="Pieces per Box"  type="number" placeholder="pcs" readOnly />
+              <div className="sm:col-span-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">Total Pieces</label>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
                   {totalPieces.toLocaleString()} pieces
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
-                  </span>
+                  <span className="ml-2 text-muted-foreground text-xs">({qty} boxes × {pcs} pieces/box)</span>
                 </div>
-              </FormItem>
+              </div>
             </div>
           )}
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save
-            </Button>
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>Save</Button>
           </div>
         </form>
       </Form>

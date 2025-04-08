@@ -20,21 +20,23 @@ import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { fetchCommodity } from "../REQUEST/fetch";
 import { useCategoriesCommodity } from "../REQUEST/Category/CommodityCategory";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { addCommodityInventory, addInventory } from "../REQUEST/Post";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { CommodityPayload } from "../REQUEST/Payload";
-import { InventoryCommodityPayload } from "../REQUEST/Payload";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { submitCommodityStock } from "../REQUEST/Post/Commodity/AddCommodityPost";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck } from "lucide-react";
 
 interface CommodiityStockFormProps {  
-  setIsDialog:(isOpen: boolean) => void
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProps ) {
+export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormProps) {
   UseHideScrollbar();
+  const queryClient = useQueryClient();
   const form = useForm<CommodityStockType>({
     resolver: zodResolver(CommodityStocksSchema),
     defaultValues: {
@@ -49,15 +51,14 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
   });
 
   const commodity = fetchCommodity();
-  const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [submissionData, setSubmissionData] =
-    useState<CommodityStockType | null>(null);
+  const [submissionData, setSubmissionData] = useState<CommodityStockType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     categories,
     handleDeleteConfirmation,
-    categoryHandleAdd,
+    categoryHandleAdd, 
     ConfirmationDialogs,
   } = useCategoriesCommodity();
 
@@ -70,64 +71,47 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
     });
     return () => subscription.unsubscribe();
   }, [form]);
-  
-
-  const handleSubmit = async (data: CommodityStockType) => {
-    console.log("Form Data Submitted:", data);
-
-    try {
-      console.log(data.com_id);
-      const inventoryResponse = await addInventory(
-        InventoryCommodityPayload(data)
-      );
-
-      if (!inventoryResponse?.inv_id) {
-        throw new Error("Failed to generate inventory ID.");
-      }
-
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
-      const parseCommodityID = parseInt(data.com_id, 10);
-      if (!data.com_id) {
-        throw new Error("Failed to get commodity ID.");
-        return;
-      }
-
-      const commodityPayload = CommodityPayload(data, inv_id, parseCommodityID);
-      console.log("Commodity Payload:", commodityPayload);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const commodityInventoryResponse = await addCommodityInventory(
-        commodityPayload
-      );
-      if (!commodityInventoryResponse || commodityInventoryResponse.error) {
-        throw new Error("Failed to add commodity inventory.");
-        return;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
-
-      console.log("Commodity Inventory Added Successfully");
-      setIsAddConfirmationOpen(false);
-      setIsDialog(false) 
-
-    } catch (error: any) {
-      console.error(error);
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        setIsAddConfirmationOpen(false);
-      }
-      setIsAddConfirmationOpen(false);
-    }
-  };
+ 
 
   const onSubmit = (data: CommodityStockType) => {
     setSubmissionData(data);
     setIsAddConfirmationOpen(true);
   };
+  
+  const confirmAdd = async () => {
+    setIsAddConfirmationOpen(false); // Close confirmation dialog first
+    setIsSubmitting(true); // Disable the button
 
-  const confirmAdd = () => {
-    if (submissionData) {
-      handleSubmit(submissionData);
-      setIsDialog(false)
+    if (!submissionData) return;
+  
+    const toastId = toast.loading('Adding commodity...', {
+      duration: Infinity
+    });
+    
+    try {
+      const result = await submitCommodityStock(submissionData, queryClient);
+      
+      if (result.success) {
+        toast.success('Commodity added successfully', {
+          id: toastId,
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+          onAutoClose: () => {
+            setIsDialog(false); // Close main dialog only after toast completes
+          }
+        });
+      } else {
+        toast.error(result.error || 'Failed to add commodity', {
+          id: toastId,
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error("An unexpected error occurred", {
+        id: toastId,
+        duration: 3000
+      });
     }
   };
 
@@ -138,10 +122,16 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect control={form.control} name="com_id"  label="Commodity Name" options={commodity} />
+            <FormSelect 
+              control={form.control} 
+              name="com_id"  
+              label="Commodity Name" 
+              options={commodity} 
+            />
             <FormField
               control={form.control}
               name="cat_id"
@@ -170,18 +160,46 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
           </div>
   
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput control={form.control}  name="expiryDate" label="Expiry Date"/>
-            <FormSelect control={form.control} name="cinv_recevFrom" label="Receive From" options={[{ id: "doh", name: "DOH" },{ id: "chd", name: "CHD" },{ id: "others", name: "OTHERS" },]}/>
+            <FormDateInput 
+              control={form.control}  
+              name="expiryDate" 
+              label="Expiry Date"
+            />
+            <FormSelect 
+              control={form.control} 
+              name="cinv_recevFrom" 
+              label="Receive From" 
+              options={[
+                { id: "doh", name: "DOH" },
+                { id: "chd", name: "CHD" },
+                { id: "others", name: "OTHERS" },
+              ]}
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput control={form.control} name="cinv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}  type="number"  placeholder="Quantity"  />
-            <FormSelect control={form.control}  name="cinv_qty_unit"  label="Unit"options={[{ id: "boxes", name: "Boxes" }, { id: "bottles", name: "Bottles" }, { id: "packs", name: "Packs" }, ]} />
+            <FormInput control={form.control}  name="cinv_qty"  label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}   type="number"  placeholder="Quantity"  
+            />
+            <FormSelect 
+              control={form.control}  
+              name="cinv_qty_unit"  
+              label="Unit"
+              options={[
+                { id: "boxes", name: "Boxes" }, 
+                { id: "bottles", name: "Bottles" }, 
+                { id: "packs", name: "Packs" }, 
+              ]} 
+            />
           </div>
   
-          {/* Pieces per Box and Total Pieces (only shown when unit is boxes) */}
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormInput control={form.control} name="cinv_pcs"  label="Pieces per Box" type="number" placeholder="Pieces per box"/>
+              <FormInput 
+                control={form.control} 
+                name="cinv_pcs"  
+                label="Pieces per Box" 
+                type="number" 
+                placeholder="Pieces per box"
+              />
               <FormItem className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -197,13 +215,14 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
           )}
   
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
+            <Button type="submit" className="w-[120px]"  disabled={isSubmitting}
+            >
               Save Commodity
             </Button>
           </div>
         </form>
       </Form>
-      
+
       {ConfirmationDialogs()}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
@@ -212,6 +231,6 @@ export default function CommodityStockForm({setIsDialog}:CommodiityStockFormProp
         title="Add Commodity"
         description={`Are you sure you want to add the commodity?`}
       />
-      </div>
-    );
-  }
+    </div>
+  );
+}

@@ -2,16 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
-  FormControl, 
-  FormField, 
+  FormControl,
+  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FirstAidStockSchema,
   FirstAidStockType,
@@ -19,11 +18,16 @@ import {
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { fetchFirstAid } from "../REQUEST/fetch";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
-import { addFirstAidInventory, addInventory } from "../REQUEST/Post";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
-import { FirstAidPayload, InventoryFirstAidPayload } from "../REQUEST/Payload";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
+import { submitFirstAidStock } from "../REQUEST/Post/FirstAid/FirstAidAddPost";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
 
 interface FirstAidStockFormProps {  
   setIsDialog:(isOpen: boolean) => void
@@ -36,79 +40,47 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
     defaultValues: {
       fa_id: "",
       cat_id: "",
-      finv_qty_unit: "boxes", // Ensure a valid default value
+      finv_qty_unit: "boxes",
       finv_qty: 0,
       finv_pcs: 0,
-      expiryDate: new Date().toISOString().split("T")[0], // Default to today's date
+      expiryDate: new Date().toISOString().split("T")[0],
     },
   });
 
-  const firstaid = fetchFirstAid(); // Ensure commodity is an array to avoid errors
+  const firstaid = fetchFirstAid();
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [submissionData, setSubmissionData] =
-    useState<FirstAidStockType | null>(null);
+  const [submissionData, setSubmissionData] = useState<FirstAidStockType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    categories,
-    handleDeleteConfirmation,
-    categoryHandleAdd,
-    ConfirmationDialogs,
-  } = useCategoriesFirstAid();
+  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
 
   const handleSubmit = async (data: FirstAidStockType) => {
-    console.log("Form Data Submitted:", data);
-
+    setIsSubmitting(true);
+    const toastId = toast.loading('Adding first aid item...', {
+      duration: Infinity
+    });
     try {
-      console.log(data.fa_id);
-      const inventoryResponse = await addInventory(
-        InventoryFirstAidPayload(data)
-      );
-
-      if (!inventoryResponse?.inv_id) {
-        throw new Error("Failed to generate inventory ID.");
-        // Removed unreachable return
-      }
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
-      const parseFirstAidID = parseInt(data.fa_id, 10);
-      if (!data.fa_id) {
-        throw new Error("Failed to get FirstAid ID.");
-        return;
-      }
-
-      const firstAidPayoad = FirstAidPayload(data, inv_id, parseFirstAidID);
-      console.log("FirstAid Payload:", firstAidPayoad);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const firstAidInventoryResponse = await addFirstAidInventory(
-        firstAidPayoad
-      );
-      if (!firstAidInventoryResponse || firstAidInventoryResponse.error) {
-        throw new Error("Failed to add FirstAid inventory.");
-        return;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
-      console.log("FirstAid Inventory Added Successfully");
-      setIsDialog(false)
-      setIsAddConfirmationOpen(false);
+      await submitFirstAidStock(data, queryClient);
+      toast.success('First aid item added successfully', {
+        id: toastId,
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+        onAutoClose: () => { setIsDialog(false);}});
     } catch (error: any) {
-      console.error(error);
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        setIsAddConfirmationOpen(false);
-      }
-      setIsAddConfirmationOpen(false);
-    }
+      console.error("Error in handleSubmit:", error);
+      toast.error(error.message || "Failed to add first aid item", { id: toastId, duration: 3000});
+      setIsSubmitting(false);
+    } 
   };
 
-
-  const onSubmit = (data: FirstAidStockType) => {
+  const onSubmit = (data: FirstAidStockType) => { 
     setSubmissionData(data);
-    setIsAddConfirmationOpen(true);
-  };
+    setIsAddConfirmationOpen(true);};
 
   const confirmAdd = () => {
     if (submissionData) {
+      setIsAddConfirmationOpen(false);
       handleSubmit(submissionData);
     }
   };
@@ -120,34 +92,12 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
+      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Commodity Name */}
-            <FormField
-              control={form.control}
-              name="fa_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Item Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Commodity"
-                      options={firstaid}
-                      value={field.value}
-                      onChange={(value) => {
-                        console.log("Selected Commodity ID:", value);
-                        field.onChange(value);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+          
+            <FormSelect control={form.control} name="fa_id" label="Unit" options={firstaid}/>
             {/* Category Dropdown */}
             <FormField
               control={form.control}
@@ -161,7 +111,7 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
                       label="Select a Category"
                       options={categories}
                       value={field.value}
-                      onChange={(value) => field.onChange(value)}
+                      onChange={field.onChange}
                       onAdd={(newCategoryName) => {
                         categoryHandleAdd(newCategoryName, (newId) => {
                           field.onChange(newId);
@@ -177,103 +127,18 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Expiry Date */}
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormDateInput  control={form.control}  name="expiryDate"  label="Expiry Date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Quantity */}
-            <FormField
-              control={form.control}
-              name="finv_qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Quantity"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Storage Unit */}
-            <FormField
-              control={form.control}
-              name="finv_qty_unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
-                        { id: "packs", name: "Packs" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="finv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}   type="number"   placeholder="Quantity"   />
+            <FormSelect control={form.control} name="finv_qty_unit" label="Unit" options={[{ id: "boxes", name: "Boxes" },{ id: "bottles", name: "Bottles" },{ id: "packs", name: "Packs" },]}  />
           </div>
 
           {/* Pieces per Box and Total Pieces Display */}
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="finv_pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              <FormInput  control={form.control}  name="finv_pcs"   label="Pieces per Box"   type="number"  placeholder="Pieces per box" />
               <div>
                 <FormItem className="sm:col-span-2">
                   <FormLabel>Total Pieces</FormLabel>
@@ -290,10 +155,7 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
 
           {/* Submit Button */}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save
-            </Button>
-          </div>
+            <Button type="submit" className="w-[120px]"disabled={isSubmitting}> Save  </Button> </div>
         </form>
       </Form>
       {ConfirmationDialogs()}
@@ -301,7 +163,7 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
-        title="Add First Aid "
+        title="Add First Aid"
         description={`Are you sure you want to add the First Aid?`}
       />
     </div>
