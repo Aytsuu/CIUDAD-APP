@@ -1,10 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-<<<<<<< HEAD
-import { Button } from "@/components/ui/button";
-=======
 import { Button } from "@/components/ui/button/button";
->>>>>>> backend/feature/healthinventory
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

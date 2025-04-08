@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
-=======
 import {
   Form,
   FormControl,
@@ -9,7 +6,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
->>>>>>> backend/feature/healthinventory
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";

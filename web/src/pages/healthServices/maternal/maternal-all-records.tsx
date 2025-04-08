@@ -239,11 +239,7 @@ export default function MaternalAllRecords() {
               Maternal Health Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
-<<<<<<< HEAD:web/src/pages/healthServices/maternal/maternal-all-records.tsx
             Manage and view mother's information
-=======
-              Manage and view patients information
->>>>>>> backend/feature/healthinventory:web/src/pages/maternal/maternal-all-records.tsx
           </p>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
@@ -325,7 +321,7 @@ export default function MaternalAllRecords() {
 
           {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
+            {/* <PaginationLayout className="" /> */}
           </div>
         </div>
       </div>

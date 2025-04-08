@@ -19,24 +19,12 @@ import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router-dom"; 
 import { supabase } from "@/supabaseClient"; // Import Supabase client
 
-<<<<<<< HEAD
-import { 
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
-} from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button";
-=======
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const Icon = showPassword ? LuEyeOff : LuEye;
   const navigate = useNavigate();
->>>>>>> backend/feature/healthinventory
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),

@@ -6,7 +6,7 @@ import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";

@@ -9,10 +9,6 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-<<<<<<< HEAD
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
-=======
->>>>>>> backend/feature/healthinventory
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 
 const sitioOptions = [

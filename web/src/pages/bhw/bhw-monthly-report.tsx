@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react"
 
 
@@ -20,7 +20,7 @@ export default function BHWMonthlyReport() {
                         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
                             Child Health Record Viewing
                         </h1>
-                        <p className="text-xs sm:text-sm text-darkGray">
+                        <p className="text-xs   sm:text-sm text-darkGray">
                             View child's information
                         </p>
                     </div>

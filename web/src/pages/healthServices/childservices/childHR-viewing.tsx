@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { ChevronLeft } from "lucide-react"
 import React from "react"
 import { Label } from "@/components/ui/label"

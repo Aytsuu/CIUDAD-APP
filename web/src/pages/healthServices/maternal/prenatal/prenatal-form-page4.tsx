@@ -8,7 +8,7 @@ import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/for
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
 
 

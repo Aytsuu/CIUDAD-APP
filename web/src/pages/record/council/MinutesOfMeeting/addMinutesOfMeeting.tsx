@@ -4,11 +4,7 @@ import {Input} from '../../../../components/ui/input.tsx';
 import {Label} from '../../../../components/ui/label.tsx';
 import {DatePicker} from '../../../../components/ui/datepicker.tsx';
 import {Textarea} from '../../../../components/ui/textarea.tsx';
-<<<<<<< HEAD
-import {Button} from '../../../../components/ui/button.tsx';
-=======
 import {Button} from '../../../../components/ui/button/button.tsx';
->>>>>>> backend/feature/healthinventory
 import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Checkbox } from "@/components/ui/checkbox";

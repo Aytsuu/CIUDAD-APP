@@ -2,7 +2,7 @@ import { UseFormReturn } from "react-hook-form";
 import { Form } from "react-router";
 import { z } from "zod"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SelectLayout } from "@/components/ui/select/select-layout";

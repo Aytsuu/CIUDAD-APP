@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Trash } from "lucide-react";
 

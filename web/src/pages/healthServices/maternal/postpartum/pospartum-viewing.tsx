@@ -5,7 +5,7 @@ import React from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button/button"
 import { ChevronLeft } from "lucide-react";
 import { Link } from "react-router";
 
