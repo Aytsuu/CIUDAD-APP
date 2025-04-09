@@ -1,3 +1,4 @@
+import React from "react";
 import { z } from "zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -6,10 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Control } from "react-hook-form";
 import { businessFormSchema } from "@/form-schema/profiling-schema";
-import { MediaUpload } from "@/components/ui/media-upload";
+import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import { renderActionButton } from "../profilingActionConfig";
 import { Type } from "../profilingEnums";
-import React from "react";
 
 export default function BusinessProfileForm({
   formType,
@@ -30,11 +30,11 @@ export default function BusinessProfileForm({
   control: Control<z.infer<typeof businessFormSchema>>;
   isSubmitting: boolean;
   isReadOnly: boolean;
-  mediaFiles: any[];
+  mediaFiles: MediaUploadType;
   activeVideoId: string;
   url: string;
   setFormType: React.Dispatch<React.SetStateAction<Type>>;
-  setMediaFiles: React.Dispatch<React.SetStateAction<any[]>>;
+  setMediaFiles: React.Dispatch<React.SetStateAction<MediaUploadType>>;
   setActiveVideoId: React.Dispatch<React.SetStateAction<string>>;
   submit: () => void;
 }) {
@@ -76,8 +76,8 @@ export default function BusinessProfileForm({
               Acceptable files include Official sales receipts or invoices, 
               Bank statements showing business transactions, etc."
         mediaFiles={mediaFiles}
-        activeVideoId={activeVideoId}
         setMediaFiles={setMediaFiles}
+        activeVideoId={activeVideoId}
         setActiveVideoId={setActiveVideoId}
       />) : (
         <div className="flex flex-col gap-4 border p-5 rounded-md">

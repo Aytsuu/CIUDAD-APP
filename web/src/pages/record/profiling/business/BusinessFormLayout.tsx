@@ -13,9 +13,9 @@ import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { Type } from "../profilingEnums";
-import supabase from "@/utils/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useAddBusiness } from "../queries/profilingAddQueries";
+import { MediaUploadType } from "@/components/ui/media-upload";
 
 export default function BusinessFormLayout() {
   // Initializing states
@@ -24,9 +24,9 @@ export default function BusinessFormLayout() {
     () => location.state?.params || {},
     [location.state]
   );
-  const { user } = React.useRef(useAuth()).current;
+  const { user } = useAuth();
   const sitio = React.useRef(formatSitio(params));
-  const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
@@ -93,34 +93,11 @@ export default function BusinessFormLayout() {
       return;
     }
 
-    // File upload
-    const [fileItem] = mediaFiles;
-    const file = fileItem?.file;
-    console.log(file)
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}.${fileExt}`;
-    const filePath = `uploads/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from("image-bucket")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (error) throw error;
-
-    const { data: {publicUrl}} = supabase.storage
-      .from('image-bucket')
-      .getPublicUrl(filePath)
-
     // Submit POST request
     const businessInfo = form.getValues();
     await addBusiness({
       businessInfo: businessInfo,
-      url: publicUrl, 
+      url: "", 
       staffId: user?.staff.staff_id
     });
 
@@ -135,6 +112,8 @@ export default function BusinessFormLayout() {
       icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
     });
   }, []);
+  
+  console.log(mediaFiles)
 
   return (
     <LayoutWithBack
