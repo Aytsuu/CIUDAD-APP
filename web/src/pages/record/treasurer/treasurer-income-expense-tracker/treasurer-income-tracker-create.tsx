@@ -1753,7 +1753,7 @@ function IncomeCreateForm( { onSuccess }: IncomeCreateFormProps) {
 
     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
-
+    const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
 
     
     const { data: budgetItems = [] } = useBudgetItems();
@@ -1802,14 +1802,11 @@ function IncomeCreateForm( { onSuccess }: IncomeCreateFormProps) {
                         <FormItem>
                             <FormLabel>Particulars</FormLabel>
                             <FormControl>
-                                <Combobox
-                                    options={particularSelector}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    placeholder="Select Particulars"
-                                    emptyMessage="No particulars found"
-                                    contentClassName="w-full"
-                                />                                 
+                                <Input 
+                                    placeholder="Enter Particulars" 
+                                    className={inputcss} 
+                                    {...field} 
+                                />                         
                             </FormControl>
                             <FormMessage />
                         </FormItem>

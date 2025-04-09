@@ -19,9 +19,12 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
     onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
+
+      toast.loading("Creating entry...", { id: "createExpense" });
       
       // Show success toast
       toast.success('Expense Entry created successfully', {
+        id: "createExpense",
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000
       });
@@ -51,9 +54,12 @@ export const useCreateIncome = (onSuccess?: () => void) => {
     onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['income'] });
+
+      toast.loading("Creating entry...", { id: "createIncome" });
       
       // Show success toast
-      toast.success('Expense Entry created successfully', {
+      toast.success('Income Entry created successfully', {
+        id: "createIncome",
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000
       });
@@ -61,9 +67,9 @@ export const useCreateIncome = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error submitting expense or income:", err);
+      console.error("Error submitting income:", err);
       toast.error(
-        "Failed to submit income or expense. Please check the input data and try again.",
+        "Failed to submit income. Please check the input data and try again.",
         { duration: 2000 }
       );
     }

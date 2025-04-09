@@ -40,13 +40,7 @@ class Income_ParticularSerializers(serializers.ModelSerializer):
     class Meta:
         model = Income_Particular
         fields = '__all__'
-
-
-# class Income_TrackingSerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = Income_Tracking
-#         fields = '__all__'
-
+        
 
 class Income_TrackingSerializers(serializers.ModelSerializer):
     incp_item = serializers.CharField(source='incp_id.incp_item', read_only=True)

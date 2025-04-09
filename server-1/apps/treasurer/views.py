@@ -84,6 +84,7 @@ class GetParticularsView(generics.ListAPIView):
         return Budget_Plan_Detail.objects.none()
 
 
+
 class Income_ParticularView(generics.ListCreateAPIView):
     serializer_class = Income_ParticularSerializers
     queryset = Income_Particular.objects.all()
@@ -92,3 +93,26 @@ class Income_ParticularView(generics.ListCreateAPIView):
 class Income_TrackingView(generics.ListCreateAPIView):
     serializer_class = Income_TrackingSerializers
     queryset = Income_Tracking.objects.all().select_related('incp_id')
+
+
+class UpdateIncomeTrackingView(generics.RetrieveUpdateAPIView):
+    serializer_class = Income_TrackingSerializers
+    queryset = Income_Tracking.objects.all()
+    lookup_field = 'inc_num'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteIncomeTrackingView(generics.DestroyAPIView):
+    serializer_class = Income_TrackingSerializers    
+    queryset = Income_Tracking.objects.all()
+
+    def get_object(self):
+        inc_num = self.kwargs.get('inc_num')
+        return get_object_or_404(Income_Tracking, inc_num=inc_num) 

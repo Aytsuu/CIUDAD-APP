@@ -9,14 +9,14 @@ import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeCreateForm from "./treasurer-income-tracker-create";
-import IncomeandExpenseEditForm from "./treasurer-expense-tracker-edit";
+import IncomeEditForm from "./treasurer-income-tracker-edit";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useDeleteIncomeExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
 import { Link } from 'react-router';
 import { useIncomeData, type Income } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useDeleteIncome } from "./queries/treasurerIncomeExpenseDeleteQueries";
 
 
 
@@ -67,11 +67,11 @@ function IncomeTracking() {
     );
 
 
-    const { mutate: deleteEntry } = useDeleteIncomeExpense();
+    const { mutate: deleteIncome } = useDeleteIncome();
 
 
     const handleDelete = (iet_num: number) => {
-        deleteEntry(iet_num);
+        deleteIncome(iet_num);
     };
 
 
@@ -137,21 +137,18 @@ function IncomeTracking() {
                                 description="Update income or expense details to keep records accurate."
                                 mainContent={
                                     <div className="flex flex-col">
-                                        {/* <IncomeandExpenseEditForm 
-                                            iet_num={row.original.iet_num} 
-                                            iet_serial_num={row.original.iet_serial_num}
-                                            iet_entryType={row.original.iet_entryType}
-                                            iet_amount={String(row.original.iet_amount)}
-                                            iet_particular_id={row.original.dtl_id}
-                                            iet_particulars_name={row.original.dtl_budget_item}
-                                            iet_additional_notes={row.original.iet_additional_notes}
-                                            inv_num={row.original.inv_num}    
-                                            onSuccess={() => setEditingRowId(null)}                                        
-                                        /> */}
+                                        <IncomeEditForm
+                                            inc_num = {row.original.inc_num}
+                                            inc_particulars = {row.original.incp_item} 
+                                            inc_amount = {String(row.original.inc_amount)}
+                                            inc_additional_notes = {row.original.inc_additional_notes}
+                                            inc_receipt_image = {row.original.iet_receipt_image}
+                                            onSuccess={() => setEditingRowId(null)}  
+                                        />
                                     </div>
                                 }
-                                // isOpen={editingRowId === row.original.iet_num}
-                                // onOpenChange={(open) => setEditingRowId(open ? row.original.iet_num : null)}
+                                isOpen={editingRowId === row.original.inc_num}
+                                onOpenChange={(open) => setEditingRowId(open ? row.original.inc_num : null)}
                             />
                         }  
                         content="View"
@@ -164,7 +161,7 @@ function IncomeTracking() {
                                     title="Confirm Delete"
                                     description="Are you sure you want to delete this entry?"
                                     actionLabel="Confirm"
-                                    // onClick={() => handleDelete(row.original.iet_num)} 
+                                    onClick={() => handleDelete(row.original.inc_num)} 
                                 />                    
                             </div>                   
                         }  

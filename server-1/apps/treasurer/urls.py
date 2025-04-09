@@ -13,13 +13,13 @@ urlpatterns=[
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
     path('income-particular/', Income_ParticularView.as_view(), name = 'treasurer-income-particular'),
     path('income-tracking/', Income_TrackingView.as_view(), name = 'treasurer-income-tracking'),
-
-
-    #------------------------------------------------- DELETE ---------------------------------------------------------------------------------------------------
+    path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
 
     path('income-expense-tracking/<int:iet_num>/', DeleteIncomeExpenseView.as_view(), name = 'treasurer-income-expense-tracking-delete'),
+    path('income-tracking/<int:inc_num>/', DeleteIncomeTrackingView.as_view(), name = 'treasurer-income-tracking-delete'),
+
     path('update-income-expense-tracking/<int:iet_num>/', UpdateIncomeExpenseView.as_view(), name='treasurer-income-expense-tracking-update'),
-    path('get-particular/', GetParticularsView.as_view(), name='current-year-budget-items'),
+    path('update-income-tracking/<int:inc_num>/', UpdateIncomeTrackingView.as_view(), name='treasurer-income-tracking-update')
     
 
 ]
