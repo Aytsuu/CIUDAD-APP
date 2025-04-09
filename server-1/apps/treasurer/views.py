@@ -82,3 +82,13 @@ class GetParticularsView(generics.ListAPIView):
             # Return all details for the current year's plan
             return Budget_Plan_Detail.objects.filter(plan=current_plan)
         return Budget_Plan_Detail.objects.none()
+
+
+class Income_ParticularView(generics.ListCreateAPIView):
+    serializer_class = Income_ParticularSerializers
+    queryset = Income_Particular.objects.all()
+
+
+class Income_TrackingView(generics.ListCreateAPIView):
+    serializer_class = Income_TrackingSerializers
+    queryset = Income_Tracking.objects.all().select_related('incp_id')

@@ -11,6 +11,8 @@ urlpatterns=[
     # path('disbursement-file/', Disbursement_FileView.as_view(), name = 'treasurer-disbursement-file'),
     
     path('income-expense-tracking/', Income_Expense_TrackingView.as_view(), name = 'treasurer-income-expense-tracking'),
+    path('income-particular/', Income_ParticularView.as_view(), name = 'treasurer-income-particular'),
+    path('income-tracking/', Income_TrackingView.as_view(), name = 'treasurer-income-tracking'),
 
 
     #------------------------------------------------- DELETE ---------------------------------------------------------------------------------------------------

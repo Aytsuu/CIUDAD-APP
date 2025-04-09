@@ -74,4 +74,23 @@ class Income_Expense_Tracking(models.Model):
         db_table = "income_expense_tracking"
 
 
+class Income_Particular(models.Model):
+    incp_id = models.BigAutoField(primary_key=True)
+    incp_item = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = "income_particular"
+
+
+class Income_Tracking(models.Model):
+    inc_num = models.BigAutoField(primary_key=True)
+    inc_date = models.DateField(default=date.today)
+    inc_entryType = models.CharField(max_length=100, default='Income')
+    inc_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    inc_additional_notes = models.CharField(max_length=100)
+    inc_receipt_image = models.CharField(null=False)
+    incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "income_tracking"
 
