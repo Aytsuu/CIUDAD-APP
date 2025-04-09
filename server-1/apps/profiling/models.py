@@ -187,7 +187,11 @@ class Business(models.Model):
     def __str__(self):
         return f"{self.bus_name} (Owner: {self.bus_respondentLname})"
 
-class BuinessFile(models.Model):
+class BusinessFile(models.Model):
     bf_id = models.BigAutoField(primary_key=True)
     bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+    file = models.ForeignKey('file.File', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'business_file'
     

@@ -179,7 +179,7 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
 };
 
 // POST request for business model 
-export const addBusiness = async (businessInfo: Record<string, string>, url: string, staffId: string) => {
+export const addBusiness = async (businessInfo: Record<string, string>, staffId: string) => {
   try {
     console.log({
       bus_name: businessInfo.bus_name,
@@ -193,7 +193,6 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
       bus_respondentMname: businessInfo.bus_respondentMname,
       bus_respondentSex: businessInfo.bus_respondentSex,
       bus_respondentDob: businessInfo.bus_respondentDob,
-      bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
       sitio_id: businessInfo.sitio,
       staff_id: staffId,
@@ -210,7 +209,6 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
       bus_respondentMname: businessInfo.bus_respondentMname,
       bus_respondentSex: businessInfo.bus_respondentSex,
       bus_respondentDob: businessInfo.bus_respondentDob,
-      bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
       sitio_id: businessInfo.sitio,
       staff_id: staffId,
@@ -221,5 +219,37 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
     console.error(err);
   }
 };
+
+export const addBusinessFile = async (businessId: string, fileId: string) => {
+  try {
+    console.log({
+      bus: businessId,
+      file: fileId
+    })
+    const res = await api.post('profiling/business/file/', {
+      bus: businessId,
+      file: fileId
+    });
+
+    return res.data
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+export const addFile = async (name: string, type: string, path: string, url: string) => {
+  try {
+    const res = await api.post('file/upload/', {
+      file_name: name,
+      file_type: type,
+      file_path: path,
+      file_url: url
+    })
+
+    return res.data
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // ----------------------------------------------------------------------------------------------------------------------------

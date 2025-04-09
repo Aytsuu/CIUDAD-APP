@@ -85,3 +85,7 @@ class RequestDeleteView(generics.DestroyAPIView):
 class BusinessView(generics.ListCreateAPIView):
     serializer_class = BusinessSerializer
     queryset = Business.objects.all()
+
+class BusinessFileView(generics.ListCreateAPIView):
+    serializer_class = BusinessFileSerializer
+    queryset = BusinessFile.objects.all()

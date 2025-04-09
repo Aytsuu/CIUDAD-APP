@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   addBusiness,
+  addBusinessFile,
   addFamily,
   addFamilyComposition,
+  addFile,
   addHousehold,
   addPersonal,
   addResidentProfile,
@@ -143,33 +145,42 @@ export const useAddHousehold = () => {
 };
 
 export const useAddBusiness = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       businessInfo,
-      url,
       staffId,
     }: {
       businessInfo: Record<string, string>;
-      url: string;
       staffId: string;
-    }) => addBusiness(businessInfo, url, staffId),
+    }) => addBusiness(businessInfo, staffId),
     onSuccess: (newData) => {
       queryClient.setQueryData(["businesses"], (old: any[] = []) => [
         ...old,
         newData
       ]);
-
       queryClient.invalidateQueries({queryKey: ["businesses"]});
-
-      toast("New record created successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
     },
   });
 };
+
+
+export const useAddBusinessFile = () => {
+  return useMutation({
+    mutationFn: ({businessId, fileId} : {
+      businessId: string;
+      fileId: string;
+    }) => addBusinessFile(businessId, fileId),
+  })
+}
+
+export const useAddFile = () => {
+  return useMutation({
+    mutationFn: ({name, type, path, url} : {
+      name: string;
+      type: string;
+      path: string;
+      url: string
+    }) => addFile(name, type, path,url),
+  })
+}
