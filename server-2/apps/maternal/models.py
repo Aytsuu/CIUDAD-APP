@@ -12,7 +12,7 @@ class Prenatal_Form(models.Model):
     pf_h_mname = models.CharField(max_length=100)
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
-    # health profiling fk
+    # pat_id = models.ForeignKey('healthProfiling.Patient', on_delete=models.CASCADE,)
 
     class Meta:
         db_table = 'prenatal_form'
@@ -30,7 +30,7 @@ class Obstetrical_History(models.Model):
     obs_fullterm = models.PositiveIntegerField()
     obs_preterm = models.PositiveIntegerField()
     obs_record_from = models.CharField(max_length=100)
-    # health profiling fk
+    # pat_id = models.ForeignKey('healthProfiling.Patient', on_delete=models.CASCADE,)
 
     class Meta:
         db_table = 'obstretical_history'

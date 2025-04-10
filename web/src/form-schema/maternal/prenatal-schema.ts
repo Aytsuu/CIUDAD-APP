@@ -1,5 +1,20 @@
 import z from "zod"
 
+// positive number schema
+export const positiveNumberSchema = z.union([
+  z.string()
+    .min(1, "Value is required")
+    .transform(val => {
+      const num = parseFloat(val);
+      if (isNaN(num)) throw new Error("Invalid number");
+      return num;
+    }),
+  z.number()
+]).refine(val => val >= 0, {
+  message: "Value must be a positive number"
+});
+
+
 // mother's basic info
 export const PrenatalFormSchema = z.object({
     motherPersonalInfo: z.object({
@@ -8,7 +23,7 @@ export const PrenatalFormSchema = z.object({
         motherLName: z.string().min(1, 'Last name is required'),
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional(),
-        motherAge: z.string().min(0, 'Age must be a positive number'),
+        motherAge: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
         motherDOB: z.string().date(),
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
@@ -20,26 +35,26 @@ export const PrenatalFormSchema = z.object({
             city: z.string().min(1, 'City is required'),
             province: z.string().min(1, 'Province is required'),
         }),
-        motherWt: z.string().min(0, 'Weight must be a positive number'),
-        motherHt: z.string().min(0, 'Height must be a positive number'),
-        motherBMI: z.string().min(0, 'BMI must be a positive number'),
+        motherWt: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
+        motherHt: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
+        motherBMI: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
     }),
 
     // obstretic history
     obstreticHistory: z.object({
-        noOfChBornAlive: z.string().min(0).optional(),
-        noOfLivingCh: z.string().min(0).optional(),
-        noOfAbortion: z.string().min(0).optional(),
-        noOfStillBirths: z.string().min(0).optional(),
-        historyOfLBabies: z.string().min(0).optional(),
-        historyOfDiabetes: z.string().min(0).optional()
+        noOfChBornAlive: positiveNumberSchema.optional(),
+        noOfLivingCh: positiveNumberSchema.optional(),
+        noOfAbortion: positiveNumberSchema.optional(),
+        noOfStillBirths: positiveNumberSchema.optional(),
+        historyOfLBabies: positiveNumberSchema.optional(),
+        historyOfDiabetes: z.string().optional(),
     }),
 
     // medical history
     medicalHistory: z.object({
         prevIllness: z.string().optional(),
         prevHospitalization: z.string().optional(),
-        prevHospitalizationYr: z.string().optional(),
+        prevHospitalizationYr: positiveNumberSchema.optional(),
     }),
 
     // previous pregnancy
@@ -47,19 +62,15 @@ export const PrenatalFormSchema = z.object({
         dateOfDelivery: z.string().date().optional(),
         outcome: z.string().optional(),
         typeOfDelivery: z.string().optional(),
-        babysWt: z.string().optional(),
+        babysWt: positiveNumberSchema.default(0),
         gender: z.string().optional(),
-        ballardScore: z.string().optional(),
-        apgarScore: z.string().optional()
+        ballardScore: positiveNumberSchema.default(0),
+        apgarScore: positiveNumberSchema.default(0)
     }),
 
-    // vaccine type
-    vaccineType: z.object({
-        ttOrtd: z.enum(['TT', 'TD'])
-    }),
-
-    // pregnant tetanus vaccine
-    tetanusToxoid: z.object({
+    // pregnant vaccine info
+    prenatalVaccineInfo: z.object({
+        ttOrtd: z.enum(['TT', 'TD']),
         ttStatus: z.string(),
         ttDateGiven: z.string(),
         tdapDateGiven: z.string().optional()

@@ -279,8 +279,8 @@ export default function PrenatalFormThirdPg(
                         </div>
 
                         {/* guide for 4ANC Visit */}
-                        <div className="grid grid-cols-2 gap-4 m-2">
-                            <div className="flex flex-col border w-full rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 m-2 ">
+                            <div className="flex flex-col border w-full rounded-lg border-gray">
                                 <h2 className="text-lg font-bold p-5">Guide for 4ANC Visit: (date)</h2>
                                 <div>
                                     <FormField
@@ -339,7 +339,7 @@ export default function PrenatalFormThirdPg(
                             </div>
 
                             {/* checklist */}
-                            <div className="flex flex-col border w-full rounded-lg ">
+                            <div className="flex flex-col border w-full rounded-lg border-gray">
                                 <h2 className="text-lg font-bold p-5">Checklist</h2>
                                 <Label className="ml-10 mb-5">()PRE-ECLAMPSIA</Label>
                                 {preEclampsiaChecklistGroup.map((group, i) => (
@@ -370,7 +370,7 @@ export default function PrenatalFormThirdPg(
                         
                         <div className="grid grid-cols-2">
                             {/* pregnancy plan */}
-                            <div className="border rounded-lg m-2 p-5">
+                            <div className="border rounded-lg m-2 p-5 border-gray">
                                 <h3 className="text-lg font-bold">Birth Plans</h3>
                                 <div className="flex flex-col gap-4 mt-5">
                                     <FormField
@@ -420,7 +420,7 @@ export default function PrenatalFormThirdPg(
                             </div>
                             
                             {/* micronutrient supplementation */}
-                            <div className="border rounded-lg m-2 p-5">
+                            <div className="border rounded-lg m-2 p-5 border-gray">
                                 <h3 className="text-lg font-bold">Micronutrient Supplementation</h3>
 
                                 {/* iron folic w/ acid */}
@@ -473,7 +473,7 @@ export default function PrenatalFormThirdPg(
                         </div>
 
                         {/* risk codes */}
-                        <div className="flex flex-col border rounded-lg m-2 p-5"> 
+                        <div className="flex flex-col  rounded-lg m-2 p-5 border-gray"> 
                             <h3 className="text-lg font-bold">Risk Codes </h3>
                             <div className="grid grid-cols-2 ml-10 mt-5">
                                 <Label>HAS ONE OR MORE OF THE FF:</Label>

@@ -21,7 +21,7 @@ export default function PrenatalFormSecPg(
     }
 ){
     const submit = () => {
-        form.trigger(["previousPregnancy", "vaccineType", "tetanusToxoid", "presentPregnancy", "labResults"]).then((isValid) => {
+        form.trigger(["previousPregnancy","prenatalVaccineInfo", "presentPregnancy", "labResults"]).then((isValid) => {
             if(isValid){
                 onSubmit();
             }
@@ -38,12 +38,12 @@ export default function PrenatalFormSecPg(
                 }}
                 >
                     <h3 className="text-md font-bold">PREVIOUS PREGNANCY</h3>
-                    <div className="grid grid-cols-7 gap-4 mt-2">
+                    <div className="grid grid-cols-4 gap-4 mt-2">
                         <FormField
                             control={form.control}
                             name="previousPregnancy.dateOfDelivery"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem>  
                                     <FormLabel>DATE OF DELIVERY</FormLabel>
                                     <FormControl>
                                         <Input {...field} type="date" placeholder=""/>
@@ -112,7 +112,7 @@ export default function PrenatalFormSecPg(
                             name="previousPregnancy.gender"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Gender</FormLabel>
+                                    <FormLabel>GENDER</FormLabel>
                                     <FormControl>
                                         <SelectLayout 
                                             label="gender"
@@ -163,7 +163,7 @@ export default function PrenatalFormSecPg(
                             <div className="mt-1 mb-2">
                                 <FormField
                                         control={form.control}
-                                        name="vaccineType.ttOrtd"
+                                        name="prenatalVaccineInfo.ttOrtd"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Vaccine Type</FormLabel>
@@ -199,7 +199,7 @@ export default function PrenatalFormSecPg(
                             <div className="grid grid-cols-2 gap-4 mt-2">
                                 <FormField
                                     control={form.control}
-                                    name="tetanusToxoid.ttStatus"
+                                    name="prenatalVaccineInfo.ttStatus"
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>TT Status</FormLabel>
@@ -225,7 +225,7 @@ export default function PrenatalFormSecPg(
                                 />
                                 <FormField
                                     control={form.control}
-                                    name="tetanusToxoid.ttDateGiven"
+                                    name="prenatalVaccineInfo.ttDateGiven"
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Date Given</FormLabel>
@@ -239,7 +239,7 @@ export default function PrenatalFormSecPg(
                             <div className="mt-4">
                                 <FormField
                                     control={form.control}
-                                    name="tetanusToxoid.tdapDateGiven"
+                                    name="prenatalVaccineInfo.tdapDateGiven"
                                     render={({ field }) => (
                                         <FormItem className="flex">
                                             <FormControl>
@@ -493,7 +493,7 @@ export default function PrenatalFormSecPg(
                             name="labResults.ogct50Date"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>OGCT: 50 GMS 24-28 WKS</FormLabel>
+                                    <FormLabel>OGCT: 50 GMS</FormLabel>
                                     <FormControl>
                                         <Input {...field} type="date"/>
                                     </FormControl>
