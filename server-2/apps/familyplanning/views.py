@@ -1,8 +1,6 @@
-from django.shortcuts import render
-from rest_framework import generics,status
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
+from rest_framework import generics
 from .serializers import *
+
 
 class FP_RecordView(generics.ListCreateAPIView):
     serializer_class = FP_RecordSerializer
@@ -46,7 +44,7 @@ class PhysicalExamView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-class PelvicExamView(serializers.ModelSerializer):
+class PelvicExamView(generics.ListCreateAPIView):
     serializer_class = PelvicExamSerializer
     queryset = Pelvic_Exam.objects.all()
     

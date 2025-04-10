@@ -2,7 +2,7 @@ from .views import *
 from django.urls import path
 
 urlpatterns = [
-    path('fp_record/', FP_RecordView.as_view(), name='FP_record'),
+    path('fp_record/', FP_RecordView.as_view(), name='fp_record'),
     path('fp_type/', FP_typeView.as_view(), name='FP_type'),
     path('pregnancy_check/', PregnancyCheckView.as_view(), name='PregnancyCheck'),
     path('risk_sti/', RiskStiView.as_view(), name='RiskSti'),
