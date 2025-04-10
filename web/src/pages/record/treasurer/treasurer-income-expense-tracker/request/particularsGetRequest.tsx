@@ -11,3 +11,16 @@ export const getParticulars = async () => {
         console.error(err);
     }
 };
+
+
+
+export const getIncomeParticulars = async () => {
+
+    try {
+        const res = await api.get('treasurer/income-particular/');
+        return res.data;
+
+    } catch (err) {
+        console.error(err);
+    }
+};

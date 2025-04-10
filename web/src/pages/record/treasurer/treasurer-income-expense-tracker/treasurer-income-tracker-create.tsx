@@ -1739,14 +1739,15 @@ import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { SetStateAction } from "react";
 import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useIncomeParticular, type IncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useCreateIncome } from "./queries/treasurerIncomeExpenseAddQueries";
 import IncomeFormSchema from "@/form-schema/treasurer/income-tracker-schema";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 
 
 interface IncomeCreateFormProps {
     onSuccess?: () => void; // Add this prop type
 }
-
 
 
 function IncomeCreateForm( { onSuccess }: IncomeCreateFormProps) {
@@ -1755,15 +1756,14 @@ function IncomeCreateForm( { onSuccess }: IncomeCreateFormProps) {
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
 
-    
-    const { data: budgetItems = [] } = useBudgetItems();
+    const { data: IncomeParticularItems = [], isLoading } = useIncomeParticular();
 
-    const particularSelector = budgetItems.map(item => ({
-        id: `${item.id} ${item.name}`,
-        name: item.name,
-        proposedBudget: item.proposedBudget
+    const IncomeParticularSelector = IncomeParticularItems
+            .filter(item => item.id && item.name)
+            .map(item => ({
+                id: item.id,
+                name: item.name,
     }));
-
 
     const form = useForm<z.infer<typeof IncomeFormSchema>>({
         resolver: zodResolver(IncomeFormSchema),
@@ -1784,11 +1784,9 @@ function IncomeCreateForm( { onSuccess }: IncomeCreateFormProps) {
     };
 
 
-    // const selectedParticularId = form.watch("iet_particulars");
-    // const selectedParticular = budgetItems.find(item => item.id === selectedParticularId?.split(' ')[0]);
-
-
-
+    if(isLoading){
+        return <div>Loading...</div>
+    }
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -1799,17 +1797,20 @@ function IncomeCreateForm( { onSuccess }: IncomeCreateFormProps) {
                         control={form.control}
                         name="inc_particulars"
                         render={({ field }) => (
-                        <FormItem>
+                            <FormItem>
                             <FormLabel>Particulars</FormLabel>
                             <FormControl>
-                                <Input 
-                                    placeholder="Enter Particulars" 
-                                    className={inputcss} 
-                                    {...field} 
-                                />                         
+                                <SelectLayoutWithAdd
+                                    placeholder="Select a particular"
+                                    label="Particulars"
+                                    options={IncomeParticularSelector}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    className={inputcss}
+                                />
                             </FormControl>
                             <FormMessage />
-                        </FormItem>
+                            </FormItem>
                         )}
                     />
                 </div>                                             

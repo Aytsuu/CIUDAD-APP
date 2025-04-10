@@ -82,7 +82,7 @@ class GetParticularsView(generics.ListAPIView):
             # Return all details for the current year's plan
             return Budget_Plan_Detail.objects.filter(plan=current_plan)
         return Budget_Plan_Detail.objects.none()
-
+    
 
 
 class Income_ParticularView(generics.ListCreateAPIView):

@@ -1755,10 +1755,6 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
-    const entrytypeSelector = [
-        { id: "0", name: "Income" },
-        { id: "1", name: "Expense" },
-    ];
 
     
     const { data: budgetItems = [] } = useBudgetItems();

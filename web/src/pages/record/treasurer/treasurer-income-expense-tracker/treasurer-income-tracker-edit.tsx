@@ -182,6 +182,9 @@ import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpens
 import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+
+
 
 interface IncomeEditFormProps {
     inc_num: number;
@@ -249,7 +252,7 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
                             <FormLabel>Particulars</FormLabel>
                             <FormControl>
                                 <Input 
-                                    placeholder="Enter Event Title" 
+                                    placeholder="Enter Particular " 
                                     className={inputcss} 
                                     {...field}
                                     readOnly={!isEditing}

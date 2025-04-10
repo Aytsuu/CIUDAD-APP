@@ -33,7 +33,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
         })
 
-        return res.data.iet_num;
+        // return res.data.iet_num;
     }
     catch (err){
         console.error(err);
