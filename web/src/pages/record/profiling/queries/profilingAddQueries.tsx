@@ -1,4 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Type } from "../profilingEnums";
+import { useDeleteRequest } from "./profilingDeleteQueries";
+import { z } from "zod";
+import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import {
   addBusiness,
   addBusinessFile,
@@ -9,13 +16,6 @@ import {
   addPersonal,
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
-import { useNavigate } from "react-router";
-import { Type } from "../profilingEnums";
-import { useDeleteRequest } from "./profilingDeleteQueries";
-import { string, z } from "zod";
-import { personalInfoSchema } from "@/form-schema/profiling-schema";
 
 export const useAddPersonal = (values: z.infer<typeof personalInfoSchema>) => {
   return useMutation({
