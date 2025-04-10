@@ -1,12 +1,9 @@
-import { useState } from "react";
-import { useParams, Link, data } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useGetBlotter } from "./blotter-hooks";
 import { Button } from "@/components/ui/button/button";
 import { BsChevronLeft } from "react-icons/bs";
 
 export default function BlotterRecord (): JSX.Element {
-  const { id } = useParams<{ id: string }>();
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const {data: blotter, isLoading, error } =useGetBlotter();
 
   if (isLoading) { 
@@ -27,11 +24,6 @@ export default function BlotterRecord (): JSX.Element {
       <div className="w-full p-8 text-center">
         <p className="text-red-500 mb-2">Error: {error instanceof Error ? error.message : "Failed to load record"}</p>
         <p className="text-gray-500 mb-4">The requested blotter record could not be found or there was an error loading it.</p>
-        <Button variant="outline">
-          <Link to="/blotter-record" className="flex items-center gap-2">
-            <BsChevronLeft /> Return to Records
-          </Link>
-        </Button>
       </div>
     );
   }
@@ -53,23 +45,23 @@ export default function BlotterRecord (): JSX.Element {
               <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
                 Barangay Blotter Report
               </h1>
-              <p className="text-xs sm:text-sm text-darkGray">ID: {blotter. || "ID unavailable"}</p>
-              <p className="text-xs sm:text-sm text-darkGray">Filed: {formattedCreatedDate}</p>
+              <p className="text-xs sm:text-sm text-darkGray">ID: {blotter?.data?.id || "ID unavailable"}</p>
+              {/* <p className="text-xs sm:text-sm text-darkGray">Filed: {formattedCreatedDate}</p> */}
             </div>
           </div>
           <div className="flex items-center">
             <span 
               className={`px-3 py-1 rounded-full text-xs font-medium ${
-                bc_status === 'Resolved' 
+                blotter?.data?.bc_status === 'Resolved' 
                   ? 'bg-green-100 text-green-800' 
-                  : bc_status === 'Pending' 
+                  : blotter?.data?.bc_status === 'Pending' 
                   ? 'bg-yellow-100 text-yellow-800' 
                   : 'bg-blue-100 text-blue-800'
               }`}
             >
-              {bc_status || "Status unavailable"}
+              {blotter?.data?.bc_status || "Status unavailable"}
             </span>
-          </div>
+          </div> 
         </div>
 
         <div className="space-y-6">
@@ -83,11 +75,11 @@ export default function BlotterRecord (): JSX.Element {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-darkGray block mb-1">Full Name</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_complainant || "Not specified"}</div>
+                  <div className="p-3 bg-gray-50 rounded border">{blotter?.data?.bc_complainant || "Not specified"}</div>
                 </div>
                 <div>
                   <label className="text-sm text-darkGray block mb-1">Address</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_cmplnt_address || "Not specified"}</div>
+                  <div className="p-3 bg-gray-50 rounded border">{blotter?.data?.bc_cmplnt_address || "Not specified"}</div>
                 </div>
               </div>
             </div>
@@ -100,11 +92,11 @@ export default function BlotterRecord (): JSX.Element {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-darkGray block mb-1">Full Name</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_accused || "Not specified"}</div>
+                  <div className="p-3 bg-gray-50 rounded border">{blotter?.data?.bc_accused || "Not specified"}</div>
                 </div>
                 <div>
                   <label className="text-sm text-darkGray block mb-1">Address</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_accused_address || "Not specified"}</div>
+                  <div className="p-3 bg-gray-50 rounded border">{blotter?.data?.bc_accused_address || "Not specified"}</div>
                 </div>
               </div>
             </div>
@@ -118,17 +110,17 @@ export default function BlotterRecord (): JSX.Element {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="text-sm text-darkGray block mb-1">Category</label>
-                <div className="p-3 bg-gray-50 rounded border">{bc_incident_type || "Not specified"}</div>
+                <div className="p-3 bg-gray-50 rounded border">{blotter?.data?.bc_incident_type || "Not specified"}</div>
               </div>
               <div>
                 <label className="text-sm text-darkGray block mb-1">Date of Incident</label>
-                <div className="p-3 bg-gray-50 rounded border">{formattedIncidentDate}</div>
+                <div className="p-3 bg-gray-50 rounded border">{blotter?.data?.formattedIncidentDate}</div>
               </div>
             </div>
             <div className="mb-4">
               <label className="text-sm text-darkGray block mb-1">Incident Description</label>
               <div className="p-3 bg-gray-50 rounded border min-h-24 whitespace-pre-wrap">
-                {bc_allegation || "No description provided"}
+                {blotter?.data?.bc_allegation || "No description provided"}
               </div>
             </div>
             {/* <div>

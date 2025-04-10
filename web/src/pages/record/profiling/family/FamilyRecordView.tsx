@@ -6,7 +6,6 @@ import { dependentViewColumns } from "./FamilyColumns";
 import { useLocation } from "react-router";
 import { DependentRecord } from "../profilingTypes";
 import CardLayout from "@/components/ui/card/card-layout";
-import { MoveRight } from "lucide-react";
 
 export default function FamilyRecordView(){
 

@@ -15,7 +15,7 @@ class BlotterCreateView(generics.CreateAPIView):
 
 class BlotterListView(generics.ListAPIView):
     serializer_class = BlotterSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     queryset = Blotter.objects.all()
     
 class BlotterDetailView(generics.RetrieveAPIView):

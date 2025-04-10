@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'apps.profiling',
     'corsheaders',
     'apps.account',
-    'apps.file'
+    'apps.file',
     'apps.blotter',
 ]
 
