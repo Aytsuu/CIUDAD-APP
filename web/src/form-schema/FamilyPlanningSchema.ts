@@ -16,14 +16,7 @@ const ServiceProvisionRecordSchema = z.object({
 })
 
 // Define the pregnancy check schema
-const PregnancyCheckSchema = z.object({
-  baby_breastfeeding_no_menses: z.boolean().default(false),
-  abstained_since_last_period: z.boolean().default(false),
-  had_baby_last_4_weeks: z.boolean().default(false),
-  period_within_7_days: z.boolean().default(false),
-  miscarriage_or_abortion_7_days: z.boolean().default(false),
-  using_contraceptive_consistently: z.boolean().default(false),
-})
+
 
 // Define the complete schema for all pages
 export const FamilyPlanningSchema = z.object({
@@ -57,6 +50,15 @@ export const FamilyPlanningSchema = z.object({
     s_dateOfBirth: z.string().nonempty("Birthdate is required"),
     s_age: z.number().min(1, "Age is required and must be a positive number"),
     s_occupation: z.string().optional(),
+  }),
+
+  PregnancyCheckSchema: z.object({
+    bf_no_menses: z.boolean().default(false),
+    abstained_last_period: z.boolean().default(false),
+    had_baby: z.boolean().default(false),
+    period_within: z.boolean().default(false),
+    miscarriage_or_abortion: z.boolean().default(false),
+    using_contraceptive: z.boolean().default(false),
   }),
 
   numOfLivingChildren: z.number().min(0, "Number of living children is required"),

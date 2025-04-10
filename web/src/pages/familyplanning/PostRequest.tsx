@@ -1,167 +1,250 @@
 import api from "@/api/api"
-import { formatDate } from "@/helpers/dateFormatter"
+// import { formatDate } from "@/helpers/dateFormatter"
 
-const obstetrical = async (data: Record<string, any>) => {
-    try {
-        console.log({
-            g_pregnancy: data.obstetricalHistory.g_pregnancies,
-            p_pregnancy: data.obstetricalHistory.p_pregnancies,
-            fullterm: data.obstetricalHistory.fullTerm,
-            premature: data.obstetricalHistory.premature,
-            abortion: data.obstetricalHistory.abortion,
-            living_children: data.obstetricalHistory.livingChildren,
-            last_deliverydate: formatDate(data.obstetricalHistory.lastDeliveryDate),
-            typeofLastDelivery: data.obstetricalHistory.typeOfLastDelivery,
-            last_menstrual: formatDate(data.obstetricalHistory.lastMenstrualPeriod),
-            prev_menstrual: formatDate(data.obstetricalHistory.previousMenstrualPeriod),
-            menstrual_flow: data.obstetricalHistory.menstrualFlow,
-            dysme: data.obstetricalHistory.dysmenorrhea,
-            hydatidiform: data.obstetricalHistory.hydatidiformMole,
-            history_ectopic: data.obstetricalHistory.ectopicPregnancyHistory,
-        })
 
-        const res = await api.post("familyplanning/obstetrical/", {
-            g_pregnancies: data.obstetricalHistory.g_pregnancies,
-            p_pregnancies: data.obstetricalHistory.p_pregnancies,
-            full_term: data.obstetricalHistory.fullTerm,
-            premature: data.obstetricalHistory.premature,
-            abortion: data.obstetricalHistory.abortion,
-            living_children: data.obstetricalHistory.livingChildren,
-
-            last_delivery_date: data.obstetricalHistory.lastDeliveryDate || null,
-            type_of_last_delivery: data.obstetricalHistory.typeOfLastDelivery || null,
-
-            last_menstrual_period: data.obstetricalHistory.lastMenstrualPeriod,
-            previous_menstrual_period: data.obstetricalHistory.previousMenstrualPeriod,
-
-            menstrual_flow: data.obstetricalHistory.menstrualFlow,
-            dysmenorrhea: data.obstetricalHistory.dysmenorrhea,
-            hydatidiform_mole: data.obstetricalHistory.hydatidiformMole,
-            ectopic_pregnancy_history: data.obstetricalHistory.ectopicPregnancyHistory,
-        })
-
-        return res.data.per_id
-    } catch (err) {
-        console.log(err)
-    }
-}
-
-const risks_sti = async (data: Record<string, any>) => {
+export const risk_sti = async (data: Record<string, any>) => {
     try {
       const requestData: Record<string, any> = {
-        abnormalDischarge: data.risks_sti.abnormalDischarge,
-        sores: data.risks_sti.sores,
-        pain: data.risks_sti.pain,
-        history: data.risks_sti.history,
-        hiv: data.risks_sti.hiv,
+        abnormalDischarge: data.sexuallyTransmittedInfections.abnormalDischarge,
+        dischargeFrom: data.sexuallyTransmittedInfections.dischargeFrom,
+        sores: data.sexuallyTransmittedInfections.sores,
+        pain: data.sexuallyTransmittedInfections.pain,
+        history: data.sexuallyTransmittedInfections.history,
+        hiv: data.sexuallyTransmittedInfections.hiv,
       };
   
       // Include dischargeFrom only if abnormalDischarge is true
-      if (data.risks_sti.abnormalDischarge) {
-        requestData.dischargeFrom = data.risks_sti.dischargeFrom;
+      if (data.sexuallyTransmittedInfections.abnormalDischarge) {
+        requestData.dischargeFrom = data.sexuallyTransmittedInfections.dischargeFrom;
       }
-  
+      console.log("STI: ", requestData)
       const res = await api.post("familyplanning/risk_sti/", requestData);
       return res.data.per_id;
     } catch (err) {
       console.log(err);
     }
   };
+
+  export const risk_vaw = async (data: Record<string, any>) => {
+    try {
+      const requestData: Record<string, any> = {
+        unpleasantRelationship: data.violenceAgainstWomen.unpleasantRelationship,
+        partnerDisapproval: data.violenceAgainstWomen.partnerDisapproval,
+        domesticViolence: data.violenceAgainstWomen.domesticViolence,
+        referredTo: data.violenceAgainstWomen.referredTo,
+      };
   
-const risks_vaw = async (data: Record<string, any>) => {
-    try {
-        console.log({
-            unpleasantRelationship: data.violenceAgainstWomen.unpleasantRelationship,
-            partnerDisapproval: data.violenceAgainstWomen.partnerDisapproval,
-            domesticViolence: data.violenceAgainstWomen.domesticViolence,
-            referredTo: data.violenceAgainstWomen.referredTo,
-            otherReferral: data.violenceAgainstWomen.otherReferral,
-        })
-
-        const res = await api.post("familyplanning/risk_vaw/", {
-            unpleasantRelationship: data.violenceAgainstWomen.unpleasantRelationship,
-            partnerDisapproval: data.violenceAgainstWomen.partnerDisapproval,
-            domesticViolence: data.violenceAgainstWomen.domesticViolence,
-            referredTo: data.violenceAgainstWomen.referredTo,
-            otherReferral: data.violenceAgainstWomen.otherReferral,
-        })
-
-        return res.data.per_id
+      console.log("Vaw: ", requestData)
+      const res = await api.post("familyplanning/risk_vaw/", requestData);
+      return res.data.per_id;
     } catch (err) {
-        console.log(err)
+      console.log(err);
     }
-}
+  };
 
-const physical_exam = async (data: Record<string, any>) => {
+  export const pregnancy_check = async (data: Record<string, any>) => {
     try {
-        // Get the method from the data
-        const method = data.methodCurrentlyUsed
-
-        // Create a base request object with the required fields
-        const requestData = {
-            method: method,
-            weight: data.weight,
-            height: data.height,
-            bloodPressure: data.bloodPressure,
-            pulseRate: data.pulseRate,
-
-            // Common examination fields
-            skinExamination: data.skinExamination,
-            conjunctivaExamination: data.conjunctivaExamination,
-            neckExamination: data.neckExamination,
-            breastExamination: data.breastExamination,
-            abdomenExamination: data.abdomenExamination,
-            extremitiesExamination: data.extremitiesExamination,
-        }
-
-        // Only include IUD-specific fields if the method is IUD
-        if (method === "IUD") {
-            Object.assign(requestData, {
-                pelvicExamination: data.pelvicExamination,
-                cervicalConsistency: data.cervicalConsistency,
-                cervicalTenderness: data.cervicalTenderness,
-                cervicalAdnexalMassTenderness: data.cervicalAdnexalMassTenderness,
-                uterinePosition: data.uterinePosition,
-                uterineDepth: data.uterineDepth || null,
-            })
-        }
-
-        console.log("Sending physical exam data:", requestData)
-
-        const res = await api.post("familyplanning/physical_exam/", requestData)
-        return res.data.per_id
+      if (!data.PregnancyCheckSchema) {
+        console.error("PregnancyCheckSchema is missing in the submitted data", data);
+        return;
+      }
+  
+      const requestData: Record<string, any> = {
+        bf_no_menses: data.PregnancyCheckSchema.bf_no_menses,
+        abstained_last_period: data.PregnancyCheckSchema.abstained_last_period,
+        had_baby: data.PregnancyCheckSchema.had_baby,
+        period_within: data.PregnancyCheckSchema.period_within,
+        miscarriage_or_abortion: data.PregnancyCheckSchema.miscarriage_or_abortion,
+        using_contraceptive: data.PregnancyCheckSchema.using_contraceptive,
+      };
+  
+      console.log("PregnancyCheck: ", requestData);
+      const res = await api.post("familyplanning/pregnancy_check/", requestData);
+      return res.data.per_id;
     } catch (err) {
-        const error = err as any
-        console.error("Error submitting physical examination:", error.response?.data || error.message)
+      console.log(err);
     }
-}
+  };
+  
 
-const acknowledgement = async (data: Record<string, any>) => {
+// export const fp_type = async (data: Record<string, any>) => {
+//     try {
+//       const requestData = {
+//         fpt_client_type: data.typeOfClient, 
+//         fpt_subtype: data.subTypeOfClient || null,  
+//         fpt_reason_fp: data.reasonForFP || null,
+//         fpt_reason: data.reason || null,          
+//         fpt_method_used: data.methodCurrentlyUsed, 
+//       };
+//       console.log(requestData)
+
+//       const res = await api.post("familyplanning/fp_type/", requestData);
+//       return res.data.per_id; 
+
+//     } catch (err) {
+//       console.error("Failed to send family planning data:", err);
+//     }
+//   };
+  
+export const fp_obstetrical = async (data: Record<string, any>) => {
     try {
-        console.log({
-            selectedMethod: data.acknowledgement.selectedMethod,
-            clientSignature: data.acknowledgement.clientSignature,
-            clientSignatureDate: data.acknowledgement.clientSignatureDate,
-            guardianName: data.acknowledgement.guardianName,
-            guardianSignature: data.acknowledgement.guardianSignature,
-            guardianSignatureDate: data.acknowledgement.guardianSignatureDate,
+      if (!data.obstetricalHistory) {
+        console.error("❌ Missing `obstetricalHistory` in form data");
+        return;
+      }
+  
+      const fieldsToCheck = {
+        lastDeliveryDate: data.obstetricalHistory.lastDeliveryDate,
+        typeOfLastDelivery: data.obstetricalHistory.typeOfLastDelivery,
+        lastMenstrualPeriod: data.obstetricalHistory.lastMenstrualPeriod,
+        previousMenstrualPeriod: data.obstetricalHistory.previousMenstrualPeriod,
+        menstrualFlow: data.obstetricalHistory.menstrualFlow,
+        dysmenorrhea: data.obstetricalHistory.dysmenorrhea,
+        hydatidiformMole: data.obstetricalHistory.hydatidiformMole,
+        ectopicPregnancyHistory: data.obstetricalHistory.ectopicPregnancyHistory,
+      };
+  
+      // Log all values and highlight missing ones
+      for (const [key, value] of Object.entries(fieldsToCheck)) {
+        if (value === undefined || value === null || value === "") {
+          console.warn(`⚠️ Missing or empty: ${key}`);
+        } else {
+          console.log(`✅ ${key}:`, value);
+        }
+      }
+  
+      const requestData = {
+        fpob_last_delivery: fieldsToCheck.lastDeliveryDate,
+        fpob_type_last_delivery: fieldsToCheck.typeOfLastDelivery || null,
+        fpob_last_period: fieldsToCheck.lastMenstrualPeriod || null,
+        fpob_previous_period: fieldsToCheck.previousMenstrualPeriod || null,
+        fpob_mens_flow: fieldsToCheck.menstrualFlow,
+        fpob_dysme: fieldsToCheck.dysmenorrhea || null,
+        fpob_hydatidiform: fieldsToCheck.hydatidiformMole || null,
+        fpob_ectopic_pregnancy: fieldsToCheck.ectopicPregnancyHistory || null,
+      };
+  
+      console.log("📦 Final requestData:", requestData);
+  
+      const res = await api.post("familyplanning/obstetrical/", requestData);
+      console.log("✅ Data sent successfully");
+      return res.data.per_id;
+  
+    } catch (err) {
+      console.error("❌ Failed to send obs data:", err);
+    }
+  };
+  
+// const risks_vaw = async (data: Record<string, any>) => {
+//     try {
+//         console.log({
+//             unpleasantRelationship: data.violenceAgainstWomen.unpleasantRelationship,
+//             partnerDisapproval: data.violenceAgainstWomen.partnerDisapproval,
+//             domesticViolence: data.violenceAgainstWomen.domesticViolence,
+//             referredTo: data.violenceAgainstWomen.referredTo,
+//             otherReferral: data.violenceAgainstWomen.otherReferral,
+//         })
+
+//         const res = await api.post("familyplanning/risk_vaw/", {
+//             unpleasantRelationship: data.violenceAgainstWomen.unpleasantRelationship,
+//             partnerDisapproval: data.violenceAgainstWomen.partnerDisapproval,
+//             domesticViolence: data.violenceAgainstWomen.domesticViolence,
+//             referredTo: data.violenceAgainstWomen.referredTo,
+//             otherReferral: data.violenceAgainstWomen.otherReferral,
+//         })
+
+//         return res.data.per_id
+//     } catch (err) {
+//         console.log(err)
+//     }
+// }
+
+// const physical_exam = async (data: Record<string, any>) => {
+//     try {
+//         // Get the method from the data
+//         const method = data.methodCurrentlyUsed
+
+//         // Create a base request object with the required fields
+//         const requestData = {
+//             method: method,
+//             weight: data.weight,
+//             height: data.height,
+//             bloodPressure: data.bloodPressure,
+//             pulseRate: data.pulseRate,
+
+//             // Common examination fields
+//             skinExamination: data.skinExamination,
+//             conjunctivaExamination: data.conjunctivaExamination,
+//             neckExamination: data.neckExamination,
+//             breastExamination: data.breastExamination,
+//             abdomenExamination: data.abdomenExamination,
+//             extremitiesExamination: data.extremitiesExamination,
+//         }
+
+//         // Only include IUD-specific fields if the method is IUD
+//         if (method === "IUD") {
+//             Object.assign(requestData, {
+//                 pelvicExamination: data.pelvicExamination,
+//                 cervicalConsistency: data.cervicalConsistency,
+//                 cervicalTenderness: data.cervicalTenderness,
+//                 cervicalAdnexalMassTenderness: data.cervicalAdnexalMassTenderness,
+//                 uterinePosition: data.uterinePosition,
+//                 uterineDepth: data.uterineDepth || null,
+//             })
+//         }
+
+//         console.log("Sending physical exam data:", requestData)
+
+//         const res = await api.post("familyplanning/physical_exam/", requestData)
+//         return res.data.per_id
+//     } catch (err) {
+//         const error = err as any
+//         console.error("Error submitting physical examination:", error.response?.data || error.message)
+//     }
+// }
+
+// const acknowledgement = async (data: Record<string, any>) => {
+//     try {
+//         console.log({
+//             selectedMethod: data.acknowledgement.selectedMethod,
+//             clientSignature: data.acknowledgement.clientSignature,
+//             clientSignatureDate: data.acknowledgement.clientSignatureDate,
+//             guardianName: data.acknowledgement.guardianName,
+//             guardianSignature: data.acknowledgement.guardianSignature,
+//             guardianSignatureDate: data.acknowledgement.guardianSignatureDate,
             
-        })
-        const res = await api.post("familyplanning/acknowledgement/", {
-            selectedMethod: data.acknowledgement.selectedMethod,
-            clientSignature: data.acknowledgement.clientSignature,
-            clientSignatureDate: data.acknowledgement.clientSignatureDate,
-            guardianName: data.acknowledgement.guardianName,
-            guardianSignature: data.acknowledgement.guardianSignature,
-            guardianSignatureDate: data.acknowledgement.guardianSignatureDate,
-        })
-        return res.data.per_id
+//         })
+//         const res = await api.post("familyplanning/acknowledgement/", {
+//             selectedMethod: data.acknowledgement.selectedMethod,
+//             clientSignature: data.acknowledgement.clientSignature,
+//             clientSignatureDate: data.acknowledgement.clientSignatureDate,
+//             guardianName: data.acknowledgement.guardianName,
+//             guardianSignature: data.acknowledgement.guardianSignature,
+//             guardianSignatureDate: data.acknowledgement.guardianSignatureDate,
+//         })
+//         return res.data.per_id
+//     } catch (err) {
+//         console.log(err)
+//     }
+// }
+
+export const fp_record = async (data: Record<string, any>) => {
+    try {
+        const requestData = {
+            nhts: data.nhts_status,
+            four_ps: data.pantawid_4ps,
+            plan_more_children: data.planToHaveMoreChildren,
+            avg_monthly_income: data.averageMonthlyIncome,
+        }
+        console.log("Type of client: ", requestData)
+        const res = await api.post("familyplanning/fp_record/", requestData);
+
+      
+        return res.data.per_id;
     } catch (err) {
         console.log(err)
-    }
-}
+    }}
 
 
-
-export { obstetrical, risks_sti, risks_vaw, physical_exam, acknowledgement }
+// export { obstetrical, risks_sti, risks_vaw, physical_exam, acknowledgement,fp_type }
 

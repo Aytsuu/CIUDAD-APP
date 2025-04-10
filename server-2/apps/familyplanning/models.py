@@ -14,9 +14,9 @@ class FP_Record(models.Model):
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)
     fpt_client_type = models.CharField(max_length=20)
-    fpt_subtype = models.CharField(max_length=20)
-    fpt_reason_fp = models.CharField(max_length=20)
-    fpt_reason = models.CharField(max_length=20)
+    fpt_subtype = models.CharField(max_length=20,null=True)
+    fpt_reason_fp = models.CharField(max_length=20, null=True)
+    fpt_reason = models.CharField(max_length=20,null=True)
     fpt_method_used = models.CharField(max_length=30)
     # record = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
     
@@ -52,13 +52,12 @@ class FP_type(models.Model):
 #     obs_category = models.CharField(max_length=20)
         
 class PregnancyCheck(models.Model):
-
-    baby_breastfeeding_no_menses = models.BooleanField(default=False)
-    abstained_since_last_period = models.BooleanField(default=False)
-    had_baby_last_4_weeks = models.BooleanField(default=False)
-    period_within_7_days = models.BooleanField(default=False)
-    miscarriage_or_abortion_7_days = models.BooleanField(default=False)
-    using_contraceptive_consistently = models.BooleanField(default=False)
+    bf_no_menses = models.BooleanField(default=False)
+    abstained_last_period = models.BooleanField(default=False)
+    had_baby = models.BooleanField(default=False)
+    period_within = models.BooleanField(default=False)
+    miscarriage_or_abortion = models.BooleanField(default=False)
+    using_contraceptive = models.BooleanField(default=False)
 
     # client = models.ForeignKey(Client, on_delete=models.CASCADE)  # if you have a Client model
     # checked_at = models.DateTimeField(auto_now_add=True)
@@ -84,8 +83,7 @@ class RiskVaw(models.Model):
     unpleasant_relationship = models.BooleanField(default=False)
     partner_disapproval = models.BooleanField(default=False)
     domestic_violence = models.BooleanField(default=False)
-    referredTo = models.CharField(max_length=10)
-    other_referral = models.CharField(max_length=30)
+    referredTo = models.CharField(max_length=30)
     
     class Meta:
         db_table = 'risk_vaw'
@@ -210,14 +208,13 @@ class Acknowledgement(models.Model):
 class FP_Obstetrical_History(models.Model):
     fpob_id = models.AutoField(primary_key=True)
     fpob_last_delivery = models.CharField(max_length=30)
-    fpob_type_last_delivery = models.CharField(max_length=30)
-    fpob_last_period = models.CharField(max_length=30)
-    fpob_previous_period = models.CharField(max_length=30)
+    fpob_type_last_delivery = models.CharField(null=True,max_length=30)
+    fpob_last_period = models.CharField(null=True,max_length=30)
+    fpob_previous_period = models.CharField(null=True,max_length=30)
     fpob_mens_flow = models.CharField(max_length=20)
-    fpob_last_delivery = models.CharField(max_length=30)
-    fpob_dysme = models.CharField(max_length=10)
-    fpob_hydatidiform = models.CharField(max_length=10)
-    fpob_ectopic_pregnancy = models.CharField(max_length=10)
+    fpob_dysme = models.BooleanField(default=False)
+    fpob_hydatidiform = models.BooleanField(default=False)
+    fpob_ectopic_pregnancy = models.BooleanField(default=False)
     
     # fpt_id = models.ForeignKey(FP_type,on_delete=True)
     # obs_id = models.ForeignKey(ObstetricalHistory,on_delete=True)
