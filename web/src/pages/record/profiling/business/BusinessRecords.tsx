@@ -7,31 +7,17 @@ import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { businessColumns } from "./BusinessColumns";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { useQuery } from "@tanstack/react-query";
-import { getBusiness, getSitio } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
+import { useBusinesses, useSitio } from "../queries/profilingFetchQueries";
 
 export default function BusinessRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Fetching businesses from database
-  const { data: businesses, isLoading: isLoadingBusinesses } = useQuery({
-    queryKey: ["businesses"],
-    queryFn: getBusiness,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Fetching sitio from database
-  const { data: sitio, isLoading: isLoadingSitio } = useQuery({
-    queryKey: ["sitio"],
-    queryFn: getSitio,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: businesses, isLoading: isLoadingBusinesses } = useBusinesses();
+  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
 
   // Formatting business data (for table)
   const formatBusinessData = React.useCallback(() => {

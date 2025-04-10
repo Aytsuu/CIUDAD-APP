@@ -34,11 +34,17 @@ export const addPersonal = async (personalInfo: Record<string, string>) => {
 export const addResidentProfile = async (personalId: string, staffId: string) => {
   try {
 
-    const res = await api.post("profiling/resident/", {
+    console.log({
       rp_id: await generateResidentNo(),
       rp_date_registered: formatDate(new Date()),
       per_id: personalId,
       staff: staffId,
+    })
+    const res = await api.post("profiling/resident/", {
+      rp_id: await generateResidentNo(),
+      rp_date_registered: formatDate(new Date()),
+      per_id: personalId,
+      staff_id: staffId,
     });
 
     return res.data;
@@ -127,10 +133,10 @@ export const addFamily = async (
       mother_id: motherId || null,
       guard_id: guardId || null,
       hh_id: demographicInfo.householdNo || null,
-      staff: staffId,
+      staff_id: staffId,
     });
 
-    return res.data.fam_id;
+    return res.data;
   } catch (err) {
     console.error(err);
   }
@@ -173,8 +179,24 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
 };
 
 // POST request for business model 
-export const addBusiness = async (businessInfo: Record<string, string>, url: string, staffId: string) => {
+export const addBusiness = async (businessInfo: Record<string, string>, staffId: string) => {
   try {
+    console.log({
+      bus_name: businessInfo.bus_name,
+      bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
+      bus_province: "Cebu",
+      bus_city: "Cebu City",
+      bus_barangay: "San Roque",
+      bus_street: businessInfo.bus_street,
+      bus_respondentLname: businessInfo.bus_respondentLname,
+      bus_respondentFname: businessInfo.bus_respondentFname,
+      bus_respondentMname: businessInfo.bus_respondentMname,
+      bus_respondentSex: businessInfo.bus_respondentSex,
+      bus_respondentDob: businessInfo.bus_respondentDob,
+      bus_date_registered: formatDate(new Date()),
+      sitio_id: businessInfo.sitio,
+      staff_id: staffId,
+    })
     const res = await api.post("profiling/business/", {
       bus_name: businessInfo.bus_name,
       bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
@@ -187,10 +209,9 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
       bus_respondentMname: businessInfo.bus_respondentMname,
       bus_respondentSex: businessInfo.bus_respondentSex,
       bus_respondentDob: businessInfo.bus_respondentDob,
-      bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
       sitio_id: businessInfo.sitio,
-      staff: staffId,
+      staff_id: staffId,
     });
 
     return res.data;
@@ -198,5 +219,37 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
     console.error(err);
   }
 };
+
+export const addBusinessFile = async (businessId: string, fileId: string) => {
+  try {
+    console.log({
+      bus: businessId,
+      file: fileId
+    })
+    const res = await api.post('profiling/business/file/', {
+      bus: businessId,
+      file: fileId
+    });
+
+    return res.data
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+export const addFile = async (name: string, type: string, path: string, url: string) => {
+  try {
+    const res = await api.post('file/upload/', {
+      file_name: name,
+      file_type: type,
+      file_path: path,
+      file_url: url
+    })
+
+    return res.data
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // ----------------------------------------------------------------------------------------------------------------------------

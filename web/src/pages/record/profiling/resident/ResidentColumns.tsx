@@ -143,20 +143,10 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
   {
     accessorKey: "mname",
     header: "Middle Name",
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("mname") ? row.getValue("mname") : '-'}
-      </div>
-    )
   },
   {
     accessorKey: "suffix",
-    header: "Suffix",
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("suffix") ? row.getValue("suffix") : '-'}
-      </div>
-    )
+    header: "Suffix"
   },
   {
     accessorKey: "dateRegistered",

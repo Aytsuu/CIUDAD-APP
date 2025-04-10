@@ -8,17 +8,34 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import React from "react";
 import { Card } from "@/components/ui/card/card";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { toast } from "sonner";
+import { CircleAlert } from "lucide-react";
+import { useAddAccount } from "./queries/accountAddQueries";
 
 export default function AccountRegistrationLayout() {
-  const defaultValues = React.useRef(
-    generateDefaultValues(accountFormSchema)
-  ).current;
+  const { mutateAsync: addAccount } = useAddAccount();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const defaultValues = React.useRef(generateDefaultValues(accountFormSchema._def.schema)).current;
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
     defaultValues,
   });
 
-  const submit = React.useCallback(async () => {}, []);
+  const submit = async () => {
+    setIsSubmitting(true)
+    const formIsValid = await form.trigger();
+    if(!formIsValid) {
+      setIsSubmitting(false);
+      toast("Please fill out all required fields", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+      return;
+    };
+
+    const accountInfo = form.getValues();
+    await addAccount({ accountInfo: accountInfo });
+    
+  };
 
   return (
     <div className="W-full flex justify-center">
@@ -29,7 +46,11 @@ export default function AccountRegistrationLayout() {
         >
           <Form {...form}>
             <form className="grid gap-8">
-              <AccountRegistrationForm form={form} onSubmit={submit} />
+              <AccountRegistrationForm 
+                form={form} 
+                isSubmitting={isSubmitting}
+                onSubmit={submit} 
+              />
             </form>
           </Form>
         </MainLayoutComponent>

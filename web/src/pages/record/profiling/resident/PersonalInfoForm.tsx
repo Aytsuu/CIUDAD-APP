@@ -10,10 +10,10 @@
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Origin, Type } from "../profilingEnums";
-import { renderActionButton } from "../actionConfig";
+import { renderActionButton } from "../profilingActionConfig";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Combobox } from "@/components/ui/combobox";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import React from "react";
@@ -54,7 +54,7 @@ export default function PersonalInfoForm({
             form.setValue("per_id", value);
             handleComboboxChange();
           }}
-          placeholder="Search for resident..."
+          placeholder="Select a resident"
           emptyMessage="No resident found"
         />
       )}
@@ -103,10 +103,11 @@ export default function PersonalInfoForm({
           ]}
           readOnly={isReadOnly}
         />
-        <FormDateInput
+        <FormDateTimeInput
           control={form.control}
           name="per_dob"
           label="Date of Birth"
+          type="date"
           readOnly={isReadOnly}
         />
         <FormSelect

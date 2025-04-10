@@ -1,103 +1,132 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button/button";
+import { Separator } from "@/components/ui/separator";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { Link, useNavigate } from "react-router";
+import { Action, Type } from "./administrationEnums";
+import { useDeletePosition } from "./queries/administrationQueries";
 import {
   ChevronRight,
   Ellipsis,
   Trash,
   Loader2,
   Plus,
-  Pen,
+  Pen
 } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
-import { Separator } from "@/components/ui/separator";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { deletePosition } from "./restful-api/administrationDeleteAPI";
-import { Position } from "./administrationTypes";
-import { Link } from "react-router";
 
 export default function AdministrationPositions({
   positions,
-  setPositions,
   selectedPosition,
   setSelectedPosition,
 }: {
-  positions: Position[];
-  setPositions: React.Dispatch<React.SetStateAction<Position[]>>;
+  positions: any[]
   selectedPosition: string;
   setSelectedPosition: (value: string) => void;
 }) {
-  
-  const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
+  const navigate = useNavigate();
+  const { mutate: deletePosition, isPending: isDeleting } = useDeletePosition();
 
   // Delete a position
-  const handleDeletePosition = React.useCallback(async () => {
-    setIsDeleting(true);
+  const handleAction = React.useCallback(
+    (value: string) => {
+      if (!selectedPosition) return;
+      if (value === Action.Delete) handleDelete();
+      if (value === Action.Edit) handleEdit();
+    }, [selectedPosition]);
 
-    const res = await deletePosition(selectedPosition);
-    if (res?.status === 204) {
-      setPositions((prev) =>
-        prev.filter((position) => position.id !== selectedPosition)
-      );
+  const handleDelete = React.useCallback(() => {
+    deletePosition(selectedPosition, {
+      onSuccess: () => setSelectedPosition(""),
+    });
+  }, [selectedPosition, deletePosition]);
 
-      setSelectedPosition("");
-      setIsDeleting(false);
-    }
+  const handleEdit = React.useCallback(() => {
+    navigate("/administration/role/add-position",
+      {state : {
+        params: {
+          type: Type.Edit,
+          title: "Edit Position",
+          description: "Apply your changes and click save.",
+          data: positions.find((position: any) => position.pos_id == selectedPosition)
+        }
+      }}
+    )
   }, [selectedPosition]);
 
   return (
     <div className="w-full h-full flex flex-col gap-3">
       <div className="w-full flex justify-between items-start">
         <Label className="text-[20px] text-darkBlue1">Positions</Label>
-        <Link to='/administration/role/add-position'>
+        <Link 
+          to="/administration/role/add-position"
+          state={{
+            params: {
+              type: Type.Add,
+              title: "New Position",
+              description: "Fill out all fields to proceed with creating new position."
+            }
+          }}
+        >
           <Button>
-            <Plus/>Add Position
+            <Plus />
+            Add Position
           </Button>
         </Link>
       </div>
 
       <Separator />
-      <div className="w-full flex flex-col">   
-        {positions?.length > 1 ? (positions.map((value: any) => {
-          const exclude = ["Admin"];
-
-          if (!exclude.includes(value.name)) {
-            return (
-              <div
-                key={value.id}
-                className={`w-full flex justify-between items-center hover:bg-lightBlue/40 p-3 rounded-md cursor-pointer 
-                        ${value.id == selectedPosition ? "bg-lightBlue" : ""}`}
-                onClick={() => {
-                  setSelectedPosition(value.id);
-                }}
-              >
-                <Label className="text-black/80 text-[15px] font-medium">
-                  {value.name}
-                </Label>
-                {value.id === selectedPosition ? (
-                  !isDeleting ? (
-                    // Change elipsis to loader if is deleting
-                    <DropdownLayout
-                      trigger={<Ellipsis size={20} />}
-                      itemClassName="text-red-500 focus:text-red-500"
-                      options={[
-                        { id: "delete", name: "Delete", icon: <Trash />,},
-                        { id: "edit", name: "Edit", icon: <Pen />,},
-                      ]}
-                      onSelect={handleDeletePosition}
-                    />
+      <div className="w-full flex flex-col gap-2">
+        {positions?.length > 1 ? (
+          positions.map((value: any) => {
+            const exclude = ["Admin"];
+            if (!exclude.includes(value.pos_title)) {
+              return (
+                <div
+                  key={value.pos_id}
+                  className={`w-full flex justify-between items-center p-3 rounded-md cursor-pointer shadow-sm border
+                        ${ value.pos_id == selectedPosition ? "bg-lightBlue" : "hover:bg-lightBlue/40" }`}
+                  onClick={() => { setSelectedPosition(value.pos_id) }}
+                >
+                  <Label className="text-black/80 text-[15px] font-medium">
+                    {value.pos_title}  
+                    <div className="flex items-center gap-2 text-black/60">
+                      <Label className="text-[13px]">Max Holders : </Label> {value.pos_max}
+                    </div>
+                  </Label>
+                  {value.pos_id === selectedPosition ? (
+                    !isDeleting ? (
+                      // Change elipsis to loader if is deleting
+                      <DropdownLayout
+                        trigger={<Ellipsis size={20} />}
+                        options={[
+                          {
+                            id: "delete",
+                            name: "Delete",
+                            icon: <Trash />,
+                            variant: "delete",
+                          },
+                          {
+                            id: "edit",
+                            name: "Edit",
+                            icon: <Pen />,
+                            variant: "default",
+                          },
+                        ]}
+                        onSelect={handleAction}
+                      />
+                    ) : (
+                      <Loader2 size={22} className="animate-spin opacity-50" />
+                    )
                   ) : (
-                    <Loader2 size={22} className="animate-spin opacity-50" />
-                  )
-                ) : (
-                  <ChevronRight size={20} className="text-black/80" />
-                )}
-              </div>
-            );
-          }
-        })) : (
-          <Label className="text-[15px] text-black/60">
-            No position added
-          </Label>
+                    <ChevronRight size={20} className="text-black/80" />
+                  )}
+                </div>
+              );
+            }
+          })
+        ) : (
+          <Label className="text-[15px] text-black/60">No position added</Label>
         )}
       </div>
     </div>

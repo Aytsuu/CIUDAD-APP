@@ -7,7 +7,7 @@ export type Position = {
 export type Assigned = {
     assi_id: string
     assi_date: string
-    feat: string
+    feat: any
     pos: string
     permissions: any
 }
