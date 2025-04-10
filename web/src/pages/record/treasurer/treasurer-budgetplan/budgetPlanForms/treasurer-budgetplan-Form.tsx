@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
 import { useEffect } from "react";
-import { ChevronLeft, CircleCheck } from "lucide-react";
+import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
@@ -286,10 +286,14 @@ function CreateBudgetPlanForm() {
                     {/* Displays the breakdown of Net available resources when clicked */}
                         <DialogLayout
                             trigger={ 
-                                <div className='p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow cursor-pointer'>
+                                <div className="p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-lg">
+                                    <div className="flex items-center justify-between">
                                         <Label className={styles.labelDesign}>NET Available Resources:</Label>
-                                        <Label> {formatNumber(availableResources.toString())}</Label>
-                                </div>
+                                        <ChevronRightIcon className="w-5 h-5 text-blue-500" />
+                                    </div>
+                                    <Label>{formatNumber(availableResources.toString())}</Label>
+                              </div>
+                              
                             }
                             title="Breakdown of NET Available Resources"
                             description="Detailed breakdown of available funds from all income sources"

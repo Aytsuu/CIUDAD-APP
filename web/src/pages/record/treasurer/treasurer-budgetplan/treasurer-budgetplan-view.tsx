@@ -1,7 +1,7 @@
     import TableLayout from "@/components/ui/table/table-layout";
     import PaginationLayout from "@/components/ui/pagination/pagination-layout";
     import { useState } from "react";
-    import { ChevronLeft, Pen } from "lucide-react";
+    import { ChevronLeft, Pen, ChevronRightIcon } from "lucide-react";
     import { Link } from "react-router-dom";
     import { Button } from "@/components/ui/button/button";
     import { useParams } from "react-router-dom";
@@ -11,16 +11,17 @@
     import { Skeleton } from "@/components/ui/skeleton";
     import DialogLayout from "@/components/ui/dialog/dialog-layout";
     import DisplayBreakdown from "./display_breakdown";
+    import { Label } from "@/components/ui/label";
 
     const styles = {
         mainCategory: "font-bold text-[19px] md:text-[22px]",
         subCategory: "font-semibold text-[16px] md:text-[18px] text-sky-500",
         header: "font-bold text-lg text-blue-600",
-        budgetItem: "flex flex-col space-y-1 p-3 rounded bg-white border-l-4 border-sky-500 shadow-sm",
+        budgetItem: "flex flex-col space-y-1 p-3 rounded-lg bg-white shadow-lg",
         budgetLabel: "text-sm font-semibold text-gray-600",
         budgetValue: "font-semibold",
         headerTitle: "text-center text-2xl font-bold text-blue mb-4 absolute left-1/2 transform -translate-x-1/2",
-        budgetHeaderGrid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2", 
+        budgetHeaderGrid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", 
         rowItem: "flex text-sm font-semibold text-left w-full",
         rowValue: "text-sm",
         budgetFooter: "text-sm font-bold text-blue",
@@ -260,9 +261,12 @@
 
                     <DialogLayout
                     trigger={
-                        <div className={styles.budgetItem}>
-                            <div className={styles.budgetLabel}>NET Available Resources:</div>
-                            <div className={styles.budgetValue}>{formatNumber(availableResources)}</div>
+                         <div className="p-4 bg-white flex flex-col gap-4 rounded-lg shadow-lg cursor-pointer transition-transform hover:scale-[1.02]">
+                            <div className="flex items-center justify-between">
+                                <Label className={styles.budgetLabel}>NET Available Resources:</Label>
+                                <ChevronRightIcon className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <Label>{formatNumber(availableResources)}</Label>
                         </div>
                     }
                     title="Breakdown of NET Available Resources"
