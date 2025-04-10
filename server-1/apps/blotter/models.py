@@ -9,7 +9,7 @@ class Blotter(models.Model):
     bc_datetime = models.CharField(max_length=100)
     bc_allegation = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    
+                                                                                                         
     class Meta:
         db_table = 'blotter'
     

@@ -8,4 +8,8 @@ export const postBlotter = (formData: FormData) => {
 
 export const getBlotters = () => {
   return api.get("/blotters/list/");
-}
+};
+
+export const getBlotterById = (id: string) => {
+  return api.get(`/blotter/${id}/`);
+};

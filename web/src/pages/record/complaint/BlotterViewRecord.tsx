@@ -1,421 +1,296 @@
-import { Button } from "@/components/ui/button/button";
-import { Image, Film, Plus, X, Play } from "lucide-react";
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import { BsChevronLeft } from "react-icons/bs";
-import { useState, useRef, ChangeEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { postBlotter } from "./restful-api/blotter-api";
-import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button/button";
+import { Film, Image, Play, Printer } from "lucide-react";
+import { getBlotterById } from "./restful-api/blotter-api";
+import { useQuery } from "@tanstack/react-query";
 
-interface MediaFile {
-  id: number;
-  type: "image" | "video" | "document";
+// Define interfaces for type safety
+interface MediaItem {
+  id: string;
   url: string;
-  file?: File;
-  description: string;
+  file_type: string;
+  file_name?: string;
 }
 
-interface BlotterFormValues {
+interface BlotterData {
+  id: string;
   bc_complainant: string;
   bc_cmplnt_address: string;
   bc_accused: string;
   bc_accused_address: string;
   bc_incident_type: string;
-  bc_allegation: string;
   bc_datetime: string;
-  bc_evidence: FileList | null;
-};
+  bc_allegation: string;
+  bc_status: string;
+  bc_officer: string;
+  created_at: string;
+  media?: MediaItem[];
+}
 
-export function BlotterViewRecord() {
-  const { user } = useAuth()
-  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
-  const [activeVideoId, setActiveVideoId] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
+export function BlotterViewRecord(): JSX.Element {
+  const { id } = useParams<{ id: string }>();
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   
-  const postBlotterMutation = postBlotter();
-
-  const form = useForm<BlotterFormValues>({
-    defaultValues: {
-      bc_complainant: "",
-      bc_cmplnt_address: "",
-      bc_accused: "",
-      bc_accused_address: "",
-      bc_incident_type: "",
-      bc_allegation: "",
-      bc_datetime: new Date().toISOString().split("T")[0],
-      bc_evidence: null
-    }
+  // Use React Query to fetch the specific blotter record
+  const { 
+    data: response, 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ["blotter", id],
+    queryFn: async () => {
+      if (!id) throw new Error("No blotter ID provided");
+      return getBlotterById(id);
+    },
+    enabled: !!id,
   });
 
-  const handleAddMediaClick = () => {
-    fileInputRef.current?.click();
+  const blotterData = response?.data as BlotterData | undefined; // Type assertion
+
+  const toggleVideoPlayback = (mediaId: string): void => {
+    setActiveVideoId(activeVideoId === mediaId ? null : mediaId);
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    if (selectedFiles.length === 0) return;
-
-    const newMediaFiles = selectedFiles.map((file, index) => {
-      const previewUrl = URL.createObjectURL(file);
-      const fileType = file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-        ? "video"
-        : "document";
-
-      return {
-        id: mediaFiles.length + index + 1,
-        type: fileType,
-        url: previewUrl,
-        file,
-        description: file.name,
-      };
-    });
-
-    setMediaFiles([...mediaFiles, ...newMediaFiles as MediaFile[]]);
-    
-    // Update the form's bc_evidence field
-    form.setValue("bc_evidence", e.target.files);
-    
-    e.target.value = "";
+  const handlePrintReport = () => {
+    window.print();
   };
 
-  const handleRemoveMedia = (id: number) => {
-    setMediaFiles(mediaFiles.filter((media) => media.id !== id));
-    if (activeVideoId === id) setActiveVideoId(null);
-    
-    // If all media files are removed, reset the form's bc_evidence field
-    if (mediaFiles.length <= 1) {
-      form.setValue("bc_evidence", null);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="w-full p-8 text-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded w-full mb-4"></div>
+          <div className="h-20 bg-gray-200 rounded w-full"></div>
+        </div>
+        <p className="mt-4 text-gray-500">Loading blotter record...</p>
+      </div>
+    );
+  }
 
-  const toggleVideoPlayback = (id: number) => {
-    setActiveVideoId(activeVideoId === id ? null : id);
-  };
+  if (error || !blotterData) {
+    return (
+      <div className="w-full p-8 text-center">
+        <p className="text-red-500 mb-2">Error: {error instanceof Error ? error.message : "Failed to load record"}</p>
+        <p className="text-gray-500 mb-4">The requested blotter record could not be found or there was an error loading it.</p>
+        <Button variant="outline">
+          <Link to="/blotter-record" className="flex items-center gap-2">
+            <BsChevronLeft /> Return to Records
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
-  const onSubmit = async (data: BlotterFormValues) => {
-    const formData = new FormData();
-    
-    // Append form data
-    Object.entries(data).forEach(([key, value]) => {
-      if (key !== "bc_evidence" && value !== null && value !== undefined) {
-        formData.append(key, value.toString());
-      }
-    });
+  const {
+    id: blotter_id,
+    bc_complainant,
+    bc_cmplnt_address,
+    bc_accused,
+    bc_accused_address,
+    bc_incident_type,
+    bc_datetime,
+    bc_allegation,
+    bc_status,
+    bc_officer,
+    created_at: date_created,
+    media = []
+  } = blotterData;
 
-    // Append media files
-    mediaFiles.forEach((file) => {
-      if (file.file) {
-        formData.append("mediaFiles", file.file);
-      }
-    });
+  // Format dates for display (with null check)
+  const formattedCreatedDate = date_created 
+    ? new Date(date_created).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : "Date unavailable";
 
-    try {
-      await postBlotterMutation.mutateAsync(formData, {
-        onSuccess: () => {
-          toast(
-            "Blotter report submitted successfully"
-          );
-          navigate("/blotter-record");
-        },
-        onError: (error) => {
-          console.error("Submission failed:", error);
-          toast("Failed to submit blotter report. Please try again.");
-        }
-      });
-    } catch (error) {
-      console.error("Submission failed:", error);
-    }
-  };
-
-  const currentDate = new Date().toISOString().split("T")[0];
+  const formattedIncidentDate = bc_datetime
+    ? new Date(bc_datetime).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : "Date unavailable";
 
   return (
-    <div className="w-full h-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div className="flex flex-row mb-4 sm:mb-0">
-          <div className="flex items-center mr-4">
-            <Button className="text-black p-2 self-start" variant="outline">
-              <Link to="/blotter-record">
-                <BsChevronLeft />
-              </Link>
-            </Button>
+    <div className="w-full h-full bg-gray-50 p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 bg-white p-4 rounded-lg shadow-sm">
+          <div className="flex flex-row mb-4 sm:mb-0">
+            <div className="flex items-center mr-4">
+              <Button className="text-black p-2 self-start" variant="outline">
+                <Link to="/blotter-record">
+                  <BsChevronLeft />
+                </Link>
+              </Button>
+            </div>
+            <div>
+              <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                Barangay Blotter Report
+              </h1>
+              <p className="text-xs sm:text-sm text-darkGray">ID: {blotter_id || "ID unavailable"}</p>
+              <p className="text-xs sm:text-sm text-darkGray">Filed: {formattedCreatedDate}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-semibold text-l sm:text-2xl text-darkBlue2">
-              Barangay Report
-            </h1>
-            <p className="text-xs sm:text-sm text-darkGray">D3312TH899033190</p>
-            <p className="text-xs sm:text-sm text-darkGray">
-              March 09, 2023 12:23
-            </p>
+          <div className="flex items-center">
+            <span 
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                bc_status === 'Resolved' 
+                  ? 'bg-green-100 text-green-800' 
+                  : bc_status === 'Pending' 
+                  ? 'bg-yellow-100 text-yellow-800' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}
+            >
+              {bc_status || "Status unavailable"}
+            </span>
           </div>
         </div>
-      </div>
 
-      <hr className="border-gray mb-6 sm:mb-8" />
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-6">
+          {/* People Involved Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Complainant Card */}
-            <div className="border rounded-md p-4 bg-white">
-              <h3 className="font-medium text-lg mb-2 text-darkBlue2">
-                Complainant
+            <div className="border rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
+                Complainant Information
               </h3>
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="bc_complainant"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Full Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter Complaint Name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bc_cmplnt_address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Sitio/Barangay/Municipality/City"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Full Name</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_complainant || "Not specified"}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Address</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_cmplnt_address || "Not specified"}</div>
+                </div>
               </div>
             </div>
 
             {/* Accused Card */}
-            <div className="border rounded-md p-4 bg-white">
-              <h3 className="font-medium text-lg mb-2 text-darkBlue2">
-                Accused
+            <div className="border rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
+                Accused Information
               </h3>
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="bc_accused"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Full Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter Accused Name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bc_accused_address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Sitio/Barangay/Municipality/City"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Full Name</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_accused || "Not specified"}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Address</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_accused_address || "Not specified"}</div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Incident Details */}
-          <div className="border rounded-md p-4 bg-white">
-            <h1 className="font-medium text-lg text-darkBlue2 mb-4">
+          <div className="border rounded-lg p-5 bg-white shadow-sm">
+            <h3 className="font-medium text-lg text-darkBlue2 mb-4 border-b pb-2">
               Incident Details
-            </h1>
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
-              <FormField
-                control={form.control}
-                name="bc_incident_type"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="text-sm text-darkGray">
-                      Category
-                    </FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        label="Incidents"
-                        placeholder="Select"
-                        options={[
-                          { id: "1", name: "Theft" },
-                          { id: "2", name: "Assault" },
-                          { id: "3", name: "Noise Complaint" },
-                          { id: "4", name: "Property Damage" },
-                          { id: "5", name: "Other" },
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bc_datetime"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel className="text-sm text-darkGray">
-                      Date of Incident
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        max={currentDate}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="bc_allegation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm text-darkGray">
-                    Incident Description
-                  </FormLabel>
-                  <FormControl>
-                    <textarea
-                      className="w-full border rounded-md p-2 min-h-24"
-                      placeholder="Enter incident details here..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Supporting Documents */}
-          <div className="border rounded-md p-4 bg-white">
-            <h2 className="font-medium text-lg mb-4 text-darkBlue2">
-              Supporting Documents
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {mediaFiles.map((media) => (
-                <div key={media.id} className="relative group">
-                  <div className="aspect-square bg-gray-100 rounded-md overflow-hidden">
-                    {media.type === "video" ? (
-                      <div className="w-full h-full relative">
-                        <video
-                          src={media.url}
-                          className="w-full h-full object-cover"
-                          controls={activeVideoId === media.id}
-                          muted={activeVideoId !== media.id}
-                          onClick={() => toggleVideoPlayback(media.id)}
-                        />
-                        {activeVideoId !== media.id && (
-                          <div
-                            className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                            onClick={() => toggleVideoPlayback(media.id)}
-                          >
-                            <div className="bg-black bg-opacity-50 rounded-full p-2">
-                              <Play size={24} className="text-white" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <img
-                        src={media.url}
-                        alt={`Evidence ${media.id}`}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleRemoveMedia(media.id)}
-                    className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    type="button"
-                  >
-                    <X size={16} />
-                  </button>
-                  <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
-                    {media.type === "video" ? (
-                      <Film size={16} />
-                    ) : (
-                      <Image size={16} />
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div
-                onClick={handleAddMediaClick}
-                className="aspect-square border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
-              >
-                <Plus size={24} className="text-gray-400 mb-1" />
-                <p className="text-xs text-gray-500">Add Media</p>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*,video/*"
-                  multiple
-                  className="hidden"
-                />
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm text-darkGray block mb-1">Category</label>
+                <div className="p-3 bg-gray-50 rounded border">{bc_incident_type || "Not specified"}</div>
+              </div>
+              <div>
+                <label className="text-sm text-darkGray block mb-1">Date of Incident</label>
+                <div className="p-3 bg-gray-50 rounded border">{formattedIncidentDate}</div>
               </div>
             </div>
+            <div className="mb-4">
+              <label className="text-sm text-darkGray block mb-1">Incident Description</label>
+              <div className="p-3 bg-gray-50 rounded border min-h-24 whitespace-pre-wrap">
+                {bc_allegation || "No description provided"}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm text-darkGray block mb-1">Handling Officer</label>
+              <div className="p-3 bg-gray-50 rounded border">{bc_officer || "Not assigned"}</div>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-4">
+          {/* Media Files Section */}
+          {media && media.length > 0 && (
+            <div className="border rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
+                Supporting Documents & Evidence
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {media.map((mediaItem: MediaItem) => (
+                  <div key={mediaItem.id} className="relative group">
+                    <div className="aspect-square bg-gray-100 rounded-md overflow-hidden border">
+                      {mediaItem.file_type.includes("video") ? (
+                        <div className="w-full h-full relative">
+                          <video
+                            src={mediaItem.url}
+                            className="w-full h-full object-cover"
+                            controls={activeVideoId === mediaItem.id}
+                            muted={activeVideoId !== mediaItem.id}
+                            onClick={() => toggleVideoPlayback(mediaItem.id)}
+                          />
+                          {activeVideoId !== mediaItem.id && (
+                            <div
+                              className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black bg-opacity-30 hover:bg-opacity-20 transition-all"
+                              onClick={() => toggleVideoPlayback(mediaItem.id)}
+                            >
+                              <div className="bg-black bg-opacity-70 rounded-full p-3">
+                                <Play size={24} className="text-white" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <img
+                          src={mediaItem.url}
+                          alt={`Evidence ${mediaItem.id}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
+                      {mediaItem.file_type.includes("video") ? (
+                        <Film size={16} className="text-blue-500" />
+                      ) : (
+                        <Image size={16} className="text-green-500" />
+                      )}
+                    </div>
+                    <p className="text-xs mt-1 text-center text-gray-500 truncate">
+                      {mediaItem.file_name || `File ${mediaItem.id}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Actions Footer */}
+          <div className="flex justify-end gap-4 mt-8 print:hidden">
             <Link to="/blotter-record">
-              <Button type="button" variant="outline">
-                Cancel
+              <Button variant="outline" className="px-6">
+                Back to Records
               </Button>
             </Link>
-            <Button 
-              type="submit" 
-              disabled={postBlotterMutation.isPending}
-            >
-              {postBlotterMutation.isPending ? "Submitting..." : "Submit Report"}
+            <Button onClick={handlePrintReport} className="bg-darkBlue2 hover:bg-blue-700 px-6">
+              <Printer className="mr-2 h-4 w-4" /> Print Report
             </Button>
           </div>
-        </form>
-      </Form>
+        </div>
+      </div>
     </div>
   );
 }
+
+// Add this line to export the component as the default export as well
+export default BlotterViewRecord;

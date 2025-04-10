@@ -8,7 +8,7 @@ class BlotterCreateView(generics.CreateAPIView):
     queryset = Blotter.objects.all()
     serializer_class = BlotterSerializer
     # permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]  # For file uploads
+    parser_classes = [MultiPartParser, FormParser] 
 
     def perform_create(self, serializer):
         serializer.save()
@@ -17,3 +17,9 @@ class BlotterListView(generics.ListAPIView):
     serializer_class = BlotterSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Blotter.objects.all()
+    
+class BlotterDetailView(generics.RetrieveAPIView):
+    queryset = Blotter.objects.all()
+    serializer_class = BlotterSerializer
+    # permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'

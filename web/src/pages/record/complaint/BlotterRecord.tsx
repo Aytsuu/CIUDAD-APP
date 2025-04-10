@@ -1,225 +1,150 @@
+import { useState } from "react";
+import { useParams, Link, data } from "react-router-dom";
+import { useGetBlotter } from "./blotter-hooks";
 import { Button } from "@/components/ui/button/button";
-import { DataTable } from "@/components/ui/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
-import { Plus, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { BsChevronLeft } from "react-icons/bs";
 
-type Record = {
-  complaintNo: string;
-  complainantName: string;
-  complainantAddress: string;
-  accusedName: string;
-  accusedAddress: string;
-  incidentDate: string;
-  dateSubmitted: string;
-};
+export default function BlotterRecord (): JSX.Element {
+  const { id } = useParams<{ id: string }>();
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const {data: blotter, isLoading, error } =useGetBlotter();
 
-const columns: ColumnDef<Record>[] = [
-  {
-    accessorKey: "complaintNo",
-    header: "Complaint No.",
-  },
-  {
-    accessorKey: "complainantName",
-    header: "Complainant Name",
-  },
-  {
-    accessorKey: "complainantAddress",
-    header: "Complainant Address",
-  },
-  {
-    accessorKey: "accusedName",
-    header: "Accused Name",
-  },
-  {
-    accessorKey: "accusedAddress",
-    header: "Accused Address",
-  },
-  {
-    accessorKey: "incidentDate",
-    header: "Incident Date",
-  },
-  {
-    accessorKey: "dateSubmitted",
-    header: "Date Submitted",
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    cell: ({ row }) => (
-      <Link to="/blotter-view-record">
-        <Button variant="outline">View</Button>
-      </Link>
-    ),
-  },
-];
-
-// Sample data - expanded to test pagination
-const generateSampleRecords = (): Record[] => {
-  const sampleRecords: Record[] = [];
-  
-  // First, add the original record
-  sampleRecords.push({
-    complaintNo: "CMPL-001",
-    complainantName: "John Doe",
-    complainantAddress: "123 Main St, City",
-    accusedName: "Jane Smith",
-    accusedAddress: "456 Oak Ave, City",
-    incidentDate: "2025-01-15",
-    dateSubmitted: "2025-01-16",
-  });
-  
-  // Generate additional sample records
-  for (let i = 2; i <= 150; i++) {
-    sampleRecords.push({
-      complaintNo: `CMPL-${i.toString().padStart(3, '0')}`,
-      complainantName: `Complainant ${i}`,
-      complainantAddress: `Address ${i}, City`,
-      accusedName: `Accused ${i}`,
-      accusedAddress: `Accused Address ${i}`,
-      incidentDate: `2025-01-${(i % 28) + 1}`,
-      dateSubmitted: `2025-01-${(i % 28) + 2}`,
-    });
+  if (isLoading) { 
+    return (
+      <div className="w-full p-8 text-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-32 bg-gray-200 rounded w-full mb-4"></div>
+          <div className="h-20 bg-gray-200 rounded w-full"></div>
+        </div>
+        <p className="mt-4 text-gray-500">Loading blotter record...</p>
+      </div>
+    );
   }
-  
-  return sampleRecords;
-};
 
-const allRecords: Record[] = generateSampleRecords();
-
-export default function BlotterRecord() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState<Record[]>(allRecords);
-  const [currentData, setCurrentData] = useState<Record[]>([]);
-  const [totalPages, setTotalPages] = useState(Math.ceil(allRecords.length / pageSize));
-
-  // Filter data based on search query
-  useEffect(() => {
-    const filtered = allRecords.filter(record => {
-      const searchText = `${record.complaintNo} ${record.complainantName} ${record.complainantAddress} ${record.accusedName} ${record.accusedAddress} ${record.incidentDate} ${record.dateSubmitted}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    });
-    
-    setFilteredData(filtered);
-    setTotalPages(Math.ceil(filtered.length / pageSize));
-    setCurrentPage(1); // Reset to first page when search changes
-  }, [searchQuery, pageSize]);
-
-  // Update data based on page and page size
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    setCurrentData(filteredData.slice(startIndex, endIndex));
-  }, [currentPage, pageSize, filteredData]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    if (!isNaN(value) && value > 0) {
-      setPageSize(value);
-    } else {
-      setPageSize(10); // Default to 10 if invalid input
-    }    
-  };
-
-  // Handle page change from the PaginationLayout component
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  if (error) {
+    return (
+      <div className="w-full p-8 text-center">
+        <p className="text-red-500 mb-2">Error: {error instanceof Error ? error.message : "Failed to load record"}</p>
+        <p className="text-gray-500 mb-4">The requested blotter record could not be found or there was an error loading it.</p>
+        <Button variant="outline">
+          <Link to="/blotter-record" className="flex items-center gap-2">
+            <BsChevronLeft /> Return to Records
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Header Section */}
-      <div className="flex flex-col justify-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Resident Records
-        </h1>
-        <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view resident information
-        </p>
-      </div>
-
-      <hr className="border-gray mb-6 sm:mb-8" />
-
-      {/* Search and filters - Stacks on mobile */}
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="flex gap-x-2">
-          <div className="relative flex-1 bg-white">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-              size={17}
-            />
-            <Input 
-              placeholder="Search..." 
-              className="pl-10 w-72"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
+    <div className="w-full h-full bg-gray-50 p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 bg-white p-4 rounded-lg shadow-sm">
+          <div className="flex flex-row mb-4 sm:mb-0">
+            <div className="flex items-center mr-4">
+              <Button className="text-black p-2 self-start" variant="outline">
+                <Link to="/blotter-record">
+                  <BsChevronLeft />
+                </Link>
+              </Button>
+            </div>
+            <div>
+              <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+                Barangay Blotter Report
+              </h1>
+              <p className="text-xs sm:text-sm text-darkGray">ID: {blotter. || "ID unavailable"}</p>
+              <p className="text-xs sm:text-sm text-darkGray">Filed: {formattedCreatedDate}</p>
+            </div>
           </div>
-          <SelectLayout
-            placeholder="Filter by"
-            label=""
-            className="bg-white"
-            options={[
-              { id: "1", name: "Date" },
-              { id: "2", name: "Sitio" },
-            ]}
-            value=""
-            onChange={() => {}}
-          />
-        </div>
-        <Link to="/blotter-report">
-          <Button className="bg-buttonBlue hover:bg-buttonBlue/90 text-white flex flex-row">
-            <Plus />
-            Report
-          </Button>
-        </Link>
-      </div>
-
-      <div className="w-full flex flex-col">
-        <div className="w-full h-auto bg-white flex p-3">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input 
-              type="number" 
-              className="w-14 h-8" 
-              value={pageSize}
-              onChange={handlePageSizeChange}
-              min="1"
-            />
-            <p className="text-xs sm:text-sm">Entries</p>
+          <div className="flex items-center">
+            <span 
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                bc_status === 'Resolved' 
+                  ? 'bg-green-100 text-green-800' 
+                  : bc_status === 'Pending' 
+                  ? 'bg-yellow-100 text-yellow-800' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}
+            >
+              {bc_status || "Status unavailable"}
+            </span>
           </div>
         </div>
 
-        <div className="bg-white">
-          <DataTable columns={columns} data={currentData} />
-        </div>
-      </div>
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-        {/* Showing Rows Info */}
-        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-        </p>
+        <div className="space-y-6">
+          {/* People Involved Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Complainant Card */}
+            <div className="border rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
+                Complainant Information
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Full Name</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_complainant || "Not specified"}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Address</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_cmplnt_address || "Not specified"}</div>
+                </div>
+              </div>
+            </div>
 
-        {/* Pagination */}
-        <div className="w-full sm:w-auto flex justify-center">
-          <PaginationLayout 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+            {/* Accused Card */}
+            <div className="border rounded-lg p-5 bg-white shadow-sm">
+              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
+                Accused Information
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Full Name</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_accused || "Not specified"}</div>
+                </div>
+                <div>
+                  <label className="text-sm text-darkGray block mb-1">Address</label>
+                  <div className="p-3 bg-gray-50 rounded border">{bc_accused_address || "Not specified"}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Incident Details */}
+          <div className="border rounded-lg p-5 bg-white shadow-sm">
+            <h3 className="font-medium text-lg text-darkBlue2 mb-4 border-b pb-2">
+              Incident Details
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm text-darkGray block mb-1">Category</label>
+                <div className="p-3 bg-gray-50 rounded border">{bc_incident_type || "Not specified"}</div>
+              </div>
+              <div>
+                <label className="text-sm text-darkGray block mb-1">Date of Incident</label>
+                <div className="p-3 bg-gray-50 rounded border">{formattedIncidentDate}</div>
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="text-sm text-darkGray block mb-1">Incident Description</label>
+              <div className="p-3 bg-gray-50 rounded border min-h-24 whitespace-pre-wrap">
+                {bc_allegation || "No description provided"}
+              </div>
+            </div>
+            {/* <div>
+              <label className="text-sm text-darkGray block mb-1">Handling Officer</label>
+              <div className="p-3 bg-gray-50 rounded border">{bc_officer || "Not assigned"}</div>
+            </div> */}
+          </div>
+
+          {/* Actions Footer */}
+          <div className="flex justify-end gap-4 mt-8 print:hidden">
+            <Link to="/blotter-record">
+              <Button variant="outline" className="px-6">
+                Back to Records
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

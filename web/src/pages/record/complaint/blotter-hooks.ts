@@ -13,3 +13,4 @@ export const useGetBlotter = () => {
         queryFn: () => getBlotters(),
     })
 }
+

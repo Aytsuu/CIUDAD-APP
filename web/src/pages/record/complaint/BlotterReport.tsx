@@ -46,7 +46,7 @@ export function BlotterReport() {
 
           // Upload to Supabase bucket
           const { data: uploadData, error } = await supabase.storage
-            .from("blotter-files") // Replace with your bucket name
+            .from("blotter-files")
             .upload(filePath, file.file);
 
           if (error) {
@@ -71,7 +71,7 @@ export function BlotterReport() {
       // Filter out nulls from failed uploads
       const validMediaUrls = mediaUrls.filter((url) => url !== null);
 
-      // 2. Create form data for your API
+      // Create form data for API
       const formData = new FormData();
 
       // Append form data
@@ -84,7 +84,7 @@ export function BlotterReport() {
       // Add media URLs as JSON string
       formData.append("media_urls", JSON.stringify(validMediaUrls));
 
-      // 3. Submit to your Django API
+      // Submit to Django API
       await postBlotterMutation.mutateAsync(formData, {
         onSuccess: () => {
           toast("Blotter report submitted successfully");
@@ -104,8 +104,6 @@ export function BlotterReport() {
       toast("Failed to submit report");
     }
   };
-
-  const currentDate = new Date().toISOString().split("T")[0];
 
   return (
     <div className="w-full h-full">
