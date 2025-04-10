@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { main_router } from "./routers/main-router";
@@ -37,17 +36,3 @@ function NotFound() {
 }
 
 export default App;
-=======
-import { createBrowserRouter, RouterProvider } from 'react-router'
-import { main_router } from './routes/main-router';
-
-const router = createBrowserRouter([
-  ...main_router,
-  { path: "*", element: ""}
-])
-
-function App() {
-  return <RouterProvider router={router} />
-  }
-export default App;
->>>>>>> mobile/health/resident

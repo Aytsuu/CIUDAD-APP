@@ -31,6 +31,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('health-profiling/', include("apps.healthProfiling.urls"))
+    path('health-profiling/', include("apps.healthProfiling.urls")),
     path ('familyplanning/', include("apps.familyplanning.urls"))
 ]

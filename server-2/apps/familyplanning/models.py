@@ -23,21 +23,21 @@ class FP_type(models.Model):
     class Meta:
         db_table = "fp_type"
         
-class Spouse(models.Model):
-    sp_id = models.AutoField(primary_key=True)
+# class Spouse(models.Model):
+#     sp_id = models.AutoField(primary_key=True)
 
-class PelvicExam(models.Model):
-    pel_id = models.AutoField(primary_key=True)
-    pel_exam = models.CharField(max_length=25)
-    cervical_consistency = models.CharField(max_length=5)
-    cervical_tenderness = models.CharField(max_length=20)
-    cervical_adnexal = models.CharField(max_length=20)
-    cervical_position = models.CharField(max_length=20)
-    uterine_depth = models.CharField(max_length=20)
-    # fpt_id = models.ForeignKey(FP_type,on_delete=True)
+# class PelvicExam(models.Model):
+#     pel_id = models.AutoField(primary_key=True)
+#     pel_exam = models.CharField(max_length=25)
+#     cervical_consistency = models.CharField(max_length=5)
+#     cervical_tenderness = models.CharField(max_length=20)
+#     cervical_adnexal = models.CharField(max_length=20)
+#     cervical_position = models.CharField(max_length=20)
+#     uterine_depth = models.CharField(max_length=20)
+#     # fpt_id = models.ForeignKey(FP_type,on_delete=True)
 
-    class Meta:
-        db_table = "pelvic_exam"
+#     class Meta:
+#         db_table = "pelvic_exam"
         
           
 # class ObstetricalHistory(models.Model):
@@ -50,27 +50,21 @@ class PelvicExam(models.Model):
 #     obs_para = models.PositiveIntegerField(default=0)
 #     obs_fullterm = models.PositiveIntegerField(default=0)
 #     obs_category = models.CharField(max_length=20)
-    
-class FP_ObstetricalHistory(models.Model):
-    # g_pregnancies = models.PositiveIntegerField(default=0)
-    # p_pregnancies = models.PositiveIntegerField(default=0)
-    # full_term = models.PositiveIntegerField()
-    # premature = models.PositiveIntegerField()
-    # abortion = models.PositiveIntegerField()
-    # living_children = models.PositiveIntegerField()
-    fp_ob_id = models.AutoField(primary_key=True)
-    last_delivery_date = models.DateField(blank=True, null=True)
-    type_of_last_delivery = models.CharField(max_length=10, choices=[("Vaginal", "Vaginal"), ("Cesarean", "Cesarean")], blank=True, null=True)
-    last_menstrual_period = models.DateField()
-    previous_menstrual_period = models.DateField()
-    menstrual_flow = models.CharField(max_length=10, choices=[("Scanty", "Scanty"), ("Moderate", "Moderate"), ("Heavy", "Heavy")])
-    dysmenorrhea = models.BooleanField(default=False)
-    hydatidiform_mole = models.BooleanField(default=False)
-    ectopic_pregnancy_history = models.BooleanField(default=False)
-    # obs = models.ForeignKey(ObstetricalHistory,on_delete=models.CASCADE)
-    
+        
+class PregnancyCheck(models.Model):
+
+    baby_breastfeeding_no_menses = models.BooleanField(default=False)
+    abstained_since_last_period = models.BooleanField(default=False)
+    had_baby_last_4_weeks = models.BooleanField(default=False)
+    period_within_7_days = models.BooleanField(default=False)
+    miscarriage_or_abortion_7_days = models.BooleanField(default=False)
+    using_contraceptive_consistently = models.BooleanField(default=False)
+
+    # client = models.ForeignKey(Client, on_delete=models.CASCADE)  # if you have a Client model
+    # checked_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        db_table = "fp_obstetrical_history"
+        db_table = "pregnancy_check"
         
 class RiskSti(models.Model):
     sti_id = models.AutoField(primary_key=True)
@@ -149,13 +143,15 @@ class Physical_Exam(models.Model):
     ]
     extremitiesExamination = models.CharField(max_length=30, choices=EXTREMITIES_EXAM_CHOICES)
 
-   
+    class Meta:
+        db_table = 'physical_exam'
+
 
     # pe_list_id = models.ForeignKey(,on_delete=models.CASCADE)
     # vital_id = models.ForeignKey(,on_delete=models.CASCADE)
     # bm_id = models.ForeignKey(,on_delete=models.CASCADE)
     
-class pelvic_exam(models.Model):
+class Pelvic_Exam(models.Model):
     pelvic_id = models.AutoField(primary_key=True)
     PELVIC_EXAM_CHOICES = [
         ("normal", "Normal"),
@@ -258,3 +254,7 @@ class FP_finding(models.Model):
     # as_id = models.ForeignKey(Assessment_Record,on_delete=True) 
     # physical_exam = models.ForeignKey(Physical_Exam,on_delete=True)
     # fp_type = models.ForeignKey(FP_type,on_delete=True)
+    
+    class Meta:
+        db_table = 'fp_findings'
+

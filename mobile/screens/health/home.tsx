@@ -153,7 +153,7 @@ const Homepage = () => {
         {/* Admin */}
         <View className="flex-row justify-between px-4 mt-7">
           
-          <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Manage</Text>
+         
 
           <View className="grid grid-cols-3 grid-rows-4 mt-7">
             <Card className="bg-black">
@@ -164,11 +164,11 @@ const Homepage = () => {
 
 
         </View>
-        <View className="px-4 mt-6">
-          <Text className="text-lg font-bold mb-4">Manage</Text>
+        <View className="px-4 mt-3">
+        <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Manage</Text>
           <View className="flex-row flex-wrap justify-between">
             {modules.map((module, index) => {
-              const Icon = module.icon; // Fix here by using curly braces
+              const Icon = module.icon; 
               return (
                 <TouchableOpacity
                   key={index}

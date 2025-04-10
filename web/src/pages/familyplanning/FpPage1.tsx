@@ -677,7 +677,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                                   value={option}
                                   checked={
                                     option === "Others"
-                                      ? field.value && !["Spacing", "Limiting"].includes(field.value)
+                                      ? !!field.value && !["Spacing", "Limiting"].includes(field.value)
                                       : field.value === option
                                   }
                                   onChange={() => field.onChange(option)}
