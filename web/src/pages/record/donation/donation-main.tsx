@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -9,78 +9,35 @@ import ClerkDonateView from "./donation-view";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getdonationreq } from "./request-db/donationGetRequest";
-import { deldonationreq } from "./request-db/donationDelRequest";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { type Donation, useDeleteDonation } from "./queries/donationDeleteQueries";
+import { useGetDonations } from "./queries/donationFetchQueries";
 
-type Donation = {
-  don_num: number;
-  don_donorfname: string; 
-  don_donorlname: string;
-  don_item_name: string;
-  don_qty: number;
-  don_category: string;
-  don_receiver: string;
-  don_description?: string;
-  don_date: string;
-};
 
 function DonationTracker() {
-  const [data, setData] = useState<Donation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); 
+  const [data] = useState<Donation[]>([]);
+  // const [loading, setLoading] = useState(true);
+  const [error] = useState<string | null>(null); 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchData = async () => {
-    try {
-      const result = await getdonationreq();
-      
-      if (!Array.isArray(result)) {
-        throw new Error("Invalid data format");
-      }
-      
-      setData(result);
-    } catch (err) {
-      console.error("Fetch error:", err);
-      setError(err instanceof Error ? err.message : "Failed to load donations");
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    data: donations = [], 
+    isLoading, 
+    refetch 
+  } = useGetDonations();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { mutate: deleteEntry} = useDeleteDonation();
 
   const handleDelete = async (don_num: number) => {
-    try {
-      const toastId = toast.loading("Deleting donation...");
-      await deldonationreq(don_num.toString());
-      
-      toast.success("Donation deleted successfully", {
-        id: toastId,
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
-      
-      setData(prevData => prevData.filter(item => item.don_num !== don_num));
-    } catch (err) {
-      toast.error("Failed to delete donation", {
-        duration: 2000
-      });
-      console.error("Delete error:", err);
-    }
+    deleteEntry(don_num);
   };
 
   // Filter data based on search query
-  const filteredData = data.filter((donation) => {
+  const filteredData = donations.filter((donation) => {
     const searchString = `${donation.don_num} ${donation.don_donorfname} ${donation.don_donorlname} ${donation.don_item_name} ${donation.don_category}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
@@ -151,16 +108,8 @@ function DonationTracker() {
                 mainContent={
                   <div className="w-full h-full">
                     <ClerkDonateView
-                      don_num={row.original.don_num}
-                      don_donorfname={row.original.don_donorfname}
-                      don_donorlname={row.original.don_donorlname}
-                      don_item_name={row.original.don_item_name}
-                      don_qty={row.original.don_qty}
-                      don_category={row.original.don_category}
-                      don_receiver={row.original.don_receiver}
-                      don_description={row.original.don_description}
-                      don_date={row.original.don_date}  
-                      onSaveSuccess={fetchData}            
+                       don_num={row.original.don_num}
+                       onSaveSuccess={refetch}            
                     />
                   </div>
                 }
@@ -187,7 +136,7 @@ function DonationTracker() {
     },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -241,7 +190,7 @@ function DonationTracker() {
             <div className="w-full h-full">
               <ClerkDonateCreate onSuccess={() => {
                 setIsDialogOpen(false);
-                fetchData();
+                refetch();
               }}/>
             </div>
           }

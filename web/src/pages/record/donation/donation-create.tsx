@@ -7,9 +7,9 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
-import { postdonationreq } from "./request-db/donationPostRequest";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
+import { useAddDonation } from "./queries/donationAddQueries";
 
 interface ClerkDonateCreateFormProps {
   onSuccess?: () => void; // Add this prop type
@@ -31,32 +31,35 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
     },
   });
   
+  const { mutate: addDonation, isPending } = useAddDonation();
 
-  const onSubmit = async (values: z.infer<typeof ClerkDonateCreateSchema>) => {
+  const onSubmit = (values: z.infer<typeof ClerkDonateCreateSchema>) => {
     const toastId = toast.loading('Submitting entry...', {
       duration: Infinity  
-  });
-    try {
-      await postdonationreq(values);
-      toast.success('Donation entry recorded successfully', {
-        id: toastId, 
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-        onAutoClose: () => {
-          window.location.reload();
-        }
     });
-    if (onSuccess) onSuccess();
-  } catch (err) {
-      console.error("Error submitting donation", err);
-      toast.error(
-        "Failed to submit income or expense. Please check the input data and try again.",
-        {
+
+    addDonation(values, {
+      onSuccess: () => {
+        toast.success('Donation entry recorded successfully', {
+          id: toastId, 
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+          onAutoClose: () => {
+            if (onSuccess) onSuccess();
+          }
+        });
+      },
+      onError: (error) => {
+        toast.error(
+          "Failed to submit donation. Please check the input data and try again.",
+          {
             id: toastId,
             duration: 2000
-        }
-    );
-  }
+          }
+        );
+        console.error("Error submitting donation", error);
+      }
+    });
   };
 
   return (
@@ -166,11 +169,12 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
 
             {/* Submit Button */}
             <div className="mt-8 flex justify-end gap-3">
-              <Button
+            <Button
                 type="submit"
                 className="bg-buttonBlue hover:bg-buttonBlue/90"
+                disabled={isPending} // Disable button during submission
               >
-                Save
+                {isPending ? "Saving..." : "Save"}
               </Button>
             </div>
           </form>
