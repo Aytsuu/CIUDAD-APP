@@ -81,7 +81,7 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="mb-4">
-                    <div className="mb-5 bg-white p-5 w-full max-h-[21rem] overflow-x-auto">
+                    <div className="mb-5 bg-white p-5 w-full">
                         <div className='p-2'>
                             <h3 className='font-semibold text-blue w-[21rem] flex justify-center'>Maint. & Other Operating Expenses</h3>
                         </div>
