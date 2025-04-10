@@ -1,18 +1,20 @@
 import { Label } from "@/components/ui/label";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { useLocation } from "react-router";
 
+interface DisplayBreakDownProps{
+    balance: number,
+    realtyTaxShare: number,
+    taxAllotment: number,
+    clearanceAndCertFees: number,
+    otherSpecificIncome: number,
+}
 
-
-function DisplayBreakdown(){
-    const location = useLocation();
-
+function DisplayBreakdown({balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome}: DisplayBreakDownProps){
     const style = {
         container: "p-5 border rounded-md border-[2px] border-lightBlue drop-shadow flex flex-col gap-4",
         text: "text-blue font-bold"
     }
 
-    const {balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome} = location.state
     return(
         <div className="flex flex-col gap-3 mt-3">
             <div className={style.container}>

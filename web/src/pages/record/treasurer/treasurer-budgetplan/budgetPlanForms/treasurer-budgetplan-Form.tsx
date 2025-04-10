@@ -294,7 +294,13 @@ function CreateBudgetPlanForm() {
                             title="Breakdown of NET Available Resources"
                             description="Detailed breakdown of available funds from all income sources"
                             mainContent={
-                                <DisplayBreakdown></DisplayBreakdown>
+                                <DisplayBreakdown
+                                balance={balance}
+                                realtyTaxShare={realtyTaxShare}
+                                taxAllotment={taxAllotment}
+                                clearanceAndCertFees={clearanceAndCertFees}
+                                otherSpecificIncome={otherSpecificIncome}
+                                />
                             }
                         />
                    

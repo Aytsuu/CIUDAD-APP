@@ -9,6 +9,8 @@
     import { formatNumber } from "@/helpers/currencynumberformatter";
     import { getBudgetDetails } from "./restful-API/budgetplanGetAPI";
     import { Skeleton } from "@/components/ui/skeleton";
+    import DialogLayout from "@/components/ui/dialog/dialog-layout";
+    import DisplayBreakdown from "./display_breakdown";
 
     const styles = {
         mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -255,10 +257,24 @@
                 </div>
                 
                 <div className={styles.budgetHeaderGrid}>
-                    <div className={styles.budgetItem}>
-                        <div className={styles.budgetLabel}>NET Available Resources:</div>
-                        <div className={styles.budgetValue}>{formatNumber(availableResources)}</div>
-                    </div>
+
+                    <DialogLayout
+                    trigger={
+                        <div className={styles.budgetItem}>
+                            <div className={styles.budgetLabel}>NET Available Resources:</div>
+                            <div className={styles.budgetValue}>{formatNumber(availableResources)}</div>
+                        </div>
+                    }
+                    title="Breakdown of NET Available Resources"
+                    description=""
+                    mainContent={
+                        <DisplayBreakdown
+                        balance={budgetDetails?.plan_balance}
+                        realtyTaxShare={budgetDetails?.plan_tax_share}
+                        taxAllotment={budgetDetails?.plan_tax_allotment}
+                        clearanceAndCertFees={budgetDetails?.plan_cert_fees}
+                        otherSpecificIncome={budgetDetails.plan_other_income}/>
+                    }/>
                     
                     <div className={styles.budgetItem}>
                         <div className={styles.budgetLabel}>Year:</div>
