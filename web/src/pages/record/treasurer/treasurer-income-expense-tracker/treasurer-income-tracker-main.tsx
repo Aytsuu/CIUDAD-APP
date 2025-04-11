@@ -17,6 +17,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Link } from 'react-router';
 import { useIncomeData, type Income } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDeleteIncome } from "./queries/treasurerIncomeExpenseDeleteQueries";
+import { useIncomeParticular, type IncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
 
 
 
@@ -29,6 +30,16 @@ function IncomeTracking() {
 
     // Fetch data from the backend
     const { data: fetchedData = [], isLoading } = useIncomeData();
+
+
+    const { data: IncomeParticularItems = [] } = useIncomeParticular();
+
+    const IncomeParticulars = IncomeParticularItems
+            .filter(item => item.id && item.name)
+            .map(item => ({
+                id: item.id,
+                name: item.name,
+    }));
 
 
     // Filter options
@@ -260,7 +271,7 @@ function IncomeTracking() {
                     description="Fill in the details for your entry."
                     mainContent={
                         <div className="w-full h-full">
-                            <IncomeCreateForm onSuccess={() => setIsDialogOpen(false)}/>
+                            <IncomeCreateForm onSuccess={() => setIsDialogOpen(false)} IncomeParticularSelector={IncomeParticulars}/>
                         </div>
                     }
                     isOpen={isDialogOpen}

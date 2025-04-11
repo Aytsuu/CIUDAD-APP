@@ -90,6 +90,15 @@ class Income_ParticularView(generics.ListCreateAPIView):
     queryset = Income_Particular.objects.all()
 
 
+class DeleteIncome_ParticularView(generics.DestroyAPIView):
+    serializer_class = Income_ParticularSerializers
+    queryset = Income_Particular.objects.all()   
+
+    def get_object(self):
+        incp_id = self.kwargs.get('incp_id')
+        return get_object_or_404(Income_Particular, incp_id=incp_id)      
+
+
 class Income_TrackingView(generics.ListCreateAPIView):
     serializer_class = Income_TrackingSerializers
     queryset = Income_Tracking.objects.all().select_related('incp_id')

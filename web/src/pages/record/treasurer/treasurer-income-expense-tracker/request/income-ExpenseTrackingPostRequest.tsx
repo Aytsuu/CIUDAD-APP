@@ -2,6 +2,13 @@ import api from "@/api/api";
 import { formatDate } from '@/helpers/dateFormatter';
 import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
+import { useState } from "react";
+
+interface Option {
+    id: string;
+    name: string;
+}
+  
 
 
 export const income_expense_tracking = async (incomeExpenseInfo: Record<string, any>) => {
@@ -33,7 +40,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
         })
 
-        // return res.data.iet_num;
+        return res.data.iet_num;
     }
     catch (err){
         console.error(err);
@@ -47,6 +54,15 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
 
     try{
 
+        console.log({
+            inc_date: formatDate(new Date().toISOString().split('T')[0]),
+            inc_entryType: "Income",
+            inc_amount: parseFloatSafe(incomeInfo.inc_amount),
+            inc_additional_notes: incomeInfo.inc_additional_notes,
+            inc_receipt_image: "urlfornow",
+            incp_id:  incomeInfo.inc_particulars
+        })
+
         const res = await api.post('treasurer/income-tracking/',{
 
             inc_date: formatDate(new Date().toISOString().split('T')[0]),
@@ -54,7 +70,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
             inc_receipt_image: "urlfornow",
-            incp_id:  1
+            incp_id:  parseInt(incomeInfo.inc_particulars)
 
         })
 
