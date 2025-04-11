@@ -4,7 +4,18 @@ import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import React from 'react'
 
-export const blotterColumns = (families: any[]): ColumnDef<BlotterRecord>[] => [
+// Define the BlotterRecord type
+interface BlotterRecord {
+  id: string;
+  Complainant: string;
+  building: string;
+  indigenous: string;
+  dateRegistered: string;
+  registeredBy: string;
+  action?: string;
+}
+
+export const blotterColumns = (blotter: any[]): ColumnDef<BlotterRecord>[] => [
   {
     accessorKey: 'id',
     header: ({ column }) => (
@@ -61,7 +72,7 @@ export const blotterColumns = (families: any[]): ColumnDef<BlotterRecord>[] => [
         to="/family/view"
         state={{
           params: {
-            data: families.find((family) => family.fam_id == row.original.id)
+            data: blotter.find((blotter) => blotter.id == row.original.id)
           }
         }}
       >
