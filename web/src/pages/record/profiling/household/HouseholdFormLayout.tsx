@@ -12,9 +12,11 @@ import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
 import { useAddHousehold } from "../queries/profilingAddQueries";
-import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
+import { useLocation } from "react-router";
 
 export default function HouseholdFormLayout() {
+  const location = useLocation();
+  const params = React.useMemo(() => location.state?.params, [location.state])
   const { user } = useAuth();
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -23,22 +25,19 @@ export default function HouseholdFormLayout() {
       resolver: zodResolver(householdFormSchema),
       defaultValues: defaultValues.current,
   });
-  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
-  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
   const { mutateAsync: addHousehold} = useAddHousehold();
-  const [formattedSitio, setSitio] = React.useState(() => formatSitio({sitio: sitio}));
+  const [formattedSitio, setSitio] = React.useState(() => formatSitio(params));
   const [formattedResidents, setFormattedResidents] = React.useState(() =>
-    formatResidents({residents: residents, households: households})
+    formatResidents(params)
   );
 
   React.useEffect(()=>{
     setFormattedResidents(() =>
-      formatResidents({residents: residents, households: households})
+      formatResidents(params)
     );
     
-    setSitio(() => formatSitio({sitio: sitio}));
-  }, [residents, households, sitio])
+    setSitio(() => formatSitio(params));
+  }, [params.residents, params.households, params.sitio])
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -62,14 +61,6 @@ export default function HouseholdFormLayout() {
     setIsSubmitting(false);
     form.reset(defaultValues.current);
   };
-
-  if(isLoadingResidents || isLoadingHouseholds 
-    || isLoadingSitio
-  ) {
-    return (
-      <div>Loading...</div>
-    )
-  }
 
   return (
     <div className="w-full flex justify-center">

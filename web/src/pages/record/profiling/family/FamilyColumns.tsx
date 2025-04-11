@@ -66,7 +66,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
           params: {
             data: families.find((family) => family.fam_id == row.original.id)
           }
-        }}
+        }}  
       >
         <Button variant={"outline"}>
           View <MoveRight />
@@ -78,10 +78,10 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const dependentViewColumns = (): ColumnDef<DependentRecord>[] => [
+export const familyViewColumns = (): ColumnDef<DependentRecord>[] => [
   {
       accessorKey: 'id',
-      header: 'Resident (#)'
+      header: 'Resident No.'
   },
   {
       accessorKey: 'lname',
@@ -97,24 +97,26 @@ export const dependentViewColumns = (): ColumnDef<DependentRecord>[] => [
   },
   {
       accessorKey: 'suffix',
-      header: 'Suffix',
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.suffix ? row.original.suffix : '-'}
-        </div>
-      )
+      header: 'Suffix'
   },
   {
       accessorKey: 'sex',
       header: 'Sex'
   },
   {
+    accessorKey: 'age',
+    header: 'Age'
+  },
+  {
       accessorKey: 'dateOfBirth',
       header: 'Date of Birth'
+  },
+  {
+    accessorKey: 'role',
+    header: 'Role'
   },
   {
     accessorKey: 'action',
     header: ''
   }
-
 ]
