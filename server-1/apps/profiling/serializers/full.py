@@ -51,16 +51,9 @@ class HouseholdFullSerializer(serializers.ModelSerializer):
         return FamilyFullSerializer(obj.family_set.all(), many=True).data
     
 class FamilyFullSerializer(serializers.ModelSerializer):
-    dependents = DependentSerializer(many=True, read_only=True)
-    mother = MotherSerializer(read_only=True)
-    father = FatherSerializer(read_only=True)
-    guard = GuardianSerializer(read_only=True)
     hh = HouseholdMinimalSerializer(read_only=True)
     staff = serializers.SerializerMethodField()
 
-    mother_id = serializers.PrimaryKeyRelatedField(queryset=Mother.objects.all(), write_only=True, source="mother", allow_null=True)
-    father_id = serializers.PrimaryKeyRelatedField(queryset=Father.objects.all(), write_only=True, source="father", allow_null=True)
-    guard_id = serializers.PrimaryKeyRelatedField(queryset=Guardian.objects.all(), write_only=True, source="guard", allow_null=True)
     hh_id = serializers.PrimaryKeyRelatedField(queryset=Household.objects.all(), write_only=True, source="hh")
     staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff")    
 

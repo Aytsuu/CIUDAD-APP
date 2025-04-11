@@ -9,14 +9,6 @@ class ResidentProfileMinimalSerializer(serializers.ModelSerializer):
         model = ResidentProfile
         fields = '__all__'
 
-class DependentSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Dependent
-        fields = '__all__'
-
 class HouseholdMinimalSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)
     rp = ResidentProfileMinimalSerializer(read_only=True)
@@ -36,30 +28,6 @@ class RequestRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RequestRegistration
-        fields = '__all__'
-
-class MotherSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Mother
-        fields = '__all__'
-
-class FatherSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Father
-        fields = '__all__'
-
-class GuardianSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Guardian
         fields = '__all__'
 
 class BusinessSerializer(serializers.ModelSerializer):
