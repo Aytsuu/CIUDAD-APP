@@ -82,7 +82,7 @@ function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: B
                             name="skFundLimit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>SK Fund</FormLabel>
+                                    <FormLabel>Sangguniang Kabataan (SK) Fund</FormLabel>
                                     <FormControl>
                                         <Input {...field} type="number" placeholder="0" />
                                     </FormControl>

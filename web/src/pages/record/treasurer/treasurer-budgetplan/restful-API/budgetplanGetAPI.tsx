@@ -18,3 +18,13 @@ export const getBudgetPlan = async () => {
         console.error(error);
     }
 }
+
+export const getHeaderandAllocation = async ( planId: string) => {
+    try{
+        const res = await api.get(`treasurer/edit-header-and-allocation/${planId}/`)
+        return res.data
+
+    } catch (error){
+        console.error(error)
+    }
+}

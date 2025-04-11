@@ -12,6 +12,7 @@
     import DialogLayout from "@/components/ui/dialog/dialog-layout";
     import DisplayBreakdown from "./display_breakdown";
     import { Label } from "@/components/ui/label";
+    import { Outlet } from "react-router-dom";
 
     const styles = {
         mainCategory: "font-bold text-[19px] md:text-[22px]",
@@ -254,7 +255,11 @@
                     <h1 className={`${styles.headerTitle} text-center flex-grow`}>
                         ANNUAL BUDGET PLAN {budgetDetails?.plan_year}
                     </h1>
-                    <Button><Pen size={16} /> <span>Edit</span></Button>
+                    <Link to={'edit-header-and-allocation'} state={{ id: plan_id }}>
+                        <Button>
+                            <Pen size={16} /> <span>Edit</span>
+                        </Button>
+                    </Link>
                 </div>
                 
                 <div className={styles.budgetHeaderGrid}>
@@ -320,6 +325,7 @@
                     onPageChange={handlePageChange}
                 />
             </div>
+            <Outlet/>
         </div>
         )
 

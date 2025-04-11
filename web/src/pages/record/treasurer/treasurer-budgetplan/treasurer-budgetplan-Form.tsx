@@ -1,7 +1,7 @@
-import CreateBudgetPlanPage1 from "./treasurer-budgetplan-Page1";
-import CreateBudgetPlanPage2 from "./treasurer-budgetplan-Page2";
-import CreateBudgetPlanPage3 from "./treasurer-budgetplan-Page3";
-import CreateBudgetPlanPage4 from "./treasurer-budgetplan-Page4";
+import CreateBudgetPlanPage1 from "./CreateBudgetPlanForms/budgetPlanPage1-create.tsx.tsx";
+import CreateBudgetPlanPage2 from "./CreateBudgetPlanForms/budgetPlanPage2-create.tsx.tsx";
+import CreateBudgetPlanPage3 from "./CreateBudgetPlanForms/budgetPlanPage3-create.tsx.tsx";
+import CreateBudgetPlanPage4 from "./CreateBudgetPlanForms/budgetPlanPage4-create.tsx.tsx";
 import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
@@ -10,10 +10,10 @@ import { useEffect } from "react";
 import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
+import { budget_plan, budget_plan_details } from "./restful-API/budgetPlanPostAPI.tsx";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import DisplayBreakdown from "../display_breakdown";
+import DisplayBreakdown from "./display_breakdown.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 const styles = {

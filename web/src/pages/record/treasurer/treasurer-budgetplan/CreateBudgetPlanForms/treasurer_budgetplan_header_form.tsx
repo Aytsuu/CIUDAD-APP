@@ -34,7 +34,6 @@ function CreateBudgetPlanHeader(){
         setFormValues(values);
         setShowHeaderForm(false);
         setIsDialogOpen(true); 
-        // navigate("/treasurer-budgetplan-form", {state : values});
     }
 
     const handleFinalSubmit = (allocationValues: z.infer<typeof BudgetAllocationSchema>) => {
