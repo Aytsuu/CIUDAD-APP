@@ -19,7 +19,7 @@ class ObstetricalSerializer(serializers.ModelSerializer):
 
 class PregnancySerializer(serializers.ModelSerializer):
     class Meta:
-        model: PregnancyCheck
+        model = PregnancyCheck
         fields = '__all__'
         
 class RiskStiSerializer(serializers.ModelSerializer):

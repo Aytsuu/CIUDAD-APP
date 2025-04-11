@@ -52,11 +52,11 @@ class FP_type(models.Model):
 #     obs_category = models.CharField(max_length=20)
         
 class PregnancyCheck(models.Model):
-    bf_no_menses = models.BooleanField(default=False)
-    abstained_last_period = models.BooleanField(default=False)
-    had_baby = models.BooleanField(default=False)
-    period_within = models.BooleanField(default=False)
-    miscarriage_or_abortion = models.BooleanField(default=False)
+    breastfeeding = models.BooleanField(default=False)
+    abstained = models.BooleanField(default=False)
+    recent_baby = models.BooleanField(default=False)
+    recent_period = models.BooleanField(default=False)
+    recent_abortion = models.BooleanField(default=False)
     using_contraceptive = models.BooleanField(default=False)
 
     # client = models.ForeignKey(Client, on_delete=models.CASCADE)  # if you have a Client model
@@ -254,4 +254,3 @@ class FP_finding(models.Model):
     
     class Meta:
         db_table = 'fp_findings'
-

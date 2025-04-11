@@ -26,28 +26,28 @@ interface ServiceProvisionFormProps {
 
 const pregnancyQuestions = [
   {
-    id: "baby_breastfeeding_no_menses",
+    id: "breastfeeding",
     question:
       "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?",
   },
   {
-    id: "abstained_since_last_period",
+    id: "abstained",
     question: "Have you abstained from sexual intercourse since your last menstrual period or delivery?",
   },
   {
-    id: "had_baby_last_4_weeks",
+    id: "recent_baby",
     question: "Have you had a baby in the last four (4) weeks?",
   },
   {
-    id: "period_within_7_days",
+    id: "recent_period",
     question: "Did your last menstrual period start within the past seven (7) days?",
   },
   {
-    id: "miscarriage_or_abortion_7_days",
+    id: "recent_abortion",
     question: "Have you had miscarriage or abortion in the last seven (7) days?",
   },
   {
-    id: "using_contraceptive_consistently",
+    id: "using_contraceptive",
     question: "Have you been using a reliable contraceptive method consistently and correctly?",
   },
 ]
@@ -68,12 +68,12 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
       pregnancyCheck: formData?.pregnancyCheck || {
-        baby_breastfeeding_no_menses: false,
-        abstained_since_last_period: false,
-        had_baby_last_4_weeks: false,
-        period_within_7_days: false,
-        miscarriage_or_abortion_7_days: false,
-        using_contraceptive_consistently: false,
+        breastfeeding: false,
+        abstained: false,
+        recent_baby: false,
+        recent_period: false,
+        recent_abortion: false,
+        using_contraceptive: false,
       },
     },
     mode: "onBlur",
@@ -208,7 +208,6 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
 
     onSubmitFinal()
   }
-
 
   return (
     <Card className="w-full">
@@ -449,8 +448,11 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                             <FormLabel className="font-normal text-base">{question.question}</FormLabel>
                             <FormControl>
                               <RadioGroup
-                                onValueChange={(value) => field.onChange(value === "yes")}
-                                defaultValue={field.value ? "yes" : "no"}
+                                onValueChange={(value) => {
+                                  console.log(`Setting ${question.id} to:`, value === "yes")
+                                  field.onChange(value === "yes")
+                                }}
+                                value={field.value ? "yes" : "no"}
                                 className="flex gap-6 mt-2"
                               >
                                 <div className="flex items-center space-x-2">
@@ -473,12 +475,14 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
 
               {/* Pregnancy Check Result */}
               <div className="mt-6 p-4 rounded-md bg-gray-50">
-                <div className="font-medium mb-2">■
-                  If the client answered YES to at least one of the questions and she is free of signs or symptoms of pregnancy, provide client with desired method.
+                <div className="font-medium mb-2">
+                  ■ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
+                  pregnancy, provide client with desired method.
                 </div>
                 <div className="font-medium mb-2">
-                  ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should await menses or use a pregnancy test.</div>
-
+                  ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
+                  await menses or use a pregnancy test.
+                </div>
               </div>
             </div>
 

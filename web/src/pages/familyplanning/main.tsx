@@ -1,6 +1,5 @@
 "use client"
-// import { acknowledgement, obstetrical, physical_exam, risks_sti, risks_vaw, fp_type } from "./PostRequest"
-import { pregnancy_check } from "./PostRequest"
+import { fp_record, fp_type, pregnancyCheck, risk_sti, risk_vaw } from "./PostRequest"
 
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
@@ -93,12 +92,12 @@ const initialFormData: FormData = {
     domesticViolence: false,
     referredTo: undefined,
   },
-  pregnancy_check: {
-    bf_no_menses: false,
-    abstained_last_period: false,
-    had_baby: false,
-    period_within: false,
-    miscarriage_or_abortion: false,
+  pregnancyCheck: {
+    breastfeeding: false,
+    abstained: false,
+    recent_baby: false,
+    recent_period: false,
+    recent_abortion: false,
     using_contraceptive: false,
   },
   weight: "",
@@ -175,14 +174,14 @@ export default function FamilyPlanningMain() {
 
   const handleSubmit = () => {
     // obstetrical(formData)
-    // risk_sti(formData)
-    // risk_vaw(formData)
+    risk_sti(formData)
+    risk_vaw(formData)
     // physical_exam(formData)
     // acknowledgement(formData)
-    // fp_type(formData)
-    // fp_record(formData)
+    fp_type(formData)
+    fp_record(formData)
     // fp_obstetrical(formData)
-    pregnancy_check(formData)
+    pregnancyCheck(formData)
     console.log("Submitting data: ", formData)
     alert("Form submitted successfully!")
   }
@@ -190,9 +189,7 @@ export default function FamilyPlanningMain() {
   return (
     <>
       {currentPage === 1 && (
-        <FamilyPlanningForm onNext2={handleNext}
-        updateFormData={updateFormData}
-        formData={formData} />
+        <FamilyPlanningForm onNext2={handleNext} updateFormData={updateFormData} formData={formData} />
       )}
       {currentPage === 2 && (
         <FamilyPlanningForm2
@@ -237,4 +234,3 @@ export default function FamilyPlanningMain() {
     </>
   )
 }
-
