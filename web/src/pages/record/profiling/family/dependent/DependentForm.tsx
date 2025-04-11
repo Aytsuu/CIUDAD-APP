@@ -107,7 +107,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
             <FormSelect control={form.control} name="dependentsInfo.new.sex" label="Sex" options={[
                 { id: 'male', name: 'Male' },
                 { id: 'female', name: 'Female' },
-              ]} readOnly/>
+            ]} readOnly/>
             <FormDateTimeInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" type="date" readOnly />
             <div className="flex items-end">
               <Button type="button" onClick={handleAddDependent} className="bg-green-600 hover:bg-green-700 text-white">
