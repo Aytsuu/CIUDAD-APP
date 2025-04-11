@@ -1,7 +1,7 @@
 import api from '@/api/api';
 import { formatDate } from '@/helpers/dateFormatter';
 
-export const postdonationreq= async (budgetTrackInfo: Record<string, any>) => {
+export const postbudgettrackreq= async (budgetTrackInfo: Record<string, any>) => {
     try {
         const currentDate = new Date();
         console.log({

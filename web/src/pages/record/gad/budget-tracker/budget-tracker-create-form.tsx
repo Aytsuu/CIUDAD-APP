@@ -6,15 +6,13 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import GADAddEntrySchema from "@/form-schema/gad-budget-track-create-form-schema";
-import { postdonationreq } from "./requestAPI/BTPostRequest";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { useAddGADBudget } from "./queries/BTAddQueries"; // Import the new hook
 
 interface GADAddEntryFormProps {
-  onSuccess?: () => void; // Add this prop type
+  onSuccess?: () => void;
 }
 
-function GADAddEntryForm({onSuccess}:GADAddEntryFormProps) {
+function GADAddEntryForm({ onSuccess }: GADAddEntryFormProps) {
   const form = useForm<z.infer<typeof GADAddEntrySchema>>({
     resolver: zodResolver(GADAddEntrySchema),
     defaultValues: {
@@ -25,31 +23,14 @@ function GADAddEntryForm({onSuccess}:GADAddEntryFormProps) {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof GADAddEntrySchema>) => {
-    const toastId = toast.loading('Submitting entry...', {
-      duration: Infinity  
+  const { mutate: addGADBudget, isPending } = useAddGADBudget();
+
+  const onSubmit = (values: z.infer<typeof GADAddEntrySchema>) => {
+    addGADBudget(values, {
+      onSuccess: () => {
+        if (onSuccess) onSuccess();
+      }
     });
-    try {
-      await postdonationreq(values);
-      toast.success('Budget entry recorded successfully', {
-        id: toastId, 
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-        onAutoClose: () => {
-          window.location.reload();
-        }
-    });
-    if (onSuccess) onSuccess();
-    } catch (err) {
-      console.error("Error submitting GAD budget entry", err);
-      toast.error(
-        "Failed to submit enrty. Please try again.",
-        {
-            id: toastId,
-            duration: 2000
-        }
-    );
-  }
   };
 
   return (
@@ -108,8 +89,9 @@ function GADAddEntryForm({onSuccess}:GADAddEntryFormProps) {
               <Button
                 type="submit"
                 className="bg-blue hover:bg-blue hover:opacity-[95%]"
+                disabled={isPending}
               >
-                Save
+                {isPending ? "Submitting..." : "Save"}
               </Button>
             </div>
           </form>
