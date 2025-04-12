@@ -53,7 +53,7 @@ export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<s
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
             inc_receipt_image: "urlfornow",
-            incp_id:  1
+            incp_id:  4
 
         })
 

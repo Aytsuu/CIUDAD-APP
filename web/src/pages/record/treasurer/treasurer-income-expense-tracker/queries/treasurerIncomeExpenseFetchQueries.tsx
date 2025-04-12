@@ -65,7 +65,7 @@ export interface IncomeParticular{
 
 export const useIncomeParticular = () => {
     return useQuery<IncomeParticular[]>({
-            queryKey: ['incomeParticular'],
+            queryKey: ['incomeParticulars'],
             queryFn: async () => {
             const data = await getIncomeParticulars();
             return data.map((item: any) => ({
@@ -82,6 +82,7 @@ export const useIncomeParticular = () => {
 
 export type Income = {
     inc_num: number;
+    inc_serial_num: string;
     inc_date: string;
     incp_item: string;
     incp_id: number;

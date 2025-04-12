@@ -1314,23 +1314,23 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
                 )}
 
 
-                {inv_num !== "None" && (
-                    <div className="pb-5">
-                        <FormField
-                            control={form.control}
-                            name="iet_serial_num"
-                            render={({field}) => (
-                                <FormItem>
-                                    <FormLabel>Serial No.</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder="(e.g. 123456)" type="text" readOnly />
-                                    </FormControl>
-                                    <FormMessage/>
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                )}
+
+                <div className="pb-5">
+                    <FormField
+                        control={form.control}
+                        name="iet_serial_num"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Serial No.</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="(e.g. 123456)" type="text" readOnly />
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
 
                 <div className="pb-5">
                     <FormField

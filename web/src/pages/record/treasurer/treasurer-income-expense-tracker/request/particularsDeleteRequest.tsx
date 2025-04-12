@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "@/api/api";
+import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 
@@ -13,6 +14,7 @@ export const useDeleteParticular = () => {
     const [particulars, setParticulars] = useState<Option[]>([]);
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
     const [particularToDelete, setParticularToDelete] = useState<number | null>(null);
+    const queryClient = useQueryClient();
 
 
 
@@ -23,6 +25,13 @@ export const useDeleteParticular = () => {
           if (res.status === 200 || res.status === 204) {
             setParticulars(prev => prev.filter(part => part.id !== String(partId)));
           }
+
+          //refetch Income Particulars
+          await queryClient.invalidateQueries({ queryKey: ['incomeParticulars'] }); 
+
+          //refetch Income Main Table          
+          await queryClient.invalidateQueries({ queryKey: ['income'] });
+
         } catch (err) {
           console.error(err);
           throw err;

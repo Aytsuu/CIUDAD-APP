@@ -188,6 +188,7 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 
 interface IncomeEditFormProps {
     inc_num: number;
+    inc_serial_num: string;
     inc_particulars: string;
     inc_amount: string;
     inc_additional_notes: string;
@@ -195,7 +196,7 @@ interface IncomeEditFormProps {
     onSuccess?: () => void;
 }
 
-function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, onSuccess }: IncomeEditFormProps) {
+function IncomeEditForm({ inc_num, inc_serial_num, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, onSuccess }: IncomeEditFormProps) {
     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [isEditing, setIsEditing] = useState(false);
@@ -216,6 +217,7 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
         resolver: zodResolver(IncomeEditFormSchema),
         defaultValues: {
             inc_entryType: "",
+            inc_serial_num: inc_serial_num,
             inc_particulars: inc_particulars,
             inc_amount: inc_amount,
             inc_additional_notes: inc_additional_notes,
@@ -243,6 +245,27 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
     return (
         <Form {...form}>
             <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
+
+                {inc_serial_num !== "None" && ( 
+
+                    <div className="pb-5">
+                        <FormField
+                            control={form.control}
+                            name="inc_serial_num"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Serial Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} placeholder="Enter serial number" readOnly/>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>    
+                )}     
+                
+
                 <div className="pb-5">
                     <FormField
                         control={form.control}

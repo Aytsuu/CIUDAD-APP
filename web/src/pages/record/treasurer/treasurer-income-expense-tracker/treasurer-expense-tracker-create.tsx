@@ -1770,6 +1770,7 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
     const form = useForm<z.infer<typeof IncomeExpenseFormSchema>>({
         resolver: zodResolver(IncomeExpenseFormSchema),
         defaultValues: {
+            iet_serial_num: "",
             iet_entryType: "",
             iet_particulars: "",
             iet_amount: "",
@@ -1831,7 +1832,6 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                                 </div>
                             </div>
                         )}
-
                         
                         <div className="pb-5">
                             <FormField
@@ -1883,6 +1883,22 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                 {/* Step 2: Remaining Fields */}
                 {currentStep === 2 && (
                     <>
+
+                        <div className="pb-5">
+                            <FormField
+                                control={form.control}
+                                name="iet_serial_num"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Serial Number</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Enter serial number" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         <div className="pb-5">
                             <FormField
