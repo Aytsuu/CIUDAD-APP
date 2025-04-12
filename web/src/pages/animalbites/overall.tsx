@@ -8,6 +8,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { Eye, Search, Trash } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Link } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
 // Define Patient Type
@@ -93,15 +94,18 @@ function AnimalBites() {
     },
     { accessorKey: "bitingAnimal", header: "Biting Animal" },
     { accessorKey: "actions", header: "Actions Taken" },
+    
     {
-      accessorKey: "actionsMenu",
-      header: "Actions",
+      accessorKey: "button",
+      header: "",
       cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center">
           <TooltipLayout
             trigger={
               <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                <Eye size={15} />
+                <Link to={`/Animalbite_individual/`}>
+                  <Eye size={15} />
+                </Link>
               </div>
             }
             content="View"
@@ -163,7 +167,7 @@ function AnimalBites() {
                 placeholder="Search..."
                 className="pl-10 w-72 bg-white"
                 value={searchQuery}
-                onChangeCapture={handleSearchChange}
+                onChange={handleSearchChange}
               />
             </div>
 
@@ -184,9 +188,20 @@ function AnimalBites() {
 
         {/* New Record Button */}
         <div className="flex justify-end">
-          <Button className="font-medium py-2 px-4 rounded-md shadow-sm">
-            New Record
-          </Button>
+          <DialogLayout
+            trigger={
+              <Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>
+            }
+            className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
+            mainContent={
+              <ReferralFormModal
+                onAddPatient={handleAddPatient}
+                onClose={() => console.log("Closing modal")} // Ensure onClose is passed
+              />
+            }
+            title={""}
+            description={""}
+          />
         </div>
       </div>
 

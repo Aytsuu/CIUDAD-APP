@@ -1,30 +1,27 @@
-import { Button } from "@/components/ui/button/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-// import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form/form";
-import ReferralFormSchema from "@/form-schema/ReferralFormSchema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import type { z } from "zod"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import ReferralFormSchema from "@/form-schema/ReferralFormSchema"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { useState } from "react"
+import { patient, referral, bitedetails } from "./postrequest"
 
 type ReferralFormModalProps = {
-  onClose: () => void;
-  onAddPatient?: (patient: any) => void; // Add this line
-};
+  onClose: () => void
+  onAddPatient?: (patient: any) => void
+}
 
 export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFormModalProps) {
-  function onSubmit(values: z.infer<typeof ReferralFormSchema>) {
-    console.log("Form submitted:", values);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
     if (onAddPatient) {
       const newPatient = {
@@ -55,7 +52,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     }
   }
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
-    // resolver: zodResolver(ReferralFormSchema),
+    resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
       receiver: "",
       sender: "",
@@ -67,25 +64,82 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_address: "",
       p_age: 0,
       p_gender: "",
-      p_exposure: "",
-      p_siteofexposure: "",
-      p_bitinganimal: "",
-      p_lab_exam: "",
+      exposure_type: "",
+      exposure_site: "",
+      biting_animal: "",
       p_actions: "",
       p_referred: "",
     },
-  });
-  console.log("❌ Validation errors:", form.formState.errors);
+  })
+  async function onSubmit() {
+    const isValid = form.trigger()
+
+    if (!isValid) {
+      return
+    }
+
+    const values = form.getValues()
+    console.log("Form submitted with values:", values);
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      console.log("Creating patient...");
+      const patientId = await patient(values);
+      console.log("Patient created with ID:", patientId);
+
+      console.log("Creating referral...");
+      const referralId = await referral(values, patientId);
+      console.log("Referral created with ID:", referralId);
+
+      console.log("Creating bite details...");
+      const biteDetailsId = await bitedetails(values, referralId);
+      console.log("Bite details created with ID:", biteDetailsId);
+
+      if (onAddPatient) {
+        const newPatient = {
+          id: referralId,
+          lname: values.p_lname,
+          fname: values.p_fname,
+          mname: values.p_mname,
+          address: values.p_address,
+          age: values.p_age.toString(),
+          gender: values.p_gender,
+          date: values.date,
+          transient: values.transient,
+          exposure: values.exposure_type,
+          siteOfExposure: values.exposure_site,
+          bitingAnimal: values.biting_animal,
+          actions: values.p_actions || "No actions recorded",
+        };
+        console.log("Adding patient to state:", newPatient);
+        onAddPatient(newPatient);
+      }
+
+      console.log("All data saved successfully");
+      onClose();
+    } catch (err) {
+      console.error("Failed to save record:", err);
+      setError("Failed to save record. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
 
   return (
-    <div className="p-6">
+    <div className="p-3">
       {/* Header */}
-      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">
-        Animal Bites Referral Form
-      </h2>
+      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">Animal Bites Referral Form</h2>
+
+      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4">
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          onSubmit()
+        }} className="p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Receiver */}
             <FormField
@@ -139,7 +193,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               render={({ field }) => (
                 <FormItem className="flex items-center gap-2">
                   <FormControl>
-                    <Checkbox className="mt-3 border border-black" checked={field.value} onCheckedChange={field.onChange} />
+                    <Checkbox
+                      className="mt-3 border border-black"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                   <Label>Transient</Label>
                   <FormMessage />
@@ -151,7 +209,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           {/* Patient Information Section */}
           <div className="col-span-2 border-t pt-4 mt-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Last Name */}
               <FormField
                 control={form.control}
@@ -239,9 +297,9 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -255,11 +313,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           {/* Animal Bite Details Section */}
           <div className="col-span-2 border-t pt-4 mt-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Animal Bite Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Exposure Type */}
               <FormField
                 control={form.control}
-                name="p_exposure"
+                name="exposure_type"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Type of Exposure:</Label>
@@ -282,7 +340,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               {/* Site of Exposure */}
               <FormField
                 control={form.control}
-                name="p_siteofexposure"
+                name="exposure_site"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Site of Exposure:</Label>
@@ -297,12 +355,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               {/* Biting Animal */}
               <FormField
                 control={form.control}
-                name="p_bitinganimal"
+                name="biting_animal"
                 render={({ field }) => (
                   <FormItem>
                     <Label>Biting Animal:</Label>
                     <FormControl>
-                      <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
+                      <Input placeholder="e.g., Dog, Cat" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -331,7 +389,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                   <FormItem>
                     <Label>Referred by:</Label>
                     <FormControl>
-                      <Input placeholder="" {...field} />
+                      <Input  {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -342,13 +400,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
           {/* Buttons */}
           <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
-              Cancel
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Add"}
             </Button>
-            <Button type="submit">Add</Button>
           </div>
         </form>
       </Form>
     </div>
-  );
+  )
 }

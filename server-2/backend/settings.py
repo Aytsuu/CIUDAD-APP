@@ -30,6 +30,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1'
+# SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -55,6 +56,8 @@ INSTALLED_APPS = [
     # 'apps.profiling',
     # 'apps.administration'
     'apps.familyplanning',
+    'apps.animalbites',
+
 ]
 
 MIDDLEWARE = [
