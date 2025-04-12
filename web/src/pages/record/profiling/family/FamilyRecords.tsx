@@ -10,7 +10,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
 import { FamilyRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFamilies, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
+import { useFamilies, useFamilyComposition, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -19,25 +19,22 @@ export default function FamilyRecords() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   const { data: families, isLoading: isLoadingFamilies } = useFamilies();
+  const { data: familyComposition, isLoading: isLoadingFamilyComposition} = useFamilyComposition();
   const { data: residents, isLoading: isLoadingResidents } = useResidents();
   const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format family to populate data table
   const formatFamilyData = (): FamilyRecord[] => {
-    if (!families) return [];
-
+    if (!families || !familyComposition) return [];
     return families.map((family: any) => {
-      const mother = family?.mother;
-      const father = family?.father;
-      const dependents = family?.dependents;
       const staff = family?.staff?.rp?.per;
-
-      const totalMembers =
-        (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length;
+      const totalMembers = familyComposition?.filter((composition: any) =>
+         composition.fam.fam_id === family.fam_id
+      ).length
 
       return {
         id: family.fam_id || "-",
-        noOfMembers: totalMembers || 1,
+        noOfMembers: totalMembers || "-",
         building: family.fam_building || "-",
         indigenous: family.fam_indigenous || "-",
         dateRegistered: family.fam_date_registered || "-",
@@ -60,7 +57,7 @@ export default function FamilyRecords() {
     );
 
     return filtered;
-  }, [searchQuery, families]);
+  }, [searchQuery, families, familyComposition]);
 
   const totalPages = Math.ceil(filteredFamilies.length / pageSize);
 
@@ -68,8 +65,8 @@ export default function FamilyRecords() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  if (isLoadingFamilies || isLoadingResidents || isLoadingHouseholds) {
+  if (isLoadingFamilies || isLoadingResidents || 
+    isLoadingHouseholds || isLoadingFamilyComposition) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -160,7 +157,7 @@ export default function FamilyRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={familyColumns(families)}
+            columns={familyColumns(familyComposition)}
             data={paginatedFamilies}
           />
         </div>

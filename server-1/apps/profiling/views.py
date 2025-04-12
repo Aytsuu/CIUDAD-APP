@@ -32,7 +32,7 @@ class FamilyView(generics.ListCreateAPIView):
 
 # Family Composition Views ------------------------------------------------------------
 class FamilyCompositionView(generics.ListCreateAPIView):
-    serializer_class = FamilyCompositionSerializer
+    serializer_class = FamilyCompositionFullSerializer
     queryset = FamilyComposition.objects.all()
 
 # Sitio Views --------------------------------------------------------------------------

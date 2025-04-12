@@ -64,3 +64,12 @@ class FamilyFullSerializer(serializers.ModelSerializer):
     def get_staff(self, obj):
         from apps.administration.serializers.minimal import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff).data
+
+class FamilyCompositionFullSerializer(serializers.ModelSerializer):
+    fam = FamilyFullSerializer(read_only=True)
+    rp = ResidentProfileMinimalSerializer(read_only=True)
+    fam_id = serializers.PrimaryKeyRelatedField(queryset=Family.objects.all(), write_only=True, source="fam")
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
+    class Meta:
+        model = FamilyComposition
+        fields = '__all__'

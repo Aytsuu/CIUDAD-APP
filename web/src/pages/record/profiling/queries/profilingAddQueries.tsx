@@ -62,55 +62,44 @@ export const useAddResidentProfile = (params: any) => {
   });
 };
 
-export const useAddFamily = (demographicInfo: Record<string, string>) => {
-  const navigate = useNavigate();
+export const useAddFamily = () => {
   const queryClient = useQueryClient();
-  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   return useMutation({
-    mutationFn: ({
-      fatherId,
-      motherId,
-      guardId,
-      staffId,
-    }: {
-      fatherId: string | null;
-      motherId: string | null;
-      guardId: string | null;
+    mutationFn: ({demographicInfo, staffId}: {
+      demographicInfo: Record<string, string>;
       staffId: string;
-    }) => addFamily(demographicInfo, fatherId, motherId, guardId, staffId),
+    }) => addFamily(demographicInfo, staffId),
     onSuccess: async (newData) => {
-      await addFamilyComposition({
-        familyId: newData.fam_id,
-        residentId: demographicInfo.id.split(" ")[0],
-      });
-
       queryClient.setQueryData(["families"], (old: any[] = []) => [
         ...old,
         newData,
       ]);
 
       queryClient.invalidateQueries({ queryKey: ["families"] });
-
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
     },
   });
 };
 
 export const useAddFamilyComposition = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       familyId,
+      role,
       residentId,
     }: {
       familyId: string;
+      role: string;
       residentId: string;
-    }) => addFamilyComposition(familyId, residentId),
+    }) => addFamilyComposition(familyId, role, residentId),
+    onSuccess: (newData) => {
+      queryClient.setQueryData(["familyComposition"], (old: any[] = []) => [
+        ...old,
+        newData
+      ]);
+
+      queryClient.invalidateQueries({queryKey: ["familyComposition"]});
+    }
   });
 };
 

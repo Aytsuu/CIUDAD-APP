@@ -11,6 +11,8 @@ import { familyFormSchema } from '@/form-schema/profiling-schema';
 import { Combobox } from '@/components/ui/combobox';
 import { DependentRecord } from '../../profilingTypes';
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Link } from 'react-router';
 
 export default function DependentForm({ form, residents, selectedParents, dependents}: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -88,16 +90,30 @@ export default function DependentForm({ form, residents, selectedParents, depend
 
   return (
     <div className="grid gap-3">
+      <div className="mb-4">
+        <h2 className="font-semibold text-lg">Dependents Information</h2>
+        <p className="text-xs text-black/50">Review all fields before proceeding</p>
+      </div>
+
       <Form {...form}>
         <form className='grid gap-4'>
           <Combobox 
             options={filteredResidents}
             value={form.watch('dependentsInfo.new.id')}
             onChange={(value) => form.setValue('dependentsInfo.new.id', value)}
-            placeholder='Search for resident...'
+            placeholder='Select a resident'
             triggerClassName='w-1/3'
             contentClassName='w-[28rem]'
-            emptyMessage='No resident found'
+            emptyMessage={
+              <div className="flex gap-2 justify-center items-center">
+                <Label className="font-normal text-[13px]">No resident found.</Label>
+                <Link to="/resident/form">
+                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                    Register
+                  </Label>
+                </Link>
+              </div>
+            }
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <FormInput control={form.control} name="dependentsInfo.new.lastName" label="Last Name" readOnly />

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getBusinesses,
   getFamilies,
+  getFamilyComposition,
   getHouseholds,
   getRequests,
   getResidents,
@@ -48,6 +49,14 @@ export const useFamilies = () => {
     staleTime: 1000 * 60 * 5,
   });
 };
+
+export const useFamilyComposition = () => {
+  return useQuery({
+    queryKey: ["familyComposition"],
+    queryFn: getFamilyComposition,
+    staleTime: 1000 * 60 * 5
+  })
+}
 
 export const useBusinesses = () => {
   return useQuery({
