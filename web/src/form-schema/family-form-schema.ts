@@ -6,6 +6,9 @@ export const demographicInfoSchema = z.object({
   building: z.string().min(1, "Building is required"),
   householdNo: z.string(),
   indigenous: z.string().min(1, "Indigenous is required"),
+  nhts: z.string().optional(),
+  sitio: z.string().optional(),
+  street: z.string().optional(),
 });
 
 export const personalInfoSchema = z.object({
@@ -109,11 +112,30 @@ export const householdFormSchema = z.object({
   householdHead: z.string()
 });
 
+export const motherHealthInfo = z.object({
+  healthRiskClass: z.string().optional(),
+  immunizationStatus: z.string().optional(),
+  method: z.array(z.string()).optional(), 
+  source: z.string().optional(),
+});
+
+export const environmentalFormSchema = z.object({
+  waterSupply: z.string().min(1, "Water supply type is required"),
+  facilityType: z.string().min(1, "At least one sanitary facility must be selected"),
+  sanitaryFacilityType: z.string().optional(),
+  unsanitaryFacilityType: z.string().optional(),
+  toiletFacilityType: z.string(),
+  wasteManagement: z
+    .array(z.string())
+    .min(1, "At least one waste management method must be selected"),
+  otherWasteMethod: z.string().optional(),
+});
 
 export const familyFormSchema = z.object({
   demographicInfo: demographicInfoSchema,
   motherInfo: parentInfoSchema.extend({
     healthRelDetails: perAddDetails.optional(),
+    motherHealthInfo: motherHealthInfo.optional(),
   }),
   fatherInfo: parentInfoSchema.extend({
     healthRelDetails: perAddDetails.optional(),
@@ -125,6 +147,7 @@ export const familyFormSchema = z.object({
     list: z.array(dependentSchema).default([]),
     new: dependentSchema,
   }),
+  environmentalForm: environmentalFormSchema,
 });
 
 
@@ -145,3 +168,4 @@ export const businessFormSchema = z.object({
   bus_street: z.string().min(1, 'Street Address is required'),
   sitio: z.string().min(1, 'Sitio is required')
 });
+

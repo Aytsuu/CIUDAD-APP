@@ -20,8 +20,9 @@ import { DependentRecord } from "@/pages/record/profiling/profilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import RespondentsInfoLayout from "./family/RespondentsInfoLayout";
-import HouseholdHeadLayout from "./household/HouseholdHeadLayout";
+import HouseholdHeadLayout from "./householdInfo/HouseholdHeadLayout";
 import HealthInfoLayout from "./healthInfo/HealthInfoLayout";
+import EnvironmentalFormLayout from "./householdInfo/EnvironmentalFormLayout";
 
 export default function HealthFamilyForm() {
   const location = useLocation();
@@ -69,7 +70,7 @@ export default function HealthFamilyForm() {
       description="Provide your details to complete the registration process."
     >
       <div>
-        <Card className="w-full">
+        <Card className="w-full h-full ">
           {currentStep === 1 && (
             <>
               <DemographicForm
@@ -150,14 +151,36 @@ export default function HealthFamilyForm() {
               back={() => prevStep()}
             />
           )}
+          {currentStep === 3 && (
+            <EnvironmentalFormLayout
+            form={form}
+            residents={{
+              default: params.residents,
+              formatted: formattedResidents,
+            }}
+            selectedResidentId={selectedResidentId}
+            setSelectedResidentId={setSelectedResidentId}
+          />
+          )}
           <div className="flex justify-end">
             <div className="flex items-center pb-10 space-x-4 mr-10">
-              {currentStep > 1 && (
-                <Button onClick={prevStep} variant="outline">
-                  Previous
+              {currentStep === 1 && (
+                <Button onClick={nextStep}>
+                  Next
                 </Button>
               )}
-              {currentStep < 2 && (
+              {currentStep === 2 && (
+                <div className="gap-4">
+                  <Button onClick={prevStep} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={nextStep}>
+                    Next
+                  </Button>
+                  
+                </div>
+              )}
+              {currentStep === 3 && (
                 <Button onClick={nextStep}>
                   Next
                 </Button>

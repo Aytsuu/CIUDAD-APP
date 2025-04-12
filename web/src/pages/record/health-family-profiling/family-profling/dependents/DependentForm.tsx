@@ -81,9 +81,14 @@ export default function DependentForm({ form, residents, selectedParents, depend
 
   return (
     <div className="grid gap-3">
+      <div>
+        <h2 className="font-semibold text-lg">{title}</h2>
+        <p className="text-xs text-black/50">Review all fields before proceeding</p>
+      </div>
       <Form {...form}>
         <form className='grid gap-4'>
           <Combobox 
+            
             options={filteredResidents}
             value={form.watch('dependentsInfo.new.id')}
             onChange={(value) => form.setValue('dependentsInfo.new.id', value)}

@@ -30,7 +30,9 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
                 className="w-full"
                 options={options}
                 value={field.value ? field.value.toLowerCase() : ''}
-                onChange={field.onChange}
+                onChange={(value) => {
+                  field.onChange(value);
+                }}
               />
             ) : (
               <Input {...field} readOnly />

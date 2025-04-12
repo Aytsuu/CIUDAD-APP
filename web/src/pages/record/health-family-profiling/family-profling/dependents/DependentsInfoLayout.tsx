@@ -170,24 +170,10 @@ export default function DependentsInfoLayout({
           selectedParents={selectedParents}
           dependents={dependentsList}
         />
+        
         <DataTable data={dependentsList} columns={dependentColumns} />
       </div>
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" className="w-full sm:w-32" onClick={back}>
-          Prev
-        </Button>
-        <ConfirmationModal 
-          trigger={
-            <Button className="w-full sm:w-32">
-              Register
-            </Button>
-          }
-          title="Confirm Registration"
-          description="Do you wish to proceed with the registration?"
-          actionLabel="Confirm"
-          onClick={registerProfile}
-        />
-      </div>
+      
     </div>
   );
 }

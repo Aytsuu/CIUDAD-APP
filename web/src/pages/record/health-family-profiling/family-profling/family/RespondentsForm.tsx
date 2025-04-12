@@ -67,7 +67,7 @@ export default function RespondentsForm({ residents, form, selectedResidentId, p
           />
 
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <FormInput control={form.control} name={`${prefix}.lastName`} label="Last Name" readOnly />
+            <FormInput control={form.control} name={`${prefix}.lastName`} label="Last Name"  readOnly />
             <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.suffix`} label="Suffix" readOnly />

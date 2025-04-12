@@ -58,32 +58,34 @@ export default function DemographicForm({
           }}
           className="grid gap-4"
         >
-          <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex flex-col justify-start">
-              <div className="flex justify-between items-center mb-2">
-                <Label className="text-black/70">Household</Label>
-                <div className="flex gap-2 justify-end items-center">
-                  <Label className="font-normal text-[13px]">Not found?</Label>
-                  <Link to="/household-form">
-                    <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                      Register
-                    </Label>
-                  </Link>
-                </div>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
+              <Label className="text-black/70">Household</Label>
+              <div className="flex gap-2 justify-start md:justify-end items-center mt-2 md:mt-0">
+                <Label className="font-normal text-[13px]">Not found?</Label>
+                <Link to="/household-form">
+                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                  Register
+                </Label>
+                </Link>
+              </div>
               </div>
               <Combobox
-                options={households}
-                value={form.watch(`demographicInfo.householdNo`)}
-                onChange={handleHouseholdChange}
-                placeholder="Search for household..."
-                contentClassName="w-[22rem]"
-                emptyMessage="No household found"
+              options={households}
+              value={form.watch(`demographicInfo.householdNo`)}
+              onChange={handleHouseholdChange}
+              placeholder="Search for household..."
+              contentClassName="w-full md:w-[22rem]"
+              emptyMessage="No household found"
               />
               <Label className="text-[13px] text-red-500 mt-1">
-                {invalidHousehold ? `Resident is required` : ""}
+              {invalidHousehold ? `Resident is required` : ""}
               </Label>
             </div>
-            <FormSelect
+            </div>
+          <div className="grid grid-cols-3 gap-4">
+          <FormSelect
               control={form.control}
               name="demographicInfo.building"
               label="Building"
@@ -105,6 +107,7 @@ export default function DemographicForm({
               ]}
               readOnly={false}
             />
+            
           </div>
         </form>
       </Form>

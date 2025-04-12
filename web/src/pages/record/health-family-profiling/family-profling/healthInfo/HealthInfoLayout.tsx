@@ -31,7 +31,7 @@ export default function HealthInfoLayout({
          
           selectedResidentId={selectedResidentId}
           onSelect={setSelectedResidentId}
-          prefix="respondentInfo"
+          prefix="motherInfo.motherHealthInfo"
           title="Health Information"
         />
 

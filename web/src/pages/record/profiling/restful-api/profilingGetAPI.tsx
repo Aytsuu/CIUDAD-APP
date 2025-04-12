@@ -20,6 +20,16 @@ export const getFamilies = async () => {
   }
 };
 
+// Fetch family composition
+export const getFamilyComposition = async () => {
+  try {
+    const res = await api.get("profiling/family-composition/");
+    return res.data;
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 // Fetch households
 export const getHouseholds = async () => {
   try {

@@ -84,5 +84,5 @@ export default function HouseholdHeadForm({ residents, form, selectedResidentId,
         </form>
       </Form>
     </div>
-  );
+  )
 }
