@@ -5,18 +5,20 @@ import { UseFormReturn } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button/button"
 import { Link } from "react-router"
+import { LoadButton } from "@/components/ui/button/load-button"
 
-export default function AccountRegistrationForm({form, onSubmit} : {
+export default function AccountRegistrationForm({form, isSubmitting, onSubmit} : {
   form: UseFormReturn<z.infer<typeof accountFormSchema>>
+  isSubmitting: boolean
   onSubmit: () => void
 }) {
   return (
     <>
       <div className="grid gap-4">
-        <FormInput control={form.control} name="username" label="Username"/>
-        <FormInput control={form.control} name="email" label="Email"/>
-        <FormInput control={form.control} name="password" label="Enter your password" type="password"/>
-        <FormInput control={form.control} name="confirmPassword" label="Re-enter your password" type="password"/>
+        <FormInput control={form.control} name="username" label="Username" placeholder="Enter username"/>
+        <FormInput control={form.control} name="email" label="Email" placeholder="Enter email (optional)"/>
+        <FormInput control={form.control} name="password" label="Password" placeholder="Enter password" type="password"/>
+        <FormInput control={form.control} name="confirmPassword" label="Confirm Password" placeholder="Re-enter password" type="password"/>
       </div>
       <div className="flex justify-between">
         <Link to="/resident">
@@ -24,13 +26,15 @@ export default function AccountRegistrationForm({form, onSubmit} : {
             Skip for now
           </Button>
         </Link>
-        <ConfirmationModal 
+        {!isSubmitting ? (<ConfirmationModal 
           trigger={<Button>Create</Button>}
           title="Confirm Account Registration"
           description="Are you sure you want to register an account?"
           actionLabel="Confirm"
           onClick={onSubmit}
-        />
+        />) : (
+          <LoadButton>Creating...</LoadButton>
+        )}
       </div>
     </>
   )

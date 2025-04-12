@@ -4,7 +4,7 @@ import { useFieldArray, UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button/button';
 import { Form } from '@/components/ui/form/form';
 import { FormInput } from '@/components/ui/form/form-input';
-import { FormDateInput } from '@/components/ui/form/form-date-input';
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
 import { familyFormSchema } from '@/form-schema/profiling-schema';
@@ -106,7 +106,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
                 { id: 'male', name: 'Male' },
                 { id: 'female', name: 'Female' },
               ]} readOnly/>
-            <FormDateInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" readOnly />
+            <FormDateTimeInput control={form.control} name="dependentsInfo.new.dateOfBirth" label="Date of Birth" type="date" readOnly />
             <div className="flex items-end">
               <Button type="button" onClick={handleAddDependent} className="bg-green-600 hover:bg-green-700 text-white">
                 <Plus /> Dependent

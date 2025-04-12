@@ -1,11 +1,14 @@
 import * as z from "zod";
 
-// Define the schema with custom validation for householdNo
+
 export const demographicInfoSchema = z.object({
   id: z.string(), // For residents living independently
   building: z.string().min(1, "Building is required"),
   householdNo: z.string(),
   indigenous: z.string().min(1, "Indigenous is required"),
+  nhts: z.string().optional(),
+  sitio: z.string().optional(),
+  street: z.string().optional(),
 });
 
 export const personalInfoSchema = z.object({
@@ -50,6 +53,12 @@ export const personalInfoSchema = z.object({
     }),
 });
 
+export const perAddDetails = z.object({
+  bloodType: z.string().optional(),
+  philHealthId: z.string().optional(),
+  covidVaxStatus: z.string().optional(),
+});
+
 export const parentInfoSchema = z.object({
   // To be removed, use personal
   id: z.string(),
@@ -57,12 +66,24 @@ export const parentInfoSchema = z.object({
   firstName: z.string(),
   middleName: z.string(),
   suffix: z.string(),
+  sex: z.string(),
   dateOfBirth: z.string().date(),
   status: z.string(),
   religion: z.string(),
   edAttainment: z.string(),
   contact: z.string(),
 });
+
+export const respondentInfoSchema = z.object({
+  id: z.string(),
+  lastName: z.string(),
+  firstName: z.string(),
+  middleName: z.string(),
+  suffix: z.string(),
+  sex: z.string(),
+  contact: z.string(),
+});
+
 
 export const dependentSchema = z.object({
   id: z.string(),
@@ -74,15 +95,12 @@ export const dependentSchema = z.object({
   sex: z.string(),
 });
 
-export const familyFormSchema = z.object({
-  demographicInfo: demographicInfoSchema,
-  motherInfo: parentInfoSchema,
-  fatherInfo: parentInfoSchema,
-  guardInfo: parentInfoSchema,
-  dependentsInfo: z.object({
-    list: z.array(dependentSchema).default([]),
-    new: dependentSchema,
-  }),
+export const householdHeadSchema = z.object({
+  id: z.string(),
+  lastName: z.string(),
+  firstName: z.string(),
+  middleName: z.string(),
+  sex: z.string(),
 });
 
 export const householdFormSchema = z.object({
@@ -93,6 +111,45 @@ export const householdFormSchema = z.object({
     .min(2, "Address must be at least 2 letters"),
   householdHead: z.string()
 });
+
+export const motherHealthInfo = z.object({
+  healthRiskClass: z.string().optional(),
+  immunizationStatus: z.string().optional(),
+  method: z.array(z.string()).optional(), 
+  source: z.string().optional(),
+});
+
+export const environmentalFormSchema = z.object({
+  waterSupply: z.string().min(1, "Water supply type is required"),
+  facilityType: z.string().min(1, "At least one sanitary facility must be selected"),
+  sanitaryFacilityType: z.string().optional(),
+  unsanitaryFacilityType: z.string().optional(),
+  toiletFacilityType: z.string(),
+  wasteManagement: z
+    .array(z.string())
+    .min(1, "At least one waste management method must be selected"),
+  otherWasteMethod: z.string().optional(),
+});
+
+export const familyFormSchema = z.object({
+  demographicInfo: demographicInfoSchema,
+  motherInfo: parentInfoSchema.extend({
+    healthRelDetails: perAddDetails.optional(),
+    motherHealthInfo: motherHealthInfo.optional(),
+  }),
+  fatherInfo: parentInfoSchema.extend({
+    healthRelDetails: perAddDetails.optional(),
+  }),
+  guardInfo: parentInfoSchema,
+  respondentInfo: respondentInfoSchema,
+  householdHeadInfo: householdHeadSchema,
+  dependentsInfo: z.object({
+    list: z.array(dependentSchema).default([]),
+    new: dependentSchema,
+  }),
+  environmentalForm: environmentalFormSchema,
+});
+
 
 export const businessFormSchema = z.object({
   bus_respondentLname: z.string()
@@ -111,3 +168,4 @@ export const businessFormSchema = z.object({
   bus_street: z.string().min(1, 'Street Address is required'),
   sitio: z.string().min(1, 'Sitio is required')
 });
+

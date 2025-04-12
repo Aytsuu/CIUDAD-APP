@@ -25,26 +25,6 @@ class PersonalUpdateView(generics.RetrieveUpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Mother Views ------------------------------------------------------------------------
-class MotherView(generics.ListCreateAPIView):
-    serializer_class = MotherSerializer
-    queryset = Mother.objects.all()
-
-# Father Views ------------------------------------------------------------------------
-class FatherView(generics.ListCreateAPIView):
-    serializer_class = FatherSerializer
-    queryset = Father.objects.all()
-
-# Guardian Views ----------------------------------------------------------------------
-class GuardianView(generics.ListCreateAPIView):
-    serializer_class = GuardianSerializer
-    queryset = Guardian.objects.all()
-
-# Dependent Views ----------------------------------------------------------------------
-class DependentView(generics.ListCreateAPIView):
-    serializer_class = DependentSerializer
-    queryset = Dependent.objects.all()
-
 # Family Views ------------------------------------------------------------------------
 class FamilyView(generics.ListCreateAPIView):
     serializer_class = FamilyFullSerializer
@@ -52,7 +32,7 @@ class FamilyView(generics.ListCreateAPIView):
 
 # Family Composition Views ------------------------------------------------------------
 class FamilyCompositionView(generics.ListCreateAPIView):
-    serializer_class = FamilyCompositionSerializer
+    serializer_class = FamilyCompositionFullSerializer
     queryset = FamilyComposition.objects.all()
 
 # Sitio Views --------------------------------------------------------------------------
@@ -85,3 +65,7 @@ class RequestDeleteView(generics.DestroyAPIView):
 class BusinessView(generics.ListCreateAPIView):
     serializer_class = BusinessSerializer
     queryset = Business.objects.all()
+
+class BusinessFileView(generics.ListCreateAPIView):
+    serializer_class = BusinessFileSerializer
+    queryset = BusinessFile.objects.all()

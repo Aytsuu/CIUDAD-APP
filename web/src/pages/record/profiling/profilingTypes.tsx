@@ -33,6 +33,10 @@ export type FamilyRecord = {
   registeredBy: string;
 }
 
+export type MemberRecord = {
+  data: React.ReactNode
+}
+
 export type HouseholdRecord = {
   id: string;
   streetAddress: string;
@@ -42,6 +46,10 @@ export type HouseholdRecord = {
   head: string;
   dateRegistered: string;
   registeredBy: string;
+}
+
+export type HouseholdFamRecord = {
+  data: React.ReactNode
 }
 
 export type SitioRecord = {

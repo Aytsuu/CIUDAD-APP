@@ -1,19 +1,12 @@
 from ..models import *
 from .base import *
+from apps.administration.models import Staff
 
 class ResidentProfileMinimalSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
 
     class Meta:
         model = ResidentProfile
-        fields = '__all__'
-
-class DependentSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Dependent
         fields = '__all__'
 
 class HouseholdMinimalSerializer(serializers.ModelSerializer):
@@ -28,6 +21,13 @@ class HouseholdMinimalSerializer(serializers.ModelSerializer):
     def get_staff(self, obj):
         from apps.administration.serializers.minimal import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff, context=self.context).data
+
+class FamilyMinimalSerializer(serializers.ModelSerializer):
+    hh = HouseholdMinimalSerializer(read_only=True)
+
+    class Meta:
+        model = Family
+        fields = '__all__'
     
 class RequestRegistrationSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -37,34 +37,11 @@ class RequestRegistrationSerializer(serializers.ModelSerializer):
         model = RequestRegistration
         fields = '__all__'
 
-class MotherSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Mother
-        fields = '__all__'
-
-class FatherSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Father
-        fields = '__all__'
-
-class GuardianSerializer(serializers.ModelSerializer):
-    rp = ResidentProfileMinimalSerializer(read_only=True)
-    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-
-    class Meta:
-        model = Guardian
-        fields = '__all__'
-
 class BusinessSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)
-    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source="sitio")
+    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio')
     staff = serializers.SerializerMethodField()
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source='staff')
 
     class Meta:
         model = Business
@@ -73,3 +50,17 @@ class BusinessSerializer(serializers.ModelSerializer):
     def get_staff(self,obj):
         from apps.administration.serializers.minimal import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff).data
+
+class FCWithProfileDataSerializer(serializers.ModelSerializer):
+    rp = ResidentProfileMinimalSerializer(read_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
+    class Meta:
+        model = FamilyComposition
+        fields = ['fc_role', 'rp', 'rp_id']
+
+class FCWithFamilyDataSerializer(serializers.ModelSerializer):
+    fam = FamilyMinimalSerializer(read_only=True)
+
+    class Meta: 
+        model = FamilyComposition
+        fields = ['fc_role', 'fam']

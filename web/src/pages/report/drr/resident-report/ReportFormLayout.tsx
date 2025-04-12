@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, MessageSquareWarning, Clock4, ClockAlert, CalendarDays, Trash, ImageOff, ChartBarStacked } from "lucide-react";
 
 // Main component for the DRR Report Form
-export default function DRRReportForm() {
+export default function ReportFormLayout() {
     return (
         // Main container for the form
         <div className="w-full h-full flex flex-col gap-3">

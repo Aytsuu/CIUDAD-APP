@@ -26,26 +26,20 @@ export default function FamilyRecords() {
   // Format family to populate data table
   const formatFamilyData = (): FamilyRecord[] => {
     if (!families) return [];
-
     return families.map((family: any) => {
-      const mother = family?.mother;
-      const father = family?.father;
-      const dependents = family?.dependents;
       const staff = family?.staff?.rp?.per;
-
-      const totalMembers =
-        (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length;
+      const totalMembers = family.family_compositions.length
 
       return {
         id: family.fam_id || "-",
-        noOfMembers: totalMembers || 1,
+        noOfMembers: totalMembers || "-",
         building: family.fam_building || "-",
         indigenous: family.fam_indigenous || "-",
         dateRegistered: family.fam_date_registered || "-",
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   };
@@ -69,8 +63,8 @@ export default function FamilyRecords() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  if (isLoadingFamilies || isLoadingResidents || isLoadingHouseholds) {
+  if (isLoadingFamilies || isLoadingResidents || 
+    isLoadingHouseholds) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />

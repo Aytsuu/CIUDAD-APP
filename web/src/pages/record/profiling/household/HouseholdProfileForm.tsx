@@ -28,24 +28,26 @@ export default function HouseholdProfileForm({
   return (
     <>
       <div className="grid gap-2">
+        <div className="flex justify-between items-center">
+          <Label className="text-black/70">Household Head</Label>
+        </div>
         <Combobox
           options={residents}
           value={form.watch("householdHead")}
           onChange={(value) => form.setValue("householdHead", value)}
           placeholder="Select a household head"
-          emptyMessage="No resident found"
+          emptyMessage={
+            <div className="flex gap-2 justify-center items-center">
+              <Label className="font-normal text-[13px]">No resident found.</Label>
+              <Link to="/resident/form">
+                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                  Register
+                </Label>
+              </Link>
+            </div>
+          }
         />
-        <div className="flex justify-between">
-          <Label className="text-[13px] text-red-500">{invalidHouseHead ? `Household head is required` : ''} </Label>
-          <div className="flex gap-2 justify-end items-center">
-            <Label className="font-normal">Resident not found?</Label>
-            <Link to="/resident-form">
-              <Label className="font-normal text-teal cursor-pointer hover:underline">
-                Register
-              </Label>
-            </Link>
-          </div>
-        </div>
+        <Label className="text-[13px] text-red-500">{invalidHouseHead ? `Household head is required` : ''} </Label>
       </div>
       <FormSelect
         control={form.control}

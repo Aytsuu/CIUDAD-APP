@@ -7,18 +7,6 @@ urlpatterns = [
     path("personal/", PersonalView.as_view(), name="personal-details-list"),
     path("personal/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
 
-    # Mother Urls
-    path("mother/", MotherView.as_view(), name="mother-details"),
-
-    # Father Urls
-    path("father/", FatherView.as_view(), name="father-details"),
-
-    # Guardian Urls
-    path("guardian/", GuardianView.as_view(), name="guardian-details"),
-
-    # Dependent Urls
-    path("dependent/", DependentView.as_view(), name="dependent-details"),
-
     # Family Urls
     path("family/", FamilyView.as_view(), name="family-details"),
 
@@ -39,6 +27,7 @@ urlpatterns = [
     path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
 
     # Business Urls
-    path("business/", BusinessView.as_view(), name="business-details")
+    path("business/", BusinessView.as_view(), name="business-details"),
+    path("business/file/", BusinessFileView.as_view(), name="business-files"),
 
 ]

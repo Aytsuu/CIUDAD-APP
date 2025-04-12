@@ -2,97 +2,84 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { DataTable } from "@/components/ui/table/data-table";
-import { dependentViewColumns } from "./FamilyColumns";
+import { familyViewColumns } from "./FamilyColumns";
 import { useLocation } from "react-router";
-import { DependentRecord } from "../profilingTypes";
+import { MemberRecord } from "../profilingTypes";
 import CardLayout from "@/components/ui/card/card-layout";
-import { MoveRight } from "lucide-react";
+import { Card } from "@/components/ui/card/card";
 
-export default function FamilyRecordView(){
+export default function FamilyRecordView() {
+  const location = useLocation();
+  const params = React.useMemo(
+    () => location.state?.params || {},
+    [location.state]
+  );
+  const family = React.useMemo(() => params.data, [params]);
+  const staff = React.useMemo(() => family.staff.rp.per, [family]);
 
-    const location = useLocation();
+  const formatMemberData = React.useCallback((): MemberRecord[] => {
+    const compositions = family.family_compositions;
+    if (!compositions) return [];
 
-    const params = React.useMemo(()=> location.state?.params || {}, [location.state]);
-    const motherInfo = React.useMemo(() => params.data.mother?.rp || {}, [params.data]);
-    const fatherInfo = React.useMemo(() => params.data.father?.rp || {}, [params.data]);
+    return compositions.map((comp: any) => {
+      return {
+        data: comp,
+      };
+    });
+  }, [family.family_compositions]);
 
-    const formatDependentData = React.useCallback((): DependentRecord[] => {
-
-        const dependents = params.data.dependents
-        if (!dependents) return [];
-
-        return dependents.map((dependent: any) => {
-
-            const profile = dependent.rp
-            const personalInfo = profile.per
-
-            return {
-                id: profile.rp_id || '',
-                lname: personalInfo.per_lname || '',
-                fname: personalInfo.per_fname || '',
-                mname: personalInfo.per_mname || '',
-                suffix: personalInfo.per_suffix || '',
-                sex: personalInfo.per_sex || '',
-                dateOfBirth: personalInfo.per_dob || ''
-            }
-        })
-
-    }, [params.data.dependents]);
-
-    return (
-        <LayoutWithBack
-            title="Family Details"
-            description="View family details, including family number, date registered and associated members."
-        >
-            <div className="w-full mb-4">
-                <CardLayout 
-                    content={
-                        <div className="w-full flex justify-between">
-                            <Label>Family No. : {params.data.fam_id}</Label>
-                            <Label>Indigenous : {params.data.fam_indigenous}</Label>
-                            <Label>Household No. : {params.data.hh.hh_id}</Label>
-                            <Label>Date Registered : {params.data.fam_date_registered}</Label>
-                            <Label>Registered By: {params.data.staff.staff_id}</Label>
-                        </div>
-                    }
-                />
+  return (
+    <LayoutWithBack
+      title="Family Details"
+      description="View family details, including family number, date registered and associated members."
+    >
+      <div className="w-full mb-4">
+        <CardLayout
+          content={
+            <div className="w-full flex justify-between">
+              <Label>Family No. : {family.fam_id}</Label>
+              <Label>Household No. : {family.hh.hh_id}</Label>
+              <Label>Indigenous : {family.fam_indigenous}</Label>
+              <Label>Date Registered : {family.fam_date_registered}</Label>
+              <Label>
+                Registered By :{" "}
+                {`${staff.per_lname}, ${staff.per_fname}
+                ${staff.per_mname ? staff.per_mname[0] + "." : ""}`}
+              </Label>
             </div>
+          }
+        />
+      </div>
 
-            <div className="w-full flex gap-4 mb-4">
-                <CardLayout 
-                    title="Father"
-                    content={<InfoLayout {...fatherInfo} />}
-                    cardClassName="w-full"
-                />
-                <CardLayout 
-                    title="Mother"
-                    content={<InfoLayout {...motherInfo} />}
-                    cardClassName="w-full"
-                />
-                <CardLayout 
-                    title="Guardian"
-                    content={<InfoLayout {...motherInfo} />}
-                    cardClassName="w-full"
-                />
-            </div>
-            
-            <CardLayout 
-                title="Dependents"
-                content={<DataTable columns={dependentViewColumns()} data={formatDependentData()} />}
-            />
-        </LayoutWithBack>
-    );
-
-}
-
-export const InfoLayout = React.memo((info: any) => (
-    <div className="grid gap-2">
-        <div className="w-full grid grid-cols-2">
-            <Label>Resident (#): {info?.rp_id}</Label>
-            <Label>Name: {info?.per?.per_fname} {info?.per?.per_mname} {info?.per?.per_lname}</Label>
-            <Label>Date of Birth: {info?.per?.per_dob}</Label>
-            <Label>Contact: {info?.per?.per_contact}</Label>
-            <Label>Educational Attainment: {info?.per?.per_edAttainment}</Label>
+      <Card className="p-5">
+        <div className="p-3 mb-2">
+          <Label className="text-[18px] text-darkBlue1">List of Members</Label>
+          <p className="text-sm text-black/70">
+            A list overview of all members in the selected family, including key
+            details.
+          </p>
         </div>
-    </div>
-))
+        <div className="w-full flex px-6 py-4">
+          <div className="w-full grid grid-cols-8 items-center justify-center">
+            <Label className="text-black/50">Resident No.</Label>
+            <div className="w-full flex flex-col col-span-2 items-start gap-1">
+              <Label className="text-black/50">Name</Label>
+            </div>
+            <Label className="text-black/50">Sex</Label>
+            <Label className="text-black/50">Age</Label>
+            <Label className="text-black/50">Date of Birth</Label>
+            <Label className="text-black/50">Marital Status</Label>
+            <Label className="text-black/50">Role</Label>
+          </div>
+          <div className="w-1/12 flex justify-end items-center">
+          </div>
+        </div>
+        <DataTable
+          columns={familyViewColumns()}
+          data={formatMemberData()}
+          header={false}
+        />
+      </Card>
+    </LayoutWithBack>
+  );
+}

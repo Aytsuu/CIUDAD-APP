@@ -16,7 +16,8 @@ import { Form } from "@/components/ui/form/form";
 import { useLocation } from "react-router";
 import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues";
 import { personal } from "@/pages/record/health/patientsRecord/patientPostRequest";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Combobox } from "@/components/ui/combobox";
@@ -128,7 +129,7 @@ export default function CreatePatientRecord() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormSelect control={form.control} name="gender" label="Sex" options={[{ id: "female", name: "Female" }, { id: "male", name: "Male" },]}/>
                     <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} />
-                    <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth"/>            
+                    <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth"/>            
                     <FormSelect control={form.control} name="patientType" label="Patient Type" options={[{ id: "Resident", name: "Resident" }, { id: "Transient", name: "Transient" },]}/>
                   </div>
 
