@@ -86,8 +86,8 @@ class Family(models.Model):
 class FamilyComposition(models.Model):
     fc_id = models.BigAutoField(primary_key=True)
     fc_role = models.CharField(max_length=50)
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='compositions')
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='compositions')
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family_compositions')
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='family_compositions')
 
     class Meta:
         db_table = 'family_composition'

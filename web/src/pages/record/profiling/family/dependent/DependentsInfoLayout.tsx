@@ -118,7 +118,7 @@ export default function DependentsInfoLayout({
       toast('Family Registration', {
         description: "Must have atleast one dependent.",
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-      })
+      });
       return;
     }
 
@@ -154,7 +154,7 @@ export default function DependentsInfoLayout({
     toast("Record added successfully", {
       icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
     });
-    
+
     navigate(-1);
     setIsSubmitting(false);
     form.reset(defaultValues);

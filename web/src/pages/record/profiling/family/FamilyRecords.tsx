@@ -10,7 +10,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
 import { FamilyRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFamilies, useFamilyComposition, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
+import { useFamilies, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -19,18 +19,15 @@ export default function FamilyRecords() {
   const [currentPage, setCurrentPage] = React.useState(1);
 
   const { data: families, isLoading: isLoadingFamilies } = useFamilies();
-  const { data: familyComposition, isLoading: isLoadingFamilyComposition} = useFamilyComposition();
   const { data: residents, isLoading: isLoadingResidents } = useResidents();
   const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format family to populate data table
   const formatFamilyData = (): FamilyRecord[] => {
-    if (!families || !familyComposition) return [];
+    if (!families) return [];
     return families.map((family: any) => {
       const staff = family?.staff?.rp?.per;
-      const totalMembers = familyComposition?.filter((composition: any) =>
-         composition.fam.fam_id === family.fam_id
-      ).length
+      const totalMembers = family.family_compositions.length
 
       return {
         id: family.fam_id || "-",
@@ -41,7 +38,7 @@ export default function FamilyRecords() {
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   };
@@ -57,7 +54,7 @@ export default function FamilyRecords() {
     );
 
     return filtered;
-  }, [searchQuery, families, familyComposition]);
+  }, [searchQuery, families]);
 
   const totalPages = Math.ceil(filteredFamilies.length / pageSize);
 
@@ -66,7 +63,7 @@ export default function FamilyRecords() {
     currentPage * pageSize
   );
   if (isLoadingFamilies || isLoadingResidents || 
-    isLoadingHouseholds || isLoadingFamilyComposition) {
+    isLoadingHouseholds) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -157,7 +154,7 @@ export default function FamilyRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={familyColumns(familyComposition)}
+            columns={familyColumns(families)}
             data={paginatedFamilies}
           />
         </div>

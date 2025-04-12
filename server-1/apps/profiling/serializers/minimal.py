@@ -21,6 +21,13 @@ class HouseholdMinimalSerializer(serializers.ModelSerializer):
     def get_staff(self, obj):
         from apps.administration.serializers.minimal import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff, context=self.context).data
+
+class FamilyMinimalSerializer(serializers.ModelSerializer):
+    hh = HouseholdMinimalSerializer(read_only=True)
+
+    class Meta:
+        model = Family
+        fields = '__all__'
     
 class RequestRegistrationSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -43,3 +50,17 @@ class BusinessSerializer(serializers.ModelSerializer):
     def get_staff(self,obj):
         from apps.administration.serializers.minimal import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff).data
+
+class FCWithProfileDataSerializer(serializers.ModelSerializer):
+    rp = ResidentProfileMinimalSerializer(read_only=True)
+    rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
+    class Meta:
+        model = FamilyComposition
+        fields = ['fc_role', 'rp', 'rp_id']
+
+class FCWithFamilyDataSerializer(serializers.ModelSerializer):
+    fam = FamilyMinimalSerializer(read_only=True)
+
+    class Meta: 
+        model = FamilyComposition
+        fields = ['fc_role', 'fam']

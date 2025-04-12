@@ -39,13 +39,13 @@ export default function HouseholdRecords() {
           (`${personal.per_lname},
            ${personal.per_fname} 
            ${personal.per_mname ? 
-            personal.per_mname?.slice(0, 1) + '.' : ''
+            personal.per_mname[0] + '.' : ''
           }` || "-"),
         dateRegistered: house.hh_date_registered || "-",
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   }, [households]);

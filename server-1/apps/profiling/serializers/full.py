@@ -6,8 +6,7 @@ from apps.account.serializers import UserAccountSerializer
 
 class ResidentProfileFullSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
-    compositions = FamilyCompositionSerializer(many=True, read_only=True)
-    family = serializers.SerializerMethodField()
+    family_compositions = FCWithFamilyDataSerializer(many=True, read_only=True)
     per_id = serializers.PrimaryKeyRelatedField(
         queryset=Personal.objects.all(), 
         write_only=True, 
@@ -20,10 +19,6 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = '__all__'
-
-    def get_family(self, obj):
-        family = Family.objects.filter(compositions__rp=obj).distinct()
-        return FamilyFullSerializer(family, many=True, context=self.context).data
     
     def get_staff(self, obj):
         from apps.administration.serializers.full import StaffFullSerializer
@@ -53,6 +48,7 @@ class HouseholdFullSerializer(serializers.ModelSerializer):
 class FamilyFullSerializer(serializers.ModelSerializer):
     hh = HouseholdMinimalSerializer(read_only=True)
     staff = serializers.SerializerMethodField()
+    family_compositions = FCWithProfileDataSerializer(many=True, read_only=True)
 
     hh_id = serializers.PrimaryKeyRelatedField(queryset=Household.objects.all(), write_only=True, source="hh")
     staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff")    

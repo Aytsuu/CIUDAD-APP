@@ -2,7 +2,8 @@ import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { HouseholdRecord } from "../profilingTypes";
+import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
+import { Label } from "@/components/ui/label";
 
 // Define the columns for household the data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -86,6 +87,53 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
         </Link>
     )
   },
+]
+
+export const householdFamColumns = (): ColumnDef<HouseholdFamRecord>[] => [
+  {
+    accessorKey: 'data',
+    header: '',
+    cell: ({ row }) => {
+      const family = row.getValue('data') as any;
+      const totalMembers = family.family_compositions.length;
+      const staff = family.staff.rp.per;
+
+      return (
+        <div className="w-full border shadow-md flex p-4 rounded-lg">
+          <div className="w-full grid grid-cols-7 items-center justify-center">
+            <div className="w-full flex flex-col items-start gap-1">
+              <Label className="text-black/70">{family.fam_id}</Label>
+            </div>
+            <div className="w-full flex flex-col items-start gap-1">
+              <Label className="text-black/70">{totalMembers}</Label>
+            </div>
+            <div className="w-full flex flex-col items-start gap-1">
+              <Label className="text-black/70">{family.fam_building}</Label>
+            </div>
+            <div className="w-full flex flex-col items-start gap-1">
+              <Label className="text-black/70">{family.fam_indigenous}</Label>
+            </div>
+            <div className="w-full flex flex-col items-start gap-1">
+              <Label className="text-black/70">{family.fam_date_registered}</Label>
+            </div>
+            <div className="w-full flex flex-col items-start gap-1">
+              <Label className="text-black/70">
+              {`${staff.per_lname}, ${staff.per_fname} 
+              ${staff.per_mname ? staff.per_mname[0] + '.' : ''}`}
+              </Label>
+            </div>
+          </div>
+          <div className="w-1/12 flex justify-end items-center">
+            <Link to="">
+              <Button>
+                View <MoveRight/>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      );
+    }
+  }
 ]
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------

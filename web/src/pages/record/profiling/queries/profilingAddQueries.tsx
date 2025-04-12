@@ -81,7 +81,6 @@ export const useAddFamily = () => {
 };
 
 export const useAddFamilyComposition = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       familyId,
@@ -91,15 +90,7 @@ export const useAddFamilyComposition = () => {
       familyId: string;
       role: string;
       residentId: string;
-    }) => addFamilyComposition(familyId, role, residentId),
-    onSuccess: (newData) => {
-      queryClient.setQueryData(["familyComposition"], (old: any[] = []) => [
-        ...old,
-        newData
-      ]);
-
-      queryClient.invalidateQueries({queryKey: ["familyComposition"]});
-    }
+    }) => addFamilyComposition(familyId, role, residentId)
   });
 };
 
