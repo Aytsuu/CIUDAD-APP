@@ -1,15 +1,19 @@
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoveRight } from "lucide-react";
+import { ArrowUpDown, CircleMinus, Loader2, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { FamilyRecord, MemberRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useDeleteFamilyComposition } from "../queries/profilingDeleteQueries";
 
 // Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
+export const familyColumns = (
+  families: any[]
+): ColumnDef<FamilyRecord>[] => [
   {
     accessorKey: "id",
     header: ({ column }) => (
@@ -66,7 +70,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
         to="/family/view"
         state={{
           params: {
-            data: families.find((family) => family.fam_id == row.original.id),
+            data: families.find((family) => family.fam_id == row.original.id)
           },
         }}
       >
@@ -80,7 +84,7 @@ export const familyColumns = (families: any[]): ColumnDef<FamilyRecord>[] => [
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const familyViewColumns = (): ColumnDef<MemberRecord>[] => [
+export const familyViewColumns = (familyId: string): ColumnDef<MemberRecord>[] => [
   {
     accessorKey: "data",
     header: "",
@@ -105,7 +109,7 @@ export const familyViewColumns = (): ColumnDef<MemberRecord>[] => [
             <div className="w-full flex flex-col items-start gap-1">
               <Label className="text-black/70">{personal.per_sex}</Label>
             </div>
-            <div className="w-full flex flex-col items-start gap-1">
+            <div className="w-full flex flex-col items-start gap-1 opac">
               <Label className="text-black/70">
                 {calculateAge(personal.per_dob)}
               </Label>
@@ -131,4 +135,40 @@ export const familyViewColumns = (): ColumnDef<MemberRecord>[] => [
       );
     },
   },
+  {
+    accessorKey: "action",
+    header: "",
+    cell: ({ row }) => {
+      const composition = row.getValue("data") as any;
+      const residentId = composition.rp.rp_id;
+      const { mutate: deleteFamilyComposition, isPending} = useDeleteFamilyComposition();
+
+      const remove = () => {
+        deleteFamilyComposition({
+          familyId: familyId,
+          residentId: residentId
+        })
+      };
+
+      return (
+        <div className="flex justify-center items-center">
+          {!isPending ? (<ConfirmationModal 
+            trigger= {
+              <CircleMinus 
+                size={27}
+                className="fill-red-500 stroke-white cursor-pointer"
+              />
+            }
+            title="Confirm Removal"
+            description="Are you sure you want to remove this member?"
+            actionLabel="Confirm"
+            onClick={remove}
+            variant="destructive"
+          />) : (
+            <Loader2 className="animate-spin"/>
+          )}
+        </div>
+      )
+    }
+  }
 ];

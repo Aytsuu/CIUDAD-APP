@@ -10,7 +10,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { CircleAlert, CircleCheck, Trash } from "lucide-react";
 import { toast } from "sonner";
-import { replace, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
 import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAddQueries";
@@ -57,7 +57,9 @@ export default function DependentsInfoLayout({
       }));
 
       // Update the state with the transformed data
-      setDependentsList(transformedData);
+      if(transformedData.length > 0) {
+        setDependentsList(transformedData);
+      }
     }
   }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
 

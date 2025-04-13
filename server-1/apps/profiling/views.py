@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
-
+from django.shortcuts import get_object_or_404
 from .models import *
 from .serializers.base import *
 from .serializers.minimal import *
@@ -34,6 +34,17 @@ class FamilyView(generics.ListCreateAPIView):
 class FamilyCompositionView(generics.ListCreateAPIView):
     serializer_class = FamilyCompositionFullSerializer
     queryset = FamilyComposition.objects.all()
+
+class FamilyCompositionDeleteView(generics.DestroyAPIView):
+    serializer_class = FamilyCompositionSerializer
+    queryset = FamilyComposition.objects.all()
+    
+    def get_object(self):
+        fam_id = self.kwargs.get('fam')
+        rp_id = self.kwargs.get('rp')
+
+        obj = get_object_or_404(FamilyComposition, fam_id=fam_id, rp_id=rp_id)
+        return obj
 
 # Sitio Views --------------------------------------------------------------------------
 class SitioView(generics.ListCreateAPIView):

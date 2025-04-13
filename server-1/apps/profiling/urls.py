@@ -12,6 +12,7 @@ urlpatterns = [
 
     # Family Composition Urls
     path("family-composition/", FamilyCompositionView.as_view(), name="family-composition-details"),
+    path("family-composition/delete/<str:fam>/<str:rp>/", FamilyCompositionDeleteView.as_view(), name="family-composition-delete"),
 
     # Sitio Urls
     path("sitio/", SitioView.as_view(), name="sitio-list"),
@@ -24,7 +25,7 @@ urlpatterns = [
 
     # Request Urls
     path("request/", RequestRegistrationView.as_view(), name="request-details"),
-    path("request/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+    path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
 
     # Business Urls
     path("business/", BusinessView.as_view(), name="business-details"),

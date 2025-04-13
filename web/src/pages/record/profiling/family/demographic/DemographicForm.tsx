@@ -99,7 +99,7 @@ export default function DemographicForm({
             <FormSelect
               control={form.control}
               name="demographicInfo.indigenous"
-              label="Inigenous People"
+              label="Indigenous People"
               options={[
                 { id: "no", name: "No" },
                 { id: "yes", name: "Yes" },

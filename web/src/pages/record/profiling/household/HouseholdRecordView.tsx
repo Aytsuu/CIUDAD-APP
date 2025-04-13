@@ -73,11 +73,11 @@ export default function HouseholdRecordView() {
             <Label className="text-black/50">Family No.</Label>
             <Label className="text-black/50">No. of Members</Label>
             <Label className="text-black/50">Building</Label>
-            <Label className="text-black/50">Indgenous</Label>
+            <Label className="text-black/50">Indigenous</Label>
             <Label className="text-black/50">Date Registered</Label>
             <Label className="text-black/50">Registered By</Label>
           </div>
-          <div className="w-1/12 flex justify-end items-center">
+          <div className="w-[14.5%] flex justify-end items-center">
           </div>
         </div>
         <DataTable

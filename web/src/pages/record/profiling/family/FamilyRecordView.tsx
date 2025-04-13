@@ -52,12 +52,14 @@ export default function FamilyRecordView() {
       </div>
 
       <Card className="p-5">
-        <div className="p-3 mb-2">
-          <Label className="text-[18px] text-darkBlue1">List of Members</Label>
-          <p className="text-sm text-black/70">
-            A list overview of all members in the selected family, including key
-            details.
-          </p>
+        <div className="flex justify-between p-3 mb-2">
+          <div>
+            <Label className="text-[18px] text-darkBlue1">List of Members</Label>
+            <p className="text-sm text-black/70">
+              A list overview of all members in the selected family, including key
+              details.
+            </p>
+          </div>
         </div>
         <div className="w-full flex px-6 py-4">
           <div className="w-full grid grid-cols-8 items-center justify-center">
@@ -71,11 +73,11 @@ export default function FamilyRecordView() {
             <Label className="text-black/50">Marital Status</Label>
             <Label className="text-black/50">Role</Label>
           </div>
-          <div className="w-1/12 flex justify-end items-center">
+          <div className="w-[14.5%] flex justify-end items-center">
           </div>
         </div>
         <DataTable
-          columns={familyViewColumns()}
+          columns={familyViewColumns(family.fam_id)}
           data={formatMemberData()}
           header={false}
         />

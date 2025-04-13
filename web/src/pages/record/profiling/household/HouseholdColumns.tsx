@@ -1,9 +1,10 @@
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoveRight } from "lucide-react";
+import { ArrowUpDown, CircleMinus, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Define the columns for household the data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -89,6 +90,8 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
   },
 ]
 
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
 export const householdFamColumns = (): ColumnDef<HouseholdFamRecord>[] => [
   {
     accessorKey: 'data',
@@ -133,7 +136,28 @@ export const householdFamColumns = (): ColumnDef<HouseholdFamRecord>[] => [
         </div>
       );
     }
+  },
+  {
+    accessorKey: "action",
+    header: "",
+    cell: ({ row }) => {
+
+      return (
+        <div className="flex justify-center items-center">
+          <ConfirmationModal 
+            trigger= {
+              <CircleMinus 
+                size={27}
+                className="fill-red-500 stroke-white cursor-pointer"
+              />
+            }
+            title="Confirm Removal"
+            description="Are you sure you want to remove this member?"
+            actionLabel="Confirm"
+            variant="destructive"
+          />
+        </div>
+      )
+    }
   }
 ]
-
-// -----------------------------------------------------------------------------------------------------------------------------------------------------------
