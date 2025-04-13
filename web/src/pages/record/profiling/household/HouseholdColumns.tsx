@@ -1,15 +1,17 @@
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleMinus, MoveRight } from "lucide-react";
+import { ArrowUpDown, CircleChevronRight, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Define the columns for household the data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[] => [
+export const householdColumns = (
+  residents: any[],
+  households: any[]
+): ColumnDef<HouseholdRecord>[] => [
   {
     accessorKey: 'id',
     header: ({ column }) => (
@@ -80,7 +82,12 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
     header: 'Action',
     cell: ({ row }) => (
         <Link to="/household/view" 
-          state={{params: {data: households.find((household) => household.hh_id == row.original.id)}}}
+          state={{
+            params: {
+              residents: residents,
+              household: households.find((household) => household.hh_id == row.original.id)
+            }
+          }}
         >
           <Button variant={"outline"}>
               View <MoveRight/>
@@ -92,7 +99,9 @@ export const householdColumns = (households: any[]): ColumnDef<HouseholdRecord>[
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const householdFamColumns = (): ColumnDef<HouseholdFamRecord>[] => [
+export const householdFamColumns = (
+  residents: any[]
+): ColumnDef<HouseholdFamRecord>[] => [
   {
     accessorKey: 'data',
     header: '',
@@ -127,37 +136,31 @@ export const householdFamColumns = (): ColumnDef<HouseholdFamRecord>[] => [
             </div>
           </div>
           <div className="w-1/12 flex justify-end items-center">
-            <Link to="">
-              <Button>
-                View <MoveRight/>
-              </Button>
+            <Link to="/family/view"
+              state={{
+                params: {
+                  residents: residents,
+                  family: family
+                }
+              }}
+            >
+              <div className="group flex justify-center items-center gap-2 px-3 py-2
+                        rounded-lg border-none shadow-none hover:bg-muted
+                        transition-colors duration-200 ease-in-out">
+                <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
+                        transition-colors duration-200 ease-in-out">
+                  View
+                </Label> 
+                <CircleChevronRight
+                  size={35}
+                  className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
+                      group-hover:stroke-white transition-all duration-200 ease-in-out"
+                />
+              </div>
             </Link>
           </div>
         </div>
       );
     }
   },
-  {
-    accessorKey: "action",
-    header: "",
-    cell: ({ row }) => {
-
-      return (
-        <div className="flex justify-center items-center">
-          <ConfirmationModal 
-            trigger= {
-              <CircleMinus 
-                size={27}
-                className="fill-red-500 stroke-white cursor-pointer"
-              />
-            }
-            title="Confirm Removal"
-            description="Are you sure you want to remove this member?"
-            actionLabel="Confirm"
-            variant="destructive"
-          />
-        </div>
-      )
-    }
-  }
 ]

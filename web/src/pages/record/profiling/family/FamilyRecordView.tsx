@@ -14,7 +14,8 @@ export default function FamilyRecordView() {
     () => location.state?.params || {},
     [location.state]
   );
-  const family = React.useMemo(() => params.data, [params]);
+  const residents = React.useMemo(() => params.residents, [params])
+  const family = React.useMemo(() => params.family, [params]);
   const staff = React.useMemo(() => family.staff.rp.per, [family]);
 
   const formatMemberData = React.useCallback((): MemberRecord[] => {
@@ -62,7 +63,7 @@ export default function FamilyRecordView() {
           </div>
         </div>
         <div className="w-full flex px-6 py-4">
-          <div className="w-full grid grid-cols-8 items-center justify-center">
+          <div className="w-full grid grid-cols-9 items-center justify-center">
             <Label className="text-black/50">Resident No.</Label>
             <div className="w-full flex flex-col col-span-2 items-start gap-1">
               <Label className="text-black/50">Name</Label>
@@ -71,13 +72,13 @@ export default function FamilyRecordView() {
             <Label className="text-black/50">Age</Label>
             <Label className="text-black/50">Date of Birth</Label>
             <Label className="text-black/50">Marital Status</Label>
-            <Label className="text-black/50">Role</Label>
+            <Label className="text-yellow-500">Role</Label>
           </div>
           <div className="w-[14.5%] flex justify-end items-center">
           </div>
         </div>
         <DataTable
-          columns={familyViewColumns(family.fam_id)}
+          columns={familyViewColumns(residents, family)}
           data={formatMemberData()}
           header={false}
         />

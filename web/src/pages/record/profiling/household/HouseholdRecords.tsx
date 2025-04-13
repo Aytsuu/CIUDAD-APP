@@ -155,7 +155,7 @@ export default function HouseholdRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={householdColumns(households)}
+            columns={householdColumns(residents, households)}
             data={paginatedHouseholds}
           />
         </div>

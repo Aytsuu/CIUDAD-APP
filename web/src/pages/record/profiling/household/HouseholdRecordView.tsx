@@ -7,7 +7,6 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { HouseholdFamRecord } from "../profilingTypes";
 import { householdFamColumns } from "./HouseholdColumns";
 import { Card } from "@/components/ui/card/card";
-import { Separator } from "@/components/ui/separator";
 
 export default function HouseholdRecordView() {
   const location = useLocation();
@@ -15,7 +14,8 @@ export default function HouseholdRecordView() {
     () => location.state?.params || {},
     [location.state]
   );
-  const household = React.useMemo(() => params?.data || {}, [params]);
+  const residents = React.useMemo(() => params.residents, [params]);
+  const household = React.useMemo(() => params.household || {}, [params]);
   const head = React.useMemo(() => household.rp || {}, [household]);
   const personal = React.useMemo(() => head.per || {}, [head]);
 
@@ -77,11 +77,11 @@ export default function HouseholdRecordView() {
             <Label className="text-black/50">Date Registered</Label>
             <Label className="text-black/50">Registered By</Label>
           </div>
-          <div className="w-[14.5%] flex justify-end items-center">
+          <div className="w-1/12 flex justify-end items-center">
           </div>
         </div>
         <DataTable
-            columns={householdFamColumns()}
+            columns={householdFamColumns(residents)}
             data={formatFamilyData()}
             header={false}
           />
