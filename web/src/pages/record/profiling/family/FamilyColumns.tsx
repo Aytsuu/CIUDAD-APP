@@ -77,9 +77,19 @@ export const familyColumns = (
           },
         }}
       >
-        <Button variant={"outline"}>
-          View <MoveRight />
-        </Button>
+        <div className="group flex justify-center items-center gap-2 px-3 py-2
+                rounded-lg border-none shadow-none hover:bg-muted
+                transition-colors duration-200 ease-in-out">
+        <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
+                transition-colors duration-200 ease-in-out">
+          View
+        </Label> 
+        <CircleChevronRight
+          size={35}
+          className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
+              group-hover:stroke-white transition-all duration-200 ease-in-out"
+        />
+      </div>
       </Link>
     ),
   },
@@ -181,6 +191,7 @@ export const familyViewColumns = (
           toast('Family must have atleast 1 member(s)', {
            icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
           })
+          return;
         }
 
         deleteFamilyComposition({

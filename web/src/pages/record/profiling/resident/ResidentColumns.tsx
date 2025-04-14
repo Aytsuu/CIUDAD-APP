@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
-import { ArrowUpDown, CircleAlert, MoveRight, UserRoundCheck, UserRoundX } from "lucide-react";
+import { ArrowUpDown, CircleAlert, CircleChevronRight, UserRoundCheck, UserRoundX } from "lucide-react";
 import { ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Label } from "@/components/ui/label";
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -20,7 +20,13 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
           {account ? (<UserRoundCheck size={18} className="text-green-500"/>) : (
             <TooltipLayout 
               trigger={
-                <Link to="/account/create">
+                <Link to="/account/create"
+                  state={{
+                    params: {
+                      residentId: row.original.id
+                    }
+                  }}
+                >
                   <UserRoundX size={18} className="text-red-500"/>
                 </Link> 
               }
@@ -188,9 +194,19 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
           }
         }}
       >
-        <Button variant="outline">
-          View <MoveRight/>
-        </Button>
+        <div className="group flex justify-center items-center gap-2 px-3 py-2
+                  rounded-lg border-none shadow-none hover:bg-muted
+                  transition-colors duration-200 ease-in-out">
+          <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
+                  transition-colors duration-200 ease-in-out">
+            View
+          </Label> 
+          <CircleChevronRight
+            size={35}
+            className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
+                group-hover:stroke-white transition-all duration-200 ease-in-out"
+          />
+        </div>
       </Link>
     ),
     enableSorting: false,

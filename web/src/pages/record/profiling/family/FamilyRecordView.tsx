@@ -74,7 +74,7 @@ export default function FamilyRecordView() {
             <Label className="text-black/50">Marital Status</Label>
             <Label className="text-yellow-500">Role</Label>
           </div>
-          <div className="w-[14.5%] flex justify-end items-center">
+          <div className="w-[14%] flex justify-end items-center">
           </div>
         </div>
         <DataTable
