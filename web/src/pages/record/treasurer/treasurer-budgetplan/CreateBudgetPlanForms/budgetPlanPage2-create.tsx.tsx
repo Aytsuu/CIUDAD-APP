@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { FormData, CurrentExpenditureMaintandOtherExpensesSchema1 } from "@/form-schema/budgetplan-create-schema";
+import { FormData, CurrentExpenditureMaintandOtherExpensesSchema1 } from "@/form-schema/treasurer/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";

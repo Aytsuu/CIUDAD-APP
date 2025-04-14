@@ -1,12 +1,12 @@
 import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import BudgetHeaderSchema from "@/form-schema/budgetplan-header-schema";
+import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod"
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import BudgetAllocationSchema from "@/form-schema/budget-allocation-schema";
+import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
 import BudgetAllocationForm from "./treasurer_budget_allocation_form";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";

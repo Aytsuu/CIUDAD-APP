@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/budgetplan-create-schema";
+import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/treasurer/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useRef, useState } from "react";
@@ -58,7 +58,6 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [isOverLimit, setOverLimit] = useState(false);
 
     const toastId = useRef<string | number | null>(null);
-    const isOverBudget = useRef(false);
     const localDevBudgetLimit = taxAllotment * (localDevLimit/100);
     const skBudgetLimit = availableResources * (skFundLimit/100);
     const calamityFundBudgetLimit = availableResources * (calamityFundLimit/100);

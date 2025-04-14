@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { CurrentExpendituresPersonalServicesSchema, FormData } from "@/form-schema/budgetplan-create-schema";
+import { CurrentExpendituresPersonalServicesSchema, FormData } from "@/form-schema/treasurer/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState, useRef } from "react";
@@ -53,10 +53,12 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         defaultValues: formData,
     });
 
+    // Field Watcher 
     const { watch } = form;
     const formValues = watch();
     const toastId = useRef<string | number | null> (null);
 
+    // Auto Update
     useEffect(() => {
         updateFormData(formValues);
     }, [formValues, updateFormData]);

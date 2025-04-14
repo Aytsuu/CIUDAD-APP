@@ -1,7 +1,6 @@
 import { FormInput } from "@/components/ui/form/form-input";
-import { AllocationEditSchema } from "@/form-schema/budgetplanheaderandallocation-schema";
+import { AllocationEditSchema } from "@/form-schema/treasurer/budgetplanheaderandallocationEdit-schema";
 import { UseFormReturn } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useLocation } from "react-router";
 

@@ -6,11 +6,12 @@ import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests
 import BarangayService from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-barangayService";
 import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budget-plan-main";
 import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
-import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-Form";
+import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/CreateBudgetPlanForms/treasurer-budgetplan-Form";
 import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-view";
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
 import HeaderAndAllocationEdit from "@/pages/record/treasurer/treasurer-budgetplan/EditBudgetPlanForms/budgetPlanHeaderandAlloctionEdit.tsx";
+import EditBudgetPlanMainForm from "@/pages/record/treasurer/treasurer-budgetplan/EditBudgetPlanForms/budgetPlanForm-Edit";
 
 export const treasurer_router = [
     {
@@ -64,5 +65,9 @@ export const treasurer_router = [
     {
         path: 'edit-header-and-allocation/:plan_id',
         element: <HeaderAndAllocationEdit/>
+    },
+    {
+        path:'edit-budget-plan-details/:plan_id',
+        element: <EditBudgetPlanMainForm/>
     }
 ]

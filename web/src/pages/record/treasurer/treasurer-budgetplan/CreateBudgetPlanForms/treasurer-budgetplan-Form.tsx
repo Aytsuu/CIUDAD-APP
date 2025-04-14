@@ -1,19 +1,19 @@
-import CreateBudgetPlanPage1 from "./CreateBudgetPlanForms/budgetPlanPage1-create.tsx.tsx";
-import CreateBudgetPlanPage2 from "./CreateBudgetPlanForms/budgetPlanPage2-create.tsx.tsx";
-import CreateBudgetPlanPage3 from "./CreateBudgetPlanForms/budgetPlanPage3-create.tsx.tsx";
-import CreateBudgetPlanPage4 from "./CreateBudgetPlanForms/budgetPlanPage4-create.tsx.tsx";
+import CreateBudgetPlanPage1 from "./budgetPlanPage1-create.tsx.tsx";
+import CreateBudgetPlanPage2 from "./budgetPlanPage2-create.tsx.tsx";
+import CreateBudgetPlanPage3 from "./budgetPlanPage3-create.tsx.tsx";
+import CreateBudgetPlanPage4 from "./budgetPlanPage4-create.tsx.tsx";
 import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
+import { FormData, CreateBudgetPlanSchema } from "@/form-schema/treasurer/budgetplan-create-schema.ts";
 import { useEffect } from "react";
 import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { budget_plan, budget_plan_details } from "./restful-API/budgetPlanPostAPI.tsx";
+import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI.tsx";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import DisplayBreakdown from "./display_breakdown.tsx";
+import DisplayBreakdown from "../display_breakdown.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 const styles = {
@@ -102,6 +102,7 @@ function CreateBudgetPlanForm() {
     const [formData3, setFormData3] = useState(initialFormData3);
     const [formData4, setFormData4] = useState(initialFormData4);
 
+    // Auto Calculation of Total Budgetary Obligations and Balance Unappropriated
     useEffect(() => {
         const sumFormData = (formData: Record<string, any>) =>
             Object.values(formData)
@@ -113,11 +114,13 @@ function CreateBudgetPlanForm() {
         setbalUnappropriated(availableResources - totalBudget);
     }, [formData1, formData2, formData3, formData4, availableResources]);
     
+    // Function for next button
     const handleNext = () => {
         setCurrentPage((prev) => {
             return prev + 1;
         });
     };
+    // function for Previous Button
     const handlePrevious = () => {
         setCurrentPage((prev) => prev - 1);
     };

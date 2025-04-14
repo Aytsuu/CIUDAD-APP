@@ -1,5 +1,5 @@
 import { FormInput } from "@/components/ui/form/form-input";
-import { HeaderEditSchema } from "@/form-schema/budgetplanheaderandallocation-schema";
+import { HeaderEditSchema } from "@/form-schema/treasurer/budgetplanheaderandallocationEdit-schema";
 import { UseFormReturn } from "react-hook-form";
 import z from "zod";
 

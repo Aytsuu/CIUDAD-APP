@@ -1,11 +1,11 @@
 import { FormField, Form, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
-import BudgetAllocationSchema from "@/form-schema/budget-allocation-schema";
+import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
-import BudgetHeaderSchema from "@/form-schema/budgetplan-header-schema";
+import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
 
 interface BudgetAllocationFormProps {
     headerValues: z.infer<typeof BudgetHeaderSchema>; // Just pass them as props
