@@ -159,7 +159,8 @@ function BudgetPlan() {
                 />
             </div>
 
-            <div className="w-full bg-white border border-none"> 
+            <div className="w-full bg-white border b
+            order-none"> 
                 <div className="flex flex-col sm:flex-row gap-2 items-center p-4">
                     <p className="text-xs sm:text-sm">Show</p>
                     <Input type="number" className="w-14 h-8" defaultValue="10" />

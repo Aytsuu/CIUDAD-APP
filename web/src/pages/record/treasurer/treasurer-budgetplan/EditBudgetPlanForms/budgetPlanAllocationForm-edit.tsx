@@ -1,24 +1,13 @@
 import { FormInput } from "@/components/ui/form/form-input";
 import { AllocationEditSchema } from "@/form-schema/budgetplanheaderandallocation-schema";
-import { useForm } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useLocation } from "react-router";
 
-function AllocationFormEdit(){
-    const location = useLocation();
-    const {id} = location.state
-
-    const form = useForm<z.infer<typeof AllocationEditSchema>>({
-        resolver: zodResolver(AllocationEditSchema),
-        defaultValues: {
-           personalServicesLimitEdit: "",
-           miscExpenseLimitEdit: "",
-           localDevLimitEdit: "",
-           skFundLimitEdit: "",
-           calamityFundLimitEdit: "",
-        }
-    })
+function AllocationFormEdit({form}: {
+    form:UseFormReturn<z.infer<typeof AllocationEditSchema>>
+}) {
 
     
     return(

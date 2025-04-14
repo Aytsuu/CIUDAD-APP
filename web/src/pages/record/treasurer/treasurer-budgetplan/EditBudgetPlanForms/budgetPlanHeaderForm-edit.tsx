@@ -1,45 +1,54 @@
 import { FormInput } from "@/components/ui/form/form-input";
 import { HeaderEditSchema } from "@/form-schema/budgetplanheaderandallocation-schema";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { UseFormReturn } from "react-hook-form";
 import z from "zod";
-import { useLocation } from "react-router";
 
+function HeaderFormEdit({ form }: {
+    form: UseFormReturn<z.infer<typeof HeaderEditSchema>>
+}) {
+    // Split the inputs into two groups of 5 or less
+    const leftColumnInputs = [
+        { name: "balanceEdit", label: "Balance" },
+        { name: "realtyTaxShareEdit", label: "Realty Tax Share" },
+        { name: "taxAllotmentEdit", label: "National Tax Allotment" },
+        { name: "clearanceAndCertFeesEdit", label: "Clearance & Certification Fees" },
+        { name: "otherSpecificIncomeEdit", label: "Other Specific Income" },
+    ];
 
+    const rightColumnInputs = [
+        { name: "actualIncomeEdit", label: "Actual Income" },
+        { name: "actualRPTEdit", label: "Actual RPT Income" },
+    ];
 
-function HeaderFormEdit(){
-    const location = useLocation();
-    const {id} = location.state
-
-    const form = useForm<z.infer<typeof HeaderEditSchema>>({
-        resolver: zodResolver(HeaderEditSchema),
-        defaultValues: {
-            balanceEdit: "",
-            realtyTaxShareEdit: "",
-            taxAllotmentEdit: "",
-            clearanceAndCertFeesEdit: "",
-            otherSpecificIncomeEdit: "",
-            actualIncomeEdit: "",
-            actualRPTEdit: "",
-        }
-    })
-
-    
-    return(
-        <>
-            <div className="grid gap-4">
-                <FormInput control={form.control} name="balanceEdit" label="Balance" type="number"/>
-                <FormInput control={form.control} name="realtyTaxShareEdit" label="Realty Tax Share" type="number"/>
-                <FormInput control={form.control} name="taxAllotmentEdit" label="National Tax Allotment" type="number"/>
-                <FormInput control={form.control} name="clearanceAndCertFeesEdit" label="Clearance & Certification Fees" type="number"/>
-                <FormInput control={form.control} name="otherSpecificIncomeEdit" label="Other Specific Income" type="number"/>
-                <FormInput control={form.control} name="actualIncomeEdit" label="Actual Income" type="number"/>
-                <FormInput control={form.control} name="actualRPTEdit" label="Actual RPT Income" type="number"/>
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left Column */}
+            <div className="space-y-4">
+                {leftColumnInputs.map((input) => (
+                    <FormInput
+                        key={input.name}
+                        control={form.control}
+                        name={input.name}
+                        label={input.label}
+                        type="number"
+                    />
+                ))}
             </div>
-        </>
-    )
-
+            
+            {/* Right Column */}
+            <div className="space-y-4">
+                {rightColumnInputs.map((input) => (
+                    <FormInput
+                        key={input.name}
+                        control={form.control}
+                        name={input.name}
+                        label={input.label}
+                        type="number"
+                    />
+                ))}
+            </div>
+        </div>
+    );
 }
 
-export default HeaderFormEdit
-
+export default HeaderFormEdit;
