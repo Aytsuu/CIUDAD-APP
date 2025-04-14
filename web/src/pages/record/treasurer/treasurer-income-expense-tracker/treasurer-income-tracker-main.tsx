@@ -503,6 +503,7 @@ function IncomeTracking() {
                                         <IncomeEditForm
                                             inc_num = {row.original.inc_num}
                                             inc_serial_num= {row.original.inc_serial_num}
+                                            incp_id = {row.original.incp_id}
                                             inc_particulars = {row.original.incp_item} 
                                             inc_amount = {String(row.original.inc_amount)}
                                             inc_additional_notes = {row.original.inc_additional_notes}
