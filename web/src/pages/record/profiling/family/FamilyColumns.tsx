@@ -111,10 +111,12 @@ export const familyViewColumns = (
       const personal = profile.per;
 
       return (
-        <div className="w-full border shadow-md flex px-4 py-3 rounded-lg">
+        <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
           <div className="w-full grid grid-cols-9 items-center justify-center">
             <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{profile.rp_id}</Label>
+              <Label className="w-[90%] py-1.5 text-black/70 bg-muted rounded-full">
+                {profile.rp_id}
+              </Label>
             </div>
             <div className="w-full flex flex-col col-span-2 items-start gap-1">
               <Label className="text-black/70">
@@ -137,7 +139,7 @@ export const familyViewColumns = (
               <Label className="text-black/70">{personal.per_status}</Label>
             </div>
             <div className="w-full flex flex-col items-start gap-1">
-              <Label className="w-[90%] py-1.5 text-white rounded-lg bg-green-500 cursor-pointer">
+              <Label className="w-[90%] py-1.5 text-white rounded-full bg-green-500 cursor-pointer">
                 {role}
               </Label>
             </div>

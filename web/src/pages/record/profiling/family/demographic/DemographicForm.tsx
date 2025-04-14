@@ -40,9 +40,7 @@ export default function DemographicForm({
   const handleHouseholdChange = React.useCallback(
     (value: any) => {
       form.setValue("demographicInfo.householdNo", value);
-    },
-    [form]
-  );
+  }, [form]);
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">

@@ -111,3 +111,8 @@ export const businessFormSchema = z.object({
   bus_street: z.string().min(1, 'Street Address is required'),
   sitio: z.string().min(1, 'Sitio is required')
 });
+
+export const newMemberFormSchema = z.object({
+  id: z.string(),
+  role: z.string().min(1, "Role is required")
+})

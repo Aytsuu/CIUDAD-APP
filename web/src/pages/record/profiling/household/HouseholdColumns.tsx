@@ -121,16 +121,20 @@ export const householdFamColumns = (
       const staff = family.staff.rp.per;
 
       return (
-        <div className="w-full border shadow-md flex p-4 rounded-lg">
+        <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
           <div className="w-full grid grid-cols-7 items-center justify-center">
             <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{family.fam_id}</Label>
+              <Label className="w-[90%] py-1.5 text-black/70 bg-muted rounded-full">
+                {family.fam_id}
+              </Label>
             </div>
             <div className="w-full flex flex-col items-start gap-1">
               <Label className="text-black/70">{totalMembers}</Label>
             </div>
             <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{family.fam_building}</Label>
+              <Label className="w-[50%] py-1.5 text-white bg-green-500 rounded-full">
+                {family.fam_building}
+              </Label>
             </div>
             <div className="w-full flex flex-col items-start gap-1">
               <Label className="text-black/70">{family.fam_indigenous}</Label>
