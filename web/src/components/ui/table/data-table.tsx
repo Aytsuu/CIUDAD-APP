@@ -80,6 +80,7 @@ import {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={!header ? "border-none hover:bg-white" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="text-center">

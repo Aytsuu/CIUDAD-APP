@@ -105,11 +105,8 @@ export default function ResidentFormLayout() {
         { key: "per_contact", value: resident?.per_contact || "" },
       ];
 
-      fields.forEach(({ key, value }) => {
-        form.setValue(
-          key as keyof z.infer<typeof personalInfoSchema>,
-          value || ""
-        );
+      fields.map((f: any) => {
+        form.setValue(f.key , f.value);
       });
 
       // Toggle read only

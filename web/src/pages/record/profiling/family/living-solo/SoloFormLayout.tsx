@@ -1,6 +1,6 @@
 import React from "react";
 import { z } from "zod";
-import { useLocation, useParams } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,15 +8,19 @@ import LivingSoloForm from "./LivingSoloForm";
 import { formatHouseholds, formatResidents } from "../../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
-import { useAddFamily } from "../../queries/profilingAddQueries";
-import { useHouseholds, useResidents } from "../../queries/profilingFetchQueries";
+import {
+  useAddFamily,
+  useAddFamilyComposition,
+} from "../../queries/profilingAddQueries";
 
 export default function SoloFormLayout() {
+  const navigate = useNavigate();
   const location = useLocation();
+  const params = React.useMemo(() => location.state?.params, [location.state]);
   const defaultValues = React.useRef(
     generateDefaultValues(demographicInfoSchema)
   );
@@ -25,25 +29,27 @@ export default function SoloFormLayout() {
     defaultValues: defaultValues.current,
     mode: "onChange",
   });
-  
-  const { user } = React.useRef(useAuth()).current;
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
-  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
-  const { mutateAsync: addFamily} = useAddFamily(form.getValues());
+
+  const { user } = useAuth();
+  const { mutateAsync: addFamily } = useAddFamily();
+  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
-  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
-  const [formattedResidents, setFormattedResidents] = React.useState(() => 
-    formatResidents({residents: residents})
-  )
-  const [formattedHouseholds, setFormattedHouseholds] = React.useState(() => 
-    formatHouseholds({households: households})
-  )
+  const [invalidHousehold, setInvalidHousehold] =
+    React.useState<boolean>(false);
+  const formattedResidents = React.useMemo(
+    () => formatResidents(params),
+    [params.resident]
+  );
+  const formattedHouseholds = React.useMemo(
+    () => formatHouseholds(params),
+    [params.households]
+  );
 
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
-    const residentId = form.watch("id");
+    const residentId = form.watch("id").split(" ")[0];
     const householdId = form.watch("householdNo");
 
     if (!formIsValid && !residentId && !householdId) {
@@ -56,22 +62,26 @@ export default function SoloFormLayout() {
       return;
     }
 
-    await addFamily({
-      fatherId: null, 
-      motherId: null, 
-      guardId: null, 
-      staffId: user?.staff.staff_id
+    const family = await addFamily({ 
+      demographicInfo: form.getValues(),
+      staffId: user?.staff.staff_id 
     });
 
-    setIsSubmitting(false);
-    form.reset(defaultValues.current);
-  };
+    const composition = await addFamilyComposition({
+      familyId: family.fam_id,
+      role: "Independent",
+      residentId: residentId,
+    });
 
-  if(isLoadingResidents || isLoadingHouseholds) {
-    return (
-      <div>Loading...</div>
-    )
-  }
+    if (composition) {
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+      navigate(-1);
+      setIsSubmitting(false);
+      form.reset(defaultValues.current);
+    }
+  };
 
   return (
     <div className="w-full flex justify-center">
@@ -88,9 +98,9 @@ export default function SoloFormLayout() {
               }}
               className="flex flex-col gap-10"
             >
-              <LivingSoloForm 
-                residents={formattedResidents} 
-                households={formattedHouseholds} 
+              <LivingSoloForm
+                residents={formattedResidents}
+                households={formattedHouseholds}
                 isSubmitting={isSubmitting}
                 invalidResident={invalidResdent}
                 invalidHousehold={invalidHousehold}

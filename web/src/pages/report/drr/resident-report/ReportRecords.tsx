@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { ResidentReportColumns } from "./DRRColumns";
+import { ResidentReportColumns } from "../DRRColumns";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { FileInput } from "lucide-react";
@@ -12,7 +12,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import React from "react";
 
 // Main component for displaying the DRR Resident Report
-export default function DRRResidentReport() {
+export default function ReportRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
