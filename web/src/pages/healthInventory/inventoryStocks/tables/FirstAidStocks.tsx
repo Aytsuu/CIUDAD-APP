@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { ColumnDef } from "@tanstack/react-table";
 import { Search, Plus, FileInput } from "lucide-react";
 import {
   DropdownMenu,
@@ -11,18 +10,17 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import FirstAidStockForm from "../addstocksModal/FirstAidStockModal";
-import UsedFAModal from "../addstocksModal/UsedFAModal";
-import EditFirstAidStockForm from "../editModal/EditFirstAidStockModal";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFirstAidStocks } from "../REQUEST/Get";
 import { archiveInventory } from "../REQUEST/archive";
 import { getColumns } from "../tables/columns/FirstAidCol";
+import { toast } from "sonner";
+import { CircleCheck,Loader2 } from "lucide-react";
 
 export type FirstAidStocksRecord = {
   finv_id: number;
@@ -102,21 +100,40 @@ export default function FirstAidStocks() {
     setFirstAidToArchive(inv_id);
     setIsArchiveConfirmationOpen(true);
   };
-
   const confirmArchiveInventory = async () => {
     if (firstAidToArchive !== null) {
+      setIsArchiveConfirmationOpen(false); // Immediately close the dialog
+      
+    const toastId = toast.loading(
+      <div className="flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Archiving commodity...
+      </div>,
+      { duration: Infinity } // Show until replaced
+    );
+  
       try {
         await archiveInventory(firstAidToArchive);
         queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
+        
+        toast.success("First aid item archived successfully", {
+          id: toastId, // Replace the loading toast
+          icon: <CircleCheck size={20} className="text-green-500" />,
+          duration: 2000,
+        });
       } catch (error) {
         console.error("Failed to archive inventory:", error);
+        toast.error("Failed to archive first aid item", {
+          id: toastId, // Replace the loading toast
+          duration: 5000,
+        });
       } finally {
-        setIsArchiveConfirmationOpen(false);
         setFirstAidToArchive(null);
       }
     }
   };
-
+ 
+  
   if (isLoadingFirstAid) {
     return (
       <div className="w-full h-full">
@@ -224,7 +241,7 @@ export default function FirstAidStocks() {
         onConfirm={confirmArchiveInventory}
         title="Archive Inventory Item"
         description="Are you sure you want to archive this item? It will be preserved in the system but removed from active inventory."
-      />nfdf
+      />
     </>
   );
 }

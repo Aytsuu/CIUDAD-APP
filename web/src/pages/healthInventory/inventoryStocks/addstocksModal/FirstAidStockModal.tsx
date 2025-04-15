@@ -9,7 +9,6 @@ import {
   FormMessage,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FirstAidStockSchema,
@@ -21,19 +20,20 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
-import { submitFirstAidStock } from "../REQUEST/Post/FirstAid/FirstAidAddPost";
+import { submitFirstAidStock } from "../REQUEST/FirstAid/FirstAidSubmit";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 
-interface FirstAidStockFormProps {  
-  setIsDialog:(isOpen: boolean) => void
+interface FirstAidStockFormProps {
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) {
+export default function FirstAidStockForm({
+  setIsDialog,
+}: FirstAidStockFormProps) {
   UseHideScrollbar();
   const form = useForm<FirstAidStockType>({
     resolver: zodResolver(FirstAidStockSchema),
@@ -41,8 +41,8 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
       fa_id: "",
       cat_id: "",
       finv_qty_unit: "boxes",
-      finv_qty: 0,
-      finv_pcs: 0,
+      finv_qty: undefined,
+      finv_pcs: undefined,
       expiryDate: new Date().toISOString().split("T")[0],
     },
   });
@@ -50,33 +50,40 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
   const firstaid = fetchFirstAid();
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [submissionData, setSubmissionData] = useState<FirstAidStockType | null>(null);
+  const [submissionData, setSubmissionData] =
+    useState<FirstAidStockType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesFirstAid();
+  const {
+    categories,
+    handleDeleteConfirmation,
+    categoryHandleAdd,
+    ConfirmationDialogs,
+  } = useCategoriesFirstAid();
 
   const handleSubmit = async (data: FirstAidStockType) => {
     setIsSubmitting(true);
-    const toastId = toast.loading('Adding first aid item...', {
-      duration: Infinity
-    });
     try {
       await submitFirstAidStock(data, queryClient);
-      toast.success('First aid item added successfully', {
-        id: toastId,
+      toast.success('First Aid item added successfully', {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-        onAutoClose: () => { setIsDialog(false);}});
+        duration: 2000,     
+      });
+            setIsDialog(false);
     } catch (error: any) {
       console.error("Error in handleSubmit:", error);
-      toast.error(error.message || "Failed to add first aid item", { id: toastId, duration: 3000});
+      toast.error(error.message || "Failed to add First Aid item", {
+        duration: 3000,
+      });
+    } finally {
       setIsSubmitting(false);
-    } 
+    }
   };
 
-  const onSubmit = (data: FirstAidStockType) => { 
+  const onSubmit = (data: FirstAidStockType) => {
     setSubmissionData(data);
-    setIsAddConfirmationOpen(true);};
+    setIsAddConfirmationOpen(true);
+  };
 
   const confirmAdd = () => {
     if (submissionData) {
@@ -86,23 +93,25 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
   };
 
   const currentUnit = form.watch("finv_qty_unit");
-  const qty = form.watch("finv_qty");
-  const pcs = form.watch("finv_pcs");
-  const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
+  const qty = form.watch("finv_qty") || 0;
+  const pcs = form.watch("finv_pcs") || 0;
+  const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
-      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          
-            <FormSelect control={form.control} name="fa_id" label="Unit" options={firstaid}/>
-            {/* Category Dropdown */}
+            <FormSelect
+              control={form.control}
+              name="fa_id"
+              label="Unit"
+              options={firstaid}
+            />
             <FormField
               control={form.control}
               name="cat_id"
-              render={({ field }) => (
+              render={({ field }) => ( 
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
@@ -127,23 +136,47 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput  control={form.control}  name="expiryDate"  label="Expiry Date" />
+            <FormDateInput
+              control={form.control}
+              name="expiryDate"
+              label="Expiry Date"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput control={form.control} name="finv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}   type="number"   placeholder="Quantity"   />
-            <FormSelect control={form.control} name="finv_qty_unit" label="Unit" options={[{ id: "boxes", name: "Boxes" },{ id: "bottles", name: "Bottles" },{ id: "packs", name: "Packs" },]}  />
+            <FormInput
+              control={form.control}
+              name="finv_qty"
+              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
+              type="number"
+              placeholder="Quantity"
+            />
+            <FormSelect
+              control={form.control}
+              name="finv_qty_unit"
+              label="Unit"
+              options={[
+                { id: "boxes", name: "Boxes" },
+                { id: "bottles", name: "Bottles" },
+                { id: "packs", name: "Packs" },
+              ]}
+            />
           </div>
 
-          {/* Pieces per Box and Total Pieces Display */}
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormInput  control={form.control}  name="finv_pcs"   label="Pieces per Box"   type="number"  placeholder="Pieces per box" />
+              <FormInput
+                control={form.control}
+                name="finv_pcs"
+                label="Pieces per Box"
+                type="number"
+                placeholder="Pieces per box"
+              />
               <div>
                 <FormItem className="sm:col-span-2">
                   <FormLabel>Total Pieces</FormLabel>
                   <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    {totalPieces.toLocaleString()} pieces
+                    {totalPieces.toLocaleString() } pieces
                     <span className="ml-2 text-muted-foreground text-xs">
                       ({qty} boxes × {pcs} pieces/box)
                     </span>
@@ -153,9 +186,18 @@ export default function FirstAidStockForm({setIsDialog}:FirstAidStockFormProps) 
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]"disabled={isSubmitting}> Save  </Button> </div>
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
       {ConfirmationDialogs()}

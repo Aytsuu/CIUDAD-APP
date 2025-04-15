@@ -6,7 +6,7 @@ import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { addInventory } from "../REQUEST/Post";
+import { addInventory } from "../REQUEST/Inventory";
 import { getSupplies } from "../REQUEST/Get";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
 import api from "@/pages/api/api";
@@ -14,7 +14,7 @@ import {
   ImmunizationSuppliesSchema,
   ImmunizationSuppliesType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
-import { AddImmunizationSupplyStock, ImmunizationStockTransaction } from "../REQUEST/Payload";
+import {  ImmunizationStockTransaction } from "../REQUEST/Payload";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 
 export default function ImmunizationStockForm({
@@ -58,74 +58,69 @@ export default function ImmunizationStockForm({
   const currentUnit = form.watch("imzStck_unit");
   const qty = form.watch("imzStck_qty");
   const pcs = form.watch("imzStck_pcs");
-  const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
+  const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
 
   const onSubmit = (data: ImmunizationSuppliesType) => {
     setFormData(data);
     setIsConfirmationOpen(true);
   };
-
   const handleConfirm = async () => {
     if (!formData) return;
     
     try {
       setIsSubmitting(true);
       
-      // Prepare payload based on selected unit
-      const payload = {
-        ...formData,
-        imzStck_qty: formData.imzStck_unit === "boxes" ? formData.imzStck_qty : 0,
-        imzStck_per_pcs: formData.imzStck_unit === "boxes" ? formData.imzStck_pcs : 0,
-        imzStck_pcs: formData.imzStck_unit === "pcs" ? formData.imzStck_qty : formData.imzStck_qty * formData.imzStck_pcs,
-        imzStck_avail: formData.imzStck_unit === "pcs" ? formData.imzStck_qty : formData.imzStck_qty * formData.imzStck_pcs
-      };
+      // Calculate all values as individual constants
+      const isBoxes = formData.imzStck_unit === "boxes";
+      const imzStck_qty = isBoxes ? formData.imzStck_qty : 0;
+      const imzStck_per_pcs = isBoxes ? formData.imzStck_pcs : 0;
+      const imzStck_pcs = isBoxes ? formData.imzStck_qty * (formData.imzStck_pcs || 0) : formData.imzStck_qty;
+      const imzStck_avail = imzStck_pcs; // Same as above
   
-      const inventoryResponse = await addInventory(
-        InventoryAntigenPayload(payload)
-      );
-  
+      // Inventory API call
+      const inventoryResponse = await addInventory(formData, "Antigen");
       if (!inventoryResponse?.inv_id) {
         alert("Failed to generate inventory ID.");
         return;
       }
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
   
-      const stockPayload = {
-        ...payload,
-        inv_id,
-        imzStck_avail: payload.imzStck_pcs
-      };
-  
-      const stockResponse = await api.post(
-        "inventory/immunization_stock/",
-        stockPayload
-      );
+      // Stock API call
+      const stockResponse = await api.post("inventory/immunization_stock/", {
+        ...formData,
+        imzStck_qty,
+        imzStck_per_pcs,
+        imzStck_pcs,
+        imzStck_avail,
+        inv_id
+      });
   
       if (!stockResponse.data?.imzStck_id) {
         alert("Failed to add immunization stock");
         return;
       }
   
-      const transactionPayload = ImmunizationStockTransaction(
-        stockPayload.imzStck_avail,
-        stockResponse.data.imzStck_id,
-        payload.imzStck_unit,
-        payload.imzStck_unit === "boxes" ? payload.imzStck_qty : undefined,
-        payload.imzStck_unit === "boxes" ? payload.imzStck_per_pcs : undefined
-      );
-  
+      // Transaction API call
       const transactionResponse = await api.post(
         "inventory/imz_transaction/",
-        transactionPayload
+        ImmunizationStockTransaction(
+          imzStck_avail,
+          stockResponse.data.imzStck_id,
+          formData.imzStck_unit,
+          isBoxes ? imzStck_qty : undefined,
+          isBoxes ? imzStck_per_pcs : undefined
+        )
       );
   
       if (!transactionResponse.data?.imzt_id) {
         console.warn("Transaction created but failed to get response");
       }
+  
       setIsDialog(false);
       alert("Immunization stock added successfully!");
     } catch (error) {
       console.error("Error:", error);
+      alert("An error occurred while saving the stock");
     } finally {
       setIsSubmitting(false);
       setIsConfirmationOpen(false);

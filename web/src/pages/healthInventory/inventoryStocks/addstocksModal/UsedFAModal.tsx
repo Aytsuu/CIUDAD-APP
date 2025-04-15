@@ -8,7 +8,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FirstAidStocksRecord } from "../tables/FirstAidStocks";
 import { useQueryClient } from "@tanstack/react-query";
 import { usedFaSchema } from "@/form-schema/inventory/EditStockSchema";
-import { deductFirstAidStock } from "../REQUEST/Post/FirstAid/UsedFa"
+import { deductFirstAidStock } from "../REQUEST/FirstAid/UsedFaSubmit"
 
 interface UsedFAModalProps {
   data: FirstAidStocksRecord;

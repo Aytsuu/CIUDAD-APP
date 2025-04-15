@@ -228,7 +228,6 @@ class VaccineStock(models.Model):
 class AntigenTransaction(models.Model):
     antt_id =models.BigAutoField(primary_key=True)
     antt_qty = models.CharField(max_length=100)
-    antt_type = models.CharField(max_length=100)
     antt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -279,7 +278,6 @@ class ImmunizationStock(models.Model):
 class ImmunizationTransaction(models.Model):
     imzt_id =models.BigAutoField(primary_key=True)
     imzt_qty = models.CharField(max_length=100)
-    imzt_type = models.CharField(max_length=100)
     imzt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -288,3 +286,6 @@ class ImmunizationTransaction(models.Model):
 
     class Meta:
         db_table = 'immunization_transaction'
+        
+        
+        

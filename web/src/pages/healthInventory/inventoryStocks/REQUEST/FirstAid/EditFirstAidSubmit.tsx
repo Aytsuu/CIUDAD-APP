@@ -1,9 +1,9 @@
-import api from "@/pages/api/api";
-import { FirstAidStocksRecord } from "../../../tables/FirstAidStocks";
-import { FirstAidTransactionPayload } from "../FirstAid/FirstAidAddPost";
-import { addFirstAidTransaction } from "../FirstAid/FirstAidAddPost";
+import { addFirstAidTransaction } from "./restful-api/FirstAidPost";
 import { QueryClient } from "@tanstack/react-query";
-
+import {getFirstAidInventoryList} from "./restful-api/FirstAidGet";
+import {updateFirstAidStock, updateInventoryTimestamp} from "./restful-api/FirstAidPut";
+import { formatQuantityString } from "../FormatQuantityString";
+// Main handler function
 export const handleEditFirstAidStock = async (
   data: any,
   finv_id: number,
@@ -11,10 +11,7 @@ export const handleEditFirstAidStock = async (
 ) => {
   try {
     // First, fetch the current inventory list
-    const res = await api.get(`inventory/firstaidinventorylist/`);
-    // Safely handle the case where res.data might be undefined
-    const inventoryList = res.data || [];
-
+    const inventoryList = await getFirstAidInventoryList();
     // Find the existing item with proper null checks
     const existingItem = inventoryList.find(
       (item: any) => item?.finv_id?.toString() === finv_id.toString()
@@ -24,6 +21,7 @@ export const handleEditFirstAidStock = async (
       throw new Error("First aid item not found. Please check the ID.");
     }
 
+    
     const currentQtyAvail = existingItem.finv_qty_avail || 0;
     let qty = existingItem.finv_qty || 0;
     const currentPcs = existingItem.finv_pcs || 0;
@@ -37,7 +35,7 @@ export const handleEditFirstAidStock = async (
       throw new Error(
         `Pieces per box must match the existing stock (${currentPcs}).`
       );
-    }
+    } 
 
     let newQtyAvail = currentQtyAvail;
 
@@ -49,45 +47,25 @@ export const handleEditFirstAidStock = async (
       qty += Number(data.finv_qty) || 0;
       newQtyAvail = qty;
     }
-
     // Update the stock
-    await api.put(`inventory/update_firstaidstocks/${finv_id}/`, {
-      finv_qty: qty,
-      finv_qty_avail: newQtyAvail,
-    });
+    await updateFirstAidStock(finv_id, {finv_qty: qty,finv_qty_avail: newQtyAvail,});
 
-    // Update inventory timestamp if inv_id exists
-    if (inv_id) {
-      await api.put(`inventory/update_inventorylist/${inv_id}/`, {
-        updated_at: new Date().toISOString(),
-      });
-    }
+    if (inv_id) {await updateInventoryTimestamp(inv_id); }
 
-    // Create transaction record
-    const string_qty =
-      data.finv_qty_unit === "boxes"
-        ? `${data.finv_qty} boxes (${data.finv_pcs} pcs per box)`
-        : `${data.finv_qty} ${data.finv_qty_unit}`;
+    const quantityString = formatQuantityString(data.finv_qty, data.finv_qty_unit, data.finv_pcs);
     const staffId = 1;
-    const action = "Added";
-    
-    const firstAidTransactionPayload = FirstAidTransactionPayload(
+    await addFirstAidTransaction(
       finv_id,
-      string_qty,
-      action,
+      quantityString,
+      "Added",
       staffId
-    );
+    )
 
-    await addFirstAidTransaction(firstAidTransactionPayload);
 
-    // Invalidate queries to refresh the data
-    await queryClient.invalidateQueries({
-      queryKey: ["firstaidinventorylist"],
-    });
-
+await queryClient.invalidateQueries({queryKey: ["firstaidinventorylist"],});
     return { success: true };
   } catch (error) {
     console.error("Error in handleEditFirstAidStock:", error);
-    throw error; // Re-throw the error to be caught by the calling function
+    throw error;
   }
 };

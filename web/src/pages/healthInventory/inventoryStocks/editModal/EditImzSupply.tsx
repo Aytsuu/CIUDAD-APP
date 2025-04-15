@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useEffect, useState } from "react";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
@@ -10,58 +9,7 @@ import api from "@/pages/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { ImmunizationStockTransaction } from "../REQUEST/Payload";
-
-// Positive number schema that handles both string and number inputs
-const positiveNumberSchema = z.union([
-  z.string().min(1, "Value is required").transform(val => parseFloat(val)),
-  z.number()
-]).refine(val => val > 0, {
-  message: "Must be greater than 0"
-});
-
-// Schema Definition
-export const ImmunizationStocksSchema = z.object({
-  imzStck_unit: z.enum(["pcs", "boxes"]),
-  boxCount: positiveNumberSchema.optional(),
-  pcsCount: positiveNumberSchema.optional(),
-  pcsPerBox: positiveNumberSchema.optional(),
-}).superRefine((data, ctx) => {
-  if (data.imzStck_unit === "boxes") {
-    if (!data.boxCount) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Number of boxes is required",
-        path: ["boxCount"],
-      });
-    }
-    if (!data.pcsPerBox) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Pieces per box is required",
-        path: ["pcsPerBox"],
-      });
-    }
-    if (data.pcsCount !== undefined) {
-      data.pcsCount = undefined;
-    }
-  } else {
-    if (!data.pcsCount) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Total pieces is required",
-        path: ["pcsCount"],
-      });
-    }
-    if (data.boxCount !== undefined) {
-      data.boxCount = undefined;
-    }
-    if (data.pcsPerBox !== undefined) {
-      data.pcsPerBox = undefined;
-    }
-  }
-});
-
-export type ImmunizationStockType = z.infer<typeof ImmunizationStocksSchema>;
+import { ImmunizationStockType,ImmunizationStocksSchema } from "@/form-schema/inventory/EditStockSchema";
 
 interface EditImmunizationFormProps {
   supply: {
@@ -102,7 +50,7 @@ export default function EditImmunizationForm({
         : (supply.item.unit === "pcs" || supply.item.unit === "boxes" 
           ? supply.item.unit 
           : "pcs"))
-        },
+    },
   });
 
   const currentUnit = form.watch("imzStck_unit");
@@ -140,8 +88,10 @@ export default function EditImmunizationForm({
       const currentUnit = formData.imzStck_unit;
       let boxCount = 0;
       let pcsCount = 0;
-      let pcsPerBoxValue = supply.imzStck_per_pcs || 0;
+      let pcsPerBoxValue = Number(formData.pcsPerBox) || supply.imzStck_per_pcs || 0;
       let totalPcsToAdd = 0;
+      let fullBoxesToAdd = 0;
+      let remainingPcsToAdd = 0;
   
       // Get existing supply data
       const res = await api.get(`inventory/immunization_stock/${supply.id}/`);
@@ -151,12 +101,19 @@ export default function EditImmunizationForm({
         boxCount = Number(formData.boxCount) || 0;
         pcsPerBoxValue = Number(formData.pcsPerBox) || existingSupply.imzStck_per_pcs || 0;
         totalPcsToAdd = boxCount * pcsPerBoxValue;
+        fullBoxesToAdd = boxCount;
+        remainingPcsToAdd = 0;
       } else {
         pcsCount = Number(formData.pcsCount) || 0;
         totalPcsToAdd = pcsCount;
-        // Calculate additional boxes if pieces exceed per box count
+        
+        // Calculate full boxes and remaining pieces
+        pcsPerBoxValue = Number(formData.pcsPerBox) || existingSupply.imzStck_per_pcs || 0;
         if (pcsPerBoxValue > 0) {
-          boxCount = Math.floor(pcsCount / pcsPerBoxValue);
+          fullBoxesToAdd = Math.floor(pcsCount / pcsPerBoxValue);
+          remainingPcsToAdd = pcsCount % pcsPerBoxValue;
+        } else {
+          remainingPcsToAdd = pcsCount;
         }
       }
   
@@ -166,12 +123,20 @@ export default function EditImmunizationForm({
       const existingPerPcs = existingSupply.imzStck_per_pcs || 0;
       const existingAvail = existingSupply.imzStck_avail || 0;
   
+      // Determine the unit to store based on the rules:
+      // - If original unit is pcs and we're converting to boxes, update to boxes
+      // - If original unit is boxes, always keep it as boxes
+      let unitToStore = originalUnit;
+      if (originalUnit === "pcs" && (currentUnit === "boxes" || fullBoxesToAdd > 0)) {
+        unitToStore = "boxes";
+      }
+  
       const payload = {
-        imzStck_qty: originalUnit === "boxes" ? existingQty + (boxCount || 0) : existingQty,
-        imzStck_per_pcs: existingPerPcs,
+        imzStck_qty: unitToStore === "boxes" ? existingQty + fullBoxesToAdd : existingQty,
+        imzStck_per_pcs: pcsPerBoxValue,
         imzStck_pcs: existingPcs + totalPcsToAdd,
         imzStck_avail: existingAvail + totalPcsToAdd,
-        imzStck_unit: originalUnit // Always keep original unit type
+        imzStck_unit: unitToStore
       };
   
       await api.put(`inventory/immunization_stock/${supply.id}/`, payload);
@@ -180,9 +145,9 @@ export default function EditImmunizationForm({
       const transactionPayload = ImmunizationStockTransaction(
         totalPcsToAdd,
         supply.id,
-        originalUnit,
-        originalUnit === "boxes" ? boxCount : undefined,
-        originalUnit === "boxes" ? pcsPerBoxValue : undefined
+        unitToStore,
+        unitToStore === "boxes" ? fullBoxesToAdd : undefined,
+        unitToStore === "boxes" ? pcsPerBoxValue : undefined
       );
       await api.post("inventory/imz_transaction/", transactionPayload);
   
@@ -240,7 +205,7 @@ export default function EditImmunizationForm({
                     label="Pieces per Box"
                     type="number"
                     placeholder="Pieces per Box"
-                    readOnly={originalUnit === "boxes"} // Read-only if original unit is boxes
+                    readOnly={originalUnit === "boxes"}
                   />
                 </div>
                 <div className="space-y-2">

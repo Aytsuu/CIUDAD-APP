@@ -25,8 +25,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { submitCommodityStock } from "../REQUEST/Post/Commodity/AddCommodityPost";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck,Loader2 } from "lucide-react";
 
 interface CommodiityStockFormProps {  
   setIsDialog: (isOpen: boolean) => void;
@@ -41,7 +40,7 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
       com_id: "",
       cat_id: "",
       cinv_qty_unit: "boxes",
-      cinv_qty: 0,
+      cinv_qty: undefined,
       cinv_pcs: undefined,
       cinv_recevFrom: "",
       expiryDate: new Date().toISOString().split("T")[0],
@@ -57,7 +56,6 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
     categories,
     handleDeleteConfirmation,
     categoryHandleAdd, 
-    ConfirmationDialogs,
   } = useCategoriesCommodity();
 
   // Watch for unit changes and reset pcs when not boxes
@@ -77,39 +75,20 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
   };
   
   const confirmAdd = async () => {
-    setIsAddConfirmationOpen(false); // Close confirmation dialog first
-    setIsSubmitting(true); // Disable the button
-
-    if (!submissionData) return;
-  
-    const toastId = toast.loading('Adding commodity...', {
-      duration: Infinity
-    });
+    setIsAddConfirmationOpen(false);
+    setIsSubmitting(true);
     
     try {
-      const result = await submitCommodityStock(submissionData, queryClient);
-      
-      if (result.success) {
-        toast.success('Commodity added successfully', {
-          id: toastId,
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000,
-          onAutoClose: () => {
-            setIsDialog(false); // Close main dialog only after toast completes
-          }
-        });
-      } else {
-        toast.error(result.error || 'Failed to add commodity', {
-          id: toastId,
-          duration: 3000
-        });
-      }
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast.error("An unexpected error occurred", {
-        id: toastId,
-        duration: 3000
+      await submitCommodityStock(submissionData, queryClient);
+      toast.success('First Aid item added successfully', {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
       });
+      setIsDialog(false);
+    } catch (error: any) {
+    console.error("Error in handleSubmit:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -120,7 +99,6 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
-      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -212,16 +190,21 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
             </div>
           )}
   
-          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]"  disabled={isSubmitting}
-            >
-              Save Commodity
+  <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </form>
       </Form>
 
-      {ConfirmationDialogs()}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}

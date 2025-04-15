@@ -5,7 +5,7 @@ import { ConfirmationDialog } from "../../../../../components/ui/confirmationLay
 interface Option {
   id: string;
   name: string;
-}
+} 
 
 export const useCategoriesFirstAid = () => {
   const [categories, setCategories] = useState<Option[]>([]);
@@ -63,9 +63,11 @@ export const useCategoriesFirstAid = () => {
     }
   }, []);
 
+
   useEffect(() => {
     getCategories();
   }, [getCategories]);
+
 
   const [isAdding, setIsAdding] = useState(false);
 
@@ -87,7 +89,7 @@ export const useCategoriesFirstAid = () => {
       setIsAdding(false);
       return;
     }
-
+    
     try {
       const newCategory = await addCategory({
         cat_type: "FirstAid",
@@ -111,16 +113,16 @@ export const useCategoriesFirstAid = () => {
     }
   };
 
+
   // Handle add confirmation
   const categoryHandleAdd = (categoryName: string, onCategoryAdded?: (newId: string) => void) => {
     setNewCategoryName(categoryName);
     setIsAddConfirmationOpen(true);
-
-    // Store the callback for later use
     if (onCategoryAdded) {
       setOnCategoryAddedCallback(() => onCategoryAdded);
     }
   };
+
 
   const handleConfirmAdd = async () => {
     if (newCategoryName.trim()) {
@@ -135,6 +137,7 @@ export const useCategoriesFirstAid = () => {
       setOnCategoryAddedCallback(null); // Clear the callback after use
     }
   };
+
 
    // DELETE CATEGORY
    const handleDeleteCategory = async (categoryId: number) => {
@@ -164,6 +167,7 @@ export const useCategoriesFirstAid = () => {
     setIsDeleteConfirmationOpen(true);
   };
 
+
 // ... (previous code)
 const ConfirmationDialogs = () => (
   <>
@@ -192,7 +196,7 @@ const ConfirmationDialogs = () => (
   </>
 );
 
-// ... (rest of the code)
+
 
   return {
     categories,

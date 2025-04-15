@@ -19,7 +19,7 @@ import { addVaccineStock } from "../REQUEST/Post";
 import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
-import { addInventory } from "../REQUEST/Post";
+import { addInventory } from "../REQUEST/Inventory";
 import {FormDateInput} from "@/components/ui/form/form-date-input";
 
 export default function VaccineStockForm() {
@@ -27,6 +27,7 @@ export default function VaccineStockForm() {
   const [vaccineOptions, setVaccineOptions] = useState<
     { id: string; name: string }[]
   >([]);
+
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,9 +71,9 @@ export default function VaccineStockForm() {
       const validatedData = VaccineStocksSchema.parse(data);
 
       // First create inventory record
+      const inv_type = "Antigen";
       const inventoryResponse = await addInventory(
-        InventoryAntigenPayload(data)
-      );
+data, inv_type);
 
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");

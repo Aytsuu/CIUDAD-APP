@@ -1,37 +1,37 @@
-import { MedicineStockType, CommodityStockType ,FirstAidStockType} from "../REQUEST/type";
+import { MedicineStockType, CommodityStockType } from "../REQUEST/type";
 import { ImmunizationSuppliesType } from "@/form-schema/inventory/inventoryStocksSchema";
-export const MedicinePayload = (
-  data: any, // Replace with the correct type if available
-  inv_id: number
-): MedicineStockType => {
-  const qty = Number(data.qty) || 0;
-  const pcs = Number(data.pcs) || 0;
-  const minv_qty_avail = data.unit === "boxes" ? qty * pcs : qty;
-  const med_id = parseInt(data.medicineID, 10);
+// export const MedicinePayload = (
+//   data: any, // Replace with the correct type if available
+//   inv_id: number 
+// ): MedicineStockType => {
+//   const qty = Number(data.qty) || 0;
+//   const pcs = Number(data.pcs) || 0;
+//   const minv_qty_avail = data.unit === "boxes" ? qty * pcs : qty;
+//   const med_id = parseInt(data.medicineID, 10);
 
-  return {
-    minv_dsg: Number(data.dosage) || 0,
-    minv_dsg_unit: data.dsgUnit,
-    minv_form: data.form,
-    minv_qty: minv_qty_avail,
-    minv_qty_unit: data.unit,
-    minv_pcs: pcs,
-    minv_distributed: 0,
-    minv_qty_avail,
-    med_id,
-    cat_id: Number(data.category),
-    inv_id, 
-  };
-};
+//   return {
+//     minv_dsg: Number(data.dosage) || 0,
+//     minv_dsg_unit: data.dsgUnit,
+//     minv_form: data.form,
+//     minv_qty: minv_qty_avail,
+//     minv_qty_unit: data.unit,
+//     minv_pcs: pcs,
+//     minv_distributed: 0,
+//     minv_qty_avail,
+//     med_id,
+//     cat_id: Number(data.category),
+//     inv_id, 
+//   };
+// };
 
-export const InventoryPayload = (data: any) => {
-  return {
-    expiry_date: data.expiryDate,
-    inv_type: "Medicine",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-};
+// export const InventoryPayload = (data: any) => {
+//   return {
+//     expiry_date: data.expiryDate,
+//     inv_type: "Medicine",
+//     created_at: new Date().toISOString(),
+//     updated_at: new Date().toISOString(),
+//   };
+// };
 
 
 export const InventoryCommodityPayload = (data: any) => {
@@ -43,14 +43,14 @@ export const InventoryCommodityPayload = (data: any) => {
   };
 };
 
-export const InventoryFirstAidPayload = (data: any) => {
-  return {
-    expiry_date: data.expiryDate,
-    inv_type: "FirstAid",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-};
+// export const InventoryFirstAidPayload = (data: any) => {
+//   return {
+//     expiry_date: data.expiryDate,
+//     inv_type: "FirstAid",
+//     created_at: new Date().toISOString(),
+//     updated_at: new Date().toISOString(),
+//   };
+// };
 
 
 
@@ -64,14 +64,14 @@ export const InventoryAntigenPayload = (data: any) => {
 };
 
 
-export const MedicineTransactionPayload = (minv_id: number,string_qty :string) => {
-  return {
-    mdt_qty: string_qty, 
-    mdt_action: "Added",
-    mdt_staff: 1, 
-    minv_id: minv_id, 
-  };
-};
+// export const MedicineTransactionPayload = (minv_id: number,string_qty :string) => {
+//   return {
+//     mdt_qty: string_qty, 
+//     mdt_action: "Added",
+//     mdt_staff: 1, 
+//     minv_id: minv_id, 
+//   };
+// };
 
 // export const CommodityTransactionPayload = (cinv_id: number,string_qty :string,action:string) => {
 //   return {
@@ -171,7 +171,7 @@ export const VaccineTransactionPayload = (
 
 // IMMUNIZATION STOCKS
 
-export interface ImmunizationStockPayload {
+export interface ImmunizationStockType {
   imz_id: number;
   inv_id: number;
   batch_number: string;
@@ -186,11 +186,11 @@ export interface ImmunizationStockPayload {
 export const AddImmunizationSupplyStock = (
   data: ImmunizationSuppliesType,
   inv_id: number
-): ImmunizationStockPayload => {
+): ImmunizationStockType => {
   const imz_id = Number(data.imz_id);
   const imzStck_avail =
     data.imzStck_unit === "boxes"
-      ? data.imzStck_qty * data.imzStck_pcs
+      ? data.imzStck_qty * (data.imzStck_pcs || 0)
       : data.imzStck_qty;
 
   return {
@@ -199,7 +199,7 @@ export const AddImmunizationSupplyStock = (
     batch_number: data.batch_number,
     imzStck_unit: data.imzStck_unit,
     imzStck_qty: data.imzStck_qty,
-    imzStck_pcs: data.imzStck_pcs,
+    imzStck_pcs: data.imzStck_pcs ?? 0,
     imzStck_used: 0,
     imzStck_avail,
     expiryDate: data.expiryDate,
@@ -208,7 +208,7 @@ export const AddImmunizationSupplyStock = (
 
 
 
-export interface ImmunizationTransactionPayload {
+export type ImmunizationTransactionType= {
   imzt_qty: string;
   imzt_type: string;
   imzt_action: string;
@@ -218,12 +218,12 @@ export interface ImmunizationTransactionPayload {
 
 
 export const ImmunizationStockTransaction = (
-  imzStck_avail: number,
+ imzStck_avail: number,
   imzStck_id: number,
   unit: string, // Add unit parameter
   boxes?: number, // Optional boxes count
   pcsPerBox?: number // Optional pcs per box
-): ImmunizationTransactionPayload => {
+): ImmunizationTransactionType => {
   // Format the quantity based on the unit
   const formattedQty = unit === "boxes" && boxes && pcsPerBox 
     ? `${boxes} boxes - ${imzStck_avail}pcs` 
@@ -233,7 +233,7 @@ export const ImmunizationStockTransaction = (
     imzt_qty: formattedQty, // Use the formatted string
     imzt_type: "inventory",
     imzt_action: "added",
-    staff: 1, // Default to 1, should be replaced with actual staff ID
+    staff: 1, 
     imzStck_id,
   };
 };

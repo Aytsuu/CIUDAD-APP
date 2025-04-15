@@ -2,25 +2,22 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import {
   Form,
-  FormControl,
-  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AddMedicineStocksSchema,
   addMedicineStocksType,
 } from "@/form-schema/inventory/addStocksSchema";
-import api from "@/pages/api/api";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { addMedicineTransaction } from "../REQUEST/Post";
-import { MedicineTransactionPayload } from "../REQUEST/Payload";
+import { FormInput } from "@/components/ui/form/form-input";
+import { toast } from "sonner";
+import { CircleCheck, Loader2 } from "lucide-react";
+import { updateMedicineStock } from "../REQUEST/Medicine/MedicineSubmit";
 
 interface AddMedProps {
   initialData: {
@@ -40,230 +37,140 @@ interface AddMedProps {
     minv_qty_unit: string;
     availQty: string;
     distributed: string;
+    inv_id: number;
   };
-  setIsDialog: (isOpen: boolean) => void; // Add this line
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-export default function EditMedicineForm({ initialData,setIsDialog }: AddMedProps) {
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); // State for confirmation modal
-  const [formData, setFormData] = useState<addMedicineStocksType | null>(null); // Store form data for confirmation
+export default function EditMedicineForm({
+  initialData,
+  setIsDialog,
+}: AddMedProps) {
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [submissionData, setSubmissionData] = useState<addMedicineStocksType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
   const form = useForm<addMedicineStocksType>({
     resolver: zodResolver(AddMedicineStocksSchema),
     defaultValues: {
-      minv_qty: 0,
+      minv_qty: undefined,
       minv_qty_unit: initialData.minv_qty_unit,
       minv_pcs: initialData.qty.pcs || 0,
     },
   });
 
-  
-  const onSubmit = useCallback(async (data: addMedicineStocksType) => {
-    setFormData(data);
-    setIsConfirmationOpen(true);
-  }, []);
-
-  
-  const handleConfirm = useCallback(async () => {
-    if (!formData) return;
-
-    try {
-      const res = await api.get(`inventory/medicineinventorylist/`);
-      const existingMedicine = res.data.find(
-        (med: any) => med.minv_id === initialData.id
-      );
-
-      if (!existingMedicine) {
-        alert("Medicine ID not found. Please check the ID.");
-        return;
-      }
-
-      const currentMinvQtyAvail = existingMedicine.minv_qty_avail;
-      let qty = existingMedicine.minv_qty;
-      const currentMinvPcs = existingMedicine.minv_pcs;
-      const inv_id = existingMedicine.inv_detail?.inv_id;
-
-      if (
-        formData.minv_qty_unit === "boxes" &&
-        Number(currentMinvPcs) !== Number(formData.minv_pcs)
-      ) {
-        form.setError("minv_pcs", {
-          type: "manual",
-          message: `Pieces per box must match the existing stock (${currentMinvPcs}).`,
-        });
-        return;
-      }
-
-      let newMinvQtyAvail = currentMinvQtyAvail;
-
-      if (formData.minv_qty_unit === "boxes") {
-        qty += formData.minv_qty ;
-        newMinvQtyAvail = qty * currentMinvPcs;
-      } else {
-        qty += formData.minv_qty;
-        newMinvQtyAvail = qty;
-      }
-
-      await api.put(
-        `inventory/update_medicinestocks/${initialData.id}/`,
-        {
-          minv_qty: qty,
-          minv_qty_avail: newMinvQtyAvail,
-        }
-      );
- 
-      if (inv_id) {
-        await api.put(`inventory/update_inventorylist/${inv_id}/`, {
-          updated_at: new Date().toISOString(),
-        });
-      }
-     
-    const string_qty =
-      formData.minv_qty_unit === "boxes"
-      ? `${formData.minv_qty} boxes (${formData.minv_pcs} pcs per box)`
-      : `${formData.minv_qty} ${formData.minv_qty_unit}`;
-
-
-    // Pass initialData to MedicineTransactionPayload
-    const MedicineTransactionpayload = MedicineTransactionPayload( initialData.id,string_qty);
-    console.log("Med", formData)
-    console.log("MInv", initialData.id)
-    const medicineTransactionResponse = await addMedicineTransaction(MedicineTransactionpayload);
-
-    if (!medicineTransactionResponse || medicineTransactionResponse.error) {
-      throw new Error("Failed to add medicine inventory.");
-    }
-
-      setIsDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
-      alert("Stock updated successfully!");
-    } catch (err: any) {
-      if (err.response) {
-        alert(
-          `Failed to update stock: ${
-            err.response.data.detail || "Unknown error"
-          }`
-        );
-      } else {
-        alert("Network error. Please try again.");
-      }
-    } finally {
-      setIsConfirmationOpen(false);
-    }
-  }, [formData, initialData.id, form, setIsDialog, queryClient]);
-
-
-
-
   const currentUnit = form.watch("minv_qty_unit");
   const qty = form.watch("minv_qty") || 0;
   const pcs = form.watch("minv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
-  //localhost:5173/donation
-  http: return (
+
+  const handleSubmit = async (data: addMedicineStocksType) => {
+    setIsSubmitting(true);
+   
+    try {
+      await updateMedicineStock(
+        { id: initialData.id },
+        data,
+        queryClient,
+      );
+
+      // Close dialog first
+      setIsDialog(false);
+      
+      // Then show success toast
+      toast.success("Medicine stock updated successfully!", {
+        icon: <CircleCheck size={20} className="text-green-500" />,
+        duration: 2000,
+      });
+    } catch (error: any) {
+      console.error("Error updating medicine stock:", error);
+      toast.error(error.message || "Failed to update medicine stock", {
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onSubmit = (data: addMedicineStocksType) => {
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmSubmit = async () => {
+    if (submissionData) {
+      setIsAddConfirmationOpen(false);
+      await handleSubmit(submissionData);
+    }
+  };
+
+  return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
+            <FormInput 
               control={form.control}
               name="minv_qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? 0 : Number(value));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
+              type="number"
             />
 
-            <FormField
+            <FormInput
               control={form.control}
               name="minv_qty_unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <Input value={field.value} disabled />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Unit"
+              readOnly
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {currentUnit === "boxes" && (
-              <FormField
+          {currentUnit === "boxes" && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormInput
                 control={form.control}
                 name="minv_pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1} // Ensure it's at least 1 when boxes are selected
-                        placeholder="pcs"
-                        value={
-                          field.value === undefined || field.value === 0
-                            ? ""
-                            : field.value
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Pieces per Box"
+                type="number"
+                placeholder="pcs"
+                readOnly
               />
-            )}
 
-            {currentUnit === "boxes" && (
-              <FormItem className="sm:col-span-2">
-                <FormLabel>Total Pieces</FormLabel>
-                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
-                  </span>
-                </div>
-              </FormItem>
-            )}
-          </div>
-
+              <div className="sm:col-span-2">
+                <FormItem>
+                  <FormLabel>Total Pieces</FormLabel>
+                  <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    {totalPieces.toLocaleString()} pieces
+                    <span className="ml-2 text-muted-foreground text-xs">
+                      ({qty} boxes × {pcs} pieces/box)
+                    </span>
+                  </div>
+                </FormItem>
+              </div>
+            </div>
+          )}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </form>
       </Form>
 
-      {/* Confirmation Dialog */}
       <ConfirmationDialog
-        isOpen={isConfirmationOpen}
-        onOpenChange={setIsConfirmationOpen}
-        onConfirm={handleConfirm}
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmSubmit}
         title="Confirm Update"
         description="Are you sure you want to update this medicine stock? This action cannot be undone."
       />
     </div>
   );
-}
+} 

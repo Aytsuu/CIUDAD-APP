@@ -21,7 +21,7 @@ import { archiveInventory } from "../REQUEST/archive";
 import {CommodityStocksColumns} from "./columns/CommodityCol";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck,Loader2 } from "lucide-react";
 
 export type CommodityStocksRecord = {
   cinv_id: number;
@@ -33,7 +33,7 @@ export type CommodityStocksRecord = {
   qty: {
     cinv_qty: number;
     cinv_pcs: number;
-  };
+  }; 
   cinv_qty_unit: string;
   availQty: string;
   dispensed: string;
@@ -74,7 +74,7 @@ export default function CommodityStocks() {
         },
         cinv_qty_unit: commodityStock.cinv_qty_unit,
         availQty: commodityStock.cinv_qty_avail,
-        dispensed: commodityStock.cinv_dispensed,
+        dispensed: commodityStock.cinv_dispensed, 
         recevFrom: commodityStock.cinv_recevFrom,
         inv_id:commodityStock.inv_id
       }));
@@ -100,31 +100,37 @@ export default function CommodityStocks() {
 
   const confirmArchiveInventory = async () => {
     if (commodityToArchive !== null) {
-      const toastId = toast.loading('Archiving inventory...', {
-        duration: Infinity
-      });
-      
+      setIsArchiveConfirmationOpen(false); // Immediately close the dialog
+    
+      const toastId = toast.loading(
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Archiving commodity...
+        </div>,
+        { duration: Infinity } // Show until replaced
+      );
+  
       try {
         await archiveInventory(commodityToArchive);
         queryClient.invalidateQueries({ queryKey: ["commodityinventorylist"] });
         
-        toast.success('Inventory archived successfully', {
-          id: toastId,
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000
+        toast.success("Commodity item archived successfully", {
+          id: toastId, // Replace the loading toast
+          icon: <CircleCheck size={20} className="text-green-500" />,
+          duration: 2000,
         });
       } catch (error) {
         console.error("Failed to archive inventory:", error);
-        toast.error('Failed to archive inventory', {
-          id: toastId,
-          duration: 3000
+        toast.error("Failed to archive commodity item", {
+          id: toastId, // Replace the loading toast
+          duration: 5000,
         });
       } finally {
-        setIsArchiveConfirmationOpen(false);
         setCommodityToArchive(null);
       }
     }
   };
+
   if (isLoadingCommodities) {
     return (
       <div className="w-full h-full">
@@ -138,10 +144,9 @@ export default function CommodityStocks() {
 
  // Replace the columns definition in your component with:
 const columns = CommodityStocksColumns(setIsDialog,setCommodityToArchive,setIsArchiveConfirmationOpen);
+
   return (
     <>
-        <Toaster position="top-center" richColors />
-
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="flex gap-x-2">

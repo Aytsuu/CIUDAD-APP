@@ -1,70 +1,69 @@
 import api from "@/pages/api/api";
-import {MedicineStockType, InventoryType,MedicineTransactionType, FirstAidStockType, FirstAidTransactionType, VaccineStockType, AntigenTransactionType } from "../REQUEST/type";
+import {MedicineStockType, InventoryType,MedicineTransactionType, VaccineStockType, AntigenTransactionType } from "../REQUEST/type";
 
 import { log } from "console";
 
 
-import { CommodityStockType } from "../REQUEST/type";
-// medicine inventory details
-export const addMedicineInventory = async (medicineData: MedicineStockType) => {
-  try {
-    const res = await api.post(
-      "inventory/medicineinventorylist/",
-      medicineData
-    );
-    return res.data;
-  } catch (err: any) {
-    console.log("Error response:", err.response?.data || err.message);
-    throw err;
-  }
-};
+// import { CommodityStockType } from "../REQUEST/type";
+// // medicine inventory details
+// export const addMedicineInventory = async (medicineData: MedicineStockType) => {
+//   try {
+//     const res = await api.post(
+//       medicineData
+//     );
+//     return res.data;
+//   } catch (err: any) {
+//     console.log("Error response:", err.response?.data || err.message);
+//     throw err;
+//   }
+// };
 
 
-export const  addFirstAidInventory = async (firstAidData: FirstAidStockType) => {
-  try {
-    const res = await api.post(
-      "inventory/firstaidinventorylist/",
-      firstAidData
-    );
-    return res.data;
-  } catch (err: any) {
-    console.log("Error response:", err.response?.data || err.message);
-    throw err;
-  }
-}
+// export const  addFirstAidInventory = async (firstAidData: FirstAidStockType) => {
+//   try {
+//     const res = await api.post(
+//       "inventory/firstaidinventorylist/",
+//       firstAidData
+//     );
+//     return res.data;
+//   } catch (err: any) {
+//     console.log("Error response:", err.response?.data || err.message);
+//     throw err;
+//   }
+// }
 
-export const addInventory = async (inventoryData: InventoryType) => {
-  try {
-    console.log("Sending payload:", inventoryData); // Log the payload
-    const res = await api.post("inventory/inventorylist/", inventoryData);
-    return res.data;
-  } catch (err: any) {
-    console.log("Error response:", err.response?.data || err.message);
-    throw err;
-  }
-};
+// export const addInventory = async (inventoryData: InventoryType) => {
+//   try {
+//     console.log("Sending payload:", inventoryData); // Log the payload
+//     const res = await api.post("inventory/inventorylist/", inventoryData);
+//     return res.data;
+//   } catch (err: any) {
+//     console.log("Error response:", err.response?.data || err.message);
+//     throw err;
+//   }
+// };
  
-// add stocks for medicine
-export const addMedicineTransaction = async (MedTransactindata: MedicineTransactionType) => {
-  try {
-    const res = await api.post("inventory/medicinetransaction/",MedTransactindata);
-    return res.data;
-  } catch (err:any) {
-    console.log("Error response:", err.response?.data || err.message);
-    throw err;
-  }
-};
+// // add stocks for medicine
+// export const addMedicineTransaction = async (MedTransactindata: MedicineTransactionType) => {
+//   try {
+//     const res = await api.post("inventory/medicinetransaction/",MedTransactindata);
+//     return res.data;
+//   } catch (err:any) {
+//     console.log("Error response:", err.response?.data || err.message);
+//     throw err;
+//   }
+// };
 
-// add stocks for medicine
-export const addFirstAidTransaction = async (FirstAidTransacindata: FirstAidTransactionType) => {
-  try {
-    const res = await api.post("inventory/firstaidtransaction/",FirstAidTransacindata);
-    return res.data;
-  } catch (err:any) {
-    console.log("Error response:", err.response?.data || err.message);
-    throw err;
-  }
-};
+// // add stocks for medicine
+// export const addFirstAidTransaction = async (FirstAidTransacindata: FirstAidTransactionType) => {
+//   try {
+//     const res = await api.post("inventory/firstaidtransaction/",FirstAidTransacindata);
+//     return res.data;
+//   } catch (err:any) {
+//     console.log("Error response:", err.response?.data || err.message);
+//     throw err;
+//   }
+// };
 
 
 

@@ -24,6 +24,7 @@ import api from "@/pages/api/api";
 import EditImmunizationForm from "../editModal/EditImzSupply";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { archiveInventory } from "../REQUEST/archive";
+import { getStockColumns } from "./columns/AntigenCol";
 
 export const getCombinedStock = async () => {
   try {
@@ -41,18 +42,9 @@ export const getCombinedStock = async () => {
       const inventoryData = inventory.data.find(
         (i: any) => i.inv_id === stock.inv_id
       );
-      
-      // Calculate vial and dose information
+
       const dosesPerVial = stock.dose_ml;
       const totalDoses = dosesPerVial * stock.qty;
-      const remainingDoses = stock.vacStck_qty_avail;
-      const remainingVials = Math.floor(remainingDoses / dosesPerVial);
-      const remainingPartialDoses = remainingDoses % dosesPerVial;
-      
-      // Format available stock as "vials-doses"
-      const availableStock = remainingPartialDoses === 0 
-        ? `${remainingVials} vials -${remainingVials * dosesPerVial} doses`
-        : `${remainingVials} vials -${remainingDoses} doses`;
 
       if (stock.solvent === "diluent") {
         return {
@@ -68,7 +60,7 @@ export const getCombinedStock = async () => {
           qty: `${stock.qty} containers`,
           administered: `${stock.vacStck_used} containers`,
           wastedDose: stock.wasted_doses?.toString() || "0",
-          availableStock: `${stock.vacStck_qty_avail} containers`,
+          availableStock: stock.vacStck_qty_avail,
           expiryDate: inventoryData?.expiry_date,
           inv_id: stock.inv_id,
           solvent: stock.solvent,
@@ -91,7 +83,7 @@ export const getCombinedStock = async () => {
         qty: `${stock.qty} vials (${totalDoses} doses)`,
         administered: `${stock.vacStck_used} doses`,
         wastedDose: stock.wasted_doses?.toString() || "0",
-        availableStock: availableStock,
+        availableStock: stock.vacStck_qty_avail,
         expiryDate: inventoryData?.expiry_date,
         solvent: stock.solvent,
         inv_id: stock.inv_id,
@@ -105,27 +97,17 @@ export const getCombinedStock = async () => {
     const supplyData = supplyStocks.data.map((stock: any) => {
       const supply = supplies.data.find((s: any) => s.imz_id === stock.imz_id);
       const inventoryData = inventory.data.find(
-        (i: any) => i.inv_id === stock.inv_id
+        (i: any) => i.inv_id === stock.inv_id 
       );
 
       const pcsPerBox = stock.imzStck_per_pcs || 1;
-      const totalPcs = stock.imzStck_pcs || (stock.imzStck_qty * pcsPerBox);
-      const availablePcs = stock.imzStck_avail || (totalPcs - stock.imzStck_used);
-      const remainingBoxes = Math.floor(availablePcs / pcsPerBox);
-      const remainingPieces = availablePcs % pcsPerBox;
+      const totalPcs = stock.imzStck_pcs || stock.imzStck_qty * pcsPerBox;
 
       let qtyDisplay;
       if (stock.imzStck_unit === "pcs") {
         qtyDisplay = `${totalPcs} pcs`;
       } else {
         qtyDisplay = `${stock.imzStck_qty} ${stock.imzStck_unit} (${totalPcs} pcs)`;
-      }
-
-      let availableStockDisplay;
-      if (stock.imzStck_unit === "pcs") {
-        availableStockDisplay = `${availablePcs} pcs`;
-      } else {
-        availableStockDisplay = `${remainingBoxes} ${stock.imzStck_unit} - ${availablePcs} pcs`;
       }
 
       return {
@@ -141,13 +123,13 @@ export const getCombinedStock = async () => {
         qty: qtyDisplay,
         administered: `${stock.imzStck_used} pcs`,
         wastedDose: stock.wasted_items?.toString() || "0",
-        availableStock: availableStockDisplay,
+        availableStock: stock.imzStck_avail,
         expiryDate: inventoryData?.expiry_date || "N/A",
         inv_id: stock.inv_id,
         imz_id: stock.imz_id,
         imzStck_id: stock.imzStck_id,
         imzStck_unit: stock.imzStck_unit,
-        imzStck_per_pcs: pcsPerBox
+        imzStck_per_pcs: pcsPerBox,
       };
     });
 
@@ -158,7 +140,7 @@ export const getCombinedStock = async () => {
   }
 };
 
-type StockRecords = {
+export type StockRecords = {
   id: number;
   batchNumber: string;
   category: string;
@@ -170,7 +152,7 @@ type StockRecords = {
   qty: string;
   administered: string;
   wastedDose: string;
-  availableStock: string;
+  availableStock: number;
   expiryDate: string;
   type: "vaccine" | "supply";
   inv_id: number;
@@ -185,11 +167,11 @@ type StockRecords = {
   imzStck_per_pcs: number;
 };
 
-function isVaccine(record: StockRecords): record is StockRecords & { type: 'vaccine' } {
+export function isVaccine(record: StockRecords): record is StockRecords & { type: 'vaccine' } {
   return record.type === 'vaccine';
 }
 
-function isSupply(record: StockRecords): record is StockRecords & { type: 'supply' } {
+export function isSupply(record: StockRecords): record is StockRecords & { type: 'supply' } {
   return record.type === 'supply';
 }
 
@@ -249,141 +231,7 @@ export default function CombinedStockTable() {
     }
   };
 
-  const columns: ColumnDef<StockRecords>[] = [
-    {
-      accessorKey: "batchNumber",
-      header: "Batch Number",
-    },
-    {
-      accessorKey: "item",
-      header: "Item Details",
-      cell: ({ row }) => {
-        const item = row.original.item;
-        return (
-          <div className="flex flex-col">
-            <div className="font-medium text-center">{item.antigen}</div>
-            {row.original.type === "vaccine" && (
-              <div className="text-sm text-gray-600 text-center">
-                {item.dosage} {item.unit}
-              </div>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "qty",
-      header: "Stock Quantity",
-      cell: ({ row }) => <div className="text-center">{row.original.qty}</div>,
-    },
-    {
-      accessorKey: "administered",
-      header: "Units Used",
-      cell: ({ row }) => (
-        <div className="text-center text-red-600">
-          {row.original.administered}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "wastedDose",
-      header: "Wasted Units",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm text-gray-600">
-            {row.original.wastedDose || 0}
-          </span>
-          <TooltipLayout
-            trigger={
-              <DialogLayout
-                trigger={
-                  <button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
-                    <Minus size={15} />
-                  </button>
-                }
-                title={
-                  row.original.category === "medsupplies"
-                    ? "Wasted Items"
-                    : "Wasted Dose"
-                }
-                mainContent={<WastedDoseForm wasted={row.original.id} />}
-              />
-            }
-            content={
-              row.original.category === "medsupplies"
-                ? "Record Wasted Items"
-                : "Record Wasted Dose"
-            }
-          />
-        </div>
-      ),
-    },
-    {
-      accessorKey: "availableStock",
-      header: "Available Stock",
-      cell: ({ row }) => (
-        <div className="text-center text-green-600">
-          {row.original.availableStock}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "expiryDate",
-      header: "Expiry Date",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.expiryDate}</div>
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => {
-        const record = row.original;
-        return (
-          <div className="flex gap-2">
-            <TooltipLayout
-              trigger={
-                <DialogLayout
-                  trigger={
-                    <div className="hover:bg-slate-300 text-black border border-gray px-4 py-2 rounded cursor-pointer">
-                      <Edit size={16} />
-                    </div>
-                  }
-                  title={
-                    record.type === "vaccine"
-                      ? "Edit Vaccine Stock"
-                      : "Edit Supply Stock"
-                  }
-                  mainContent={
-                    isVaccine(record) ? (
-                      <EditVacStockForm vaccine={record} setIsDialog={setIsDialog} />
-                    ) : isSupply(record) ? (
-                      <EditImmunizationForm supply={record} />
-                    ) : null
-                  }
-                />
-              }
-              content="Edit"
-            />
-            <TooltipLayout
-              trigger={
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleArchiveInventory(record.inv_id)}
-                >
-                  <Trash />
-                </Button>
-              }
-              content="Archive"
-            />
-          </div>
-        );
-      },
-    },
-  ];
+  const columns = getStockColumns(handleArchiveInventory, setIsDialog);
 
   if (isLoading) {
     return (

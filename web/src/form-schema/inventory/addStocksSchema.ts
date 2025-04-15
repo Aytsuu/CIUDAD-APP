@@ -1,21 +1,5 @@
 import { z } from "zod";
-
-// Create a reusable positive number schema that accepts both strings and numbers
-export const positiveNumberSchema = z.union([
-  z.string()
-    .min(1, "Value is required")
-    .transform(val => {
-      const num = parseFloat(val);
-      if (isNaN(num)) throw new Error("Invalid number");
-      return num;
-    }),
-  z.number()
-]).refine(val => val >= 0, {
-  message: "Value must be a positive number"
-});
-
-
-
+import { positiveNumberSchema } from "@/helpers/PositiveNumber";
 
 export const AddMedicineStocksSchema = z
   .object({

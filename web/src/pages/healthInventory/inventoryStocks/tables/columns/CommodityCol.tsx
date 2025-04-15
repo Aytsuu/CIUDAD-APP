@@ -10,7 +10,7 @@ import EditCommodityStockForm from "../../editModal/EditComStockModal";
 export const CommodityStocksColumns = (
   setIsDialog: (value: boolean) => void,
   setCommodityToArchive: (id: number | null) => void,
-  setIsArchiveConfirmationOpen: (value: boolean) => void
+  setIsArchiveConfirmationOpen: (value: boolean) => void 
 ): ColumnDef<CommodityStocksRecord>[] => [
   {
     accessorKey: "commodityInfo",
@@ -46,12 +46,14 @@ export const CommodityStocksColumns = (
     cell: ({ row }) => {
       const { cinv_qty, cinv_pcs } = row.original.qty;
       const unit = row.original.cinv_qty_unit;
+      
       return (
         <div className="text-center">
-          {cinv_pcs > 0 ? (
-            <span className="text-blue">
-             {cinv_qty} box/es - {cinv_qty * cinv_pcs} pcs 
-            </span>
+          {unit.toLowerCase() === 'boxes' && cinv_pcs > 0 ? (
+            <div className="flex flex-col">
+              <span className="text-blue">{cinv_qty} box/es</span>
+              <span className="text-blue-500">({cinv_qty * cinv_pcs} total pc/s)</span>
+            </div>
           ) : (
             <span className="text-blue">
               {cinv_qty} {unit}
@@ -67,38 +69,30 @@ export const CommodityStocksColumns = (
     cell: ({ row }) => (
       <div className="text-red-700">{row.original.dispensed}</div>
     ),
-  },{
+  }
+  
+  ,{
     accessorKey: "availQty",
     header: "Available",
     cell: ({ row }) => {
       const { cinv_pcs } = row.original.qty;
-      const availQty = Number(row.original.availQty);
-      
-      if (cinv_pcs > 0) {
-        // Calculate full boxes and remaining pieces
-        const fullBoxes = Math.floor(availQty / cinv_pcs);
-        const remainingPieces = availQty % cinv_pcs;
+      const unit = row.original.cinv_qty_unit;
+      const availQty = parseInt(row.original.availQty);
+  
+      if (unit.toLowerCase() === "boxes" && cinv_pcs > 0) {
+        const boxCount = Math.ceil(availQty / cinv_pcs);
+        const remainingPieces = availQty;
         
         return (
-          <div className="text-green-700 flex flex-row justify-center">
-            {/* First line: Total pieces */}
-            
-            {/* Second line: Box breakdown (only show if there are boxes or pieces) */}
-            {(fullBoxes > 0 || remainingPieces > 0) && (
-              <span>
-                {fullBoxes > 0 && `${fullBoxes} box/es`}
-                {fullBoxes > 0 && remainingPieces > 0 && ' + '}
-                {remainingPieces > 0 && `${remainingPieces} pcs`}
-              </span>
-            )}
-                        <span> - {availQty} pcs</span>
-
+          <div className="flex flex-col">
+               <span className="text-blue">{boxCount} box/es</span>
+               <span className="text-blue-500">({remainingPieces} total pc/s)</span>
           </div>
         );
       } else {
         return (
-          <div className="text-green-700">
-            {`${row.original.availQty} ${row.original.cinv_qty_unit}`}
+          <div className="text-center text-green-700">
+            {availQty} {unit}
           </div>
         );
       }
