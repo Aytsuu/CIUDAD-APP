@@ -9,6 +9,7 @@ interface Option {
     name: string;
 }
 
+
 export const useDeleteParticular = () => {
 
     const [particulars, setParticulars] = useState<Option[]>([]);
