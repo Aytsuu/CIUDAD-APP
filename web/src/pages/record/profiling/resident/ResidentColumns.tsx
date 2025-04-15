@@ -64,10 +64,12 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         const householdNo: string = row.getValue("householdNo");
         
         return householdNo ? (<div>{householdNo}</div>) :
-        (<TooltipLayout
-            trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-            content={"Family not registered"}
-        />)
+        (<div className="flex justify-center items-center">
+          <TooltipLayout
+              trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+              content="Family not registered"
+          />
+        </div>)
     },
   },
   {
@@ -85,10 +87,12 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         const familyNo: string = row.getValue("familyNo");
         
         return familyNo ? (<div>{familyNo}</div>) :
-        (<TooltipLayout
-            trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-            content="Family not registered"
-        />)
+        (<div className="flex justify-center items-center">
+          <TooltipLayout
+              trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+              content="Family not registered"
+          />
+        </div>)
     },
   },
   {
@@ -103,13 +107,15 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-        const sitio: string = row.getValue("sitio");
-        
-        return sitio ? (<div>{sitio}</div>) :
-        (<TooltipLayout
+      const sitio: string = row.getValue("sitio");
+      
+      return sitio ? (<div>{sitio}</div>) :
+      (<div className="flex justify-center items-center">
+        <TooltipLayout
             trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
             content="Family not registered"
-        />)
+        />
+      </div>)
     },
   },
   {

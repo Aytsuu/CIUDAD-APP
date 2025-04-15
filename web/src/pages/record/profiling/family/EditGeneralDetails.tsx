@@ -83,7 +83,8 @@ export default function EditGeneralDetails({
 
     await updateFamily({
       demographicInfo: values,
-      familyId: familyData.fam_id
+      familyId: familyData.fam_id,
+      oldHouseholdId: familyData.hh.hh_id
     })
 
     if(!isUpdating) {

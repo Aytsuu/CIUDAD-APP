@@ -32,9 +32,10 @@ export const useUpdateFamily = () => {
     mutationFn: ({demographicInfo, familyId} : {
       demographicInfo: Record<string, any>;
       familyId: string;
+      oldHouseholdId: string;
     }) => updateFamily(demographicInfo, familyId),
     onSuccess: (newData, variables) => {
-      const { demographicInfo, familyId } = variables;
+      const { demographicInfo, familyId, oldHouseholdId} = variables;
 
       // Update families list
       queryClient.setQueryData(['families'], (old: any[] = []) => (
@@ -56,7 +57,18 @@ export const useUpdateFamily = () => {
 
       queryClient.setQueryData(['households'], (old: any[] = []) => (
         old.map(house => {
-          if(house.hh_id === demographicInfo.householdNo) {
+          // Remove the family from previous household
+          if(house.hh_id === oldHouseholdId) {
+            return {
+              ...(house || []),
+              family: house.family.filter((fam: any) => (
+                fam.fam_id !== familyId
+              ))
+            }
+          }
+
+          // Transfer to new household
+          if(house.hh_id === demographicInfo.householdNo) { 
             return {
               ...(house || []),
               family: [

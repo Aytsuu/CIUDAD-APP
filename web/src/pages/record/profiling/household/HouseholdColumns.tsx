@@ -96,6 +96,7 @@ export const householdColumns = (
           state={{
             params: {
               residents: residents,
+              households: households,
               household: households.find((household) => household.hh_id == row.original.id)
             }
           }}
@@ -121,7 +122,8 @@ export const householdColumns = (
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 export const householdFamColumns = (
-  residents: any[]
+  residents: any[],
+  households: any[]
 ): ColumnDef<HouseholdFamRecord>[] => [
   {
     accessorKey: 'data',
@@ -135,7 +137,7 @@ export const householdFamColumns = (
         <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
           <div className="w-full grid grid-cols-7 items-center justify-center">
             <div className="w-full flex flex-col items-start gap-1">
-              <Label className="w-[90%] py-1.5 text-black/70 bg-muted rounded-full">
+              <Label className="w-[80%] py-1.5 text-black/70 bg-muted rounded-full">
                 {family.fam_id}
               </Label>
             </div>
@@ -165,7 +167,8 @@ export const householdFamColumns = (
               state={{
                 params: {
                   residents: residents,
-                  family: family
+                  family: family,
+                  households: households
                 }
               }}
             >

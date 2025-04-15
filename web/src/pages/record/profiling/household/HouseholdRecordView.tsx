@@ -15,6 +15,7 @@ export default function HouseholdRecordView() {
     [location.state]
   );
   const residents = React.useMemo(() => params.residents, [params]);
+  const households = React.useMemo(() => params.households, [params]);
   const household = React.useMemo(() => params.household || {}, [params]);
   const head = React.useMemo(() => household.rp || {}, [household]);
   const personal = React.useMemo(() => head.per || {}, [head]);
@@ -105,7 +106,7 @@ export default function HouseholdRecordView() {
             <div className="w-[9%] flex justify-end items-center"></div>
           </div>
           <DataTable
-            columns={householdFamColumns(residents)}
+            columns={householdFamColumns(residents, households)}
             data={formatFamilyData()}
             header={false}
           />
