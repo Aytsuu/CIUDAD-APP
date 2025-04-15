@@ -331,3 +331,14 @@ function BudgetTracker() {
 }
 
 export default BudgetTracker;
+
+
+//frontend
+//Remaining Balance per row
+//remove amount used
+//separate income and expense
+
+//backend
+//retrieve gad budget from budget_plan_detail then display it as remaining balance (expense amount - (closes to current_date = remaining bal))
+//every expense deducts per row on the remaining bal. column
+//search-create particulars (retrieve sa annual dev plan)
