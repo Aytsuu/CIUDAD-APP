@@ -13,7 +13,6 @@ import { Card } from "@/components/ui/card/card";
 import { ArrowRight, ChevronLeft } from "lucide-react"; 
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useNavigate } from "react-router"
-import EditBudgetPlanMainForm from "./budgetPlanForm-Edit";
 
 function HeaderAndAllocationEdit(){
     const { plan_id } = useParams<{ plan_id: string }>();
@@ -54,10 +53,11 @@ function HeaderAndAllocationEdit(){
         const combinedData = {
             header: headerValues,
             allocation: allocationValues,
-            plan_id: plan_id
+            id: plan_id,
+            isEdit: true,
         }
         console.log("Data:", combinedData)
-        navigate(`/edit-budget-plan-details/${plan_id}`)    
+        navigate('/treasurer-budgetplan-form', {state: combinedData})    
     };
 
     // Display Form
@@ -71,7 +71,7 @@ function HeaderAndAllocationEdit(){
                 description="Are you sure you want to go back? All changes made will not be saved."
                 actionLabel="Confirm"
                 onClick={() => (
-                    navigate(-1)
+                    navigate(`/treasurer-budgetplan-view/${plan_id}`)
                 )}/>
             </div>
 

@@ -7,7 +7,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
-import BudgetAllocationForm from "./treasurer_budget_allocation_form";
+import BudgetAllocationForm from "./budgetAllocationForm";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useState } from "react";
 
@@ -41,7 +41,9 @@ function CreateBudgetPlanHeader(){
         
         const completeData = {
           ...formValues,
-          ...allocationValues
+          ...allocationValues,
+          isEdit: false,
+          id: "",
         };
 
         navigate("/treasurer-budgetplan-form", {state : completeData});

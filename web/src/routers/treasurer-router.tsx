@@ -4,14 +4,13 @@ import PersonalClearance from "@/pages/record/treasurer/treasurer-clearance-requ
 import PermitClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permitClearance";
 import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-serviceCharge";
 import BarangayService from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-barangayService";
-import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budget-plan-main";
+import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/listOfAllBudgetPlans";
 import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
-import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/CreateBudgetPlanForms/treasurer-budgetplan-Form";
-import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-view";
+import BudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/budgetplanMainForm";
+import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/viewABudgetPlan";
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
 import HeaderAndAllocationEdit from "@/pages/record/treasurer/treasurer-budgetplan/EditBudgetPlanForms/budgetPlanHeaderandAlloctionEdit.tsx";
-import EditBudgetPlanMainForm from "@/pages/record/treasurer/treasurer-budgetplan/EditBudgetPlanForms/budgetPlanForm-Edit";
 
 export const treasurer_router = [
     {
@@ -20,7 +19,7 @@ export const treasurer_router = [
     },
     {
         path: "treasurer-budgetplan-form",
-        element: <CreateBudgetPlanForm/>
+        element: <BudgetPlanForm/>
     },
     {
         path: 'treasurer-budgetplan-view/:plan_id',
@@ -66,8 +65,4 @@ export const treasurer_router = [
         path: 'edit-header-and-allocation/:plan_id',
         element: <HeaderAndAllocationEdit/>
     },
-    {
-        path:'edit-budget-plan-details/:plan_id',
-        element: <EditBudgetPlanMainForm/>
-    }
 ]

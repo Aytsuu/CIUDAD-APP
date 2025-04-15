@@ -1,7 +1,7 @@
-import CreateBudgetPlanPage1 from "./budgetPlanPage1-create.tsx.tsx";
-import CreateBudgetPlanPage2 from "./budgetPlanPage2-create.tsx.tsx";
-import CreateBudgetPlanPage3 from "./budgetPlanPage3-create.tsx.tsx";
-import CreateBudgetPlanPage4 from "./budgetPlanPage4-create.tsx.tsx";
+import CreateBudgetPlanPage1 from "./budgetPlanFormPage1.tsx";
+import CreateBudgetPlanPage2 from "./budgetPlanFormPage2.tsx";
+import CreateBudgetPlanPage3 from "./budgetPlanFormPage3.tsx";
+import CreateBudgetPlanPage4 from "./budgetPlanFormPage4.tsx";
 import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
@@ -13,8 +13,9 @@ import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI.tsx";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import DisplayBreakdown from "../display_breakdown.tsx";
+import DisplayBreakdown from "../netBreakdownDisplay.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -80,12 +81,16 @@ const initialFormData4 = {
     disasterSupplies: "",
 };
 
-function CreateBudgetPlanForm() {
+function BudgetPlanForm() {
     const year = new Date().getFullYear()
+
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
             actualIncome, actualRPT, personalServicesLimit, miscExpenseLimit, 
-            localDevLimit, skFundLimit, calamityFundLimit } = location.state;
+            localDevLimit, skFundLimit, calamityFundLimit, isEdit, id } = location.state || 0;
+
+    console.log('isEdit: ', isEdit)
+
     const availableResources =
     (parseFloat(balance) || 0) +
     (parseFloat(realtyTaxShare) || 0) +
@@ -232,26 +237,30 @@ function CreateBudgetPlanForm() {
                 skFundLimit,
                 calamityFundLimit
             };
-    
-            const planId = await budget_plan(budgetHeader);
-            console.log("Budget Header Uploaded!")
 
-            const res = await budget_plan_details(combinedData, planId);
-            console.log("Budget plan and expenditures submitted successfully!");
+            if(isEdit == false && id == ""){
+                const planId = await budget_plan(budgetHeader);
+                console.log("Budget Header Uploaded!")
 
-            if (res && planId) {
-                toast.success('Budget plan created successfully', {
-                    id: toastId, 
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
+                const res = await budget_plan_details(combinedData, planId);
+                console.log("Budget plan and expenditures submitted successfully!");
 
-                window.location.href = '/treasurer-budget-plan';
+                if (res && planId) {
+                    toast.success('Budget plan created successfully', {
+                        id: toastId, 
+                        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                        duration: 2000
+                    });
+
+                    window.location.href = '/treasurer-budget-plan';
+                }
+            } else {
+                // for edit
             }
 
         } catch (error){
-            toast.error('Failed to create budget plan', {
-                id: toastId, 
+            toast.error(`Failed to ${isEdit ? 'update' : 'create'} budget plan`, {
+                id: toastId,
                 duration: 2000
             });
             console.error("Error submitting budget plan", error);
@@ -263,21 +272,28 @@ function CreateBudgetPlanForm() {
             {/* Header Title */}
             <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
-                    {/* Confirmation message when users aborts budget plan creation by clicking the back button */}
-                    <ConfirmationModal
-                    trigger={<Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button>}
-                    title="Unsaved Changes"
-                    description="Are you sure you want to go back? All progress on your budget plan will be lost."
-                    actionLabel="Confirm"
-                    onClick={() => (
-                        window.location.href = '/treasurer-budget-plan'
-                    )}/>
+                    {/* ihe form is in editing mode then the confirmation modal not will appear, otherwise it will. */}
+                    {isEdit == false ? 
+                        (<ConfirmationModal
+                        trigger={<Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button>}
+                        title="Unsaved Changes"
+                        description="Are you sure you want to go back? All progress on your budget plan will be lost."
+                        actionLabel="Confirm"
+                        onClick={() => (
+                            window.location.href = '/treasurer-budget-plan'
+                        )}/>
+                        ) : (
+                            <Button className="text-black p-2 self-start" variant={"outline"} onClick={() => {
+                                window.location.href = `/edit-header-and-allocation/${id}`
+                            }}> <ChevronLeft /></Button>
+                        )
+                    }
                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                        <div>Create Budget Plan</div>
+                        <div>{isEdit ? 'Edit Budget Plan' : "Create Budget Plan"}</div>
                     </h1>
                 </div>
                 <p className="text-xs sm:text-sm text-darkGray ml-[3.2rem]">
-                    Develop a comprehensive budget plan to support barangay initiatives and community needs.
+                    {isEdit ? "Edit the existing budget plan details." : "Develop a comprehensive budget plan to support barangay initiatives and community needs."}
                 </p>
             </div>
             <hr className="border-gray mb-7 sm:mb-8" /> 
@@ -390,4 +406,4 @@ function CreateBudgetPlanForm() {
     );
 }
 
-export default CreateBudgetPlanForm;
+export default BudgetPlanForm;

@@ -10,7 +10,7 @@
     import { getBudgetDetails } from "./restful-API/budgetplanGetAPI";
     import { Skeleton } from "@/components/ui/skeleton";
     import DialogLayout from "@/components/ui/dialog/dialog-layout";
-    import DisplayBreakdown from "./display_breakdown";
+    import DisplayBreakdown from "./netBreakdownDisplay";
     import { Label } from "@/components/ui/label";
     import { Outlet } from "react-router-dom";
 
