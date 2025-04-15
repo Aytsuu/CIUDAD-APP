@@ -10,13 +10,28 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
-import { Plus } from "lucide-react";
+import { CircleCheck, Plus } from "lucide-react";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { formatResidents } from "../profilingFormats";
+import { useAddFamilyComposition } from "../queries/profilingAddQueries";
+import { toast } from "sonner";
 
-export default function AddMemberForm() {
+export default function AddMemberForm({
+  residents, 
+  familyId, 
+  setIsOpenDialog,
+  setComposition
+} : {
+  residents: any[];
+  familyId: string;
+  setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>
+  setComposition: React.Dispatch<React.SetStateAction<any>>
+}) {
   // Initializing states
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false);
+  const { mutateAsync: addFamilyComposition, isPending: isAdding} = useAddFamilyComposition(); 
+  const formattedResidents = React.useMemo(() => formatResidents({residents: residents}), [residents]);
   const defaultValues = React.useRef(generateDefaultValues(newMemberFormSchema)).current;
   const form = useForm<z.infer<typeof newMemberFormSchema>>({
     resolver: zodResolver(newMemberFormSchema),
@@ -24,6 +39,7 @@ export default function AddMemberForm() {
     mode: "onChange"
   });
 
+  // Submit function
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
@@ -33,6 +49,27 @@ export default function AddMemberForm() {
       setInvalidResident(true);
       return;
     }
+
+    const role = form.getValues().role;
+    const newComposition = await addFamilyComposition({
+      familyId: familyId,
+      role: role,
+      residentId: residentId
+    });
+
+    if(!isAdding) {
+      setIsOpenDialog(false);
+      setIsSubmitting(false);
+      toast("A members has been added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+      });
+
+      setComposition((prev: any) => [
+        ...prev,
+        newComposition
+      ])
+    }
+
   };
 
   return (
@@ -49,7 +86,7 @@ export default function AddMemberForm() {
             <Label className="text-black/70">Resident</Label>
           </div>
           <Combobox
-            options={[]}
+            options={formattedResidents}
             value={form.watch("id")}
             onChange={(value) => form.setValue("id", value)}
             placeholder="Select a resident" 
@@ -64,9 +101,9 @@ export default function AddMemberForm() {
               </div>
             }
           />
-          <Label className="text-[13px] text-red-500">
-            {invalidResident ? `Resident is required` : ""}
-          </Label>
+          {invalidResident ? <Label className="text-[13px] text-red-500">
+            Resident is required
+          </Label> : ""}
         </div>
         <FormSelect control={form.control} name="role" label="Role" options={[
           {id: "mother", name: "Mother"},

@@ -16,8 +16,39 @@ export const useDeleteFamilyComposition = () => {
       familyId: string
       residentId: string
     }) => deleteFamilyComposition(familyId, residentId),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const {familyId, residentId} = variables;
+
+      queryClient.setQueryData(['families'], (old: any[] = []) => {
+        return old.map(family => {
+          if (family.fam_id === familyId) {
+            return {
+              ...family,
+              family_compositions: family.family_compositions.filter(
+                (fc: any) => fc.rp.rp_id !== residentId
+              )
+            };
+          }
+          return family;
+        });
+      });
+
+      // Update the resident if needed (remove the family connection)
+      queryClient.setQueryData(['residents'], (old: any[] = []) => {
+        return old.map(resident => {
+          if(resident.rp_id === residentId) {
+            return {
+              ...resident,
+              family_compositions: []
+            }
+          }
+          return resident;
+        })
+      });
+
+      queryClient.invalidateQueries({queryKey: ['familyCompositions']});
       queryClient.invalidateQueries({queryKey: ['families']});
+      queryClient.invalidateQueries({queryKey: ['residents']});
     }
   })
 }

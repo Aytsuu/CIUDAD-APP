@@ -10,6 +10,7 @@ import { Pen, UserRoundPlus } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import AddMemberForm from "./AddMemberForm";
+import EditGeneralDetails from "./EditGeneralDetails";
 
 export default function FamilyRecordView() {
   const location = useLocation();
@@ -17,20 +18,31 @@ export default function FamilyRecordView() {
     () => location.state?.params || {},
     [location.state]
   );
+  const [isOpenAddDialog, setIsOpenAddDialog] = React.useState<boolean>(false);
+  const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false);
   const residents = React.useMemo(() => params.residents, [params]);
-  const family = React.useMemo(() => params.family, [params]);
+  const [family, setFamily] = React.useState<
+    typeof params.family
+  >(params.family);
+  const [compositions, setComposition] = React.useState<
+    typeof family.family_compositions
+  >(family.family_compositions)
+  const households = React.useMemo(() => params.households, [params]);
   const staff = React.useMemo(() => family.staff.rp.per, [family]);
 
+
   const formatMemberData = React.useCallback((): MemberRecord[] => {
-    const compositions = family.family_compositions;
     if (!compositions) return [];
 
     return compositions.map((comp: any) => {
       return {
-        data: comp,
+        data: {
+          comp: comp,
+          members: compositions
+        },
       };
     });
-  }, [family.family_compositions]);
+  }, [compositions]);
 
   return (
     <LayoutWithBack
@@ -42,9 +54,28 @@ export default function FamilyRecordView() {
           <div className="flex flex-col p-5">
             <div className="flex justify-between items-center mb-2">
               <Label className="text-[17px] text-darkBlue1">General</Label>
-              <Button variant={"outline"} className="border-none shadow-none text-black/50">
-                <Pen/> Edit
-              </Button>
+              <DialogLayout 
+                trigger= {
+                  <Button 
+                    variant={"outline"} 
+                    className="border-none shadow-none text-black/50"
+                  >
+                    <Pen/> Edit
+                  </Button>
+                }
+                title="General Details"
+                description="Edit form for family general details. "
+                mainContent={
+                  <EditGeneralDetails 
+                    familyData={family} 
+                    households={households}
+                    setIsOpenDialog={setIsOpenEditDialog}
+                    setFamily={setFamily}
+                  />
+                }
+                isOpen={isOpenEditDialog}
+                onOpenChange={setIsOpenEditDialog}
+              />
             </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Family No.</Label>
@@ -55,14 +86,18 @@ export default function FamilyRecordView() {
               <Label className="text-[16px] text-black/70">{family.hh.hh_id}</Label>
             </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
+              <Label className="text-black/40">Building</Label>
+              <Label className="text-[16px] text-black/70">{family.fam_building}</Label>
+            </div>
+            <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">Indigenous</Label>
               <Label className="text-[16px] text-black/70">{family.fam_indigenous}</Label>
             </div>
-            <div className="flex flex-col px-2 py-3">
+            <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Date Registered</Label>
               <Label className="text-[16px] text-black/70">{family.fam_date_registered}</Label>
             </div>
-            <div className="flex flex-col px-2 py-3 bg-muted">
+            <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">Registered By</Label>
               <Label className="text-[16px] text-black/70">
                 {`${staff.per_lname}, ${staff.per_fname}
@@ -81,7 +116,7 @@ export default function FamilyRecordView() {
               key details.
             </p>
           </div>
-          <div className="w-full flex px-6 py-3">
+          <div className="w-full flex px-6 py-4">
             <div className="w-full grid grid-cols-9 items-center justify-center">
               <Label className="text-black/50">Resident No.</Label>
               <div className="w-full flex flex-col col-span-2 items-start gap-1">
@@ -100,14 +135,27 @@ export default function FamilyRecordView() {
                     <UserRoundPlus/> Add Member
                   </Button>
                 }
-                title="New Member"
+                title="New Member" 
                 description="Select a registered resident from the database and assign their role within the family."
-                mainContent={<AddMemberForm />}
+                mainContent={
+                  <AddMemberForm 
+                    residents={
+                      residents.filter((r: any) => (
+                        !(compositions.find((fc: any) => r.rp_id === fc.rp.rp_id))
+                      ))
+                    }
+                    familyId={family.fam_id}
+                    setIsOpenDialog={setIsOpenAddDialog}
+                    setComposition={setComposition}
+                  />
+                }
+                isOpen={isOpenAddDialog}
+                onOpenChange={setIsOpenAddDialog}
               />
             </div>
           </div>
           <DataTable
-            columns={familyViewColumns(residents, family)}
+            columns={familyViewColumns(residents, family, setComposition)}
             data={formatMemberData()}
             header={false}
           />

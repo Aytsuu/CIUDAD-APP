@@ -9,6 +9,7 @@ urlpatterns = [
 
     # Family Urls
     path("family/", FamilyView.as_view(), name="family-details"),
+    path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
 
     # Family Composition Urls
     path("family-composition/", FamilyCompositionView.as_view(), name="family-composition-details"),

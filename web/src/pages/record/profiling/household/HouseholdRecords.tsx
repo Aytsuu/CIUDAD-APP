@@ -31,6 +31,7 @@ export default function HouseholdRecords() {
 
       return {
         id: house.hh_id || "-",
+        families: house.family.length ||  "-",
         streetAddress: house.hh_street || "-",
         sitio: sitio?.sitio_name || "-",
         nhts: house.hh_nhts || "-",

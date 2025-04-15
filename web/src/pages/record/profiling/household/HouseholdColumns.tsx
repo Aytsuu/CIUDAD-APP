@@ -1,7 +1,6 @@
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleChevronRight, MoveRight } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { ArrowUpDown, CircleChevronRight } from "lucide-react";
 import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 
@@ -25,6 +24,18 @@ export const householdColumns = (
     ),
   },
   {
+    accessorKey: 'families',
+    header: ({ column }) => (
+      <div
+        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Families
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+  },
+  {
     accessorKey: 'sitio',
     header: ({ column }) => (
       <div
@@ -42,7 +53,7 @@ export const householdColumns = (
   },
   {
     accessorKey: 'nhts',
-    header: 'NHTS?',
+    header: 'NHTS',
   },
   {
     accessorKey: 'head',

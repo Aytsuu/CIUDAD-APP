@@ -1,7 +1,6 @@
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, CircleChevronRight, CircleMinus, Loader2, MoveRight } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { ArrowUpDown, CircleAlert, CircleCheck, CircleChevronRight, CircleMinus, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
@@ -15,7 +14,8 @@ import { toast } from "sonner";
 
 export const familyColumns = (
   residents: any[],
-  families: any[]
+  families: any[],
+  households: any[]
 ): ColumnDef<FamilyRecord>[] => [
   {
     accessorKey: "id",
@@ -36,7 +36,7 @@ export const familyColumns = (
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        No. of Members
+        Members
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -73,7 +73,8 @@ export const familyColumns = (
         state={{
           params: {
             residents: residents,
-            family: families.find((family) => family.fam_id == row.original.id)
+            family: families.find((family) => family.fam_id == row.original.id),
+            households: households
           },
         }}
       >
@@ -99,15 +100,16 @@ export const familyColumns = (
 
 export const familyViewColumns = (
   residents: any[],
-  family: Record<string, any>
+  family: Record<string, any>,
+  setComposition: React.Dispatch<React.SetStateAction<any>>
 ): ColumnDef<MemberRecord>[] => [
   {
     accessorKey: "data",
     header: "",
     cell: ({ row }) => {
-      const composition = row.getValue("data") as any;
-      const role = composition.fc_role;
-      const profile = composition.rp;
+      const data = row.getValue("data") as any;
+      const role = data.comp.fc_role;
+      const profile = data.comp.rp;
       const personal = profile.per;
 
       return (
@@ -178,13 +180,13 @@ export const familyViewColumns = (
     accessorKey: "action",
     header: "",
     cell: ({ row }) => {
-      const familyMembers = family.family_compositions;
-      const composition = row.getValue("data") as any;
-      const residentId = composition.rp.rp_id;
+      const data = row.getValue("data") as any;
+      const familyMembers = data.members;
+      const residentId = data.comp.rp.rp_id;
       const [isRemoving, setIsRemoving] = React.useState<boolean>(false);
-      const { mutate: deleteFamilyComposition } = useDeleteFamilyComposition();
+      const { mutateAsync: deleteFamilyComposition, isPending: isDeleting } = useDeleteFamilyComposition();
 
-      const remove = () => {
+      const remove = async () => {
         setIsRemoving(true);
         
         // Cancel if member(s) doesn't exceed 1
@@ -196,10 +198,22 @@ export const familyViewColumns = (
           return;
         }
 
-        deleteFamilyComposition({
+        await deleteFamilyComposition({
           familyId: family.fam_id,
           residentId: residentId
-        })
+        });
+
+        if(!isDeleting) {
+          setIsRemoving(false);
+          toast("A member has been deleted successfully", {
+            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+          })
+
+          setComposition((prev: any) => 
+            prev.filter((p: any) => p.rp.rp_id !== residentId)
+          )
+        }
+
       };
 
       return (
