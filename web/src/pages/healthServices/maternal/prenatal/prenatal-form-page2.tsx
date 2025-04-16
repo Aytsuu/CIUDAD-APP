@@ -157,45 +157,60 @@ export default function PrenatalFormSecPg(
                     
                     {/* tetanus toxoid status */}
                     <Separator className="mt-10 mb-10"/>
-                    <h3 className="text-md font-bold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col">
-                            <div className="mt-1 mb-2">
-                                <FormField
-                                        control={form.control}
-                                        name="prenatalVaccineInfo.ttOrtd"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Vaccine Type</FormLabel>
-                                                <FormControl>
-                                                    <RadioGroup
-                                                        onValueChange={(value) => {
-                                                            field.onChange(value);
-                                                            // setSelectedOption(value);
-                                                        }}
-                                                        defaultValue={field.value ?? ''}
-                                                        className="flex flex-row" 
-                                                    >
-                                                        <FormItem className="flex items-center space-x-1 space-y-0 mr-2"> 
-                                                            <FormControl>
-                                                                <RadioGroupItem value="TT"/>
-                                                            </FormControl>
-                                                            <FormLabel>Tetanus Toxoid (TT)</FormLabel>
-                                                        </FormItem>
+                    <div>
 
-                                                        {/* after 2 week option */}
-                                                        <FormItem className="flex items-center space-x-1 space-y-0"> 
-                                                            <FormControl>
-                                                                <RadioGroupItem value="TD"/>
-                                                            </FormControl>
-                                                            <FormLabel>Tetanus, Diptheria (TD)</FormLabel>
-                                                        </FormItem>
-                                                    </RadioGroup>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                    </div>
+                    <h3 className="text-md font-bold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
+                    <div className="grid gap-3">
+                        <div className="flex flex-col">
+                            <div className="flex flex-row mt-1 mb-2">
+                                <FormField
+                                    control={form.control}
+                                    name="prenatalVaccineInfo.ttOrtd"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Vaccine Type</FormLabel>
+                                            <FormControl>
+                                                <RadioGroup
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        // setSelectedOption(value);
+                                                    }}
+                                                    defaultValue={field.value ?? ''}
+                                                    className="flex flex-row" 
+                                                >
+                                                    <FormItem className="flex items-center space-x-1 space-y-0 mr-2"> 
+                                                        <FormControl>
+                                                            <RadioGroupItem value="TT"/>
+                                                        </FormControl>
+                                                        <FormLabel>Tetanus Toxoid (TT)</FormLabel>
+                                                    </FormItem>
+
+                                                    {/* after 2 week option */}
+                                                    <FormItem className="flex items-center space-x-1 space-y-0"> 
+                                                        <FormControl>
+                                                            <RadioGroupItem value="TD"/>
+                                                        </FormControl>
+                                                        <FormLabel>Tetanus, Diptheria (TD)</FormLabel>
+                                                    </FormItem>
+                                                </RadioGroup>
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="prenatalVaccineInfo.isAdministered"
+                                    render={({ field }) => (
+                                        <FormItem className="ml-10 mt-8">
+                                            <FormControl>
+                                                <Checkbox {...field}></Checkbox>
+                                            </FormControl>
+                                            <FormLabel className="ml-1">Administered by Midwife</FormLabel>
+                                        </FormItem>   
+                                    )}
+                                />
+                            </div>
                             <div className="grid grid-cols-2 gap-4 mt-2">
                                 <FormField
                                     control={form.control}
@@ -251,45 +266,51 @@ export default function PrenatalFormSecPg(
                                     )}
                                 />
                             </div>
-                            <Button className="mt-5">
-                                Add
-                            </Button>
+                            
+                            <hr className="mt-5 mb-2"/>
+
+                            <div className="flex justify-end">
+                                <Button className="mt-5">
+                                    Add
+                                </Button>
+                            </div>
                         </div>
 
-                        <div className="flex flex-col border rounded-md p-2">
-                                <div className="grid grid-cols-3 gap-2 m-3">
-                                    <div className="border h-[80px] rounded-md text-center" id="tt1-div">
-                                        <h3 className="font-bold">TT1</h3>
-                                        <p className="text-[10px]">(FIRST VISIT)</p>
-                                        <Label className="tt1Input text-[18px]">TT - 02/25/2025</Label>
-                                    </div>
-                                    <div className="border h-[80px] rounded-md text-center" id="tt2-div">
-                                        <h3 className="font-bold">TT2</h3>
-                                        <p className="text-[10px] mb-2">(ONE MO. AFTER THE FIRST DOSE)</p>
-                                        <Label className="tt2Input mb-2"></Label>
-                                    </div>
-                                    <div className="border h-[80px] rounded-md text-center" id="tt3-div">
-                                        <h3 className="font-bold">TT3</h3>
-                                        <p className="text-[10px] mb-2">(6 MONTHS AFTER THE SECOND DOSE)</p>
-                                        <Label className="tt3Input mb-2"></Label>
-                                    </div>
+                        <div>
+                            <h3 className="text-md font-bold"> TT STATUS HISTORY</h3>
+                        </div>
+                        <div className="flex flex-col ">
+                            <div className="grid grid-cols-6 gap-2">
+                                <div className="border h-[80px] rounded-md text-center" id="tt1-div">
+                                    <h3 className="font-bold">TT1</h3>
+                                    <p className="text-[10px]">(FIRST VISIT)</p>
+                                    <Label className="tt1Input text-[18px]"></Label>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2 m-3">
-                                    <div className="border h-[80px] rounded-md text-center" id="tt4-div">
-                                        <h3 className="font-bold">TT4</h3>
-                                        <p className="text-[10px] mb-2">(1 YEAR AFTER THE THIRD DOSE)</p>
-                                        <Label className="tt4Input mb-2"></Label>
-                                    </div>
-                                    <div className="border h-[80px] rounded-md text-center" id="tt5-div">
-                                        <h3 className="font-bold">TT5</h3>
-                                        <p className="text-[10px] mb-2">(1 YEAR AFTER THE FOURTH DOSE)</p>
-                                        <Label className="tt5Input mb-2"></Label>
-                                    </div>
-                                    <div className="border h-[80px] rounded-md text-center" id="fim-div">
-                                        <h3 className="font-bold">FIM</h3>
-                                        <Label className="fimInput mb-2"></Label>
-                                    </div>
+                                <div className="border h-[80px] rounded-md text-center" id="tt2-div">
+                                    <h3 className="font-bold">TT2</h3>
+                                    <p className="text-[10px] mb-2">(ONE MO. AFTER THE FIRST DOSE)</p>
+                                    <Label className="tt2Input mb-2"></Label>
                                 </div>
+                                <div className="border h-[80px] rounded-md text-center" id="tt3-div">
+                                    <h3 className="font-bold">TT3</h3>
+                                    <p className="text-[10px] mb-2">(6 MONTHS AFTER THE SECOND DOSE)</p>
+                                    <Label className="tt3Input mb-2"></Label>
+                                </div>
+                                <div className="border h-[80px] rounded-md text-center" id="tt4-div">
+                                    <h3 className="font-bold">TT4</h3>
+                                    <p className="text-[10px] mb-2">(1 YEAR AFTER THE THIRD DOSE)</p>
+                                    <Label className="tt4Input mb-2"></Label>
+                                </div>
+                                <div className="border h-[80px] rounded-md text-center" id="tt5-div">
+                                    <h3 className="font-bold">TT5</h3>
+                                    <p className="text-[10px] mb-2">(1 YEAR AFTER THE FOURTH DOSE)</p>
+                                    <Label className="tt5Input mb-2"></Label>
+                                </div>
+                                <div className="border h-[80px] rounded-md text-center" id="fim-div">
+                                    <h3 className="font-bold">FIM</h3>
+                                    <Label className="fimInput mb-2"></Label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     

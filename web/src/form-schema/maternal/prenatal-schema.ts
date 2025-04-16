@@ -71,6 +71,7 @@ export const PrenatalFormSchema = z.object({
     // pregnant vaccine info
     prenatalVaccineInfo: z.object({
         ttOrtd: z.enum(['TT', 'TD']),
+        isAdministered: z.enum(['Yes', 'No']),
         ttStatus: z.string(),
         ttDateGiven: z.string(),
         tdapDateGiven: z.string().optional()
@@ -110,6 +111,10 @@ export const PrenatalFormSchema = z.object({
 
     // guide for 4anc visits
     ancVisits: z.object({
+        aog: z.object({
+            aogWeeks: z.string(),
+            aogDays: z.string(),
+        }),
         firstTri: z.string().date().optional(),
         secondTri: z.string().date().optional(),
         thirdTriOne: z.string().date().optional(),
