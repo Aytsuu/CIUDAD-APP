@@ -21,15 +21,13 @@ type Page2Props = {
 // Fix the component props to match the expected props
 export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormData, formData }: Page2Props) {
   const form = useForm<FormData>({
-    // resolver: zodResolver(page2Schema), // Use page-specific schema
+    // resolver: zodResolver(page2Schema),
     defaultValues: formData,
     values: formData,
-    mode: "onChange", // Validate on change for better user experience
+    mode: "onChange",
   })
 
-  // This effect will update the form values whenever formData changes
   useEffect(() => {
-    // Reset the form with the new values from formData
     form.reset(formData)
   }, [form, formData])
 
@@ -101,9 +99,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
 
                 {/* If YES, specify disability */}
                 {form.watch("medicalHistory.disability") && (
-                  <FormField
-                    control={form.control}
-                    name="medicalHistory.disabilityDetails"
+                  <FormField control={form.control} name="medicalHistory.disabilityDetails"
                     render={({ field }) => (
                       <FormItem>
                         <Label>If YES, please specify:</Label>
@@ -130,14 +126,9 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                       <FormItem>
                         <Label className="flex w-[150px] mb-4">Number of pregnancies</Label>
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="G"
-                            className="w-[90px]"
-                            type="number"
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""}
-                          />
+                          <Input {...field} placeholder="G" className="w-[90px]" type="number" 
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -150,71 +141,49 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="P"
-                            className=" w-20 mt-8"
-                            type="number"
+                          <Input {...field} placeholder="P" className=" w-20 mt-8" type="number"
                             onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""}
-                          />
+                            value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="obstetricalHistory.fullTerm"
+                  <FormField control={form.control} name="obstetricalHistory.fullTerm"
                     render={({ field }) => (
                       <FormItem>
                         <Label>Full term</Label>
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            className=" w-[90px]"
+                          <Input {...field} type="number" className=" w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""}
-                          />
+                            value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="obstetricalHistory.premature"
+                  <FormField control={form.control} name="obstetricalHistory.premature"
                     render={({ field }) => (
                       <FormItem>
                         <Label>Premature</Label>
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            className=" w-[90px]"
+                          <Input {...field} type="number" className=" w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""}
-                          />
+                            value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="obstetricalHistory.abortion"
+                  <FormField control={form.control} name="obstetricalHistory.abortion"
                     render={({ field }) => (
                       <FormItem>
                         <Label>Abortion</Label>
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            className="w-[90px]"
+                          <Input {...field} type="number" className="w-[90px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                           />
@@ -224,20 +193,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="obstetricalHistory.livingChildren"
+                  <FormField control={form.control} name="obstetricalHistory.livingChildren"
                     render={({ field }) => (
                       <FormItem>
                         <Label>Living Children</Label>
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            className="w-[90px]"
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                            value={field.value || ""}
-                          />
+                          <Input {...field} type="number" className="w-[90px]" 
+                          onChange={(e) => field.onChange(Number(e.target.value))} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -270,15 +232,13 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                         <Label>Type of last delivery:</Label>
                         <div className="flex space-x-4">
                           <FormControl>
-                            <Checkbox
-                              checked={field.value === "Vaginal"}
+                            <Checkbox checked={field.value === "Vaginal"}
                               onCheckedChange={() => field.onChange("Vaginal")}
                             />
                           </FormControl>
                           <Label>Vaginal</Label>
                           <FormControl>
-                            <Checkbox
-                              checked={field.value === "Cesarean"}
+                            <Checkbox checked={field.value === "Cesarean"}
                               onCheckedChange={() => field.onChange("Cesarean")}
                             />
                           </FormControl>
@@ -324,9 +284,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                 {/* Menstrual Flow - Fixed for Radio Buttons */}
                 <div className="mt-5">
                   <Label>Menstrual Flow</Label>
-                  <FormField
-                    control={form.control}
-                    name="obstetricalHistory.menstrualFlow"
+                  <FormField control={form.control} name="obstetricalHistory.menstrualFlow"
                     render={({ field }) => (
                       <FormItem>
                         <div className="ml-10">
@@ -356,9 +314,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                 </div>
 
                 {/* Additional Obstetrical History Fields */}
-                <FormField
-                  control={form.control}
-                  name="obstetricalHistory.dysmenorrhea"
+                <FormField control={form.control} name="obstetricalHistory.dysmenorrhea"
                   render={({ field }) => (
                     <FormItem className="mt-4">
                       <FormControl>
@@ -370,9 +326,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="obstetricalHistory.hydatidiformMole"
+                <FormField control={form.control} name="obstetricalHistory.hydatidiformMole"
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
@@ -384,9 +338,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="obstetricalHistory.ectopicPregnancyHistory"
+                <FormField control={form.control} name="obstetricalHistory.ectopicPregnancyHistory"
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
@@ -411,23 +363,18 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
               >
                 Previous
               </Button>
-              <Button
-                type="button"
+              <Button type="button"
                 onClick={async () => {
                   // Validate the form
                   const isValid = await form.trigger()
                   if (isValid) {
-                    // If valid, save data and proceed
                     const currentValues = form.getValues()
                     updateFormData(currentValues)
                     onNext3()
                   } else {
                     console.error("Please fill in all required fields")
-                  }
-                }}
-              >
-                Next
-              </Button>
+                  }}} >
+                  Next </Button>
             </div>
           </form>
         </Form>

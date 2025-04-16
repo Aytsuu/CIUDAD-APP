@@ -6,7 +6,7 @@ export const risk_sti = async (data: Record<string, any>) => {
     const requestData: Record<string, any> = {
       abnormalDischarge: data.sexuallyTransmittedInfections.abnormalDischarge,
       dischargeFrom: data.sexuallyTransmittedInfections.dischargeFrom,
-      sores: data.sexuallyTransmittedInfections.sores,
+      sores: data.sexuallyTransmitztedInfections.sores,
       pain: data.sexuallyTransmittedInfections.pain,
       history: data.sexuallyTransmittedInfections.history,
       hiv: data.sexuallyTransmittedInfections.hiv,
@@ -240,3 +240,21 @@ export const fp_record = async (data: Record<string, any>) => {
     console.log(err)
   }
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+// export const update_risk_vaw = async (id: number | string, data: Record<string, any>) => {
+//   try {
+//     const requestData = {
+//       unpleasantRelationship: data.violenceAgainstWomen.unpleasantRelationship,
+//       partnerDisapproval: data.violenceAgainstWomen.partnerDisapproval,
+//       domesticViolence: data.violenceAgainstWomen.domesticViolence,
+//       referredTo: data.violenceAgainstWomen.referredTo,
+//     };
+
+//     const res = await api.put(`familyplanning/risk_vaw/${id}/`, requestData);
+//     return res.data;
+//   } catch (err) {
+//     console.error("Update error:", err);
+//   }
+// };

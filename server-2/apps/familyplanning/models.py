@@ -1,16 +1,24 @@
 from django.db import models
+from .models import patient_record
+
 
 class FP_Record(models.Model):
     fprecord_id = models.AutoField(primary_key=True)
+    client_id = models.CharField(max_length=15)
+    philhhealth_id = models.CharField(max_length=14)
     nhts = models.BooleanField(default=False)
     four_ps = models.BooleanField(default=False)
     plan_more_children = models.BooleanField(default=False)
     avg_monthly_income = models.CharField(max_length=15)
-    #patient_id = models.ForeignKey(,on_delete=models.CASCADE)
+
+    serv_id = models.ForeignKey(ServicesRecords,on_delete=models.CASCADE)
     
     class Meta:
         db_table = "fp_record"
         
+
+
+
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)
     fpt_client_type = models.CharField(max_length=20)
@@ -18,7 +26,8 @@ class FP_type(models.Model):
     fpt_reason_fp = models.CharField(max_length=20, null=True)
     fpt_reason = models.CharField(max_length=20,null=True)
     fpt_method_used = models.CharField(max_length=30)
-    # record = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
+    
+    record = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
     
     class Meta:
         db_table = "fp_type"
@@ -224,10 +233,10 @@ class FP_Obstetrical_History(models.Model):
 class Assessment_Record(models.Model):
     assessment_id = models.AutoField(primary_key=True)
     quantity = models.IntegerField(default=0)
-    as_followup_date = models.CharField(max_length=15)
     as_provider_signature = models.CharField()
     as_provider_name= models.CharField(max_length=35)
     
+    # as_followup_date = models.CharField(max_length=15)
     # ack = models.ForeignKey(Acknowledgement,on_delete=True)
     # fpt = models.ForeignKey(FP_type,on_delete=True)
     # staff_id = models.ForeignKey(Staff,on_delete=True)

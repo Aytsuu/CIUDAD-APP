@@ -1,65 +1,157 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
-import { SelectLayout } from "@/components/ui/select/select-layout"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button/button"
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { ChevronLeft, Search, UserPlus } from "lucide-react"
 import { useLocation, useNavigate } from "react-router"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { FormInput } from "@/components/ui/form/form-input"
+import { FormSelect } from "@/components/ui/form/form-select"
+import { FormDateInput } from "@/components/ui/form/form-date-input"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { Input } from "@mui/material"
+import { Label } from "@radix-ui/react-dropdown-menu"
 
-// Ensure the component is properly typed
 type Page1Props = {
   onNext2: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
 }
+  // const famplanning = await addFamPlanning((
+  //   famplanninginfo: form.getValues(),
+    
+  // ))
+// Configuration objects
+const CLIENT_TYPES = [
+  { id: "newacceptor", name: "New Acceptor" },
+  { id: "currentuser", name: "Current User" },
+]
+
+const SUB_CLIENT_TYPES = [
+  { id: "changingmethod", name: "Changing Method" },
+  { id: "changingclinic", name: "Changing Clinic" },
+  { id: "dropoutrestart", name: "Dropout/Restart" },
+]
+
+const REASON_FOR_FP_OPTIONS = [
+  { id: "spacing", name: "Spacing" },
+  { id: "limiting", name: "Limiting" },
+  { id: "fp_others", name: "Others" },
+]
+
+const REASON_OPTIONS = [
+  { id: "medicalcondition", name: "Medical Condition" },
+  { id: "sideeffects", name: "Side Effects" },
+]
+
+const METHOD_OPTIONS = [
+  { id: "coc", name: "COC" },
+  { id: "pop", name: "POP" },
+  { id: "injectable", name: "Injectable" },
+  { id: "implant", name: "Implant" },
+  { id: "iud-interval", name: "IUD-Interval" },
+  { id: "iud-postpartum", name: "IUD-Post Partum" },
+  { id: "condom", name: "Condom" },
+  { id: "bom/cmm", name: "BOM/CMM" },
+  { id: "bbt", name: "BBT" },
+  { id: "stm", name: "STM" },
+  { id: "sdm", name: "SDM" },
+  { id: "lam", name: "LAM" },
+  { id: "method_others", name: "Others" },
+]
+
+const EDUCATION_OPTIONS = [
+  { id: "elementary", name: "Elementary" },
+  { id: "highschool", name: "High school" },
+  { id: "shs", name: "Senior Highschool" },
+  { id: "collegegrad", name: "College level" },
+  { id: "collegelvl", name: "College Graduate" },
+]
+
+const INCOME_OPTIONS = [
+  { id: "lower", name: "Lower than 5,000" },
+  { id: "5,000-10,000", name: "5,000-10,000" },
+  { id: "10,000-30,000", name: "10,000-30,000" },
+  { id: "30,000-50,000", name: "30,000-50,000" },
+  { id: "50,000-80,000", name: "50,000-80,000" },
+  { id: "80,000-100,000", name: "80,000-100,000" },
+  { id: "100,000-200,000", name: "100,000-200,000" },
+  { id: "higher", name: "Higher than 200,000" },
+]
 
 export default function FamilyPlanningForm({ onNext2, updateFormData, formData }: Page1Props) {
   const form = useForm<FormData>({
-    // resolver: zodResolver(page1Schema),
     defaultValues: formData,
     values: formData,
-    mode: "onBlur", // Changed to onBlur for better user experience
+    mode: "onBlur",
   })
 
-  useEffect(() => {
-    form.reset(formData)
-  }, [form, formData])
+  // Calculate age matic
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date()
+    const birthDateObj = new Date(birthDate)
+
+    let age = today.getFullYear() - birthDateObj.getFullYear()
+    const monthDiff = today.getMonth() - birthDateObj.getMonth()
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--
+    }
+
+    return age
+  }
+
+  // Track date of birth and compute age
+  const dateOfBirth = form.watch("dateOfBirth")
+  const [computedAge, setComputedAge] = useState<number | null>(null)
 
   const location = useLocation()
   const recordType = location.state?.recordType || "nonExistingPatient"
+  const navigate = useNavigate()
 
-  // Get current values for conditional rendering
+  useEffect(() => {
+    if (dateOfBirth) {
+      const age = calculateAge(dateOfBirth)
+      setComputedAge(age)
+      form.setValue("age", age)
+    } else {
+      setComputedAge(null)
+      form.setValue("age", 0)
+    }
+  }, [dateOfBirth, form])
+
+  // Spouse compute age by date of birth
+  const spouseDOB = form.watch("spouse.s_dateOfBirth")
+  const [spouseAge, setSpouseAge] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (spouseDOB) {
+      const age = calculateAge(spouseDOB)
+      setSpouseAge(age)
+      form.setValue("spouse.s_age", age)
+    } else {
+      setSpouseAge(null)
+      form.setValue("spouse.s_age", 0)
+    }
+  }, [spouseDOB, form])
+
+  // Watch values for conditional rendering
   const typeOfClient = form.watch("typeOfClient")
   const subTypeOfClient = form.watch("subTypeOfClient")
-  // const reasonForFP = form.watch("reasonForFP")
-  // const reason = form.watch("reason")
-  // const methodCurrentlyUsedValue = form.watch("methodCurrentlyUsed")
+  const isNewAcceptor = typeOfClient === "newacceptor"
+  const isCurrentUser = typeOfClient === "currentuser"
+  const isChangingMethod = isCurrentUser && subTypeOfClient === "changingmethod"
 
-  const isNewAcceptor = typeOfClient === "New Acceptor"
-  const isCurrentUser = typeOfClient === "Current User"
-  const isChangingMethod = isCurrentUser && subTypeOfClient === "Changing Method"
-
-  // Reset fields when type of client or subtype changes
   useEffect(() => {
     if (isNewAcceptor) {
-      // For New Acceptor: Enable Reason for FP, disable Reason and Method Currently Used
       form.setValue("reason", "")
       form.setValue("methodCurrentlyUsed", undefined)
       form.setValue("otherMethod", "")
     } else if (isCurrentUser) {
-      // For Current User: Disable Reason for FP
       form.setValue("reasonForFP", "")
-
-      // Only enable Reason and Method Currently Used for Changing Method subtype
       if (!isChangingMethod) {
-        // For Dropout/Restart or Changing Clinic: Disable Reason and Method Currently Used
         form.setValue("reason", "")
         form.setValue("methodCurrentlyUsed", undefined)
         form.setValue("otherMethod", "")
@@ -67,37 +159,19 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     }
   }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUser, isChangingMethod])
 
-  const navigate = useNavigate()
-  // Handle form submission
   const onSubmit = async (data: FormData) => {
     updateFormData(data)
     onNext2()
   }
 
-  // Method options array
-  // const methodCurrentlyUsed = [
-  //   { id: "COC", name: "COC" },
-  //   { id: "IUD", name: "IUD" },
-  //   { id: "BOM/CMM", name: "BOM/CMM" },
-  //   { id: "LAM", name: "LAM" },
-  //   { id: "POP", name: "POP" },
-  //   { id: "Interval", name: "Interval" },
-  //   { id: "BBT", name: "BBT" },
-  //   { id: "SDM", name: "SDM" },
-  //   { id: "Injectable", name: "Injectable" },
-  //   { id: "Post Partum", name: "Post Partum" },
-  //   { id: "STM", name: "STM" },
-  //   { id: "Implant", name: "Implant" },
-  //   { id: "Condom", name: "Condom" },
-  // ]
-
+  const saveFormData = () => updateFormData(form.getValues())
   return (
     <div className="bg-white min-h-screen w-full overflow-x-hidden">
       <div className="rounded-lg w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Button className="text-black p-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
           <ChevronLeft />
         </Button>
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4  p-4 text-center">Family Planning (FP) Form 1</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 p-4 text-center">Family Planning (FP) Form 1</h2>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-6">
@@ -110,20 +184,20 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 history/findings for further medical evaluation.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full ">
+
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full">
               {recordType === "existingPatient" || (
                 <div className="flex items-center justify-between gap-3 mb-10">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-                    <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+                  <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+                  {/* value={searchQuery} onChange={handleSearchChange}  */}
                   </div>
-
                   <Label>or</Label>
-
-                  <button className="flex items-center gap-1 underline text-blue hover:bg-blue-600 hover:text-sky-500 transition-colors rounded-md">
+                  <Button className="flex items-center gap-1 hover:bg-transparent hover:underline text-blue bg-transparent">
                     <UserPlus className="h-4 w-4" />
                     Add Resident
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -148,41 +222,14 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               </div>
             </div>
 
-            {/* Client ID Section */}
+            {/* Personal Information Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="clientID"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>
-                      CLIENT ID:<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input {...field} className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="philhealthNo"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>PHILHEALTH NO:</Label>
-                    <FormControl>
-                      <Input {...field} className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput control={form.control} name="clientID" label="CLIENT ID:" /> 
+              {/* rules={{ required: "Client ID is required" }}  */}
+              <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" />
 
               {/* NHTS Checkbox */}
-              <FormField
-                control={form.control}
-                name="nhts_status"
+              <FormField control={form.control} name="nhts_status"
                 render={({ field }) => (
                   <FormItem className="ml-5 mt-2 flex flex-col">
                     <Label className="mb-2">NHTS?</Label>
@@ -192,11 +239,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
-                        <Checkbox
-                          className="ml-4"
-                          checked={!field.value}
-                          onCheckedChange={() => field.onChange(false)}
-                        />
+                        <Checkbox className="ml-4" checked={!field.value} onCheckedChange={() => field.onChange(false)} />
                       </FormControl>
                       <Label>No</Label>
                     </div>
@@ -205,7 +248,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 )}
               />
 
-              {/* Pantawid 4Ps Checkbox */}
+              {/* 4Ps Checkbox */}
               <FormField
                 control={form.control}
                 name="pantawid_4ps"
@@ -218,11 +261,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
-                        <Checkbox
-                          className="ml-4"
-                          checked={!field.value}
-                          onCheckedChange={() => field.onChange(false)}
-                        />
+                        <Checkbox className="ml-4" checked={!field.value} onCheckedChange={() => field.onChange(false)}/>
                       </FormControl>
                       <Label>No</Label>
                     </div>
@@ -232,331 +271,52 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               />
             </div>
 
-            {/* Client Name Section */}
+            {/* Name and Basic Info Section */}
             <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-6">
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>
-                      NAME OF CLIENT<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input {...field} placeholder="Last name" className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="givenName"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Given name" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="middleInitial"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Middle Initial" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>
-                      Date of Birth:<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input type="date" {...field} className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="age"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>
-                      Age<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        placeholder="Age"
-                        className="w-full"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="educationalAttainment"
-                render={({ field }) => (
-                  <FormItem className="col-span-1 mt-2">
-                    <Label className="flex">
-                      Education Attainment<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <SelectLayout
-                        placeholder="Choose"
-                        label=""
-                        className="custom-class w-full"
-                        options={[
-                          { id: "elementary", name: "Elementary" },
-                          { id: "highschool", name: "High school" },
-                          { id: "shs", name: "Senior Highschool" },
-                          { id: "collegegrad", name: "College level" },
-                          { id: "collegelvl", name: "College Graduate" },
-                        ]}
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="occupation"
-                render={({ field }) => (
-                  <FormItem className="col-span-1 sm:col-span-2 md:col-span-1">
-                    <Label>Occupation</Label>
-                    <FormControl>
-                      <Input {...field} placeholder="Occupation" className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput control={form.control} name="lastName" label="NAME OF CLIENT" placeholder="Last name" className="col-span-1" />
+              <FormInput control={form.control} label="" name="givenName" placeholder="Given name" className="col-span-1 mt-6" />
+              <FormInput control={form.control} name="middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6"/>
+              <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth:" />
+              <FormInput control={form.control} name="age" label="Age" type="number" readOnly value={computedAge || ""} className="col-span-1" />
+              <FormSelect control={form.control} name="educationalAttainment" label="Education Attainment" options={EDUCATION_OPTIONS} />
+              <FormInput control={form.control} name="occupation" label="Occupation" placeholder="Occupation" className="col-span-1 sm:col-span-2 md:col-span-1"/>
             </div>
 
             {/* Address Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-              <FormField
-                control={form.control}
-                name="address.houseNumber"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>ADDRESS</Label>
-                    <FormControl>
-                      <Input {...field} placeholder="No." className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address.street"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Street" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address.barangay"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Barangay" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address.municipality"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Municipality/City" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address.province"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Province" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput control={form.control} name="" label="ADDRESS" placeholder="No." className="col-span-1" />
+              <FormInput control={form.control} name="address.street" label="" placeholder="Street" className="col-span-1 mt-6" />
+              <FormInput control={form.control} name="address.barangay" placeholder="Barangay" label="" className="col-span-1 mt-6" />
+              <FormInput control={form.control} name="address.municipality" placeholder="Municipality/City" label="" className="col-span-1 mt-6"/>
+              <FormInput control={form.control} name="address.province" placeholder="Province" label="" className="col-span-1 mt-6"/>
             </div>
 
             {/* Spouse Information */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
-              <FormField
-                control={form.control}
-                name="spouse.s_lastName"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>
-                      NAME OF SPOUSE<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input {...field} placeholder="Last name" className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="spouse.s_givenName"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Given name" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="spouse.s_middleInitial"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormControl>
-                      <Input {...field} placeholder="Middle Initial" className="w-full mt-8" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="spouse.s_dateOfBirth"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>
-                      Date of Birth:<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input type="date" {...field} className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="spouse.s_age"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>
-                      Age<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        placeholder="Age"
-                        className="w-full"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="spouse.s_occupation"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <Label>Occupation</Label>
-                    <FormControl>
-                      <Input {...field} placeholder="Occupation" className="w-full" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormInput control={form.control} name="spouse.s_lastName" label="NAME OF SPOUSE" placeholder="Last name" className="col-span-1"/>
+              <FormInput control={form.control} name="spouse.s_givenName" label="" placeholder="Given name" className="col-span-1 mt-6"/>
+              <FormInput control={form.control} name="spouse.s_middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6" />
+              <FormDateInput control={form.control} name="spouse.s_dateOfBirth" label="Date of Birth" />
+              <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" />
+              <FormInput control={form.control} name="spouse.s_occupation" label="Occupation" placeholder="Occupation" className="col-span-1"/>
             </div>
 
             {/* Children and Income */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+              <FormInput control={form.control} name="numOfLivingChildren" label="NO. OF LIVING CHILDREN" type="number" />
+
               <FormField
-                control={form.control}
-                name="numOfLivingChildren"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>
-                      NO. OF LIVING CHILDREN<span className="text-red-500 ml-1">*</span>
-                    </Label>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        placeholder=""
-                        className="w-full"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="planToHaveMoreChildren"
+                control={form.control} name="planToHaveMoreChildren"
                 render={({ field }) => (
                   <FormItem className="flex flex-col mt-3 ml-5">
                     <Label className="mb-2">PLAN TO HAVE MORE CHILDREN?</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
-                        <Checkbox
-                          className="border"
-                          checked={field.value}
-                          onCheckedChange={() => field.onChange(true)}
-                        />
+                        <Checkbox className="border" checked={field.value} onCheckedChange={() => field.onChange(true)} />
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
-                        <Checkbox
-                          className="border ml-4"
-                          checked={!field.value}
-                          onCheckedChange={() => field.onChange(false)}
-                        />
+                        <Checkbox className="border ml-4" checked={!field.value} onCheckedChange={() => field.onChange(false)} />
                       </FormControl>
                       <Label>No</Label>
                     </div>
@@ -564,333 +324,93 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="averageMonthlyIncome"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>AVERAGE MONTHLY INCOME</Label>
-                    <FormControl>
-                      <SelectLayout
-                        placeholder="Choose"
-                        label=""
-                        className="custom-class w-full"
-                        options={[
-                          { id: "Lower", name: "Lower than 5,000" },
-                          { id: "5,000-10,000", name: "5,000-10,000" },
-                          { id: "10,000-30,000", name: "10,000-30,000" },
-                          { id: "30,000-50,000", name: "30,000-50,000" },
-                          { id: "50,000-80,000", name: "50,000-80,000" },
-                          { id: "80,000-100,000", name: "80,000-100,000" },
-                          { id: "100,000-200,000", name: "100,000-200,000" },
-                          { id: "Higher", name: "Higher than 200,000" },
-                        ]}
-                        value={field.value || ""}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormSelect control={form.control} name="averageMonthlyIncome" label="AVERAGE MONTHLY INCOME" options={INCOME_OPTIONS} />
             </div>
 
             {/* Client Type and Methods Section */}
             <div className="border border-t-black w-full p-4 rounded-md mt-6">
               <div className="grid grid-cols-12 gap-6">
-                {/* Type of Client Section - Left Column */}
+                {/* Type of Client Section */}
                 <div className="col-span-3">
                   <h3 className="font-semibold mb-3">
                     Type of Client<span className="text-red-500 ml-1">*</span>
                   </h3>
-                  {["New Acceptor", "Current User"].map((type) => (
-                    <FormField
-                      key={type}
-                      control={form.control}
-                      name="typeOfClient"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2 mb-2">
-                          <FormControl>
-                            <input
-                              type="radio"
-                              value={type}
-                              checked={field.value === type}
-                              onChange={() => {
-                                field.onChange(type)
-                                if (type !== "Current User") {
-                                  form.setValue("subTypeOfClient", "")
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <Label>{type}</Label>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                  {form.watch("typeOfClient") === "Current User" && (
-                    <div className="ml-6 mt-2">
-                      {["Changing Method", "Changing Clinic", "Dropout/Restart"].map((subType) => (
-                        <FormField
-                          key={subType}
-                          control={form.control}
-                          name="subTypeOfClient"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2 mb-2">
-                              <FormControl>
-                                <input
-                                  type="radio"
-                                  value={subType}
-                                  checked={field.value === subType}
-                                  onChange={() => field.onChange(subType)}
-                                />
-                              </FormControl>
-                              <Label>{subType}</Label>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      ))}
+                  <FormSelect control={form.control} name="typeOfClient" options={CLIENT_TYPES} />
+
+                  {isCurrentUser && (
+                    <div className="mt-4">
+                      <FormSelect control={form.control} name="subTypeOfClient" label="Sub Type of Client" options={SUB_CLIENT_TYPES}/>
                     </div>
                   )}
                 </div>
 
                 {/* Middle Column - Reasons */}
                 <div className="col-span-4 space-y-6">
-                  {/* Reason for FP Section */}
-                  <FormField
-                    control={form.control}
-                    name="reasonForFP"
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <Label className={`font-semibold ${isCurrentUser ? "text-gray-400" : ""}`}>
-                          Reason for FP
-                          {isNewAcceptor && <span className="text-red-500 ml-1">*</span>}
-                        </Label>
-                        <div className="space-y-2 mt-2">
-                          {["Spacing", "Limiting", "Others"].map((option) => (
-                            <div key={option} className="flex items-center space-x-2">
-                              <FormControl>
-                                <input
-                                  type="radio"
-                                  value={option}
-                                  checked={
-                                    option === "Others"
-                                      ? !!field.value && !["Spacing", "Limiting"].includes(field.value)
-                                      : field.value === option
-                                  }
-                                  onChange={() => field.onChange(option)}
-                                  disabled={isCurrentUser}
-                                  className={isCurrentUser ? "opacity-50 cursor-not-allowed" : ""}
-                                />
-                              </FormControl>
-                              <Label className={isCurrentUser ? "text-gray-400" : ""}>{option}</Label>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                        {(field.value === "Others" ||
-                          (field.value && !["Spacing", "Limiting"].includes(field.value))) &&
-                          !isCurrentUser && (
-                            <div className="mt-2">
-                              <Label className={isCurrentUser ? "text-gray-400" : ""}>Specify:</Label>
-                              <Input
-                                className="w-full mt-1"
-                                placeholder="Specify reason"
-                                value={field.value === "Others" ? "" : field.value}
-                                onChange={(e) => {
-                                  // If there's input, store the actual text
-                                  // If empty, revert to just "Others"
-                                  field.onChange(e.target.value || "Others")
-                                }}
-                                disabled={isCurrentUser}
-                              />
-                            </div>
-                          )}
-                      </FormItem>
-                    )}
-                  />
+                  {/* Reason for FP Section - only show for New Acceptor */}
+                  {isNewAcceptor && (
+                    <FormSelect control={form.control} name="reasonForFP" label="Reason for Family Planning" options={REASON_FOR_FP_OPTIONS} />
+                  )}
 
-                  {/* Reason Section */}
-                  <FormField
-                    control={form.control}
-                    name="reason"
-                    render={({ field }) => (
-                      <FormItem className="w-full">
-                        <Label
-                          className={`font-semibold ${isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}`}
-                        >
-                          Reason
-                          {isChangingMethod && <span className="text-red-500 ml-1">*</span>}
-                        </Label>
-                        <div className="space-y-2 mt-2">
-                          {["Medical Condition", "Side Effects"].map((reasonOption) => (
-                            <div key={reasonOption} className="flex items-center space-x-2">
-                              <FormControl>
-                                <input
-                                  type="radio"
-                                  value={reasonOption}
-                                  checked={field.value === reasonOption}
-                                  onChange={() => field.onChange(reasonOption)}
-                                  disabled={isNewAcceptor || (!isChangingMethod && isCurrentUser)}
-                                  className={
-                                    isNewAcceptor || (!isChangingMethod && isCurrentUser)
-                                      ? "opacity-50 cursor-not-allowed"
-                                      : ""
-                                  }
-                                />
-                              </FormControl>
-                              <Label
-                                className={isNewAcceptor || (!isChangingMethod && isCurrentUser) ? "text-gray-400" : ""}
-                              >
-                                {reasonOption}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                        {field.value === "Side Effects" && isChangingMethod && (
-                          <FormField
-                            control={form.control}
-                            name="otherReason"
-                            render={({ field: otherField }) => (
-                              <FormItem className="mt-2">
-                                <Label className={!isChangingMethod ? "text-gray-400" : ""}>Specify:</Label>
-                                <FormControl>
-                                  <Input className="w-full" {...otherField} disabled={!isChangingMethod} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                      </FormItem>
-                    )}
-                  />
+                  {/* Show specify reason field when "Others" is selected as reason for FP */}
+                  {isNewAcceptor && form.watch("reasonForFP") === "fp_others" && (
+                    <FormInput control={form.control} name="specifyReasonForFP" label="Specify Reason:" />
+                  )}
+                  
+                  {isChangingMethod && (
+                    <FormSelect control={form.control}
+                      name="reason" label="Reason (Current User)" options={REASON_OPTIONS} />
+                  )}
+
+                  {/* Show specify side effects field when "Side Effects" is selected as reason */}
+                  {isChangingMethod && form.watch("reason") === "sideeffects" && (
+                    <FormInput control={form.control} name="otherReason" label="Specify Side Effects:" />
+                  )}
                 </div>
 
-                {/* Right Column - Method Currently Used */}
+                {/* Right Column - Methods */}
                 <div className="col-span-5">
-                  {typeOfClient === "Current User" && form.watch("subTypeOfClient") === "Changing Method" && (
-                    <FormField
-                      control={form.control}
-                      name="methodCurrentlyUsed"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <FormLabel className="font-semibold text-sm mb-3">
-                            Method currently used (for Changing Method):
-                            {isChangingMethod && <span className="text-red-500 ml-1">*</span>}
-                          </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select method" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="COC">COC</SelectItem>
-                              <SelectItem value="POP">POP</SelectItem>
-                              <SelectItem value="Injectable">Injectable</SelectItem>
-                              <SelectItem value="Implant">Implant</SelectItem>
-                              <SelectItem value="IUD-Interval">IUD-Interval</SelectItem>
-                              <SelectItem value="IUD-Post Partum">IUD-Post Partum</SelectItem>
-                              <SelectItem value="Condom">Condom</SelectItem>
-                              <SelectItem value="BOM/CMM">BOM/CMM</SelectItem>
-                              <SelectItem value="BBT">BBT</SelectItem>
-                              <SelectItem value="STM">STM</SelectItem>
-                              <SelectItem value="SDM">SDM</SelectItem>
-                              <SelectItem value="LAM">LAM</SelectItem>
-                              <SelectItem value="Others">Others</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                  {isChangingMethod && (
+                    <FormSelect control={form.control} name="methodCurrentlyUsed" label="Method currently used (for Changing Method):" options={METHOD_OPTIONS} />
+                  )}
+
+                  {isNewAcceptor && (
+                    <FormSelect
+                      control={form.control} name="methodCurrentlyUsed" label="Method Accepted (New Acceptor)"
+                      options={[
+                        { id: "pills", name: "Pills" },
+                        { id: "dmpa", name: "DMPA" },
+                        { id: "condom", name: "Condom" },
+                        { id: "iudinterval", name: "IUD-Interval" },
+                        { id: "iudpostpartum", name: "IUD-Post Partum" },
+                        { id: "implant", name: "Implant" },
+                        { id: "lactating", name: "Lactating Amenorrhea" },
+                        { id: "bilateral", name: "Bilateral Tubal Ligation" },
+                        { id: "vasectomy", name: "Vasectomy" },
+                        { id: "source", name: "Source of FP Method (pls. specify) e.g. Buying,HC,etc) " },
+                      ]}
                     />
                   )}
 
-                  {typeOfClient === "New Acceptor" && (
-                    <FormField
-                      control={form.control}
-                      name="methodCurrentlyUsed"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <FormLabel className="font-semibold text-sm mb-3">Method Accepted:</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select method" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Pills">1. Pills</SelectItem>
-                              <SelectItem value="DMPA">2. DMPA</SelectItem>
-                              <SelectItem value="Condom">3. Condom</SelectItem>
-                              <SelectItem value="IUD-Interval">4. IUD-Interval</SelectItem>
-                              <SelectItem value="IUD-Post Partum">5. IUD-Post Partum</SelectItem>
-                              <SelectItem value="Implant">6. Implant</SelectItem>
-                              <SelectItem value="Lactating Amenorrhea">7. Lactating Amenorrhea</SelectItem>
-                              <SelectItem value="Bilateral Tubal Ligation">8. Bilateral Tubal Ligation</SelectItem>
-                              <SelectItem value="Vasectomy">9. Vasectomy</SelectItem>
-                              <SelectItem value="Source">10. Source (specify FP method)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  {typeOfClient === "New Acceptor" && form.watch("methodCurrentlyUsed") === "Source" && (
-                    <FormField
-                      control={form.control}
-                      name="otherMethod"
-                      render={({ field }) => (
-                        <FormItem className="w-full mt-4">
-                          <FormLabel>Specify FP Method:</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Specify FP method" className="w-full" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  {typeOfClient === "Current User" &&
-                    form.watch("subTypeOfClient") === "Changing Method" &&
-                    form.watch("methodCurrentlyUsed") === "Others" && (
-                      <FormField
-                        control={form.control}
-                        name="otherMethod"
-                        render={({ field }) => (
-                          <FormItem className="w-full mt-4">
-                            <FormLabel>Specify Other Method:</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Specify other method" className="w-full" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
+                  {(() => {
+                    const methodUsed = form.watch("methodCurrentlyUsed")
+                    return (
+                      (methodUsed === "method_others" || methodUsed === "source") && (
+                        <FormInput control={form.control} name="otherMethod" className="mt-6" label={methodUsed === "Source" ? "Specify FP Method:" : "Specify Other Method:"} />
+                      ))
+                  })()}
                 </div>
               </div>
             </div>
+
             <div className="flex justify-end space-x-4">
               <Button
                 type="button"
                 onClick={async () => {
-                  // Validate the form
                   const isValid = await form.trigger()
                   if (isValid) {
-                    // If valid, save data and proceed
                     const currentValues = form.getValues()
                     updateFormData(currentValues)
                     onNext2()
-                  } else {
-                    console.error("Please fill in all required fields")
                   }
                 }}
               >

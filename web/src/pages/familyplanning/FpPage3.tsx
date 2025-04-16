@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
@@ -9,21 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
 
-// Referral options constant
-const referralOptions = {
-  DSWD: "DSWD",
-  WCPU: "WCPU",
-  NGOs: "NGOs",
-  Others: "Others",
-}
 
 // Extract only the fields needed for this page
 const page3Schema = FamilyPlanningSchema.pick({
-  // STI section
-  sexuallyTransmittedInfections: true,
-  // VAW section
-  violenceAgainstWomen: true,
-})
+  sexuallyTransmittedInfections: true,violenceAgainstWomen: true})
 
 // Add props type to the component
 type Page3Props = {
@@ -33,24 +20,24 @@ type Page3Props = {
   formData: FormData
 }
 
+const referralOptions = {
+  DSWD: "DSWD",WCPU: "WCPU",NGOs: "NGOs",Others: "Others",
+}
+
 const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }: Page3Props) => {
-  // Update the form initialization to use formData
   const form = useForm<FormData>({
     // resolver: zodResolver(page3Schema),
     defaultValues: formData,
     values: formData,
   })
 
-  // This effect will update the form values whenever formData changes
   useEffect(() => {
     // Reset the form with the new values from formData
     form.reset(formData)
   }, [form, formData])
 
-  // Watch form fields for conditional rendering
   const abnormalDischarge = form.watch("sexuallyTransmittedInfections.abnormalDischarge")
 
-  // Add form submission handler to update parent form data
   const onSubmit = (data: FormData) => {
     console.log("Form Submitted", data)
 
@@ -58,17 +45,8 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
     if (!data.sexuallyTransmittedInfections.abnormalDischarge) {
       data.sexuallyTransmittedInfections.dischargeFrom = undefined
     }
-
     updateFormData(data)
     onNext4()
-  }
-
-  // Add a function to save data without navigating
-  const saveFormData = () => {
-    const currentValues = form.getValues()
-
-    console.log("Saving current form data:", currentValues)
-    updateFormData(currentValues)
   }
 
   // Add effect to clear dischargeFrom when abnormalDischarge is false
@@ -77,6 +55,14 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
       form.setValue("sexuallyTransmittedInfections.dischargeFrom", undefined)
     }
   }, [abnormalDischarge, form])
+
+  // Add a function to save data without navigating
+  const saveFormData = () => {
+    const currentValues = form.getValues()
+    console.log("Saving current form data:", currentValues)
+    updateFormData(currentValues)
+  }
+
 
   return (
     <Card className="w-full">
@@ -91,9 +77,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                   <p className="mb-4">Does the client or the client's partner have any of the following?</p>
 
                   {/* Abnormal Discharge */}
-                  <FormField
-                    control={form.control}
-                    name="sexuallyTransmittedInfections.abnormalDischarge"
+                  <FormField control={form.control} name="sexuallyTransmittedInfections.abnormalDischarge"
                     render={({ field }) => (
                       <FormItem className="mb-4">
                         <div className="flex items-center space-x-4">
@@ -183,33 +167,20 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                             </FormControl>
                           </div>
                         </FormItem>
-                      )}
-                    />
-                  ))}
+                      )} /> ))}
                 </div>
               </div>
 
               <div className="space-y-6 pl-0 md:pl-8">
                 <div>
                   <h3 className="font-bold text-lg mb-4">IV. RISKS FOR VIOLENCE AGAINST WOMEN (VAW)</h3>
-
                   {[
-                    {
-                      key: "unpleasantRelationship",
-                      label: "Unpleasant relationship with partner",
-                    },
-                    {
-                      key: "partnerDisapproval",
-                      label: "Partner does not approve of the visit to Family Planning clinic",
-                    },
-                    {
-                      key: "domesticViolence",
-                      label: "History of domestic violence or VAW",
-                    },
+                    { key: "unpleasantRelationship",label: "Unpleasant relationship with partner", },
+                    { key: "partnerDisapproval", label: "Partner does not approve of the visit to Family Planning clinic", },
+                    { key: "domesticViolence", label: "History of domestic violence or VAW",},
                   ].map(({ key, label }) => (
-                    <FormField
-                      key={key}
-                      control={form.control}
+                    
+                    <FormField key={key} control={form.control}
                       name={`violenceAgainstWomen.${key}` as any}
                       render={({ field }) => (
                         <FormItem className="mb-4">
@@ -277,8 +248,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                                   placeholder="Specify referral"
                                   value={field.value === "Others" ? "" : field.value}
                                   onChange={(e) => {
-                                    // If there's input, store the actual text
-                                    // If empty, revert to just "Others"
+                                    // If there's input, store the actual text, if empty, just "Others"
                                     field.onChange(e.target.value || "Others")
                                   }}
                                 />
@@ -288,28 +258,17 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            </div>
+                    )}/>
+                </div></div></div>
 
             {/* Submit Button */}
             <div className="flex justify-end mt-6 space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full md:w-auto"
+              <Button type="button" variant="outline" className="w-full md:w-auto" 
                 onClick={() => {
                   saveFormData()
                   onPrevious2()
-                }}
-              >
-                Previous
-              </Button>
-              <Button type="submit" className="w-full md:w-auto">
-                Next
-              </Button>
+                }}> Previous </Button>
+              <Button type="submit" className="w-full md:w-auto">Next</Button>
             </div>
           </form>
         </Form>

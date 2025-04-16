@@ -141,6 +141,10 @@ function AnimalBites() {
     return searchString.includes(searchQuery.toLowerCase());
   });
 
+  function handleAddPatient(patient: any): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header Section */}

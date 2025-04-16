@@ -1,480 +1,251 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button/button"
+import type React from "react"
+import { useForm,Controller } from "react-hook-form"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
+import { Button } from "@/components/ui/button/button"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select/select"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
-import type { FormData, ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
-import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form"
 import SignatureCanvas from "react-signature-canvas"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import type { FormData, ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
 
-// Fix the props type
-interface ServiceProvisionFormProps {
+const methods = ["COC", "POP", "Injectable", "Implant", "IUD", "Interval", "Post Partum", "Condom", "BOM/CMM", "BBT", "STM", "SDM", "LAM", "Others"]
+const units = ["box", "pcs"]
+const pregnancyQuestions = [
+  { id: "breastfeeding", q: "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?" },
+  { id: "abstained", q: "Have you abstained from sexual intercourse since your last menstrual period or delivery?" },
+  { id: "recent_baby", q: "Have you had a baby in the last four (4) weeks?", },
+  { id: "recent_period", q: "Did your last menstrual period start within the past seven (7) days?" },
+  { id: "recent_abortion", q: "Have you had miscarriage or abortion in the last seven (7) days?" },
+  { id: "using_contraceptive", q: "Have you been using a reliable contraceptive method consistently and correctly?" },
+]
+
+type Props = {
   onPrevious5: () => void
   onSubmitFinal: () => void
   updateFormData: (data: Partial<FormData>) => void
   formData: FormData
 }
 
-const pregnancyQuestions = [
-  {
-    id: "breastfeeding",
-    question:
-      "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?",
-  },
-  {
-    id: "abstained",
-    question: "Have you abstained from sexual intercourse since your last menstrual period or delivery?",
-  },
-  {
-    id: "recent_baby",
-    question: "Have you had a baby in the last four (4) weeks?",
-  },
-  {
-    id: "recent_period",
-    question: "Did your last menstrual period start within the past seven (7) days?",
-  },
-  {
-    id: "recent_abortion",
-    question: "Have you had miscarriage or abortion in the last seven (7) days?",
-  },
-  {
-    id: "using_contraceptive",
-    question: "Have you been using a reliable contraceptive method consistently and correctly?",
-  },
-]
-
-const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
-  onPrevious5,
-  onSubmitFinal,
-  updateFormData,
-  formData,
-}) => {
-  // Use the ServiceProvisionRecord type from the schema
-  const [records, setRecords] = useState<ServiceProvisionRecord[]>(
-    formData && formData.serviceProvisionRecords ? formData.serviceProvisionRecords : [],
-  )
+export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, updateFormData, formData }: Props) {
+  const [records, setRecords] = useState(formData.serviceProvisionRecords || [])
+  const [record, setRecord] = useState<ServiceProvisionRecord>({
+    dateOfVisit: new Date().toISOString().split("T")[0],
+    methodAccepted: "", nameOfServiceProvider: "", dateOfFollowUp: "", methodQuantity: "",
+    methodUnit: "", serviceProviderSignature: "", medicalFindings: "", weight: 0, bp_systolic: 0, bp_diastolic: 0,
+  })
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [sigRef, setSigRef] = useState<SignatureCanvas | null>(null)
 
   const form = useForm<FormData>({
-    // resolver: zodResolver(page6Schema),
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
-      pregnancyCheck: formData?.pregnancyCheck || {
-        breastfeeding: false,
-        abstained: false,
-        recent_baby: false,
-        recent_period: false,
-        recent_abortion: false,
-        using_contraceptive: false,
-      },
+      pregnancyCheck: formData?.pregnancyCheck || Object.fromEntries(pregnancyQuestions.map(q => [q.id, false])),
     },
     mode: "onBlur",
   })
 
-  const [record, setRecord] = useState<ServiceProvisionRecord>({
-    dateOfVisit: new Date().toISOString().split("T")[0],
-    methodAccepted: "",
-    nameOfServiceProvider: "",
-    dateOfFollowUp: "",
-    methodQuantity: "",
-    methodUnit: "",
-    serviceProviderSignature: "",
-    medicalFindings: "",
-    weight: 0,
-    bp_systolic: 0,
-    bp_diastolic: 0,
-  })
-
-  const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined)
-  const [validationError, setValidationError] = useState<string | null>(null)
-  const [serviceProviderSignatureRef, setServiceProviderSignatureRef] = useState<SignatureCanvas | null>(null)
-
-  // Update formData when records change
   useEffect(() => {
-    updateFormData({
-      serviceProvisionRecords: records,
-    })
+    updateFormData({ serviceProvisionRecords: records })
   }, [records, updateFormData])
 
-  const handleInputChange = (name: keyof ServiceProvisionRecord, value: string) => {
-    setRecord((prev) => ({ ...prev, [name]: value }))
+  const handleChange = (name: keyof ServiceProvisionRecord, value: string) => {
+    const numFields = ["weight", "bp_systolic", "bp_diastolic"]
+    setRecord((prev) => ({ ...prev, [name]: numFields.includes(name) ? Number(value) : value }))
     setValidationError(null)
   }
 
-  const handleSelectChange = (name: keyof ServiceProvisionRecord) => (value: string) => {
-    setRecord((prev) => ({ ...prev, [name]: value }))
-    setValidationError(null)
-  }
-
-  const clearSignature = () => {
-    if (serviceProviderSignatureRef) {
-      serviceProviderSignatureRef.clear()
-      setRecord((prev) => ({ ...prev, serviceProviderSignature: "" }))
-    }
-  }
-
-  const saveSignature = () => {
-    if (serviceProviderSignatureRef) {
-      const signatureData = serviceProviderSignatureRef.toDataURL()
-      setRecord((prev) => ({ ...prev, serviceProviderSignature: signatureData }))
-    }
-  }
-
-  const validateRecord = (): boolean => {
-    if (!record.dateOfVisit) {
-      setValidationError("Date of visit is required")
-      return false
-    }
-    if (!record.methodAccepted) {
-      setValidationError("Method is required")
-      return false
-    }
-    if (!record.nameOfServiceProvider) {
-      setValidationError("Service provider name is required")
-      return false
-    }
-    if (!record.dateOfFollowUp) {
-      setValidationError("Follow-up date is required")
-      return false
-    }
-    if (!record.methodQuantity) {
-      setValidationError("Quantity is required")
-      return false
-    }
-    return true
-  }
-
-  const handleAdd = () => {
-    if (validateRecord()) {
-      setRecords((prev) => [...prev, record])
-
-      // Reset the form after adding
-      setRecord({
-        dateOfVisit: new Date().toISOString().split("T")[0],
-        methodAccepted: "",
-        nameOfServiceProvider: "",
-        dateOfFollowUp: "",
-        methodQuantity: "",
-        methodUnit: "",
-        serviceProviderSignature: "",
-        medicalFindings: "",
-        weight: 0,
-        bp_systolic: 0,
-        bp_diastolic: 0,
-      })
-      setFollowUpDate(undefined)
-      setValidationError(null)
-    }
-  }
-
-  // Function to add the current record if it's valid
-  const addCurrentRecordIfValid = (): boolean => {
-    if (validateRecord()) {
-      // Only add if there's actual data in the record
-      if (record.methodAccepted && record.nameOfServiceProvider) {
-        setRecords((prev) => [...prev, record])
-        return true
+  const addRecord = () => {
+    const required = ["dateOfVisit", "methodAccepted", "nameOfServiceProvider", "dateOfFollowUp", "methodQuantity"]
+    for (let field of required) {
+      if (!record[field as keyof ServiceProvisionRecord]) {
+        return setValidationError(`${field} is required`)
       }
     }
-    return false
+    setRecords((prev) => [...prev, record])
+    setRecord({
+      dateOfVisit: new Date().toISOString().split("T")[0], methodAccepted: "", nameOfServiceProvider: "",
+      dateOfFollowUp: "", methodQuantity: "", methodUnit: "", serviceProviderSignature: "",
+      medicalFindings: "", weight: 0, bp_systolic: 0, bp_diastolic: 0,
+    })
+    setValidationError(null)
+  }
+
+  const saveSig = () => {
+    if (sigRef) setRecord((prev) => ({ ...prev, serviceProviderSignature: sigRef.toDataURL() }))
   }
 
   const handleSubmit = (data: FormData) => {
-    // Try to add the current record if it's valid and not empty
-    const recordAdded = addCurrentRecordIfValid()
-
-    // Use the updated records (including the one just added if applicable)
-    const updatedRecords = recordAdded ? [...records, record] : records
-
-    // Save current records and pregnancy check data before final submission
-    updateFormData({
-      serviceProvisionRecords: updatedRecords,
-      pregnancyCheck: data.pregnancyCheck,
-    })
-
-    // Log the final data being submitted
-    console.log("Final form data:", {
-      ...data,
-      serviceProvisionRecords: updatedRecords,
-    })
-
+    const complete = record.methodAccepted && record.nameOfServiceProvider
+    const finalRecords = complete ? [...records, record] : records
+    updateFormData({ serviceProvisionRecords: finalRecords, pregnancyCheck: data.pregnancyCheck })
     onSubmitFinal()
   }
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>Service Provision Record</CardTitle>
-        <CardDescription>Record details of family planning services provided</CardDescription>
+        <CardTitle className="mb-8">Service Provision Record</CardTitle>
+
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
-            {validationError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                <p>{validationError}</p>
-              </div>
-            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="space-y-2">
-                <Label htmlFor="methodAccepted">
-                  Method Accepted<span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Select value={record.methodAccepted} onValueChange={handleSelectChange("methodAccepted")}>
+            {validationError && <p className="text-red-600 mb-4">{validationError}</p>}
+
+            {/* Service Record Inputs */}
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="flex flex-col space-y-1 mb-2">
+                <Label htmlFor="methodAccepted" className="mb-1">METHOD SELECTED</Label>
+                <Select value={record.methodAccepted} onValueChange={(v) => handleChange("methodAccepted", v)}>
                   <SelectTrigger id="methodAccepted">
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent>
-                    {[
-                      "COC",
-                      "POP",
-                      "Injectable",
-                      "Implant",
-                      "IUD",
-                      "Interval",
-                      "Post Partum",
-                      "Condom",
-                      "BOM/CMM",
-                      "BBT",
-                      "STM",
-                      "SDM",
-                      "LAM",
-                      "Others",
-                    ].map((method) => (
-                      <SelectItem key={method} value={method}>
-                        {method}
+                    {methods.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="methodQuantity">Quantity</Label>
+              <div>
+                <Label>QUANTITY</Label>
                 <div className="flex">
                   <Input
-                    id="methodQuantity"
-                    value={record.methodQuantity || ""}
                     type="number"
-                    onChange={(e) => handleInputChange("methodQuantity", e.target.value)}
-                    placeholder="Enter qty"
+                    value={record.methodQuantity}
+                    onChange={(e) => handleChange("methodQuantity", e.target.value)}
                     className="rounded-r-none"
                   />
-                  <Select value={record.methodUnit || ""} onValueChange={handleSelectChange("methodUnit")}>
-                    <SelectTrigger className="w-[110px] rounded-l-none">
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="box">box</SelectItem>
-                      <SelectItem value="pcs">pcs</SelectItem>
-                    </SelectContent>
+                  <Select value={record.methodUnit} onValueChange={(v) => handleChange("methodUnit", v)}>
+                    <SelectTrigger className="w-[100px] rounded-l-none"><SelectValue placeholder="Unit" /></SelectTrigger>
+                    <SelectContent>{units.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="dateOfFollowUp">
-                  Date of Follow-up Visit<span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Input
-                  id="dateOfFollowUp"
-                  type="date"
-                  value={record.dateOfFollowUp}
-                  onChange={(e) => handleInputChange("dateOfFollowUp", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-1">
-                <Label htmlFor="nameOfServiceProvider">
-                  Name of Service Provider<span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Input
-                  id="nameOfServiceProvider"
-                  value={record.nameOfServiceProvider}
-                  onChange={(e) => handleInputChange("nameOfServiceProvider", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="weight">
-                  Weight
-                  <span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  defaultValue={20}
-                  value={record.weight}
-                  onChange={(e) => handleInputChange("weight", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bpsystolic">
-                  Blood pressure (Systolic)
-                  <span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Input
-                  id="bpsystolic"
-                  type="number"
-                  placeholder="Systolic"
-                  className="w-50"
-                  value={record.bp_systolic}
-                  onChange={(e) => handleInputChange("bp_systolic", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bpdiastolic">
-                  Blood pressure (Diastolic)
-                  <span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Input
-                  id="bpdiastolic"
-                  type="number"
-                  placeholder="Systolic"
-                  className="w-50"
-                  value={record.bp_diastolic}
-                  onChange={(e) => handleInputChange("bp_diastolic", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="serviceProviderSignature">Service Provider Signature</Label>
-                <div className="border border-gray-300 rounded p-2 h-32 bg-white">
-                  <SignatureCanvas
-                    ref={(ref) => setServiceProviderSignatureRef(ref)}
-                    canvasProps={{
-                      className: "w-full h-full",
-                    }}
+              {["dateOfFollowUp", "nameOfServiceProvider"].map((field) => (
+                <div key={field}>
+                  <Label>{field === "dateOfFollowUp" ? "Follow-up Date".toUpperCase() : "Service Provider".toUpperCase()}</Label>
+                  <Input
+                    type={field.includes("date") ? "date" : "text"}
+                    value={record[field as keyof ServiceProvisionRecord] as string}
+                    onChange={(e) => handleChange(field as keyof ServiceProvisionRecord, e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2 justify-between">
-                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
-                    Clear
-                  </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={saveSignature}>
-                    Save Signature
-                  </Button>
-                </div>
-              </div>
+              ))}
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="medicalFindings">Medical Findings</Label>
+              {["weight", "bp_systolic", "bp_diastolic"].map((field) => (
+                <div key={field}>
+                  <Label>{field.replace("_", " ").toUpperCase()}</Label>
+                  <Input
+                    type="number"
+                    value={record[field as keyof ServiceProvisionRecord]}
+                    onChange={(e) => handleChange(field as keyof ServiceProvisionRecord, e.target.value)}
+                  />
+                </div>
+              ))}
+
+              <div className="md:col-span-2">
+                <Label>Medical Findings</Label>
                 <Textarea
-                  id="medicalFindings"
-                  value={record.medicalFindings || ""}
-                  onChange={(e) => handleInputChange("medicalFindings", e.target.value)}
-                  className="min-h-[80px]"
+                  value={record.medicalFindings}
+                  onChange={(e) => handleChange("medicalFindings", e.target.value)}
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end">
-              <Button type="button" onClick={handleAdd} className="bg-primary">
-                Add Record
-              </Button>
-            </div>
-
-            <div className="mt-8">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date of Visit</TableHead>
-                    <TableHead>Vital Signs</TableHead>
-                    <TableHead>Method Accepted</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Medical Findings</TableHead>
-                    <TableHead>Service Provider</TableHead>
-                    <TableHead>Signature</TableHead>
-                    <TableHead>Follow-up Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground">
-                        No records found. Fill out the form above and click "Add Record" to add a record.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    records.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.dateOfVisit}</TableCell>
-                        <TableCell>
-                          <i>BP:</i> {item.bp_systolic} / {item.bp_diastolic}
-                          <br></br>
-                          <i>Weight:</i> {item.weight}{" "}
-                        </TableCell>
-                        <TableCell>{item.methodAccepted}</TableCell>
-                        <TableCell>
-                          {item.methodQuantity} {item.methodUnit}{" "}
-                        </TableCell>
-                        <TableCell>{item.medicalFindings || "-"}</TableCell>
-                        <TableCell>{item.nameOfServiceProvider}</TableCell>
-                        <TableCell>{item.serviceProviderSignature ? "Signed" : "Not signed"}</TableCell>
-                        <TableCell>{item.dateOfFollowUp}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pregnancy Check Section */}
-            <div className="mt-10">
-              <Separator className="mb-6" />
-              <h2 className="text-lg font-semibold mb-4">How to be Reasonably Sure a Client is Not Pregnant</h2>
-              <div className="space-y-6">
-                {pregnancyQuestions.map((question, index) => (
-                  <FormField
-                    key={question.id}
-                    control={form.control}
-                    name={`pregnancyCheck.${question.id}` as any}
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <div className="flex items-start gap-4">
-                          <span className="font-medium min-w-[24px]">{index + 1}.</span>
-                          <div className="flex-1">
-                            <FormLabel className="font-normal text-base">{question.question}</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={(value) => {
-                                  console.log(`Setting ${question.id} to:`, value === "yes")
-                                  field.onChange(value === "yes")
-                                }}
-                                value={field.value ? "yes" : "no"}
-                                className="flex gap-6 mt-2"
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="yes" id={`${question.id}-yes`} />
-                                  <Label htmlFor={`${question.id}-yes`}>Yes</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="no" id={`${question.id}-no`} />
-                                  <Label htmlFor={`${question.id}-no`}>No</Label>
-                                </div>
-                              </RadioGroup>
-                            </FormControl>
-                          </div>
-                        </div>
-                      </FormItem>
-                    )}
+              <div className="md:col-span-2">
+                <Label>Signature</Label>
+                <div className="border h-32 bg-white">
+                  <SignatureCanvas
+                    ref={(ref) => setSigRef(ref)}
+                    canvasProps={{ className: "w-full h-full" }}
                   />
-                ))}
+                </div>
+                <div className="flex justify-between mt-2">
+                  <Button size="sm" variant="outline" type="button" onClick={() => sigRef?.clear()}>Clear</Button>
+                  <Button size="sm" variant="secondary" type="button" onClick={saveSig}>Save</Button>
+                </div>
               </div>
+            </div>
 
-              {/* Pregnancy Check Result */}
-              <div className="mt-6 p-4 rounded-md bg-gray-50">
+            <div className="flex justify-end mt-4">
+              <Button type="button" onClick={addRecord}>Add Record</Button>
+            </div>
+
+            {/* Table */}
+            <Table className="mt-6">
+              <TableHeader>
+                <TableRow>
+                  {["Visit", "Vitals", "Method", "Qty", "Findings", "Provider", "Signed", "Follow-up"].map(h => (
+                    <TableHead key={h}>{h}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {records.length === 0 ? (
+                  <TableRow><TableCell colSpan={8}>No records yet.</TableCell></TableRow>
+                ) : (
+                  records.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{r.dateOfVisit}</TableCell>
+                      <TableCell>BP: {r.bp_systolic}/{r.bp_diastolic}<br />Wt: {r.weight}</TableCell>
+                      <TableCell>{r.methodAccepted}</TableCell>
+                      <TableCell>{r.methodQuantity} {r.methodUnit}</TableCell>
+                      <TableCell>{r.medicalFindings || "-"}</TableCell>
+                      <TableCell>{r.nameOfServiceProvider}</TableCell>
+                      <TableCell>{r.serviceProviderSignature ? "✔" : "—"}</TableCell>
+                      <TableCell>{r.dateOfFollowUp}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {/* Pregnancy Check */}
+            <Separator className="my-8" />
+            <h3 className="text-lg font-semibold mb-4">How to be Reasonably Sure a Client is Not Pregnant</h3>
+            <div className="grid gap-4">
+              {pregnancyQuestions.map(({ id, q }, i) => (
+                <FormField
+                  key={id}
+                  control={form.control}
+                  name={`pregnancyCheck.${id}` as any}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{`${i + 1}. ${q}`}</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          value={field.value ? "yes" : "no"}
+                          onValueChange={(val) => field.onChange(val === "yes")}
+                          className="flex gap-6"
+                        >
+                          {["yes", "no"].map(opt => (
+                            <div key={opt} className="flex items-center gap-2">
+                              <RadioGroupItem value={opt} id={`${id}-${opt}`} />
+                              <Label htmlFor={`${id}-${opt}`}>{opt.toUpperCase()}</Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
+
+            <div className="mt-6 p-4 rounded-md bg-gray-50">
                 <div className="font-medium mb-2">
                   ■ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
                   pregnancy, provide client with desired method.
@@ -484,35 +255,10 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
                   await menses or use a pregnancy test.
                 </div>
               </div>
-            </div>
 
             <div className="flex justify-end mt-6 space-x-4">
-              <Button variant="outline" type="button" onClick={onPrevious5}>
-                Previous
-              </Button>
-
-              <Button
-                type="submit"
-                onClick={async () => {
-                  // If the current record is valid, add it to the records array
-                  const recordAdded = addCurrentRecordIfValid()
-
-                  // Get the updated records (including the one just added if applicable)
-                  const updatedRecords = recordAdded ? [...records, record] : records
-
-                  // Update form data with the latest records
-                  updateFormData({
-                    serviceProvisionRecords: updatedRecords,
-                  })
-
-                  // Log the data being submitted
-                  console.log("Submitting data:", {
-                    serviceProvisionRecords: updatedRecords,
-                  })
-                }}
-              >
-                Submit
-              </Button>
+              <Button type="button" variant="outline" onClick={onPrevious5}>Previous</Button>
+              <Button type="submit">Submit</Button>
             </div>
           </form>
         </Form>
@@ -520,5 +266,3 @@ const FamilyPlanningForm6: React.FC<ServiceProvisionFormProps> = ({
     </Card>
   )
 }
-
-export default FamilyPlanningForm6

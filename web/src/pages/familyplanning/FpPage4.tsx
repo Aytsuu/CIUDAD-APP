@@ -98,9 +98,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid md:grid-cols-4 gap-4">
               {/* Physical Measurements */}
-              <FormField
-                control={form.control}
-                name="weight"
+              <FormField control={form.control} name="weight"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Weight (kg)</FormLabel>
@@ -111,9 +109,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="height"
+              <FormField control={form.control} name="height"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Height (m)</FormLabel>
@@ -124,9 +120,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="bloodPressure"
+              <FormField control={form.control} name="bloodPressure"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Blood Pressure (mmHg)</FormLabel>
@@ -137,9 +131,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="pulseRate"
+              <FormField control={form.control} name="pulseRate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pulse Rate (/min)</FormLabel>
@@ -227,11 +219,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <RadioGroup
-                            value={field.value as string}
-                            onValueChange={field.onChange}
-                            className="flex space-x-4"
-                          >
+                          <RadioGroup value={field.value as string} onValueChange={field.onChange} className="flex space-x-4" >
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="firm" id="cervicalConsistency" disabled={!isIUDSelected} />
                               <FormLabel htmlFor="cervicalConsistency" className="text-sm font-normal">
@@ -259,9 +247,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
-                          <input
-                            type="checkbox"
-                            checked={field.value as boolean}
+                          <input type="checkbox" checked={field.value as boolean}
                             onChange={(e) => field.onChange(e.target.checked)}
                             id="cervicalTenderness"
                             disabled={!isIUDSelected}
@@ -281,9 +267,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                     render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
-                          <input
-                            type="checkbox"
-                            checked={field.value as boolean}
+                          <input type="checkbox" checked={field.value as boolean}
                             onChange={(e) => field.onChange(e.target.checked)}
                             id="cervicalAdnexalMassTenderness"
                             disabled={!isIUDSelected}
@@ -318,21 +302,13 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData }:
                               </FormLabel>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="anteflexed"
-                                id="uterinePositionAnteflexed"
-                                disabled={!isIUDSelected}
-                              />
+                              <RadioGroupItem value="anteflexed" id="uterinePositionAnteflexed" disabled={!isIUDSelected} />
                               <FormLabel htmlFor="uterinePositionAnteflexed" className="text-sm font-normal">
                                 Anteflexed
                               </FormLabel>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="retroflexed"
-                                id="uterinePositionRetroflexed"
-                                disabled={!isIUDSelected}
-                              />
+                              <RadioGroupItem value="retroflexed" id="uterinePositionRetroflexed" disabled={!isIUDSelected} />
                               <FormLabel htmlFor="uterinePositionRetroflexed" className="text-sm font-normal">
                                 Retroflexed
                               </FormLabel>

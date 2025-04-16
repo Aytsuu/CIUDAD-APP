@@ -1,5 +1,5 @@
 "use client"
-import { fp_record, fp_type, pregnancyCheck, risk_sti, risk_vaw } from "./PostRequest"
+import { fp_record, fp_type, pregnancyCheck, risk_sti, risk_vaw } from "./request-db/PostRequest"
 
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
