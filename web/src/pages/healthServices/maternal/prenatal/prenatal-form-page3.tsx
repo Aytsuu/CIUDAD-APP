@@ -157,10 +157,10 @@ export default function PrenatalFormThirdPg(
                         submit();
                     }}
                     >
-                        <div className="grid grid-cols-2 border rounded-lg border-gray">
-                            <div className="grid m-2">
+                        <div className="grid grid-cols-2">
+                            <div className="grid m-2 pr-5">
                                 <div className="flex flex-col m-5">
-                                    <h2 className="text-lg font-bold">Schedule Follow-up Visit</h2>
+                                    <h3 className="text-md font-bold">SCHEDULE FOR FOLLOW-UP VISIT</h3>
                                     <FormField
                                         control={form.control}
                                         name="followUpSchedule.scheduleOption"
@@ -227,7 +227,7 @@ export default function PrenatalFormThirdPg(
                             
                             {/* follow-up history */}
                             <div className="flex flex-col m-2 pl-5 pr-5 h-[389px] border-l-2 border-gray-300">
-                                <h2 className="text-lg font-bold m-5">Follow-up History</h2>
+                                <h3 className="text-md font-bold p-5">FOLLOW-UP HISTORY</h3>
                                 <div className="overflow-auto">
                                     <div className="flex flex-col border ml-5 mr-5 p-4 rounded-xl border-gray">
                                         <div className="w-full grid grid-cols-2 gap-2 mb-5">
@@ -277,10 +277,11 @@ export default function PrenatalFormThirdPg(
                             </div>
                         </div>
 
+                        <Separator className="mt-10 mb-5"/>
                         {/* guide for 4ANC Visit */}
                         <div className="grid grid-cols- gap-4 mt-3">
-                            <div className="flex flex-col border w-full rounded-lg border-gray">
-                                <h2 className="text-lg font-bold p-5">Guide for 4ANC Visit: (date)</h2>
+                            <div className="flex flex-col w-full">
+                                <h3 className="text-md font-bold p-5">GUIDE FOR 4ANC VISITS</h3>
                                 <div>
                                     <div className="grid grid-cols-3 gap-3 pl-5 pr-5 mb-5">
                                         <FormField
@@ -307,15 +308,18 @@ export default function PrenatalFormThirdPg(
                                                 </FormItem>
                                             )}
                                         />
-                                        <Button className="mt-[2rem]" variant="default">Check</Button>
+                                        <div className="">
+                                            <Button className="mt-[2rem] w-[10rem]" variant="default">Check</Button>
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-5 pl-5 pr-5 mb-5 gap-3">
+                                    <div className="grid grid-cols-3 pl-5 pr-5 mb-5 gap-3">
                                         <FormField
                                             control={form.control}
                                             name="ancVisits.firstTri"
                                             render={({ field }) => (
-                                                <FormItem className="">
-                                                    <FormLabel>1st tri up to 12 wks and 6 days</FormLabel>
+                                                <FormItem className="border rounded-md p-5">
+                                                    <FormLabel>1st Trimester</FormLabel>
+                                                    <Label className="text-black text-opacity-50 italic ml-1">(up to 12 wks and 6 days)</Label>
                                                     <FormControl>
                                                         <Input {...field} type="date"/>
                                                     </FormControl>
@@ -326,8 +330,9 @@ export default function PrenatalFormThirdPg(
                                             control={form.control}
                                             name="ancVisits.secondTri"
                                             render={({ field }) => (
-                                                <FormItem className="">
-                                                    <FormLabel>2nd tri 13-27 wks and 6 days</FormLabel>
+                                                <FormItem className="border rounded-md p-5">
+                                                    <FormLabel>2nd Trimester</FormLabel>
+                                                    <Label className="text-black text-opacity-50 italic ml-1">(13-27 wks and 6 days)</Label>
                                                     <FormControl>
                                                         <Input {...field} type="date"/>
                                                     </FormControl>
@@ -335,37 +340,41 @@ export default function PrenatalFormThirdPg(
                                             )}
                                         />
                                         {/* <Label className="ml-5">3rd tri 28 wks and more</Label> */}
-                                        <FormField
-                                            control={form.control}
-                                            name="ancVisits.thirdTriOne"
-                                            render={({ field }) => (
-                                                <FormItem className="">
-                                                    <FormLabel>(1st visit in 3rd trimester)</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} type="date"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="ancVisits.thirdTriTwo"
-                                            render={({ field }) => (
-                                                <FormItem className="">
-                                                    <FormLabel>(2nd visit in 3rd Tri)</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} type="date"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
+                                        <div className="grid grid-cols-2 gap-3 border p-5">
+                                            <FormField
+                                                control={form.control}
+                                                name="ancVisits.thirdTriOne"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>(1st visit in 3rd trimester)</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} type="date"/>
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="ancVisits.thirdTriTwo"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>(2nd visit in 3rd Tri)</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} type="date"/>
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        
                                     </div>
                                 </div>
                             </div>
 
+                            <Separator className="mt-10"/> 
                             {/* checklist */}
-                            <div className="flex flex-col border pb-5 w-full rounded-lg border-gray">
-                                <h2 className="text-lg font-bold p-5">Checklist</h2>
+                            <div className="flex flex-col w-full">
+                                <h3 className="text-md font-bold p-5">CHECKLIST</h3>
                                 <Label className="ml-10 mb-5">()PRE-ECLAMPSIA</Label>
                                 {preEclampsiaChecklistGroup.map((group, i) => (
                                     <div className="grid grid-cols-2 ml-20" key={i}>
@@ -392,12 +401,12 @@ export default function PrenatalFormThirdPg(
                             </div>
                         </div>
 
-                        
-                        <div className="grid grid-cols- mt-3">
-                            {/* pregnancy plan */}
-                            <div className="border rounded-lg p-5 border-gray">
-                                <h3 className="text-lg font-bold">Birth Plans</h3>
-                                <div className="flex flex-col gap-4 mt-5">
+                        <Separator className="mt-10 mb-5"/>
+                        <div className="grid grid-cols-2 mt-3">
+                            {/* birth plan */}
+                            <div className=" p-5">
+                                <h3 className="text-md font-bold">BIRTH PLANS</h3>
+                                <div className="grid grid-cols-2 gap-5 mt-5">
                                     <FormField
                                         control={form.control}
                                         name="pregnancyPlan.planPlaceOfDel"
@@ -445,9 +454,8 @@ export default function PrenatalFormThirdPg(
                             </div>
                             
                             {/* micronutrient supplementation */}
-                            <div className="border rounded-lg mt-3 p-5 border-gray">
-                                <h3 className="text-lg font-bold">Micronutrient Supplementation</h3>
-
+                            <div className="mt-3 pr-5 pl-5 border-l-2 border-gray-300">
+                                <h3 className="text-md font-bold">MICRONUTRIENT SUPPLEMENTATION</h3>
                                 {/* iron folic w/ acid */}
                                 <div className="flex flex-col">
                                     <Label className="mt-5">IRON W/ FOLIC ACID:</Label>
@@ -498,13 +506,14 @@ export default function PrenatalFormThirdPg(
                         </div>
 
                         {/* risk codes */}
-                        <div className="flex flex-col border rounded-lg mt-3 p-5 border-gray"> 
-                            <h3 className="text-lg font-bold">Risk Codes </h3>
-                            <div className="grid grid-cols-2 ml-10 mt-5">
+                        <Separator className="mt-10 mb-5"/>
+                        <div className="flex flex-col mt-3 p-5 border-gray"> 
+                            <h3 className="text-md font-bold">RISK CODES</h3>
+                            <div className="flex flex-row gap-[15rem] ml-5 mt-5">
                                 <Label>HAS ONE OR MORE OF THE FF:</Label>
                                 <Label>HAS ONE OR MORE 1 CONDITIONS:</Label>
                             </div>
-                            <div className="grid grid-cols-2 gap-14 ml-24">
+                            <div className="flex flex-row gap-[10rem] ml-10">
                                 <div>
                                         {riskCodesList.hasOneOrMoreOfTheFF.map((item) => (
                                         <FormField
