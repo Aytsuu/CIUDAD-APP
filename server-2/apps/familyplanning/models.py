@@ -1,6 +1,5 @@
 from django.db import models
-from .models import patient_record
-
+from apps.vaccination.models import PatientRecord
 
 class FP_Record(models.Model):
     fprecord_id = models.AutoField(primary_key=True)
@@ -16,8 +15,6 @@ class FP_Record(models.Model):
     class Meta:
         db_table = "fp_record"
         
-
-
 
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)

@@ -34,12 +34,7 @@ SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-<<<<<<< HEAD
 ALLOWED_HOSTS = ['localhost', '*']
-=======
-
-ALLOWED_HOSTS = []
->>>>>>> a89fc25e6a5ac2c76e6cd07efb80cabc48b09f0a
 
 
 # Application definition
@@ -55,7 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'apps.inventory',
-    'apps.vaccination'
+    'apps.vaccination',
     # 'apps.profiling',
     # 'apps.administration'
     # 'apps.account',
