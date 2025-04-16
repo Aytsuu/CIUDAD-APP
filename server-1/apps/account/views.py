@@ -6,11 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from .models import Account
-<<<<<<< HEAD
-from .serializers import UserAccountSerializer, ChangePasswordSerializer
-=======
 from .serializers import *
->>>>>>> blotter2.0
 from rest_framework.views import APIView
 import uuid
 import os
@@ -19,6 +15,8 @@ from apps.administration.serializers.full import StaffFullSerializer
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.models import Staff
 from django.contrib.auth import update_session_auth_hash
+import json
+
 
 class SignUp(generics.CreateAPIView):
     queryset = Account.objects.all()
@@ -99,7 +97,7 @@ class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         return [permissions.AllowAny()]
     
-class UserImageView(APIView):
+class UploadImage(APIView):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
@@ -151,8 +149,6 @@ class UserImageView(APIView):
                 "error": "Upload failed",
                 "details": str(e)
             }, status=500)
-
-import json
     
 class ChangePassword(APIView):
     permission_classes = [IsAuthenticated]
