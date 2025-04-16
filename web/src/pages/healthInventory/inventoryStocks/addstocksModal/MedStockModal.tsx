@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import {
   Form,
@@ -7,102 +8,132 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   MedicineStocksSchema,
   MedicineStockType,
 } from "@/form-schema/inventory/inventoryStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { useCategoriesMedicine } from "../REQUEST/Category/Medcategory";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CircleCheck, Loader2 } from "lucide-react";
+import { fetchMedicines } from "../REQUEST/fetch";
+import { submitMedicineStock } from "../REQUEST/Medicine/MedicineSubmit";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { formOptions, unitOptions, dosageUnitOptions } from "./options";
 
+interface MedicineStocksProps {
+  setIsDialog: (isOpen: boolean) => void;
+}
 
-export default function MedicineStockForm() {
-  
-    UseHideScrollbar();
+export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) {
+  UseHideScrollbar();
   const form = useForm<MedicineStockType>({
     resolver: zodResolver(MedicineStocksSchema),
     defaultValues: {
-      medicineName: "",
+      medicineID: "",
       category: "",
-      dosage: 0,
+      dosage: undefined,
       dsgUnit: "",
       form: "",
-      qty: 0,
-      unit: "",
-      pcs: 0,
-      expiryDate: "",
+      qty: undefined,
+      unit: "boxes",
+      pcs: undefined,
+      expiryDate: new Date().toISOString().split("T")[0],
     },
   });
 
-  const onSubmit = async (data: MedicineStockType) => {
+  const { categories, handleDeleteConfirmation, categoryHandleAdd } = useCategoriesMedicine();
+  const medicines = fetchMedicines();
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Watch for unit changes and reset pcs when not boxes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "unit" && value.unit !== "boxes") {
+        form.setValue("pcs", 0);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  const handleSubmit = async (data: MedicineStockType) => {
+    setIsSubmitting(true);
+    
     try {
-      const validatedData = MedicineStocksSchema.parse(data);
-      console.log("Form submitted", validatedData);
-      form.reset();
-      alert("Medicine stock added successfully!");
-    } catch (error) {
-      console.error("Form submission error:", form.formState.errors);
-      alert("Submission failed. Please check the form for errors.");
+      await submitMedicineStock(data, queryClient);
+      
+      // Close the dialog first
+      setIsDialog(false);
+      
+      // Use setTimeout to ensure the toast shows after dialog is fully closed
+      setTimeout(() => {
+        toast.success("Medicine item added successfully", {
+          icon: <CircleCheck size={20} className="text-green-500" />,
+          duration: 2000,
+        });
+      }, 100);
+    } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
+      toast.error(error.message || "Failed to add medicine item", {
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-  // Watch relevant fields for calculation
+
+  const onSubmit = (data: MedicineStockType) => {
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = () => {
+    if (submissionData) {
+      setIsAddConfirmationOpen(false);
+      handleSubmit(submissionData);
+    }
+  };
+
   const currentUnit = form.watch("unit");
   const qty = form.watch("qty") || 0;
   const pcs = form.watch("pcs") || 0;
-  const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
+  const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Main Form Content */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Medicine Name Dropdown */}
-            <FormField
-              control={form.control}
-              name="medicineName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Medicine Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Medicine"
-                      options={[
-                        { id: "paracetamol", name: "Paracetamol" },
-                        { id: "amoxicillin", name: "Amoxicillin" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category Dropdown */}
+            <FormSelect control={form.control} name="medicineID" label="Medicine Name" options={medicines} />
             <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black/65">Category</FormLabel>
+                  <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Category"
-                      options={[
-                        { id: "analgesic", name: "Analgesic" },
-                        { id: "antibiotic", name: "Antibiotic" },
-                      ]}
+                    <SelectLayoutWithAdd
+                      placeholder="select"
+                      label="Select a Category"
+                      options={categories.length > 0 ? categories : [{ id: "loading", name: "Loading..." }]}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => field.onChange(value)}
+                      onAdd={(newCategoryName) => {
+                        categoryHandleAdd(newCategoryName, (newId) => {
+                          field.onChange(newId);
+                        });
+                      }}
+                      onDelete={(id) => handleDeleteConfirmation(Number(id))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -112,201 +143,58 @@ export default function MedicineStockForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-           
-
-            {/* Expiry Date */}
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormDateInput control={form.control} name="expiryDate" label="Expiry Date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Dosage */}
-            <FormField
-              control={form.control}
-              name="dosage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Dosage</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dosage Unit */}
-            <FormField
-              control={form.control}
-              name="dsgUnit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Dosage Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "mg", name: "mg" },
-                        { id: "ml", name: "ml" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Form */}
-            <FormField
-              control={form.control}
-              name="form"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Form</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Form"
-                      options={[
-                        { id: "tablet", name: "Tablet" },
-                        { id: "capsule", name: "Capsule" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="dosage" label="Dosage" placeholder="Dsg" type="number" />
+            <FormSelect control={form.control} name="dsgUnit" label="Dosage Unit" options={dosageUnitOptions} />
+            <FormSelect control={form.control} name="form" label="Form" options={formOptions} />
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Quantity Input */}
-            <FormField
-              control={form.control}
-              name="qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(
-                          value === "" ? undefined : Number(value)
-                        );
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Quantity Unit */}
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black/65">Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "bottles", name: "Bottles" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormInput control={form.control} name="qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} placeholder="Quantity" type="number" />
+            <FormSelect control={form.control} name="unit" label="Unit" options={unitOptions} />
           </div>
+          
+          {currentUnit === "boxes" && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormInput control={form.control} name="pcs" label="Pieces per Box" type="number" placeholder="Pieces per box" />
+              <div className="sm:col-span-2">
+                <FormItem>
+                  <FormLabel className="text-black/65">Total Pieces</FormLabel>
+                  <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    {totalPieces.toLocaleString()} pieces
+                    <span className="ml-2 text-muted-foreground text-xs">
+                      ({qty} boxes × {pcs} pieces/box)
+                    </span>
+                  </div>
+                </FormItem>
+              </div>
+            </div>
+          )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Pieces per Box (Conditional) */}
-            {currentUnit === "boxes" && (
-              <FormField
-                control={form.control}
-                name="pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-black/65">Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(
-                            value === "" ? undefined : Number(value)
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Total Pieces Display (Conditional) */}
-            {currentUnit === "boxes" && (
-              <FormItem className="sm:col-span-2">
-                <FormLabel className="text-black/65">Total Pieces</FormLabel>
-                <div className="flex items-center h-10  rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
-                  </span>
-                </div>
-              </FormItem>
-            )}
-          </div>
-
-          {/* Sticky Submit Button */}
-          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save Stock
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </form>
       </Form>
+
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine?`}
+      />
     </div>
   );
 }

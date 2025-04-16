@@ -6,18 +6,14 @@ export const childHealthServices = [
     { 
         path: "/allChildHRTable" ,
         element: <AllChildHealthRecords/>
-
-    }
-,
+    },
     { 
         path: "/invtablechr" ,
         element: <InvChildHealthRecords/>
-
     },
     {
         path:'/newAddChildHRForm',
         element: <ChildHealthForm/>
-
     }
 
 
