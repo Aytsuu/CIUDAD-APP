@@ -43,7 +43,7 @@ SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '*']
 
 
 # Application definition
@@ -55,10 +55,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.healthProfiling',
-    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'apps.inventory',
     'apps.vaccination'
     # 'apps.profiling',
@@ -66,19 +65,15 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+   'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-
-
-
-
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -182,7 +177,7 @@ CORS_ALLOW_CREDENTIALS= True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    ), 
 }
 
 # JWT Authentication Settings
