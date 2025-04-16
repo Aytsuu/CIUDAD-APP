@@ -22,6 +22,11 @@ class VaccinationHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = VaccinationHistory
         fields = '__all__'
+
+class ServicesRecordsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServicesRecords
+        fields = '__all__'
     
     
 

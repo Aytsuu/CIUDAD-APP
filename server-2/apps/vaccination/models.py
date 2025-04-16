@@ -49,16 +49,23 @@ class VaccinationHistory(models.Model):
     vachist_doseNo = models.CharField(max_length=100)
     vachist_status = models.CharField(max_length=100)
     # vachist_signature = models.CharField(max_length=300)
-    
+    vachist_age = models.PositiveIntegerField(default=0)
     vachist_pulseRate   = models.CharField(max_length=100)
     vachist_bp_systolic = models.CharField(max_length=100)
     vachist_bp_systolic = models.CharField(max_length=100)
 
     staff_id = models.PositiveIntegerField(default=1)   
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'vaccination_history'
-        
+
+class ServicesRecords(models.Model):
+    serv_id = models.BigAutoField(primary_key=True)
+    serv_name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    pat_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'services_records'

@@ -31,3 +31,10 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
     queryset  =VaccinationHistory.objects.all()
     def create(self , request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+class ServicesRecordsView(generics.ListCreateAPIView):
+    serializer_class = ServicesRecordsSerializer
+    queryset  =ServicesRecords.objects.all()
+    
+    def create(self , request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)

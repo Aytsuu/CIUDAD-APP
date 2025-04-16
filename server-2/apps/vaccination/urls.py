@@ -7,4 +7,5 @@ urlpatterns = [
     path('vaccination-record/', VaccineRecordView.as_view(), name='vaccination-record'),
     path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
     path('vaccination-history/', VaccinationHistoryView.as_view(), name='vaccination-history'),
+    path('services-records/', ServicesRecordsView.as_view(), name='services-records'),
 ]

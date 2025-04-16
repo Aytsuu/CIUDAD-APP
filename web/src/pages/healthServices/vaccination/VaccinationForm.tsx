@@ -68,7 +68,7 @@ export default function VaccinationForm() {
       city: "",
       province: "",
       assignto: "",
-      patientType: "Regular",
+      patientType: "",
     },
   });
 
