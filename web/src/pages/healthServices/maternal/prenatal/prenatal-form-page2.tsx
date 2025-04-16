@@ -202,9 +202,9 @@ export default function PrenatalFormSecPg(
                                     control={form.control}
                                     name="prenatalVaccineInfo.isAdministered"
                                     render={({ field }) => (
-                                        <FormItem className="ml-10 mt-8">
+                                        <FormItem className="ml-10 mt-[1.7rem]">
                                             <FormControl>
-                                                <Checkbox {...field}></Checkbox>
+                                                <Checkbox {...field} className="mr-1"></Checkbox>
                                             </FormControl>
                                             <FormLabel className="ml-1">Administered by Midwife</FormLabel>
                                         </FormItem>   

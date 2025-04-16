@@ -334,7 +334,7 @@ export default function PrenatalFormThirdPg(
                                                 </FormItem>
                                             )}
                                         />
-                                        <Label className="ml-5">3rd tri 28 wks and more</Label>
+                                        {/* <Label className="ml-5">3rd tri 28 wks and more</Label> */}
                                         <FormField
                                             control={form.control}
                                             name="ancVisits.thirdTriOne"
@@ -364,7 +364,7 @@ export default function PrenatalFormThirdPg(
                             </div>
 
                             {/* checklist */}
-                            <div className="flex flex-col border w-full rounded-lg border-gray">
+                            <div className="flex flex-col border pb-5 w-full rounded-lg border-gray">
                                 <h2 className="text-lg font-bold p-5">Checklist</h2>
                                 <Label className="ml-10 mb-5">()PRE-ECLAMPSIA</Label>
                                 {preEclampsiaChecklistGroup.map((group, i) => (
