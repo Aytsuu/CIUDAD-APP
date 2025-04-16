@@ -1,5 +1,4 @@
-import Settings from "@/pages/settings/settings";
-import AccountSettings from "@/pages/record/acc-profile/user-account";
+import AccountSettings from "@/pages/acc-profile/user-account";
 
 export const user_account = [
     {

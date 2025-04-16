@@ -65,3 +65,13 @@ __pycache__/
 venv/
 env/
 .venv/
+
+# Android 
+/mobile/android/
+/mobile/ios/
+
+# Vite cache
+/web/.vite/
+
+
+firebase/

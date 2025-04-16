@@ -1,10 +1,10 @@
 import React from "react";
-import { Header } from "@/components/ui/menubar/Header";
+import { Header } from "@/pages/menubar/Header";
 import {
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/menubar/sidebar";
-import AppSidebar from "@/components/ui/menubar/app-sidebar";
+} from "@/pages/menubar/sidebar/sidebar";
+import AppSidebar from "@/pages/menubar/sidebar/app-sidebar";
 import { Outlet } from "react-router";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { useState } from "react";

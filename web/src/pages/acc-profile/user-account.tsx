@@ -11,8 +11,8 @@ import {
 
 import { Button } from "@/components/ui/button/button";
 
-import Profile from "./profile";
-import Preferences from "./account-preference";
+import Profile from "./navItems/profile";
+import Preferences from "./navItems/account-preference";
 
 const AccountSettings = () => {
   const [activeTab, setActiveTab] = useState("account");

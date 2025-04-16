@@ -10,24 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-
-type AnotherSubMenuItem = {
-  title: string;
-  url: string;
-};
-
-type SubMenuItem = {
-  title: string;
-  url: string;
-  anotherItems?: AnotherSubMenuItem[];
-};
-
-type MenuItem = {
-  title: string;
-  url?: string;
-  subItems?: boolean;
-  items?: SubMenuItem[];
-};
+import type { MenuItem, SubMenuItemProps, MenuItemProps } from "./sidebarTypes";
 
 // Menu items with dropdown support
 const items: MenuItem[] = [
@@ -162,12 +145,6 @@ const items: MenuItem[] = [
   },
 ];
 
-interface SubMenuItemProps {
-  item: SubMenuItem;
-  activeItem: string;
-  setActiveItem: (title: string) => void;
-}
-
 const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
   item,
   activeItem,
@@ -241,12 +218,6 @@ const SubMenuItemComponent: React.FC<SubMenuItemProps> = ({
     </SidebarMenuButton>
   );
 };
-
-interface MenuItemProps {
-  item: MenuItem;
-  activeItem: string;
-  setActiveItem: (title: string) => void;
-}
 
 const MenuItem: React.FC<MenuItemProps> = ({
   item,

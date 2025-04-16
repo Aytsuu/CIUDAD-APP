@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.blotter',
     'apps.drr',
+    'apps.notification',
 ]
 
 MIDDLEWARE = [

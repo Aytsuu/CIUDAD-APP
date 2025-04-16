@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { updatePassword, updateProfilePicture } from "./restful-api/accountApi";
+import { updatePassword, updateProfilePicture } from "../restful-api/accountApi";
 import { passwordFormSchema } from "@/form-schema/account-schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
