@@ -8,10 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Assigned, Feature } from "./administrationTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import {
-  useAllAssignedFeatures,
-  usePositions,
-} from "./queries/administrationQueries";
+import { useAllAssignedFeatures, usePositions } from "./queries/administrationFetchQueries";
 
 export default function RoleLayout() {
   const location = useLocation();

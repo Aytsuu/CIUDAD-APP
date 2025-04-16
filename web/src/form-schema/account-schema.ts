@@ -9,7 +9,8 @@ export const SignInSchema = z.object({
 export const AccountUpdateSchema = z.object({
   email: z
     .string()
-    .email({ message: "Invalid email address" }),
+    .email({ message: "Invalid email address" })
+    .optional(  ),
 
   newPassword: z
     .string()

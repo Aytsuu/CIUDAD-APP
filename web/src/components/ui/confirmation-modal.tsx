@@ -11,12 +11,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+export const variants: Record<string, string> = {
+  default: "",
+  destructive: "bg-red-500 hover:bg-red-500/90",
+}
+
 export function ConfirmationModal({
   trigger,
   title,
   description,
   actionLabel,
   type,
+  variant,
   onClick
 }: {
   trigger: React.ReactNode;
@@ -24,6 +30,7 @@ export function ConfirmationModal({
   description: string;
   actionLabel: string;
   type?: string;
+  variant?: string;
   onClick?: () => void;
 }) {
   return (
@@ -39,6 +46,7 @@ export function ConfirmationModal({
           <AlertDialogAction
             type={(type as "button" | "submit" | "reset") || "button"}
             onClick={onClick}
+            className={variants[variant ?? variants.default]}
           >
             {actionLabel}
           </AlertDialogAction>

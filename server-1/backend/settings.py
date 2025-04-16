@@ -53,14 +53,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
+    'corsheaders',
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'corsheaders',
     'apps.account',
     'apps.file',
-    'apps.blotter',
+    'apps.blotter',,
+    'apps.drr'
 ]
 
 MIDDLEWARE = [

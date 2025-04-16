@@ -2,18 +2,19 @@ import CreateBudgetPlanPage1 from "./treasurer-budgetplan-Page1";
 import CreateBudgetPlanPage2 from "./treasurer-budgetplan-Page2";
 import CreateBudgetPlanPage3 from "./treasurer-budgetplan-Page3";
 import CreateBudgetPlanPage4 from "./treasurer-budgetplan-Page4";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/budgetplan-create-schema";
 import { useEffect } from "react";
-import { ChevronLeft, CircleCheck } from "lucide-react";
-import { Link } from "react-router";
+import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
 import { toast } from "sonner";
-import { Navigate } from "react-router";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import DisplayBreakdown from "../display_breakdown";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -80,10 +81,11 @@ const initialFormData4 = {
 };
 
 function CreateBudgetPlanForm() {
-    const navigate = useNavigate();
     const year = new Date().getFullYear()
     const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, actualIncome, actualRPT } = location.state;
+    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
+            actualIncome, actualRPT, personalServicesLimit, miscExpenseLimit, 
+            localDevLimit, skFundLimit, calamityFundLimit } = location.state;
     const availableResources =
     (parseFloat(balance) || 0) +
     (parseFloat(realtyTaxShare) || 0) +
@@ -133,64 +135,70 @@ function CreateBudgetPlanForm() {
     };
 
 
+    // Data insertion
     const onSubmit = async () => {
+        const toastId = toast.loading('Submitting budget plan...', {
+            duration: Infinity  // Keep open until we manually close it
+        });
+
         // Defining budget items for each page
         const budgetItemsPage1 = [
-            { name: "honorariaOfficials", label: "Honoraria for Officials" },
-            { name: "cashOfficials", label: "Cash Gift for Officials" },
-            { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials" },
-            { name: "endBonusOfficials", label: "Year-End Bonus for Officials" },
-            { name: "honorariaTanods", label: "Honoraria for Tanods" },
-            { name: "honorariaLupon", label: "Honoraria for Lupon Members" },
-            { name: "honorariaBarangay", label: "Honoraria for Barangay Workers" },
-            { name: "prodEnhancement", label: "Productivity Enhancement Incentive" },
-            { name: "leaveCredits", label: "Commutation of Leave Credits" },
+            { name: "honorariaOfficials", label: "Honoraria for Officials", category: "Personal Service" },
+            { name: "cashOfficials", label: "Cash Gift for Officials", category: "Personal Service" },
+            { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials", category: "Personal Service" },
+            { name: "endBonusOfficials", label: "Year-End Bonus for Officials", category: "Personal Service" },
+            { name: "honorariaTanods", label: "Honoraria for Tanods", category: "Personal Service" },
+            { name: "honorariaLupon", label: "Honoraria for Lupon Members", category: "Personal Service" },
+            { name: "honorariaBarangay", label: "Honoraria for Barangay Workers", category: "Personal Service" },
+            { name: "prodEnhancement", label: "Productivity Enhancement Incentive", category: "Personal Service" },
+            { name: "leaveCredits", label: "Commutation of Leave Credits", category: "Personal Service" },
         ];
     
         const budgetItemsPage2 = [
-            { name: "travelingExpenses", label: "Traveling Expense" },
-            { name: "trainingExpenses", label: "Training Expenses" },
-            { name: "officeExpenses", label: "Office Supplies Expenses" },
-            { name: "accountableExpenses", label: "Accountable Forms Expenses" },
-            { name: "medExpenses", label: "Drugs and Medicine Expense" },
-            { name: "waterExpenses", label: "Water Expenses" },
-            { name: "electricityExpenses", label: "Electricity Expenses" },
-            { name: "telephoneExpenses", label: "Telephone Expenses" },
-            { name: "memDues", label: "Membership Dues/Contribution to Organization" },
-            { name: "officeMaintenance", label: "Repair and Maintenance of Office Equipment" },
-            { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle" },
+            { name: "travelingExpenses", label: "Traveling Expense", category: "Other Expense" },
+            { name: "trainingExpenses", label: "Training Expenses", category: "Other Expense" },
+            { name: "officeExpenses", label: "Office Supplies Expenses", category: "Other Expense" },
+            { name: "accountableExpenses", label: "Accountable Forms Expenses", category: "Other Expense" },
+            { name: "medExpenses", label: "Drugs and Medicine Expense", category: "Other Expense" },
+            { name: "waterExpenses", label: "Water Expenses", category: "Other Expense" },
+            { name: "electricityExpenses", label: "Electricity Expenses", category: "Other Expense" },
+            { name: "telephoneExpenses", label: "Telephone Expenses", category: "Other Expense" },
+            { name: "memDues", label: "Membership Dues/ Contribution to Organization", category: "Other Expense" },
+            { name: "officeMaintenance", label: "Repair and Maintenance of Office Equipment", category: "Other Expense" },
+            { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle", category: "Other Expense" },
         ];
     
         const budgetItemsPage3 = [
-            { name: "fidelityBond", label: "Fidelity Bond Premiums" },
-            { name: "insuranceExpense", label: "Insurance Expenses" },
-            { name: "gadProg", label: "GAD Program" },
-            { name: "seniorProg", label: "Senior Citizen/ PWD Program" },
-            { name: "juvJustice", label: "BCPC (Juvenile Justice System)" },
-            { name: "badacProg", label: "BADAC Program" },
-            { name: "nutritionProg", label: "Nutrition Program" },
-            { name: "aidsProg", label: "Combating AIDS Program" },
-            { name: "assemblyExpenses", label: "Barangay Assembly Expenses" },
-            { name: "disasterProg", label: "Disaster Response Program" },
-            { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense" },
+            { name: "fidelityBond", label: "Fidelity Bond Premiums", category: "Other Expense" },
+            { name: "insuranceExpense", label: "Insurance Expenses", category: "Other Expense"  },
+            { name: "gadProg", label: "GAD Program", category: "Other Expense"},
+            { name: "seniorProg", label: "Senior Citizen/ PWD Program", category: "Other Expense" },
+            { name: "juvJustice", label: "BCPC (Juvenile Justice System)", category: "Other Expense" },
+            { name: "badacProg", label: "BADAC Program", category: "Other Expense" },
+            { name: "nutritionProg", label: "Nutrition Program", category: "Other Expense" },
+            { name: "aidsProg", label: "Combating AIDS Program", category: "Other Expense" },
+            { name: "assemblyExpenses", label: "Barangay Assembly Expenses", category: "Other Expense" },
+            { name: "disasterProg", label: "Disaster Response Program", category: "Other Expense" },
+            { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense", category: "Other Expense" },
         ];
     
         const budgetItemsPage4 = [
-            { name: "capitalOutlays", label: "Total Capital Outlays" },
-            { name: "cleanAndGreen", label: "Clean & Green Environmental" },
-            { name: "streetLighting", label: "Street Lighting Project" },
-            { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
-            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
-            { name: "qrfFund", label: "Quick Response Fund (QRF)" },
-            { name: "disasterTraining", label: "Disaster Training" },
-            { name: "disasterSupplies", label: "Disaster Supplies" },
+            { name: "capitalOutlays", label: "Total Capital Outlays", category: "Capital Outlays" },
+            { name: "cleanAndGreen", label: "Clean & Green Environmental", category: "Non-Office" },
+            { name: "streetLighting", label: "Street Lighting Project", category: "Non-Office" },
+            { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose", category: "Non-Office" },
+            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) Fund", category: "Sangguniang Kabataan" },
+            { name: "qrfFund", label: "Quick Response Fund (QRF)", category: "LDRRM Fund" },
+            { name: "disasterTraining", label: "Disaster Training", category: "LDRRM Fund" },
+            { name: "disasterSupplies", label: "Disaster Supplies", category: "LDRRM Fund" },
         ];
     
         // Transform data from each page into the desired format
-        const transformData = (formData: Record<string, any>, budgetItems: { name: string; label: string }[]) => {
-            return budgetItems.map(({ name, label }) => ({
+        const transformData = (formData: Record<string, any>, budgetItems: { name: string; label: string; category: string }[]) => {
+            return budgetItems.map(({ name, label, category }) => ({
                 dtl_budget_item: label,
                 dtl_proposed_budget: formData[name] || "0.00",
+                dtl_budget_category: category,
             }));
         };
     
@@ -214,7 +222,12 @@ function CreateBudgetPlanForm() {
                 clearanceAndCertFees,
                 otherSpecificIncome,
                 totalBudgetObligations, 
-                balUnappropriated
+                balUnappropriated,
+                personalServicesLimit,
+                miscExpenseLimit,
+                localDevLimit, 
+                skFundLimit,
+                calamityFundLimit
             };
     
             const planId = await budget_plan(budgetHeader);
@@ -223,25 +236,39 @@ function CreateBudgetPlanForm() {
             const res = await budget_plan_details(combinedData, planId);
             console.log("Budget plan and expenditures submitted successfully!");
 
-            if(res && planId){
-                toast('Budget plan created successfully', {
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+            if (res && planId) {
+                toast.success('Budget plan created successfully', {
+                    id: toastId, 
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000
                 });
 
-                navigate('/treasurer-budget-plan');
-                
+                window.location.href = '/treasurer-budget-plan';
             }
+
         } catch (error){
-            console.error("Error submitting budget plan and expenditures:", error);
+            toast.error('Failed to create budget plan', {
+                id: toastId, 
+                duration: 2000
+            });
+            console.error("Error submitting budget plan", error);
         }
     };
-
     
     return (
         <div className='w-full h-full bg-snow'>
+            {/* Header Title */}
             <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
-                    <Link to='/treasurer-budget-plan'><Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button></Link>
+                    {/* Confirmation message when users aborts budget plan creation by clicking the back button */}
+                    <ConfirmationModal
+                    trigger={<Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button>}
+                    title="Unsaved Changes"
+                    description="Are you sure you want to go back? All progress on your budget plan will be lost."
+                    actionLabel="Confirm"
+                    onClick={() => (
+                        window.location.href = '/treasurer-budget-plan'
+                    )}/>
                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
                         <div>Create Budget Plan</div>
                     </h1>
@@ -252,13 +279,35 @@ function CreateBudgetPlanForm() {
             </div>
             <hr className="border-gray mb-7 sm:mb-8" /> 
 
+            {/* Budgetplan Header */}
             <div className='flex flex-col gap-5'>
                 {/* Header */}
                 <div className='w-full  grid grid-cols-3 gap-3'>
-                    <div className='p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow'>
-                        <Label className={styles.labelDesign}>NET Available Resources: </Label>
-                        <Label>{formatNumber(availableResources.toString())}</Label>
-                    </div>
+                    {/* Displays the breakdown of Net available resources when clicked */}
+                        <DialogLayout
+                            trigger={ 
+                                <div className="p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-lg">
+                                    <div className="flex items-center justify-between">
+                                        <Label className={styles.labelDesign}>NET Available Resources:</Label>
+                                        <ChevronRightIcon className="w-5 h-5 text-blue-500" />
+                                    </div>
+                                    <Label>{formatNumber(availableResources.toString())}</Label>
+                              </div>
+                              
+                            }
+                            title="Breakdown of NET Available Resources"
+                            description="Detailed breakdown of available funds from all income sources"
+                            mainContent={
+                                <DisplayBreakdown
+                                balance={balance}
+                                realtyTaxShare={realtyTaxShare}
+                                taxAllotment={taxAllotment}
+                                clearanceAndCertFees={clearanceAndCertFees}
+                                otherSpecificIncome={otherSpecificIncome}
+                                />
+                            }
+                        />
+                   
 
                     <div className='p-4 bg-white flex flex-col gap-4 rounded-lg drop-shadow'>
                         <Label className={styles.labelDesign}>Year: </Label>

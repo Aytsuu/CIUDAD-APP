@@ -8,6 +8,8 @@ import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
 import { DependentRecord } from "../../profilingTypes";
+import { Label } from "@/components/ui/label";
+import { Link } from "react-router";
 
 export default function ParentsForm({ residents, form, dependentsList, selectedParents, onSelect, prefix, title }: {
   residents: any;
@@ -80,10 +82,19 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
             options={filteredResidents}
             value={form.watch(`${prefix}.id`)} // Use the isolated watched value
             onChange={(value) => form.setValue(`${prefix}.id`, value)}
-            placeholder="Search for resident..."
+            placeholder="Select a resident"
             contentClassName="w-[28rem]"
             triggerClassName="w-1/3"
-            emptyMessage="No resident found"
+            emptyMessage={
+              <div className="flex gap-2 justify-center items-center">
+                <Label className="font-normal text-[13px]">No resident found.</Label>
+                <Link to="/resident/form">
+                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                    Register
+                  </Label>
+                </Link>
+              </div>
+            }
           />
 
           <div className="grid grid-cols-4 gap-4 mb-6">

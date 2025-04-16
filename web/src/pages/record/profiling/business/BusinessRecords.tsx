@@ -160,11 +160,11 @@ export default function BusinessRecords() {
             {Math.min(currentPage * pageSize, filteredBusinesses.length)} of{" "}
             {filteredBusinesses.length} rows
           </p>
-          <PaginationLayout
+          {paginatedBusinesses.length > 0 && <PaginationLayout
             totalPages={totalPages}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-          />
+          />}
         </div>
       </div>
     </MainLayoutComponent>

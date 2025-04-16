@@ -3,11 +3,8 @@ import { Card } from "@/components/ui/card/card";
 import ParentsFormLayout from "./parent/ParentsFormLayout";
 import DependentsInfoLayout from "./dependent/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
-
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
-import { BsChevronLeft } from "react-icons/bs";
-import { Button } from "@/components/ui/button/button";
-import { useNavigate, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
@@ -19,7 +16,6 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function FamilyProfileForm() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
 
@@ -36,18 +32,10 @@ export default function FamilyProfileForm() {
     defaultValues: defaultValues.current,
   });
 
-  const params = React.useMemo(() => {
-    return location.state?.params || {};
-  }, [location.state]);
-
-  const formattedResidents = React.useMemo(() => {
-    return formatResidents(params, false);
-  }, [params.residents]);
-
-  const households = React.useMemo(() => {
-    return formatHouseholds(params);
-  }, [params.households]);
-
+  const params = React.useMemo(() => location.state?.params || {}, [location.state]);
+  const formattedResidents = React.useMemo(() => formatResidents(params), [params.residents]);
+  const formattedHouseholds = React.useMemo(() => formatHouseholds(params), [params.households]);
+  
   const nextStep = React.useCallback(() => {
     setCurrentStep((prev) => prev + 1);
   }, []);
@@ -83,7 +71,7 @@ export default function FamilyProfileForm() {
           {currentStep === 1 && (
             <DemographicForm
               form={form}
-              households={households}
+              households={formattedHouseholds}
               onSubmit={() => nextStep()}
             />
           )}

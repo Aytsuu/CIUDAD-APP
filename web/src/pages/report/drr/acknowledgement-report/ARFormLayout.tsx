@@ -26,10 +26,15 @@ export default function ARFormLayout() {
   });
 
   // Function to handle form submission
-  const submit = () => {};
+  const submit = () => {
+    
+  };
 
   return (
-    <LayoutWithBack title="Create Acknowledgement Report" description="">
+    <LayoutWithBack 
+      title="Create Acknowledgement Report" 
+      description="Create an acknowledgement report to confirm completion of services or tasks. Upload supporting files, add descriptions, and submit for records."
+    >
       <Card className="w-full p-10">
         <Form {...form}>
           <form

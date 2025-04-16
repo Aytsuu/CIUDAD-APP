@@ -40,9 +40,7 @@ export default function DemographicForm({
   const handleHouseholdChange = React.useCallback(
     (value: any) => {
       form.setValue("demographicInfo.householdNo", value);
-    },
-    [form]
-  );
+  }, [form]);
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
@@ -59,25 +57,26 @@ export default function DemographicForm({
           className="grid gap-4"
         >
           <div className="grid grid-cols-4 gap-4">
-            <div className="flex flex-col justify-start">
-              <div className="flex justify-between items-center mb-2">
+            <div className="flex flex-col justify-start item pt-1">
+              <div className="flex justify-between items-center mb-3">
                 <Label className="text-black/70">Household</Label>
-                <div className="flex gap-2 justify-end items-center">
-                  <Label className="font-normal text-[13px]">Not found?</Label>
-                  <Link to="/household-form">
-                    <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                      Register
-                    </Label>
-                  </Link>
-                </div>
               </div>
               <Combobox
                 options={households}
                 value={form.watch(`demographicInfo.householdNo`)}
                 onChange={handleHouseholdChange}
-                placeholder="Search for household..."
+                placeholder="Select a household"
                 contentClassName="w-[22rem]"
-                emptyMessage="No household found"
+                emptyMessage={
+                  <div className="flex gap-2 justify-center items-center">
+                    <Label className="font-normal text-[13px]">No household found.</Label>
+                    <Link to="/household/form">
+                      <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                        Register
+                      </Label>
+                    </Link>
+                  </div>
+                }
               />
               <Label className="text-[13px] text-red-500 mt-1">
                 {invalidHousehold ? `Resident is required` : ""}
@@ -98,7 +97,7 @@ export default function DemographicForm({
             <FormSelect
               control={form.control}
               name="demographicInfo.indigenous"
-              label="Inigenous People"
+              label="Indigenous People"
               options={[
                 { id: "no", name: "No" },
                 { id: "yes", name: "Yes" },

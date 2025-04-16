@@ -49,7 +49,9 @@ export default function AcknowledgementReport() {
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
-              <PaginationLayout />
+              <PaginationLayout 
+                
+              />
             </div>
           </div>
         </div>
