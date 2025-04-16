@@ -60,8 +60,8 @@ INSTALLED_APPS = [
     'apps.profiling',
     'apps.account',
     'apps.file',
-    'apps.blotter',,
-    'apps.drr'
+    'apps.blotter',
+    'apps.drr',
 ]
 
 MIDDLEWARE = [
