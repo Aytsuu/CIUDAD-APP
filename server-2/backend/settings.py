@@ -25,25 +25,21 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1'
-
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+'
-
+# SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+<<<<<<< HEAD
 ALLOWED_HOSTS = ['localhost', '*']
+=======
+
+ALLOWED_HOSTS = []
+>>>>>>> a89fc25e6a5ac2c76e6cd07efb80cabc48b09f0a
 
 
 # Application definition
@@ -62,6 +58,13 @@ INSTALLED_APPS = [
     'apps.vaccination'
     # 'apps.profiling',
     # 'apps.administration'
+    # 'apps.account',
+    # 'apps.waste',
+    # 'apps.profiling',
+    # 'apps.administration'
+    'apps.familyplanning',
+    'apps.animalbites',
+
 ]
 
 MIDDLEWARE = [
@@ -97,14 +100,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 
 DATABASES = {
     'default': {
@@ -125,7 +122,6 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
