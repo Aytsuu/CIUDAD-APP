@@ -13,7 +13,7 @@ import { Combobox } from "@/components/ui/combobox";
 import api from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -253,9 +253,10 @@ export default function VaccinationForm() {
               ]}
             />
 
-            <FormDateInput
+            <FormDateTimeInput
               control={form.control}
               name="datevaccinated"
+              type="date"
               label="Date Vaccinated"
             />
           </div>
@@ -289,10 +290,11 @@ export default function VaccinationForm() {
               type="number"
               readOnly
             />
-            <FormDateInput
+            <FormDateTimeInput
               control={form.control}
               name="dob"
               label="Date of Birth"
+              type="date"
               readOnly
             />
             <FormSelect

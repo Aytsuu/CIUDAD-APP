@@ -20,7 +20,7 @@ import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
 import { addInventory } from "../REQUEST/Inventory";
-import {FormDateInput} from "@/components/ui/form/form-date-input";
+import {FormDateTimeInput} from "@/components/ui/form/form-date-time-input";
 
 export default function VaccineStockForm() {
   UseHideScrollbar();
@@ -144,7 +144,7 @@ data, inv_type);
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput control={form.control} name="expiryDate" label="Expiry Date"/>
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date"/>
           </div>
         </div>
 
