@@ -120,7 +120,6 @@ export function BlotterReport() {
             <h1 className="font-semibold text-l sm:text-2xl text-darkBlue2">
               Barangay Report
             </h1>
-            <p className="text-xs sm:text-sm text-darkGray">D3312TH899033190</p>
             <p className="text-xs sm:text-sm text-darkGray">
               March 09, 2023 12:23
             </p>

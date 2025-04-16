@@ -4,15 +4,15 @@ import { BlotterViewRecord } from "@/pages/record/complaint/BlotterViewRecord";
 
 export const blotter_router = [
   {
-    path: "blotter-record",
+    path: "/blotter-record",
     element: <BlotterRecord />,
   },
   {
-    path: "blotter-view-record",
+    path: "/blotter-record/:id",
     element: <BlotterViewRecord />,
   },
   {
-    path: "blotter-report",
+    path: "/blotter-report",
     element: <BlotterReport />,
   },
 ];

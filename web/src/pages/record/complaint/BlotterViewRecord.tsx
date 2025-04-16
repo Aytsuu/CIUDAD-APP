@@ -1,296 +1,243 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "@/components/ui/button/button";
-import { Film, Image, Play, Printer } from "lucide-react";
-import { getBlotterById } from "./restful-api/blotter-api";
-import { useQuery } from "@tanstack/react-query";
+import { BsChevronLeft } from "react-icons/bs";
+import { Link, useLocation } from "react-router-dom";
+import { BlotterRecord } from "./blotter-type";
+import { FileText } from "lucide-react";
+import { toast } from "sonner";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
-// Define interfaces for type safety
-interface MediaItem {
-  id: string;
-  url: string;
-  file_type: string;
-  file_name?: string;
-}
+export function BlotterViewRecord() {
+  const { state } = useLocation();
+  const blotterData = state?.blotter as BlotterRecord;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-interface BlotterData {
-  id: string;
-  bc_complainant: string;
-  bc_cmplnt_address: string;
-  bc_accused: string;
-  bc_accused_address: string;
-  bc_incident_type: string;
-  bc_datetime: string;
-  bc_allegation: string;
-  bc_status: string;
-  bc_officer: string;
-  created_at: string;
-  media?: MediaItem[];
-}
+  const handleRaiseIssue = async () => {
+    setIsSubmitting(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-export function BlotterViewRecord(): JSX.Element {
-  const { id } = useParams<{ id: string }>();
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-  
-  // Use React Query to fetch the specific blotter record
-  const { 
-    data: response, 
-    isLoading, 
-    error 
-  } = useQuery({
-    queryKey: ["blotter", id],
-    queryFn: async () => {
-      if (!id) throw new Error("No blotter ID provided");
-      return getBlotterById(id);
-    },
-    enabled: !!id,
-  });
-
-  const blotterData = response?.data as BlotterData | undefined; // Type assertion
-
-  const toggleVideoPlayback = (mediaId: string): void => {
-    setActiveVideoId(activeVideoId === mediaId ? null : mediaId);
+      toast.success("Issue raised successfully", {
+        description: `Blotter ID: ${blotterData.id}`,
+        action: {
+          label: "View",
+          onClick: () => console.log("View action clicked"),
+        },
+      });
+    } catch (error) {
+      toast.error("Failed to raise issue", {
+        description: "Please try again later",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsDialogOpen(false);
+    }
   };
-
-  const handlePrintReport = () => {
-    window.print();
-  };
-
-  if (isLoading) {
-    return (
-      <div className="w-full p-8 text-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-32 bg-gray-200 rounded w-full mb-4"></div>
-          <div className="h-20 bg-gray-200 rounded w-full"></div>
-        </div>
-        <p className="mt-4 text-gray-500">Loading blotter record...</p>
-      </div>
-    );
-  }
-
-  if (error || !blotterData) {
-    return (
-      <div className="w-full p-8 text-center">
-        <p className="text-red-500 mb-2">Error: {error instanceof Error ? error.message : "Failed to load record"}</p>
-        <p className="text-gray-500 mb-4">The requested blotter record could not be found or there was an error loading it.</p>
-        <Button variant="outline">
-          <Link to="/blotter-record" className="flex items-center gap-2">
-            <BsChevronLeft /> Return to Records
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
-  const {
-    id: blotter_id,
-    bc_complainant,
-    bc_cmplnt_address,
-    bc_accused,
-    bc_accused_address,
-    bc_incident_type,
-    bc_datetime,
-    bc_allegation,
-    bc_status,
-    bc_officer,
-    created_at: date_created,
-    media = []
-  } = blotterData;
-
-  // Format dates for display (with null check)
-  const formattedCreatedDate = date_created 
-    ? new Date(date_created).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : "Date unavailable";
-
-  const formattedIncidentDate = bc_datetime
-    ? new Date(bc_datetime).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : "Date unavailable";
 
   return (
-    <div className="w-full h-full bg-gray-50 p-4 sm:p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 bg-white p-4 rounded-lg shadow-sm">
-          <div className="flex flex-row mb-4 sm:mb-0">
-            <div className="flex items-center mr-4">
-              <Button className="text-black p-2 self-start" variant="outline">
-                <Link to="/blotter-record">
-                  <BsChevronLeft />
-                </Link>
+    <div className="w-full h-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+        <div className="flex flex-row mb-4 sm:mb-0">
+          <div className="flex items-center mr-4">
+            <Button className="text-black p-2 self-start" variant="outline">
+              <Link to="/blotter-record">
+                <BsChevronLeft />
+              </Link>
+            </Button>
+          </div>
+          <div>
+            <h1 className="font-semibold text-l sm:text-2xl text-darkBlue2">
+              Blotter Record Details
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Case No: {blotterData.id || "N/A"}
+            </p>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Date Filed:{" "}
+              {new Date(blotterData.bc_datetime).toLocaleDateString() || "N/A"}
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-4 mt-6">
+          <DialogLayout
+            trigger={
+              <Button className="bg-red-600 hover:bg-red-700">
+                Raise Issue
               </Button>
+            }
+            title="Confirm Issue Raising"
+            description="Are you sure you want to raise an issue for this blotter report?"
+            mainContent={
+              <>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Blotter ID:{" "}
+                    <span className="font-medium">{blotterData.id}</span>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    This action will notify the concerned authorities about
+                    unresolved issues.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsSubmitting(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={handleRaiseIssue}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Processing..." : "Confirm"}
+                  </Button>
+                </div>
+              </>
+            }
+          />
+        </div>
+      </div>
+
+      <hr className="border-gray mb-6 sm:mb-8" />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Complainant Card */}
+        <div className="border rounded-md p-4 bg-white">
+          <h3 className="font-medium text-lg mb-2 text-darkBlue2">
+            Complainant
+          </h3>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-darkGray">Full Name</p>
+              <p className="text-base">{blotterData.bc_complainant || "N/A"}</p>
             </div>
             <div>
-              <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-                Barangay Blotter Report
-              </h1>
-              <p className="text-xs sm:text-sm text-darkGray">ID: {blotter_id || "ID unavailable"}</p>
-              <p className="text-xs sm:text-sm text-darkGray">Filed: {formattedCreatedDate}</p>
+              <p className="text-sm text-darkGray">Address</p>
+              <p className="text-base">
+                {blotterData.bc_cmplnt_address || "N/A"}
+              </p>
             </div>
-          </div>
-          <div className="flex items-center">
-            <span 
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                bc_status === 'Resolved' 
-                  ? 'bg-green-100 text-green-800' 
-                  : bc_status === 'Pending' 
-                  ? 'bg-yellow-100 text-yellow-800' 
-                  : 'bg-blue-100 text-blue-800'
-              }`}
-            >
-              {bc_status || "Status unavailable"}
-            </span>
           </div>
         </div>
 
-        <div className="space-y-6">
-          {/* People Involved Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Complainant Card */}
-            <div className="border rounded-lg p-5 bg-white shadow-sm">
-              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
-                Complainant Information
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-darkGray block mb-1">Full Name</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_complainant || "Not specified"}</div>
-                </div>
-                <div>
-                  <label className="text-sm text-darkGray block mb-1">Address</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_cmplnt_address || "Not specified"}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Accused Card */}
-            <div className="border rounded-lg p-5 bg-white shadow-sm">
-              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
-                Accused Information
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-darkGray block mb-1">Full Name</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_accused || "Not specified"}</div>
-                </div>
-                <div>
-                  <label className="text-sm text-darkGray block mb-1">Address</label>
-                  <div className="p-3 bg-gray-50 rounded border">{bc_accused_address || "Not specified"}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Incident Details */}
-          <div className="border rounded-lg p-5 bg-white shadow-sm">
-            <h3 className="font-medium text-lg text-darkBlue2 mb-4 border-b pb-2">
-              Incident Details
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-sm text-darkGray block mb-1">Category</label>
-                <div className="p-3 bg-gray-50 rounded border">{bc_incident_type || "Not specified"}</div>
-              </div>
-              <div>
-                <label className="text-sm text-darkGray block mb-1">Date of Incident</label>
-                <div className="p-3 bg-gray-50 rounded border">{formattedIncidentDate}</div>
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="text-sm text-darkGray block mb-1">Incident Description</label>
-              <div className="p-3 bg-gray-50 rounded border min-h-24 whitespace-pre-wrap">
-                {bc_allegation || "No description provided"}
-              </div>
+        {/* Accused Card */}
+        <div className="border rounded-md p-4 bg-white">
+          <h3 className="font-medium text-lg mb-2 text-darkBlue2">Accused</h3>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-darkGray">Full Name</p>
+              <p className="text-base">{blotterData.bc_accused || "N/A"}</p>
             </div>
             <div>
-              <label className="text-sm text-darkGray block mb-1">Handling Officer</label>
-              <div className="p-3 bg-gray-50 rounded border">{bc_officer || "Not assigned"}</div>
+              <p className="text-sm text-darkGray">Address</p>
+              <p className="text-base">
+                {blotterData.bc_accused_address || "N/A"}
+              </p>
             </div>
-          </div>
-
-          {/* Media Files Section */}
-          {media && media.length > 0 && (
-            <div className="border rounded-lg p-5 bg-white shadow-sm">
-              <h3 className="font-medium text-lg mb-4 text-darkBlue2 border-b pb-2">
-                Supporting Documents & Evidence
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {media.map((mediaItem: MediaItem) => (
-                  <div key={mediaItem.id} className="relative group">
-                    <div className="aspect-square bg-gray-100 rounded-md overflow-hidden border">
-                      {mediaItem.file_type.includes("video") ? (
-                        <div className="w-full h-full relative">
-                          <video
-                            src={mediaItem.url}
-                            className="w-full h-full object-cover"
-                            controls={activeVideoId === mediaItem.id}
-                            muted={activeVideoId !== mediaItem.id}
-                            onClick={() => toggleVideoPlayback(mediaItem.id)}
-                          />
-                          {activeVideoId !== mediaItem.id && (
-                            <div
-                              className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black bg-opacity-30 hover:bg-opacity-20 transition-all"
-                              onClick={() => toggleVideoPlayback(mediaItem.id)}
-                            >
-                              <div className="bg-black bg-opacity-70 rounded-full p-3">
-                                <Play size={24} className="text-white" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <img
-                          src={mediaItem.url}
-                          alt={`Evidence ${mediaItem.id}`}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
-                      {mediaItem.file_type.includes("video") ? (
-                        <Film size={16} className="text-blue-500" />
-                      ) : (
-                        <Image size={16} className="text-green-500" />
-                      )}
-                    </div>
-                    <p className="text-xs mt-1 text-center text-gray-500 truncate">
-                      {mediaItem.file_name || `File ${mediaItem.id}`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Actions Footer */}
-          <div className="flex justify-end gap-4 mt-8 print:hidden">
-            <Link to="/blotter-record">
-              <Button variant="outline" className="px-6">
-                Back to Records
-              </Button>
-            </Link>
-            <Button onClick={handlePrintReport} className="bg-darkBlue2 hover:bg-blue-700 px-6">
-              <Printer className="mr-2 h-4 w-4" /> Print Report
-            </Button>
           </div>
         </div>
       </div>
+
+      {/* Incident Details */}
+      <div className="border rounded-md p-4 bg-white mb-6">
+        <h1 className="font-medium text-lg text-darkBlue2 mb-4">
+          Incident Details
+        </h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-sm text-darkGray">Category</p>
+            <p className="text-base">{blotterData.bc_incident_type || "N/A"}</p>
+          </div>
+          <div>
+            <p className="text-sm text-darkGray">Date of Incident</p>
+            <p className="text-base">
+              {blotterData.bc_datetime
+                ? new Date(blotterData.bc_datetime).toLocaleString()
+                : "N/A"}
+            </p>
+          </div>
+        </div>
+        <div>
+          <p className="text-sm text-darkGray">Incident Description</p>
+          <p className="text-base whitespace-pre-line">
+            {blotterData.bc_allegation || "N/A"}
+          </p>
+        </div>
+      </div>
+
+      {/* Supporting Documents Section */}
+      {blotterData.media && blotterData.media.length > 0 ? (
+        <div className="border rounded-md p-4 bg-white mb-6">
+          <h2 className="font-medium text-lg mb-4 text-darkBlue2">
+            Supporting Documents
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {blotterData.media.map((media, index) => {
+              const mediaUrl = media.url.startsWith("http")
+                ? media.url
+                : `https://isxckceeyjcwvjipndfd.supabase.co/storage/v1/object/public/${media.storage_path}`;
+
+              return (
+                <div
+                  key={media.id}
+                  className="border rounded-md p-2 flex flex-col"
+                >
+                  {media.file_type.startsWith("image/") ? (
+                    <img
+                      src={mediaUrl}
+                      alt={media.file_name || `Evidence ${index + 1}`}
+                      className="w-full h-40 object-cover mb-2 rounded-md"
+                      onError={(e) => {
+                        console.error("Failed to load image:", mediaUrl);
+                        e.currentTarget.src = "/fallback-image.jpg";
+                      }}
+                    />
+                  ) : media.file_type.startsWith("video/") ? (
+                    <div className="relative w-full h-40 mb-2">
+                      <video
+                        controls
+                        className="w-full h-full object-cover rounded-md"
+                        poster="/video-thumbnail.jpg"
+                      >
+                        <source src={mediaUrl} type={media.file_type} />
+                        Your browser does not support videos
+                      </video>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 bg-gray-100 mb-2 rounded-md">
+                      <FileText className="w-12 h-12 text-gray-400" />
+                      <span className="mt-2 text-xs text-gray-500">
+                        Document
+                      </span>
+                    </div>
+                  )}
+                  <p className="text-xs truncate px-2 text-center">
+                    {media.file_name || `Evidence ${index + 1}`}
+                  </p>
+                  <a
+                    href={mediaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-500 hover:underline mt-1 text-center"
+                  >
+                    Open Fullscreen
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="border rounded-md p-4 bg-white mb-6">
+          <p className="text-gray-500 text-center">
+            No supporting documents attached
+          </p>
+        </div>
+      )}
     </div>
   );
 }
-
-// Add this line to export the component as the default export as well
-export default BlotterViewRecord;

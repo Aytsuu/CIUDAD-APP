@@ -15,7 +15,7 @@ from apps.administration.serializers.full import StaffFullSerializer
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.models import Staff
 
-class SignInView(generics.CreateAPIView):
+class SignUp(generics.CreateAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
     permission_classes = [permissions.AllowAny]

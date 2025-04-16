@@ -9,8 +9,9 @@ export const usePostBlotter = () => {
 
 export const useGetBlotter = () => {
     return useQuery({
-        queryKey: ["blotter"],
+        queryKey: ["blotters"],
         queryFn: () => getBlotters(),
+        select: (response) => response.data
     })
 }
 

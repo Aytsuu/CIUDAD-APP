@@ -1,4 +1,7 @@
 export interface MediaFile {
+  storage_path: any;
+  file_name: string;
+  file_type: any;
   id: number | string;
   type: "image" | "video" | "document";
   url: string;
@@ -7,6 +10,7 @@ export interface MediaFile {
 }
 
 export interface BlotterFormValues {
+  id: string,
   bc_complainant: string;
   bc_cmplnt_address: string;
   bc_accused: string;
@@ -16,3 +20,12 @@ export interface BlotterFormValues {
   bc_datetime: string;
   bc_evidence: FileList | null;
 }
+
+export interface BlotterRecord extends Omit<BlotterFormValues, 'bc_evidence'> {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  bc_status?: 'Pending' | 'Resolved' | 'In Progress';
+  media?: MediaFile[]; 
+}
+
