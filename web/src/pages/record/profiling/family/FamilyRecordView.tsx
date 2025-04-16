@@ -6,7 +6,6 @@ import { dependentViewColumns } from "./FamilyColumns";
 import { useLocation } from "react-router";
 import { DependentRecord } from "../profilingTypes";
 import CardLayout from "@/components/ui/card/card-layout";
-import { MoveRight } from "lucide-react";
 
 export default function FamilyRecordView(){
 
@@ -52,7 +51,7 @@ export default function FamilyRecordView(){
                             <Label>Indigenous : {params.data.fam_indigenous}</Label>
                             <Label>Household No. : {params.data.hh.hh_id}</Label>
                             <Label>Date Registered : {params.data.fam_date_registered}</Label>
-                            <Label>Registered By: {params.data.staff}</Label>
+                            <Label>Registered By: {params.data.staff.staff_id}</Label>
                         </div>
                     }
                 />

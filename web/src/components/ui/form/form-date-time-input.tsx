@@ -8,8 +8,8 @@ import {
   } from "@/components/ui/form/form";
 
 // Reusable Form Date Input Component
-export const FormDateInput = React.memo(({ control, name, label, readOnly }: 
-    { control: any; name: string; label: string; readOnly?: boolean;}
+export const FormDateTimeInput = React.memo(({ control, name, label, readOnly, type }: 
+    { control: any; name: string; label: string; readOnly?: boolean; type: "date" | "time"}
   ) => (
     <FormField
       control={control}
@@ -19,7 +19,7 @@ export const FormDateInput = React.memo(({ control, name, label, readOnly }:
           <FormLabel className="text-black/70">{label}</FormLabel>
           <FormControl>
             <input
-              type="date"
+              type={type}
               className="bg-white border w-full py-1.5 px-2 rounded-md text-[14px] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               {...field}
               readOnly={readOnly}

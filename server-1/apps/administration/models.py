@@ -7,7 +7,7 @@ class Position(models.Model):
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions')
-
+    
     class Meta:
         db_table = 'position'
 

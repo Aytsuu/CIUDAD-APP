@@ -54,21 +54,11 @@ export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     },
     {
         accessorKey: "mname",
-        header: "Middle Name",
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-            {row.getValue("mname") ? row.getValue("mname") : '-'}
-            </div>
-        )
+        header: "Middle Name"
     },
     {
         accessorKey: "suffix",
-        header: "Suffix",
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-            {row.getValue("suffix") ? row.getValue("suffix") : '-'}
-            </div>
-        )
+        header: "Suffix"
     },
     {
         accessorKey: "address",

@@ -7,6 +7,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { Link } from "react-router";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function LivingSoloForm({
   residents,
@@ -15,6 +16,7 @@ export default function LivingSoloForm({
   invalidResident,
   invalidHousehold,
   form,
+  onSubmit
 }: {
   residents: any[];
   households: any[];
@@ -22,6 +24,7 @@ export default function LivingSoloForm({
   invalidResident: boolean;
   invalidHousehold: boolean;
   form: UseFormReturn<z.infer<typeof demographicInfoSchema>>;
+  onSubmit: () => void;
 }) {
   return (
     <>
@@ -29,46 +32,48 @@ export default function LivingSoloForm({
         <div className="grid gap-2">
           <div className="flex justify-between items-center">
             <Label className="text-black/70">Resident</Label>
-            <div className="flex gap-2 justify-end items-center">
-              <Label className="font-normal text-[13px]">Not found?</Label>
-              <Link to="/resident-form">
-                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                  Register
-                </Label>
-              </Link>
-            </div>
           </div>
           <Combobox
             options={residents}
             value={form.watch("id")}
             onChange={(value) => form.setValue("id", value)}
-            placeholder="Search for resident..."
+            placeholder="Select a resident"
             triggerClassName="font-normal"
-            emptyMessage="No resident found"
+            emptyMessage={
+              <div className="flex gap-2 justify-center items-center">
+                <Label className="font-normal text-[13px]">No resident found.</Label>
+                <Link to="/resident/form">
+                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                    Register
+                  </Label>
+                </Link>
+              </div>
+            }
           />
           <Label className="text-[13px] text-red-500">
             {invalidResident ? `Resident is required` : ""}
           </Label>
         </div>
         <div className="grid gap-2">
-        <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center">
             <Label className="text-black/70">Household</Label>
-            <div className="flex gap-2 justify-end items-center">
-              <Label className="font-normal text-[13px]">Not found?</Label>
-              <Link to="/household-form">
-                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                  Register
-                </Label>
-              </Link>
-            </div>
           </div>
           <Combobox
             options={households}
             value={form.watch("householdNo")}
             onChange={(value) => form.setValue("householdNo", value)}
-            placeholder="Search for household..."
+            placeholder="Select a household"
             triggerClassName="font-normal"
-            emptyMessage="No resident found"
+            emptyMessage={
+              <div className="flex gap-2 justify-center items-center">
+                <Label className="font-normal text-[13px]">No household found.</Label>
+                <Link to="/household/form">
+                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                    Register
+                  </Label>
+                </Link>
+              </div>
+            }
           />
           <Label className="text-[13px] text-red-500">
             {invalidHousehold ? `Resident is required` : ""}
@@ -100,7 +105,13 @@ export default function LivingSoloForm({
       {/* Submit Button */}
       <div className="flex justify-end">
         {!isSubmitting ? (
-          <Button type="submit">Register</Button>
+          <ConfirmationModal 
+            trigger={<Button>Register</Button>}
+            title="Confirm Register"
+            description="Are you sure you want to register a family?"
+            actionLabel="Confirm"
+            onClick={onSubmit}
+          />
         ) : (
           <LoadButton>Registering...</LoadButton>
         )}

@@ -42,14 +42,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'rest_framework_simplejwt',
-    'rest_framework.authtoken',
     'corsheaders',
     'apps.account',
+    'apps.file',
+    'apps.blotter',
 ]
 
 MIDDLEWARE = [
@@ -179,5 +181,5 @@ CORS_ALLOW_HEADERS = [
 ]
 CORS_EXPOSE_HEADERS = ['Authorization']
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 CORS_ALLOW_HEADERS = ["*"]

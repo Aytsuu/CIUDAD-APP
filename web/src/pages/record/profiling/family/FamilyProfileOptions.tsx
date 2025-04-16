@@ -11,7 +11,7 @@ export default function FamilyProfileOptions({
     <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Registration Form */}
       <Link
-        to="/family-solo-form"
+        to="/family/form/solo"
         state={{
           params: {
             residents: residents,
@@ -29,7 +29,7 @@ export default function FamilyProfileOptions({
         </div>
       </Link>
       <Link
-        to="/family-form"
+        to="/family/form"
         state={{
           params: {
             residents: residents,

@@ -1,7 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from apps.administration.models import Staff
-
 
 class Account(AbstractUser): 
     profile_image = models.URLField(

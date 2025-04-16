@@ -18,10 +18,7 @@ class PersonalSerializer(serializers.ModelSerializer):
         model = Personal
         fields = '__all__'
 
-class BusinessSerializer(serializers.ModelSerializer):
-    sitio = SitioSerializer(read_only=True)
-    sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source="sitio")
-
+class BusinessFileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Business
+        model = BusinessFile
         fields = '__all__'

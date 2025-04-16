@@ -177,7 +177,6 @@ class Business(models.Model):
     bus_respondentMname = models.CharField(max_length=50)
     bus_respondentSex = models.CharField(max_length=50)
     bus_respondentDob = models.DateField()
-    bus_doc_url = models.TextField()
     bus_date_registered = models.DateField(default=date.today)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
@@ -187,4 +186,12 @@ class Business(models.Model):
 
     def __str__(self):
         return f"{self.bus_name} (Owner: {self.bus_respondentLname})"
+
+class BusinessFile(models.Model):
+    bf_id = models.BigAutoField(primary_key=True)
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+    file = models.ForeignKey('file.File', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'business_file'
     

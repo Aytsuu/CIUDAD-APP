@@ -48,10 +48,10 @@ const items: MenuItem[] = [
     subItems: true, 
     url: "/",
     items: [
-      { title: "Resident", url: "/resident-records"},
-      { title: "Family", url: "/family-records" },
-      { title: "Household", url: "/household-records" },
-      { title: "Business", url: "/business-records" },
+      { title: "Resident", url: "/resident"},
+      { title: "Family", url: "/family" },
+      { title: "Household", url: "/household" },
+      { title: "Business", url: "/business" },
     ],
   },
   {
@@ -63,10 +63,10 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Resident Report", url: "/drr-resident-report" },
-      { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
-      { title: "Monthly Report", url: "/drr-monthly-report" },
-      { title: "Staff", url: "/drr-staff" },
+      { title: "Resident Report", url: "/drr/resident-report" },
+      { title: "Acknowledgement Report", url: "/drr/acknowledgement-report" },
+      { title: "Monthly Report", url: "/drr/monthly-report" },
+      { title: "Staff", url: "/drr/staff" },
     ],
   },
 
@@ -316,9 +316,17 @@ const MenuItem: React.FC<MenuItemProps> = ({
   );
 };
 
-export function AppSidebar() {
+export function AppSidebar({assignedFeatures}: { assignedFeatures: any[] }) {
   const [activeItem, setActiveItem] = useState<string>("");
 
+  // const items: MenuItem[] = assignedFeatures.map((item) => {
+  //   const feature = item.feat;
+  //   return {
+  //     title: feature.feat_name,
+  //     url: feature.feat_url,
+  //   }
+  // });
+  
   return (
     <Sidebar className="border-none">
       <SidebarContent>
