@@ -5,7 +5,7 @@ export const announcementFormSchema = z.object({
   details: z.string().min(1, "Details are required"),
   date: z.string().min(1,"Date is required"),
   image: z.string().nullable().optional(),
-  modes: z.array(z.string()).optional(),
-  recipients: z.array(z.string()).optional(), 
+  modes: z.array(z.string()).nonempty("Modes are required"), 
+  recipients: z.array(z.string()).nonempty("Recipients are required"), 
 });
 

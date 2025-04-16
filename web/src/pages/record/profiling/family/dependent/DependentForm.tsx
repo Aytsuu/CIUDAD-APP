@@ -41,7 +41,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
 
     // Get values
     const searchedResidentId = form.watch('dependentsInfo.new.id')
-    const searchedResident = residents.default.find((value: any) => 
+    const searchedResident = residents.default?.find((value: any) => 
       value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]  
     );
 

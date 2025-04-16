@@ -11,6 +11,7 @@ import FamilyProfileOptions from "./FamilyProfileOptions";
 import { FamilyRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFamilies, useFamilyComposition, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
+import { Link } from "react-router-dom";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -105,6 +106,19 @@ export default function FamilyRecords() {
         </div>
 
         {/* DialogLayout with state management */}
+        <Link
+          to="/health-family-form"
+          state={{
+            params: {
+              residents: residents,
+              households: households,
+            },
+          }}
+        >
+          <Button>
+            <Plus /> Register
+          </Button>
+        </Link>
         <DialogLayout
           trigger={
             <Button>

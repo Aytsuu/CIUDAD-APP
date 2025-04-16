@@ -1,976 +1,541 @@
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { FormSelect } from '@/components/ui/form/form-select';
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
-import type { DemographicFormData } from "@/form-schema/health-data-types"
-import { demographicFormSchema } from "@/form-schema/family-profiling-schema"
-import { toast } from 'sonner';
+"use client";
 
-interface DemographicDataProps {
-  
-  onSubmit: (data: DemographicFormData) => void
-  initialData?: Partial<DemographicFormData>
-}
+import React from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
+import { Combobox } from "@/components/ui/combobox";
+import { Form } from "@/components/ui/form/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { DemographicSchema } from "@/form-schema/family-profiling-schema";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import {
+  FormField,
+  FormItem,
+  FormControl,
+  FormLabel,
+} from "@/components/ui/form/form";
+import CardLayout from "@/components/ui/card/card-layout";
+import { toast } from "sonner";
+import { CircleAlert } from "lucide-react";
+import { FormDateInput } from "@/components/ui/form/form-date-input";
 
-export function DemographicData({ onSubmit, initialData }: DemographicDataProps) {
-  const form = useForm<DemographicFormData>({
-    resolver: zodResolver(demographicFormSchema),
-    defaultValues: initialData || {
-      building: "",
-      quarter: "",
-      householdNo: "",
-      familyNo: "",
-      respondent: {
-        lastName: "",
-        firstName: "",
-        middleName: "",
-        gender: "",
-        contactNumber: "",
-        mothersMaidenName: "",
-      },
-      address: "",
-      nhtsHousehold: "",
-      indigenousPeople: "",
-      householdHead: {
-        lastName: "",
-        firstName: "",
-        middleName: "",
-        gender: "",
-      },
-      father: {
-        lastName: "",
-        firstName: "",
-        middleName: "",
-        birthYear: "",
-        age: "",
-        civilStatus: "",
-        educationalAttainment: "",
-        religion: "",
-        bloodType: "",
-        philHealthId: "",
-        covidVaxStatus: "",
-      },
-      mother: {
-        lastName: "",
-        firstName: "",
-        middleName: "",
-        birthYear: "",
-        age: "",
-        civilStatus: "",
-        educationalAttainment: "",
-        religion: "",
-        bloodType: "",
-        philHealthId: "",
-        covidVaxStatus: "",
-      },
-      healthRiskClassification: "",
-      immunizationStatus: "",
-      familyPlanning: {
-        method: "",
-        source: "",
-      },
-      noFamilyPlanning: false,
+export function DemographicData({
+  form,
+  households,
+  onSubmit,
+}: {
+  form: UseFormReturn<z.infer<typeof DemographicSchema>>;
+  onSubmit: () => void;
+  households: any[];
+}) {
+  const submit = async () => {
+    const formIsValid = await form.trigger();
+
+    if (formIsValid) {
+      onSubmit();
+    } else {
+      toast("Please fill out all required fields", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+    }
+  };
+
+  const handleHouseholdChange = React.useCallback(
+    (value: any) => {
+      form.setValue('demographicInfo.householdNo', value);
     },
-  })
-
-  const handleSubmit = (data: DemographicFormData) => {
-    onSubmit(data)
-  }
-
-  const genderOptions = [
-    { value: "male", label: "Male" },
-    { value: "female", label: "Female" },
-    { value: "other", label: "Other" },
-  ]
-
-  const civilStatusOptions = [
-    { value: "single", label: "Single" },
-    { value: "married", label: "Married" },
-    { value: "widowed", label: "Widowed" },
-    { value: "separated", label: "Separated" },
-    { value: "divorced", label: "Divorced" },
-  ]
-
-  const educationOptions = [
-    { value: "elementary", label: "Elementary" },
-    { value: "highSchool", label: "High School" },
-    { value: "college", label: "College" },
-    { value: "postGraduate", label: "Post Graduate" },
-    { value: "vocational", label: "Vocational" },
-    { value: "none", label: "None" },
-  ]
-
-  const bloodTypeOptions = [
-    { value: "A+", label: "A+" },
-    { value: "A-", label: "A-" },
-    { value: "B+", label: "B+" },
-    { value: "B-", label: "B-" },
-    { value: "AB+", label: "AB+" },
-    { value: "AB-", label: "AB-" },
-    { value: "O+", label: "O+" },
-    { value: "O-", label: "O-" },
-    { value: "unknown", label: "Unknown" },
-  ]
-
-  const vaxStatusOptions = [
-    { value: "notVaccinated", label: "Not Vaccinated" },
-    { value: "partiallyVaccinated", label: "Partially Vaccinated" },
-    { value: "fullyVaccinated", label: "Fully Vaccinated" },
-    { value: "boosted", label: "Boosted" },
-  ]
-
-  const yesNoOptions = [
-    { value: "yes", label: "Yes" },
-    { value: "no", label: "No" },
-  ]
-
-  const healthRiskOptions = [
-    { value: "low", label: "Low Risk" },
-    { value: "medium", label: "Medium Risk" },
-    { value: "high", label: "High Risk" },
-  ]
-
-  const immunizationOptions = [
-    { value: "complete", label: "Complete" },
-    { value: "incomplete", label: "Incomplete" },
-    { value: "none", label: "None" },
-  ]
-
-  const familyPlanningMethodOptions = [
-    { value: "pills", label: "Pills" },
-    { value: "iud", label: "IUD" },
-    { value: "condom", label: "Condom" },
-    { value: "implant", label: "Implant" },
-    { value: "rhythm", label: "Rhythm" },
-    { value: "other", label: "Other" },
-  ]
-
-  const familyPlanningSourceOptions = [
-    { value: "healthCenter", label: "Health Center" },
-    { value: "hospital", label: "Hospital" },
-    { value: "pharmacy", label: "Pharmacy" },
-    { value: "other", label: "Other" },
-  ]
+    [form]
+  );
 
   return (
-    <div className="w-full  mx-auto px-8 py-6">
-      <h1 className="text-xl font-semibold text-left mb-4 text-black">I. Demographic Data</h1>
-      <Separator className="mb-4"></Separator>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="building"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Building</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Building" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="quarter"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quarter</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Quarter" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="householdNo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Household No. <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Household No." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="familyNo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Family No.<span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Family No." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Complete Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Complete Address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="nhtsHousehold"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>NHTS Household</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {yesNoOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="indigenousPeople"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Indigenous People</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {yesNoOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Respondent Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="respondent.lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Last Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="respondent.firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="First Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="respondent.middleName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Middle Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="respondent.gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {genderOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="respondent.contactNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Contact Number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-             
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Household Head</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="householdHead.lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Last Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="householdHead.firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="First Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="householdHead.middleName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Middle Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="householdHead.gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {genderOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Father's Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="father.lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Last Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="First Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.middleName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Middle Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="father.birthYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Birth Date <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Birth Date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Age</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Age" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.civilStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Civil Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {civilStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.educationalAttainment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Educational Attainment</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select education" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {educationOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              
-              <FormField
-                control={form.control}
-                name="father.religion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Religion</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Religion" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.bloodType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Blood Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select blood type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {bloodTypeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.philHealthId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PhilHealth ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="PhilHealth ID" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="father.covidVaxStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>COVID Vaccination Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {vaxStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Mother's Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="mother.lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Last Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="First Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.middleName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Middle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Middle Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="mother.birthYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Birth Year</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Birth Year" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Age</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Age" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.civilStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Civil Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {civilStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.educationalAttainment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Educational Attainment</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select education" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {educationOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              
-              <FormField
-                control={form.control}
-                name="mother.religion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Religion</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Religion" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.bloodType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Blood Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select blood type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {bloodTypeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.philHealthId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PhilHealth ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="PhilHealth ID" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="mother.covidVaxStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>COVID Vaccination Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {vaxStatusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Health Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="healthRiskClassification"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Health Risk Classification</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select classification" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {healthRiskOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="immunizationStatus"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Immunization Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {immunizationOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-md font-medium">Family Planning</h3>
-
-              <FormField
-                control={form.control}
-                name="noFamilyPlanning"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>No Family Planning Method Used</FormLabel>
+    <div className="w-full">
+      <CardLayout
+        title="Demographic Data"
+        description="Fill in all the required fields to complete the demographic data."
+        content={
+          <div className="w-full mx-auto border-none">
+            <Separator className="w-full bg-gray"></Separator>
+            <div className="pt-4">
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submit();
+                  }}
+                  className="space-y-6"
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="demographicInfo.building"
+                        label="Building"
+                        placeholder="Enter building"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="demographicInfo.quarter"
+                        label="Quarter"
+                        placeholder="Enter quarter"
+                      />
+                      <Combobox
+                        options={[]}
+                        // value={form.watch(`demographicInfo.householdNo`)}
+                        value={form.watch(`demographicInfo.householdNo`) || ""}
+                        onChange={handleHouseholdChange}
+                        placeholder="Search for household..."
+                        contentClassName="w-full"
+                        emptyMessage="No household found"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="demographicInfo.familyNo"
+                        label="Family No."
+                        placeholder="Enter family no."
+                      />
                     </div>
-                  </FormItem>
-                )}
-              />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="address"
+                        label="Street Address"
+                        placeholder="Enter complete address"
+                      />
+                      <FormSelect
+                        control={form.control}
+                        name="sitio"
+                        label="Sitio"
+                        options={[
+                          { id: "cuenco", name: "Cuenco" },
+                          { id: "palma", name: "Palma" },
+                        ]}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormSelect
+                        control={form.control}
+                        name="nhtsHousehold"
+                        label="NHTS Household"
+                        options={[
+                          { id: "Yes", name: "Yes" },
+                          { id: "No", name: "No" },
+                        ]}
+                      />
+                      <FormSelect
+                        control={form.control}
+                        name="demographicInfo.indigenousPeople"
+                        label="Indigenous People"
+                        options={[
+                          { id: "Yes", name: "Yes" },
+                          { id: "No", name: "No" },
+                        ]}
+                      />
+                    </div>
+                  </div>
 
-              {!form.watch("noFamilyPlanning") && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="familyPlanning.method"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Family Planning Method</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select method" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {familyPlanningMethodOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="familyPlanning.source"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Family Planning Source</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select source" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {familyPlanningSourceOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold">
+                      Respondent Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="respondent.lastName"
+                        label="Last Name"
+                        placeholder="Enter last name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="respondent.firstName"
+                        label="First Name"
+                        placeholder="Enter first name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="respondent.middleName"
+                        label="Middle Name"
+                        placeholder="Enter middle name"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormSelect
+                        control={form.control}
+                        name="respondent.gender"
+                        label="Sex"
+                        options={[
+                          { id: "female", name: "Female" },
+                          { id: "male", name: "Male" },
+                        ]}
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="respondent.contactNumber"
+                        label="Contact Number"
+                        placeholder="Enter contact number"
+                      />
+                    </div>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold">Household Head</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="householdHead.lastName"
+                        label="Last Name"
+                        placeholder="Enter last name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="householdHead.firstName"
+                        label="First Name"
+                        placeholder="Enter first name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="householdHead.middleName"
+                        label="Middle Name"
+                        placeholder="Enter middle name"
+                      />
+                      <FormSelect
+                        control={form.control}
+                        name="householdHead.gender"
+                        label="Sex"
+                        options={[
+                          { id: "female", name: "Female" },
+                          { id: "male", name: "Male" },
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold">
+                      Father's Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="father.lastName"
+                        label="Last Name"
+                        placeholder="Enter last name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="father.firstName"
+                        label="First Name"
+                        placeholder="Enter first name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="father.middleName"
+                        label="Middle Name"
+                        placeholder="Enter middle name"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormDateInput
+                        control={form.control}
+                        name="father.birthYear"
+                        label="Date of Birth"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="father.age"
+                        label="Age"
+                        placeholder="Enter age"
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="father.civilStatus"
+                        label="Civil Status"
+                        options={[
+                          { id: "Single", name: "Single" },
+                          { id: "Married", name: "Married" },
+                          { id: "Widowed", name: "Widowed" },
+                          { id: "Separated", name: "Separated" },
+                          { id: "Divorced", name: "Divorced" },
+                        ]}
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="father.educationalAttainment"
+                        label="Educational Attainment"
+                        options={[
+                          { id: "Elementary", name: "Elementary" },
+                          { id: "Highschool", name: "Highschool" },
+                          { id: "College", name: "College" },
+                          { id: "Post Graduate", name: "Post Graduate" },
+                          { id: "Vocational", name: "Vocational" },
+                          { id: "None", name: "None" },
+                        ]}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="father.religion"
+                        label="Religion"
+                        placeholder="Enter religion"
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="father.bloodType"
+                        label="Blood Type"
+                        options={[
+                          { id: "A+", name: "A+" },
+                          { id: "A-", name: "A-" },
+                          { id: "B+", name: "B+" },
+                          { id: "B-", name: "B-" },
+                          { id: "AB+", name: "AB+" },
+                          { id: "AB-", name: "AB-" },
+                          { id: "O+", name: "O+" },
+                          { id: "O-", name: "O-" },
+                          { id: "unknown", name: "Unknown" },
+                        ]}
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="father.philHealthId"
+                        label="PhilHealth ID"
+                        placeholder="Enter PhilHealth ID"
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="father.covidVaxStatus"
+                        label="COVID Vaccination Status"
+                        options={[
+                          { id: "notVaccinated", name: "Not Vaccinated" },
+                          {
+                            id: "partiallyVaccinated",
+                            name: "Partially Vaccinated",
+                          },
+                          { id: "fullyVaccinated", name: "Fully Vaccinated" },
+                          { id: "boosted", name: "Boosted" },
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold">
+                      Mother's Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="mother.lastName"
+                        label="Last Name"
+                        placeholder="Enter last name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="mother.firstName"
+                        label="First Name"
+                        placeholder="Enter first name"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="mother.middleName"
+                        label="Middle Name"
+                        placeholder="Enter middle name"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormDateInput
+                        control={form.control}
+                        name="mother.birthYear"
+                        label="Date of Birth"
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="mother.age"
+                        label="Age"
+                        placeholder="Enter age"
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="mother.civilStatus"
+                        label="Civil Status"
+                        options={[
+                          { id: "Single", name: "Single" },
+                          { id: "Married", name: "Married" },
+                          { id: "Widowed", name: "Widowed" },
+                          { id: "Separated", name: "Separated" },
+                          { id: "Divorced", name: "Divorced" },
+                        ]}
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="mother.educationalAttainment"
+                        label="Educational Attainment"
+                        options={[
+                          { id: "Elementary", name: "Elementary" },
+                          { id: "Highschool", name: "Highschool" },
+                          { id: "College", name: "College" },
+                          { id: "Post Graduate", name: "Post Graduate" },
+                          { id: "Vocational", name: "Vocational" },
+                          { id: "None", name: "None" },
+                        ]}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormInput
+                        control={form.control}
+                        name="mother.religion"
+                        label="Religion"
+                        placeholder="Enter religion"
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="mother.bloodType"
+                        label="Blood Type"
+                        options={[
+                          { id: "A+", name: "A+" },
+                          { id: "A-", name: "A-" },
+                          { id: "B+", name: "B+" },
+                          { id: "B-", name: "B-" },
+                          { id: "AB+", name: "AB+" },
+                          { id: "AB-", name: "AB-" },
+                          { id: "O+", name: "O+" },
+                          { id: "O-", name: "O-" },
+                          { id: "unknown", name: "Unknown" },
+                        ]}
+                      />
+                      <FormInput
+                        control={form.control}
+                        name="mother.philHealthId"
+                        label="PhilHealth ID"
+                        placeholder="Enter PhilHealth ID"
+                      />
+
+                      <FormSelect
+                        control={form.control}
+                        name="mother.covidVaxStatus"
+                        label="COVID Vaccination Status"
+                        options={[
+                          { id: "notVaccinated", name: "Not Vaccinated" },
+                          {
+                            id: "partiallyVaccinated",
+                            name: "Partially Vaccinated",
+                          },
+                          { id: "fullyVaccinated", name: "Fully Vaccinated" },
+                          { id: "boosted", name: "Boosted" },
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold">
+                      Health Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormSelect
+                        control={form.control}
+                        name="healthRiskClassification"
+                        label="Health Risk Classification"
+                        options={[
+                          { id: "low", name: "Low Risk" },
+                          { id: "medium", name: "Medium Risk" },
+                          { id: "high", name: "High Risk" },
+                        ]}
+                      />
+                      <FormSelect
+                        control={form.control}
+                        name="immunizationStatus"
+                        label="Immunization Status"
+                        options={[
+                          { id: "complete", name: "Complete" },
+                          { id: "incomplete", name: "Incomplete" },
+                          { id: "none", name: "None" },
+                        ]}
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-md font-medium">Family Planning</h3>
+
+                      <FormField
+                        control={form.control}
+                        name="healthInfo.noFamilyPlanning"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                No Family Planning Method Used
+                              </FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {!form.watch("healthInfo.noFamilyPlanning") && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormSelect
+                            control={form.control}
+                            name="familyPlanning.method"
+                            label="Family Planning Method"
+                            options={[
+                              { id: "pills", name: "Pills" },
+                              { id: "iud", name: "IUD" },
+                              { id: "condom", name: "Condom" },
+                              { id: "implant", name: "Implant" },
+                              { id: "rhythm", name: "Rhythm" },
+                              { id: "other", name: "Other" },
+                            ]}
+                          />
+
+                          <FormSelect
+                            control={form.control}
+                            name="familyPlanning.source"
+                            label="Family Planning Source"
+                            options={[
+                              { id: "healthCenter", name: "Health Center" },
+                              { id: "hospital", name: "Hospital" },
+                              { id: "pharmacy", name: "Pharmacy" },
+                              { id: "other", name: "Other" },
+                            ]}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </form>
+              </Form>
             </div>
           </div>
-        </form>
-      </Form>
+        }
+        cardClassName="border-0 shadow-none pb-2 rounded-lg"
+        headerClassName="pb-2 bt-2 text-xl"
+        contentClassName="pt-0"
+      />
     </div>
-  )
+  );
 }
-

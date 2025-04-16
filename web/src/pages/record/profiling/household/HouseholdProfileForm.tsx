@@ -47,7 +47,17 @@ export default function HouseholdProfileForm({
             </div>
           }
         />
-        <Label className="text-[13px] text-red-500">{invalidHouseHead ? `Household head is required` : ''} </Label>
+        <div className="flex justify-between">
+          <Label className="text-[13px] text-red-500">{invalidHouseHead ? `Household head is required` : ''} </Label>
+          <div className="flex gap-2 justify-end items-center">
+            <Label className="font-normal">Resident not found?</Label>
+            <Link to="/resident/form">
+              <Label className="font-normal text-teal cursor-pointer hover:underline">
+                Register
+              </Label>
+            </Link>
+          </div>
+        </div>
       </div>
       <FormSelect
         control={form.control}
