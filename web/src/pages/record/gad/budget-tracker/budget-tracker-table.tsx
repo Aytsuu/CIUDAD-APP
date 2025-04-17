@@ -19,8 +19,7 @@ import { type GADBudgetEntry, useDeleteGADBudget } from "./queries/BTDeleteQueri
 import { useGetGADBudgets } from "./queries/BTFetchQueries";
 
 function BudgetTracker() {
-  const [totalBalance, setTotalBalance] = useState<number>(0);
-  const [amountUsed, setAmountUsed] = useState<number>(0);
+  const [budget_item, setTotalBalance] = useState<number>(0);
   const [year] = useState(new Date().getFullYear().toString());
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -51,7 +50,7 @@ function BudgetTracker() {
         .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
 
       setTotalBalance(income - expenses);
-      setAmountUsed(expenses);
+      // setAmountUsed(expenses);
     }
   }, [budgetEntries]);
 
@@ -107,6 +106,13 @@ function BudgetTracker() {
         <div>Php {Number(row.getValue("gbud_amount")).toFixed(2)}</div>
       ),
     },
+    {
+        accessorKey: "gbud_remaining_bal",
+        header: "Remaining Balance",
+        cell: ({ row }) => (
+          <div>Php {Number(row.getValue("gbud_remaining_bal")).toFixed(2)}</div>
+        ),
+      },
     {
       accessorKey: "gbud_add_notes",
       header: "Additional Notes",
@@ -205,19 +211,12 @@ function BudgetTracker() {
       {/* Budget Summary */}
       <div className="flex flex-row gap-5 mb-5">
         <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Amount Used:</Label>
+          <Label className="w-35 text-md">Budget:</Label>
           <Label className="text-red-500 text-md font-bold">
-            Php {amountUsed.toFixed(2)}
+            Php {budget_item.toFixed(2)}
           </Label>
         </div>
-        <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Remaining Balance:</Label>
-          <Label className="text-green-700 text-md font-bold">
-            Php {totalBalance.toFixed(2)}
-          </Label>
-        </div>
-      </div>
-
+    </div>
       {/* Search and Filter Controls */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
@@ -341,4 +340,4 @@ export default BudgetTracker;
 //backend
 //retrieve gad budget from budget_plan_detail then display it as remaining balance (expense amount - (closes to current_date = remaining bal))
 //every expense deducts per row on the remaining bal. column
-//search-create particulars (retrieve sa annual dev plan)
+//search-create particulars

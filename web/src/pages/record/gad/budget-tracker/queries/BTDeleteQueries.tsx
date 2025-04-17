@@ -11,6 +11,7 @@ export type GADBudgetEntry = {
   gbud_amount: number;
   gbud_remaining_bal: number;
   gbud_add_notes: string;
+  budget_item: number;
 };
 
 export const useDeleteGADBudget = () => {
