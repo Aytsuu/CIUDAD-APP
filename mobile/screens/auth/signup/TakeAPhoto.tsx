@@ -1,83 +1,104 @@
-import "@/global.css";
-import React from 'react';
-import { View, Text, TouchableWithoutFeedback, Image} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Button } from "@/components/ui/button";
-import Layout from "./_layout";
-import * as ImagePicker from 'expo-image-picker';
-import { Camera } from '@/lib/icons/Camera';
-import { addPersonal, addRequest } from "./restful-api/signupPostAPI";
-import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
+import { 
+  StyleSheet, 
+  Text, 
+  View 
+} from 'react-native'
+import { 
+  useEffect, 
+  useState,
+  useRef
+} from 'react'
+import {
+  Camera,
+  Frame,
+  useCameraDevice,
+  useFrameProcessor
+} from 'react-native-vision-camera'
+import { 
+  Face,
+  useFaceDetector,
+  FaceDetectionOptions,
+} from 'react-native-vision-camera-face-detector'
+import { Worklets } from 'react-native-worklets-core'
 
-export default function TakeAPhoto() {
-  const router = useRouter();
-  const { control, trigger, getValues} = useRegistrationFormContext()
-  const [photo, setPhoto] = React.useState(null);
+export default function App() {
+  const faceDetectionOptions = useRef<FaceDetectionOptions>({
+    // detection options
+    performanceMode: 'fast',
+    landmarkMode: 'all',
+    contourMode: 'all',
+    classificationMode: 'none',
+    minFaceSize: 0.5,
+  }).current
 
-  const handleSubmit = async () => {  
+  const device = useCameraDevice('front')
+  const { detectFaces } = useFaceDetector(faceDetectionOptions)
 
-    const values = getValues()
+  useEffect(() => {
+    (async () => {
+      const status = await Camera.requestCameraPermission()
+      console.log({ status })
+    })()
+  }, [device])
 
-    const personalId = await addPersonal(values)
-    const res = await addRequest(personalId)
+  const handleDetectedFaces = Worklets.createRunOnJS((faces: Face[], frame: Frame) => { 
+    const validFaces = faces.filter(face => isFaceFullyVisibleAndAccurate(face, frame))
+    if (validFaces.length > 0) {
+      console.log('✅ Valid faces detected:', validFaces)
+    } 
+  })
 
-    // if (photo) {
-    //   console.log('Photo:', photo);
-    //   router.push('./ConfirmRegister');
-    // } else {
-    //   alert('Please fill out all fields before submitting.');
-    // }
-  };
+  const isFaceFullyVisibleAndAccurate = (face: Face, frame: Frame): boolean => {
+    // 1. Check if face bounds are within the frame (assuming frame is 0-1 normalized)
+    const { bounds } = face
 
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Sorry, we need camera permissions to make this work!');
-      return;
-    }
+    const normalizedX = bounds.x / frame.width;
+    const normalizedY = bounds.y / frame.height;
+    const normalizedWidth = bounds.width / frame.width;
+    const normalizedHeight = bounds.height / frame.height;
 
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 1,
-    });
+    const isFullyVisible = (
+      normalizedX > 0.1 && normalizedX + normalizedWidth < 0.9 &&  // Not too close to edges
+      normalizedY > 0.1 && normalizedY + normalizedHeight < 0.9
+    )
 
-  };
+    console.log({isFullyVisible: isFullyVisible})
+  
+    // 2. Check if face angles are within reasonable limits (looking roughly at camera)
+    const isFacingCamera = (
+      Math.abs(face.yawAngle) < 15 &&    // Not turned too far left/right
+      Math.abs(face.pitchAngle) < 15 &&  // Not tilted too far up/down
+      Math.abs(face.rollAngle) < 15      // Not tilted too far sideways
+    )
+
+    console.log({isFacingCamera: isFacingCamera})
+  
+    // 3. Optional: Check face size (adjust thresholds as needed)
+    const isLargeEnough = bounds.width > 100 && bounds.height > 100
+    console.log({isLargeEnough: isLargeEnough})
+  
+    return isFullyVisible && isFacingCamera && isLargeEnough
+  }
+
+  const frameProcessor = useFrameProcessor((frame: Frame) => {
+    'worklet'
+    const faces = detectFaces(frame)
+    handleDetectedFaces(faces, frame)
+  }, [handleDetectedFaces, detectFaces])
 
   return (
-    <Layout
-        header={'Take A Photo'}
-        description={''}
-    >
-        <View className="flex-1 justify-between gap-7">
-            <View className="flex-1 gap-7">
-                <View className="flex-1 gap-3">
-                    <View className="flex bg-lightBlue-2 rounded-md gap-3 p-4">
-                        <Text className="text-black/80  font-PoppinsRegular text-[15px]">Please ensure the photo is clear.</Text>
-                        <TouchableWithoutFeedback onPress={takePhoto}>
-                            <View className="flex h-[200px] rounded-md bg-white border border-gray-200 items-center justify-center">
-                                {photo ? (
-                                <Image source={{ uri: photo }} style={{ width: 100, height: 100 }} />
-                                ) : (
-                                <>
-                                    <Camera className="text-black/30 stroke-1" size={50}/>
-                                    <Text className="text-black/50 font-PoppinsRegular text-[14px]">Click to open camera </Text>
-                                </>
-                                )}
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </View>
-                </View>
-            </View>
-
-            {/* Submit Button */}
-            <View>
-                <Button
-                    onPress={handleSubmit}
-                    className="bg-primaryBlue native:h-[57px]"
-                >
-                    <Text className="text-white font-bold text-[16px]">Submit</Text>
-                </Button>
-            </View>
-        </View>
-    </Layout>
-  );
-};
+    <View style={{ flex: 1 }}>
+      {!!device ? (
+        <Camera
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={true}
+          frameProcessor={frameProcessor}
+          pixelFormat="yuv"
+        />
+      ) : (
+        <Text>No Device</Text>
+      )}
+    </View>
+  )
+}
