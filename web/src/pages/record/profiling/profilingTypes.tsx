@@ -34,11 +34,12 @@ export type FamilyRecord = {
 }
 
 export type MemberRecord = {
-  data: React.ReactNode
+  data: Record<string, any>;
 }
 
 export type HouseholdRecord = {
   id: string;
+  families: string;
   streetAddress: string;
   sitio: string;
   nhts: string;

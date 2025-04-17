@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import NonComDiseaseForm from "./NonComDiseaseForm";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button/button";
 import { useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import {

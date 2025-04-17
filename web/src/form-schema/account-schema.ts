@@ -24,7 +24,8 @@ export const accountFormSchema = z.object({
 export const accountUpdateSchema = z.object({
   email: z
     .string()
-    .email({ message: "Invalid email address" }),
+    .email({ message: "Invalid email address" })
+    .optional(  ),
 
   newPassword: z
     .string()

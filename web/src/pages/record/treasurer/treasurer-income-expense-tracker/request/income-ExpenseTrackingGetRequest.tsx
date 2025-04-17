@@ -11,3 +11,16 @@ export const getIncomeExpense = async () => {
         console.error(err);
     }
 };
+
+
+
+export const getIncomeData = async () => {
+    try {
+
+        const res = await api.get('treasurer/income-tracking/');
+        return res.data;
+        
+    } catch (err) {
+        console.error(err);
+    }
+};

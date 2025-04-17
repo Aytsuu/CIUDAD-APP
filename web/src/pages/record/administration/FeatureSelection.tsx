@@ -12,7 +12,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useAssignFeature, useDeleteAssignedFeature, useSetPermission } from "./queries/administrationQueries";
+import { useAssignFeature, useSetPermission } from "./queries/administrationAddQueries";
+import { useDeleteAssignedFeature } from "./queries/administrationDeleteQueries";
 
 interface FeatureSelectionProps {
   selectedPosition: string;

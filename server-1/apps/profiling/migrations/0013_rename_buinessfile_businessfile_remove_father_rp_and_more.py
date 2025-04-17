@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('file', '0001_initial'),
-        ('profiling', '0012_remove_business_bus_doc_url_buinessfile'),
     ]
 
     operations = [

@@ -78,7 +78,7 @@ export const addFamily = async (
 export const addFamilyComposition = async (familyId: string, role: string, residentId: string) => {
   try {
     const res = await api.post("profiling/family-composition/", {
-      fc_role: role,
+      fc_role: capitalize(role),
       fam_id: familyId,
       rp_id: residentId,
     });

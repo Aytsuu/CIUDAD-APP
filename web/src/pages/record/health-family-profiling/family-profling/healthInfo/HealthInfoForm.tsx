@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo } from "react"
 import { Form } from "@/components/ui/form/form"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { familyFormSchema } from "@/form-schema/profiling-schema"
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { UseFormReturn } from "react-hook-form"
 import { z } from "zod"
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox"

@@ -15,6 +15,11 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
+            plan_personalService_limit: parseFloatSafe(budgetInfo.personalServicesLimit),
+            plan_miscExpense_limit: parseFloatSafe(budgetInfo.miscExpenseLimit),
+            plan_localDev_limit: parseFloatSafe(budgetInfo.localDevLimit),
+            plan_skFund_limit: parseFloatSafe(budgetInfo.skFundLimit),
+            plan_calamityFund_limit: parseFloatSafe(budgetInfo.calamityFundLimit),
         });
 
         const res = await api.post('treasurer/budget-plan/', {
@@ -29,6 +34,11 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
+            plan_personalService_limit: parseFloatSafe(budgetInfo.personalServicesLimit),
+            plan_miscExpense_limit: parseFloatSafe(budgetInfo.miscExpenseLimit),
+            plan_localDev_limit: parseFloatSafe(budgetInfo.localDevLimit),
+            plan_skFund_limit: parseFloatSafe(budgetInfo.skFundLimit),
+            plan_calamityFund_limit: parseFloatSafe(budgetInfo.calamityFundLimit),
         });
 
         return res.data.plan_id;
@@ -37,11 +47,12 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
     }
 };
 
-const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; dtl_proposed_budget: string }>, planId: number) => {
+const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; dtl_proposed_budget: string, dtl_budget_category: string }>, planId: number) => {
     try {
         const transformedDetails = detailInfo.map((item) => ({
             dtl_budget_item: item.dtl_budget_item,
             dtl_proposed_budget: parseFloatSafe(item.dtl_proposed_budget) || 0.00,
+            dtl_budget_category: item.dtl_budget_category,
             plan: planId,
         }));
         console.log("Submitting Budget Plan Details:", transformedDetails);

@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 
 export default function FamilyProfileOptions({
+  familyCompositions,
   residents,
   households,
 }: {
+  familyCompositions: any[];
   residents: any[];
   households: any[];
 }) {
@@ -14,7 +16,11 @@ export default function FamilyProfileOptions({
         to="/family/form/solo"
         state={{
           params: {
-            residents: residents,
+            residents: residents.filter((r: any) => (
+              !familyCompositions
+                .filter((fc: any) => fc.fc_role === "Independent")
+                .map((fc: any) => fc.rp.rp_id).includes(r.rp_id)
+            )),
             households: households,
           },
         }}

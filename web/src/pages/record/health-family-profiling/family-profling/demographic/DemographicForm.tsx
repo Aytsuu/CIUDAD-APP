@@ -1,7 +1,7 @@
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Button } from "@/components/ui/button/button";

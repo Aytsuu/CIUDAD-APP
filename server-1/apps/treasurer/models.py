@@ -1,6 +1,6 @@
 from django.db import models
 from datetime import date
-
+from django.core.validators import MaxValueValidator
 
 class Budget_Plan(models.Model): 
     plan_id = models.BigAutoField(primary_key=True)
@@ -15,18 +15,24 @@ class Budget_Plan(models.Model):
     plan_budgetaryObligations = models.DecimalField(max_digits=10, decimal_places=2)
     plan_balUnappropriated = models.DecimalField(max_digits=10, decimal_places=2)
     plan_issue_date = models.DateField(default=date.today)
+    plan_personalService_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_miscExpense_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_localDev_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_skFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
+    plan_calamityFund_limit= models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        db_table = "Budget_Plan"
+        db_table = 'budget_plan'
 
 class Budget_Plan_Detail(models.Model):
     dtl_id = models.BigAutoField(primary_key = True)
     dtl_budget_item = models.CharField(max_length=200)
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
  
     class Meta: 
-        db_table = "Budget_Plan_Detail"
+        db_table = 'budget_plan_detail'
 
 # class Income_File(models.Model):
 #     inc_num = models.BigAutoField(primary_key=True)
@@ -62,7 +68,29 @@ class Income_Expense_Tracking(models.Model):
     iet_receipt_image = models.CharField(null=False)
     # inv_num = models.ForeignKey('Invoice', on_delete=models.CASCADE, null=True, blank=True, default=None)
     inv_num = models.CharField(max_length=100, default=None)
-    dtl_id = models.ForeignKey('Budget_Plan_Detail', on_delete=models.CASCADE)
+    dtl_id = models.ForeignKey('budget_plan_detail', on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "Income_Expense_Tracking"
+        db_table = "income_expense_tracking"
+
+
+class Income_Particular(models.Model):
+    incp_id = models.BigAutoField(primary_key=True)
+    incp_item = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = "income_particular"
+
+
+class Income_Tracking(models.Model):
+    inc_num = models.BigAutoField(primary_key=True)
+    inc_date = models.DateField(default=date.today)
+    inc_entryType = models.CharField(max_length=100, default='Income')
+    inc_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    inc_additional_notes = models.CharField(max_length=100)
+    inc_receipt_image = models.CharField(null=False)
+    incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "income_tracking"
+

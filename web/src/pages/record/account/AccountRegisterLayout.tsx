@@ -11,8 +11,13 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import { useAddAccount } from "./queries/accountAddQueries";
+import { useLocation, useNavigate } from "react-router";
 
 export default function AccountRegistrationLayout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = React.useMemo(()=> location.state?.params, [location.state])
+  const residentId = React.useMemo(()=> params.residentId, [params]);
   const { mutateAsync: addAccount } = useAddAccount();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(accountFormSchema._def.schema)).current;
@@ -33,7 +38,12 @@ export default function AccountRegistrationLayout() {
     };
 
     const accountInfo = form.getValues();
-    await addAccount({ accountInfo: accountInfo });
+    await addAccount({ 
+      accountInfo: accountInfo,
+      residentId: residentId
+    }, {
+      onSuccess: () => navigate(-1)
+    });
     
   };
 

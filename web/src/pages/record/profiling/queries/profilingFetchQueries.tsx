@@ -52,7 +52,7 @@ export const useFamilies = () => {
 
 export const useFamilyComposition = () => {
   return useQuery({
-    queryKey: ["familyComposition"],
+    queryKey: ["familyCompositions"],
     queryFn: getFamilyComposition,
     staleTime: 1000 * 60 * 5
   })

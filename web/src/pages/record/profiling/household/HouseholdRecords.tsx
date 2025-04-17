@@ -31,6 +31,7 @@ export default function HouseholdRecords() {
 
       return {
         id: house.hh_id || "-",
+        families: house.family.length ||  "-",
         streetAddress: house.hh_street || "-",
         sitio: sitio?.sitio_name || "-",
         nhts: house.hh_nhts || "-",
@@ -157,7 +158,7 @@ export default function HouseholdRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={householdColumns(households)}
+            columns={householdColumns(residents, households)}
             data={paginatedHouseholds}
           />
         </div>

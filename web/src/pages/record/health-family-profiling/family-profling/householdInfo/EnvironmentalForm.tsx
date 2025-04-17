@@ -1,16 +1,11 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-
+import { familyFormSchema, environmentalFormSchema } from "@/form-schema/family-form-schema";
 import { FormSelect } from "@/components/ui/form/form-select";
-import {
-  environmentalFormSchema,
-  familyFormSchema,
-} from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { Combobox } from "@/components/ui/combobox";
-import { DependentRecord } from "../../profilingTypes";
+
 import { RadioCardGroup } from "@/components/ui/radio-card-group";
 import { Separator } from "@/components/ui/separator";
 
