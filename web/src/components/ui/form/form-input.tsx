@@ -19,7 +19,17 @@ export const FormInput = React.memo(({ control, name, label, placeholder, type="
         <FormItem className={className}>
           <FormLabel className="text-black/70">{label}</FormLabel>
           <FormControl>
-            <Input type={type} placeholder={placeholder} {...field} readOnly={readOnly}/>
+            <Input type={type} placeholder={placeholder} {...field} readOnly={readOnly}
+            onKeyDown={(e) => {
+              // Prevent non-numeric key presses (except Backspace, Tab, etc.)
+              if (
+                !/[0-9]/.test(e.key) && 
+                !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key) && 
+                type === 'number'
+              ) {
+                e.preventDefault();
+              }
+            }}/>
           </FormControl>
           <FormMessage />
         </FormItem>

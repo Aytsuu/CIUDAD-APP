@@ -12,9 +12,10 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
-import { addBusiness } from "../restful-api/profiingPostAPI";
 import { Type } from "../profilingEnums";
-import supabase from "@/utils/supabase";
+import { useAuth } from "@/context/AuthContext";
+import { useAddBusiness, useAddBusinessFile, useAddFile } from "../queries/profilingAddQueries";
+import { MediaUploadType } from "@/components/ui/media-upload";
 
 export default function BusinessFormLayout() {
   // Initializing states
@@ -24,8 +25,9 @@ export default function BusinessFormLayout() {
     () => location.state?.params || {},
     [location.state]
   );
+  const { user } = useAuth();
   const sitio = React.useRef(formatSitio(params));
-  const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false)
@@ -35,6 +37,9 @@ export default function BusinessFormLayout() {
     resolver: zodResolver(businessFormSchema),
     defaultValues: defaultValues.current,
   });
+  const { mutateAsync: addBusiness } = useAddBusiness();
+  const { mutateAsync: addBusinessFile } = useAddBusinessFile();
+  const { mutateAsync: addFile } = useAddFile();
 
   React.useEffect(() => {
     if(formType === Type.Viewing){
@@ -91,45 +96,38 @@ export default function BusinessFormLayout() {
       return;
     }
 
-    // File upload
-    const [fileItem] = mediaFiles;
-    const file = fileItem?.file;
-    console.log(file)
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}.${fileExt}`;
-    const filePath = `uploads/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from("image-bucket")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
-
-    if (error) throw error;
-
-    const { data: {publicUrl}} = supabase.storage
-      .from('image-bucket')
-      .getPublicUrl(filePath)
-
     // Submit POST request
     const businessInfo = form.getValues();
-    const res = await addBusiness(businessInfo, publicUrl);
+    const business = await addBusiness({
+      businessInfo: businessInfo,
+      staffId: user?.staff.staff_id
+    });
 
-    if (res) {
-      setIsSubmitting(false);
-      setMediaFiles([])
-      toast("New record created successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
+    mediaFiles.map(async (media) => {
+      const file = await addFile({
+        name: media.file.name,
+        type: media.type,
+        path: media.storagePath || '',
+        url: media.publicUrl || ''
       });
-      form.reset(defaultValues.current);
-    }
+
+      await addBusinessFile({
+        businessId: business.bus_id,
+        fileId: file.file_id
+      });
+    })
+
+    toast("New record created successfully", {
+      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      action: {
+        label: "View",
+        onClick: () => navigate(-1),
+      },
+    });
+
+    setIsSubmitting(false);
+    setMediaFiles([])
+    form.reset(defaultValues.current);
   };
 
   const errorFeedback = React.useCallback((message: string) => {

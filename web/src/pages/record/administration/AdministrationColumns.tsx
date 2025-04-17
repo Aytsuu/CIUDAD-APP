@@ -102,18 +102,8 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     {
         accessorKey: 'action',
         header: 'Action',
-        cell: ({row}) => (
-            <DropdownLayout
-                trigger={<Ellipsis size={20}/>}
-                itemClassName="text-red-500 focus:text-red-500"
-                options={[
-                    {
-                        id: 'delete',
-                        name: 'Remove',
-                        icon: <Trash />
-                    }
-                ]}
-            />
-        )
+        cell: ({row}) => {
+            
+        }
     }
 ]

@@ -39,3 +39,27 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
         console.error(err);
     }
 }
+
+
+
+export const updateIncomeTracking = async (inc_num: number, incomeInfo: Record<string, any>) => {
+
+    try{
+
+        const res = await api.put(`treasurer/update-income-tracking/${inc_num}/`,{
+
+            inc_date: formatDate(new Date().toISOString().split('T')[0]),
+            inc_entryType: "Income",
+            inc_amount: parseFloatSafe(incomeInfo.inc_amount),
+            inc_additional_notes: incomeInfo.inc_additional_notes,
+            inc_receipt_image: "urlfornow",
+            incp_id:  1
+
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}

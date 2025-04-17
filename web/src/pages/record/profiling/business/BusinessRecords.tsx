@@ -7,31 +7,17 @@ import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { businessColumns } from "./BusinessColumns";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { useQuery } from "@tanstack/react-query";
-import { getBusiness, getSitio } from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
+import { useBusinesses, useSitio } from "../queries/profilingFetchQueries";
 
 export default function BusinessRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Fetching businesses from database
-  const { data: businesses, isLoading: isLoadingBusinesses } = useQuery({
-    queryKey: ["businesses"],
-    queryFn: getBusiness,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  // Fetching sitio from database
-  const { data: sitio, isLoading: isLoadingSitio } = useQuery({
-    queryKey: ["sitio"],
-    queryFn: getSitio,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: businesses, isLoading: isLoadingBusinesses } = useBusinesses();
+  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
 
   // Formatting business data (for table)
   const formatBusinessData = React.useCallback(() => {
@@ -46,6 +32,8 @@ export default function BusinessRecords() {
         mname ? mname.slice(0, 1) + "." : ""
       }`;
 
+      const staff = business?.staff?.rp?.per;
+
       return {
         id: business.bus_id || "-",
         name: business.bus_name || "-",
@@ -54,7 +42,10 @@ export default function BusinessRecords() {
         street: business.bus_street || "-",
         respondent: fullName || "-",
         dateRegistered: business.bus_date_registered || "-",
-        registeredBy: business.staff || "-",
+        registeredBy: 
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
       };
     });
   }, [businesses]);
@@ -113,7 +104,7 @@ export default function BusinessRecords() {
           />
         </div>
         <Link
-          to="/business-form"
+          to="/business/form"
           state={{
             params: {
                
@@ -169,11 +160,11 @@ export default function BusinessRecords() {
             {Math.min(currentPage * pageSize, filteredBusinesses.length)} of{" "}
             {filteredBusinesses.length} rows
           </p>
-          <PaginationLayout
+          {paginatedBusinesses.length > 0 && <PaginationLayout
             totalPages={totalPages}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-          />
+          />}
         </div>
       </div>
     </MainLayoutComponent>

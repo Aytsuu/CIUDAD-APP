@@ -1,76 +1,78 @@
 import React, { useEffect, useState } from "react";
 import {
-  FormField,
-  FormItem,
-  FormMessage,
-  FormControl,
-  FormLabel,
+  
   Form,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { Button } from "@/components/ui/button/button";
 import {
   FirstAidType,
   FirstAidSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import {  useQueryClient } from "@tanstack/react-query";
+import {getFirstAid} from "../requests/get/getFirstAid";
+import { updateFirstAid } from "../requests/update/UpdateFirstAid";
+import { FormInput } from "@/components/ui/form/form-input";
 interface FirstAidListProps {
   initialData: {
     id: number;
-    itemName: string;
-    category: string;
+    firstAidName: string;
   };
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-interface Option {
-  id: string;
-  name: string;
-}
-
-const initialCategories: Option[] = [
-  { id: "Wound Care", name: "Wound Care" },
-  { id: "Syrup", name: "Syrup" },
-  { id: "Disinfectant", name: "Disinfectant" },
-];
-
-export default function EditFirstAidModal({ initialData }: FirstAidListProps) {
-  
-
+export default function EditFirstAidModal({
+  initialData,
+  setIsDialog,
+}: FirstAidListProps) {
   const form = useForm<FirstAidType>({
     resolver: zodResolver(FirstAidSchema),
     defaultValues: {
-      itemName: initialData.itemName,
-      category: initialData.category,
+      firstAidName: initialData.firstAidName,
     },
   });
 
-  const [categories, setCategories] = useState<Option[]>(initialCategories);
-  const handleSelectChange = (
-    selectedValue: string,
-    fieldOnChange: (value: string) => void
-  ) => {
-    console.log("Selected Value:", selectedValue);
-    setCategories((prev) =>
-      prev.some((opt) => opt.id === selectedValue)
-        ? prev
-        : [...prev, { id: selectedValue, name: selectedValue }]
-    );
-    fieldOnChange(selectedValue);
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [newFirstAidName, setnewFirstAidName] = useState<string>("");
+  const queryClient = useQueryClient();
+
+  const confirmAdd = async () => {
+    try {
+      await updateFirstAid(initialData.id, newFirstAidName); // Update the medicine
+      setIsDialog(false); // Close the edit dialog
+      queryClient.invalidateQueries({ queryKey: ["firstAid"] });
+      setIsAddConfirmationOpen(false); // Close the confirmation dialog   
+    } catch (err) {
+      console.error("Error updating medicine:", err);
+    }
   };
 
-  useEffect(() => {
-    form.reset({
-      itemName: initialData.itemName,
-      category: initialData.category,
-    });
-  }, [initialData, form]);
+  const isDuplicateFirstAidName = (firstaid: any[], newFirstAid: string) => {
+    return firstaid.some(
+      (fa) => fa.fa_name.toLowerCase() === newFirstAid.toLowerCase()
+    );
+  };
 
   const onSubmit = async (data: FirstAidType) => {
-    console.log(data);
-    alert("success");
+    try {
+      const existingMedicines = await getFirstAid();
+      if (!Array.isArray(existingMedicines))
+        throw new Error("Invalid API response");
+
+      if (isDuplicateFirstAidName(existingMedicines, data.firstAidName)) {
+        form.setError("firstAidName", {
+          type: "manual",
+          message: "FirstAid already exists.",
+        });
+        return;
+      }
+      setnewFirstAidName(data.firstAidName);
+      setIsAddConfirmationOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -78,59 +80,21 @@ export default function EditFirstAidModal({ initialData }: FirstAidListProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            <FormField
-              control={form.control}
-              name="itemName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Item Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={field.value}
-                      placeholder="Item Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => {
-                const selectedCategoryId = categories.find(
-                  (opt) => opt.name === field.value
-                )?.id;
-                return (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <SelectLayoutWithAdd
-                        className="w-full"
-                        label="Category"
-                        placeholder="Select"
-                        options={categories}
-                        value={selectedCategoryId || field.value}
-                        onChange={(selectedValue) =>
-                          handleSelectChange(selectedValue, field.onChange)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
+            <FormInput control={form.control} name="firstAidName" label="Item Name" placeholder="Item Name"/>      
           </div>
-
           <div className="w-full flex justify-end mt-8">
             <Button type="submit">Submit</Button>
           </div>
         </form>
       </Form>
+
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine "${newFirstAidName}"?`}
+      />
     </div>
   );
 }

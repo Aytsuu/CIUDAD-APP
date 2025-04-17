@@ -104,7 +104,7 @@ export const ChildHealthFormSchema = BasicInfoSchema.merge(ChildDetails)
   .merge(Supplement)
   .merge(VaccinesSchema)
   .extend({
-    vitalSigns: z.array(VitalSignSchema).optional(),
+    vitalSigns: z.array(VitalSignSchema).optional(), 
   });
 
 
