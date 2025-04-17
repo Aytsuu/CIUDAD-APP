@@ -10,15 +10,6 @@ export const updateIncomeExpense = async (iet_num: number, incomeExpenseInfo: Re
 
         let entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
 
-        console.log({
-            iet_date: formatDate(new Date().toISOString().split('T')[0]),
-            iet_entryType: entry,
-            iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
-            iet_particulars:  capitalize(incomeExpenseInfo.iet_particulars),
-            iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
-            iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
-            iet_receipt_image: "urlfornow",
-        })
 
         const res = await api.put(`treasurer/update-income-expense-tracking/${iet_num}/`,{
 

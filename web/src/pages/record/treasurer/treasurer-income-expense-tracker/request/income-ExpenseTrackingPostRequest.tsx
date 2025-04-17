@@ -4,11 +4,7 @@ import { parseFloatSafe } from '@/helpers/floatformatter';
 import { capitalize } from "@/helpers/capitalize";
 import { useState } from "react";
 
-interface Option {
-    id: string;
-    name: string;
-}
-  
+
 
 
 export const income_expense_tracking = async (incomeExpenseInfo: Record<string, any>) => {

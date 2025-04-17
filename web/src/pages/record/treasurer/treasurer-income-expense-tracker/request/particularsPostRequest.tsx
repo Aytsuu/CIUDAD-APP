@@ -13,7 +13,7 @@ export const useAddParticular = () => {
                        
             await queryClient.invalidateQueries({ queryKey: ['incomeParticulars'] });
             
-            return String(res.data.incp_id); // Ensure it's a string
+            return String(res.data.incp_id); 
         }
         catch (err) {
             console.error('Error adding particular:', err);

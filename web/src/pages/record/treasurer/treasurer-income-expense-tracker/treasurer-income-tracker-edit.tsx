@@ -313,8 +313,8 @@ function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc
     };
 
     const handleConfirmSave = () => {
-        setIsConfirmOpen(false); // Close confirmation modal
-        form.handleSubmit(onSubmit)(); // Call the submit function
+        setIsConfirmOpen(false); 
+        form.handleSubmit(onSubmit)(); 
     };
 
     return (
