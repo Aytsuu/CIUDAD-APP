@@ -4,9 +4,8 @@ import ParentsFormLayout from "@/pages/record/health-family-profiling/family-pro
 import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
 
-import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "@/components/ui/button/button";
-import { useNavigate, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
@@ -23,10 +22,12 @@ import RespondentsInfoLayout from "./family/RespondentsInfoLayout";
 import HouseholdHeadLayout from "./householdInfo/HouseholdHeadLayout";
 import HealthInfoLayout from "./healthInfo/HealthInfoLayout";
 import EnvironmentalFormLayout from "./householdInfo/EnvironmentalFormLayout";
+import NoncomDiseaseFormLayout from "./householdInfo/NonComDiseaseFormLayout";
+import TbSurveilanceInfoLayout from "./householdInfo/TbSurveilanceInfoLayout";
 
 export default function HealthFamilyForm() {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
 
@@ -56,13 +57,13 @@ export default function HealthFamilyForm() {
   }, [params.households]);
 
   const nextStep = React.useCallback(() => {
-      setCurrentStep((prev) => prev + 1);
-    }, []);
-  
-    // Handler for going to the previous step
+    setCurrentStep((prev) => prev + 1);
+  }, []);
+
+  // Handler for going to the previous step
   const prevStep = React.useCallback(() => {
-      setCurrentStep((prev) => prev - 1);
-    }, []);
+    setCurrentStep((prev) => prev - 1);
+  }, []);
 
   return (
     <LayoutWithBack
@@ -76,9 +77,9 @@ export default function HealthFamilyForm() {
               <DemographicForm
                 form={form}
                 households={households}
-                onSubmit={() => {
-                  [];
-                }}
+                // onSubmit={() => {
+                //   [];
+                // }}
               />
               <div className="flex items-center justify-between px-10">
                 <Separator />
@@ -120,8 +121,8 @@ export default function HealthFamilyForm() {
                 dependentsList={dependentsList}
                 setSelectedMotherId={setSelectedMotherId}
                 setSelectedFatherId={setSelectedFatherId}
-                onSubmit={() => nextStep()}
-                back={() => prevStep()}
+                // onSubmit={() => nextStep()}
+                // back={() => prevStep()}
               />
               <div className="flex items-center justify-between px-10">
                 <Separator />
@@ -148,42 +149,83 @@ export default function HealthFamilyForm() {
               dependentsList={dependentsList}
               setDependentsList={setDependentsList}
               defaultValues={defaultValues}
-              back={() => prevStep()}
+              // back={() => prevStep()}
             />
           )}
           {currentStep === 3 && (
-            <EnvironmentalFormLayout
-            form={form}
-            residents={{
-              default: params.residents,
-              formatted: formattedResidents,
-            }}
-            selectedResidentId={selectedResidentId}
-            setSelectedResidentId={setSelectedResidentId}
-          />
+            <>
+              <EnvironmentalFormLayout
+                form={form}
+                residents={{
+                  default: params.residents,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+              <div className="flex items-center justify-between px-10">
+                <Separator />
+              </div>
+              <NoncomDiseaseFormLayout
+                form={form}
+                residents={{
+                  default: params.residents,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+              <div className="flex items-center justify-between px-10">
+                <Separator />
+              </div>
+              <TbSurveilanceInfoLayout
+                form={form}
+                residents={{
+                  default: params.residents,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+            </>
+          )}
+          {currentStep === 4 && (
+            <NoncomDiseaseFormLayout
+              form={form}
+              residents={{
+                default: params.residents,
+                formatted: formattedResidents,
+              }}
+              selectedResidentId={selectedResidentId}
+              setSelectedResidentId={setSelectedResidentId}
+            />
           )}
           <div className="flex justify-end">
             <div className="flex items-center pb-10 space-x-4 mr-10">
-              {currentStep === 1 && (
-                <Button onClick={nextStep}>
-                  Next
-                </Button>
-              )}
+              {currentStep === 1 && <Button onClick={nextStep}>Next</Button>}
               {currentStep === 2 && (
                 <div className="gap-4">
                   <Button onClick={prevStep} variant="outline">
                     Previous
                   </Button>
-                  <Button onClick={nextStep}>
-                    Next
-                  </Button>
-                  
+                  <Button onClick={nextStep}>Next</Button>
                 </div>
               )}
               {currentStep === 3 && (
-                <Button onClick={nextStep}>
-                  Next
-                </Button>
+                <div className="gap-4">
+                  <Button onClick={prevStep} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={nextStep}>Next</Button>
+                </div>
+              )}
+              {currentStep === 4 && (
+                <div className="gap-4">
+                  <Button onClick={prevStep} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={nextStep}>Next</Button>
+                </div>
               )}
             </div>
           </div>

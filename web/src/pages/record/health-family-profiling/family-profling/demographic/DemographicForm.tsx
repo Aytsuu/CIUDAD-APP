@@ -14,28 +14,28 @@ import { Link } from "react-router";
 export default function DemographicForm({
   form,
   households,
-  onSubmit,
+
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   households: any[];
-  onSubmit: () => void;
+ 
 }) {
   const [invalidHousehold, setInvalidHousehold] =
     React.useState<boolean>(false);
 
-  const submit = async () => {
-    const formIsValid = await form.trigger("demographicInfo");
-    const householdId = form.watch("demographicInfo.householdNo");
+  // const submit = async () => {
+  //   const formIsValid = await form.trigger("demographicInfo");
+  //   const householdId = form.watch("demographicInfo.householdNo");
 
-    if (formIsValid && householdId) {
-      onSubmit();
-    } else {
-      if (!householdId) setInvalidHousehold(true);
-      toast("Please fill out all required fields", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-      });
-    }
-  };
+  //   if (formIsValid && householdId) {
+  //     onSubmit();
+  //   } else {
+  //     if (!householdId) setInvalidHousehold(true);
+  //     toast("Please fill out all required fields", {
+  //       icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+  //     });
+  //   }
+  // };
 
   const handleHouseholdChange = React.useCallback(
     (value: any) => {
@@ -54,7 +54,7 @@ export default function DemographicForm({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submit();
+            // submit();
           }}
           className="grid gap-4"
         >

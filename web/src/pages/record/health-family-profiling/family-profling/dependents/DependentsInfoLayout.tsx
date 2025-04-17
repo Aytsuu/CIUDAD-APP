@@ -23,7 +23,7 @@ export default function DependentsInfoLayout({
   dependentsList,
   setDependentsList,
   defaultValues,
-  back,
+
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -31,7 +31,7 @@ export default function DependentsInfoLayout({
   dependentsList: DependentRecord[];
   setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
   defaultValues: Record<string, any>;
-  back: () => void;
+
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
@@ -111,54 +111,54 @@ export default function DependentsInfoLayout({
     });
   };
 
-  const submit = async () => { 
-    setIsSubmitting(true);
+  // const submit = async () => { 
+  //   setIsSubmitting(true);
 
-    if(dependentsList.length === 0){
-      toast('Family Registration', {
-        description: "Must have atleast one dependent.",
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-      });
-      return;
-    }
+  //   if(dependentsList.length === 0){
+  //     toast('Family Registration', {
+  //       description: "Must have atleast one dependent.",
+  //       icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+  //     });
+  //     return;
+  //   }
 
-    // Get form values
-    const demographicInfo = form.getValues().demographicInfo;
-    const dependentsInfo = form.getValues().dependentsInfo.list;
+  //   // Get form values
+  //   const demographicInfo = form.getValues().demographicInfo;
+  //   const dependentsInfo = form.getValues().dependentsInfo.list;
 
-    // Store information to the database
-    const family = await addFamily({
-      demographicInfo: demographicInfo, 
-      staffId: user?.staff.staff_id
-    });
+  //   // Store information to the database
+  //   const family = await addFamily({
+  //     demographicInfo: demographicInfo, 
+  //     staffId: user?.staff.staff_id
+  //   });
 
-    await Promise.all(selectedParents.map( async (parentId, index) => {
-      if(parentId) {
-        await addFamilyComposition({
-          familyId: family.fam_id,
-          role: PARENT_ROLES[index],
-          residentId: parentId
-        })
-      }
-    }))
+  //   await Promise.all(selectedParents.map( async (parentId, index) => {
+  //     if(parentId) {
+  //       await addFamilyComposition({
+  //         familyId: family.fam_id,
+  //         role: PARENT_ROLES[index],
+  //         residentId: parentId
+  //       })
+  //     }
+  //   }))
 
-    await Promise.all(dependentsInfo.map( async (dependent) => {
-      await addFamilyComposition({
-        familyId: family.fam_id,
-        role: "Dependent",
-        residentId: dependent.id.split(" ")[0]
-      })
-    }))
+  //   await Promise.all(dependentsInfo.map( async (dependent) => {
+  //     await addFamilyComposition({
+  //       familyId: family.fam_id,
+  //       role: "Dependent",
+  //       residentId: dependent.id.split(" ")[0]
+  //     })
+  //   }))
 
-    // Provide feedback to the user
-    toast("Record added successfully", {
-      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-    });
+  //   // Provide feedback to the user
+  //   toast("Record added successfully", {
+  //     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+  //   });
 
-    navigate(-1);
-    setIsSubmitting(false);
-    form.reset(defaultValues);
-  }
+  //   navigate(-1);
+  //   setIsSubmitting(false);
+  //   form.reset(defaultValues);
+  // }
 
   return (
     <div className="flex flex-col min-h-0 h-auto gap-10 md:p-10 rounded-lg overflow-auto">
@@ -172,26 +172,7 @@ export default function DependentsInfoLayout({
         />
         <DataTable data={dependentsList} columns={dependentColumns} />
       </div>
-      <div className="flex justify-end gap-3">
-        {!isSubmitting ? (<>
-          <Button variant="outline" className="w-full sm:w-32" onClick={back}>
-            Prev
-          </Button>
-          <ConfirmationModal 
-          trigger={
-            <Button className="w-full sm:w-32">
-              Register
-            </Button>
-          }
-          title="Confirm Registration"
-          description="Do you wish to proceed with the registration?"
-          actionLabel="Confirm"
-          onClick={submit}
-          />
-        </>) : (
-          <LoadButton>Registering...</LoadButton>
-        )}
-      </div>
+      
     </div>
   );
 }

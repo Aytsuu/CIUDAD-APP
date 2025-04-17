@@ -25,7 +25,7 @@ export default function EnvironmentalFormLayout({
       <div className="flex flex-col bg-white rounded-lg overflow-hidden">
         <div className="flex flex-col p-4 sm:p-6 md:p-10 gap-4 sm:gap-6">
           {/* Responsive container with max-width constraints */}
-          <div className="w-full max-w-7xl mx-auto">
+          <div className="w-full mx-auto">
             <div className="space-y-4 sm:space-y-6">
               {/* Household Head Information */}
               <EnvironmentalForm

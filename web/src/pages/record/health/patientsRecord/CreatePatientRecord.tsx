@@ -102,9 +102,9 @@ export default function CreatePatientRecord() {
       </div>
 
       <CardLayout
-        cardTitle="Patients Information"
-        cardDescription="Fill in the required fields to create a new patient record"
-        cardContent={
+        title="Patients Information"
+        description="Fill in the required fields to create a new patient record"
+        content={
           <div className="w-full mx-auto border-none ">
             <Separator className="w-full bg-gray" />
             <div className="pt-4">
@@ -129,7 +129,7 @@ export default function CreatePatientRecord() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormSelect control={form.control} name="gender" label="Sex" options={[{ id: "female", name: "Female" }, { id: "male", name: "Male" },]}/>
                     <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} />
-                    <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth"/>            
+                    <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type='date'/>            
                     <FormSelect control={form.control} name="patientType" label="Patient Type" options={[{ id: "Resident", name: "Resident" }, { id: "Transient", name: "Transient" },]}/>
                   </div>
 
@@ -185,8 +185,8 @@ export default function CreatePatientRecord() {
           </div>
         }
         cardClassName="border-none pb-2 p-3 rounded-lg"
-        cardHeaderClassName="pb-2 bt-2 text-xl"
-        cardContentClassName="pt-0"
+        headerClassName="pb-2 bt-2 text-xl"
+        contentClassName="pt-0"
       />
     </div>
   );

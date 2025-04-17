@@ -51,6 +51,8 @@ export default function EnvironmentalForm({
     setFacilityType(selectedFacilityType);
   }, [selectedFacilityType, form]);
 
+  
+
   return (
     <div className="bg-white rounded-lg">
       <div className="mb-6">
@@ -116,12 +118,12 @@ export default function EnvironmentalForm({
                 name={`${prefix}.sanitaryFacilityType`}
                 label="Sanitary Facility Type"
                 options={[
-                  { id: "sanType1", name: "Pour/flush type with septic tank" },
+                  { id: "santype1", name: "Pour/flush type with septic tank" },
                   {
-                    id: "sanType2",
+                    id: "santype2",
                     name: "Pour/flush toilet connected to septic tank AND to sewerage",
                   },
-                  { id: "sanType3", name: "Ventilated Pit (VIP) Latrine" },
+                  { id: "santype3", name: "Ventilated Pit (VIP) Latrine" },
                 ]}
               />
             )}
@@ -137,9 +139,9 @@ export default function EnvironmentalForm({
                     id: "unsanType1",
                     name: "Water-sealed toilet without septic tank",
                   },
-                  { id: "unsanType2", name: "Overhung latrine" },
-                  { id: "unsanType3", name: "Open Pit Latrine" },
-                  { id: "unsanType4", name: "Without toilet" },
+                  { id: "unsantype2", name: "Overhung latrine" },
+                  { id: "unsantype3", name: "Open Pit Latrine" },
+                  { id: "unsantype4", name: "Without toilet" },
                 ]}
               />
             )}
@@ -151,7 +153,23 @@ export default function EnvironmentalForm({
               label="Toilet Facility Type"
               options={[
                 { id: "shared", name: "SHARED with Other Household" },
-                { id: "notShared", name: "NOT SHARED with Other Household" },
+                { id: "notshared", name: "NOT SHARED with Other Household" },
+              ]}
+            />
+          </div>
+          <h2>C. Solid Waste Management</h2>
+          <div className="grid grid-cols-3 gap-4">
+            <FormSelect
+              control={form.control}
+              name={`${prefix}.wasteManagement`}
+              label="Waste Management Type"
+              options={[
+                { id: "wastesegregation", name: "Waste Segregation" },
+                { id: "backyardcomposting", name: "Backyard Composting" },
+                { id: "recycling", name: "Recyling/Reuse" },
+                { id: "collectedbycity", name: "Collected by City Collection and Disposal System" },
+                { id: "burning", name: "Burning/Burying" },
+                { id: "others", name: "Others.."}
               ]}
             />
           </div>

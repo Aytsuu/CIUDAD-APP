@@ -74,13 +74,14 @@ export const parentInfoSchema = z.object({
   contact: z.string(),
 });
 
-export const respondentInfoSchema = z.object({
+export const personInfoSchema = z.object({
   id: z.string(),
   lastName: z.string(),
   firstName: z.string(),
   middleName: z.string(),
   suffix: z.string(),
   sex: z.string(),
+  dateOfBirth: z.string(),
   contact: z.string(),
 });
 
@@ -125,11 +126,22 @@ export const environmentalFormSchema = z.object({
   sanitaryFacilityType: z.string().optional(),
   unsanitaryFacilityType: z.string().optional(),
   toiletFacilityType: z.string(),
-  wasteManagement: z
-    .array(z.string())
-    .min(1, "At least one waste management method must be selected"),
-  otherWasteMethod: z.string().optional(),
+  wasteManagement: z.string().min(1, )
+
 });
+
+export const ncdFormSchema = z.object({
+  riskClassAgeGroup: z.string(),
+  comorbidities: z.string(),
+  lifestyleRisk: z.string(),
+  inMaintenance: z.string(),
+})
+export const tbSurveilanceSchema = z.object({
+  srcAntiTBmeds: z.string(),
+  noOfDaysTakingMeds: z.string(),
+  tbStatus: z.string(),
+
+})
 
 export const familyFormSchema = z.object({
   demographicInfo: demographicInfoSchema,
@@ -141,13 +153,30 @@ export const familyFormSchema = z.object({
     healthRelDetails: perAddDetails.optional(),
   }),
   guardInfo: parentInfoSchema,
-  respondentInfo: respondentInfoSchema,
+  respondentInfo: personInfoSchema,
   householdHeadInfo: householdHeadSchema,
   dependentsInfo: z.object({
     list: z.array(dependentSchema).default([]),
     new: dependentSchema,
   }),
   environmentalForm: environmentalFormSchema,
+  
+  ncdRecords: z.object({
+    list: z.array(personInfoSchema.extend({
+      ncdFormSchema: ncdFormSchema.optional()
+    })).default([]),
+    new: personInfoSchema.extend({
+      ncdFormSchema: ncdFormSchema.optional()
+    })
+  }),
+  tbRecords: z.object({
+    list: z.array(personInfoSchema.extend({
+      tbSurveilanceSchema: tbSurveilanceSchema.optional()
+    })).default([]),
+    new: personInfoSchema.extend({
+      tbSurveilanceSchema: tbSurveilanceSchema.optional()
+    })
+  }),
 });
 
 

@@ -61,14 +61,7 @@ export default function HouseholdFormLayout() {
     setIsSubmitting(false);
     form.reset(defaultValues.current);
   };
-
-  if(isLoadingResidents || isLoadingHouseholds 
-    || isLoadingSitio
-  ) {
-    return (
-      <div>Loading...</div>
-    )
-  }
+  
 
   return (
     <div className="w-full flex justify-center">

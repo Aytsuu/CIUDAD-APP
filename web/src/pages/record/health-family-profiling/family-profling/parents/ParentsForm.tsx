@@ -94,7 +94,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
             <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.suffix`} label="Suffix" readOnly />
-            <FormDateTimeInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" type="date" readOnly />
+            {/* <FormDateTimeInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" type="date"  /> */}
             <FormSelect control={form.control} name={`${prefix}.status`} label="Marital Status" options={[
               { id: 'single', name: 'Single' },
               { id: 'married', name: 'Married' },

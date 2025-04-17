@@ -7,7 +7,6 @@ import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
 
-
 export default function RespondentsForm({ residents, form, selectedResidentId, prefix, title }: {
   residents: any;
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -42,6 +41,7 @@ export default function RespondentsForm({ residents, form, selectedResidentId, p
         middleName: residentData.per_mname || residentData.middleName || '',
         suffix: residentData.per_suffix || residentData.suffix || '',
         sex: residentData.per_sex || residentData.sex || '',
+        dateOfBirth: residentData.per_dob || residentData.dateOfBirth || '',
         contact: residentData.per_contact || residentData.contact || '',
       });
     }
@@ -61,7 +61,7 @@ export default function RespondentsForm({ residents, form, selectedResidentId, p
             value={form.watch(`${prefix}.id`)}
             onChange={(value) => form.setValue(`${prefix}.id`, value)}
             placeholder="Search for resident..."
-            contentClassName="w-[28rem]"
+            contentClassName="w-[28rem]"   
             triggerClassName="w-1/3"
             emptyMessage="No resident found"
           />
