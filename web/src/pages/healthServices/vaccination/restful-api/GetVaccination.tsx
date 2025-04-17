@@ -1,4 +1,8 @@
+
+
+
 import api from "@/api/api";
+
 
 export const getPatientRecord =  async () => {
   try {
@@ -8,6 +12,7 @@ export const getPatientRecord =  async () => {
     console.error(err);
   }
 };
+
 
 export const getVaccinationRecords =  async () => {
   try {
@@ -20,6 +25,19 @@ export const getVaccinationRecords =  async () => {
 
 
 
+
+export const getVaccintStocks =  async () => {
+    try {
+        const response = await api.get(`/inventory/vaccine_stocks/`);
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
+
+
 export const getVaccinelist =  async () => {
     try {
         const response = await api.get(`/inventory/vac_list`);
@@ -28,3 +46,5 @@ export const getVaccinelist =  async () => {
         console.error(err);
     }
     }
+
+

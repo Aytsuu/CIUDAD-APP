@@ -73,7 +73,7 @@ export const VaccineStocksSchema = z.object({
   batchNumber: z.string().min(1, "Batch number is required"),
   volume: positiveNumberSchema.pipe(z.number().min(1, "Volume must be at least 1")),
   qty: positiveNumberSchema.pipe(z.number().min(1, "Vial box count must be at least 1")),
-  dose_ml: positiveNumberSchema.pipe(z.number().min(1, "Doses pieces count must be at least 1")),
+  // dose_ml: positiveNumberSchema.pipe(z.number().min(1, "Doses pieces count must be at least 1")),
   expiryDate: z.string().min(1, "Expiry date is required")
     .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
 });
