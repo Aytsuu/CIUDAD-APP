@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  getBusinesses,
   getFamilies,
+  getFamilyComposition,
   getHouseholds,
   getRequests,
   getResidents,
@@ -49,11 +49,11 @@ export const useFamilies = () => {
   });
 };
 
-export const useBusinesses = () => {
+export const useFamilyComposition = () => {
   return useQuery({
-    queryKey: ["businesses"],
-    queryFn: getBusinesses,
-    staleTime: 1000 * 60 * 5,
+    queryKey: ["familyCompositions"],
+    queryFn: getFamilyComposition,
+    staleTime: 1000 * 60 * 5
   })
 }
 

@@ -7,7 +7,8 @@ import { FormInput } from '@/components/ui/form/form-input';
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from '@/components/ui/form/form-select';
 import { Plus } from 'lucide-react';
-import { familyFormSchema } from '@/form-schema/profiling-schema';
+import { familyFormSchema } from "@/form-schema/family-form-schema";
+
 import { Combobox } from '@/components/ui/combobox';
 import { DependentRecord } from '../../profilingTypes';
 

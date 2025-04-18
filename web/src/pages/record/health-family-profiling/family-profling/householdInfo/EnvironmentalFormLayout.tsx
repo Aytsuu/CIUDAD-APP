@@ -3,7 +3,7 @@ import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import EnvironmentalForm from "./EnvironmentalForm";
-import { environmentalFormSchema, familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema, environmentalFormSchema } from "@/form-schema/family-form-schema";
 import { DependentRecord } from "../../profilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";

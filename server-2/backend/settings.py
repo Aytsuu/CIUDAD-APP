@@ -43,7 +43,7 @@ SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '*']
 
 
 # Application definition
@@ -59,10 +59,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    # 'apps.account',
-    # 'apps.waste',
-    # 'apps.profiling',
-    # 'apps.administration'
+    'apps.administration'
 ]
 
 MIDDLEWARE = [
@@ -120,7 +117,7 @@ DATABASES = {
         'PORT': config('DB_PORT')
 
     },
-    'Profiling': {
+    'brgyDB': {
 
     }
 }
@@ -163,7 +160,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
+# DATABASE_ROUTERS = ['healthProfiling.db_router.DbRouter',]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -178,7 +175,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",  
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True 
+
 
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
