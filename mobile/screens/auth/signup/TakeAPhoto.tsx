@@ -25,7 +25,7 @@ export default function App() {
     minFaceSize: 0.7,
   } as FaceDetectionOptions);
 
-  React.useEffect(() => {
+  React.useEffect(() => { 
     return () => {
       isActive.current = false;
     };
