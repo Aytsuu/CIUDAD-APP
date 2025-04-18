@@ -433,8 +433,8 @@ function IncomeTracking() {
     const { mutate: deleteIncome } = useDeleteIncome();
 
 
-    const handleDelete = (iet_num: number) => {
-        deleteIncome(iet_num);
+    const handleDelete = (inc_num: number) => {
+        deleteIncome(inc_num);
     };
 
 
@@ -457,14 +457,10 @@ function IncomeTracking() {
         { 
             accessorKey: "incp_item", 
             header: "Particulars",
-            cell: ({row}) => (
-                <div>{row.getValue("incp_item")}</div>
-            )
         },
         { accessorKey: "inc_amount", header: "Amount" },
-        { accessorKey: "inc_entryType", header: "Entry Type" },
         { 
-            accessorKey: "iet_receipt_image", 
+            accessorKey: "inc_receipt_image", 
             header: "Receipt",
             cell: ({row}) => (
                 <div className="flex justify-center"> 
@@ -474,12 +470,17 @@ function IncomeTracking() {
                         title="Receipt"
                         description="Here are the details of receipt."
                         mainContent={
-                            <div className="max-h-[80vh] flex flex-col">
-                                <img
-                                    src={row.getValue("iet_receipt_image")}
-                                    alt="Receipt"
-                                    className="w-full h-auto"
-                                />
+                            // <div className="max-h-[80vh] flex flex-col">
+                            //     <img
+                            //         src={row.getValue("iet_receipt_image")}
+                            //         alt="Receipt"
+                            //         className="w-full h-auto"
+                            //     />
+                            // </div>
+                            <div className="flex flex-col gap-4 border p-5 rounded-md">
+                                <div>
+                                    <img src={row.getValue("inc_receipt_image")} className="w-52 h-52 border shadow-sm"/>
+                                </div>
                             </div>
                         }
                     />
@@ -507,7 +508,7 @@ function IncomeTracking() {
                                             inc_particulars = {row.original.incp_item} 
                                             inc_amount = {String(row.original.inc_amount)}
                                             inc_additional_notes = {row.original.inc_additional_notes}
-                                            inc_receipt_image = {row.original.iet_receipt_image}
+                                            inc_receipt_image = {row.original.inc_receipt_image}
                                             onSuccess={() => setEditingRowId(null)}  
                                         />
                                     </div>

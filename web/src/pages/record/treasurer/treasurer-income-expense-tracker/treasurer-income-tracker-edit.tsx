@@ -236,7 +236,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { SetStateAction } from "react";
@@ -271,7 +271,7 @@ function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc
 
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
     
-
+    console.log("URL IMAGE: ", inc_receipt_image)
     const form = useForm<z.infer<typeof IncomeEditFormSchema>>({
         resolver: zodResolver(IncomeEditFormSchema),
         defaultValues: {
@@ -280,9 +280,18 @@ function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc
             inc_particulars: String(incp_id),
             inc_amount: inc_amount,
             inc_additional_notes: inc_additional_notes,
-            inc_receipt_image: undefined,
+            inc_receipt_image: inc_receipt_image,
         },
     });
+
+
+    useEffect(() => {
+        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+            form.setValue('inc_receipt_image', mediaFiles[0].publicUrl);
+        } else {
+            form.setValue('inc_receipt_image', '');
+        }
+    }, [mediaFiles, form]);
 
 
     //Handling the Income Particular
@@ -417,20 +426,14 @@ function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc
                         name="inc_receipt_image"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Receipt</FormLabel>
+                                <FormLabel>Receipt Image</FormLabel>
                                 <FormControl>
                                     <MediaUpload
                                         title="Receipt Image"
                                         description="Upload an image of your receipt as proof of transaction"
                                         mediaFiles={mediaFiles}
                                         activeVideoId={activeVideoId}
-                                        setMediaFiles={(value: SetStateAction<any[]>) => {
-                                            const newFiles = typeof value === 'function' 
-                                                ? value(mediaFiles) 
-                                                : value;
-                                            setMediaFiles(newFiles);
-                                            field.onChange(newFiles.length > 0 ? newFiles[0] : undefined);
-                                        }}
+                                        setMediaFiles={setMediaFiles}
                                         setActiveVideoId={setActiveVideoId}
                                     />
                                 </FormControl>
@@ -438,6 +441,11 @@ function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc
                             </FormItem>
                         )}
                     />
+                </div>
+                <div className="flex flex-col gap-4 border p-5 rounded-md">
+                    <div>
+                        <img src={inc_receipt_image} className="w-52 h-52 border shadow-sm"/>
+                    </div>
                 </div>
 
                 <div className="flex justify-end mt-[20px] space-x-2">

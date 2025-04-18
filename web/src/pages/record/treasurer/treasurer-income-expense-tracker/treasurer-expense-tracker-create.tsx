@@ -264,7 +264,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import IncomeExpenseFormSchema from "@/form-schema/treasurer/expense-tracker-schema";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { SetStateAction } from "react";
@@ -313,6 +313,14 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
     const onSubmit = (values: z.infer<typeof IncomeExpenseFormSchema>) => {
         createExpense(values);
     };
+
+    useEffect(() => {
+        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+            form.setValue('iet_receipt_image', mediaFiles[0].publicUrl);
+        } else {
+            form.setValue('iet_receipt_image', 'no-image-url-fetched');
+        }
+    }, [mediaFiles, form]);
 
 
     const selectedParticularId = form.watch("iet_particulars");
@@ -448,23 +456,16 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
                             <FormField
                                 control={form.control}
                                 name="iet_receipt_image"
-                                render={({ field }) => (
+                                render={() => (
                                     <FormItem>
-                                        <FormLabel>Receipt</FormLabel>
+                                        <FormLabel>Receipt Image</FormLabel>
                                         <FormControl>
                                             <MediaUpload
                                                 title="Receipt Image"
                                                 description="Upload an image of your receipt as proof of transaction"
                                                 mediaFiles={mediaFiles}
                                                 activeVideoId={activeVideoId}
-                                                setMediaFiles={(value: SetStateAction<any[]>) => {
-                                                    // Handle both direct value and functional update
-                                                    const newFiles = typeof value === 'function' 
-                                                        ? value(mediaFiles) 
-                                                        : value;
-                                                    setMediaFiles(newFiles);
-                                                    field.onChange(newFiles.length > 0 ? newFiles[0] : undefined);
-                                                }}
+                                                setMediaFiles={setMediaFiles}
                                                 setActiveVideoId={setActiveVideoId}
                                             />
                                         </FormControl>

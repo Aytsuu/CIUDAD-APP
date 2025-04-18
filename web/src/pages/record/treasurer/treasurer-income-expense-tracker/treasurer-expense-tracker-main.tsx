@@ -312,6 +312,8 @@
 
 
 
+
+// LATEST WITH EVERYTHING..
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -413,7 +415,6 @@ function IncomeandExpenseTracking() {
             )
         },
         { accessorKey: "iet_amount", header: "Amount" },
-        { accessorKey: "iet_entryType", header: "Entry Type" },
         { 
             accessorKey: "iet_receipt_image", 
             header: "Receipt",
@@ -425,12 +426,10 @@ function IncomeandExpenseTracking() {
                         title="Receipt"
                         description="Here are the details of receipt."
                         mainContent={
-                            <div className="max-h-[80vh] flex flex-col">
-                                <img
-                                    src={row.getValue("iet_receipt_image")}
-                                    alt="Receipt"
-                                    className="w-full h-auto"
-                                />
+                            <div className="flex flex-col gap-4 border p-5 rounded-md">
+                                <div>
+                                    <img src={row.getValue("iet_receipt_image")} className="w-52 h-52 border shadow-sm"/>
+                                </div>
                             </div>
                         }
                     />
@@ -459,6 +458,7 @@ function IncomeandExpenseTracking() {
                                             iet_particular_id={row.original.dtl_id}
                                             iet_particulars_name={row.original.dtl_budget_item}
                                             iet_additional_notes={row.original.iet_additional_notes}
+                                            iet_receipt_image={row.original.iet_receipt_image}
                                             inv_num={row.original.inv_num}    
                                             onSuccess={() => setEditingRowId(null)}                                        
                                         />
@@ -645,3 +645,11 @@ function IncomeandExpenseTracking() {
 }
 
 export default IncomeandExpenseTracking;
+
+
+
+
+
+
+
+

@@ -89,7 +89,7 @@ export type Income = {
     inc_amount: number;
     inc_entryType: "Income" | "Expense";
     inc_additional_notes: string;
-    iet_receipt_image: string;
+    inc_receipt_image: string;
 };
 
 export const useIncomeData = () => {

@@ -1206,8 +1206,10 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import IncomeExpenseEditFormSchema from "@/form-schema/treasurer/expense-tracker-edit-schema";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
+import { MediaUpload } from "@/components/ui/media-upload";
+import { SetStateAction } from "react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useUpdateIncomeExpense } from "./queries/treasurerIncomeExpenseUpdateQueries";
@@ -1221,16 +1223,20 @@ interface IncomeandExpenseEditProps{
     iet_particulars_name: string;
     iet_amount: string;
     iet_additional_notes: string;
+    iet_receipt_image: string;
     inv_num: string;
     onSuccess?: () => void; 
 }
 
 
 
-function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_additional_notes, inv_num, onSuccess} : IncomeandExpenseEditProps) {    
+function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_additional_notes, iet_receipt_image, inv_num, onSuccess} : IncomeandExpenseEditProps) {    
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [formValues, setFormValues] = useState<z.infer<typeof IncomeExpenseEditFormSchema>>();
+
+    const [mediaFiles, setMediaFiles] = useState<any[]>([]);
+    const [activeVideoId, setActiveVideoId] = useState<string>("");
 
 
     const entrytypeSelector = [
@@ -1297,7 +1303,16 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
     const handleConfirmSave = () => {
         setIsConfirmOpen(false); // Close confirmation modal
         form.handleSubmit(onSubmit)(); // Call the submit function
-    };    
+    };
+
+
+    useEffect(() => {
+        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+            form.setValue('iet_receipt_image', mediaFiles[0].publicUrl);
+        } else {
+            form.setValue('iet_receipt_image', 'no-image-url-fetched');
+        }
+    }, [mediaFiles, form]);
 
 
     return (
@@ -1402,29 +1417,30 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
 
                 <div className="pb-5">
                     <FormField
-                    control={form.control}
-                    name="iet_receipt_image"
-                    render={({field}) =>(
-                        <FormItem>
-                            <FormLabel>Receipt</FormLabel>
+                        control={form.control}
+                        name="iet_receipt_image"
+                        render={() => (
+                            <FormItem>
+                                <FormLabel>Receipt Image</FormLabel>
                                 <FormControl>
-                                    <input
-                                        className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md"
-                                        type="file"
-                                        accept="image/*" // This restricts the file types to images only
-                                        onChange={(e) => {
-                                            const files = e.target.files; // Get the files
-                                            if (files && files.length > 0) { // Check if files is not null and has at least one file
-                                                const file = files[0]; // Get the first file
-                                                field.onChange(file); // Set the file to the form state
-                                            }                              
-                                        }}
-                                        disabled={!isEditing}
+                                    <MediaUpload
+                                        title="Receipt Image"
+                                        description="Upload an image of your receipt as proof of transaction"
+                                        mediaFiles={mediaFiles}
+                                        activeVideoId={activeVideoId}
+                                        setMediaFiles={setMediaFiles}
+                                        setActiveVideoId={setActiveVideoId}
                                     />
                                 </FormControl>
-                            <FormMessage/>
-                        </FormItem>
-                    )}></FormField>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <div className="flex flex-col gap-4 border p-5 rounded-md">
+                    <div>
+                        <img src={iet_receipt_image} className="w-52 h-52 border shadow-sm"/>
+                    </div>
                 </div>
                 
                 <div className="mt-6 flex justify-end">

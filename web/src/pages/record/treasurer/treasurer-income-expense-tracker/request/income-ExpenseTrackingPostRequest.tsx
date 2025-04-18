@@ -31,7 +31,7 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
             iet_serial_num: incomeExpenseInfo.iet_serial_num,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
             iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
-            iet_receipt_image: "urlfornow",
+            iet_receipt_image: incomeExpenseInfo.iet_receipt_image,
             inv_num: "urlforInvNum",
             dtl_id:  parseInt(incomeExpenseInfo.iet_particulars)
 
@@ -57,7 +57,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_entryType: "Income",
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
-            inc_receipt_image: "urlfornow",
+            inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  incomeInfo.inc_particulars
         })
 
@@ -67,7 +67,7 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
             inc_entryType: "Income",
             inc_amount: parseFloatSafe(incomeInfo.inc_amount),
             inc_additional_notes: incomeInfo.inc_additional_notes,
-            inc_receipt_image: "urlfornow",
+            inc_receipt_image: incomeInfo.inc_receipt_image || null,
             incp_id:  parseInt(incomeInfo.inc_particulars)
 
         })
