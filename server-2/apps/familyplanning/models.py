@@ -1,5 +1,5 @@
 from django.db import models
-from apps.vaccination.models import PatientRecord
+# from apps.vaccination.models import PatientRecord
 
 class FP_Record(models.Model):
     fprecord_id = models.AutoField(primary_key=True)
