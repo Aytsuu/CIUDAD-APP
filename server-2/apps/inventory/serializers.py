@@ -67,7 +67,7 @@ class MedicineInventorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MedicineInventory
-        fields = '__all__'
+        fields = '__all__' 
 
     def to_internal_value(self, data):
         """Allow partial updates but require all fields for creation."""
