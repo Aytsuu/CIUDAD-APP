@@ -1,4 +1,8 @@
-# Create your models here.
+# from django.db import models
+
+# # Create your models here.
+# from django.db import models
+
 from django.db import models
 from django.conf import settings
 from datetime import date
@@ -114,8 +118,8 @@ class HealthRelatedDetails(models.Model):
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     
 
-    class Meta:
-        db_table = 'health_related_details'
+#     class Meta:
+#         db_table = 'health_related_details'
 
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
@@ -133,8 +137,8 @@ class Dependents_Under_Five(models.Model):
     duf_exclusive_bf= models.CharField(max_length=50 )
     fc = models.ForeignKey(FamilyComposition, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = 'dependents_under_five'
+#     class Meta:
+#         db_table = 'dependents_under_five'
 
 # class WaterSupply(models.Model):
 #     water_sup_id = models.CharField(max_length=50, primary_key=True)
@@ -144,7 +148,13 @@ class Dependents_Under_Five(models.Model):
 
 #     class Meta:
 #         db_table = 'water_supply'
+#     class Meta:
+#         db_table = 'water_supply'
 
+# class SanitaryFacility(models.Model):
+#     sf_id = models.CharField(max_length=50, primary_key=True)
+#     sf_type = models.CharField(max_length=50)
+#     sf_toilet_type = models.CharField(max_length=50)
 # class SanitaryFacility(models.Model):
 #     sf_id = models.CharField(max_length=50, primary_key=True)
 #     sf_type = models.CharField(max_length=50)
@@ -160,19 +170,19 @@ class Dependents_Under_Five(models.Model):
 #     fd_description = models.CharField(max_length=200)
 #     sf = models.ForeignKey(SanitaryFacility, on_delete=models.CASCADE)
 
-# class Solid_Waste_Mgmt(models.Model):
-#     swm_id = models.CharField(max_length=50, primary_key=True)
-#     swn_desposal_type = models.CharField(max_length=50)
-#     swm_desc = models.TextField(max_length=1000)
-#     # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+class Solid_Waste_Mgmt(models.Model):
+    swm_id = models.CharField(max_length=50, primary_key=True)
+    swn_desposal_type = models.CharField(max_length=50)
+    swm_desc = models.TextField(max_length=1000)
+    # hh = models.ForeignKey(Household, on_delete=models.CASCADE)
     
 #     class Meta:
 #         db_table = 'solid_waste_mgmt'
 
 
-# class Patient(models.Model):
-#     pat_id = models.CharField(max_length=50, primary_key=True)
-#     # per = models.ForeignKey(Personal, on_depete=models.CASCADE)
+class Patient(models.Model):
+    pat_id = models.CharField(max_length=50, primary_key=True)
+    # per = models.ForeignKey(Personal, on_depete=models.CASCADE)
 
 #     class Meta:
 #         db_table = 'patient'

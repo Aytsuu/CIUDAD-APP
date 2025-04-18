@@ -4,7 +4,10 @@ import AnimalBites from '@/screens/animal-bites/AnimalBites';
 
 export default function HomeScreen() {
   return (
+    <View>
       <AnimalBites />
+        <Text>Welcome!</Text>
+      </View>
   );
 }
 

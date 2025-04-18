@@ -11,7 +11,7 @@ import FamilyProfileOptions from "./FamilyProfileOptions";
 import { FamilyRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFamilies, useFamilyComposition, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 export default function FamilyRecords() {
   // Initialize states

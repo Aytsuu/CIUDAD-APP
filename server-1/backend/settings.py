@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
 from decouple import config
 from datetime import timedelta
 import sys
@@ -28,7 +27,6 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_'
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -88,15 +86,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 
 DATABASES = {
     'default': {
@@ -106,15 +97,6 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-
-    },
-    'healthDB': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('SERVER2_DB_NAME'),
-        'USER': config('SERVER2_DB_USER'),
-        'PASSWORD': config('SERVER2_DB_PASSWORD'),
-        'HOST': config('SERVER2_DB_HOST'),
-        'PORT': config('SERVER2_DB_PORT'),
     }
 }
 
@@ -156,11 +138,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
-
-
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -180,7 +157,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# New User Model
+# # New User Model
 AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
