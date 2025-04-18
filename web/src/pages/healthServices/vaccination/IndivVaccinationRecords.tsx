@@ -24,32 +24,12 @@ import { Toaster } from "sonner";
 import { CircleCheck, Loader2, ChevronLeft } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { useLocation, useParams } from "react-router-dom";
-
 export interface VaccinationRecord {
-  pat_id: number;
-  fname: string;
-  lname: string;
-  mname: string;
-  sex: string;
-  age: string;
-  householdno: string;
-  street: string;
-  sitio: string;
-  barangay: string;
-  city: string;
-  province: string;
-  pat_type: string;
-  vaccination_count: string;
-  address: string;
-  vital_signs: {
-    date: string;
-    doseNo: string;
-    bp: string;
-    temp: string;
-    rr: string;
-    o2: string;
-    vaccine: string;
-  }[];
+  vachist_id: number;
+  vachist_doseNo: string;
+  vachist_status: string;
+  vachist_age: string;
+ 
 }
 
 export default function IndivVaccinationRecords() {
@@ -80,57 +60,32 @@ export default function IndivVaccinationRecords() {
 
   });
 
+  console.log("pat:", patientData.pat_id);
 
-// Format the data for display with vital signs
-const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
-  if (!vaccinationRecords) return [];
 
-  // Convert single record to array with one element
-  const records = Array.isArray(vaccinationRecords) ? vaccinationRecords : [vaccinationRecords];
+  // Format the data for display
+  const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
+    if (!vaccinationRecords) return [];
 
-  return records.map((record: any) => {
-    // Extract vital signs from vaccination history if available
-    const vitalSignsRecords = record.vaccination_services?.flatMap((service: any) => 
-      service.vaccination_record?.vaccination_history
-        ?.filter((history: any) => history.vital_id)
-        .map((history: any) => ({
-          date: history.created_at,
-          doseNo: history.vachist_doseNo,
-          bp: `${history.vital_id.vital_bp_systolic}/${history.vital_id.vital_bp_diastolic}`,
-          temp: `${history.vital_id.vital_temp}°C`,
-          rr: `${history.vital_id.vital_RR} bpm`,
-          o2: `${history.vital_id.vital_o2}%`,
-        })) || []);
+    return vaccinationRecords.map((record: any) => ({
+     vachist_id: record.vachist_id,
+     vachist_doseNo: record.vachist_doseNo,
+     vachist_status: record.vachist_status,
+     vachist_age: record.vachist_age,
 
-    return {
-      pat_id: record.pat_id,
-      fname: record.fname,
-      lname: record.lname,
-      mname: record.mname,
-      sex: record.sex,
-      age: record.age,
-      householdno: record.householdno,
-      street: record.street,
-      sitio: record.sitio,
-      barangay: record.barangay,
-      city: record.city,
-      province: record.province,
-      pat_type: record.pat_type,
-      vaccination_count: record.vaccination_count,
-      address: `${record.householdno} ${record.street}, ${record.sitio}, ${record.barangay}`,
-      vital_signs: vitalSignsRecords
-    };
-  });
-}, [vaccinationRecords]);
+
+    }));
+  }, [vaccinationRecords]);
+
 
 
   // Filter data based on search query
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
-      const searchText = `${record.pat_id} 
-        ${record.lname} 
-        ${record.fname} 
-        ${record.sitio}`.toLowerCase();
+      const searchText = `${record.vachist_id} 
+        ${record.vachist_doseNo} 
+        ${record.vachist_doseNo} 
+        ${record.vachist_age}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
   }, [searchQuery, formatVaccinationData]);
@@ -184,13 +139,13 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     ),
     cell: ({ row }) => {
       const fullName =
-        `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
+        `${row.original.vachist_age}, ${row.original.vachist_age} ${row.original.vachist_age}`.trim();
       return (
         <div className="flex justify-start min-w-[200px] px-2">
           <div className="flex flex-col w-full">
             <div className="font-medium truncate">{fullName}</div>
             <div className="text-sm text-darkGray">
-              {row.original.sex}, {row.original.age}
+              {row.original.vachist_age}, {row.original.vachist_age}
             </div>
           </div>
         </div>
@@ -201,26 +156,26 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     accessorKey: "vital_signs",
     header: "Vital Signs",
     cell: ({ row }) => {
-      const latestVital = row.original.vital_signs.length > 0 
-        ? row.original.vital_signs[row.original.vital_signs.length - 1]
-        : null;
+      // const latestVital = row.original.vital_signs.length > 0 
+      //   ? row.original.vital_signs[row.original.vital_signs.length - 1]
+      //   : null;
       
-      return (
-        <div className="flex flex-col items-center">
-          {latestVital ? (
-            <>
-              <div className="text-sm">
-                <span className="font-medium">Dose {latestVital.doseNo}</span>
-              </div>
-              <div className="text-xs">
-                BP: {latestVital.bp} | Temp: {latestVital.temp}
-              </div>
-            </>
-          ) : (
-            <span className="text-gray-400 text-sm">No vitals</span>
-          )}
-        </div>
-      );
+      // return (
+      //   <div className="flex flex-col items-center">
+      //     {latestVital ? (
+      //       <>
+      //         <div className="text-sm">
+      //           <span className="font-medium">Dose {latestVital.doseNo}</span>
+      //         </div>
+      //         <div className="text-xs">
+      //           BP: {latestVital.bp} | Temp: {latestVital.temp}
+      //         </div>
+      //       </>
+      //     ) : (
+      //       <span className="text-gray-400 text-sm">No vitals</span>
+      //     )}
+      //   </div>
+      // );
     },
   },
   // ... keep all your existing columns exactly as they are ...
@@ -236,7 +191,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     ),
     cell: ({ row }) => (
       <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.address}</div>
+        <div className="w-full truncate">{row.original.vachist_age}</div>
       </div>
     ),
   },
@@ -245,7 +200,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     header: "Sitio",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.sitio}</div>
+        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
       </div>
     ),
   },
@@ -254,7 +209,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     header: "Type",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.pat_type}</div>
+        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
       </div>
     ),
   },
@@ -263,7 +218,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     header: "No of Records",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.vaccination_count}</div>
+        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
       </div>
     ),
   },
@@ -275,7 +230,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
         <TooltipLayout
           trigger={
             <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-              <Link to={`/invVaccinationRecord/${row.original.pat_id}`}>
+              <Link to={`/invVaccinationRecord/${row.original.vachist_doseNo}`}>
                 <Eye size={15} />
               </Link>
             </div>
@@ -287,7 +242,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
             <div
               className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
               onClick={() => {
-                setRecordToArchive(row.original.pat_id);
+                setRecordToArchive(row.original.vachist_id);
                 setIsArchiveConfirmationOpen(true);
               }}
             >

@@ -1,7 +1,7 @@
 from django.db import models
 from apps.inventory.models import VaccineStock
 
-class PatientRecord(models.Model):
+class PatientRecordSample(models.Model):
     pat_id = models.BigAutoField(primary_key=True)
     fname = models.CharField(max_length=100)
     lname = models.CharField(max_length=100)
@@ -25,9 +25,10 @@ class PatientRecord(models.Model):
 class ServicesRecords(models.Model):
     serv_id = models.BigAutoField(primary_key=True)
     serv_name = models.CharField(max_length=100)
+    serv_status = models.CharField(max_length=100) # e.g. "Completed", "Pending" ,"Forwarded
     created_at = models.DateTimeField(auto_now_add=True)
     pat_id = models.ForeignKey(
-        PatientRecord, 
+        PatientRecordSample, 
         on_delete=models.CASCADE, 
         related_name='services'
     )
@@ -83,6 +84,6 @@ class VaccinationHistory(models.Model):
         on_delete=models.CASCADE,
         related_name='vaccination_histories'
     )
-
+    
     class Meta:
         db_table = 'vaccination_history'

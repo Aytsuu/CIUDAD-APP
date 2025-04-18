@@ -73,25 +73,24 @@ export default function AllVaccinationRecords() {
     if (!vaccinationRecords) return [];
 
     return vaccinationRecords.map((record: any) => ({
-      pat_id: record.patient_detail?.pat_id,
-      fname: record.patient_detail?.fname,
-      lname: record.patient_detail?.lname,
-      mname: record.patient_detail?.mname,
-      sex: record.patient_detail?.sex,
-      age: record.patient_detail?.age,
-      householdno: record.patient_detail?.householdno,
-      street: record.patient_detail?.street,
-      sitio: record.patient_detail?.sitio,
-      barangay: record.patient_detail?.barangay,
-      city: record.patient_detail?.city,
-      province: record.patient_detail?.province,
-      pat_type: record.patient_detail?.pat_type,
-      address: `${record.patient_detail?.householdno} ${record.patient_detail?.street}, ${record.patient_detail?.sitio}, ${record.patient_detail?.barangay}`,
+      pat_id: record.pat_id,
+      fname: record.fname,
+      lname: record.lname,
+      mname: record.mname,
+      sex: record.sex,
+      age: record.age,
+      householdno: record.householdno,
+      street: record.street,
+      sitio: record.sitio,
+      barangay: record.barangay,
+      city: record.city,
+      province: record.province,
+      pat_type: record.pat_type,
+      address: `${record.householdno} ${record.street}, ${record.sitio}, ${record.barangay}`,
       vaccination_count: record.vaccination_count,  
   
     }));
   }, [vaccinationRecords]);
-
 
 
 
@@ -131,7 +130,8 @@ export default function AllVaccinationRecords() {
       }
     }
   };
- 
+  
+
   const columns: ColumnDef<VaccinationRecord>[] = [
     {
       accessorKey: "id",

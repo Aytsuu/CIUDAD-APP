@@ -44,7 +44,7 @@ export const getVaccinationRecords =  async () => {
 
 export const getVaccinationRecordById =  async (id: number) => {
   try {
-    const response = await api.get(`/vaccination/individual-vaccination-records/${id}/`);
+    const response = await api.get(`/vaccination/indv-vaccination-records/${id}/`);
     console.log("API Response:", response); // Add logging
     if (!response.data) {
       throw new Error("No data returned from API");
