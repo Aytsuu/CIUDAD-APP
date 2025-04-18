@@ -1,14 +1,42 @@
-import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
-import { ArrowUpDown, CircleAlert, MoveRight } from "lucide-react";
+import { ArrowUpDown, CircleAlert, CircleChevronRight, UserRoundCheck, UserRoundX } from "lucide-react";
 import { ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-
+import { Label } from "@/components/ui/label";
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] => [
+  {
+    accessorKey: 'account',
+    header: '',
+    cell: ({ row }) => {
+      const resident = residents.find((resident) => resident.rp_id === row.original.id)
+      const account = resident?.account
+
+      return (
+        <div className="w-7 h-7 flex items-center justify-center">
+          {account ? (<UserRoundCheck size={18} className="text-green-500"/>) : (
+            <TooltipLayout 
+              trigger={
+                <Link to="/account/create"
+                  state={{
+                    params: {
+                      residentId: row.original.id
+                    }
+                  }}
+                >
+                  <UserRoundX size={18} className="text-red-500"/>
+                </Link> 
+              }
+              content="Account not registered"
+            />
+          )}
+        </div>
+      )
+    }
+  },
   {
     accessorKey: "id",
     header: ({ column }) => (
@@ -16,7 +44,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Resident (#)
+        Resident No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -28,7 +56,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Household (#)
+        Household No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -36,10 +64,12 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         const householdNo: string = row.getValue("householdNo");
         
         return householdNo ? (<div>{householdNo}</div>) :
-        (<TooltipLayout
-            trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-            content={"Family not registered"}
-        />)
+        (<div className="flex justify-center items-center">
+          <TooltipLayout
+              trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+              content="Family not registered"
+          />
+        </div>)
     },
   },
   {
@@ -49,7 +79,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Family (#)
+        Family No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -57,10 +87,12 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         const familyNo: string = row.getValue("familyNo");
         
         return familyNo ? (<div>{familyNo}</div>) :
-        (<TooltipLayout
-            trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-            content="Family not registered"
-        />)
+        (<div className="flex justify-center items-center">
+          <TooltipLayout
+              trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
+              content="Family not registered"
+          />
+        </div>)
     },
   },
   {
@@ -75,13 +107,15 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-        const sitio: string = row.getValue("sitio");
-        
-        return sitio ? (<div>{sitio}</div>) :
-        (<TooltipLayout
+      const sitio: string = row.getValue("sitio");
+      
+      return sitio ? (<div>{sitio}</div>) :
+      (<div className="flex justify-center items-center">
+        <TooltipLayout
             trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
             content="Family not registered"
-        />)
+        />
+      </div>)
     },
   },
   {
@@ -121,20 +155,10 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
   {
     accessorKey: "mname",
     header: "Middle Name",
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("mname") ? row.getValue("mname") : '-'}
-      </div>
-    )
   },
   {
     accessorKey: "suffix",
-    header: "Suffix",
-    cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("suffix") ? row.getValue("suffix") : '-'}
-      </div>
-    )
+    header: "Suffix"
   },
   {
     accessorKey: "dateRegistered",
@@ -166,7 +190,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <Link to="/resident-form" 
+      <Link to="/resident/view" 
         state={{
           params: {
             type: 'viewing',
@@ -176,9 +200,19 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
           }
         }}
       >
-        <Button variant="outline">
-          View <MoveRight/>
-        </Button>
+        <div className="group flex justify-center items-center gap-2 px-3 py-2
+                  rounded-lg border-none shadow-none hover:bg-muted
+                  transition-colors duration-200 ease-in-out">
+          <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
+                  transition-colors duration-200 ease-in-out">
+            View
+          </Label> 
+          <CircleChevronRight
+            size={35}
+            className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
+                group-hover:stroke-white transition-all duration-200 ease-in-out"
+          />
+        </div>
       </Link>
     ),
     enableSorting: false,

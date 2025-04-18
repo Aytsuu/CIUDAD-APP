@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import addImage from "/src/assets/images/addimage.png";
 import { announcementFormSchema } from "../../form-schema/AnnouncementSchema";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form/form";
+import { useNavigate } from "react-router";
+import { ChevronLeft } from "lucide-react";
 
 const options = {
   modes: ["ALL", "SMS", "APP"],
@@ -14,18 +16,31 @@ const options = {
 };
 
 export default function CreateAnnouncement() {
+  const navigate = useNavigate();
+
   const form = useForm({
     resolver: zodResolver(announcementFormSchema),
     defaultValues: { header: "", details: "", image: "", date: "", modes: [], recipients: [] },
   });
 
   return (
-    <div className="max-w-[600px] mx-auto p-4 mb-4">
+    
+    <div className="bg-white max-w-[600px] mx-auto p-10 mb-4">
+      <div >
+      <Button
+                    className="text-black p-2 self-start"
+                    variant={"outline"}
+                    onClick={() => navigate(-1)}
+                >
+                    <ChevronLeft />
+                </Button>
       <h2 className="font-bold text-[#263D67] text-2xl mb-4 text-center">Create Announcement</h2>
+
+      </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit((data) => console.log("Announcement Data:", data))} className="space-y-4 flex flex-col">
-          
+       
           {/* Date Field */}
           <FormField control={form.control} name="date" render={({ field }) => (
             <FormItem>
@@ -101,7 +116,7 @@ export default function CreateAnnouncement() {
 
           {/* Post Button */}
           <div className="mt-4 flex justify-end">
-            <Button type="submit" className="text-sm px-6 py-2">POST</Button>
+            <Button type="submit" className="text-sm px-6 py-2">Post</Button>
           </div>
         </form>
       </Form>

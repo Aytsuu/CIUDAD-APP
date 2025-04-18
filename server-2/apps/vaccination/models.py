@@ -54,8 +54,13 @@ class VitalSigns(models.Model):
     vital_temp = models.CharField(max_length=100, null=True, blank=True)
     vital_RR = models.CharField(max_length=100, null=True, blank=True)
     vital_o2 = models.CharField(max_length=100, null=True, blank=True)
+    vital_id = models.BigAutoField(primary_key=True)
+    vital_bp_systolic = models.CharField(max_length=100, null=True, blank=True)
+    vital_bp_diastolic = models.CharField(max_length=100, null=True, blank=True)
+    vital_temp = models.CharField(max_length=100, null=True, blank=True)
+    vital_RR = models.CharField(max_length=100, null=True, blank=True)
+    vital_o2 = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
     class Meta:
         db_table = 'vital_signs'
 

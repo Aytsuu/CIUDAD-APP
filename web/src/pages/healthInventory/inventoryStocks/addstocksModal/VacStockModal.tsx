@@ -20,7 +20,7 @@ import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
 import { addInventory } from "../REQUEST/Inventory";
-import {FormDateInput} from "@/components/ui/form/form-date-input";
+import {FormDateTimeInput} from "@/components/ui/form/form-date-time-input";
 
 export default function VaccineStockForm() {
   UseHideScrollbar();
@@ -37,7 +37,7 @@ export default function VaccineStockForm() {
       vac_id: "",
       batchNumber: "",
       volume: undefined,
-      qty: 0, // Now as number
+      qty: undefined, // Now as number
       expiryDate: "",
       solvent: "doses",
     },
@@ -71,13 +71,13 @@ export default function VaccineStockForm() {
 
       // First create inventory record
       const inv_type = "Antigen";
-      const inventoryResponse = await addInventory(
-data, inv_type);
+      const inventoryResponse = await addInventory(data, inv_type);
 
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");
       }
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
+
 
       // Convert vac_id to number
       const vac_id = Number(validatedData.vac_id);
@@ -143,7 +143,7 @@ data, inv_type);
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput control={form.control} name="expiryDate" label="Expiry Date"/>
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date"/>
           </div>
         </div>
 

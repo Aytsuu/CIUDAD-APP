@@ -9,12 +9,8 @@ export const patientRecordSchema = z.object({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   patientType: z.string().min(1, "Patient type is required"),
   houseNo: z.string().min(1, "House number is required"),
-  street: z.string().min(1),
-  sitio: z.string().min(1),
-  barangay: z.string().min(1),
-  city: z.string().min(1),
-  province: z.string().min(1),
- 
+  street: z.string().min(1, "Street Address is required"),
+  sitio: z.string().min(1, "Sitio is required"),
 })
 
 export type PatientRecordFormValues = z.infer<typeof patientRecordSchema>

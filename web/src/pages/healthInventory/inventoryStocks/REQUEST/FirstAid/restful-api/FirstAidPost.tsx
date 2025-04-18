@@ -1,5 +1,5 @@
 
-import api from "@/api/api";
+import {api} from "@/api/api";
 
 export const addFirstAidInventory = async (
   formData: any,  // Replace with proper type if available

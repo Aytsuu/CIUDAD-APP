@@ -25,7 +25,7 @@ import { fetchMedicines } from "../REQUEST/fetch";
 import { submitMedicineStock } from "../REQUEST/Medicine/MedicineSubmit";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { formOptions, unitOptions, dosageUnitOptions } from "./options";
 
 interface MedicineStocksProps {
@@ -143,7 +143,7 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput control={form.control} name="expiryDate" label="Expiry Date" />
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

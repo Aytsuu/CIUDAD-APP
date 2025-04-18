@@ -17,10 +17,10 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link, useNavigate } from "react-router-dom";
 import { Combobox } from "@/components/ui/combobox";
-import api from "@/api/api";
+import {api} from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert,ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -402,10 +402,11 @@ console.log("Submitting Step 2:", serv_id);
             />
 
 
-            <FormDateInput
+            <FormDateTimeInput
               control={form.control}
               name="datevaccinated"
               label="Date Vaccinated"
+              type="date"
             />
           </div>
 
@@ -449,10 +450,11 @@ console.log("Submitting Step 2:", serv_id);
 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <FormDateInput
+            <FormDateTimeInput
               control={form.control}
               name="dob"
               label="Date of Birth"
+              type="date"
               readOnly
             />
             <FormInput
@@ -664,7 +666,6 @@ console.log("Submitting Step 2:", serv_id);
     </div>
   );
 }
-
 
 
 

@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
+import { toast } from "sonner";
 
 const styles = {
     fieldStyle: "flex flex-cols-2 gap-5 items-center p-2",
@@ -27,8 +27,20 @@ type Props = {
 };
 
 function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData }: Props) {
+    // page 4 budget items
+    const budgetItems = [
+        { name: "capitalOutlays", label: "Total Capital Outlays" },
+        { name: "cleanAndGreen", label: "Clean & Green Environmental" },
+        { name: "streetLighting", label: "Street Lighting Project" },
+        { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
+        { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
+        { name: "qrfFund", label: "Quick Response Fund (QRF)" },
+        { name: "disasterTraining", label: "Disaster Training" },
+        { name: "disasterSupplies", label: "Disaster Supplies" },
+    ];
+
     const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome} = location.state
+    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit} = location.state
 
     const availableResources =
     (parseFloat(balance) || 0) +
@@ -43,12 +55,13 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [skFundBalance, setskFundBalance] = useState(0.00);
     const [calamityFundBalance ,setcalamityFundBalance] = useState(0.00);
     const [localDevBalance, setlocalDevBalance] = useState(0.00);
+    const [isOverLimit, setOverLimit] = useState(false);
 
-    const localDevBudgetLimit = taxAllotment * 0.20;
-    const skBudgetLimit = availableResources * 0.10;
-    const calamityFundBudgetLimit = availableResources* 0.05;
-
-
+    const toastId = useRef<string | number | null>(null);
+    const isOverBudget = useRef(false);
+    const localDevBudgetLimit = taxAllotment * (localDevLimit/100);
+    const skBudgetLimit = availableResources * (skFundLimit/100);
+    const calamityFundBudgetLimit = availableResources * (calamityFundLimit/100);
 
     const form = useForm<BudgetPlanPage4FormData>({
         resolver: zodResolver(CapitalOutlaysAndNonOfficeSchema),
@@ -72,6 +85,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         const remainingBal = localDevBudgetLimit - calculatedTotal;
         settotalDevFund(calculatedTotal);
         setlocalDevBalance(remainingBal);
+        displayToast();
     }, [localDevVal, localDevBudgetLimit]);
     
 
@@ -81,6 +95,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         const remainingBal = calamityFundBudgetLimit - calculatedTotal;
         settotalCalamityFund(calculatedTotal);
         setcalamityFundBalance(remainingBal);
+        displayToast();
     }, [calamityFundVal, calamityFundBudgetLimit]);
 
 
@@ -88,6 +103,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     useEffect(() => {
         const remainingBal = skBudgetLimit - (Number(skVal) || 0)
         setskFundBalance(remainingBal)
+        displayToast();
     }, [skVal, skBudgetLimit])
 
     // Capital Outlays
@@ -99,10 +115,41 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
 
     // next and previous handlers
     const handleSubmit = (value: BudgetPlanPage4FormData) => {
-        console.log("Submitting Page 4 Data:", value);
+        console.log('Submitting data for page 4:', value)
         updateFormData(value);
         onSubmit();
     };
+
+    function displayToast() {
+        const currentlyExceeded = isAnyBudgetExceeded();
+        
+        if (currentlyExceeded) {
+            setOverLimit(true);
+            if (!toastId.current) {  
+                console.log('toast displayed');
+                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                    duration: Infinity, 
+                    style: {
+                        border: '1px solid #f87171',
+                        padding: '16px',
+                        color: '#b91c1c',
+                        background: '#fef2f2',
+                    },
+                });
+            }
+        } else {
+            setOverLimit(false);
+            if (toastId.current) {  
+                toast.dismiss(toastId.current);
+                toastId.current = null;
+            }
+        }
+    }
+    
+    function isAnyBudgetExceeded(): boolean {
+        return localDevBalance < 0 || skFundBalance < 0 || calamityFundBalance < 0 ? true : false;
+    }
+
 
     const handlePrevious = () => {
         updateFormData(form.getValues()); 
@@ -113,20 +160,11 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
                 <div className="mb-4">
-                    <div className="mb-5 bg-white p-5 w-full max-h-[21rem] overflow-x-auto">
+                    <div className="mb-5 bg-white p-5 w-full">
                         <div className='p-2 flex flex-col gap-1'>
                             <h1 className='font-bold flex justify-center w-[21rem]'>CAPITAL OUTLAYS</h1>
                         </div>
-                        {[
-                            { name: "capitalOutlays", label: "Total Capital Outlays" },
-                            { name: "cleanAndGreen", label: "Clean & Green Environmental" },
-                            { name: "streetLighting", label: "Street Lighting Project" },
-                            { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
-                            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
-                            { name: "qrfFund", label: "Quick Response Fund (QRF)" },
-                            { name: "disasterTraining", label: "Disaster Training" },
-                            { name: "disasterSupplies", label: "Disaster Supplies" },
-                        ].map(({ name, label }) => (
+                        {budgetItems.map(({ name, label }) => (
                             <div key={name}>
                                 <FormField
                                     control={form.control}
@@ -216,10 +254,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                     </div>
 
                     <div className="flex justify-between">
-                        <Button type="button" onClick={handlePrevious} className="w-[100px]">
+                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit}>
                             Previous
                         </Button>
-                        <Button type="submit" className="w-[100px]">
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>
                             Submit
                         </Button>
                     </div>

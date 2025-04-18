@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -195,10 +195,11 @@ export default function ImmunizationStockForm({
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormDateInput
+                <FormDateTimeInput
                   control={form.control}
                   name="expiryDate"
                   label="Expiry Date"
+                  type="date"
                 />
               </div>
             </div>

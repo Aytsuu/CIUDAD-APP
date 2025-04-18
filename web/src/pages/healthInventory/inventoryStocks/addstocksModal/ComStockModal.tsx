@@ -22,7 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { submitCommodityStock } from "../REQUEST/Post/Commodity/AddCommodityPost";
 import { toast } from "sonner";
 import { CircleCheck,Loader2 } from "lucide-react";
@@ -136,10 +136,11 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
           </div>
   
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput 
+            <FormDateTimeInput 
               control={form.control}  
               name="expiryDate" 
               label="Expiry Date"
+              type="date"
             />
             <FormSelect 
               control={form.control} 

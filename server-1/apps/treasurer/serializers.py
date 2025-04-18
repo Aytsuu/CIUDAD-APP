@@ -1,31 +1,22 @@
 from rest_framework import serializers
 from .models import *
 
-class Budget_PlanSerializer(serializers.ModelSerializer):
+class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget_Plan_Detail
+        fields = '__all__'
+
+class  Budget_HeaderSerializer(serializers.ModelSerializer):
+    details = serializers.SerializerMethodField()
+
+
     class Meta:
         model = Budget_Plan
         fields = '__all__'
 
-class Current_Expenditures_PersonalSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = Current_Expenditures_Personal
-        fields = '__all__'
-
-class Current_Expenditures_MaintenanceSerializers(serializers.ModelSerializer):
-    class Meta: 
-        model = Current_Expenditures_Maintenance
-        fields = '__all__'
-
-class Other_Maint_And_Operating_ExpenseSerializers(serializers.ModelSerializer):
-    class Meta: 
-        model = Other_Maint_And_Operating_Expense
-        fields = '__all__'
-
-class Capital_Outlays_And_Non_OfficeSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = Capital_Outlays_And_Non_Office
-        fields = '__all__'
-
+    def get_details(self, obj):
+         return Budget_Plan_DetailSerializer(obj.budget_detail.all(), many=True).data
+    
 # class Income_FileSerializers(serializers.ModelSerializer):
 #     class Meta:
 #         model = Income_File
@@ -36,7 +27,24 @@ class Capital_Outlays_And_Non_OfficeSerializers(serializers.ModelSerializer):
 #         model = Disbursement_File
 #         fields = '__all__'
 
-# class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = Income_Expense_Tracking
-#         fields = '__all__'
+
+class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
+    dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
+    
+    class Meta:
+        model = Income_Expense_Tracking
+        fields = '__all__'
+
+
+class Income_ParticularSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Income_Particular
+        fields = '__all__'
+        
+
+class Income_TrackingSerializers(serializers.ModelSerializer):
+    incp_item = serializers.CharField(source='incp_id.incp_item', read_only=True)
+
+    class Meta:
+        model = Income_Tracking
+        fields = '__all__'

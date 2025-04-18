@@ -67,7 +67,7 @@ urlpatterns = [
     path("imz_supplies/<int:inv_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
     
     
-    # VACCINE STOCKS
+    # VACCINE STOCKS 
     path("vaccine_stocks/", VaccineStocksView.as_view(), name="vaccine_stocks"),
     path("antigens_stocks/", AntigenTransactionView.as_view(), name="antigens_stocks"), 
     

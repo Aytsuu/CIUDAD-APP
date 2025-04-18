@@ -1,5 +1,4 @@
 import "@/global.css";
-
 import React from 'react';
 import { View, Text, TouchableWithoutFeedback, Image} from 'react-native';
 import { useRouter } from 'expo-router';
@@ -7,18 +6,27 @@ import { Button } from "@/components/ui/button";
 import Layout from "./_layout";
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from '@/lib/icons/Camera';
+import { addPersonal, addRequest } from "./restful-api/signupPostAPI";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
 export default function TakeAPhoto() {
   const router = useRouter();
+  const { control, trigger, getValues} = useRegistrationFormContext()
   const [photo, setPhoto] = React.useState(null);
 
-  const handleSubmit = () => {
-    if (photo) {
-      console.log('Photo:', photo);
-      router.push('./ConfirmRegister');
-    } else {
-      alert('Please fill out all fields before submitting.');
-    }
+  const handleSubmit = async () => {  
+
+    const values = getValues()
+
+    const personalId = await addPersonal(values)
+    const res = await addRequest(personalId)
+
+    // if (photo) {
+    //   console.log('Photo:', photo);
+    //   router.push('./ConfirmRegister');
+    // } else {
+    //   alert('Please fill out all fields before submitting.');
+    // }
   };
 
   const takePhoto = async () => {
