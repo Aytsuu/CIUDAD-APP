@@ -33,13 +33,6 @@ export const addPersonal = async (personalInfo: Record<string, string>) => {
 // POST request for resident_profile model 
 export const addResidentProfile = async (personalId: string, staffId: string) => {
   try {
-
-    console.log({
-      rp_id: await generateResidentNo(),
-      rp_date_registered: formatDate(new Date()),
-      per_id: personalId,
-      staff: staffId,
-    })
     const res = await api.post("profiling/resident/", {
       rp_id: await generateResidentNo(),
       rp_date_registered: formatDate(new Date()),

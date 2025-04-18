@@ -12,10 +12,10 @@ import { z } from "zod";
 import { Type, Origin } from "../profilingEnums";
 import { Card } from "@/components/ui/card/card";
 import { toast } from "sonner";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { useForm } from "react-hook-form";
 import { formatResidents } from "../profilingFormats";
@@ -31,6 +31,7 @@ export default function ResidentFormLayout() {
   const { user } = React.useRef(useAuth()).current;
 
   // Initializing states
+  const navigate = useNavigate();
   const location = useLocation();
   const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema)).current;
   const form = useForm<z.infer<typeof personalInfoSchema>>({
@@ -183,13 +184,28 @@ export default function ResidentFormLayout() {
           ? reqPersonalId
           : await addPersonal();
 
-      await addResidentProfile({
+      const resident = await addResidentProfile({
         personalId: personalId, 
         staffId: user?.staff.staff_id
       });
 
       // Reset the values of all fields in the form
       form.reset(defaultValues.current);
+      toast("New record created successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
+        },
+      });
+      
+      navigate("/account/create", {
+        state: {
+          params: {
+            residentId: resident.rp_id
+          }
+        }
+      });
     }
   };
 
