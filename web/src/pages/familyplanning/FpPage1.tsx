@@ -9,7 +9,7 @@ import { ChevronLeft, Search, UserPlus } from "lucide-react"
 import { useLocation, useNavigate } from "react-router"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { FormDateInput } from "@/components/ui/form/form-date-input"
+// import { FormDateInput } from "@/components/ui/form/form-date-input"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Input } from "@mui/material"
 import { Label } from "@radix-ui/react-dropdown-menu"
@@ -276,8 +276,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               <FormInput control={form.control} name="lastName" label="NAME OF CLIENT" placeholder="Last name" className="col-span-1" />
               <FormInput control={form.control} label="" name="givenName" placeholder="Given name" className="col-span-1 mt-6" />
               <FormInput control={form.control} name="middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6"/>
-              <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth:" />
-              <FormInput control={form.control} name="age" label="Age" type="number" readOnly value={computedAge || ""} className="col-span-1" />
+              {/* <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth:" /> */}
+              {/* <FormInput control={form.control} name="age" label="Age" type="number" readOnly value={computedAge || ""} className="col-span-1" /> */}
               <FormSelect control={form.control} name="educationalAttainment" label="Education Attainment" options={EDUCATION_OPTIONS} />
               <FormInput control={form.control} name="occupation" label="Occupation" placeholder="Occupation" className="col-span-1 sm:col-span-2 md:col-span-1"/>
             </div>
@@ -296,8 +296,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               <FormInput control={form.control} name="spouse.s_lastName" label="NAME OF SPOUSE" placeholder="Last name" className="col-span-1"/>
               <FormInput control={form.control} name="spouse.s_givenName" label="" placeholder="Given name" className="col-span-1 mt-6"/>
               <FormInput control={form.control} name="spouse.s_middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6" />
-              <FormDateInput control={form.control} name="spouse.s_dateOfBirth" label="Date of Birth" />
-              <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" />
+              {/* <FormDateInput control={form.control} name="spouse.s_dateOfBirth" label="Date of Birth" /> */}
+              {/* <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" /> */}
               <FormInput control={form.control} name="spouse.s_occupation" label="Occupation" placeholder="Occupation" className="col-span-1"/>
             </div>
 
@@ -391,13 +391,13 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     />
                   )}
 
-                  {(() => {
+                  {/* {(() => {
                     const methodUsed = form.watch("methodCurrentlyUsed")
                     return (
                       (methodUsed === "method_others" || methodUsed === "source") && (
                         <FormInput control={form.control} name="otherMethod" className="mt-6" label={methodUsed === "Source" ? "Specify FP Method:" : "Specify Other Method:"} />
                       ))
-                  })()}
+                  })()} */}
                 </div>
               </div>
             </div>

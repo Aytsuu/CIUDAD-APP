@@ -16,7 +16,7 @@ import { Form } from "@/components/ui/form/form";
 import { useLocation } from "react-router";
 import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues";
 import { personal } from "@/pages/record/health/patientsRecord/patientPostRequest";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+// import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Combobox } from "@/components/ui/combobox";
@@ -100,10 +100,10 @@ export default function CreatePatientRecord() {
         </p>
       </div>
 
-      <CardLayout
+      {/* <CardLayout
         cardTitle="Patients Information"
         cardDescription="Fill in the required fields to create a new patient record"
-        cardContent={
+        cardContent={ */}
           <div className="w-full mx-auto border-none ">
             <Separator className="w-full bg-gray" />
             <div className="pt-4">
@@ -128,7 +128,7 @@ export default function CreatePatientRecord() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormSelect control={form.control} name="gender" label="Sex" options={[{ id: "female", name: "Female" }, { id: "male", name: "Male" },]}/>
                     <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} />
-                    <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth"/>            
+                    {/* <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth"/>             */}
                     <FormSelect control={form.control} name="patientType" label="Patient Type" options={[{ id: "Resident", name: "Resident" }, { id: "Transient", name: "Transient" },]}/>
                   </div>
 
@@ -182,11 +182,11 @@ export default function CreatePatientRecord() {
               </Form>
             </div>
           </div>
-        }
+        {/* }
         cardClassName="border-none pb-2 p-3 rounded-lg"
         cardHeaderClassName="pb-2 bt-2 text-xl"
         cardContentClassName="pt-0"
-      />
+      /> */}
     </div>
   );
 }

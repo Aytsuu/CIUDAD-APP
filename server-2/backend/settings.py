@@ -51,14 +51,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.inventory',
     'apps.vaccination',
-    # 'apps.profiling',
-    # 'apps.administration'
-    # 'apps.account',
-    # 'apps.waste',
-    # 'apps.profiling',
-    # 'apps.administration'
+    'apps.profiling',
+    'apps.administration'
+    'apps.account',
+    'apps.waste',
+    'apps.profiling',
+    'apps.administration'
     'apps.familyplanning',
     'apps.animalbites',
+    'apps.gad'
 
 ]
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+// import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { UseFormReturn } from "react-hook-form";
@@ -42,7 +42,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
         firstName: searchResident.per.per_fname || '',
         middleName: searchResident.per.per_mname || '',
         suffix: searchResident.per.per_suffix || '',
-        sex: searchResident.per.per_sex || '',
+        // sex: searchResident.per.per_sex || '',
         dateOfBirth: searchResident.per.per_dob || '',
         status: searchResident.per.per_status || '',
         religion: searchResident.per.per_religion || '',
@@ -56,7 +56,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
         firstName: '',
         middleName: '',
         suffix: '',
-        sex: '',
+        // sex: '',
         dateOfBirth: '',
         status: '',
         religion: '',
@@ -93,7 +93,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
             <FormInput control={form.control} name={`${prefix}.firstName`} label="First Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.middleName`} label="Middle Name" readOnly />
             <FormInput control={form.control} name={`${prefix}.suffix`} label="Suffix" readOnly />
-            <FormDateInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" readOnly />
+            {/* <FormDateInput control={form.control} name={`${prefix}.dateOfBirth`} label="Date of Birth" readOnly /> */}
             <FormSelect control={form.control} name={`${prefix}.status`} label="Marital Status" options={[
               { id: 'single', name: 'Single' },
               { id: 'married', name: 'Married' },

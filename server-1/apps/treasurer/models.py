@@ -56,7 +56,7 @@ class Budget_Plan_Detail(models.Model):
 #     feat_id = models.ForeignKey('', on_delete=models.CASCADE)
 
 #     class Meta:
-#         db_table = "Disbursement_File"
+#         db_table = "Disbursement_File" 
 
 
 class Income_Expense_Tracking(models.Model):

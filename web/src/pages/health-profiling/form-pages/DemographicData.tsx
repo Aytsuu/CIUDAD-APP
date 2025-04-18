@@ -20,7 +20,7 @@ import {
 import CardLayout from "@/components/ui/card/card-layout";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+// import { FormDateInput } from "@/components/ui/form/form-date-input";
 
 export function DemographicData({
   form,
@@ -243,11 +243,11 @@ export function DemographicData({
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <FormDateInput
+                      {/* <FormDateInput
                         control={form.control}
                         name="father.birthYear"
                         label="Date of Birth"
-                      />
+                      /> */}
                       <FormInput
                         control={form.control}
                         name="father.age"
@@ -357,11 +357,11 @@ export function DemographicData({
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <FormDateInput
+                      {/* <FormDateInput
                         control={form.control}
                         name="mother.birthYear"
                         label="Date of Birth"
-                      />
+                      /> */}
                       <FormInput
                         control={form.control}
                         name="mother.age"

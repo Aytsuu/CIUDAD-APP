@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
 import ParentsFormLayout from "@/pages/record/health-family-profiling/family-profling/parents/ParentsFormLayout";
-import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
+// import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
 
 import { BsChevronLeft } from "react-icons/bs";
@@ -47,7 +47,7 @@ export default function HealthFamilyForm() {
   }, [location.state]);
 
   const formattedResidents = React.useMemo(() => {
-    return formatResidents(params, false);
+    // return formatResidents(params, false);
   }, [params.residents]);
 
   const households = React.useMemo(() => {
@@ -137,18 +137,19 @@ export default function HealthFamilyForm() {
             </>
           )}
           {currentStep === 2 && (
-            <DependentsInfoLayout
-              form={form}
-              residents={{
-                default: params.residents,
-                formatted: formattedResidents,
-              }}
-              selectedParents={[selectedMotherId, selectedFatherId]}
-              dependentsList={dependentsList}
-              setDependentsList={setDependentsList}
-              defaultValues={defaultValues}
-              back={() => prevStep()}
-            />
+            // <DependentsInfoLayout
+            //   form={form}
+            //   residents={{
+            //     default: params.residents,
+            //     formatted: formattedResidents,
+            //   }}
+            //   selectedParents={[selectedMotherId, selectedFatherId]}
+            //   dependentsList={dependentsList}
+            //   setDependentsList={setDependentsList}
+            //   defaultValues={defaultValues}
+            //   back={() => prevStep()}
+            // />
+            ''
           )}
           <div className="flex justify-end">
             <div className="flex items-center pb-10 space-x-4 mr-10">
