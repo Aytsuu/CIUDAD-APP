@@ -33,7 +33,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
   React.useEffect(() => {
 
     const searchedResidentId = form.watch(`${prefix}.id`);
-    const searchResident = residents.default.find((value: any) =>
+    const searchResident = residents.default?.find((value: any) =>
       value.rp_id === searchedResidentId?.split(" ")[0]
     );
 

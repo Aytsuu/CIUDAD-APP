@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 import { generateResidentNo } from "@/helpers/generateResidentNo";

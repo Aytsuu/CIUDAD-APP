@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Label } from "@/components/ui/label";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./VaccinationModal";
+import VaccinationForm from "./VaccinationForm";
 import { Syringe, ArrowLeft, ArrowUpDown, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 

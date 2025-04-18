@@ -43,7 +43,7 @@ const samplePatients: FamPlanningPatient[] = [
 ];
 
 function FamPlanningTable() {
-  const [patients, setPatients] = useState<FamPlanningPatient[]>(samplePatients);
+  const [patients] = useState<FamPlanningPatient[]>(samplePatients);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Table Columns
@@ -75,9 +75,9 @@ function FamPlanningTable() {
   ];
 
   // Function to add a new patient
-  const handleAddPatient = (newPatient: FamPlanningPatient) => {
-    setPatients((prevPatients) => [...prevPatients, newPatient]);
-  };
+  // const handleAddPatient = (newPatient: FamPlanningPatient) => {
+  //   setPatients((prevPatients) => [...prevPatients, newPatient]);
+  // };
 
   // Function to handle search input change
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {

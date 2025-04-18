@@ -10,68 +10,78 @@ import {
 import { useForm } from "react-hook-form";
 import {
   CommodityType,
-  CommodityListSchema, 
+  CommodityListSchema,
 } from "@/form-schema/inventory/inventoryListSchema";
-import { Input } from "@/components/ui/input";
-import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button/button";
-
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { getCommodity } from "../requests/get/getCommodity";
+import { updateCommodity } from "../requests/update/UpdateCommodity";
+import { useQueryClient } from "@tanstack/react-query";
+import { FormInput } from "@/components/ui//form/form-input";
 
 interface CommodityListProps {
   initialData: {
     id: number;
     commodityName: string;
-    category: string;
   };
+  setIsDialog: (isOpen: boolean) => void;
 }
-interface Option {
-  id: string;
-  name: string;
-}
-
-const initialCategories: Option[] = [
-  { id: "Pharmaceutical", name: "Pharmaceutical" },
-  { id: "Antibiotic", name: "Antibiotic" },
-];
 
 export default function EditCommodityModal({
   initialData,
+  setIsDialog,
 }: CommodityListProps) {
+
 
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
       commodityName: initialData.commodityName,
-      category: initialData.category,
     },
   });
 
+  // State for add confirmation dialog
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [newCommodityName, setnewCommodityName] = useState<string>("");
+  const queryClient = useQueryClient();
 
-  const [categories, setCategories] = useState<Option[]>(initialCategories);
-  const handleSelectChange = (
-    selectedValue: string,
-    fieldOnChange: (value: string) => void
-  ) => {
-    console.log("Selected Value:", selectedValue);
-    setCategories((prev) =>
-      prev.some((opt) => opt.id === selectedValue)
-        ? prev
-        : [...prev, { id: selectedValue, name: selectedValue }]
-    );
-    fieldOnChange(selectedValue);
+  const confirmAdd = async () => {
+    try {
+      await updateCommodity(initialData.id, newCommodityName); // Update the medicine
+      setIsDialog(false);
+      setIsAddConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+    } catch (err) {
+      console.error("Error updating medicine:", err);
+    }
   };
 
-  useEffect(() => {
-    form.reset({
-      commodityName: initialData.commodityName,
-      category: initialData.category,
-    });
-  }, [initialData, form]); // Add 
+  const isDuplicateCOmmodity = (commodity: any[], newCommodityName: string) => {
+    return commodity.some(
+      (com) => com.com_name.toLowerCase() === newCommodityName.toLowerCase()
+    );
+  };
 
   const onSubmit = async (data: CommodityType) => {
-    console.log(data);
-    alert("success");
+    try {
+      const existingCommodity = await getCommodity();
+      if (!Array.isArray(existingCommodity))
+        throw new Error("Invalid API response");
+
+      if (isDuplicateCOmmodity(existingCommodity, data.commodityName)) {
+        form.setError("commodityName", {
+          type: "manual",
+          message: "Medicine already exists.",
+        });
+        return;
+      }
+      setnewCommodityName(data.commodityName);
+      setIsAddConfirmationOpen(true);
+      setIsDialog(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -79,62 +89,21 @@ export default function EditCommodityModal({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-3">
-            {/* Commodity Name Field */}
-            <FormField
-              control={form.control}
-              name="commodityName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commodity Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={String(field.value)}
-                      placeholder="Commodity Name"
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category Field with Dynamic Addition */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => {
-                const selectedCategoryId = categories.find(
-                  (opt) => opt.name === field.value
-                )?.id;
-
-                return (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <SelectLayoutWithAdd
-                        className="w-full"
-                        label="Category"
-                        placeholder="Select"
-                        options={categories}
-                        value={selectedCategoryId || field.value}
-                        onChange={(selectedValue) =>
-                          handleSelectChange(selectedValue, field.onChange)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
+             <FormInput control={form.control} name="commodityName" label="Commodity Name" placeholder="Enter Commodity Name" />  
             <div className="w-full flex justify-end mt-8">
               <Button type="submit">Submit</Button>
             </div>
           </div>
         </form>
       </Form>
+
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Add Medicine"
+        description={`Are you sure you want to add the medicine "${newCommodityName}"?`}
+      />
     </div>
   );
 }

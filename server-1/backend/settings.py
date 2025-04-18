@@ -157,7 +157,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# New User Model
+# # New User Model
 AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
