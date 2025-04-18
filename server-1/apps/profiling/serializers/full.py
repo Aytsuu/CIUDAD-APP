@@ -14,7 +14,7 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
     )
     account = UserAccountSerializer(read_only=True)
     staff = serializers.SerializerMethodField()
-    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff")
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff", allow_null=True)
 
     class Meta:
         model = ResidentProfile
@@ -32,7 +32,7 @@ class HouseholdFullSerializer(serializers.ModelSerializer):
     
     sitio_id = serializers.PrimaryKeyRelatedField(queryset=Sitio.objects.all(), write_only=True, source='sitio')
     rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source='rp')
-    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source='staff', allow_null=True)
+    staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source='staff')
     
     class Meta:
         model = Household

@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 import { capitalizeAllFields, capitalize } from "@/helpers/capitalize";
 
 export const updateProfile = async (
