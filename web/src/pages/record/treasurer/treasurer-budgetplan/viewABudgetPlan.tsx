@@ -246,7 +246,6 @@
         const endIndex = startIndex + 12;
         const currentRows = rowsProp.slice(startIndex, endIndex);
 
-        console.log('plan_id in View:', plan_id)
 
         return(
             <div className="w-full h-full bg-snow flex flex-col gap-3 p-4">
@@ -257,7 +256,8 @@
                     <h1 className={`${styles.headerTitle} text-center flex-grow`}>
                         ANNUAL BUDGET PLAN {budgetDetails?.plan_year}
                     </h1>
-                    <Link to={`/edit-header-and-allocation/${plan_id}`}> 
+                    <Link to={`/edit-header-and-allocation/${plan_id}`}
+                            state={{budgetData: budgetDetails}}> 
                         <Button>
                             <Pen size={16} /> <span>Edit</span>
                         </Button>
