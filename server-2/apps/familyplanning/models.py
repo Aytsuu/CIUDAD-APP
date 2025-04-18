@@ -1,22 +1,25 @@
 from django.db import models
-from .models import patient_record
+from .models import *
+from apps.vaccination.models import ServicesRecords
 
 
 class FP_Record(models.Model):
     fprecord_id = models.AutoField(primary_key=True)
     client_id = models.CharField(max_length=15)
-    philhhealth_id = models.CharField(max_length=14)
+    # philhealth_id = models.CharField(max_length=14)
     nhts = models.BooleanField(default=False)
     four_ps = models.BooleanField(default=False)
     plan_more_children = models.BooleanField(default=False)
     avg_monthly_income = models.CharField(max_length=15)
-
     serv_id = models.ForeignKey(ServicesRecords,on_delete=models.CASCADE)
+    transient = models.BooleanField(default=False)
+    
+    # def patient(self):
+    #     return self.serv_id.pat_id
     
     class Meta:
         db_table = "fp_record"
         
-
 
 
 class FP_type(models.Model):

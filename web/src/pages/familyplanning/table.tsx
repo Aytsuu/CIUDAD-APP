@@ -23,7 +23,7 @@ const samplePatients: FamPlanningPatient[] = [
   {
     id: 1,
     fname: "Jane",
-    lname: "Bil",
+    lname: "",
     age: "25",
     address: "Feet",
     purok: "Cat",
