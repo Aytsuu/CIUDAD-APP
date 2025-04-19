@@ -211,7 +211,8 @@ function BudgetTracker() {
       {/* Budget Summary */}
       <div className="flex flex-row gap-5 mb-5">
         <div className="flex flex-row gap-2">
-          <Label className="w-35 text-md">Budget:</Label>
+          {/* here is where I must display the budget from budget_plan_detail of the year selected */}
+          <Label className="w-35 text-md">Budget:</Label> 
           <Label className="text-red-500 text-md font-bold">
             Php {budget_item.toFixed(2)}
           </Label>

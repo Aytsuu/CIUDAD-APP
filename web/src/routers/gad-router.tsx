@@ -7,7 +7,7 @@ import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_p
 
 export const gad_router = [
     {
-        path: '/gad-budget-tracker-table',
+        path: '/gad-budget-tracker-table/:year',
         element: <BudgetTracker/>
     },
     {

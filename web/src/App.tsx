@@ -11,7 +11,6 @@ const router = createBrowserRouter([
   ...main_router,
   ...user_account,
   ...landing_router,
-  ...user_account,
   ...settings_router,
   { path: "*", element: <NotFound /> },
 ]);
