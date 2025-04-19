@@ -284,8 +284,9 @@ function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormPr
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
 
-    
-    const { data: budgetItems = [] } = useBudgetItems();
+    const { data: budgetItems = [] } = useBudgetItems(2024);
+
+    console.log("FRONTEND: ", budgetItems)
 
     const particularSelector = budgetItems.map(item => ({
         id: `${item.id} ${item.name}`,

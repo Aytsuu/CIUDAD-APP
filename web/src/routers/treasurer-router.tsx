@@ -10,6 +10,7 @@ import BudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budget
 import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/viewABudgetPlan";
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
+import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main";
 import HeaderAndAllocationEdit from "@/pages/record/treasurer/treasurer-budgetplan/EditBudgetPlanForms/budgetPlanHeaderandAlloctionEdit.tsx";
 
 export const treasurer_router = [
@@ -28,6 +29,10 @@ export const treasurer_router = [
     {
         path: "treasurer-donation",
         element: <TreasurerDonationTable/>
+    },
+    {
+        path: "treasurer-income-expense-main",
+        element: <IncomeExpenseMain/>
     },
     {
         path: "treasurer-income-and-expense-tracking",

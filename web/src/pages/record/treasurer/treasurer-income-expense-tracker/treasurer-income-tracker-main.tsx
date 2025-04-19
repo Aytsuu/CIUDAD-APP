@@ -390,7 +390,8 @@ function IncomeTracking() {
     const [currentPage, setCurrentPage] = useState(1);
 
     // Fetch data from the backend
-    const { data: fetchedData = [], isLoading } = useIncomeData();
+    const [currentYear] = useState(() => new Date().getFullYear());
+    const { data: fetchedData = [], isLoading } = useIncomeData(currentYear );
 
 
 
@@ -470,13 +471,6 @@ function IncomeTracking() {
                         title="Receipt"
                         description="Here are the details of receipt."
                         mainContent={
-                            // <div className="max-h-[80vh] flex flex-col">
-                            //     <img
-                            //         src={row.getValue("iet_receipt_image")}
-                            //         alt="Receipt"
-                            //         className="w-full h-auto"
-                            //     />
-                            // </div>
                             <div className="flex flex-col gap-4 border p-5 rounded-md">
                                 <div>
                                     <img src={row.getValue("inc_receipt_image")} className="w-52 h-52 border shadow-sm"/>
@@ -557,7 +551,7 @@ function IncomeTracking() {
                     <div>Income Tracking</div>
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
-                    Gain clear insights into your finances by tracking incomes in real time.
+                    Manage and view income and expense records for this year.
                 </p>
             </div>
             <hr className="border-gray mb-7 sm:mb-9" /> 

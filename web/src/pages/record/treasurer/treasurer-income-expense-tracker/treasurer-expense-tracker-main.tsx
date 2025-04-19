@@ -344,7 +344,10 @@ function IncomeandExpenseTracking() {
     const [currentPage, setCurrentPage] = useState(1);
 
     // Fetch data from the backend
-    const { data: fetchedData = [], isLoading } = useIncomeExpense();
+    // const { data: fetchedData = [], isLoading } = useIncomeExpense();
+
+    const [currentYear] = useState(() => new Date().getFullYear());
+    const { data: fetchedData = [], isLoading } = useIncomeExpense(currentYear);
 
 
     // Filter options
@@ -508,7 +511,7 @@ function IncomeandExpenseTracking() {
                     <div>Expense Tracking</div>
                 </h1>
                 <p className="text-xs sm:text-sm text-darkGray">
-                    Gain clear insights into your finances by tracking expenses in real time.
+                    Manage and view income and expense records for this year.
                 </p>
             </div>
             <hr className="border-gray mb-7 sm:mb-9" /> 

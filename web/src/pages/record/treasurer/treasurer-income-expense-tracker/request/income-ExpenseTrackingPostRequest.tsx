@@ -26,7 +26,8 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
         const res = await api.post('treasurer/income-expense-tracking/',{
 
-            iet_date: formatDate(new Date().toISOString().split('T')[0]),
+            // iet_date: formatDate(new Date().toISOString().split('T')[0]), 
+            iet_date: "2024-04-19",
             iet_entryType: "Expense",
             iet_serial_num: incomeExpenseInfo.iet_serial_num,
             iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
