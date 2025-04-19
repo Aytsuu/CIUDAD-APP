@@ -7,7 +7,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import CreateBudgetPlanHeader from "./budgetPlanForms/budgetHeaderForm";
+import CreateBudgetPlanHeader from "./budgetHeaderAndAllocationForms/budgetHeaderForm";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteBudgetPlan } from "./restful-API/budgetPlanDeleteAPI";
 import { getBudgetPlan } from "./restful-API/budgetplanGetAPI";
@@ -148,7 +148,7 @@ function BudgetPlan() {
                     <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> 
                 </div>
                 
-                <DialogLayout
+                {/* <DialogLayout
                     trigger={<div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>}
                     className=""
                     title="Create Budget Plan Header"
@@ -156,7 +156,10 @@ function BudgetPlan() {
                     mainContent={
                         <CreateBudgetPlanHeader/>
                     }
-                />
+                /> */}
+                <Link to="/header-and-allocation-form" state={({isEdit : false})}>
+                    <div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>
+                </Link>
             </div>
 
             <div className="w-full bg-white border b

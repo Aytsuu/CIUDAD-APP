@@ -10,12 +10,14 @@ import { useEffect } from "react";
 import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
-import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI.tsx";
+import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DisplayBreakdown from "../netBreakdownDisplay.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-
+import { Link } from "react-router-dom";
+import { budgetItemMapping } from "../budget-item-mapper.tsx";
+import { initialFormData1, initialFormData2, initialFormData3, initialFormData4 } from "../formDataInitializer.tsx";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -30,56 +32,36 @@ const styles = {
     highlightLabel: "w-full text-left text-darkGray"
 }; 
 
-const initialFormData1 = {
-    honorariaOfficials: "",
-    cashOfficials: "",
-    midBonusOfficials: "",
-    endBonusOfficials: "",
-    honorariaTanods: "",
-    honorariaLupon: "",
-    honorariaBarangay: "",
-    prodEnhancement: "",
-    leaveCredits: "",
-};
-
-const initialFormData2 = {
-    travelingExpenses: "",
-    trainingExpenses: "",
-    officeExpenses: "",
-    accountableExpenses: "",
-    medExpenses: "",
-    waterExpenses: "",
-    electricityExpenses: "",
-    telephoneExpenses: "",
-    memDues: "",
-    officeMaintenance: "",
-    vehicleMaintenance: "",
-};
-
-const initialFormData3 = {
-    fidelityBond: "",
-    insuranceExpense: "",
-    gadProg: "",
-    seniorProg: "",
-    juvJustice: "",
-    badacProg: "",
-    nutritionProg: "",
-    aidsProg: "",
-    assemblyExpenses: "",
-    disasterProg: "",
-    miscExpense: "",
-}
-
-const initialFormData4 = {
-    capitalOutlays: "",
-    cleanAndGreen: "",
-    streetLighting: "",
-    rehabMultPurpose: "",
-    skFund: "",
-    qrfFund: "",
-    disasterTraining: "",
-    disasterSupplies: "",
-};
+const initializeFormDataFromDetails = (details: BudgetPlanDetail[]) => {
+    const formData = {
+      page1: {...initialFormData1},
+      page2: {...initialFormData2},
+      page3: {...initialFormData3},
+      page4: {...initialFormData4}
+    };
+  
+    details.forEach(detail => {
+      // Find the form field name that matches this budget item
+      const fieldName = Object.keys(budgetItemMapping).find(
+        key => budgetItemMapping[key] === detail.dtl_budget_item
+      );
+  
+      if (fieldName) {
+        // Determine which page this field belongs to
+        if (fieldName in initialFormData1) {
+          formData.page1[fieldName] = detail.dtl_proposed_budget.toString();
+        } else if (fieldName in initialFormData2) {
+          formData.page2[fieldName] = detail.dtl_proposed_budget.toString();
+        } else if (fieldName in initialFormData3) {
+          formData.page3[fieldName] = detail.dtl_proposed_budget.toString();
+        } else if (fieldName in initialFormData4) {
+          formData.page4[fieldName] = detail.dtl_proposed_budget.toString();
+        }
+      }
+    });
+  
+    return formData;
+  };
 
 function BudgetPlanForm() {
     const year = new Date().getFullYear()
@@ -87,10 +69,12 @@ function BudgetPlanForm() {
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
             actualIncome, actualRPT, personalServicesLimit, miscExpenseLimit, 
-            localDevLimit, skFundLimit, calamityFundLimit, isEdit, id } = location.state || 0;
+            localDevLimit, skFundLimit, calamityFundLimit, isEdit, id, originalData } = location.state || 0;
 
-    console.log('isEdit: ', isEdit)
+    console.log('isEdit:', isEdit);
+    console.log('id:', id)
 
+    // Calculating net available resources
     const availableResources =
     (parseFloat(balance) || 0) +
     (parseFloat(realtyTaxShare) || 0) +
@@ -106,6 +90,16 @@ function BudgetPlanForm() {
     const [formData2, setFormData2] = useState(initialFormData2);
     const [formData3, setFormData3] = useState(initialFormData3);
     const [formData4, setFormData4] = useState(initialFormData4);
+
+    if (isEdit && originalData?.budget_detail) {
+        const initializedData = initializeFormDataFromDetails(originalData.budget_detail);
+        
+        setFormData1(initializedData.page1);
+        setFormData2(initializedData.page2);
+        setFormData3(initializedData.page3);
+        setFormData4(initializedData.page4);
+    }
+
 
     // Auto Calculation of Total Budgetary Obligations and Balance Unappropriated
     useEffect(() => {
@@ -238,7 +232,7 @@ function BudgetPlanForm() {
                 calamityFundLimit
             };
 
-            if(isEdit == false && id == ""){
+            if(isEdit == false){
                 const planId = await budget_plan(budgetHeader);
                 console.log("Budget Header Uploaded!")
 
@@ -283,9 +277,9 @@ function BudgetPlanForm() {
                             window.location.href = '/treasurer-budget-plan'
                         )}/>
                         ) : (
-                            <Button className="text-black p-2 self-start" variant={"outline"} onClick={() => {
-                                window.location.href = `/edit-header-and-allocation/${id}`
-                            }}> <ChevronLeft /></Button>
+                            <Link to={`/header-and-allocation-form/${id}`}>
+                                <Button className="text-black p-2 self-start" variant={"outline"}><ChevronLeft /></Button>
+                            </Link>
                         )
                     }
                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">

@@ -11,7 +11,7 @@ import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/viewAB
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
 import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main";
-import HeaderAndAllocationEdit from "@/pages/record/treasurer/treasurer-budgetplan/EditBudgetPlanForms/budgetPlanHeaderandAlloctionEdit.tsx";
+import HeaderAndAllocationForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetHeaderAndAllocationForms/budgetPlanHeaderandAllocation";
 
 export const treasurer_router = [
     {
@@ -67,7 +67,7 @@ export const treasurer_router = [
         element: <RatesForm/>
     },
     {
-        path: 'edit-header-and-allocation/:plan_id',
-        element: <HeaderAndAllocationEdit/>
+        path: 'header-and-allocation-form/:plan_id?',
+        element: <HeaderAndAllocationForm/>
     },
 ]

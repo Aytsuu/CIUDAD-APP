@@ -1,10 +1,10 @@
 import { FormInput } from "@/components/ui/form/form-input";
-import { HeaderEditSchema } from "@/form-schema/treasurer/budgetplanheaderandallocationEdit-schema";
+import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
 import { UseFormReturn } from "react-hook-form";
 import z from "zod";
 
-function HeaderFormEdit({ form }: {
-    form: UseFormReturn<z.infer<typeof HeaderEditSchema>>
+function BudgetHeaderForm({ form }: {
+    form: UseFormReturn<z.infer<typeof BudgetHeaderSchema>>
 }) {
     // Split the inputs into two groups of 5 or less
     const leftColumnInputs = [
@@ -51,4 +51,4 @@ function HeaderFormEdit({ form }: {
     );
 }
 
-export default HeaderFormEdit;
+export default BudgetHeaderForm;

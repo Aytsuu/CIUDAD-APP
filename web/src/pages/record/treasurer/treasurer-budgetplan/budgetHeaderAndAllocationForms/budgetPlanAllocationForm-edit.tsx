@@ -1,11 +1,11 @@
 import { FormInput } from "@/components/ui/form/form-input";
-import { AllocationEditSchema } from "@/form-schema/treasurer/budgetplanheaderandallocationEdit-schema";
+import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
 import { UseFormReturn } from "react-hook-form"
 import z from "zod";
 import { useLocation } from "react-router";
 
-function AllocationFormEdit({form}: {
-    form:UseFormReturn<z.infer<typeof AllocationEditSchema>>
+function BudgetAllocationForm({form}: {
+    form:UseFormReturn<z.infer<typeof BudgetAllocationSchema>>
 }) {
 
     
@@ -23,5 +23,5 @@ function AllocationFormEdit({form}: {
 
 }
 
-export default AllocationFormEdit
+export default BudgetAllocationForm
 

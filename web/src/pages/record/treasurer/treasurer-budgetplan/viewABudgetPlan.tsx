@@ -256,8 +256,8 @@
                     <h1 className={`${styles.headerTitle} text-center flex-grow`}>
                         ANNUAL BUDGET PLAN {budgetDetails?.plan_year}
                     </h1>
-                    <Link to={`/edit-header-and-allocation/${plan_id}`}
-                            state={{budgetData: budgetDetails}}> 
+                    <Link to={`/header-and-allocation-form/${plan_id}`}
+                            state={{budgetData: budgetDetails, isEdit: true}}> 
                         <Button>
                             <Pen size={16} /> <span>Edit</span>
                         </Button>
