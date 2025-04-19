@@ -11,8 +11,9 @@ export const buttonConfig = (
   form: any,
   isAssignmentOpen: boolean,
   setIsAssignmentOpen: (value: boolean) => void,
-  setFormType: (value: Type) => void,
-  submit: () => void
+  setFormType: React.Dispatch<React.SetStateAction<Type>> | undefined,
+  submit: () => void,
+  reject: () => void
 ) => ({
   [Origin.Administration]: {
     [Type.Viewing]: null, // No button for viewing in administration
@@ -38,7 +39,7 @@ export const buttonConfig = (
     [Type.Viewing]: (
       <Button
         onClick={() => {
-          setFormType(Type.Editing);
+          setFormType && setFormType(Type.Editing);
         }}
       >
         <Pen size={24} /> Edit
@@ -50,7 +51,7 @@ export const buttonConfig = (
           className="w-full sm:w-32"
           variant={"outline"}
           onClick={() => {
-            setFormType(Type.Viewing);
+            setFormType && setFormType(Type.Viewing);
           }}
         >
           Cancel
@@ -73,7 +74,7 @@ export const buttonConfig = (
           title="Confirm Rejection"
           description="Do you wish to proceed rejecting this request?"
           actionLabel="Confirm"
-          onClick={submit}
+          onClick={reject}
           variant="destructive"
         />
         <ConfirmationModal
@@ -104,27 +105,30 @@ export const renderActionButton = ({
   form,
   isAssignmentOpen,
   formType,
-  origin,
+  origin="defaultOrigin",
   isSubmitting,
   setIsAssignmentOpen,
   setFormType,
   submit,
+  reject, // For request
 }: {
   form?: any;
   isAssignmentOpen?: boolean;
   formType: Type;
-  origin: OriginKeys;
+  origin?: OriginKeys;
   isSubmitting: boolean;
   setIsAssignmentOpen?: (value: boolean) => void;
-  setFormType: (value: Type) => void;
+  setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
+  reject?: () => void; // For request
 }) => {
   const config = buttonConfig(
     form,
     isAssignmentOpen || false,
     setIsAssignmentOpen || (() => {}),
     setFormType,
-    submit
+    submit,
+    reject || (() => {})
   );
   const originConfig = config[origin] || config.defaultOrigin;
   const button = originConfig[formType as keyof typeof originConfig] || originConfig.default;

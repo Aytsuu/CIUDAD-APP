@@ -1,13 +1,16 @@
 /* 
 
-  Note...
+  WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  This form is being utilized for creating, viewing, and updating resident records
-  Additionally, it is being used for adminstrative position assignment or staff registration 
+  THIS FILE IS DEPRECATED AND WILL BE REMOVED IN THE FUTURE
+  PLEASE USE THE NEW FILES IN THE NEW DIRECTORY STRUCTURE
+  FOR THE NEW RESIDENT FORM LAYOUT
+
+  THIS FILE IS ONLY HERE FOR BACKWARDS COMPATIBILITY
 
 */
 import React from "react";
-import PersonalInfoForm from "./PersonalInfoForm";
+import PersonalInfoForm from "./form/PersonalInfoForm";
 import { z } from "zod";
 import { Type, Origin } from "../profilingEnums";
 import { Card } from "@/components/ui/card/card";
@@ -48,8 +51,8 @@ export default function ResidentFormLayout() {
     return formatResidents(params);
   }, [params.residents]);
   const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
-  const { mutateAsync: addPersonal } = useAddPersonal(form.getValues());
-  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile(form.getValues(), setFormType);
+  const { mutateAsync: addPersonal } = useAddPersonal();
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {
     setIsSubmitting(isSubmittingProfile || isUpdatingProfile);
@@ -164,7 +167,7 @@ export default function ResidentFormLayout() {
       }
 
       const personalId = params.data.per.per_id
-      await updateProfile({ personalId: personalId });
+      await updateProfile({ personalId: personalId, values: form.getValues()});
       params.data.per = values;
 
     } else {
@@ -173,7 +176,7 @@ export default function ResidentFormLayout() {
       const personalId =
         params.type === Type.Request
           ? params.data?.per.per_id
-          : await addPersonal();
+          : await addPersonal(form.getValues());    
 
       const resident = await addResidentProfile({
         personalId: personalId, 

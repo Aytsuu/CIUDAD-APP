@@ -17,9 +17,9 @@ import {
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
 
-export const useAddPersonal = (values: z.infer<typeof personalInfoSchema>) => {
+export const useAddPersonal = () => {
   return useMutation({
-    mutationFn: () => addPersonal(values),
+    mutationFn: (values: z.infer<typeof personalInfoSchema>) => addPersonal(values),
   });
 };
 
