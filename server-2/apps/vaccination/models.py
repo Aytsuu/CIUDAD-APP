@@ -18,7 +18,7 @@ class PatientRecordSample(models.Model):
     pat_type = models.CharField(default="Regular", max_length=100)
 
     class Meta:
-        db_table = 'patient_record'
+        db_table = 'patient_record_sample'
 
    
 
@@ -48,12 +48,6 @@ class VaccinationRecord(models.Model):
         db_table = 'vaccination_record'
 
 class VitalSigns(models.Model):
-    vital_id = models.BigAutoField(primary_key=True)
-    vital_bp_systolic = models.CharField(max_length=100, null=True, blank=True)
-    vital_bp_diastolic = models.CharField(max_length=100, null=True, blank=True)
-    vital_temp = models.CharField(max_length=100, null=True, blank=True)
-    vital_RR = models.CharField(max_length=100, null=True, blank=True)
-    vital_o2 = models.CharField(max_length=100, null=True, blank=True)
     vital_id = models.BigAutoField(primary_key=True)
     vital_bp_systolic = models.CharField(max_length=100, null=True, blank=True)
     vital_bp_diastolic = models.CharField(max_length=100, null=True, blank=True)

@@ -199,7 +199,7 @@ export default function VaccinationForm() {
           "vaccination/services-records/",
           {
             serv_name: "Vaccination",
-            // serv_status:"Completed",
+            serv_status:"Completed",
             pat_id: data.pat_id,
             created_at: new Date().toISOString(),
           }

@@ -3,8 +3,6 @@ from .models import *
 from datetime import date
 from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
 # serializers.py
-from rest_framework import serializers
-from .models import *
 
 
 class PatientRecSerializer(serializers.ModelSerializer):

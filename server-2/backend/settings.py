@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'apps.administration',
     'apps.familyplanning',
     'apps.animalbites',
+    'apps.patientrecords',
 
 ]
 
