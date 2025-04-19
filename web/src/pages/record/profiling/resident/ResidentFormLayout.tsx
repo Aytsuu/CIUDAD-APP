@@ -26,7 +26,6 @@ import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQu
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
 export default function ResidentFormLayout() {
-
   // Get user information from useContext
   const { user } = React.useRef(useAuth()).current;
 
@@ -41,17 +40,13 @@ export default function ResidentFormLayout() {
   const params = React.useMemo(() => {
     return location.state?.params || {};
   }, [location.state]);
-
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
-  const [isAssignmentOpen, setIsAssignmentOpen] =
-    React.useState<boolean>(false);
-
+  const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const formattedResidents = React.useMemo(() => {
     return formatResidents(params);
   }, [params.residents]);
-
   const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
   const { mutateAsync: addPersonal } = useAddPersonal(form.getValues());
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile(form.getValues(), setFormType);
@@ -109,9 +104,9 @@ export default function ResidentFormLayout() {
       fields.map((f: any) => {
         form.setValue(f.key , f.value);
       });
-
+ 
       // Toggle read only
-      if (resident) setIsReadOnly(true); 
+      if (resident && formType !== Type.Request) setIsReadOnly(true); 
       else setIsReadOnly(false);
     },
     [params.data || params.resident]
@@ -144,10 +139,9 @@ export default function ResidentFormLayout() {
     return isDefault;
   };
 
-  // Handle form submission
+  // Handle form actions
   const submit = async () => {
     setIsSubmitting(true);
-
     const formIsValid = await form.trigger();
 
     if (!formIsValid) {
@@ -159,9 +153,8 @@ export default function ResidentFormLayout() {
     }
 
     // For editing resident personal info
-    const values = form.getValues();
-
     if (formType === Type.Editing) {
+      const values = form.getValues();
       setIsSubmitting(false);
       if (checkDefaultValues(values, params.data.per)) {
         toast("No changes made", {
@@ -175,13 +168,11 @@ export default function ResidentFormLayout() {
       params.data.per = values;
 
     } else {
-      // For registration request
-      const reqPersonalId = params.data?.per.per_id;
 
       // Check if form type is request
       const personalId =
         params.type === Type.Request
-          ? reqPersonalId
+          ? params.data?.per.per_id
           : await addPersonal();
 
       const resident = await addResidentProfile({
@@ -200,8 +191,7 @@ export default function ResidentFormLayout() {
       });
       
       navigate("/account/create", {
-        state: {
-          params: {
+        state: { params: {
             residentId: resident.rp_id
           }
         }

@@ -58,8 +58,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Search } from 'lucide-react';
-import api from '@/api/api'; 
-
+import { api } from "@/api/api";
 interface FileData {
     id: number; // or string, depending on your data
     name: string;

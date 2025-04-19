@@ -62,13 +62,20 @@ export const buttonConfig = (
     ),
     [Type.Request]: (
       <div className="flex gap-2">
-        <Button
-          type="button"
-          className="w-full sm:w-32 text-red-500 hover:text-red-500"
-          variant={"outline"}
-        >
-          Reject
-        </Button>
+        <ConfirmationModal
+          trigger={<Button
+              className="w-full sm:w-32 text-red-500 hover:text-red-500"
+              variant={"outline"}
+            >
+              Reject
+            </Button>
+          }
+          title="Confirm Rejection"
+          description="Do you wish to proceed rejecting this request?"
+          actionLabel="Confirm"
+          onClick={submit}
+          variant="destructive"
+        />
         <ConfirmationModal
           trigger={<Button className="w-full sm:w-32"> Approve </Button>}
           title="Confirm Approval"

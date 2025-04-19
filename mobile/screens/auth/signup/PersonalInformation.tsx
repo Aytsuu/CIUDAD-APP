@@ -35,11 +35,11 @@ export default function PersonalInformation() {
         "personalInfoSchema.per_edAttainment",
         "personalInfoSchema.per_religion",
         "personalInfoSchema.per_contact",
-        "personalInfoSchema.per_occupation"])
+        "personalInfoSchema.per_occupation"]);
 
     if(formIsValid) {
-      router.push('/(auth)/upload-id')
-    }
+      router.push('/(auth)/take-a-photo');
+    };
   }
 
   // Handlers for input fields

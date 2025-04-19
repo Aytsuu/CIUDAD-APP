@@ -1,18 +1,23 @@
 import React from 'react';
 import Layout from './_layout';
+import 'react-native-get-random-values';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useRegistrationFormContext } from '@/contexts/RegistrationFormContext';
 import { Text, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'expo-router';
 import { FaceDetectionCam, FaceDetectionCamHandle } from './FaceDetectionCam';
 import { supabase } from '@/lib/supabase';
-import 'react-native-get-random-values';
 import { v4 as uuid4 } from 'uuid';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { useAddPersonal, useAddRequest, useAddFile, useAddRequestFile } from './queries/signupAddQueries';
 
 export default function TakeAPhoto() {
   const router = useRouter();
   const { getValues } = useRegistrationFormContext();
+  const { mutateAsync: addPersonal } = useAddPersonal();
+  const { mutateAsync: addRequest } = useAddRequest();
+  const { mutateAsync: addFile } = useAddFile();
+  const { mutateAsync: addRequestFile } = useAddRequestFile();
   const [isValid, setIsValid] = React.useState<boolean>(false);
   const [isUploading, setIsUploading] = React.useState<boolean>(false);
   const cameraRef = React.useRef<FaceDetectionCamHandle>(null);
@@ -62,9 +67,23 @@ export default function TakeAPhoto() {
 
       console.log('Upload successful!', publicUrl);
 
-      // const values = getValues();
-      // const personalId = await addPersonal(values);
-      // await addRequest(personalId);
+      const values = getValues();
+      const personal = await addPersonal(values);
+      const request = await addRequest(personal.per_id);
+      const file = await addFile({
+        name: fileName,
+        type: 'image/jpeg',
+        path: filePath,
+        url: publicUrl,
+      })
+      const requestFile = await addRequestFile({
+        requestId: request.req_id,
+        fileId: file.file_id,
+      });
+
+      if(requestFile) {
+        alert('Request sent!');
+      }
 
       // router.push('/success'); // Navigate to success page
 

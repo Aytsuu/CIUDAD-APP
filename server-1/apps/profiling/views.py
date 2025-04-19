@@ -85,6 +85,10 @@ class RequestDeleteView(generics.DestroyAPIView):
     queryset = RequestRegistration.objects.all()
     lookup_field = 'req_id'
 
+class RequestFileView(generics.ListCreateAPIView):
+    serializer_class = RequestFileSerializer
+    queryset = RequestFile.objects.all()
+
 # Business Views --------------------------------------------------------------------------
 class BusinessView(generics.ListCreateAPIView):
     serializer_class = BusinessSerializer

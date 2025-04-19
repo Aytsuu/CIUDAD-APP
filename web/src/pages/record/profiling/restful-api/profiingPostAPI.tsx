@@ -148,10 +148,6 @@ export const addBusiness = async (businessInfo: Record<string, string>, staffId:
 
 export const addBusinessFile = async (businessId: string, fileId: string) => {
   try {
-    console.log({
-      bus: businessId,
-      file: fileId
-    })
     const res = await api.post('profiling/business/file/', {
       bus: businessId,
       file: fileId

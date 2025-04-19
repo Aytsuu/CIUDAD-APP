@@ -22,3 +22,8 @@ class BusinessFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessFile
         fields = '__all__'
+
+class RequestFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequestFile
+        fields = '__all__'
