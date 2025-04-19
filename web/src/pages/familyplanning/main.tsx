@@ -1,6 +1,5 @@
 "use client"
-import { fp_record, fp_type, pregnancyCheck, risk_sti, risk_vaw } from "./request-db/PostRequest"
-
+import { fp_obstetrical, fp_record, fp_type, pregnancyCheck, risk_sti, risk_vaw } from "./request-db/PostRequest"
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
 import FamilyPlanningForm2 from "./FpPage2"
@@ -173,14 +172,13 @@ export default function FamilyPlanningMain() {
   }
 
   const handleSubmit = () => {
-    // obstetrical(formData)
     risk_sti(formData)
     risk_vaw(formData)
     // physical_exam(formData)
     // acknowledgement(formData)
     fp_type(formData)
     fp_record(formData)
-    // fp_obstetrical(formData)
+    fp_obstetrical(formData)
     pregnancyCheck(formData)
     console.log("Submitting data: ", formData)
     alert("Form submitted successfully!")

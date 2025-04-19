@@ -16,12 +16,7 @@ class FP_typeView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-class PregnancyCheckView(generics.ListCreateAPIView):   
-    serializer_class = PregnancySerializer
-    queryset = PregnancyCheck.objects.all()
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+
 
 class RiskStiView(generics.ListCreateAPIView):
     serializer_class = RiskStiSerializer

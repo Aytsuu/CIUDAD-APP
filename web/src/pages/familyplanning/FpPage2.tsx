@@ -43,7 +43,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
     { name: "abnormalVaginalDischarge", label: "Abnormal vaginal discharge" },
     { name: "phenobarbitalOrRifampicin", label: "Intake of phenobarbital (anti-seizure) or rifampicin (anti-TB)" },
     { name: "smoker", label: "Is this client a SMOKER?" },
-    { name: "disability", label: "With Disability?" },
+    { name: "disability", label: "With Disability/Others" },
   ]
 
   const onSubmit = async (data: FormData) => {

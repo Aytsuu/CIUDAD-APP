@@ -339,9 +339,7 @@ export default function VaccinationForm() {
           <div className="flex justify-between items-center">
             <Label className="text-black/70">Patients</Label>
           </div>
-
-
-
+          
           <div className="w-full">
                 <Combobox
                   options={patients.formatted}

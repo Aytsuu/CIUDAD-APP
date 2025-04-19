@@ -12,24 +12,9 @@ export const fp_record = async (data: Record<string, any>) => {
       plan_more_children: data.planToHaveMoreChildren,
       avg_monthly_income: data.averageMonthlyIncome,
 
-      patient: {
-        fname: data.fname,
-        lname: data.lname,
-        mname: data.mname,
-        dob: data.dob,
-        age: data.age.toString(),
-        sex: data.sex,
-        householdno: data.householdno,
-        street: data.street,
-        sitio: data.sitio,
-        barangay: data.barangay,
-        city: data.city,
-        province: data.province,
-        pat_type: data.pat_type,
-      }
     }
     console.log("Type of client: ", requestData)
-    const res = await api.post("familyplanning/fp_record/", requestData)
+    const res = await api.post("family-planning/fp_record/", requestData)
     return res.data.fprecord_id
     
     } catch (err) {
@@ -39,13 +24,30 @@ export const fp_record = async (data: Record<string, any>) => {
 
 
 
+  export const fp_type = async (data: Record<string, any>) => {
+    try {
+      const requestData = {
+        fpt_client_type: data.typeOfClient,
+        fpt_subtype: data.subTypeOfClient || null,
+        fpt_reason_fp: data.reasonForFP || null,
+        fpt_reason: data.reason || null,
+        fpt_method_used: data.methodCurrentlyUsed,
+      }
+      
+      const res = await api.post("family-planning/fp_type/", requestData)
+      console.log("FP type: ", requestData)
+      return res.data.per_id
+    } catch (err) {
+      console.error("Failed to send family planning data:", err)
+    }
+  }
 
 export const risk_sti = async (data: Record<string, any>) => {
     try {
       const requestData: Record<string, any> = {
         abnormalDischarge: data.sexuallyTransmittedInfections.abnormalDischarge,
         dischargeFrom: data.sexuallyTransmittedInfections.dischargeFrom,
-        sores: data.sexuallyTransmitztedInfections.sores,
+        sores: data.sexuallyTransmittedInfections.sores,
         pain: data.sexuallyTransmittedInfections.pain,
         history: data.sexuallyTransmittedInfections.history,
         hiv: data.sexuallyTransmittedInfections.hiv,
@@ -56,7 +58,7 @@ export const risk_sti = async (data: Record<string, any>) => {
         requestData.dischargeFrom = data.sexuallyTransmittedInfections.dischargeFrom
       }
       console.log("STI: ", requestData)
-      const res = await api.post("familyplanning/risk_sti/", requestData)
+      const res = await api.post("family-planning/risk_sti/", requestData)
       return res.data.per_id
     } catch (err) {
       console.log(err)
@@ -73,7 +75,7 @@ export const risk_sti = async (data: Record<string, any>) => {
       }
 
       console.log("Vaw: ", requestData)
-      const res = await api.post("familyplanning/risk_vaw/", requestData)
+      const res = await api.post("family-planning/risk_vaw/", requestData)
       return res.data.per_id
     } catch (err) {
       console.log(err)
@@ -96,7 +98,7 @@ export const risk_sti = async (data: Record<string, any>) => {
         using_contraceptive: data.pregnancyCheck.using_contraceptive,
       }
 
-      const res = await api.post("familyplanning/pregnancy_check/", requestData)
+      const res = await api.post("family-planning/pregnancy_check/", requestData)
       console.log("PregnancyCheck data being sent to API:", requestData)
       return res.data.per_id
     } catch (err) {
@@ -104,23 +106,6 @@ export const risk_sti = async (data: Record<string, any>) => {
     }
   }
 
-  export const fp_type = async (data: Record<string, any>) => {
-    try {
-      const requestData = {
-        fpt_client_type: data.typeOfClient,
-        fpt_subtype: data.subTypeOfClient || null,
-        fpt_reason_fp: data.reasonForFP || null,
-        fpt_reason: data.reason || null,
-        fpt_method_used: data.methodCurrentlyUsed,
-      }
-      console.log("FP type: ", requestData)
-
-      const res = await api.post("familyplanning/fp_type/", requestData)
-      return res.data.per_id
-    } catch (err) {
-      console.error("Failed to send family planning data:", err)
-    }
-  }
 
   export const fp_obstetrical = async (data: Record<string, any>) => {
     try {
@@ -162,7 +147,7 @@ export const risk_sti = async (data: Record<string, any>) => {
 
       console.log("📦 Final requestData:", requestData)
 
-      const res = await api.post("familyplanning/obstetrical/", requestData)
+      const res = await api.post("family-planning/obstetrical/", requestData)
       console.log("✅ Data sent successfully")
       return res.data.per_id
     } catch (err) {
