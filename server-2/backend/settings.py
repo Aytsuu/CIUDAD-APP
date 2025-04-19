@@ -35,6 +35,7 @@ SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = ['localhost', '*']
+ALLOWED_HOSTS = ['localhost', '*']
 
 
 # Application definition
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'apps.healthProfiling',
     'apps.inventory',
     'apps.vaccination',
     'apps.profiling',
@@ -109,7 +111,7 @@ DATABASES = {
         'PORT': config('DB_PORT')
 
     },
-    'Profiling': {
+    'brgyDB': {
 
     }
    
@@ -158,6 +160,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  
+    "http://localhost:3000",  
+    "http://127.0.0.1:8000",  
+    "http://localhost:8000",  
+]
+
 
 
 CORS_ALLOW_ALL_ORIGINS= True

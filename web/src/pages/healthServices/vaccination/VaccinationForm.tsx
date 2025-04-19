@@ -16,7 +16,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link } from "react-router-dom";
 import { Combobox } from "@/components/ui/combobox";
-import api from "@/api/api";
+import { api } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";

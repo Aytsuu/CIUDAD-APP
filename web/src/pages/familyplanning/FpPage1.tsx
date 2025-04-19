@@ -277,7 +277,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               <FormInput control={form.control} label="" name="givenName" placeholder="Given name" className="col-span-1 mt-6" />
               <FormInput control={form.control} name="middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6"/>
               {/* <FormDateInput control={form.control} name="dateOfBirth" label="Date of Birth:" /> */}
-              {/* <FormInput control={form.control} name="age" label="Age" type="number" readOnly value={computedAge || ""} className="col-span-1" /> */}
+              <FormInput control={form.control} name="age" label="Age" type="number" readOnly value={computedAge || ""} className="col-span-1" />
               <FormSelect control={form.control} name="educationalAttainment" label="Education Attainment" options={EDUCATION_OPTIONS} />
               <FormInput control={form.control} name="occupation" label="Occupation" placeholder="Occupation" className="col-span-1 sm:col-span-2 md:col-span-1"/>
             </div>
@@ -297,7 +297,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               <FormInput control={form.control} name="spouse.s_givenName" label="" placeholder="Given name" className="col-span-1 mt-6"/>
               <FormInput control={form.control} name="spouse.s_middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6" />
               {/* <FormDateInput control={form.control} name="spouse.s_dateOfBirth" label="Date of Birth" /> */}
-              {/* <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" /> */}
+              <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" />
               <FormInput control={form.control} name="spouse.s_occupation" label="Occupation" placeholder="Occupation" className="col-span-1"/>
             </div>
 

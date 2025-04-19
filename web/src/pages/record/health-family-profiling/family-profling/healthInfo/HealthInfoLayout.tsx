@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import HealthInfoForm from "./HealthInfoForm";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { DependentRecord } from "../../profilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ export default function HealthInfoLayout({
          
           selectedResidentId={selectedResidentId}
           onSelect={setSelectedResidentId}
-          prefix="respondentInfo"
+          prefix="motherInfo.motherHealthInfo"
           title="Health Information"
         />
 

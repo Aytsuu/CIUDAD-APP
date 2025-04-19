@@ -72,9 +72,11 @@ export default function HouseholdRecords() {
     currentPage * pageSize
   );
 
-  if ( isLoadingHouseholds || isLoadingSitio 
-    || isLoadingResidents
-   ) {
+  if (
+    isLoadingHouseholds ||
+    isLoadingSitio ||
+    isLoadingResidents
+  ) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -105,14 +107,14 @@ export default function HouseholdRecords() {
             />
           </div>
         </div>
-        <Link 
+        <Link
           to="/household/form"
           state={{
             params: {
               sitio: sitio,
               residents: residents,
-              households: households
-            }
+              households: households,
+            },
           }}
         >
           <Button>

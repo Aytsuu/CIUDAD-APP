@@ -142,17 +142,13 @@ const items: MenuItem[] = [
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
-      {title: "Family Profile Form", url: "/family-profiling-main"},
-      {title: "Patients Records", url: "patients-record-main"},
       {
         title: "Inventory",
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          { title: "Transaction", url: "/transactionMainInventoryList" },
-         
-    ],
+        ],
       },
       {
         title: "Queueing",

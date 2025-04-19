@@ -1,4 +1,4 @@
-import api from "@/api/api"
+import {api} from "@/api/api"
 // import { formatDate } from "@/helpers/dateFormatter"
 
 export const risk_sti = async (data: Record<string, any>) => {

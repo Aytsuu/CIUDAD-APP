@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { useForm, UseFormReturn } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { UseFormReturn } from "react-hook-form";
 import type { z } from "zod";
 import { Combobox } from "@/components/ui/combobox";
 import { Form } from "@/components/ui/form/form";
@@ -20,11 +19,10 @@ import {
 import CardLayout from "@/components/ui/card/card-layout";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
-// import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 
 export function DemographicData({
   form,
-  households,
   onSubmit,
 }: {
   form: UseFormReturn<z.infer<typeof DemographicSchema>>;
@@ -243,11 +241,12 @@ export function DemographicData({
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {/* <FormDateInput
+                      <FormDateTimeInput
                         control={form.control}
                         name="father.birthYear"
                         label="Date of Birth"
-                      /> */}
+                        type="date"
+                      />
                       <FormInput
                         control={form.control}
                         name="father.age"
@@ -357,11 +356,12 @@ export function DemographicData({
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {/* <FormDateInput
+                      <FormDateTimeInput
                         control={form.control}
                         name="mother.birthYear"
                         label="Date of Birth"
-                      /> */}
+                        type="date"
+                      />
                       <FormInput
                         control={form.control}
                         name="mother.age"

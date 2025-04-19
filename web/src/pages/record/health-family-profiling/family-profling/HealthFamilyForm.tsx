@@ -4,12 +4,11 @@ import ParentsFormLayout from "@/pages/record/health-family-profiling/family-pro
 // import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
 
-import { BsChevronLeft } from "react-icons/bs";
 import { Button } from "@/components/ui/button/button";
-import { useNavigate, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import {
@@ -20,12 +19,15 @@ import { DependentRecord } from "@/pages/record/profiling/profilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import RespondentsInfoLayout from "./family/RespondentsInfoLayout";
-import HouseholdHeadLayout from "./household/HouseholdHeadLayout";
+import HouseholdHeadLayout from "./householdInfo/HouseholdHeadLayout";
 import HealthInfoLayout from "./healthInfo/HealthInfoLayout";
+import EnvironmentalFormLayout from "./householdInfo/EnvironmentalFormLayout";
+import NoncomDiseaseFormLayout from "./householdInfo/NonComDiseaseFormLayout";
+import TbSurveilanceInfoLayout from "./householdInfo/TbSurveilanceInfoLayout";
 
 export default function HealthFamilyForm() {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
 
@@ -47,7 +49,7 @@ export default function HealthFamilyForm() {
   }, [location.state]);
 
   const formattedResidents = React.useMemo(() => {
-    // return formatResidents(params, false);
+    return formatResidents(params);
   }, [params.residents]);
 
   const households = React.useMemo(() => {
@@ -55,13 +57,13 @@ export default function HealthFamilyForm() {
   }, [params.households]);
 
   const nextStep = React.useCallback(() => {
-      setCurrentStep((prev) => prev + 1);
-    }, []);
-  
-    // Handler for going to the previous step
+    setCurrentStep((prev) => prev + 1);
+  }, []);
+
+  // Handler for going to the previous step
   const prevStep = React.useCallback(() => {
-      setCurrentStep((prev) => prev - 1);
-    }, []);
+    setCurrentStep((prev) => prev - 1);
+  }, []);
 
   return (
     <LayoutWithBack
@@ -69,15 +71,15 @@ export default function HealthFamilyForm() {
       description="Provide your details to complete the registration process."
     >
       <div>
-        <Card className="w-full">
+        <Card className="w-full h-full ">
           {currentStep === 1 && (
             <>
               <DemographicForm
                 form={form}
                 households={households}
-                onSubmit={() => {
-                  [];
-                }}
+                // onSubmit={() => {
+                //   [];
+                // }}
               />
               <div className="flex items-center justify-between px-10">
                 <Separator />
@@ -119,8 +121,8 @@ export default function HealthFamilyForm() {
                 dependentsList={dependentsList}
                 setSelectedMotherId={setSelectedMotherId}
                 setSelectedFatherId={setSelectedFatherId}
-                onSubmit={() => nextStep()}
-                back={() => prevStep()}
+                // onSubmit={() => nextStep()}
+                // back={() => prevStep()}
               />
               <div className="flex items-center justify-between px-10">
                 <Separator />
@@ -137,31 +139,93 @@ export default function HealthFamilyForm() {
             </>
           )}
           {currentStep === 2 && (
-            // <DependentsInfoLayout
-            //   form={form}
-            //   residents={{
-            //     default: params.residents,
-            //     formatted: formattedResidents,
-            //   }}
-            //   selectedParents={[selectedMotherId, selectedFatherId]}
-            //   dependentsList={dependentsList}
-            //   setDependentsList={setDependentsList}
-            //   defaultValues={defaultValues}
-            //   back={() => prevStep()}
-            // />
-            ''
+            <DependentsInfoLayout
+              form={form}
+              residents={{
+                default: params.residents,
+                formatted: formattedResidents,
+              }}
+              selectedParents={[selectedMotherId, selectedFatherId]}
+              dependentsList={dependentsList}
+              setDependentsList={setDependentsList}
+              defaultValues={defaultValues}
+              // back={() => prevStep()}
+            />
+          )}
+          {currentStep === 3 && (
+            <>
+              <EnvironmentalFormLayout
+                form={form}
+                residents={{
+                  default: params.residents,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+              <div className="flex items-center justify-between px-10">
+                <Separator />
+              </div>
+              <NoncomDiseaseFormLayout
+                form={form}
+                residents={{
+                  default: params.residents,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+              <div className="flex items-center justify-between px-10">
+                <Separator />
+              </div>
+              <TbSurveilanceInfoLayout
+                form={form}
+                residents={{
+                  default: params.residents,
+                  formatted: formattedResidents,
+                }}
+                selectedResidentId={selectedResidentId}
+                setSelectedResidentId={setSelectedResidentId}
+              />
+            </>
+          )}
+          {currentStep === 4 && (
+            <NoncomDiseaseFormLayout
+              form={form}
+              residents={{
+                default: params.residents,
+                formatted: formattedResidents,
+              }}
+              selectedResidentId={selectedResidentId}
+              setSelectedResidentId={setSelectedResidentId}
+            />
           )}
           <div className="flex justify-end">
             <div className="flex items-center pb-10 space-x-4 mr-10">
-              {currentStep > 1 && (
-                <Button onClick={prevStep} variant="outline">
-                  Previous
-                </Button>
+              {currentStep === 1 && <Button onClick={nextStep}>Next</Button>}
+              {currentStep === 2 && (
+                <div className="gap-4">
+                  <Button onClick={prevStep} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={nextStep}>Next</Button>
+                </div>
               )}
-              {currentStep < 2 && (
-                <Button onClick={nextStep}>
-                  Next
-                </Button>
+              {currentStep === 3 && (
+                <div className="gap-4">
+                  <Button onClick={prevStep} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={nextStep}>Next</Button>
+                </div>
+              )}
+              {currentStep === 4 && (
+                <div className="gap-4">
+                  <Button onClick={prevStep} variant="outline">
+                    Previous
+                  </Button>
+                  <Button onClick={nextStep}>Next</Button>
+                </div>
               )}
             </div>
           </div>
