@@ -3,7 +3,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Assigned } from "./administrationTypes";
-import { useBatchPermissionUpdate, useUpdatePermission } from "./queries/administrationQueries";
+import { useBatchPermissionUpdate, useUpdatePermission } from "./queries/administrationUpdateQueries";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function SettingPermissions({

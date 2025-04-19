@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { usePositions } from "@/pages/record/administration/queries/administrationQueries";
+import { usePositions } from "@/pages/record/administration/queries/administrationFetchQueries";
 import { Type } from "@/pages/record/administration/administrationEnums";
 
 export const useValidatePosition = () => {

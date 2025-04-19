@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -24,18 +24,23 @@ import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 
-export type VaccinationRecord = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  middleName: string;
-  gender: string;
-  age: number;
-  address: string;
+export interface VaccinationRecord {
+  pat_id: number;
+  fname: string;
+  lname: string;
+  mname: string;
+  sex: string;
+  age: string;
+  householdno: string;
+  street: string;
   sitio: string;
-  type: string;
-  isArchived: boolean;
-};
+  barangay: string;
+  city: string;
+  province: string;
+  pat_type: string;
+  address: string;
+  vaccination_count: number;
+}
 
 export default function AllVaccinationRecords() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
@@ -58,31 +63,44 @@ export default function AllVaccinationRecords() {
     }
   );
 
+  useEffect(() => {
+    console.log(vaccinationRecords);
+
+  }, []);
+
   // Format the data for display
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
+
     return vaccinationRecords.map((record: any) => ({
-      id: record.id,
-      firstName: record.firstName,
-      lastName: record.lastName,
-      middleName: record.middleName,
-      gender: record.gender,
+      pat_id: record.pat_id,
+      fname: record.fname,
+      lname: record.lname,
+      mname: record.mname,
+      sex: record.sex,
       age: record.age,
-      ageTime: record.ageTime,
-      address: record.address,
+      householdno: record.householdno,
+      street: record.street,
       sitio: record.sitio,
-      type: record.type,
-      isArchived: record.isArchived,
+      barangay: record.barangay,
+      city: record.city,
+      province: record.province,
+      pat_type: record.pat_type,
+      address: `${record.householdno} ${record.street}, ${record.sitio}, ${record.barangay}`,
+      vaccination_count: record.vaccination_count,  
+  
     }));
   }, [vaccinationRecords]);
+
+
+
 
   // Filter data based on search query
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
-      const searchText = `${record.id} 
-        ${record.firstName} 
-        ${record.lastName} 
-        ${record.address} 
+      const searchText = `${record.pat_id} 
+        ${record.lname} 
+        ${record.fname} 
         ${record.sitio}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
@@ -97,36 +115,23 @@ export default function AllVaccinationRecords() {
 
   // Archive confirmation handler
   const confirmArchiveRecord = async () => {
-    // if (recordToArchive !== null) {
-    //   setIsArchiveConfirmationOpen(false);
-    //   const toastId = toast.loading(
-    //     <div className="flex items-center gap-2">
-    //       <Loader2 className="h-4 w-4 animate-spin" />
-    //       Archiving vaccination record...
-    //     </div>,
-    //     { duration: Infinity }
-    //   );
-    //   try {
-    //     await archiveVaccinationRecord(recordToArchive);
-    //     queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
-    //     toast.success("Vaccination record archived successfully", {
-    //       id: toastId,
-    //       icon: <CircleCheck size={20} className="text-green-500" />,
-    //       duration: 2000,
-    //     });
-    //   } catch (error) {
-    //     console.error("Failed to archive record:", error);
-    //     toast.error("Failed to archive vaccination record", {
-    //       id: toastId,
-    //       duration: 5000,
-    //     });
-    //   } finally {
-    //     setRecordToArchive(null);
-    //   }
-    // }
-  };
+    if (recordToArchive !== null) {
+      try {
+        // Add your archive logic here, e.g., API call to archive the record
+        // await archiveVaccinationRecord(recordToArchive);
 
-  // Columns definition
+        toast.success("Record archived successfully!");
+        queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+      } catch (error) {
+        toast.error("Failed to archive the record.");
+      } finally {
+        setIsArchiveConfirmationOpen(false);
+        setRecordToArchive(null);
+      }
+    }
+  };
+  
+
   const columns: ColumnDef<VaccinationRecord>[] = [
     {
       accessorKey: "id",
@@ -134,7 +139,7 @@ export default function AllVaccinationRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center">
           <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.id}
+            {row.original.pat_id}
           </div>
         </div>
       ),
@@ -151,14 +156,13 @@ export default function AllVaccinationRecords() {
       ),
       cell: ({ row }) => {
         const fullName =
-          `${row.original.lastName}, ${row.original.firstName} ${row.original.middleName}`.trim();
-
+          `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-darkGray">
-                {row.original.gender}, {row.original.age}
+                {row.original.sex}, {row.original.age}
               </div>
             </div>
           </div>
@@ -195,7 +199,16 @@ export default function AllVaccinationRecords() {
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
+          <div className="text-center w-full">{row.original.pat_type}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "vaccination_count",
+      header: "No of Records",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">{row.original.vaccination_count}</div>
         </div>
       ),
     },
@@ -207,9 +220,16 @@ export default function AllVaccinationRecords() {
           <TooltipLayout
             trigger={
               <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-                <Link to={`/invVaccinationRecord/${row.original.id}`}>
-                  <Eye size={15} />
-                </Link>
+               <Link 
+              to="/invVaccinationRecord"
+              state={{
+                params: {
+                  patientData: row.original,  // Pass entire row data
+                }
+              }}
+            >
+              <Eye size={15} />
+            </Link> 
               </div>
             }
             content="View"
@@ -219,7 +239,7 @@ export default function AllVaccinationRecords() {
               <div
                 className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
                 onClick={() => {
-                  setRecordToArchive(row.original.id);
+                  setRecordToArchive(row.original.pat_id);
                   setIsArchiveConfirmationOpen(true);
                 }}
               >
@@ -290,22 +310,7 @@ export default function AllVaccinationRecords() {
             </div>
           </div>
 
-          {/* <div className="w-full sm:w-auto">
-            <DialogLayout
-              trigger={
-                <Button
-                  className="w-full sm:w-auto"
-                >
-                  New Record
-                </Button>
-              }
-              className="sm:max-w-[600px] md:max-w-[800px] lg:max-w-[900px] h-full sm:h-auto"
-              title="Vaccination"
-              mainContent={<VaccinationForm recordType={value} />}
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
-            />
-          </div> */}
+       
 
           <div>
             <Button className="w-full sm:w-auto">

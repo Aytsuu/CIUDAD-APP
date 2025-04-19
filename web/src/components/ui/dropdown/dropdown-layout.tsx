@@ -36,7 +36,7 @@ export default function DropdownLayout({
 }: DropdownProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={cn("border-white focus:outline-none", className)}>
+      <DropdownMenuTrigger asChild className={cn("border-white focus:outline-none", className)}>
         {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>

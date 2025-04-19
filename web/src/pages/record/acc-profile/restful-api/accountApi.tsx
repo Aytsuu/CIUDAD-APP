@@ -1,6 +1,6 @@
 import api from "@/api/api";
 
-export const updatePassword = async() {
+export const updatePassword = async() => {
     try{
 
     }
@@ -9,7 +9,7 @@ export const updatePassword = async() {
     }
 }
 
-export const updateProfilePicture = async(){
+export const updateProfilePicture = async() => {
     try{
         
     }catch{

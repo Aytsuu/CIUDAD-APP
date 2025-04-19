@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card/card";
 import { CircleAlert } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { useAddPosition, useEditPosition } from "./queries/administrationQueries";
+import { useAddPosition } from "./queries/administrationAddQueries";
+import { useEditPosition } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./administrationActionConfig";
 import { Type } from "./administrationEnums";
 

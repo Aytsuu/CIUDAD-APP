@@ -16,10 +16,9 @@ export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-
-  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
   const { data: sitio, isLoading: isLoadingSitio } = useSitio();
   const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format households to populate data table
   const formatHouseholdData = React.useCallback((): HouseholdRecord[] => {
@@ -32,6 +31,7 @@ export default function HouseholdRecords() {
 
       return {
         id: house.hh_id || "-",
+        families: house.family.length ||  "-",
         streetAddress: house.hh_street || "-",
         sitio: sitio?.sitio_name || "-",
         nhts: house.hh_nhts || "-",
@@ -40,13 +40,13 @@ export default function HouseholdRecords() {
           (`${personal.per_lname},
            ${personal.per_fname} 
            ${personal.per_mname ? 
-            personal.per_mname?.slice(0, 1) + '.' : ''
+            personal.per_mname[0] + '.' : ''
           }` || "-"),
         dateRegistered: house.hh_date_registered || "-",
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   }, [households]);
@@ -158,7 +158,7 @@ export default function HouseholdRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={householdColumns(households)}
+            columns={householdColumns(residents, households)}
             data={paginatedHouseholds}
           />
         </div>

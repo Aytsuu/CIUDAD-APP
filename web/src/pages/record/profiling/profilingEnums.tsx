@@ -1,5 +1,5 @@
 export enum Origin {
-    Administration = 'administration',
+    Administration = 'administration'
 }
   
 export enum Type {

@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from .models import Account
-from .serializers import UserAccountSerializer, UserLoginSerializer
+from .serializers import UserAccountSerializer
 from rest_framework.views import APIView
 import uuid
 import os
@@ -15,7 +15,7 @@ from apps.administration.serializers.full import StaffFullSerializer
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.models import Staff
 
-class SignInView(generics.CreateAPIView):
+class SignUpView(generics.CreateAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
     permission_classes = [permissions.AllowAny]

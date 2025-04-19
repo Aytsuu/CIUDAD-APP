@@ -7,7 +7,7 @@ import { ChevronLeft } from "lucide-react"
 import { Link, useLocation, useNavigate } from "react-router"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { FormDateInput } from "@/components/ui/form/form-date-input"
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 // import { Input } from "@mui/material"
 import { Label } from "@radix-ui/react-dropdown-menu"
@@ -394,7 +394,7 @@ const handlePatientSelection = (id: string) => {
                 <FormInput control={form.control} name="spouse.s_lastName" label="NAME OF SPOUSE" placeholder="Last name" className="col-span-1" />
                 <FormInput control={form.control} name="spouse.s_givenName" label="" placeholder="Given name" className="col-span-1 mt-6" />
                 <FormInput control={form.control} name="spouse.s_middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6" />
-                <FormDateInput control={form.control} name="spouse.s_dateOfBirth" label="Date of Birth" />
+                <FormDateTimeInput control={form.control} type="date" name="spouse.s_dateOfBirth" label="Date of Birth" />
                 <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" />
                 <FormInput control={form.control} name="spouse.s_occupation" label="Occupation" placeholder="Occupation" className="col-span-1" />
               </div>

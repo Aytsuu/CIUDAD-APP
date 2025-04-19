@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import {api} from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 
 export const addStaff = async (personalId: string, positionId: string, staffId: string) => {

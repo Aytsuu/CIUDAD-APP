@@ -8,7 +8,7 @@ import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdministrationRecord } from "./administrationTypes";
-import { useFeatures, useStaffs, useResidents } from "./queries/administrationQueries";
+import { useFeatures, useStaffs, useResidents } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function AdministrationRecords() {

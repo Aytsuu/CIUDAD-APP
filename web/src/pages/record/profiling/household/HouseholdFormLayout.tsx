@@ -1,7 +1,6 @@
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocation } from "react-router";
 import HouseholdProfileForm from "./HouseholdProfileForm";
 import { formatResidents, formatSitio } from "../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -13,40 +12,38 @@ import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
 import { useAddHousehold } from "../queries/profilingAddQueries";
+import { useLocation } from "react-router";
 
 export default function HouseholdFormLayout() {
   const location = useLocation();
-  const { user } = React.useRef(useAuth()).current;
-  const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false)
+  const params = React.useMemo(() => location.state?.params, [location.state])
+  const { user } = useAuth();
+  const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));
   const form = useForm<z.infer<typeof householdFormSchema>>({
       resolver: zodResolver(householdFormSchema),
       defaultValues: defaultValues.current,
   });
-  const params = React.useMemo(() => location.state?.params || {}, [location.state]);
-  const sitio = React.useRef(formatSitio(params));
-  const [residents, setResidents] = React.useState(() =>
-    formatResidents(params, true)
+  const { mutateAsync: addHousehold} = useAddHousehold();
+  const [formattedSitio, setSitio] = React.useState(() => formatSitio(params));
+  const [formattedResidents, setFormattedResidents] = React.useState(() =>
+    formatResidents(params)
   );
 
-
-  // Function to update residents after a new household is registered
-  const updateResidents = React.useCallback((newHousehold: any) => {
-    setResidents((prevResidents: any) => {
-      return prevResidents.filter(
-        (resident: any) => resident.id.split(" ")[0] !== newHousehold.rp.rp_id
-      );
-    });
-  }, []);
-
-  const { mutateAsync: addHousehold} = useAddHousehold(updateResidents);
+  React.useEffect(()=>{
+    setFormattedResidents(() =>
+      formatResidents(params)
+    );
+    
+    setSitio(() => formatSitio(params));
+  }, [params.residents, params.households, params.sitio])
 
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
 
-    if (!formIsValid && form.watch("householdHead") === '') {
+    if (!formIsValid || form.watch("householdHead") === '') {
       setInvalidHouseHead(true)
       setIsSubmitting(false);
       toast("Please fill out all required fields", {
@@ -64,6 +61,7 @@ export default function HouseholdFormLayout() {
     setIsSubmitting(false);
     form.reset(defaultValues.current);
   };
+  
 
   return (
     <div className="w-full flex justify-center">
@@ -81,8 +79,8 @@ export default function HouseholdFormLayout() {
               className="grid gap-4"
             >
               <HouseholdProfileForm
-                sitio={sitio.current}
-                residents={residents}
+                sitio={formattedSitio}
+                residents={formattedResidents}
                 isSubmitting={isSubmitting}
                 invalidHouseHead={invalidHouseHead}
                 form={form}

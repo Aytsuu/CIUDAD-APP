@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 import { generateResidentNo } from "@/helpers/generateResidentNo";
@@ -53,74 +53,9 @@ export const addResidentProfile = async (personalId: string, staffId: string) =>
   }
 };
 
-// POST request for mother model 
-export const addMother = async (residentId: string) => {
-  try {
-    const res = await api.post("profiling/mother/", {
-      rp: residentId,
-    });
-
-    return res.data.mother_id;
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-// POST request for father model 
-export const addFather = async (residentId: string) => {
-  try {
-    console.log({
-      rp: residentId,
-    });
-
-    const res = await api.post("profiling/father/", {
-      rp: residentId,
-    });
-
-    return res.data.father_id;
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-// POST request for guardian model 
-export const addGuardian = async (residentId: string) => {
-  try {
-    const res = await api.post("profiling/guardian/", {
-      rp_id: residentId
-    });
-    
-    return res.data.guard_id
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-// POST request for dependent model 
-export const addDependent = (
-  dependentsInfo: Record<string, string>[],
-  familyId: string
-) => {
-  try {
-    dependentsInfo.map((dependent) => {
-      api.post("profiling/dependent/", {
-        rp_id: dependent.id,
-        fam: familyId,
-      });
-
-      addFamilyComposition(familyId, dependent.id);
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
 // POST request for family model 
 export const addFamily = async (
   demographicInfo: Record<string, string>,
-  fatherId: string | null,
-  motherId: string | null,
-  guardId: string | null,
   staffId: string
 ) => {
   try {
@@ -129,11 +64,8 @@ export const addFamily = async (
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
       fam_date_registered: formatDate(new Date()),
-      father_id: fatherId || null,
-      mother_id: motherId || null,
-      guard_id: guardId || null,
       hh_id: demographicInfo.householdNo || null,
-      staff: staffId,
+      staff_id: staffId,
     });
 
     return res.data;
@@ -143,11 +75,12 @@ export const addFamily = async (
 };
 
 // POST request for family_composition model 
-export const addFamilyComposition = async (familyId: string, residentId: string) => {
+export const addFamilyComposition = async (familyId: string, role: string, residentId: string) => {
   try {
     const res = await api.post("profiling/family-composition/", {
-      fam: familyId,
-      rp: residentId,
+      fc_role: capitalize(role),
+      fam_id: familyId,
+      rp_id: residentId,
     });
 
     return res.data
@@ -179,8 +112,24 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
 };
 
 // POST request for business model 
-export const addBusiness = async (businessInfo: Record<string, string>, url: string, staffId: string) => {
+export const addBusiness = async (businessInfo: Record<string, string>, staffId: string) => {
   try {
+    console.log({
+      bus_name: businessInfo.bus_name,
+      bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
+      bus_province: "Cebu",
+      bus_city: "Cebu City",
+      bus_barangay: "San Roque",
+      bus_street: businessInfo.bus_street,
+      bus_respondentLname: businessInfo.bus_respondentLname,
+      bus_respondentFname: businessInfo.bus_respondentFname,
+      bus_respondentMname: businessInfo.bus_respondentMname,
+      bus_respondentSex: businessInfo.bus_respondentSex,
+      bus_respondentDob: businessInfo.bus_respondentDob,
+      bus_date_registered: formatDate(new Date()),
+      sitio_id: businessInfo.sitio,
+      staff_id: staffId,
+    })
     const res = await api.post("profiling/business/", {
       bus_name: businessInfo.bus_name,
       bus_gross_sales: parseFloat(businessInfo.bus_gross_sales),
@@ -193,10 +142,9 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
       bus_respondentMname: businessInfo.bus_respondentMname,
       bus_respondentSex: businessInfo.bus_respondentSex,
       bus_respondentDob: businessInfo.bus_respondentDob,
-      bus_doc_url: url,
       bus_date_registered: formatDate(new Date()),
       sitio_id: businessInfo.sitio,
-      staff: staffId,
+      staff_id: staffId,
     });
 
     return res.data;
@@ -204,5 +152,37 @@ export const addBusiness = async (businessInfo: Record<string, string>, url: str
     console.error(err);
   }
 };
+
+export const addBusinessFile = async (businessId: string, fileId: string) => {
+  try {
+    console.log({
+      bus: businessId,
+      file: fileId
+    })
+    const res = await api.post('profiling/business/file/', {
+      bus: businessId,
+      file: fileId
+    });
+
+    return res.data
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+export const addFile = async (name: string, type: string, path: string, url: string) => {
+  try {
+    const res = await api.post('file/upload/', {
+      file_name: name,
+      file_type: type,
+      file_path: path,
+      file_url: url
+    })
+
+    return res.data
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // ----------------------------------------------------------------------------------------------------------------------------

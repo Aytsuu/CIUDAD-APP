@@ -2,24 +2,19 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import DependentForm from "./DependentForm";
 import { DataTable } from "@/components/ui/table/data-table";
-import {
-  addFather,
-  addMother,
-  addFamily,
-  addFamilyComposition,
-  addDependent,
-  addGuardian
-} from "@/pages/record/profiling/restful-api/profiingPostAPI";
 import { DependentRecord } from "../../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { CircleAlert, CircleCheck, Trash } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router";
+import { replace, useNavigate } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useAuth } from "@/context/AuthContext";
+import { useAddFamily, useAddFamilyComposition } from "@/pages/record/profiling/queries/profilingAddQueries"; 
+import { LoadButton } from "@/components/ui/button/load-button";
 
 export default function DependentsInfoLayout({
   form,
@@ -36,9 +31,15 @@ export default function DependentsInfoLayout({
   dependentsList: DependentRecord[];
   setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
   defaultValues: Record<string, any>;
-  back: () => void;
+
 }) {
+
+  const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const navigate = useNavigate();
+  const { user } = React.useRef(useAuth()).current;
+  const { mutateAsync: addFamily } = useAddFamily();
+  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const dependents = form.getValues("dependentsInfo.list");
@@ -110,82 +111,68 @@ export default function DependentsInfoLayout({
     });
   };
 
-  const registerProfile = async () => { 
+  // const submit = async () => { 
+  //   setIsSubmitting(true);
 
-    if(dependentsList.length === 0){
-      toast('Family Registration', {
-        description: "Must have atleast one dependent.",
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-      })
-      return;
-    }
+  //   if(dependentsList.length === 0){
+  //     toast('Family Registration', {
+  //       description: "Must have atleast one dependent.",
+  //       icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+  //     });
+  //     return;
+  //   }
 
-    try {
-      // Get form values
-      const demographicInfo = form.getValues().demographicInfo;
-      const dependentsInfo = form.getValues().dependentsInfo.list;
+  //   // Get form values
+  //   const demographicInfo = form.getValues().demographicInfo;
+  //   const dependentsInfo = form.getValues().dependentsInfo.list;
 
-      // Store information to the database
-      const motherId = await addMother(selectedParents[0]);
-      const fatherId = await addFather(selectedParents[1]);
-      const guardId = await addGuardian(selectedParents[3]);
-      const familyId = await addFamily(demographicInfo, fatherId, motherId, guardId);
+  //   // Store information to the database
+  //   const family = await addFamily({
+  //     demographicInfo: demographicInfo, 
+  //     staffId: user?.staff.staff_id
+  //   });
 
-      // Automatically add selected mother and father in the family composition
-      addFamilyComposition(familyId, selectedParents[0]);
-      addFamilyComposition(familyId, selectedParents[1]);
+  //   await Promise.all(selectedParents.map( async (parentId, index) => {
+  //     if(parentId) {
+  //       await addFamilyComposition({
+  //         familyId: family.fam_id,
+  //         role: PARENT_ROLES[index],
+  //         residentId: parentId
+  //       })
+  //     }
+  //   }))
 
-      // Store dependents information
-      addDependent(dependentsInfo, familyId);
-    } catch (err) {
-      // Handle errors and provide feedback to the user
-      console.error("Error registering profile:", err);
-      alert(
-        "An error occurred while registering the profile. Please try again."
-      );
-    } finally {
-      // Reset form if all operations are successful
-      form.reset(defaultValues);
+  //   await Promise.all(dependentsInfo.map( async (dependent) => {
+  //     await addFamilyComposition({
+  //       familyId: family.fam_id,
+  //       role: "Dependent",
+  //       residentId: dependent.id.split(" ")[0]
+  //     })
+  //   }))
 
-      // Provide feedback to the user
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
-      });
-    }
-  };
+  //   // Provide feedback to the user
+  //   toast("Record added successfully", {
+  //     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+  //   });
+
+  //   navigate(-1);
+  //   setIsSubmitting(false);
+  //   form.reset(defaultValues);
+  // }
 
   return (
     <div className="flex flex-col min-h-0 h-auto gap-10 md:p-10 rounded-lg overflow-auto">
       <div className="mt-8 flex flex-col justify-end gap-2 sm:gap-3">
         <DependentForm
+          title="Dependents Information"
           form={form}
           residents={residents}
           selectedParents={selectedParents}
           dependents={dependentsList}
-          title="Dependents Information"
         />
         <DataTable data={dependentsList} columns={dependentColumns} />
       </div>
-      {/* <div className="flex justify-end gap-3">
-        <Button variant="outline" className="w-full sm:w-32" onClick={back}>
-          Prev
-        </Button>
-        <ConfirmationModal 
-          trigger={
-            <Button className="w-full sm:w-32">
-              Register
-            </Button>
-          }
-          title="Confirm Registration"
-          description="Do you wish to proceed with the registration?"
-          actionLabel="Confirm"
-          onClick={registerProfile}
-        />
-      </div> */}
+      
     </div>
   );
 }

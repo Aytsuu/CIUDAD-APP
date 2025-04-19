@@ -72,7 +72,7 @@ import { log } from "console";
 export const addVaccineStock = async (vaccineStockData: VaccineStockType, vac_id: number, inv_id: number) => {
   // Calculate available quantity based on solvent type
   const availqty = vaccineStockData.solvent === 'doses' 
-    ? vaccineStockData.qty * (vaccineStockData.dose_ml || 0) 
+    ? vaccineStockData.qty * (vaccineStockData.volume || 0) 
     : vaccineStockData.qty;
 
   try {
@@ -83,7 +83,7 @@ export const addVaccineStock = async (vaccineStockData: VaccineStockType, vac_id
       solvent: vaccineStockData.solvent,
       volume: vaccineStockData.volume || 0,
       qty: vaccineStockData.qty,
-      dose_ml: vaccineStockData.dose_ml || 0,
+      dose_ml: vaccineStockData.volume || 0,
       vacStck_qty_avail: availqty,  // Use the calculated available quantity
       wasted_dose: 0,  // Initialize wasted doses to 0
       expiry_date: vaccineStockData.expiryDate,
@@ -98,6 +98,9 @@ export const addVaccineStock = async (vaccineStockData: VaccineStockType, vac_id
     throw err;
   }
 };
+
+
+
 
 
 

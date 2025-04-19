@@ -3,7 +3,7 @@ import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import ParentsForm from "./ParentsForm";
-import { familyFormSchema } from "@/form-schema/profiling-schema";
+import { familyFormSchema } from "@/form-schema/family-form-schema";
 import { DependentRecord } from "../../profilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -17,8 +17,6 @@ export default function ParentsFormLayout({
   setSelectedMotherId,
   setSelectedFatherId,
 
-  onSubmit,
-  back,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -27,24 +25,11 @@ export default function ParentsFormLayout({
   setSelectedMotherId: React.Dispatch<React.SetStateAction<string>>;
   setSelectedFatherId: React.Dispatch<React.SetStateAction<string>>;
 
-  onSubmit: () => void;
-  back: () => void;
+
+
 }) {
 
-  const submit = React.useCallback(() => {
-    const isValid = Object.values(selectedParents).some(
-      (value) => value !== ""
-    );
-
-    if (isValid) {
-      onSubmit();
-    } else {
-      toast("Family Registration", {
-        description: "Must have atleast one parent.",
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
-    }
-  }, [selectedParents]);
+ 
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">

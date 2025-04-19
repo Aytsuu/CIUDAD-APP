@@ -12,11 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
-
-
-
-from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import sys
@@ -33,7 +28,6 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_'
 
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -48,14 +42,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+    'corsheaders',
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'rest_framework_simplejwt',
-    'rest_framework.authtoken',
-    'corsheaders',
     'apps.account',
+    'apps.file',
+    'apps.drr'
 ]
 
 MIDDLEWARE = [
@@ -90,15 +86,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 
 DATABASES = {
     'default': {
@@ -108,10 +97,6 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-
-    },
-    'Profiling': {
-
     }
 }
 
@@ -153,8 +138,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -174,14 +157,29 @@ REST_FRAMEWORK = {
     ],
 }
 
-# New User Model
+# # New User Model
 AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:5173",
+    "http://localhost:5173",  
+    "http://localhost:3000",  
+    "http://127.0.0.1:8000",  
+    "http://localhost:8000",  
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_EXPOSE_HEADERS = ['Authorization']
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 CORS_ALLOW_HEADERS = ["*"]

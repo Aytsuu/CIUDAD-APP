@@ -20,13 +20,13 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
-import { submitFirstAidStock } from "../REQUEST/FirstAid/FirstAidSubmit";
+// import { submitFirstAidStock } from "../REQUEST/FirstAid/FirstAidSubmit";
 import { toast } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
-
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import {useSubmitFirstAidStock} from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
 interface FirstAidStockFormProps {
   setIsDialog: (isOpen: boolean) => void;
 }
@@ -48,11 +48,13 @@ export default function FirstAidStockForm({
   });
 
   const firstaid = fetchFirstAid();
+  
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] =
     useState<FirstAidStockType | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { mutate: submitFirstAidStock, isPending: isSubmitting } = useSubmitFirstAidStock();
 
   const {
     categories,
@@ -61,37 +63,25 @@ export default function FirstAidStockForm({
     ConfirmationDialogs,
   } = useCategoriesFirstAid();
 
-  const handleSubmit = async (data: FirstAidStockType) => {
-    setIsSubmitting(true);
-    try {
-      await submitFirstAidStock(data, queryClient);
-      toast.success('First Aid item added successfully', {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,     
-      });
-            setIsDialog(false);
-    } catch (error: any) {
-      console.error("Error in handleSubmit:", error);
-      toast.error(error.message || "Failed to add First Aid item", {
-        duration: 3000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSubmit = (data: FirstAidStockType) => {
+    submitFirstAidStock(data, {
+      onSuccess: () => {
+        setIsDialog(false);
+      }
+    });
   };
-
+  
   const onSubmit = (data: FirstAidStockType) => {
     setSubmissionData(data);
     setIsAddConfirmationOpen(true);
   };
-
+  
   const confirmAdd = () => {
     if (submissionData) {
       setIsAddConfirmationOpen(false);
       handleSubmit(submissionData);
     }
-  };
-
+  }
   const currentUnit = form.watch("finv_qty_unit");
   const qty = form.watch("finv_qty") || 0;
   const pcs = form.watch("finv_pcs") || 0;
@@ -136,10 +126,11 @@ export default function FirstAidStockForm({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput
+            <FormDateTimeInput
               control={form.control}
               name="expiryDate"
               label="Expiry Date"
+              type="date"
             />
           </div>
 

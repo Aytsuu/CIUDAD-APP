@@ -17,3 +17,8 @@ class PersonalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Personal
         fields = '__all__'
+
+class BusinessFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BusinessFile
+        fields = '__all__'
