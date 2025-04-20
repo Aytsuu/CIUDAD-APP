@@ -1,7 +1,8 @@
 export type Notification = {
-  id: number;
-  sender: string;
-  message: string;
+  notif_id: number;
+  notif_title: string;
+  notif_message: string;
   created_at: string;
-  profile_image?: string;
-};
+  action_url?: string;
+  is_read: boolean;
+}

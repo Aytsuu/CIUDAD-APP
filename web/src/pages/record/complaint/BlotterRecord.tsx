@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
@@ -12,12 +11,62 @@ import { useMemo } from "react";
 import { BlotterRecordSkeleton } from "./skeleton/blotter-rec-skeleton";
 
 export default function BlotterRecord() {
+  const DEFAULT_PAGE_SIZE = 10;
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSizeInput, setPageSizeInput] = useState(DEFAULT_PAGE_SIZE.toString());
   const [currentPage, setCurrentPage] = useState(1);
   const { data: blotters = [], isLoading, error } = useGetBlotter();
 
   const columns = useMemo(() => blotterColumns(blotters), [blotters]);
+
+  // Filter data based on search query
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return blotters;
+    
+    return blotters.filter((blotter: any) => {
+      // Search through all string and number values in the blotter object
+      return Object.values(blotter).some(value => 
+        value !== null && 
+        value !== undefined && 
+        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [blotters, searchQuery]);
+
+  // Calculate paginated data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredData.slice(startIndex, startIndex + pageSize);
+  }, [filteredData, currentPage, pageSize]);
+
+  // Reset to first page when search query or page size changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, pageSize]);
+
+  // Update pageSizeInput when pageSize changes externally
+  useEffect(() => {
+    setPageSizeInput(pageSize.toString());
+  }, [pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+
+  // Handle page size input change - just update the input field
+  const handlePageSizeInputChange = (e: any) => {
+    setPageSizeInput(e.target.value);
+  };
+
+  const applyPageSize = () => {
+    const newSize = parseInt(pageSizeInput, 10);
+    if (!isNaN(newSize) && newSize > 0) {
+      setPageSize(newSize);
+    } else {
+      // Reset the input to the current valid page size
+      setPageSizeInput(pageSize.toString());
+    }
+  };
 
   if(isLoading){
     return <BlotterRecordSkeleton />;
@@ -27,7 +76,7 @@ export default function BlotterRecord() {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center">
         <p className="text-red-500">Error loading data: {error.message}</p>
-        <Button 
+        <Button
           className="mt-4 bg-buttonBlue hover:bg-buttonBlue/90 text-white"
         >
           Retry
@@ -35,6 +84,11 @@ export default function BlotterRecord() {
       </div>
     );
   }
+
+  // Calculate the actual displayed entries range
+  const entriesStart = filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const entriesEnd = Math.min(currentPage * pageSize, filteredData.length);
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header Section */}
@@ -78,28 +132,41 @@ export default function BlotterRecord() {
           <div className="flex gap-x-2 items-center">
             <p className="text-xs sm:text-sm">Show</p>
             <Input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               className="w-14 h-8"
-              value={pageSize}
-              min="1"
+              value={pageSizeInput}
+              onChange={handlePageSizeInputChange}
+              onBlur={applyPageSize}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  applyPageSize();
+                }
+              }}
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
         </div>
 
         <div className="bg-white">
-          <DataTable columns={blotterColumns(columns)} data={blotters} />
+          <DataTable columns={columns} data={paginatedData} />
         </div>
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         {/* Showing Rows Info */}
-        {/* <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-          {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-        </p> */}
+        <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+          Showing {entriesStart}-{entriesEnd} of {filteredData.length} rows
+        </p>
 
         {/* Pagination */}
-        <div className="w-full sm:w-auto flex justify-center"></div>
+        <div className="w-full sm:w-auto flex justify-center">
+          <PaginationLayout
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
     </div>
   );

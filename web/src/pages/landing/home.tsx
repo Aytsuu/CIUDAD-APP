@@ -1,5 +1,15 @@
+import { useEffect } from "react";
+import { generateToken, messaging } from "@/firebase/firebase";
+import { onMessage } from "firebase/messaging";
 
 export default function Home(){
+    useEffect(() => {
+        generateToken();
+        onMessage(messaging, (payload) => {
+            console.log(payload);
+        } )
+    }, []);
+    
     return (
         <div className='w-full flex flex-col items-center gap-10'>
             <div className="w-[90%] h-[40rem] flex">

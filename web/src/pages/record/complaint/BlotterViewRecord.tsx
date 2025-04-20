@@ -61,6 +61,8 @@ export function BlotterViewRecord() {
         </div>
         <div className="flex justify-end gap-4 mt-6">
           <DialogLayout
+            isOpen={isDialogOpen}
+            onOpenChange={(open) => setIsDialogOpen(open)}
             trigger={
               <Button className="bg-red-600 hover:bg-red-700">
                 Raise Issue
@@ -83,7 +85,7 @@ export function BlotterViewRecord() {
                 <div className="flex justify-end gap-2 mt-6">
                   <Button
                     variant="outline"
-                    onClick={() => setIsSubmitting(false)}
+                    onClick={() => setIsDialogOpen(false)}
                     disabled={isSubmitting}
                   >
                     Cancel

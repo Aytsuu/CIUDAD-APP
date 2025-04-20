@@ -19,6 +19,8 @@ import { MediaUpload } from "@/components/ui/media-upload";
 import { BlotterFormValues, MediaFile } from "./blotter-type";
 import { useMutation } from "@tanstack/react-query";
 import supabase from "@/utils/supabase";
+import ComplaintformSchema from "@/form-schema/complaint-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export function BlotterReport() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -87,13 +89,13 @@ export function BlotterReport() {
       // Submit to Django API
       await postBlotterMutation.mutateAsync(formData, {
         onSuccess: () => {
-          toast("Blotter report submitted successfully");
+          toast("✅     Blotter report submitted successfully");
           navigate("/blotter-record");
         },
         onError: (error: any) => {
           console.error("Submission failed:", error);
           toast(
-            `Failed to submit report: ${
+            `❌     Failed to submit report: ${
               error.response?.data?.message || error.message || "Unknown error"
             }`
           );
@@ -101,7 +103,7 @@ export function BlotterReport() {
       });
     } catch (error) {
       console.error("Submission failed:", error);
-      toast("Failed to submit report");
+      toast("❌     Failed to submit report");
     }
   };
 
@@ -121,7 +123,8 @@ export function BlotterReport() {
               Barangay Report
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              March 09, 2023 12:23
+              Report individuals involved in conflicts, disturbances, or
+              incidents needing barangay action.{" "}
             </p>
           </div>
         </div>
