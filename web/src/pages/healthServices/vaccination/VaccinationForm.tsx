@@ -31,35 +31,38 @@ export default function VaccinationForm() {
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
     "self"
   );
+  
   const [vaccineLoading, setVaccineLoading] = useState(false);
   const location = useLocation();
   const { params } = location.state || {};
   const {patientData} = params || {};
 
-  console.log("Vaccination Form Data:", patientData);
+  // console.log("Vaccination Form Data:", patientData);
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
-      pat_id: "",
+      pat_id: patientData.pat_id || "",
       vaccinetype: "",
-      datevaccinated: "",
-      lname: "",
-      fname: "",
-      mname: "",
-      age: "",
-      sex: "",
-      dob: "",
-      householdno: "",
-      street: "",
-      sitio: "",
-      barangay: "",
-      city: "",
-      province: "",
+      datevaccinated: new Date().toISOString().split("T")[0], // Set default date to today
+      lname: patientData.lname || "",
+      fname: patientData.fname || "",
+      mname: patientData.mname || "",
+      age: patientData.age || "",
+      sex: patientData.sex || "",
+      dob: patientData.dob || "",
+      householdno: patientData.householdno || "",
+      street: patientData.street || "",
+      sitio: patientData.sitio || "",
+      barangay: patientData.barangay || "",
+      city: patientData.city || "",
+      province: patientData.province || "",
       assignto: "",
-      patientType: "",
+      patientType: patientData.patientType || "Resident",
     },
   });
 
+
+  
   const form2 = useForm<VitalSignsType>({
     resolver: zodResolver(VitalSignsSchema),
     defaultValues: {
@@ -70,109 +73,184 @@ export default function VaccinationForm() {
       bpdiastolic: undefined,
     },
   });
+  useEffect(() => {
+    console.log("Form errors:", form.formState.errors);
+  }, [form.formState.errors]);
+
 
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
+    console.log(form.formState.errors);
+  
     try {
       console.log("Submitting Step 1:", data);
+      console.log(form.formState.errors);
+  
       if (assignmentOption === "other") {
-        const serviceResponse = await api.post(
-          "patientrecords/patient-record/",
-          {
-            patrec_type: "Vaccination",
-            pat_id: data.pat_id,
-            created_at: new Date().toISOString(),
+        // Initialize variables to hold IDs that might need to be rolled back
+        let patrec_id: string | null = null;
+        let vacrec_id: string | null = null;
+  
+        try {
+          // Step 1: Create patient record
+          const serviceResponse = await api.post(
+            "patientrecords/patient-record/",
+            {
+              patrec_type: "Vaccination",
+              pat_id: data.pat_id,
+              created_at: new Date().toISOString(),
+            }
+          );
+          patrec_id = serviceResponse.data.patrec_id;
+  
+          // Step 2: Create vaccination record
+          const vaccinationRecordResponse = await api.post(
+            "vaccination/vaccination-record/",
+            {
+              patrec_id: patrec_id,
+            }
+          );
+          vacrec_id = vaccinationRecordResponse.data.vacrec_id;
+  
+          // Step 3: Create vaccination history
+          await api.post("vaccination/vaccination-history/", {
+            vachist_doseNo: "1st dose",
+            vachist_status: "forwarded",
+            vachist_age: data.age,
+            staff_id: 1,
+            vacrec: vacrec_id,
+            vital: null,
+            updated_at: new Date().toISOString(),
+            vacStck: data.vaccinetype,
+            assigned_to: parseInt(data.assignto, 10),
+          });
+  
+          toast.success(
+            `Form assigned to ${data.assignto} for Step 2 completion!`
+          );
+          form.reset();
+        } catch (error) {
+          console.error("Error during submission:", error);
+          
+          // Rollback in reverse order of creation
+          try {
+            if (vacrec_id) {
+              await api.delete(`vaccination/vaccination-record/${vacrec_id}/`);
+              console.log(`Rolled back vaccination record: ${vacrec_id}`);
+            }
+          } catch (deleteError) {
+            console.error("Error rolling back vaccination record:", deleteError);
           }
-        );
-
-        const patrec_id = serviceResponse.data.patrec_id;
-
-        const vaccinationRecordResponse = await api.post(
-          "vaccination/vaccination-record/",
-          {
-            patrec_id: patrec_id,
+  
+          try {
+            if (patrec_id) {
+              await api.delete(`patientrecords/patient-record/${patrec_id}/`);
+              console.log(`Rolled back patient record: ${patrec_id}`);
+            }
+          } catch (deleteError) {
+            console.error("Error rolling back patient record:", deleteError);
           }
-        );
-        const vacrec_id = vaccinationRecordResponse.data.vacrec_id;
-        const staff_id = 1;
-
-        await api.post("vaccination/vaccination-history/", {
-          vachist_doseNo: "1st dose",
-          vachist_status: "forwarded",
-          vachist_age: data.age,
-          staff_id: staff_id,
-          vacrec_id: vacrec_id,
-          vital_id: null,
-          updated_at: new Date().toISOString(),
-          vacStck_id: data.vaccinetype,
-          assigned_to: parseInt(data.assignto, 10),
-        });
-
-        toast.success(
-          `Form assigned to ${data.assignto} for Step 2 completion!`
-        );
-        form.reset();
+  
+          // Re-throw the error to be caught by the outer catch block
+          throw error;
+        }
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      toast.error("Form submission failed. Please check the fields.");
+     
+      toast.error("Form submission failed. Please check the fields.", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
     }
   };
 
   const onSubmitStep2 = async (data: VitalSignsType) => {
+    // Track all created IDs for potential rollback
+    let patrec_id: string | null = null;
+    let vacrec_id: string | null = null;
+    let vital_id: string | null = null;
+  
     try {
-      const serviceResponse = await api.post(  "patientrecords/patient-record/",{
+      // Step 1: Create patient record
+      const serviceResponse = await api.post("patientrecords/patient-record/", {
         patrec_type: "Vaccination",
         pat_id: patientData.pat_id,
         created_at: new Date().toISOString(),
       });
-
-      const patrec_id = serviceResponse.data.patrec_id;
-
-      console.log("Submitting Step 2:", patrec_id);
+      patrec_id = serviceResponse.data.patrec_id;
+  
+      // Step 2: Create vaccination record
       const vaccinationRecordResponse = await api.post(
         "vaccination/vaccination-record/",
-        {
-          patrec_id: patrec_id,
-        }
+        { patrec_id: patrec_id }
       );
-
-      const vacrec_id = vaccinationRecordResponse.data.vacrec_id;
-
+      vacrec_id = vaccinationRecordResponse.data.vacrec_id;
+  
+      // Step 3: Create vital signs record
       const vitalSignsResponse = await api.post("vaccination/vital-signs/", {
         vital_bp_systolic: data.bpsystolic?.toString() || "",
         vital_bp_diastolic: data.bpdiastolic?.toString() || "",
         vital_temp: data.temp?.toString() || "",
-        vital_RR: "",
+        vital_RR: "N/A",
         vital_o2: data.o2?.toString() || "",
         created_at: new Date().toISOString(),
       });
-
-      const vital_id = vitalSignsResponse.data.vital_id;
-
+      vital_id = vitalSignsResponse.data.vital_id;
+  
+      // Step 4: Create vaccination history
       await api.post("vaccination/vaccination-history/", {
         vachist_doseNo: "1st dose",
         vachist_status: "completed",
         vachist_age: form.getValues("age"),
         staff_id: 1,
         serv_id: patrec_id,
-        vacrec_id: vacrec_id,
-        vital_id: vital_id,
-        vacStck_id: form.getValues("vaccinetype"),
+        vacrec: vacrec_id,
+        vital: vital_id,
+        vacStck: form.getValues("vaccinetype"),
         updated_at: new Date().toISOString(),
         assigned_to: null,
       });
-
+  
       toast.success("Vaccination record created successfully!");
       form.reset();
       form2.reset();
       setAssignmentOption("self");
     } catch (error) {
       console.error("Form submission error:", error);
+      
+      // Rollback in reverse order of creation
+      try {
+        if (vital_id) {
+          await api.delete(`vaccination/vital-signs/${vital_id}/`);
+          console.log(`Rolled back vital signs record: ${vital_id}`);
+        }
+      } catch (deleteError) {
+        console.error("Error rolling back vital signs:", deleteError);
+      }
+  
+      try {
+        if (vacrec_id) {
+          await api.delete(`vaccination/vaccination-record/${vacrec_id}/`);
+          console.log(`Rolled back vaccination record: ${vacrec_id}`);
+        }
+      } catch (deleteError) {
+        console.error("Error rolling back vaccination record:", deleteError);
+      }
+  
+      try {
+        if (patrec_id) {
+          await api.delete(`patientrecords/patient-record/${patrec_id}/`);
+          console.log(`Rolled back patient record: ${patrec_id}`);
+        }
+      } catch (deleteError) {
+        console.error("Error rolling back patient record:", deleteError);
+      }
+  
       toast.error("Form submission failed. Please check the form for errors.", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
       });
     }
   };
+
 
   const { options, isLoading } = fetchVaccinesWithStock();
   useEffect(() => {
@@ -231,6 +309,7 @@ export default function VaccinationForm() {
               name="datevaccinated"
               label="Date Vaccinated"
               type="date"
+              readOnly
             />
           </div>
 
@@ -248,21 +327,26 @@ export default function VaccinationForm() {
                 { id: "Transient", name: "Transient" },
                 { id: "Regular", name: "Regular" },
               ]}
+              readOnly
             />
+
             <FormInput
               control={form.control}
               name="lname"
               label="Last Name"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="fname"
               label="First Name"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="mname"
               label="Middle Name"
+              readOnly
             />
           </div>
 
@@ -272,12 +356,14 @@ export default function VaccinationForm() {
               name="dob"
               label="Date of Birth"
               type="date"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="age"
               label="Age"
               type="number"
+              readOnly
             />
             <FormSelect
               control={form.control}
@@ -287,6 +373,7 @@ export default function VaccinationForm() {
                 { id: "female", name: "Female" },
                 { id: "male", name: "Male" },
               ]}
+              readOnly
             />
           </div>
 
@@ -299,31 +386,37 @@ export default function VaccinationForm() {
               control={form.control}
               name="householdno"
               label="Household No."
+              readOnly
             />
             <FormInput
               control={form.control}
               name="street"
               label="Street"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="sitio"
               label="Sitio"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="barangay"
               label="Barangay"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="city"
               label="City"
+              readOnly
             />
             <FormInput
               control={form.control}
               name="province"
               label="Province"
+              readOnly
             />
           </div>
 

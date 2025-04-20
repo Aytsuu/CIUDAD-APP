@@ -13,8 +13,8 @@ class VitalSignsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VaccinationHistorySerializer(serializers.ModelSerializer):
-    vital_signs = VitalSignsSerializer(source='vital_id', read_only=True)
-    vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
+    vital_signs = VitalSignsSerializer(source='vital', read_only=True)
+    vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
 
     class Meta:
         model = VaccinationHistory

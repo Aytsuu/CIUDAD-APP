@@ -49,7 +49,7 @@ export default function IndivVaccinationRecords() {
   const { patientData } = params || {};
   // Now you can use patientData in your component
   console.log("data", patientData); // This will log the entire row data
-  console.log("data", patientData.pat_id); // This will log the entire row data
+  console.log("data", patientData.dob); // This will log the entire row data
 
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
@@ -330,6 +330,8 @@ export default function IndivVaccinationRecords() {
               <div className="space-y-1">
                 <p className="text-sm text-darkGray">Address</p>
                 <p className="font-medium">{patientData.address}</p>
+                <p className="font-medium">{patientData.dob}</p>
+
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-darkGray">Patient Type</p>

@@ -40,6 +40,7 @@ export interface VaccinationRecord {
   pat_type: string;
   address: string;
   vaccination_count: number;
+  dob: string;
 }
 
 export default function AllVaccinationRecords() {
@@ -82,12 +83,13 @@ export default function AllVaccinationRecords() {
         mname: info.per_mname,
         sex: info.per_sex,
         age: calculateAge(info.per_dob).toString(),
-        householdno: "", // optional if not present
+        dob: info.per_dob,
+        householdno: "12", // optional if not present
         street: info.per_address,
-        sitio: "", // optional if not present
-        barangay: "", // optional if not present
-        city: "", // optional if not present
-        province: "", // optional if not present
+        sitio: "Keneme", // optional if not present
+        barangay: "KornDog", // optional if not present
+        city: "dsds", // optional if not present
+        province: "sdsds", // optional if not present
         pat_type: details.pat_type,
         address: `${info.per_address ?? ''}`,
         vaccination_count: record.vaccination_count,
