@@ -7,7 +7,6 @@ import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/treasu
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { toast } from "sonner";
 
@@ -19,35 +18,35 @@ const styles = {
 
 type BudgetPlanPage4FormData = z.infer<typeof CapitalOutlaysAndNonOfficeSchema>;
 
-type Props = {
-    onPrevious3: () => void;
-    onSubmit: () => void;
-    updateFormData: (data: Partial<BudgetPlanPage4FormData>) => void;
-    formData: BudgetPlanPage4FormData;
-};
-
-function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData }: Props) {
+function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData, balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit }: {
+    onPrevious3: () => void,
+    onSubmit: () => void,
+    updateFormData: (data: Partial<BudgetPlanPage4FormData>) => void,
+    formData: BudgetPlanPage4FormData,
+    balance: string,
+    realtyTaxShare: string,
+    taxAllotment: string,
+    clearanceAndCertFees: string,
+    otherSpecificIncome: string,
+    localDevLimit: string,
+    skFundLimit: string,
+    calamityFundLimit: string,
+}) {
     // page 4 budget items
     const budgetItems = [
         { name: "capitalOutlays", label: "Total Capital Outlays" },
         { name: "cleanAndGreen", label: "Clean & Green Environmental" },
         { name: "streetLighting", label: "Street Lighting Project" },
         { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
-        { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
+        { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) Fund" },
         { name: "qrfFund", label: "Quick Response Fund (QRF)" },
         { name: "disasterTraining", label: "Disaster Training" },
         { name: "disasterSupplies", label: "Disaster Supplies" },
     ];
 
-    const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit} = location.state
-
-    const availableResources =
-    (parseFloat(balance) || 0) +
-    (parseFloat(realtyTaxShare) || 0) +
-    (parseFloat(taxAllotment) || 0) +
-    (parseFloat(clearanceAndCertFees) || 0) +
-    (parseFloat(otherSpecificIncome) || 0);
+    const availableResources = parseFloat(balance) + parseFloat(realtyTaxShare) + 
+    parseFloat(taxAllotment) + parseFloat(clearanceAndCertFees) + parseFloat(otherSpecificIncome);
+    console.log('Available Resources:', availableResources)
 
     const [totalOutlays, setTotalOutlays] = useState(0.00);
     const [totalDevFund, settotalDevFund] = useState(0.00);
@@ -58,9 +57,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [isOverLimit, setOverLimit] = useState(false);
 
     const toastId = useRef<string | number | null>(null);
-    const localDevBudgetLimit = taxAllotment * (localDevLimit/100);
-    const skBudgetLimit = availableResources * (skFundLimit/100);
-    const calamityFundBudgetLimit = availableResources * (calamityFundLimit/100);
+    const localDevBudgetLimit = parseFloat(taxAllotment) * (parseFloat(localDevLimit)/100);
+    const skBudgetLimit = availableResources * (parseFloat(skFundLimit)/100);
+    const calamityFundBudgetLimit = availableResources * (parseFloat(calamityFundLimit)/100);
 
     const form = useForm<BudgetPlanPage4FormData>({
         resolver: zodResolver(CapitalOutlaysAndNonOfficeSchema),

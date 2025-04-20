@@ -18,13 +18,13 @@ const styles = {
 
 type BudgetPlanPage1FormData = z.infer<typeof CurrentExpendituresPersonalServicesSchema>;
 
-type Props = {
-    onNext2: () => void;
-    updateFormData: (data: Partial<BudgetPlanPage1FormData>) => void;
-    formData: BudgetPlanPage1FormData;
-};
-
-function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
+function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServicesLimit, actualIncome }:{
+    onNext2: () => void,
+    updateFormData: (data: Partial<BudgetPlanPage1FormData>) => void,
+    formData: BudgetPlanPage1FormData,
+    personalServicesLimit: number,
+    actualIncome: number,
+}) {
     // Page 1 budget items
     const budgetItems = [
         { name: "honorariaOfficials", label: "Honoraria for Officials" },
@@ -38,11 +38,6 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         { name: "leaveCredits", label: "Commutation of Leave Credits" },
     ];
 
-    // receiving the passed values
-    const location = useLocation();
-    const { actualIncome, personalServicesLimit } = location.state;
-
-    // budgetLimit and initializing states for total and balance
     const [total, setTotal] = useState(0);
     const [Balance, setBalance] = useState(0);
     const [isOverLimit, setOverLimit] = useState(false);
@@ -53,7 +48,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         defaultValues: formData,
     });
 
-    // Field Watcher 
+    // Fields Watcher 
     const { watch } = form;
     const formValues = watch();
     const toastId = useRef<string | number | null> (null);
@@ -62,6 +57,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
     useEffect(() => {
         updateFormData(formValues);
     }, [formValues, updateFormData]);
+
 
     useEffect(() => {
         const calculatedTotal = Object.values(formValues).reduce((acc, val) => acc + (Number(val) || 0), 0);
@@ -143,8 +139,12 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                         <div className="flex justify-end p-2">
                             <div className="flex flex-row justify-center gap-[2rem]">
                                 <Label className={styles.formfooter}>Total: {formatNumber(total)}</Label>
-                                <Label className={styles.formfooter}>{formatNumber(personalServicesBudgetLimit)}</Label>
-                                <Label className={styles.formfooter}>{formatNumber(Balance)}</Label>
+                                <Label className={styles.formfooter}>
+                                    {formatNumber(personalServicesBudgetLimit)}
+                                </Label>
+                                <Label className={styles.formfooter}>
+                                    {formatNumber(Balance)}
+                                </Label>
                             </div>
                         </div>
                     </div>

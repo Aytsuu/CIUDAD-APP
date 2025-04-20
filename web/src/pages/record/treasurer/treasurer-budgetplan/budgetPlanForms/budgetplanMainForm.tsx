@@ -16,8 +16,8 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DisplayBreakdown from "../netBreakdownDisplay.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Link } from "react-router-dom";
-import { budgetItemMapping } from "../budget-item-mapper.tsx";
-import { initialFormData1, initialFormData2, initialFormData3, initialFormData4 } from "../formDataInitializer.tsx";
+import { getInitialFormData } from "../budgetPlanFormEditInitializer.tsx";
+import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "../budgetItemDefinition.tsx";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -32,36 +32,6 @@ const styles = {
     highlightLabel: "w-full text-left text-darkGray"
 }; 
 
-const initializeFormDataFromDetails = (details: BudgetPlanDetail[]) => {
-    const formData = {
-      page1: {...initialFormData1},
-      page2: {...initialFormData2},
-      page3: {...initialFormData3},
-      page4: {...initialFormData4}
-    };
-  
-    details.forEach(detail => {
-      // Find the form field name that matches this budget item
-      const fieldName = Object.keys(budgetItemMapping).find(
-        key => budgetItemMapping[key] === detail.dtl_budget_item
-      );
-  
-      if (fieldName) {
-        // Determine which page this field belongs to
-        if (fieldName in initialFormData1) {
-          formData.page1[fieldName] = detail.dtl_proposed_budget.toString();
-        } else if (fieldName in initialFormData2) {
-          formData.page2[fieldName] = detail.dtl_proposed_budget.toString();
-        } else if (fieldName in initialFormData3) {
-          formData.page3[fieldName] = detail.dtl_proposed_budget.toString();
-        } else if (fieldName in initialFormData4) {
-          formData.page4[fieldName] = detail.dtl_proposed_budget.toString();
-        }
-      }
-    });
-  
-    return formData;
-  };
 
 function BudgetPlanForm() {
     const year = new Date().getFullYear()
@@ -70,9 +40,6 @@ function BudgetPlanForm() {
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
             actualIncome, actualRPT, personalServicesLimit, miscExpenseLimit, 
             localDevLimit, skFundLimit, calamityFundLimit, isEdit, id, originalData } = location.state || 0;
-
-    console.log('isEdit:', isEdit);
-    console.log('id:', id)
 
     // Calculating net available resources
     const availableResources =
@@ -86,24 +53,14 @@ function BudgetPlanForm() {
     const [balUnappropriated, setbalUnappropriated] = useState(0.00);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [formData1, setFormData1] = useState(initialFormData1);
-    const [formData2, setFormData2] = useState(initialFormData2);
-    const [formData3, setFormData3] = useState(initialFormData3);
-    const [formData4, setFormData4] = useState(initialFormData4);
+    const initialForms = getInitialFormData(isEdit, originalData?.details);
+    const [formData1, setFormData1] = useState(initialForms.form1);
+    const [formData2, setFormData2] = useState(initialForms.form2);
+    const [formData3, setFormData3] = useState(initialForms.form3);
+    const [formData4, setFormData4] = useState(initialForms.form4);
 
-    if (isEdit && originalData?.budget_detail) {
-        const initializedData = initializeFormDataFromDetails(originalData.budget_detail);
-        
-        setFormData1(initializedData.page1);
-        setFormData2(initializedData.page2);
-        setFormData3(initializedData.page3);
-        setFormData4(initializedData.page4);
-    }
-
-
-    // Auto Calculation of Total Budgetary Obligations and Balance Unappropriated
     useEffect(() => {
-        const sumFormData = (formData: Record<string, any>) =>
+        const sumFormData = (formData: Record<string, any>): number => 
             Object.values(formData)
                 .map((value) => parseFloat(value) || 0)
                 .reduce((acc, curr) => acc + curr, 0);
@@ -142,58 +99,6 @@ function BudgetPlanForm() {
         const toastId = toast.loading('Submitting budget plan...', {
             duration: Infinity  // Keep open until we manually close it
         });
-
-        // Defining budget items for each page
-        const budgetItemsPage1 = [
-            { name: "honorariaOfficials", label: "Honoraria for Officials", category: "Personal Service" },
-            { name: "cashOfficials", label: "Cash Gift for Officials", category: "Personal Service" },
-            { name: "midBonusOfficials", label: "Mid-Year Bonus for Officials", category: "Personal Service" },
-            { name: "endBonusOfficials", label: "Year-End Bonus for Officials", category: "Personal Service" },
-            { name: "honorariaTanods", label: "Honoraria for Tanods", category: "Personal Service" },
-            { name: "honorariaLupon", label: "Honoraria for Lupon Members", category: "Personal Service" },
-            { name: "honorariaBarangay", label: "Honoraria for Barangay Workers", category: "Personal Service" },
-            { name: "prodEnhancement", label: "Productivity Enhancement Incentive", category: "Personal Service" },
-            { name: "leaveCredits", label: "Commutation of Leave Credits", category: "Personal Service" },
-        ];
-    
-        const budgetItemsPage2 = [
-            { name: "travelingExpenses", label: "Traveling Expense", category: "Other Expense" },
-            { name: "trainingExpenses", label: "Training Expenses", category: "Other Expense" },
-            { name: "officeExpenses", label: "Office Supplies Expenses", category: "Other Expense" },
-            { name: "accountableExpenses", label: "Accountable Forms Expenses", category: "Other Expense" },
-            { name: "medExpenses", label: "Drugs and Medicine Expense", category: "Other Expense" },
-            { name: "waterExpenses", label: "Water Expenses", category: "Other Expense" },
-            { name: "electricityExpenses", label: "Electricity Expenses", category: "Other Expense" },
-            { name: "telephoneExpenses", label: "Telephone Expenses", category: "Other Expense" },
-            { name: "memDues", label: "Membership Dues/ Contribution to Organization", category: "Other Expense" },
-            { name: "officeMaintenance", label: "Repair and Maintenance of Office Equipment", category: "Other Expense" },
-            { name: "vehicleMaintenance", label: "Repair and Maintenance of Motor Vehicle", category: "Other Expense" },
-        ];
-    
-        const budgetItemsPage3 = [
-            { name: "fidelityBond", label: "Fidelity Bond Premiums", category: "Other Expense" },
-            { name: "insuranceExpense", label: "Insurance Expenses", category: "Other Expense"  },
-            { name: "gadProg", label: "GAD Program", category: "Other Expense"},
-            { name: "seniorProg", label: "Senior Citizen/ PWD Program", category: "Other Expense" },
-            { name: "juvJustice", label: "BCPC (Juvenile Justice System)", category: "Other Expense" },
-            { name: "badacProg", label: "BADAC Program", category: "Other Expense" },
-            { name: "nutritionProg", label: "Nutrition Program", category: "Other Expense" },
-            { name: "aidsProg", label: "Combating AIDS Program", category: "Other Expense" },
-            { name: "assemblyExpenses", label: "Barangay Assembly Expenses", category: "Other Expense" },
-            { name: "disasterProg", label: "Disaster Response Program", category: "Other Expense" },
-            { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense", category: "Other Expense" },
-        ];
-    
-        const budgetItemsPage4 = [
-            { name: "capitalOutlays", label: "Total Capital Outlays", category: "Capital Outlays" },
-            { name: "cleanAndGreen", label: "Clean & Green Environmental", category: "Non-Office" },
-            { name: "streetLighting", label: "Street Lighting Project", category: "Non-Office" },
-            { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose", category: "Non-Office" },
-            { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) Fund", category: "Sangguniang Kabataan" },
-            { name: "qrfFund", label: "Quick Response Fund (QRF)", category: "LDRRM Fund" },
-            { name: "disasterTraining", label: "Disaster Training", category: "LDRRM Fund" },
-            { name: "disasterSupplies", label: "Disaster Supplies", category: "LDRRM Fund" },
-        ];
     
         // Transform data from each page into the desired format
         const transformData = (formData: Record<string, any>, budgetItems: { name: string; label: string; category: string }[]) => {
@@ -362,6 +267,8 @@ function BudgetPlanForm() {
                         {currentPage === 1 && (
                                 <CreateBudgetPlanPage1
                                 onNext2={handleNext}
+                                personalServicesLimit = {personalServicesLimit}
+                                actualIncome = {actualIncome}
                                 updateFormData={updateFormData}
                                 formData={formData1}
                                 />
@@ -382,6 +289,8 @@ function BudgetPlanForm() {
                                 onNext4={handleNext}    
                                 updateFormData={updateFormData}
                                 formData={formData3}
+                                actualRPT = {actualRPT}
+                                miscExpenseLimit = {miscExpenseLimit}
                             />
                         )}
 
@@ -391,6 +300,14 @@ function BudgetPlanForm() {
                                 onSubmit={onSubmit}
                                 updateFormData={updateFormData}
                                 formData={formData4}
+                                balance = {balance}
+                                taxAllotment = {taxAllotment}
+                                realtyTaxShare = {realtyTaxShare}
+                                clearanceAndCertFees = {clearanceAndCertFees}
+                                otherSpecificIncome = {otherSpecificIncome}
+                                localDevLimit = {localDevLimit}
+                                skFundLimit = {skFundLimit}
+                                calamityFundLimit = {calamityFundLimit}
                             />
                         )}
                     </div>

@@ -108,9 +108,6 @@ function BudgetAllocationForm({form}:{
                             )}
                         />
 
-                        {/* <div className="flex justify-end mt-[20px]">
-                            <Button type="submit">Proceed</Button>
-                        </div> */}
                     </div>
                 </form>
             </Form>
