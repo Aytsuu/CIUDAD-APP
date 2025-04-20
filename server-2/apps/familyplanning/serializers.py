@@ -89,7 +89,7 @@ class ObstetricalSerializer(serializers.ModelSerializer):
         model = FP_Obstetrical_History
         fields = '__all__'     
 
-class FP_FindingsSerializer(serializers.ModelSerializer):
+class FP_PregnancyCheckSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FP_finding
+        model = fp_pregnancy_check
         fields = '__all__'

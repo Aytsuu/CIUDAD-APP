@@ -67,9 +67,9 @@ class FP_ObstetricalView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-class FP_FindingsView(generics.ListCreateAPIView):
-    serializer_class = FP_FindingsSerializer
-    queryset = FP_finding.objects.all()
+class FP_PregnancyCheckView(generics.ListCreateAPIView):
+    serializer_class = FP_PregnancyCheckSerializer
+    queryset = fp_pregnancy_check.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)

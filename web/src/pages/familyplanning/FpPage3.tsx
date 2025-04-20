@@ -35,7 +35,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
   })
 
   const patientId = formData?.pat_id // Assuming you stored it earlier
-  const { data: riskStiData, isLoading: riskLoading, error: riskError } = useRiskStiData(patientId)
+  const { data: riskStiData } = useRiskStiData(patientId)
 
   useEffect(() => {
     if (riskStiData) {
@@ -74,8 +74,6 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
     updateFormData(form.getValues())
   }
 
-  if (riskLoading) return <div>Loading STI info...</div>
-  if (riskError) return <div>Failed to fetch STI data.</div>
 
   return (
     <Card className="w-full">

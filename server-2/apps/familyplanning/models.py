@@ -1,15 +1,17 @@
 from django.db import models
 from .models import *
-from apps.vaccination.models import PatientRecord
+from apps.vaccination.models import PatientRecordSample
 
 class FP_Record(models.Model):
-    client_id = models.BigAutoField(primary_key=True)
+    fprecord_id = models.BigAutoField(primary_key=True)
+    client_id = models.CharField(null=True,blank=True)
     nhts = models.BooleanField(default=False)
     four_ps = models.BooleanField(default=False)
     plan_more_children = models.BooleanField(default=False)
     avg_monthly_income = models.CharField(max_length=15)
     transient = models.BooleanField(default=False)
-    record = models.ForeignKey(PatientRecord, to_field='pat_id', on_delete=models.CASCADE)
+    
+    pat_id = models.ForeignKey(PatientRecordSample, on_delete=models.CASCADE)
 
     
     # philhealth_id = models.CharField(max_length=14)
@@ -18,7 +20,7 @@ class FP_Record(models.Model):
     # personal = models.ForeignKey(Personal, on_delete=models.CASCADE, null=True)
     
     # def patient(self):
-    #     return self.serv_id.pat_id
+    #     return self.serv_id.pat_idz
     
     class Meta:
         db_table = "fp_record"
@@ -32,7 +34,7 @@ class FP_type(models.Model):
     fpt_reason = models.CharField(max_length=20,null=True, blank=True)
     fpt_method_used = models.CharField(max_length=30)
     
-    type_record = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
+    fprecord_id = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
     
     class Meta:
         db_table = "fp_type"
@@ -89,7 +91,7 @@ class RiskSti(models.Model):
     history = models.BooleanField(default=False)
     hiv = models.BooleanField(default=False)
 
-    sti_patient = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    fprecord_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     
     class Meta: 
         db_table = "risk_sti"
@@ -101,7 +103,7 @@ class RiskVaw(models.Model):
     domestic_violence = models.BooleanField(default=False)
     referredTo = models.CharField(max_length=30)
     
-    vaw_patient = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    fprecord_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'risk_vaw'
@@ -124,7 +126,7 @@ class Physical_Exam(models.Model):
     abdomenExamination = models.CharField(max_length=30, choices=ABDOMEN_EXAM_CHOICES)
     extremitiesExamination = models.CharField(max_length=30, choices=EXTREMITIES_EXAM_CHOICES)
 
-    pe_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
+    fprecord_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     
     # vital_id = models.ForeignKey(,on_delete=models.CASCADE)
     # bm_id = models.ForeignKey(,on_delete=models.CASCADE)
@@ -150,7 +152,8 @@ class Pelvic_Exam(models.Model):
     uterinePosition = models.CharField(max_length=20, choices=UTERINE_POSITION_CHOICES)
     uterineDepth = models.CharField(max_length=10, null=True, blank=True)
 
-    pelvic_record = models.ForeignKey(FP_type, on_delete=models.CASCADE)
+    fpt_id = models.ForeignKey(FP_type, on_delete=models.CASCADE)
+    
     class Meta:
         db_table = "pelvic_exam"
         
@@ -162,8 +165,9 @@ class Acknowledgement(models.Model):
     client_name = models.CharField(max_length=50)
     guardian_signature = models.TextField()
     guardian_signature_date = models.DateField()
-    patient_ack_id = models.ForeignKey(PatientRecord,on_delete=models.CASCADE)
-    fpt_record = models.ForeignKey(FP_type,on_delete=models.CASCADE)
+    patient_ack_id = models.ForeignKey(PatientRecordSample,on_delete=models.CASCADE)
+    
+    fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE)
     
     class Meta:
         db_table = "acknowledgement"
@@ -180,7 +184,7 @@ class FP_Obstetrical_History(models.Model):
     fpob_hydatidiform = models.BooleanField(default=False)
     fpob_ectopic_pregnancy = models.BooleanField(default=False)
     
-    fptype_obs = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
+    fprecord_id = models.ForeignKey(FP_Record,on_delete=models.CASCADE)
     # obs_history = models.ForeignKey(Obstetrical_History,on_delete=True)
     # wala pa ma merge kang mayi
     class Meta:
@@ -192,19 +196,19 @@ class Assessment_Record(models.Model):
     as_provider_signature = models.CharField()
     as_provider_name= models.CharField(max_length=35)
     as_followup_date = models.CharField(max_length=15)
-    
-    acknowledge = models.ForeignKey(Acknowledgement,on_delete=models.CASCADE)
-    fpt = models.ForeignKey(FP_type,on_delete=models.CASCADE)
+    medical_findings = models.CharField(max_length=100,default="None")
+    ack_id = models.ForeignKey(Acknowledgement,on_delete=models.CASCADE)
+    # for method used
+    fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE) 
+    # vital signs fk pud
     # staff_id = models.ForeignKey(Staff,on_delete=True)
     
     class Meta:
         db_table = "Assessment"
 
 
-class FP_finding(models.Model):
-    fpf_id = models.AutoField(primary_key=True)
-    fpf_details = models.CharField(max_length=50)
-    
+class fp_pregnancy_check(models.Model):
+    fp_pc_id = models.AutoField(primary_key=True)
     breastfeeding = models.BooleanField(default=False)
     abstained = models.BooleanField(default=False)
     recent_baby = models.BooleanField(default=False)
@@ -215,7 +219,8 @@ class FP_finding(models.Model):
     
     # as_id = models.ForeignKey(Assessment_Record,on_delete=True) 
     # physical_exam = models.ForeignKey(Physical_Exam,on_delete=True)
-    finding_record = models.ForeignKey(FP_type,on_delete=models.CASCADE)
+    # vitals = models.ForeignKey(VitalSigns,on_delete=models.CASCADE)
+    fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE)
     
     class Meta:
-        db_table = 'fp_findings'
+        db_table = 'FP_pregnancy_check'

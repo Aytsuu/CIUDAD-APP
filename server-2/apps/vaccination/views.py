@@ -80,4 +80,3 @@ class InvPatientVaccinationRecordsView(generics.ListAPIView):
             services__serv_name__iexact='Vaccination',  # Filter by service name
             pat_id=self.kwargs['pat_id']  # Filter by patient ID
         )
-

@@ -17,18 +17,19 @@ const ServiceProvisionRecordSchema = z.object({
 
 // Define the pregnancy check schema
 const pregnancyCheck = z.object({
-  bf_no_menses: z.boolean().default(false),
-  abstained_last_period: z.boolean().default(false),
-  had_baby: z.boolean().default(false),
-  period_within: z.boolean().default(false),
-  miscarriage_or_abortion: z.boolean().default(false),
+  breastfeeding: z.boolean().default(false),
+  abstained: z.boolean().default(false),
+  recent_baby: z.boolean().default(false),
+  recent_period: z.boolean().default(false),
+  recent_abortion: z.boolean().default(false),
   using_contraceptive: z.boolean().default(false),
+  fpt_id: z.number().min(1,"FP type is required"),
 });
 
 
 // Define the complete schema for all pages
 export const FamilyPlanningSchema = z.object({
-  // Page 1 fields
+  pat_id: z.string(),
   clientID: z.string().nonempty("Client ID is required"),
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean(),
@@ -194,17 +195,7 @@ export const FamilyPlanningSchema = z.object({
 
   // Pelvic Examination (for IUD Acceptors)
   pelvicExamination: z
-    .enum([
-      "normal",
-      "mass",
-      "abnormal_discharge",
-      "cervical_abnormalities",
-      "warts",
-      "polyp_or_cyst",
-      "inflammation_or_erosion",
-      "bloody_discharge",
-      "not_applicable",
-    ])
+    .enum(["normal","mass","abnormal_discharge","cervical_abnormalities","warts","polyp_or_cyst","inflammation_or_erosion","bloody_discharge","not_applicable",])
     .refine((val) => val !== undefined, { message: "Please select pelvic examination result" }),
 
   // Cervical Examination
@@ -223,21 +214,7 @@ export const FamilyPlanningSchema = z.object({
   // Page 5 fields
   acknowledgement: z.object({
     selectedMethod: z
-      .enum([
-        "coc",
-        "bom/cmm",
-        "lam",
-        "pop",
-        "iud-interval",
-        "iud-postpartum",
-        "bbt",
-        "sdm",
-        "injectable",
-        "stm",
-        "implant",
-        "condom",
-        "others",
-      ])
+      .enum(["coc","bom/cmm","lam","pop","iud-interval","iud-postpartum","bbt","sdm","injectable","stm","implant","condom","others",])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
     clientSignature: z.string().optional(),
     clientName: z.string().optional(),
