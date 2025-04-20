@@ -10,6 +10,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 export const buttonConfig = (
   form: any,
   isAssignmentOpen: boolean,
+  isAllowSubmit: boolean,
   setIsAssignmentOpen: (value: boolean) => void,
   setFormType: React.Dispatch<React.SetStateAction<Type>> | undefined,
   submit: () => void,
@@ -18,7 +19,7 @@ export const buttonConfig = (
   [Origin.Administration]: {
     [Type.Viewing]: null, // No button for viewing in administration
     default: (
-      <DialogLayout
+      isAllowSubmit ? (<DialogLayout
         trigger={<Button className="px-12">Finish</Button>}
         title="Position Assignment"
         description="Assign a position to complete the registration"
@@ -32,7 +33,9 @@ export const buttonConfig = (
         }
         isOpen={isAssignmentOpen}
         onOpenChange={setIsAssignmentOpen}
-      />
+      />) : (
+        <Button type="submit" className="px-12">Finish</Button>
+      )
     ),
   },
   defaultOrigin: {
@@ -107,6 +110,7 @@ export const renderActionButton = ({
   formType,
   origin="defaultOrigin",
   isSubmitting,
+  isAllowSubmit,
   setIsAssignmentOpen,
   setFormType,
   submit,
@@ -117,6 +121,7 @@ export const renderActionButton = ({
   formType: Type;
   origin?: OriginKeys;
   isSubmitting: boolean;
+  isAllowSubmit?: boolean;  
   setIsAssignmentOpen?: (value: boolean) => void;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
@@ -125,6 +130,7 @@ export const renderActionButton = ({
   const config = buttonConfig(
     form,
     isAssignmentOpen || false,
+    isAllowSubmit || false,
     setIsAssignmentOpen || (() => {}),
     setFormType,
     submit,

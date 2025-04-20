@@ -35,7 +35,7 @@ export default function TakeAPhoto() {
       // Compress photo to reduce size
       const compressedImage = await ImageManipulator.manipulateAsync(
         photoUri,
-        [{ resize: { width: 800, height: 1200 } }],
+        [{ resize: { width: 1080, height: 1200 } }],
         {
           compress: 0.8, // 70% compression (0.7)
           format: ImageManipulator.SaveFormat.JPEG,

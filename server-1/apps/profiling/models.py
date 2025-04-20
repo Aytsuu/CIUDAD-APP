@@ -141,7 +141,7 @@ class BusinessFile(models.Model):
 
 class RequestFile(models.Model):
     rf_id = models.BigAutoField(primary_key=True)
-    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE)
+    req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files')
     file = models.ForeignKey('file.File', on_delete=models.CASCADE)
 
     class Meta:

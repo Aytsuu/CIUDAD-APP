@@ -114,7 +114,7 @@ export default function AdministrationRecords() {
                 description:
                   "Ensure that all required fields are filled out correctly before submission.",
                 origin: "administration",
-                residents: residents,
+                residents: residents.filter((res: any) => res.is_staff === false),
               },
             }}
           >

@@ -8,6 +8,7 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 
 export default function ResidentViewForm({ params }: { params: any }) {
+  // ============= STATE INITIALIZATION ===============
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } =
     useResidentForm(params.data?.per);
   const { mutateAsync: updateProfile, isPending: isUpdating } =
@@ -16,11 +17,13 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
 
+  // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
     formType === Type.Viewing && setIsReadOnly(true);
     formType === Type.Editing && setIsReadOnly(false);
   }, [formType]);
 
+  // ==================== HANDLERS ====================
   const submit = async () => {
     setIsSubmitting(true);
 
@@ -53,6 +56,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
   };
 
   return (
+    // ==================== RENDER ====================
     <LayoutWithBack title={params.title} description={params.description}>
       <Card className="w-full p-10">
         <div className="pb-4">

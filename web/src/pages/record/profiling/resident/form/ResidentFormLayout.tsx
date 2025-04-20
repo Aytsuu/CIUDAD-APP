@@ -5,9 +5,11 @@ import ResidentViewForm from "./ResidentViewForm";
 import ResidentRequestForm from "./ResidentRequestForm";
 
 export default function ResidentFormLayout() {
+   // ============= STATE INITIALIZATION ===============
   const { state } = useLocation();
   const { type = Type.Create } = state?.params || {};
 
+  // ==================== RENDER ====================
   switch (type) {
     case Type.Viewing:
       return <ResidentViewForm params={state?.params} />;

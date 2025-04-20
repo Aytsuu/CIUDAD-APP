@@ -228,7 +228,7 @@ export default function ResidentFormLayout() {
               setIsAssignmentOpen={setIsAssignmentOpen}
               setFormType={setFormType}
               submit={submit}
-              handleComboboxChange={handleComboboxChange}
+              onComboboxChange={handleComboboxChange}
             />
           </form>
         </Form>

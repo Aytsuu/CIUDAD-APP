@@ -12,6 +12,7 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
         write_only=True, 
         source='per'
     )
+    is_staff = serializers.SerializerMethodField()
     account = UserAccountSerializer(read_only=True)
     staff = serializers.SerializerMethodField()
     staff_id = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(), write_only=True, source="staff", allow_null=True)
@@ -23,6 +24,10 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
     def get_staff(self, obj):
         from apps.administration.serializers.full import StaffFullSerializer
         return StaffFullSerializer(obj.staff).data
+
+    def get_is_staff(self, obj):
+        return Staff.objects.filter(rp=obj).exists()       
+
 
 class HouseholdFullSerializer(serializers.ModelSerializer):
     sitio = SitioSerializer(read_only=True)

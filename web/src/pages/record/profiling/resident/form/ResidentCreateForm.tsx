@@ -10,13 +10,39 @@ import { useAuth } from "@/context/AuthContext";
 import { Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
+import { formatResidents } from "../../profilingFormats";
 
 export default function ResidentCreateForm({ params }: { params: any }) {
+  // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  const { form, defaultValues, handleSubmitSuccess, handleSubmitError } = useResidentForm();
+  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('',params.origin);
   const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: addResidentProfile, isPending: isCreating } = useAddResidentProfile(params);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
+  const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
+  const formattedResidents = React.useMemo(() => {
+    return formatResidents(params);
+  }, [params.residents]);
+
+  // ================== SIDE EFFECTS ==================
+    React.useEffect(() => {
+      // Change submit button state based on form values
+      if(!checkDefaultValues(form.getValues(), defaultValues)) {
+        setIsAllowSubmit(true);
+      } else {
+        setIsAllowSubmit(false);
+      }
+    }, [form.watch()])
+
+  // ==================== HANDLERS ====================
+  const handleComboboxChange = React.useCallback(() => { 
+    const data = params.residents.find(
+      (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
+    );
+
+    populateFields(data?.per);
+  }, [form.watch("per_id")]);
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -46,6 +72,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   };
 
   return (
+    // ==================== RENDER ====================
     <LayoutWithBack title={params.title} description={params.description}>
       <Card className="w-full p-10">
         <div className="pb-4">
@@ -53,16 +80,25 @@ export default function ResidentCreateForm({ params }: { params: any }) {
           <p className="text-xs text-black/50">Fill out all necessary fields</p>
         </div>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(submit)}
+        <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm
+              formattedResidents={formattedResidents} // For combobox
               form={form}
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
               isReadOnly={false}
+              isAllowSubmit={isAllowSubmit}
+              isAssignmentOpen={isAssignmentOpen} 
+              setIsAssignmentOpen={setIsAssignmentOpen}
+              origin={params.origin}
+              onComboboxChange={handleComboboxChange}
             />
           </form>
         </Form>

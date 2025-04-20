@@ -18,7 +18,11 @@ export const useResidentForm = (defaultData?: any, origin?: string) => {
   });
 
   React.useEffect(() => {
-    const resident = defaultData;
+    populateFields(defaultData);
+  }, [defaultData])
+
+  const populateFields = React.useCallback((values: Record<string, any>) => {
+    const resident = values;
     const fields = [
       {
         key: "per_id",
@@ -27,7 +31,7 @@ export const useResidentForm = (defaultData?: any, origin?: string) => {
             ? String(form.watch("per_id"))
             : String(resident?.per_id) || "",
       },
-      { key: "per_lname", value: resident?.per_lname },
+      { key: "per_lname", value: resident?.per_lname || ""},
       { key: "per_fname", value: resident?.per_fname || "" },
       { key: "per_mname", value: resident?.per_mname || "" },
       { key: "per_suffix", value: resident?.per_suffix || "" },
@@ -95,5 +99,6 @@ export const useResidentForm = (defaultData?: any, origin?: string) => {
     checkDefaultValues,
     handleSubmitSuccess,
     handleSubmitError,
+    populateFields
   };
 };

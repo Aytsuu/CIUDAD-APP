@@ -7,6 +7,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import React from "react";
+import { Combobox } from "@/components/ui/combobox";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
@@ -17,11 +18,12 @@ type PersonalInfoFormProps = {
   origin?: Origin;
   isSubmitting: boolean;
   isReadOnly: boolean;
+  isAllowSubmit?: boolean;
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
   reject?: () => void;
-  handleComboboxChange?: () => void;  
+  onComboboxChange?: () => void;  
 };
 
 // ==================== CONSTANTS ====================
@@ -39,22 +41,37 @@ const MARITAL_STATUS_OPTIONS = [
 
 // ==================== COMPONENT ====================
 export default function PersonalInfoForm({
+  formattedResidents,
   form,
   formType,
   isAssignmentOpen,
   origin,
   isSubmitting = false,
   isReadOnly = false,
+  isAllowSubmit,
   setIsAssignmentOpen,
   setFormType,
   submit,
   reject,
+  onComboboxChange,
 }: PersonalInfoFormProps) {
-  const { control } = form;
+  const { control, setValue, watch } = form;
 
   // ==================== RENDER ====================
   return (
     <>
+      {origin === Origin.Administration && formattedResidents && (
+        <Combobox
+          options={formattedResidents}
+          value={watch("per_id")}
+          onChange={(value) => {
+            setValue("per_id", value);
+            onComboboxChange && onComboboxChange();
+          }}
+          placeholder="Select a resident"
+          emptyMessage="No resident found"
+        />
+      )}
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <FormInput
@@ -152,6 +169,7 @@ export default function PersonalInfoForm({
           formType,
           origin,
           isSubmitting,
+          isAllowSubmit,
           setIsAssignmentOpen,
           setFormType,
           submit,
