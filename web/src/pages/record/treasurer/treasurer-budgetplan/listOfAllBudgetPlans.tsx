@@ -1,41 +1,33 @@
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Eye, Trash, ArrowUpDown, Search, CircleCheck } from 'lucide-react';
+import { Eye, Trash, ArrowUpDown, Search } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import CreateBudgetPlanHeader from "./budgetHeaderAndAllocationForms/budgetHeaderForm";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteBudgetPlan } from "./restful-API/budgetPlanDeleteAPI";
-import { getBudgetPlan } from "./restful-API/budgetplanGetAPI";
 import { Skeleton } from "@mui/material";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { toast } from "sonner";
+import { useDeleteBudgetPlan } from "./queries/budgetPlanDeleteQueries";
+import { usegetBudgetPlan, type BudgetPlanType } from "./queries/budgetplanFetchQueries";
 
-export type BudgetPlan = {
-    plan_id: number,
-    plan_year: string,
-    plan_issue_date: string,
-}
 
 function BudgetPlan() {
     const [currentPage, setCurrentPage] = useState(1);
-    const queryClient = useQueryClient();
     const totalPages = 10;
 
     
-    const { data: budgetPlans, isLoading: isLoadingBudgetPlan } = useQuery<BudgetPlan[]>({
-        queryKey: ['plan'],
-        queryFn: getBudgetPlan,
-        refetchOnMount: true,
-        staleTime: 0
-    });
+    const { mutate: deletePlan } = useDeleteBudgetPlan();
+    
+    
+    const handleDelete = (plan_id: number) => {
+        deletePlan(plan_id);
+    };
+
+    const { data: fetchedData = [], isLoading } = usegetBudgetPlan();
 
     // loading screen
-    if (isLoadingBudgetPlan) {
+    if (isLoading) {
         return (
             <div className="w-full h-full">
                 <Skeleton className="h-10 w-1/6 mb-3" />
@@ -46,29 +38,8 @@ function BudgetPlan() {
         );
     }
 
-    // delete budgetplan function
-    const handleDelete = async (planId: number) => {
-        try {
-            const toastId = toast.loading("Deleting budget plan...");
-            const success = await deleteBudgetPlan(planId);
-            
-            if (success) {
-                toast.success("Budget Plan deleted successfully", {
-                    id: toastId,
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-                });
-                queryClient.invalidateQueries({queryKey: ['plan']});
-            } else {
-                toast.error("Failed to delete budget plan", { id: toastId });
-            }
-        } catch (error) {
-            toast.error("An error occurred while deleting the budget plan");
-            console.error("Delete error:", error);
-        }
-    };
-
     // Table Columns
-    const columns: ColumnDef<BudgetPlan>[] = [
+    const columns: ColumnDef<BudgetPlanType>[] = [
         { 
             accessorKey: "plan_year",
             header: ({ column }) => (
@@ -147,16 +118,7 @@ function BudgetPlan() {
                     />
                     <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> 
                 </div>
-                
-                {/* <DialogLayout
-                    trigger={<div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>}
-                    className=""
-                    title="Create Budget Plan Header"
-                    description="Fill out the form to create a new budget plan header."
-                    mainContent={
-                        <CreateBudgetPlanHeader/>
-                    }
-                /> */}
+            
                 <Link to="/header-and-allocation-form" state={({isEdit : false})}>
                     <div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>
                 </Link>
@@ -170,7 +132,7 @@ function BudgetPlan() {
                     <p className="text-xs sm:text-sm">Entries</p>
                 </div>                              
 
-                <DataTable columns={columns} data={budgetPlans || []} />
+                <DataTable columns={columns} data={fetchedData || []} />
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

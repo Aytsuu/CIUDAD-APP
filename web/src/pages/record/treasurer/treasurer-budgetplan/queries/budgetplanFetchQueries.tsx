@@ -1,47 +1,26 @@
-// import { useQuery } from "@tanstack/react-query";
-// import { getHeaderandAllocation } from "../restful-API/budgetplanGetAPI";
-// import { getBudgetDetails } from "../restful-API/budgetplanGetAPI";
+import { useQuery } from "@tanstack/react-query";
+import { getBudgetPlan } from "../restful-API/budgetplanGetAPI";
+import { getBudgetDetails } from "../restful-API/budgetplanGetAPI";
+import { BudgetPlanDetail } from "../budgetPlanInterfaces"; 
+import { BudgetPlan } from "../budgetPlanInterfaces";
 
-// export type HeaderandAllocation = {
-//     plan_id: number;
-//     plan_year: string;
-//     plan_actual_income: number;
-//     plan_rpt_income: number;
-//     plan_balance: number;
-//     plan_tax_share: number;
-//     plan_tax_allotment: number;
-//     plan_cert_fees: number;
-//     plan_other_income: number;
-//     plan_budgetaryObligations: number;
-//     plan_balUnappropriated: number;
-//     plan_issue_date: string;
-//     plan_personalService_limit: number,
-//     plan_miscExpense_limit: number,
-//     plan_localDev_limit: number,
-//     plan_skFund_limit: number,
-//     plan_calamityFund_limit: number,
-//     budget_detail: BudgetPlanDetail[];
-// }
+export type BudgetPlanType = BudgetPlan
 
-// export type BudgetPlanDetail = {
-//     dtl_id: number;
-//     dtl_budget_item: string;
-//     dtl_proposed_budget: number;
-//     dtl_budget_category: string;
-//     plan: number; 
-// }
+export const usegetBudgetPlan = () => {
+    return useQuery<BudgetPlanType[]>({
+        queryKey: ["budgetPlan"], 
+        queryFn: () => getBudgetPlan(),
+        staleTime: 1000 * 60 * 30,
+    });
+};
 
 
-// export const HeaderandAllocationQuery = (planId: string) => {
-//     return useQuery<HeaderandAllocation>({
-//         queryKey: ['budgetPlan', planId],
-//         queryFn: async () => {
-//             if (!planId) return {} as HeaderandAllocation;
-//             return await getHeaderandAllocation(planId);
-//         },
-//         enabled: !!planId,
-//         staleTime: 1000 * 60 * 30,
-//     });
-// }
+export type BudgetPlanDetailType = BudgetPlanDetail
 
-
+export const usegetBudgetPlanDetail = (plan_id: string) => {
+    return useQuery<BudgetPlanType>({
+        queryKey : ['budgetDetails', plan_id],
+        queryFn: () => getBudgetDetails(plan_id!),
+        staleTime: 1000 * 60 * 30,
+    })
+}

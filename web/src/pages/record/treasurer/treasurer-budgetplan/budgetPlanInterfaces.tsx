@@ -17,7 +17,7 @@ export interface BudgetPlan {
     plan_localDev_limit: number,
     plan_skFund_limit: number,
     plan_calamityFund_limit: number,
-    budget_detail: BudgetPlanDetail[];
+    details: BudgetPlanDetail[];
 }
 
 export interface BudgetPlanDetail {

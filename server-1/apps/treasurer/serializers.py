@@ -5,6 +5,9 @@ class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Budget_Plan_Detail
         fields = '__all__'
+        extra_kwargs = {
+            'plan': {'required': False}  # Make plan optional for updates
+        }
 
 class  Budget_HeaderSerializer(serializers.ModelSerializer):
     details = serializers.SerializerMethodField()
