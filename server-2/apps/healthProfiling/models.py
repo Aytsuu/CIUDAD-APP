@@ -120,7 +120,7 @@ class HealthRelatedDetails(models.Model):
 
 #     class Meta:
 #         db_table = 'health_related_details'
-
+ 
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
     # dep = models.ForeignKey(Dependent, on_delete=models.CASCADE)

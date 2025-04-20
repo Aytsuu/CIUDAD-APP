@@ -4,7 +4,8 @@ from apps.administration.models import Staff
 
 class ResidentProfileMinimalSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
-
+    
+    
     class Meta:
         model = ResidentProfile
         fields = '__all__'
@@ -50,3 +51,5 @@ class FCWithFamilyDataSerializer(serializers.ModelSerializer):
     class Meta: 
         model = FamilyComposition
         fields = ['fc_role', 'fam']
+        
+        

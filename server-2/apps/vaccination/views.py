@@ -6,11 +6,11 @@ from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
 from django.db.models import Count
+from apps.patientrecords.models import Patient
  
- 
-class PatientRecordView(generics.ListCreateAPIView):
-    serializer_class = PatientRecordSerializer
-    queryset  =PatientRecordSample.objects.all()
+# class PatientRecordView(generics.ListCreateAPIView):
+#     serializer_class = PatientRecordSerializer
+#     queryset  =PatientRecordSample.objects.all()
    
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
@@ -27,15 +27,15 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
     queryset  =VaccinationHistory.objects.all()
    
    
-class ServicesRecordsView(generics.CreateAPIView):
-    serializer_class = ServicesRecordsSerializer
-    queryset  =ServicesRecords.objects.all()
+# class ServicesRecordsView(generics.CreateAPIView):
+#     serializer_class = ServicesRecordsSerializer
+#     queryset  =ServicesRecords.objects.all()
    
 
 
-class PatientRecordView(generics.ListCreateAPIView):
-    queryset = PatientRecordSample.objects.all()
-    serializer_class = PatientRecordSerializer
+# class PatientRecordView(generics.ListCreateAPIView):
+#     queryset = PatientRecordSample.objects.all()
+#     serializer_class = PatientRecordSerializer
    
    
    
@@ -48,16 +48,21 @@ class PatientRecordView(generics.ListCreateAPIView):
 #         return ServicesRecords.objects.filter(
 #     serv_name__iexact='Vaccination'
 #     ).order_by('pat_id').distinct('pat_id')
-
-
+ 
 
 
 
 class PatientVaccinationRecordsView(generics.ListAPIView):
-    serializer_class = PatientWithVaccinationSerializer
+    
+    serializer_class = PatientVaccinationRecordSerializer
+    queryset = Patient.objects.all()
+ 
 
-    def get_queryset(self):
-        return PatientRecordSample.objects.all()
+# class PatientVaccinationRecordsView(generics.ListAPIView):
+#     serializer_class = PatientWithVaccinationSerializer
+
+#     def get_queryset(self):
+#         return PatientRecordSample.objects.all()
 
 # class PatientVaccinationRecordsView(generics.ListAPIView):
 #     serializer_class = PatientRecordSerializer
@@ -69,15 +74,15 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
 #         ).distinct()
        
 # View ALl RECORDS
-class InvPatientVaccinationRecordsView(generics.ListAPIView):
-    serializer_class = PatientRecordSerializer
-    lookup_field = 'pat_id'
+# class InvPatientVaccinationRecordsView(generics.ListAPIView):
+#     serializer_class = PatientRecordSerializer
+#     lookup_field = 'pat_id'
 
 
-    def get_queryset(self):
-        # Using filter to return all records for the given pat_id and vaccination service
-        return PatientRecordSample.objects.filter(
-            services__serv_name__iexact='Vaccination',  # Filter by service name
-            pat_id=self.kwargs['pat_id']  # Filter by patient ID
-        )
+#     def get_queryset(self):
+#         # Using filter to return all records for the given pat_id and vaccination service
+#         return PatientRecordSample.objects.filter(
+#             services__serv_name__iexact='Vaccination',  # Filter by service name
+#             pat_id=self.kwargs['pat_id']  # Filter by patient ID
+#         )
 

@@ -7,8 +7,8 @@ from .serializers import *
 from datetime import datetime
 from django.db.models import Count
  
-class PatientRecordsView(generics.ListAPIView):
+
+class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer
     queryset = PatientRecord.objects.all()
-
 

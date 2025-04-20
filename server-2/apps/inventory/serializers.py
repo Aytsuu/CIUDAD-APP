@@ -245,17 +245,13 @@ class VacccinationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = VaccineList
         fields = '__all__'
-        
+         
 class VaccineStockSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     vaccinelist = VacccinationListSerializer(source='vac_id', read_only = True)
         # Keep this only for write
-    vac_id = serializers.PrimaryKeyRelatedField(
-        queryset=VaccineList.objects.all(), write_only=True
-    )
-    inv_id = serializers.PrimaryKeyRelatedField(
-        queryset=Inventory.objects.all(),write_only=True
-    )
+    vac_id = serializers.PrimaryKeyRelatedField(queryset=VaccineList.objects.all(), write_only=True)
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all(),write_only=True)
     class Meta:
         model = VaccineStock
         fields = '__all__'

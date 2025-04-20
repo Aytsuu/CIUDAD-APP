@@ -2,14 +2,11 @@ from rest_framework import serializers
 from .models import *
 from datetime import date
 from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
+from apps.patientrecords.models import Patient,PatientRecord
+from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
 # serializers.py
 
 
-class PatientRecSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PatientRecordSample
-        fields = '__all__'
-        
 class VitalSignsSerializer(serializers.ModelSerializer):
     class Meta:
         model = VitalSigns
@@ -30,60 +27,23 @@ class VaccinationRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PatientRecordSerializer(serializers.ModelSerializer):
-   
-    class Meta:
-        model = PatientRecordSample
-        fields = '__all__'
-        
-class ServicesRecordsSerializer(serializers.ModelSerializer):
-    vaccination_records = VaccinationRecordSerializer(many=True, read_only=True)
-    patient_detail = PatientRecordSerializer(source='pat_id', read_only=True)  # Changed from many=True to source='pat_id'
+# VACCCINATION RECORD 
+class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
+    # vaccination_services = serializers.SerializerMethodField()
     vaccination_count = serializers.SerializerMethodField()
+    patient_details = PatientSerializer(source='*', read_only=True)
 
     class Meta:
-        model = ServicesRecords
+        model = Patient  # This model should be Patient
         fields = '__all__'
-    def get_vaccination_count(self, obj):
-        # Count all services related to this patient where the service name is 'Vaccination'
-        return ServicesRecords.objects.filter(
-            pat_id=obj.pat_id,
-            serv_name__iexact='Vaccination'
-        ).count()
 
-
-# ALL
-
-# class PatientWithVaccinationSerializer(serializers.ModelSerializer):
-#     vaccination_services = serializers.SerializerMethodField()
-#     vaccination_count = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = PatientRecord
-#         fields = '__all__'  # or list fields explicitly like ['id', 'fname', ...]
-    
-#     def get_vaccination_services(self, obj):
-#         # Get related ServicesRecords for this patient, filtered to "Vaccination"
-#         records = obj.services.filter(serv_name__iexact='Vaccination')
-#         return ServicesRecordsSerializer(records, many=True).data
-
-#     def get_vaccination_count(self, obj):
-#         return obj.services.filter(serv_name__iexact='Vaccination').count()
-
-
-
-class PatientWithVaccinationSerializer(serializers.ModelSerializer):
-    vaccination_services = serializers.SerializerMethodField()
-    vaccination_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = PatientRecordSample
-        fields = '__all__'  # or list fields explicitly like ['id', 'fname', ...]
-    
-    def get_vaccination_services(self, obj):
-        # Get related ServicesRecords for this patient, filtered to "Vaccination"
-        records = obj.services.filter(serv_name__iexact='Vaccination')
-        return ServicesRecordsSerializer(records, many=True).data
+    # def get_vaccination_services(self, obj):
+    #     # Access the related Patient object and filter PatientRecords based on "Vaccination"
+    #     records = obj.patient_records.filter(patrec_type__iexact='Vaccination')
+    #     return PatientRecordSerializer(records, many=True).data
 
     def get_vaccination_count(self, obj):
-        return obj.services.filter(serv_name__iexact='Vaccination').count()
+        # Count the related PatientRecords based on "Vaccination"
+        return obj.patient_records.filter(patrec_type__iexact='Vaccination').count()
+
+

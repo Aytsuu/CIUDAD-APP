@@ -24,12 +24,23 @@ import { Toaster } from "sonner";
 import { CircleCheck, Loader2, ChevronLeft } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { useLocation, useParams } from "react-router-dom";
+// Make sure to add these imports at the top of your file
+import {
+  User,
+  Home,
+  FileText,
+  MapPin,
+  Edit,
+  Fingerprint,
+  Syringe,
+  UserRound,
+} from "lucide-react";
+
 export interface VaccinationRecord {
   vachist_id: number;
   vachist_doseNo: string;
   vachist_status: string;
   vachist_age: string;
- 
 }
 
 export default function IndivVaccinationRecords() {
@@ -37,8 +48,8 @@ export default function IndivVaccinationRecords() {
   const { params } = location.state || {};
   const { patientData } = params || {};
   // Now you can use patientData in your component
-  console.log("data",patientData); // This will log the entire row data
-  console.log("data",patientData.pat_id); // This will log the entire row data
+  console.log("data", patientData); // This will log the entire row data
+  console.log("data", patientData.pat_id); // This will log the entire row data
 
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
@@ -52,32 +63,28 @@ export default function IndivVaccinationRecords() {
   const queryClient = useQueryClient();
 
   // Fetch vaccination records from API
-  const { data: vaccinationRecords, isLoading } = useQuery<VaccinationRecord[]>({
-    queryKey: ["patientVaccinationDetails", patientData.pat_id],
-    queryFn: () => getVaccinationRecordById(patientData.pat_id),
-    refetchOnMount: true,
-    staleTime: 0,
-
-  });
+  const { data: vaccinationRecords, isLoading } = useQuery<VaccinationRecord[]>(
+    {
+      queryKey: ["patientVaccinationDetails", patientData.pat_id],
+      queryFn: () => getVaccinationRecordById(patientData.pat_id),
+      refetchOnMount: true,
+      staleTime: 0,
+    }
+  );
 
   console.log("pat:", patientData.pat_id);
-
 
   // Format the data for display
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
 
     return vaccinationRecords.map((record: any) => ({
-     vachist_id: record.vachist_id,
-     vachist_doseNo: record.vachist_doseNo,
-     vachist_status: record.vachist_status,
-     vachist_age: record.vachist_age,
-
-
+      vachist_id: record.vachist_id,
+      vachist_doseNo: record.vachist_doseNo,
+      vachist_status: record.vachist_status,
+      vachist_age: record.vachist_age,
     }));
   }, [vaccinationRecords]);
-
-
 
   // Filter data based on search query
   const filteredData = React.useMemo(() => {
@@ -114,147 +121,154 @@ export default function IndivVaccinationRecords() {
       }
     }
   };
- 
-const columns: ColumnDef<VaccinationRecord>[] = [
-  {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-          {row.index + 1}
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "patient",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Patient <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const fullName =
-        `${row.original.vachist_age}, ${row.original.vachist_age} ${row.original.vachist_age}`.trim();
-      return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {row.original.vachist_age}, {row.original.vachist_age}
-            </div>
+
+  const columns: ColumnDef<VaccinationRecord>[] = [
+    {
+      accessorKey: "id",
+      header: "#",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+            {row.index + 1}
           </div>
         </div>
-      );
+      ),
     },
-  },
-  {
-    accessorKey: "vital_signs",
-    header: "Vital Signs",
-    cell: ({ row }) => {
-      // const latestVital = row.original.vital_signs.length > 0 
-      //   ? row.original.vital_signs[row.original.vital_signs.length - 1]
-      //   : null;
-      
-      // return (
-      //   <div className="flex flex-col items-center">
-      //     {latestVital ? (
-      //       <>
-      //         <div className="text-sm">
-      //           <span className="font-medium">Dose {latestVital.doseNo}</span>
-      //         </div>
-      //         <div className="text-xs">
-      //           BP: {latestVital.bp} | Temp: {latestVital.temp}
-      //         </div>
-      //       </>
-      //     ) : (
-      //       <span className="text-gray-400 text-sm">No vitals</span>
-      //     )}
-      //   </div>
-      // );
+    {
+      accessorKey: "patient",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Patient <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const fullName =
+          `${row.original.vachist_age}, ${row.original.vachist_age} ${row.original.vachist_age}`.trim();
+        return (
+          <div className="flex justify-start min-w-[200px] px-2">
+            <div className="flex flex-col w-full">
+              <div className="font-medium truncate">{fullName}</div>
+              <div className="text-sm text-darkGray">
+                {row.original.vachist_age}, {row.original.vachist_age}
+              </div>
+            </div>
+          </div>
+        );
+      },
     },
-  },
-  // ... keep all your existing columns exactly as they are ...
-  {
-    accessorKey: "address",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Address <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.vachist_age}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "sitio",
-    header: "Sitio",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "vaccination_count",
-    header: "No of Records",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        <TooltipLayout
-          trigger={
-            <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-              <Link to={`/invVaccinationRecord/${row.original.vachist_doseNo}`}>
-                <Eye size={15} />
-              </Link>
-            </div>
-          }
-          content="View"
-        />
-        <TooltipLayout
-          trigger={
-            <div
-              className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-              onClick={() => {
-                setRecordToArchive(row.original.vachist_id);
-                setIsArchiveConfirmationOpen(true);
-              }}
-            >
-              <Trash size={16} />
-            </div>
-          }
-          content="Archive"
-        />
-      </div>
-    ),
-  },
-];
+    {
+      accessorKey: "vital_signs",
+      header: "Vital Signs",
+      cell: ({ row }) => {
+        // const latestVital = row.original.vital_signs.length > 0
+        //   ? row.original.vital_signs[row.original.vital_signs.length - 1]
+        //   : null;
+        // return (
+        //   <div className="flex flex-col items-center">
+        //     {latestVital ? (
+        //       <>
+        //         <div className="text-sm">
+        //           <span className="font-medium">Dose {latestVital.doseNo}</span>
+        //         </div>
+        //         <div className="text-xs">
+        //           BP: {latestVital.bp} | Temp: {latestVital.temp}
+        //         </div>
+        //       </>
+        //     ) : (
+        //       <span className="text-gray-400 text-sm">No vitals</span>
+        //     )}
+        //   </div>
+        // );
+      },
+    },
+    // ... keep all your existing columns exactly as they are ...
+    {
+      accessorKey: "address",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Address <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-start min-w-[200px] px-2">
+          <div className="w-full truncate">{row.original.vachist_age}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "sitio",
+      header: "Sitio",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[120px] px-2">
+          <div className="text-center w-full">
+            {row.original.vachist_doseNo}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">
+            {row.original.vachist_doseNo}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "vaccination_count",
+      header: "No of Records",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[100px] px-2">
+          <div className="text-center w-full">
+            {row.original.vachist_doseNo}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <TooltipLayout
+            trigger={
+              <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                <Link
+                  to={`/invVaccinationRecord/${row.original.vachist_doseNo}`}
+                >
+                  <Eye size={15} />
+                </Link>
+              </div>
+            }
+            content="View"
+          />
+          <TooltipLayout
+            trigger={
+              <div
+                className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
+                onClick={() => {
+                  setRecordToArchive(row.original.vachist_id);
+                  setIsArchiveConfirmationOpen(true);
+                }}
+              >
+                <Trash size={16} />
+              </div>
+            }
+            content="Archive"
+          />
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -271,27 +285,65 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     <>
       <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => {
-           navigate(-1);
-          }}
-        >
-          <ChevronLeft />
-        </Button>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Individual Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <Button
+            className="text-black p-2 mb-2 self-start"
+            variant={"outline"}
+            onClick={() => {
+              navigate(-1);
+            }}
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="flex-col items-center mb-4">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Individual Records
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Manage and view patients information
+            </p>
+          </div>
         </div>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
+        <hr className="border-gray mb-5 sm:mb-8" />
 
+        <div>
+          {/* Patient Information Card */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <h2 className="text-lg font-semibold text-darkBlue2 mb-3">
+              Patient Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-darkGray">Patient ID</p>
+                <p className="font-medium">{patientData.pat_id}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-darkGray">Full Name</p>
+                <p className="font-medium">{`${patientData.lname}, ${
+                  patientData.fname
+                } ${patientData.mname || ""}`}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-darkGray">Age & Gender</p>
+                <p className="font-medium">{`${patientData.age} years, ${patientData.sex}`}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-darkGray">Address</p>
+                <p className="font-medium">{patientData.address}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-darkGray">Patient Type</p>
+                <p className="font-medium">{patientData.pat_type}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-darkGray">
+                  Total Vaccination Records
+                </p>
+                <p className="font-medium">{patientData.vaccination_count}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
           {/* Search Input and Filter Dropdown */}
@@ -324,11 +376,11 @@ const columns: ColumnDef<VaccinationRecord>[] = [
             </div>
           </div>
 
-       
-
           <div>
             <Button className="w-full sm:w-auto">
-              <Link to={`/vaccinationForm`}>New Record</Link>
+              <Link to="/vaccinationForm" state={{ params: { patientData } }}>
+                New Record
+              </Link>
             </Button>
           </div>
         </div>
