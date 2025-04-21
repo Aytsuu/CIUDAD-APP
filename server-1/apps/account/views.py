@@ -60,7 +60,7 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
                 
-            token, _ = Token.objects.get_or_create(user=user)   
+            token, _ = Token.objects.get_or_create(user=user)
             
             # Fetch ResidentProfile data
             rp_data = ResidentProfileFullSerializer(user.rp).data if user.rp else None
@@ -89,7 +89,7 @@ class LoginView(APIView):
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
+            
 class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
