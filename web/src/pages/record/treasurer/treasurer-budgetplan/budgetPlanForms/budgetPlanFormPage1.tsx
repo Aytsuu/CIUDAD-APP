@@ -41,7 +41,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
     const [total, setTotal] = useState(0);
     const [Balance, setBalance] = useState(0);
     const [isOverLimit, setOverLimit] = useState(false);
-    const personalServicesBudgetLimit = actualIncome * (personalServicesLimit/100);
+    const personalServicesBudgetLimit = actualIncome * (personalServicesLimit/100); //personalService is some percent of the barangay's actual Income
 
     const form = useForm<BudgetPlanPage1FormData>({
         resolver: zodResolver(CurrentExpendituresPersonalServicesSchema),
@@ -51,7 +51,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
     // Fields Watcher 
     const { watch } = form;
     const formValues = watch();
-    const toastId = useRef<string | number | null> (null);
+    const personalServiceToast = useRef<string | number | null> (null);
 
     // Auto Update
     useEffect(() => {
@@ -71,11 +71,11 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
         if (calculatedBalance < 0) {
             setOverLimit(true);
             // Only show toast if one isn't already showing
-            if (!toastId.current) {
-                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+            if (!personalServiceToast.current) {
+                personalServiceToast.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
                     duration: Infinity, 
                     style: {
-                        border: '1px solid #f87171',
+                        border: '1px solid rgb(225, 193, 193)',
                         padding: '16px',
                         color: '#b91c1c',
                         background: '#fef2f2',
@@ -83,9 +83,11 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
                 });
             }
         } else {
-            setOverLimit(false);
-            toast.dismiss();
-            toastId.current = null;
+            if (personalServiceToast.current !== null) {
+                setOverLimit(false)
+                toast.dismiss(personalServiceToast.current);
+                personalServiceToast.current = null;
+            }
         }
     }, [total, personalServicesBudgetLimit]);
 
@@ -105,7 +107,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
                     <div className="mb-5 bg-white p-5 w-full">
                         <div className="p-2 flex flex-col gap-1">
                             <h1 className="font-bold flex justify-center w-[21rem]">CURRENT OPERATING EXPENDITURES</h1>
-                            <h3 className="font-semibold text-blue flex justify-center w-[21rem]">Personal Services</h3>
+                            <h3 className="font-semibold text-blue flex justify-center w-[21rem]">Personal Services ({personalServicesLimit}%)</h3>
                         </div>
                         {budgetItems.map(({ name, label }) => (
                             <FormField

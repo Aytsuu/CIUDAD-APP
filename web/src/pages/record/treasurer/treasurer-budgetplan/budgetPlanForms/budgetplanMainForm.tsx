@@ -4,7 +4,7 @@ import CreateBudgetPlanPage3 from "./budgetPlanFormPage3.tsx";
 import CreateBudgetPlanPage4 from "./budgetPlanFormPage4.tsx";
 import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/treasurer/budgetplan-create-schema.ts";
 import { useEffect } from "react";
 import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
@@ -35,6 +35,7 @@ const styles = {
 
 function BudgetPlanForm() {
     const year = new Date().getFullYear()
+    const totalBudgetToast = useRef <string | number | null>(null);
 
     const location = useLocation();
     const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
@@ -59,17 +60,39 @@ function BudgetPlanForm() {
     const [formData3, setFormData3] = useState(initialForms.form3);
     const [formData4, setFormData4] = useState(initialForms.form4);
 
+    // auto calculation of total budgetary obligations and balance unappropriated
     useEffect(() => {
         const sumFormData = (formData: Record<string, any>): number => 
             Object.values(formData)
                 .map((value) => parseFloat(value) || 0)
                 .reduce((acc, curr) => acc + curr, 0);
-
+    
         const totalBudget = sumFormData(formData1) + sumFormData(formData2) + sumFormData(formData3) + sumFormData(formData4);
         settotalBudgetObligations(totalBudget);
-        setbalUnappropriated(availableResources - totalBudget);
+        
+        const newBalance = availableResources - totalBudget;
+        setbalUnappropriated(newBalance);
+        
+        if (newBalance < 0) {
+            if (!totalBudgetToast.current) {
+                totalBudgetToast.current = toast.error("Insufficient funds! Budget obligations exceed available resources.", {
+                    duration: Infinity, 
+                    style: {
+                        border: '1px solid rgb(225, 193, 193)',
+                        padding: '16px',
+                        color: '#b91c1c',
+                        background: '#fef2f2',
+                    },
+                });
+            }
+        } else {
+            if(totalBudgetToast.current !== null){
+                toast.dismiss(totalBudgetToast.current);
+                totalBudgetToast.current = null;
+            }
+        }
     }, [formData1, formData2, formData3, formData4, availableResources]);
-    
+
     // Function for next button
     const handleNext = () => {
         setCurrentPage((prev) => {
@@ -271,6 +294,7 @@ function BudgetPlanForm() {
                                 actualIncome = {actualIncome}
                                 updateFormData={updateFormData}
                                 formData={formData1}
+
                                 />
                         )}
 

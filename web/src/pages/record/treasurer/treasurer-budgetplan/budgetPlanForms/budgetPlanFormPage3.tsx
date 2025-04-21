@@ -55,7 +55,7 @@ function CreateBudgetPlanPage3({ onPrevious2, onNext4, updateFormData, formData,
     const { watch } = form;
     const formValues = watch();
     const miscExpenseVal = watch("miscExpense");
-    const toastId = useRef<string | number | null> (null);
+    const miscExpenseToast = useRef<string | number | null> (null);
 
     useEffect(() => {
         updateFormData(formValues);
@@ -73,8 +73,8 @@ function CreateBudgetPlanPage3({ onPrevious2, onNext4, updateFormData, formData,
             if (remainingBal < 0) {
                     setOverLimit(true);
                     // Only show toast if one isn't already showing
-                    if (!toastId.current) {
-                        toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                    if (!miscExpenseToast.current) {
+                        miscExpenseToast.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
                             duration: Infinity, 
                             style: {
                                 border: '1px solid #f87171',
@@ -85,9 +85,11 @@ function CreateBudgetPlanPage3({ onPrevious2, onNext4, updateFormData, formData,
                         });
                     }
                 } else {
-                    setOverLimit(false);
-                    toast.dismiss();
-                    toastId.current = null;
+                    if(miscExpenseToast.current !== null){
+                        setOverLimit(false);
+                        toast.dismiss(miscExpenseToast.current);
+                        miscExpenseToast.current = null;
+                    }
                 }
     },[miscExpenseVal, budgetLimitValue]);
 

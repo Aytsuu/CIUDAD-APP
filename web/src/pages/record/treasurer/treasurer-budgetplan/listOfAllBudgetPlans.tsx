@@ -11,7 +11,6 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteBudgetPlan } from "./queries/budgetPlanDeleteQueries";
 import { usegetBudgetPlan, type BudgetPlanType } from "./queries/budgetplanFetchQueries";
 
-
 function BudgetPlan() {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = 10;

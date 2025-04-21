@@ -93,7 +93,7 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className={styles.fieldStyle}>
-                                            <FormLabel className="w-[20rem]">{label}</FormLabel>
+                                            <FormLabel className="w-[20rem] text-black">{label}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     {...field}

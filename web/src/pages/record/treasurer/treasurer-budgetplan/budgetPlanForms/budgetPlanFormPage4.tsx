@@ -56,7 +56,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [localDevBalance, setlocalDevBalance] = useState(0.00);
     const [isOverLimit, setOverLimit] = useState(false);
 
-    const toastId = useRef<string | number | null>(null);
+    const capitalAndNonOfficeToast = useRef<string | number | null>(null);
     const localDevBudgetLimit = parseFloat(taxAllotment) * (parseFloat(localDevLimit)/100);
     const skBudgetLimit = availableResources * (parseFloat(skFundLimit)/100);
     const calamityFundBudgetLimit = availableResources * (parseFloat(calamityFundLimit)/100);
@@ -123,9 +123,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         
         if (currentlyExceeded) {
             setOverLimit(true);
-            if (!toastId.current) {  
+            if (!capitalAndNonOfficeToast.current) {  
                 console.log('toast displayed');
-                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                capitalAndNonOfficeToast.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
                     duration: Infinity, 
                     style: {
                         border: '1px solid #f87171',
@@ -137,9 +137,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
             }
         } else {
             setOverLimit(false);
-            if (toastId.current) {  
-                toast.dismiss(toastId.current);
-                toastId.current = null;
+            if (capitalAndNonOfficeToast.current) {  
+                toast.dismiss(capitalAndNonOfficeToast.current);
+                capitalAndNonOfficeToast.current = null;
             }
         }
     }
