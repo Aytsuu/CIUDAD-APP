@@ -20,7 +20,7 @@ export default function AccountRegistrationLayout() {
   const residentId = React.useMemo(()=> params.residentId, [params]);
   const { mutateAsync: addAccount } = useAddAccount();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const defaultValues = React.useRef(generateDefaultValues(accountFormSchema._def.schema)).current;
+  const defaultValues = React.useRef(generateDefaultValues(accountFormSchema)).current;
   const form = useForm<z.infer<typeof accountFormSchema>>({
     resolver: zodResolver(accountFormSchema),
     defaultValues,

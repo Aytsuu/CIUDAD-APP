@@ -73,5 +73,3 @@ env/
 # Vite cache
 /web/.vite/
 
-
-firebase/
