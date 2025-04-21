@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search,  Plus, FileInput } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import MedicineStockForm from "../addstocksModal/MedStockModal";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
@@ -20,6 +19,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { archiveInventory } from "../REQUEST/archive";
 import { MedicineStocksRecord } from "./columns/MedicineCol";
 import { getColumns } from "./columns/MedicineCol";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { toast } from "sonner";
+import { CircleCheck,Loader2 } from "lucide-react";
 
 export default function MedicineStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
@@ -28,6 +30,7 @@ export default function MedicineStocks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [editDialogStates, setEditDialogStates] = useState<Record<number, boolean>>({});
   const queryClient = useQueryClient();
 
   const { data: medicineStocks, isLoading: isLoadingMedicines } = useQuery({
@@ -37,31 +40,38 @@ export default function MedicineStocks() {
     staleTime: 0,
   });
 
+  const setIsEditDialogOpen = (id: number | null, isOpen: boolean) => {
+    if (id !== null) {
+      setEditDialogStates(prev => ({
+        ...prev,
+        [id]: isOpen
+      }));
+    }
+  };
+
   const formatMedicineStocksData = React.useCallback((): MedicineStocksRecord[] => {
     if (!medicineStocks) return [];
-    return medicineStocks
-      .map((medicineStock: any) => ({
-        id: medicineStock.minv_id, // Populate id property
-        minv_id: medicineStock.minv_id,
-        medicineInfo: {
-          medicineName: medicineStock.med_detail?.med_name,
-          dosage: medicineStock.minv_dsg,
-          dsgUnit: medicineStock.minv_dsg_unit,
-          form: medicineStock.minv_form,
-        },
-        expiryDate: medicineStock.inv_detail?.expiry_date,
-        category: medicineStock.cat_detail?.cat_name,
-        qty: {
-          qty: medicineStock.minv_qty,
-          pcs: medicineStock.minv_pcs,
-        },
-        minv_qty_unit: medicineStock.minv_qty_unit,
-        availQty: medicineStock.minv_qty_avail,
-        distributed: medicineStock.minv_distributed,
-        inv_id: medicineStock.inv_id,
-      }));
+    return medicineStocks.map((medicineStock: any) => ({
+      id: medicineStock.minv_id,
+      minv_id: medicineStock.minv_id,
+      medicineInfo: {
+        medicineName: medicineStock.med_detail?.med_name,
+        dosage: medicineStock.minv_dsg,
+        dsgUnit: medicineStock.minv_dsg_unit,
+        form: medicineStock.minv_form,
+      },
+      expiryDate: medicineStock.inv_detail?.expiry_date,
+      category: medicineStock.cat_detail?.cat_name,
+      qty: {
+        qty: medicineStock.minv_qty,
+        pcs: medicineStock.minv_pcs,
+      },
+      minv_qty_unit: medicineStock.minv_qty_unit,
+      availQty: medicineStock.minv_qty_avail,
+      distributed: medicineStock.minv_distributed,
+      inv_id: medicineStock.inv_id,
+    }));
   }, [medicineStocks]);
-
 
   const filteredData = React.useMemo(() => {
     return formatMedicineStocksData().filter((record) =>
@@ -85,18 +95,36 @@ export default function MedicineStocks() {
 
   const confirmArchiveInventory = async () => {
     if (medicineToArchive !== null) {
+      setIsArchiveConfirmationOpen(false); // Immediately close the dialog
+      
+    const toastId = toast.loading(
+      <div className="flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Archiving commodity...
+      </div>,
+      { duration: Infinity } // Show until replaced
+    );
+  
       try {
         await archiveInventory(medicineToArchive);
         queryClient.invalidateQueries({ queryKey: ["medicineinventorylist"] });
+        
+        toast.success("Medicine item archived successfully", {
+          id: toastId, // Replace the loading toast
+          icon: <CircleCheck size={20} className="text-green-500" />,
+          duration: 2000,
+        });
       } catch (error) {
         console.error("Failed to archive inventory:", error);
+        toast.error("Failed to archive medicine item", {
+          id: toastId, // Replace the loading toast
+          duration: 5000,
+        });
       } finally {
-        setIsArchiveConfirmationOpen(false);
         setMedicineToArchive(null);
       }
     }
   };
-
   if (isLoadingMedicines) {
     return (
       <div className="w-full h-full">
@@ -108,7 +136,7 @@ export default function MedicineStocks() {
     );
   }
 
-  const columns = getColumns(handleArchiveInventory,  setIsDialog);
+  const columns = getColumns(handleArchiveInventory, setIsEditDialogOpen, editDialogStates);
 
   return (
     <>
@@ -191,7 +219,7 @@ export default function MedicineStocks() {
         <div className="bg-white w-full overflow-x-auto">
           <DataTable columns={columns} data={paginatedData} />
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing{" "}

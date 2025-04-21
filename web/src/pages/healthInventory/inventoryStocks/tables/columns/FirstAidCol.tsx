@@ -8,27 +8,26 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export type FirstAidStocksRecord = {
-    finv_id: number;
-    firstAidInfo: {
-      fa_name: string;
-    };
-    expiryDate: string;
-    category: string;
-    qty: {
-      finv_qty: number;
-      finv_pcs: number;
-    };
-    finv_qty_unit: string;
-    availQty: string;
-    used: string;
-    inv_id: number;
+  finv_id: number;
+  firstAidInfo: {
+    fa_name: string;
   };
-  
+  expiryDate: string;
+  category: string;
+  qty: {
+    finv_qty: number;
+    finv_pcs: number;
+  };
+  finv_qty_unit: string;
+  availQty: string;
+  used: string;
+  inv_id: number;
+};
+
 export const getColumns = (
   handleArchiveInventory: (inv_id: number) => void,
-  setIsDialog: (value: boolean) => void
+  setIsDialog: (isOpen: boolean) => void
 ): ColumnDef<FirstAidStocksRecord>[] => [
-  
   {
     accessorKey: "firstAidInfo",
     header: "Item Name",
@@ -56,12 +55,13 @@ export const getColumns = (
     cell: ({ row }) => {
       const { finv_qty, finv_pcs } = row.original.qty;
       const unit = row.original.finv_qty_unit;
+      
       return (
         <div className="text-center">
-          {finv_pcs > 0 ? (
+          {unit.toLowerCase() === 'boxes' && finv_pcs > 0 ? (
             <div className="flex flex-col">
               <span className="text-blue">{finv_qty} box/es</span>
-              <span className="text-red-500"> ({finv_pcs} pcs per box)</span>
+              <span className="text-blue-500">({finv_qty * finv_pcs} total pc/s)</span>
             </div>
           ) : (
             <span className="text-blue">
@@ -77,9 +77,7 @@ export const getColumns = (
     header: "Used",
     cell: ({ row }) => (
       <div className="flex items-center justify-center gap-2">
-        <span className="text-sm text-red-700">
-          {row.original.used || 0}
-        </span>
+        <span className="text-sm text-red-700">{row.original.used || 0}</span>
         <TooltipLayout
           trigger={
             <DialogLayout
@@ -88,10 +86,9 @@ export const getColumns = (
                   <Minus size={15} />
                 </button>
               }
-              mainContent={<UsedFAModal 
-                data={row.original}
-                setIsDialog={setIsDialog}
-                />}
+              mainContent={
+                <UsedFAModal data={row.original} setIsDialog={setIsDialog} />
+              }
             />
           }
           content="Used Items"
@@ -106,15 +103,16 @@ export const getColumns = (
       const { finv_pcs } = row.original.qty;
       const unit = row.original.finv_qty_unit;
       const availQty = parseInt(row.original.availQty);
-      
-      if (unit.toLowerCase() === 'boxes' && finv_pcs > 0) {
+
+      if (unit.toLowerCase() === "boxes" && finv_pcs > 0) {
         // Always count as at least 1 box if there are any pieces
         const boxCount = Math.ceil(availQty / finv_pcs);
         const remainingPieces = availQty;
-        
+
         return (
-          <div className="text-center text-green-700">
-            {boxCount} box/es ({remainingPieces} pc/s)
+          <div className="flex flex-col">
+               <span className="text-blue">{boxCount} box/es</span>
+               <span className="text-blue-500">({remainingPieces} total pc/s)</span>
           </div>
         );
       } else {
@@ -138,7 +136,7 @@ export const getColumns = (
   },
   {
     accessorKey: "action",
-    header: "Action",
+    header: "Action", 
     cell: ({ row }) => {
       return (
         <div className="flex gap-2">

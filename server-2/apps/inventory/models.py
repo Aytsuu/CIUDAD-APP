@@ -217,8 +217,8 @@ class VaccineStock(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id')
-    vac_id = models.ForeignKey('VaccineList',on_delete=models.CASCADE)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
+    vac_id = models.ForeignKey('VaccineList',on_delete=models.CASCADE,related_name='vaccine_stock')
 
    
     class Meta:
@@ -228,11 +228,10 @@ class VaccineStock(models.Model):
 class AntigenTransaction(models.Model):
     antt_id =models.BigAutoField(primary_key=True)
     antt_qty = models.CharField(max_length=100)
-    antt_type = models.CharField(max_length=100)
     antt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
-    vacStck_id = models.ForeignKey('VaccineStock', on_delete=models.CASCADE,  db_column='vacStck_id')
+    vacStck_id = models.ForeignKey('VaccineStock', on_delete=models.CASCADE,  db_column='vacStck_id',related_name='antigen_transactions')
 
 
     class Meta:
@@ -268,8 +267,8 @@ class ImmunizationStock(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
-    imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.CASCADE)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,related_name='immunization_stock')
+    imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.CASCADE ,related_name='immunization_stock')
 
     
     class Meta:
@@ -279,7 +278,6 @@ class ImmunizationStock(models.Model):
 class ImmunizationTransaction(models.Model):
     imzt_id =models.BigAutoField(primary_key=True)
     imzt_qty = models.CharField(max_length=100)
-    imzt_type = models.CharField(max_length=100)
     imzt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
@@ -288,3 +286,6 @@ class ImmunizationTransaction(models.Model):
 
     class Meta:
         db_table = 'immunization_transaction'
+        
+        
+        

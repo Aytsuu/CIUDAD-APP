@@ -1,6 +1,6 @@
 import api from "@/pages/api/api";
 import { QueryClient } from "@tanstack/react-query";
-import { addInventory } from "../Inventory";
+import { addInventory } from "../../Inventory";
 
 export interface CommodityStockType {
   com_id: number;
@@ -101,10 +101,10 @@ export const submitCommodityStock = async (
   data: any,
   queryClient: QueryClient
 ) => {
-  try {
+ 
     // Step 1: Create inventory record
-    const inventoryResponse = await addInventory(
-      InventoryCommodityPayload(data)
+    const inv_type = "Commodity";
+    const inventoryResponse = await addInventory(data,inv_type
     );
 
     if (!inventoryResponse?.inv_id) {
@@ -158,15 +158,7 @@ export const submitCommodityStock = async (
       queryKey: ["commodityinventorylist"],
     });
 
-    return {
-      success: true,
-      data: commodityInventoryResponse,
-    };
-  } catch (error) {
-    console.error("Commodity submission error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    };
-  }
-};
+    
+    return { success: true };
+  };
+  

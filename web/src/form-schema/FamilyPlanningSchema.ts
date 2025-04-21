@@ -16,14 +16,15 @@ const ServiceProvisionRecordSchema = z.object({
 })
 
 // Define the pregnancy check schema
-const PregnancyCheckSchema = z.object({
-  baby_breastfeeding_no_menses: z.boolean().default(false),
-  abstained_since_last_period: z.boolean().default(false),
-  had_baby_last_4_weeks: z.boolean().default(false),
-  period_within_7_days: z.boolean().default(false),
-  miscarriage_or_abortion_7_days: z.boolean().default(false),
-  using_contraceptive_consistently: z.boolean().default(false),
-})
+const pregnancyCheck = z.object({
+  bf_no_menses: z.boolean().default(false),
+  abstained_last_period: z.boolean().default(false),
+  had_baby: z.boolean().default(false),
+  period_within: z.boolean().default(false),
+  miscarriage_or_abortion: z.boolean().default(false),
+  using_contraceptive: z.boolean().default(false),
+});
+
 
 // Define the complete schema for all pages
 export const FamilyPlanningSchema = z.object({
@@ -48,7 +49,7 @@ export const FamilyPlanningSchema = z.object({
     barangay: z.string().nonempty("Barangay is required"),
     municipality: z.string().nonempty("Municipality/City is required"),
     province: z.string().nonempty("Province is required"),
-  }),
+  }), 
 
   spouse: z.object({
     s_lastName: z.string().nonempty("Last name is required"),
@@ -59,6 +60,15 @@ export const FamilyPlanningSchema = z.object({
     s_occupation: z.string().optional(),
   }),
 
+  // pregnancyCheck: z.object({
+  //   bf_no_menses: z.boolean().default(false),
+  //   abstained_last_period: z.boolean().default(false),
+  //   had_baby: z.boolean().default(false),
+  //   period_within: z.boolean().default(false),
+  //   miscarriage_or_abortion: z.boolean().default(false),
+  //   using_contraceptive: z.boolean().default(false),
+  // }),
+  
   numOfLivingChildren: z.number().min(0, "Number of living children is required"),
   planToHaveMoreChildren: z.boolean(),
   averageMonthlyIncome: z.string().nonempty("Average monthly income is required"),
@@ -76,9 +86,8 @@ export const FamilyPlanningSchema = z.object({
       "POP",
       "Injectable",
       "Implant",
-      "IUD",
-      "Interval",
-      "Post Partum",
+      "IUD-Interval",
+      "IUD-Post Partum",
       "Condom",
       "BOM/CMM",
       "BBT",
@@ -86,11 +95,9 @@ export const FamilyPlanningSchema = z.object({
       "SDM",
       "LAM",
       "Others",
-      // New Acceptor methods
+ 
       "Pills",
       "DMPA",
-      "IUD-i",
-      "IUD-pp",
       "Lactating Amenorrhea",
       "Bilateral Tubal Ligation",
       "Vasectomy",
@@ -218,15 +225,14 @@ export const FamilyPlanningSchema = z.object({
     selectedMethod: z
       .enum([
         "coc",
-        "iud",
         "bom/cmm",
         "lam",
         "pop",
-        "interval",
+        "iud-interval",
+        "iud-postpartum",
         "bbt",
         "sdm",
         "injectable",
-        "postpartum",
         "stm",
         "implant",
         "condom",
@@ -245,7 +251,7 @@ export const FamilyPlanningSchema = z.object({
   serviceProvisionRecords: z.array(ServiceProvisionRecordSchema).optional().default([]),
 
   // Pregnancy Check fields
-  pregnancyCheck: PregnancyCheckSchema.optional(),
+  pregnancy_check: pregnancyCheck.optional(),
 })
 
 // Create page-specific schemas by picking fields from the main schema
@@ -311,11 +317,12 @@ export const page5Schema = FamilyPlanningSchema.pick({
 
 export const page6Schema = FamilyPlanningSchema.pick({
   serviceProvisionRecords: true,
-  pregnancyCheck: true,
+}).extend({
+  pregnancyCheck: pregnancyCheck.optional(),
 })
 
 // Exporting the schemas properly
 export default FamilyPlanningSchema
 export type FormData = z.infer<typeof FamilyPlanningSchema>
 export type ServiceProvisionRecord = z.infer<typeof ServiceProvisionRecordSchema>
-export type PregnancyCheck = z.infer<typeof PregnancyCheckSchema>
+export type PregnancyCheck = z.infer<typeof pregnancyCheck>

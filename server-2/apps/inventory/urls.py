@@ -32,13 +32,11 @@ urlpatterns = [
     path("inventorylist/", InventoryView.as_view(), name="inventorylist"),
     path("update_inventorylist/<int:inv_id>/",InventoryUpdateView.as_view(), name="update_inventorylist"),
 
-      
     # INVENTORY POST
     path("medicineinventorylist/", MedicineInventoryView.as_view(), name="medicine-inventory"),
     path("commodityinventorylist/", CommodityInventoryVIew.as_view(), name="commodity-inventory"),
     path("firstaidinventorylist/", FirstAidInventoryVIew.as_view(), name="firstaid-inventory"),
 
-     
      #DELETE
     path("medicineinventorylist/<int:minv_id>/", DeleteMedicineInvView.as_view(), name="delete_medicinestocks"),
     path("commodityinventorylist/<int:cinv_id>/", DeleteCommodityInvView.as_view(), name="delete_commoditystocks"),
@@ -61,24 +59,23 @@ urlpatterns = [
     path("vac_categ/", VaccineCategoryView.as_view(), name="vac_cat"),
     path("imz_supplies/", ImmunizationSuppliesView.as_view(), name="imz_supplies"),
     
-    
      # Vaccination - Retrieve/Update endpoints
-    path("vac_list/<int:inv_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
+    path("vac_list/<int:vac_id>/", VaccineListRetrieveUpdateDestroyView.as_view(), name="vaccination-detail"),
     path("vac_intervals/<int:vacInt_id>/", VaccineIntervalRetrieveUpdateDestroyView.as_view(), name="vaccination-interval-detail"),
     path("routine_freq/<int:routineF_id>/", RoutineFrequencyRetrieveUpdateDestroyView.as_view(), name="RoutineFrequency-detail"),
     path("vac_categ/<int:vaccat_id>/", VaccineCategoryRetrieveUpdateDestroyView.as_view(), name="vac_cat-detail"),
-    path("imz_supplies/<int:inv_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
+    path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
     
     
-    # VACCINE STOCKS
+    # VACCINE STOCKS 
     path("vaccine_stocks/", VaccineStocksView.as_view(), name="vaccine_stocks"),
     path("antigens_stocks/", AntigenTransactionView.as_view(), name="antigens_stocks"), 
     
     path("immunization_stock/", ImmunizationStockSuppliesView.as_view(), name="immunization_stocksn"),
     path("imz_transaction/", ImmunizationTransactionView.as_view(), name="imz_transaction"),
     
-    
+
     path("vaccine_stocks/<int:vacStck_id>/", VaccineStockRetrieveUpdateDestroyView.as_view(), name="vaccine_stocks-detail"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
     
-]
+] 

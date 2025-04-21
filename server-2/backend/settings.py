@@ -25,25 +25,17 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-lw^^0nq_%631_(3wza&xj7=-m$s603wx+)f_#@12^@(y09w3b1'
-
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g56qefvrrgnx_ygpsz-#!ao71tv@!fjk49mukq68@lh#p*6%t+'
-
+# SECRET_KEY = 'django-insecure-5h=(s6a5on^k)(ul!y7kh)mnhm26vuq93r1ix#!kw^zkt0cte2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '*']
+ALLOWED_HOSTS = ['localhost', '*']
 
 
 # Application definition
@@ -55,30 +47,32 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.healthProfiling',
-    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
+    'apps.healthProfiling',
     'apps.inventory',
     'apps.maternal',
     # 'apps.profiling',
     # 'apps.administration'
+    'apps.vaccination',
+    'apps.administration',
+    'apps.familyplanning',
+    'apps.animalbites',
+    'apps.patientrecords',
+
 ]
 
 MIDDLEWARE = [
+   'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-
-
-
-
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -102,14 +96,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 
 DATABASES = {
     'default': {
@@ -121,7 +109,7 @@ DATABASES = {
         'PORT': config('DB_PORT')
 
     },
-    'Profiling': {
+    'brgyDB': {
 
     }
    
@@ -130,7 +118,6 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -173,6 +160,15 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  
+    "http://localhost:3000",  
+    "http://127.0.0.1:8000",  
+    "http://localhost:8000",  
+]
+
+
+
 CORS_ALLOW_ALL_ORIGINS= True
 CORS_ALLOW_CREDENTIALS= True
 
@@ -182,7 +178,7 @@ CORS_ALLOW_CREDENTIALS= True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    ), 
 }
 
 # JWT Authentication Settings
@@ -195,5 +191,6 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
 CORS_ALLOW_HEADERS = ["*"]

@@ -12,9 +12,8 @@ import {
   AddFirstAidStockType,
 } from "@/form-schema/inventory/addStocksSchema";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { handleEditFirstAidStock } from "../REQUEST/Post/FirstAid/EditFirstAidPost";
+import { handleEditFirstAidStock } from "../REQUEST/FirstAid/EditFirstAidSubmit";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 
@@ -31,7 +30,7 @@ export default function EditFirstAidStockForm({
   const form = useForm<AddFirstAidStockType>({
     resolver: zodResolver(AddFirstAidSchema),
     defaultValues: {
-      finv_qty: 0,
+      finv_qty: undefined,
       finv_qty_unit: initialData.finv_qty_unit,
       finv_pcs: initialData.qty.finv_pcs || 0,
     },
@@ -42,18 +41,18 @@ export default function EditFirstAidStockForm({
   const [submissionData, setSubmissionData] =
     useState<AddFirstAidStockType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+
   const handleSubmit = async (data: AddFirstAidStockType) => {
     setIsSubmitting(true);
-    const toastId = toast.loading("Adding first aid item...", {
-      duration: Infinity,
-    });
+
     try {
       await handleEditFirstAidStock(data, initialData.finv_id, queryClient);
 
       toast.success("First aid item updated successfully", {
-        id: toastId,
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 3000, // Increased duration to ensure visibility
+        duration: 3000,
         onAutoClose: () => {
           setIsDialog(false);
         },
@@ -64,13 +63,14 @@ export default function EditFirstAidStockForm({
     } catch (error: any) {
       console.error("Error in handleSubmit:", error);
       toast.error(error.message || "Failed to update first aid item", {
-        id: toastId,
-        duration: 5000, // Longer duration for errors
+        duration: 5000,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  
 
   const onSubmit = (data: AddFirstAidStockType) => {
     setSubmissionData(data);
@@ -80,6 +80,7 @@ export default function EditFirstAidStockForm({
   const confirmAdd = () => {
     if (submissionData) {
       setIsAddConfirmationOpen(false);
+      setIsSubmitting(true); // Set submitting state here
       handleSubmit(submissionData);
     }
   };
@@ -89,9 +90,8 @@ export default function EditFirstAidStockForm({
   const pcs = form.watch("finv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
-  return (
+  return ( 
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
-      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -100,6 +100,8 @@ export default function EditFirstAidStockForm({
               name="finv_qty"
               label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
               type="number"
+              placeholder="Quantity"
+
             />
 
             <FormSelect
@@ -140,7 +142,13 @@ export default function EditFirstAidStockForm({
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-              Save
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <span className="loader mr-2"></span> Saving...
+                </span>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </form>

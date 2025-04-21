@@ -368,9 +368,9 @@ export default function PatientsRecord() {
       {/* Stats Cards with simplified design */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <CardLayout
-          cardTitle="Total Patients"
-          cardDescription="All registered patients"
-          cardContent={
+          title='Total Patients'
+          description="All registered patients"
+          content={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{totalPatients}</span>
@@ -382,14 +382,14 @@ export default function PatientsRecord() {
             </div>
           }
           cardClassName="border shadow-sm rounded-lg"
-          cardHeaderClassName="pb-2"
-          cardContentClassName="pt-0"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
         />
 
         <CardLayout
-          cardTitle="Residents"
-          cardDescription="Permanent patients"
-          cardContent={
+          title="Residents"
+          description="Permanent patients"
+          content={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{residents}</span>
@@ -404,14 +404,14 @@ export default function PatientsRecord() {
             </div>
           }
           cardClassName="border shadow-sm rounded-lg"
-          cardHeaderClassName="pb-2"
-          cardContentClassName="pt-0"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
         />
 
         <CardLayout
-          cardTitle="Transients"
-          cardDescription="Temporary patients"
-          cardContent={
+          title="Transients"
+          description="Temporary patients"
+          content={
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{transients}</span>
@@ -426,8 +426,8 @@ export default function PatientsRecord() {
             </div>
           }
           cardClassName="border shadow-sm rounded-lg"
-          cardHeaderClassName="pb-2"
-          cardContentClassName="pt-0"
+          headerClassName="pb-2"
+          contentClassName="pt-0"
         />
       </div>
 

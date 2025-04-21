@@ -24,23 +24,22 @@ export default function PersonalInformation() {
   const { control, trigger, getValues, formState: {errors} } = useRegistrationFormContext()
 
   const handleSubmit = async () => {
-    router.push('/(auth)/upload-id')
-    // const formIsValid = await trigger(
-    //   ["personalInfoSchema.per_lname", 
-    //     "personalInfoSchema.per_fname", 
-    //     "personalInfoSchema.per_mname", 
-    //     "personalInfoSchema.per_suffix",
-    //     "personalInfoSchema.per_sex", 
-    //     "personalInfoSchema.per_status",
-    //     "personalInfoSchema.per_address",
-    //     "personalInfoSchema.per_edAttainment",
-    //     "personalInfoSchema.per_religion",
-    //     "personalInfoSchema.per_contact",
-    //     "personalInfoSchema.per_occupation"])
+    const formIsValid = await trigger(
+      ["personalInfoSchema.per_lname", 
+        "personalInfoSchema.per_fname", 
+        "personalInfoSchema.per_mname", 
+        "personalInfoSchema.per_suffix",
+        "personalInfoSchema.per_sex", 
+        "personalInfoSchema.per_status",
+        "personalInfoSchema.per_address",
+        "personalInfoSchema.per_edAttainment",
+        "personalInfoSchema.per_religion",
+        "personalInfoSchema.per_contact",
+        "personalInfoSchema.per_occupation"])
 
-    // if(formIsValid) {
-    //   router.push('/(auth)/register-completion')
-    // }
+    if(formIsValid) {
+      router.push('/(auth)/upload-id')
+    }
   }
 
   // Handlers for input fields

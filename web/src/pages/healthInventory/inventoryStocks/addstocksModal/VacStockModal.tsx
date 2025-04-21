@@ -19,14 +19,15 @@ import { addVaccineStock } from "../REQUEST/Post";
 import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
-import { addInventory } from "../REQUEST/Post";
-import {FormDateInput} from "@/components/ui/form/form-date-input";
+import { addInventory } from "../REQUEST/Inventory";
+import {FormDateTimeInput} from "@/components/ui/form/form-date-time-input";
 
 export default function VaccineStockForm() {
   UseHideScrollbar();
   const [vaccineOptions, setVaccineOptions] = useState<
     { id: string; name: string }[]
   >([]);
+
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,8 +37,7 @@ export default function VaccineStockForm() {
       vac_id: "",
       batchNumber: "",
       volume: undefined,
-      qty: 0, // Now as number
-      dose_ml: 0, // Now as number
+      qty: undefined, // Now as number
       expiryDate: "",
       solvent: "doses",
     },
@@ -61,7 +61,7 @@ export default function VaccineStockForm() {
   // Watch form values
   const solvent = form.watch("solvent");
   const vialBoxCount = form.watch("qty") || 0;
-  const dosesPcsCount = form.watch("dose_ml") || 0;
+  const dosesPcsCount = form.watch("volume") || 0;
 
   const onSubmit = async (data: VaccineStockType) => {
     console.log("Submitting:", data);
@@ -70,14 +70,14 @@ export default function VaccineStockForm() {
       const validatedData = VaccineStocksSchema.parse(data);
 
       // First create inventory record
-      const inventoryResponse = await addInventory(
-        InventoryAntigenPayload(data)
-      );
+      const inv_type = "Antigen";
+      const inventoryResponse = await addInventory(data, inv_type);
 
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");
       }
       const inv_id = parseInt(inventoryResponse.inv_id, 10);
+
 
       // Convert vac_id to number
       const vac_id = Number(validatedData.vac_id);
@@ -99,7 +99,7 @@ export default function VaccineStockForm() {
         validatedData.qty.toString(),
         "Added",
         validatedData.solvent,
-        validatedData.dose_ml
+        validatedData.volume
       );
 
       await AntigenTransaction(transactionData);
@@ -132,18 +132,18 @@ export default function VaccineStockForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormSelect control={form.control} name="solvent" label="Solvent Type" options={[{ id: "diluent", name: "Diluent" },{ id: "doses", name: "Doses" },]}/> 
             {solvent === "diluent" && (
-              <FormInput control={form.control} name="dose_ml" label="Dosage (ml)" type="number" />
+              <FormInput control={form.control} name="volume" label="Dosage (ml)" type="number" />
             )}
-          </div>
+          </div> 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput control={form.control} name="qty" label={solvent === "doses" ? "Number of Vials" : "Number of Containers"} type="number"/>
             {solvent === "doses" && (
-              <FormInput control={form.control} name="dose_ml" label="Doses per Vial" type="number"/>
+              <FormInput control={form.control} name="volume" label="Doses per Vial" type="number"/>
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput control={form.control} name="expiryDate" label="Expiry Date"/>
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date"/>
           </div>
         </div>
 

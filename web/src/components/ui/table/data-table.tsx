@@ -22,11 +22,12 @@ import {
   } from "./table"
    
   interface DataTableProps<TData, TValue> {
+    header?: boolean
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
   }
    
-  export function DataTable<TData, TValue>({ columns, data}: DataTableProps<TData, TValue>) {
+  export function DataTable<TData, TValue>({header=true, columns, data}: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -54,7 +55,7 @@ import {
    
     return (
         <Table>
-          <TableHeader>
+          {header && (<TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-none bg-lightBlue hover:bg-lightBlue h-12">
                 {headerGroup.headers.map((header) => {
@@ -71,13 +72,15 @@ import {
                 })}
               </TableRow>
             ))}
-          </TableHeader>
+          </TableHeader>)
+          }
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={!header ? "border-none hover:bg-white" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="text-center">

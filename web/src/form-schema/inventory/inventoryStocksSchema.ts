@@ -1,155 +1,83 @@
 import { z } from "zod";
-import { ImmunizationSchema } from "./inventoryListSchema";
+import { positiveNumberSchema } from "@/helpers/PositiveNumber";
 
-// Helper schema for number fields that can accept strings or numbers
-const numberSchema = z.union([
-  z.string().min(1).transform(val => parseInt(val, 10)),
-  z.number()
-]).pipe(
-  z.number().min(0)
-);
 
-const positiveNumberSchema = z.union([
-  z.string().min(1).transform(val => parseInt(val, 10)),
-  z.number()
-]).pipe(
-  z.number().min(1)
-);
+// Simplified validation helper
+const withPiecesValidation = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => 
+  schema.refine(
+    (data) => {
+      const piecesField = Object.keys(data).find(key => key.endsWith('_pcs')) as keyof typeof data;
+      const unitField = Object.keys(data).find(key => key.endsWith('_unit') || 'unit') as keyof typeof data;
+      
+      // Only validate if unit is boxes
+      if (data[unitField] === "boxes") {
+        return data[piecesField] !== undefined && data[piecesField] >= 1;
+      }
+      return true;
+    },
+    {
+      message: "Pieces per box must be at least 1 when using boxes",
+      path: [Object.keys(schema.shape).find(key => key.endsWith('_pcs')) || 'pcs']
+    }
+  );
 
-export const MedicineStocksSchema = z.object({
-  medicineID: z.string().min(1, "Medicine name is Required").default(""),
-  category: z.string().min(1, "Category is required").default(""),
-  dosage: z.union([
-    z.string().min(1).transform(val => parseInt(val, 10)),
-    z.number()
-  ]).pipe(
-    z.number().min(0, "Dosage must be a non-negative number")
-  ),
-  dsgUnit: z.string().min(1, "Dosage unit is required").default(""),
-  form: z.string().min(1, "Form is required").default(""),
-  qty: positiveNumberSchema.pipe(
-    z.number().min(1, "Qty is Required")
-  ),
+// Simplified schemas
+export const MedicineStocksSchema = withPiecesValidation(z.object({
+  medicineID: z.string().min(1, "Medicine name is required"),
+  category: z.string().min(1, "Category is required"),
+  dosage: positiveNumberSchema.pipe(z.number().min(1, "Dosage must be at least 1")),
+  dsgUnit: z.string().min(1, "Dosage unit is required"),
+  form: z.string().min(1, "Form is required"),
+  qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   unit: z.string().min(1, "Unit is required").default(""),
-  pcs: numberSchema.pipe(
-    z.number().min(0, "Pieces must be a non-negative number")
-  ),
-  expiryDate: z.string()
-    .refine((date) => new Date(date) > new Date(), {
-      message: "Expiry date must be in the future",
-    }),
-}).refine(
-  (data) => {
-    if (data.unit === "boxes") {
-      return data.pcs >= 1;
-    }
-    return true;
-  },
-  {
-    message: "Pieces per box must be at least 1",
-    path: ["pcs"],
-  }
-);
+  pcs: positiveNumberSchema.optional(), // Truly optional now
+  expiryDate: z.string().min(1, "Expiry date is required")
+    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
+}));
 
-export const CommodityStocksSchema = z.object({
-  com_id: z.string().min(1, "Commodity name is required").default(""),
-  cat_id: z.string().min(1, "Category is required").default(""),
-  cinv_qty: positiveNumberSchema.pipe(
-    z.number().min(1, "required")
-  ),
+export const CommodityStocksSchema = withPiecesValidation(z.object({
+  com_id: z.string().min(1, "Commodity name is required"),
+  cat_id: z.string().min(1, "Category is required"),
+  cinv_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   cinv_qty_unit: z.string().min(1, "Unit is required").default(""),
-  cinv_pcs: numberSchema.pipe(
-    z.number().min(0, "Pieces must be a non-negative number")
-  ),
-  cinv_recevFrom: z.string().min(1, "Received from is Required").default(""),
-  expiryDate: z.string()
-    .refine((date) => new Date(date) > new Date(), {
-      message: "Expiry date must be in the future",
-    }),
-}).refine(
-  (data) => {
-    if (data.cinv_qty_unit === "boxes") {
-      return data.cinv_pcs >= 1;
-    }
-    return true;
-  },
-  {
-    message: "Pieces per box must be at least 1 when using boxes",
-    path: ["cinv_pcs"], // Fixed path from "pcs" to "cinv_pcs"
-  }
-);
+  cinv_pcs: positiveNumberSchema.optional(),
+  cinv_recevFrom: z.string().min(1, "Received from is required"),
+  expiryDate: z.string().min(1, "Expiry date is required")
+    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
+}));
 
-export const FirstAidStockSchema = z.object({
-  fa_id: z.string().min(1, "Commodity name is required").default(""),
-  cat_id: z.string().min(1, "Category is required").default(""),
-  finv_qty: positiveNumberSchema.pipe(
-    z.number().min(1, "required")
-  ),
+export const FirstAidStockSchema = withPiecesValidation(z.object({
+  fa_id: z.string().min(1, "First aid item is required"),
+  cat_id: z.string().min(1, "Category is required"),
+  finv_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
   finv_qty_unit: z.string().min(1, "Unit is required").default(""),
-  finv_pcs: numberSchema.pipe(
-    z.number().min(0, "Pieces must be a non-negative number")
-  ),
-  expiryDate: z.string()
-    .refine((date) => new Date(date) > new Date(), {
-      message: "Expiry date must be in the future",
-    }),
-}).refine(
-  (data) => {
-    if (data.finv_qty_unit === "boxes") {
-      return data.finv_pcs >= 1;
-    }
-    return true;
-  },
-  {
-    message: "Pieces per box must be at least 1 when using boxes",
-    path: ["finv_pcs"], // Fixed path from "pcs" to "finv_pcs"
-  }
-);
+  finv_pcs: positiveNumberSchema.optional(),
+  expiryDate: z.string().min(1, "Expiry date is required")
+    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
+}));
 
-export const VaccineStocksSchema = z.object({
-  vac_id: z.string().min(1, "Vaccine name is required").default(""),
-  solvent: z.enum(["diluent", "doses"]).default("doses"),
-  batchNumber: z.string().min(1, "Batch number is required").default(""),
-  volume: numberSchema.pipe(
-    z.number().min(0, "Volume must be a non-negative number")
-  ).default(0),
-  qty: numberSchema.pipe(
-    z.number().min(0, "Vial box count must be a non-negative number")
-  ),
-  dose_ml: numberSchema.pipe(
-    z.number().min(0, "Doses pieces count must be a non-negative number")
-  ),
-  expiryDate: z.string().min(1, "Expiry date is Required").default(""),
-});
-
-export const ImmunizationSuppliesSchema = z.object({
+export const ImmunizationSuppliesSchema = withPiecesValidation(z.object({
   imz_id: z.string().min(1, "Immunization supply is required"),
   batch_number: z.string().min(1, "Batch number is required"),
-  imzStck_qty: numberSchema.pipe(
-    z.number().min(0, "Quantity cannot be negative")
-  ).default(0),
-  imzStck_pcs: numberSchema.pipe(
-    z.number().min(0, "Pieces cannot be negative")
-  ),
-  imzStck_unit: z.enum(["boxes", "pcs"]),
-  expiryDate: z.string()
-    .min(1, "Expiry date is required")
-    .refine((date) => new Date(date) > new Date(), {
-      message: "Expiry date must be in the future",
-    }),
-}).refine(
-  (data) => {
-    if (data.imzStck_unit === "boxes") {
-      return data.imzStck_pcs > 0;
-    }
-    return true;
-  },
-  {
-    message: "Pieces per box must be at least 1 when using boxes",
-    path: ["imzStck_pcs"],
-  }
-);
+  imzStck_qty: positiveNumberSchema.pipe(z.number().min(1, "Quantity must be at least 1")),
+  imzStck_pcs: positiveNumberSchema.optional(),
+  imzStck_unit: z.string().min(1, "Unit is required").default(""),
+  expiryDate: z.string().min(1, "Expiry date is required")
+    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
+}));
 
+// Vaccine schema remains unchanged as it doesn't use pieces validation
+export const VaccineStocksSchema = z.object({
+  vac_id: z.string().min(1, "Vaccine name is required"),
+  solvent: z.string().min(1, "required").default(""),
+  batchNumber: z.string().min(1, "Batch number is required"),
+  volume: positiveNumberSchema,
+  qty: positiveNumberSchema,
+  expiryDate: z.string().min(1, "Expiry date is required")
+    .refine(date => new Date(date) > new Date(), "Expiry date must be in the future")
+});
+ 
+// Type exports
 export type ImmunizationSuppliesType = z.infer<typeof ImmunizationSuppliesSchema>;
 export type MedicineStockType = z.infer<typeof MedicineStocksSchema>;
 export type CommodityStockType = z.infer<typeof CommodityStocksSchema>;

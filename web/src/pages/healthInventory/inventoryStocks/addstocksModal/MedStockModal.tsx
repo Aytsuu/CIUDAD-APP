@@ -7,7 +7,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form/form";import { useForm } from "react-hook-form";
+} from "@/components/ui/form/form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   MedicineStocksSchema,
@@ -19,15 +20,17 @@ import { useCategoriesMedicine } from "../REQUEST/Category/Medcategory";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
-import { CircleCheck} from "lucide-react";
+import { CircleCheck, Loader2 } from "lucide-react";
 import { fetchMedicines } from "../REQUEST/fetch";
-import { submitMedicineStock } from "../REQUEST/Post/Medicine/AddPostMedicine";
+import { submitMedicineStock } from "../REQUEST/Medicine/MedicineSubmit";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
-import {formOptions, unitOptions, dosageUnitOptions} from "./options"
-interface MedicineStocksProps {setIsDialog: (isOpen: boolean) => void;}
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { formOptions, unitOptions, dosageUnitOptions } from "./options";
+
+interface MedicineStocksProps {
+  setIsDialog: (isOpen: boolean) => void;
+}
 
 export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) {
   UseHideScrollbar();
@@ -36,17 +39,17 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
     defaultValues: {
       medicineID: "",
       category: "",
-      dosage: 0,
+      dosage: undefined,
       dsgUnit: "",
       form: "",
-      qty: 0,
+      qty: undefined,
       unit: "boxes",
       pcs: undefined,
       expiryDate: new Date().toISOString().split("T")[0],
     },
   });
 
-  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesMedicine();
+  const { categories, handleDeleteConfirmation, categoryHandleAdd } = useCategoriesMedicine();
   const medicines = fetchMedicines();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
@@ -65,24 +68,26 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
 
   const handleSubmit = async (data: MedicineStockType) => {
     setIsSubmitting(true);
-    const toastId = toast.loading('Adding medicine item...', {
-      duration: Infinity
-    });
     
     try {
       await submitMedicineStock(data, queryClient);
-      toast.success('Medicine item added successfully', {
-        id: toastId,
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-        onAutoClose: () => { setIsDialog(false); }
-      });
+      
+      // Close the dialog first
+      setIsDialog(false);
+      
+      // Use setTimeout to ensure the toast shows after dialog is fully closed
+      setTimeout(() => {
+        toast.success("Medicine item added successfully", {
+          icon: <CircleCheck size={20} className="text-green-500" />,
+          duration: 2000,
+        });
+      }, 100);
     } catch (error: any) {
       console.error("Error in handleSubmit:", error);
-      toast.error(error.message || "Failed to add medicine item", { 
-        id: toastId, 
-        duration: 3000
+      toast.error(error.message || "Failed to add medicine item", {
+        duration: 5000,
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -106,11 +111,10 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
 
   return (
     <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
-      <Toaster position="top-center" richColors />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect  control={form.control} name="medicineID" label="Medicine Name" options={medicines}/>
+            <FormSelect control={form.control} name="medicineID" label="Medicine Name" options={medicines} />
             <FormField
               control={form.control}
               name="category"
@@ -139,24 +143,22 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateInput  control={form.control} name="expiryDate" label="Expiry Date" />
+            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FormInput  control={form.control}  name="dosage"  label="Dosage"  type="number"/>
+            <FormInput control={form.control} name="dosage" label="Dosage" placeholder="Dsg" type="number" />
             <FormSelect control={form.control} name="dsgUnit" label="Dosage Unit" options={dosageUnitOptions} />
-            <FormSelect control={form.control} name="form" label="Form" options={formOptions}/>
+            <FormSelect control={form.control} name="form" label="Form" options={formOptions} />
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput control={form.control} name="qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} type="number" />
-            <FormSelect control={form.control}  name="unit"  label="Unit"  options={unitOptions}/>
+            <FormInput control={form.control} name="qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} placeholder="Quantity" type="number" />
+            <FormSelect control={form.control} name="unit" label="Unit" options={unitOptions} />
           </div>
-
-          {/* Pieces per Box and Total Pieces Display */}
+          
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormInput  control={form.control}  name="pcs"  label="Pieces per Box"  type="number"  placeholder="Pieces per box"/>
+              <FormInput control={form.control} name="pcs" label="Pieces per Box" type="number" placeholder="Pieces per box" />
               <div className="sm:col-span-2">
                 <FormItem>
                   <FormLabel className="text-black/65">Total Pieces</FormLabel>
@@ -171,13 +173,21 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-            <Button  type="submit"  className="w-[120px]"  disabled={isSubmitting} > Save</Button>
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()}
+
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}

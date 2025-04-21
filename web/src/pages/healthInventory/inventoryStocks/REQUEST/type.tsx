@@ -35,12 +35,12 @@ export interface MedicineTransactionType {
 }
 
 
-export interface FirstAidTransactionType {
-  fat_qty: string;
-  fat_action: string;
-  staff: number;
-  finv_id: number;
-}
+// export interface FirstAidTransactionType {
+//   fat_qty: string;
+//   fat_action: string;
+//   staff: number;
+//   finv_id: number;
+// }
 
 export interface CommodityStockType {
   com_id: number;
@@ -55,17 +55,17 @@ export interface CommodityStockType {
   inv_id: number;
 }
 
-export interface FirstAidStockType {
-  fa_id: number;
-  cat_id: number;
-  finv_qty: number;
-  finv_qty_unit: string;
-  finv_pcs: number;
-  finv_qty_avail: number;
-  finv_used: number;
-  expiryDate: string;
-  inv_id: number;
-}
+// export interface FirstAidStockType {
+//   fa_id: number;
+//   cat_id: number;
+//   finv_qty: number;
+//   finv_qty_unit: string;
+//   finv_pcs: number;
+//   finv_qty_avail: number;
+//   finv_used: number;
+//   expiryDate: string;
+//   inv_id: number;
+// }
 
 
 // Add VaccineStockType definition and export

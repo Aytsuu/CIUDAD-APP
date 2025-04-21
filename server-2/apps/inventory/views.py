@@ -358,10 +358,10 @@ class ImmunizationSuppliesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestr
     queryset = ImmunizationSupplies.objects.all()
     lookup_field = 'imz_id'
     
-    def get_object(self):
-        imz_id = self.kwargs.get('imz_id')
-        obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
-        return obj
+    # def get_object(self):
+    #     imz_id = self.kwargs.get('imz_id')
+    #     obj = get_object_or_404(ImmunizationSupplies, imz_id=imz_id)
+    #     return obj
     
     
 # Vaccine List Views
@@ -369,6 +369,7 @@ class VaccineListRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView
     serializer_class = VacccinationListSerializer
     queryset = VaccineList.objects.all()
     lookup_field = 'vac_id'
+    
     
 # Vaccine Interval Views
 class VaccineIntervalRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):

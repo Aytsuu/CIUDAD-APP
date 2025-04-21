@@ -12,14 +12,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
-
-
-
-from pathlib import Path
-from datetime import timedelta
 from decouple import config
-import sys, os
+from datetime import timedelta
+import sys
+import os
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +27,6 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_'
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -47,25 +43,27 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+    'corsheaders',
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'corsheaders',
-    'apps.useraccount',
-    'apps.blotter',
+    'apps.account',
+    'apps.file',
+    'apps.drr'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    # 'useraccount.middleware.SupabaseJWTAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -88,15 +86,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 
 DATABASES = {
     'default': {
@@ -106,10 +97,6 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-
-    },
-    'Profiling': {
-
     }
 }
 
@@ -151,8 +138,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -162,7 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':(
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
@@ -172,31 +157,29 @@ REST_FRAMEWORK = {
     ],
 }
 
-# JWT Authentication Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
+# # New User Model
+AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:5173",
+    "http://localhost:5173",  
+    "http://localhost:3000",  
+    "http://127.0.0.1:8000",  
+    "http://localhost:8000",  
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_EXPOSE_HEADERS = ['Authorization']
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
-
-
-# AUTHENTICATION_BACKENDS = [
-#     # 'django.contrib.auth.backends.ModelBackend',  # Default backend
-#     # 'useraccount.authentication.SupabaseAuthenticationBackend',  # Supabase backend
-# ]
-
-# Supabase credentials
-# SUPABASE_URL = "https://bnvhzzbsqixwyevhgcol.supabase.co"
-# SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudmh6emJzcWl4d3lldmhnY29sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1ODkwMDEsImV4cCI6MjA1ODE2NTAwMX0.CaEU6OAV3BjTZ0Lh5TDTRkHzqKQmoHlbZ2dBOlDsEjs"
-# SUPABASE_JWT_SECRET = "EEDHhSbqr5GRRUZWNzJuiNAh1m6k5S4LD9JhKbQJ/UPN0WTzICDRrl7Q3Vbw05jk1SZDrNZl4ofrde2b0ihwAQ=="

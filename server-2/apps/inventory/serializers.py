@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import *
 from datetime import date  # Add this import
 
+
+
+
 class MedicineListSerializers(serializers.ModelSerializer):
     class Meta: 
         model = Medicinelist

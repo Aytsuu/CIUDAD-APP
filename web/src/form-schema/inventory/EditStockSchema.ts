@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { positiveNumberSchema } from "./addStocksSchema";
+import { positiveNumberSchema } from "@/helpers/PositiveNumber";
 
 
 export const VaccineStocksSchema = z.object({

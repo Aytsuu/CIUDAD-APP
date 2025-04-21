@@ -8,9 +8,9 @@ import Layout from "./_layout";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
 import { z } from "zod";
-import { FormDataSchema } from "@/form-schema/registration-schema";
-import { UserAccount } from "@/form-schema/user-account-schema";
-import axios from "axios";
+// import { FormDataSchema } from "@/form-schema/registration-schema";
+// import { UserAccount } from "@/form-schema/user-account-schema";
+// import axios from "axios";
 
 export default function AccountDetails() {
   const router = useRouter();
