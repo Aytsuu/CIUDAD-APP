@@ -54,7 +54,7 @@ export default ({
   description: String;
 }) => {
   return (
-    <SafeAreaView className="flex-1 bg-lightBlue-1 p-5">
+    <SafeAreaView className="flex-1 bg-white p-5">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}

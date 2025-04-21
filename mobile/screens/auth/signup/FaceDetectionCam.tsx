@@ -3,6 +3,7 @@ import { StyleSheet, useWindowDimensions, Text, View } from 'react-native';
 import { Camera, Frame, useCameraDevice, PhotoFile, useFrameProcessor } from 'react-native-vision-camera';
 import { Face, useFaceDetector, FaceDetectionOptions } from 'react-native-vision-camera-face-detector';
 import { Worklets } from 'react-native-worklets-core';
+import * as ImageManipulator from "expo-image-manipulator";
 
 type Props = {
   isValid: boolean;
@@ -10,7 +11,7 @@ type Props = {
 };
 
 export type FaceDetectionCamHandle = {
-  capturePhoto: () => Promise<PhotoFile | null>;
+  capturePhoto: () => Promise<Uint8Array | null>;
 };
 
 export const FaceDetectionCam = forwardRef<FaceDetectionCamHandle, Props>((props, ref) => {
@@ -186,12 +187,34 @@ export const FaceDetectionCam = forwardRef<FaceDetectionCamHandle, Props>((props
             enableShutterSound: false,
           });
 
+          // Convert path to proper URI format
+          const photoUri = `file://${photo?.path}`;
+    
+          // Compress photo to reduce size
+          const compressedImage = await ImageManipulator.manipulateAsync(
+            photoUri,
+            [{ resize: { width: 1080, height: 1200 } }],
+            {
+              compress: 0.8, // 70% compression (0.7)
+              format: ImageManipulator.SaveFormat.JPEG,
+              base64: true,
+            }
+          );
+    
+          if (!compressedImage.base64) {
+            throw new Error("Compressed image base64 data is undefined");
+          }
+    
+          const arrayBuffer = Uint8Array.from(atob(compressedImage.base64), (c) =>
+            c.charCodeAt(0)
+          );
+
           // Verify the captured photo
           if (!photo.path || photo.path.length === 0) {
             throw new Error('Invalid photo path');
           }
 
-          return photo;
+          return arrayBuffer;
         } catch (error) {
           console.error('Failed to capture photo:', error);
           return null;

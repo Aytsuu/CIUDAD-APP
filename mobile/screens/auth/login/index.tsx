@@ -1,5 +1,5 @@
 import "@/global.css";
-
+import { api } from "@/api/api";
 import React, { useState } from "react";
 import {
   View,
@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
 import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
@@ -33,7 +35,7 @@ export default function LoginScreen() {
     setIsLoading(true);
   
     try {
-      const response = await axios.post("http://localhost:8000/user/login/", {
+      const response = await api.post("user/login/", {
         username: username,
         password: password,
       });
