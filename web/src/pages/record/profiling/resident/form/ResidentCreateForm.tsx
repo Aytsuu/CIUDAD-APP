@@ -11,6 +11,7 @@ import { Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { formatResidents } from "../../profilingFormats";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function ResidentCreateForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -53,7 +54,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       return;
     }
 
-    const personalId = await addPersonal(form.getValues());
+    const personalInfo = capitalizeAllFields(form.getValues());
+    const personalId = await addPersonal(personalInfo);
     const resident = await addResidentProfile({
       personalId,
       staffId: user?.staff.staff_id,

@@ -1,9 +1,8 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import { StyleSheet, useWindowDimensions, Text, View } from 'react-native';
 import { Camera, Frame, useCameraDevice, PhotoFile, useFrameProcessor } from 'react-native-vision-camera';
 import { Face, useFaceDetector, FaceDetectionOptions } from 'react-native-vision-camera-face-detector';
 import { Worklets } from 'react-native-worklets-core';
-
 
 type Props = {
   isValid: boolean;
@@ -22,6 +21,17 @@ export const FaceDetectionCam = forwardRef<FaceDetectionCamHandle, Props>((props
   const device = useCameraDevice('front');
   const camera = React.useRef<Camera>(null);
   const circleSize = React.useRef(Math.min(screenWidth * 0.8, screenHeight * 0.5)).current;
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+
+  // Request camera permission
+  useEffect(() => {
+    const requestCameraPermission = async () => {
+      const status = await Camera.requestCameraPermission();
+      setHasPermission(status === 'granted');
+    };
+
+    requestCameraPermission();
+  }, []);
 
   const { detectFaces } = useFaceDetector({
     performanceMode: 'accurate',
@@ -66,7 +76,6 @@ export const FaceDetectionCam = forwardRef<FaceDetectionCamHandle, Props>((props
       setIsValid(validFace);
     } catch (err) {
       console.log(err);
-
     }
   });
 
@@ -191,15 +200,34 @@ export const FaceDetectionCam = forwardRef<FaceDetectionCamHandle, Props>((props
       return null;
     }
   }));
-  
 
   if (!device) {
     return (
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-black/80 font-PoppinsRegular text-[15px]">
-            Camera device not found
-          </Text>
-        </View>
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-black/80 font-PoppinsRegular text-[15px]">
+          Camera device not found
+        </Text>
+      </View>
+    );
+  }
+
+  if (hasPermission === null) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-black/80 font-PoppinsRegular text-[15px]">
+          Requesting camera permission...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!hasPermission) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-black/80 font-PoppinsRegular text-[15px]">
+          Camera permission not granted
+        </Text>
+      </View>
     );
   }
 

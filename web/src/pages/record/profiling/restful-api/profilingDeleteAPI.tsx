@@ -3,6 +3,7 @@ import { api } from "@/api/api";
 // Request deletion on approve
 export const deleteRequest = async (requestId: string) => {
   try {
+    console.log({requestId})
     const res = await api.delete(`profiling/request/delete/${requestId}/`);
     return res;
   } catch (err) {

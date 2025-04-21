@@ -12,6 +12,21 @@ class PersonalView(generics.ListCreateAPIView):
     serializer_class = PersonalSerializer
     queryset = Personal.objects.all()
 
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Skip the full model clean if not needed
+        instance = Personal(**serializer.validated_data)
+        instance.save(force_insert=True)
+
+        response_data = serializer.data
+        response_data['per_id'] = instance.per_id
+        
+        headers = self.get_success_headers(serializer.data)
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
 class PersonalUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PersonalSerializer
     queryset = Personal.objects.all()
@@ -72,7 +87,39 @@ class HouseholdView(generics.ListCreateAPIView):
 # ResidentProfile Views -----------------------------------------------------------------
 class ResidentProfileView(generics.ListCreateAPIView):
     serializer_class = ResidentProfileFullSerializer
-    queryset = ResidentProfile.objects.all()    
+    
+    def get_queryset(self):
+        """
+        Optimized queryset with:
+        - select_related for foreign keys
+        - prefetch_related for many-to-many/reverse relations
+        - only() to select specific fields
+        - Annotated is_staff flag to avoid N+1 queries
+        """
+        from django.db.models import Exists, OuterRef
+        from apps.administration.models import Staff
+
+        base_query = ResidentProfile.objects.select_related(
+            'per',
+            'staff',
+            'account',
+        ).prefetch_related(
+            'family_compositions',
+            'family_compositions__fam',
+            'staff_assignments'
+        ).annotate(
+            is_staff_flag=Exists(Staff.objects.filter(rp=OuterRef('pk'))),
+        )
+    
+        if self.request.method == 'GET':
+            return base_query.only(
+                'rp_id',
+                'rp_date_registered',
+                'per__per_id',
+                'staff__staff_id',
+                'account__id'  # Must include all select_related fields used
+            )
+        return base_query
 
 # Request Views --------------------------------------------------------------------------
 

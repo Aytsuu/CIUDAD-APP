@@ -9,11 +9,15 @@ import { useAddResidentProfile } from "../../queries/profilingAddQueries";
 import { useAuth } from "@/context/AuthContext";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Label } from "@/components/ui/label";
+import { useDeleteRequest } from "../../queries/profilingDeleteQueries";
+import { useNavigate } from "react-router";
 
 export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
+  const navigate = useNavigate();
   const { user } = useAuth(); 
-  const { mutateAsync: addResidentProfile, isPending: isCreating } = useAddResidentProfile(params);
+  const { mutateAsync: addResidentProfile, isPending: isCreating } = useAddResidentProfile();
+  const { mutateAsync: deleteRequest } = useDeleteRequest();
   const { form, handleSubmitError, handleSubmitSuccess } = useResidentForm(
     params.data?.per
   );
@@ -37,9 +41,13 @@ export default function ResidentRequestForm({ params }: { params: any }) {
     await addResidentProfile({
       personalId: params.data?.per.per_id,
       staffId: user?.staff.staff_id,
+      params: params
     });
 
     if (!isCreating) {
+      console.log(params.data.req_id)
+      await deleteRequest(params.data.req_id);
+      navigate(-1);
       handleSubmitSuccess(
         "New record created successfully"
       );

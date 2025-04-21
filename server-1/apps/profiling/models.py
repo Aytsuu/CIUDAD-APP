@@ -28,6 +28,10 @@ class Personal(models.Model):
 
     class Meta:
         db_table = 'personal'
+        indexes = [
+            models.Index(fields=['per_lname', 'per_fname']),
+            models.Index(fields=['per_contact']),
+        ]
 
     def __str__(self):
         name_parts = [self.per_lname, self.per_fname]
@@ -46,6 +50,10 @@ class ResidentProfile(models.Model):
 
     class Meta:
         db_table = 'resident_profile'
+        indexes = [
+            models.Index(fields=['per']),
+            models.Index(fields=['rp_date_registered'])
+        ]
 
     def __str__(self):
         return f"{self.per} (ID: {self.rp_id})"

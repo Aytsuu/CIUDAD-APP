@@ -1,3 +1,4 @@
+from django.db import transaction
 from apps.administration.models import Staff
 from ..models import *
 from .base import *
@@ -20,13 +21,21 @@ class ResidentProfileFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = '__all__'
+
+    @transaction.atomic
+    def create(self, validated_data):
+        per =  validated_data.pop('per', None) 
+        staff = validated_data.pop('staff', None)
+
+        resident_profile = ResidentProfile.objects.create(per=per, staff=staff,**validated_data)
+        return resident_profile
     
     def get_staff(self, obj):
         from apps.administration.serializers.full import StaffFullSerializer
         return StaffFullSerializer(obj.staff).data
 
     def get_is_staff(self, obj):
-        return Staff.objects.filter(rp=obj).exists()       
+        return hasattr(obj, 'staff_assignments') and bool(obj.staff_assignments.all())    
 
 
 class HouseholdFullSerializer(serializers.ModelSerializer):

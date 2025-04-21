@@ -79,10 +79,6 @@ export const useResidentForm = (defaultData?: any, origin?: string) => {
   const handleSubmitSuccess = (message: string, redirectPath?: string, state?: any) => {
     toast(message, {
       icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      action: redirectPath ? {
-        label: "View",
-        onClick: () => navigate(redirectPath),
-      } : undefined,
     });
     if (redirectPath) navigate(redirectPath, {state});
   };
