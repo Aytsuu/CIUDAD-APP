@@ -7,7 +7,7 @@ class PrenatalFormSerializer(serializers.ModelSerializer):
         model = Prenatal_Form
         fields = '__all__'
 
-class ObsteticalHistorySerializer(serializers.ModelSerializer):
+class ObstetricalHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Obstetrical_History
         fields = '__all__'
