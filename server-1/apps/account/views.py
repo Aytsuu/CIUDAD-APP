@@ -66,7 +66,7 @@ class LoginView(APIView):
             rp_data = ResidentProfileFullSerializer(user.rp).data if user.rp else None
 
             # Fetch Staff where staff_id == rp_id
-            staff = Staff.objects.filter(staff_id=user.rp.rp_id).first() if user.rp else None
+            staff = Staff.objects.filter(staff_id=str(user.rp.rp_id)).first() if user.rp else None
             staff_data = StaffFullSerializer(staff).data if staff else None
             
             return Response({
@@ -85,8 +85,9 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         except Exception as e:
+            print(f"Login error: {str(e)}")
             return Response(
-                {"error": "An unexpected error occurred"},
+                {"error": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             
