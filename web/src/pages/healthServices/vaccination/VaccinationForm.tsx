@@ -196,6 +196,7 @@ export default function VaccinationForm() {
       });
       vital_id = vitalSignsResponse.data.vital_id;
   
+      const vacStck = form.getValues("vaccinetype")
       // Step 4: Create vaccination history
       await api.post("vaccination/vaccination-history/", {
         vachist_doseNo: "1st dose",
@@ -205,10 +206,15 @@ export default function VaccinationForm() {
         serv_id: patrec_id,
         vacrec: vacrec_id,
         vital: vital_id,
-        vacStck: form.getValues("vaccinetype"),
+        vacStck: vacStck,
         updated_at: new Date().toISOString(),
         assigned_to: null,
       });
+      
+
+      
+
+      
   
       toast.success("Vaccination record created successfully!");
       form.reset();

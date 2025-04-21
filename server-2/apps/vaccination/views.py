@@ -54,18 +54,23 @@ class VaccinationRecordByPatientView(generics.ListAPIView):
 
 
     def get_queryset(self):
-        pat_id = self.kwargs['pat_id']
+            pat_id = self.kwargs['pat_id']
+            # Subquery to get the latest vachist_status from VaccinationHistory
+            latest_status_subquery = VaccinationHistory.objects.filter(
+                vacrec_id=OuterRef('pk')
+            ).order_by('-updated_at').values('vachist_status')[:1]
 
-        # Use Subquery to get the latest created_at from VaccinationHistory for each VaccinationRecord
-        return VaccinationRecord.objects.filter(
-            patrec_id__pat_id=pat_id
-        ).annotate(
-            latest_history_updated_at=Subquery(
-                VaccinationHistory.objects.filter(
-                    vacrec_id=OuterRef('patrec_id')  # Referencing the current VaccinationRecord's id
-                ).order_by('-updated_at').values('updated_at')[:1]  # Get the most recent created_at
+            # Annotate each record with the latest vachist_status
+            queryset = VaccinationRecord.objects.filter(
+                patrec_id__pat_id=pat_id
+            ).annotate(
+                latest_status=Subquery(latest_status_subquery)
+            ).exclude(
+                latest_status='forwarded'
             )
-        ).order_by('-latest_history_updated_at')  # Order by the latest `created_at` of the related histories
+            return queryset
+
+
 # UPDATE DELETE
 class DeleteUpdateVaccinationRecordView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccinationRecordSerializer

@@ -8,7 +8,6 @@ from apps.healthProfiling.models import FamilyComposition,Household
 # serializers.py
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = PersonalSerializer(source='per_id', read_only=True)
-
     resident_profile = ResidentProfileMinimalSerializer(source='per_id.personal_information', many=True, read_only=True)
     family_compositions = serializers.SerializerMethodField()
     households = serializers.SerializerMethodField()  # 🔥 Add this line
