@@ -23,13 +23,13 @@ const pregnancyCheck = z.object({
   recent_period: z.boolean().default(false),
   recent_abortion: z.boolean().default(false),
   using_contraceptive: z.boolean().default(false),
-  fpt_id: z.number().min(1,"FP type is required"),
 });
 
 
 // Define the complete schema for all pages
 export const FamilyPlanningSchema = z.object({
   pat_id: z.string(),
+  fpt_id: z.string(),
   clientID: z.string().nonempty("Client ID is required"),
   philhealthNo: z.string().optional(),
   nhts_status: z.boolean(),

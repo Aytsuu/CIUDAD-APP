@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import type React from "react"
-import { useForm,Controller } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
+import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button/button"
@@ -15,13 +16,15 @@ import SignatureCanvas from "react-signature-canvas"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import type { FormData, ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
+
 
 const methods = ["COC", "POP", "Injectable", "Implant", "IUD", "Interval", "Post Partum", "Condom", "BOM/CMM", "BBT", "STM", "SDM", "LAM", "Others"]
 const units = ["box", "pcs"]
 const pregnancyQuestions = [
   { id: "breastfeeding", q: "Did you have a baby less than six (6) months ago, are you fully or nearly fully breastfeeding, and have you had no menstrual period since then?" },
   { id: "abstained", q: "Have you abstained from sexual intercourse since your last menstrual period or delivery?" },
-  { id: "recent_baby", q: "Have you had a baby in the last four (4) weeks?", },
+  { id: "recent_baby", q: "Have you had a baby in the last four (4) weeks?" },
   { id: "recent_period", q: "Did your last menstrual period start within the past seven (7) days?" },
   { id: "recent_abortion", q: "Have you had miscarriage or abortion in the last seven (7) days?" },
   { id: "using_contraceptive", q: "Have you been using a reliable contraceptive method consistently and correctly?" },
@@ -43,6 +46,9 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
   })
   const [validationError, setValidationError] = useState<string | null>(null)
   const [sigRef, setSigRef] = useState<SignatureCanvas | null>(null)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
+  const navigate = useNavigate()
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -82,22 +88,28 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
     if (sigRef) setRecord((prev) => ({ ...prev, serviceProviderSignature: sigRef.toDataURL() }))
   }
 
-  const handleSubmit = (data: FormData) => {
+  const onConfirmSubmit = form.handleSubmit((data) => {
     const complete = record.methodAccepted && record.nameOfServiceProvider
     const finalRecords = complete ? [...records, record] : records
-    updateFormData({ serviceProvisionRecords: finalRecords, pregnancyCheck: data.pregnancyCheck })
+
+    updateFormData({
+      serviceProvisionRecords: finalRecords,
+      pregnancyCheck: data.pregnancyCheck,
+    })
+
     onSubmitFinal()
-  }
+    navigate("/FamPlanning_table")
+  })
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="mb-8">Service Provision Record</CardTitle>
-
       </CardHeader>
+
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <form>
 
             {validationError && <p className="text-red-600 mb-4">{validationError}</p>}
 
@@ -111,9 +123,7 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
                   </SelectTrigger>
                   <SelectContent>
                     {methods.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -246,20 +256,30 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
             </div>
 
             <div className="mt-6 p-4 rounded-md bg-gray-50">
-                <div className="font-medium mb-2">
-                  ■ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
-                  pregnancy, provide client with desired method.
-                </div>
-                <div className="font-medium mb-2">
-                  ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
-                  await menses or use a pregnancy test.
-                </div>
+              <div className="font-medium mb-2">
+                ■ If the client answered YES to at least one of the questions and she is free of signs or symptoms of
+                pregnancy, provide client with desired method.
               </div>
+              <div className="font-medium mb-2">
+                ■ If the client answered NO to all of the questions, pregnancy cannot be ruled out. The client should
+                await menses or use a pregnancy test.
+              </div>
+            </div>
 
+            {/* Confirmation & Navigation */}
             <div className="flex justify-end mt-6 space-x-4">
               <Button type="button" variant="outline" onClick={onPrevious5}>Previous</Button>
-              <Button type="submit">Submit</Button>
+              <Button type="button" onClick={() => setIsConfirmOpen(true)}>Submit</Button>
             </div>
+
+            <ConfirmationDialog
+              isOpen={isConfirmOpen}
+              onOpenChange={setIsConfirmOpen}
+              onConfirm={onConfirmSubmit}
+              title="Confirm Submission"
+              description="Are you sure you want to submit all data? This action cannot be undone."
+            />
+
           </form>
         </Form>
       </CardContent>
