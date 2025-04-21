@@ -32,3 +32,19 @@ class DeleteUpdatePatientRecordView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+
+class VitalSignsView(generics.ListCreateAPIView):
+    serializer_class = VitalSignsSerializer
+    queryset  =VitalSigns.objects.all()
+   
+   
+class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VitalSignsSerializer
+    queryset = VitalSigns.objects.all()
+    lookup_field = 'vital_id'
+    
+    def get_object(self):
+        try:
+            return super().get_object()
+        except NotFound:
+            return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)

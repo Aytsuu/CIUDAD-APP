@@ -21,6 +21,74 @@ import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
 
+interface VaccineInterval {
+  vacInt_id: number;
+  interval: number;
+  dose_number: number;
+  time_unit: string;
+  vac_id: number;
+}
+
+interface VaccineCategory {
+  vaccat_id: number;
+  vaccat_type: string;
+}
+
+interface VaccineList {
+  vac_id: number;
+  vaccat_details: VaccineCategory;
+  intervals: VaccineInterval[];
+  routine_frequency: string | null;
+  vac_type_choices: string;
+  vac_name: string;
+  no_of_doses: number;
+  age_group: string;
+  specify_age: string;
+  created_at: string;
+  updated_at: string;
+  vaccat_id: number;
+}
+
+interface VaccineStock {
+  vacStck_id: number;
+  vaccinelist: VaccineList;
+  inv_id: number;
+  vac_id: number;
+  solvent: string;
+  batch_number: string;
+  volume: number;
+  qty: number;
+  dose_ml: number;
+  vacStck_used: number;
+  vacStck_qty_avail: number;
+  wasted_dose: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface VaccinationHistory {
+  vachist_id: number;
+  vital_signs: {
+    vital_id: number;
+    vital_bp_systolic: string;
+    vital_bp_diastolic: string;
+    vital_temp: string;
+    vital_RR: string;
+    vital_o2: string;
+    created_at: string;
+  } | null;
+  vaccine_stock: VaccineStock | null;
+  vachist_doseNo: string;
+  vachist_status: string;
+  vachist_age: number;
+  assigned_to: number | null;
+  staff_id: number;
+  updated_at: string;
+  vital: number;
+  vacrec: number;
+  vacStck: number;
+}
+
 export interface VaccinationRecord {
   vachist_id: number;
   vachist_doseNo: string;
@@ -37,6 +105,12 @@ export interface VaccinationRecord {
   vaccine_name: string;
   batch_number: string;
   updated_at: string;
+  intervals: VaccineInterval[];
+  vaccine_details: {
+    no_of_doses: number;
+    age_group: string;
+    vac_type: string;
+  };
 }
 
 export default function IndivVaccinationRecords() {
@@ -77,40 +151,17 @@ export default function IndivVaccinationRecords() {
             vital_o2: "N/A",
             created_at: "N/A",
           },
-          vaccine_name:
-            history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+          vaccine_name: history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
           batch_number: history.vaccine_stock?.batch_number || "N/A",
           updated_at: history.updated_at,
+          intervals: history.vaccine_stock?.vaccinelist?.intervals || [],
+          vaccine_details: {
+            no_of_doses: history.vaccine_stock?.vaccinelist?.no_of_doses || 0,
+            age_group: history.vaccine_stock?.vaccinelist?.age_group || "N/A",
+            vac_type: history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+          },
         }))
     );
-
-    interface VaccinationHistory {
-      vachist_id: number;
-      vachist_doseNo: string;
-      vachist_status: string;
-      vachist_age: number;
-      vital_signs?: VitalSigns;
-      vaccine_stock?: VaccineStock;
-      updated_at: string;
-    }
-
-    interface VitalSigns {
-      vital_bp_systolic: string;
-      vital_bp_diastolic: string;
-      vital_temp: string;
-      vital_RR: string;
-      vital_o2: string;
-      created_at: string;
-    }
-
-    interface VaccineStock {
-      batch_number: string;
-      vaccinelist?: VaccineList;
-    }
-
-    interface VaccineList {
-      vac_name: string;
-    }
   }, [vaccinationRecords]);
 
   const filteredData = React.useMemo(() => {
@@ -167,6 +218,9 @@ export default function IndivVaccinationRecords() {
             <div className="text-xs text-gray-500">
               Batch: {row.original.batch_number}
             </div>
+            <div className="text-xs text-gray-500">
+              Type: {row.original.vaccine_details.vac_type}
+            </div>
           </div>
         </div>
       ),
@@ -211,6 +265,11 @@ export default function IndivVaccinationRecords() {
         <div className="flex justify-center">
           <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
             {row.original.vachist_doseNo}
+           
+              <div className="text-xs text-gray-500 mt-1">
+              Required Doses {row.original.vaccine_details.no_of_doses} doses
+              </div>
+          
           </div>
         </div>
       ),

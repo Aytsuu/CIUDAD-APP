@@ -4,7 +4,7 @@ from .views import *
 
 urlpatterns = [
     path('vaccination-record/', VaccineRecordView.as_view(), name='vaccination-record'),
-    path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
+    # path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
     path('vaccination-history/', VaccinationHistoryView.as_view(), name='vaccination-history'),
   
 #   all records view
@@ -13,5 +13,5 @@ urlpatterns = [
     
     # # UPDATE DELETE
     path('vaccination-record/<int:vacrec_id>/', DeleteUpdateVaccinationRecordView.as_view(), name='vaccination-record-detail'),
-    path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
+    # path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
 ]

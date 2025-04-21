@@ -235,6 +235,7 @@ export default function CombinedStockTable() {
     }
   };
 
+  
   const columns = getStockColumns(handleArchiveInventory, setIsDialog);
 
   if (isLoading) {

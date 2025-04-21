@@ -37,3 +37,9 @@ class PatientRecordSerializer(serializers.ModelSerializer):
         model = PatientRecord
         fields = '__all__'
   
+  
+  
+class VitalSignsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VitalSigns
+        fields = '__all__'

@@ -4,14 +4,6 @@ from datetime import date  # Add this import
 
 
 
-class PartialUpdateMixin:
-    def to_internal_value(self, data):
-        if self.instance:
-            for field in self.fields:
-                if field not in data:
-                    self.fields[field].required = False
-        return super().to_internal_value(data)
-
 
 class MedicineListSerializers(serializers.ModelSerializer):
     class Meta: 

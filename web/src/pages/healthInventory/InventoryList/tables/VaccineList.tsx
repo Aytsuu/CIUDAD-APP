@@ -158,10 +158,7 @@ export default function VaccineList() {
       if (recordToDelete) {
         try {
           await handleDeleteAntigen(
-            vaccineToDelete,
-            recordToDelete.type,
-            
-          );
+            vaccineToDelete,recordToDelete.type );
           
           setIsDeleteConfirmationOpen(false);
           setVaccineToDelete(null);

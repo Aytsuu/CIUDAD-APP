@@ -8,7 +8,7 @@ from datetime import datetime
 from django.db.models import Count, Max, Subquery, OuterRef
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
- 
+from apps.patientrecords.models import VitalSigns
 
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
@@ -84,13 +84,13 @@ class DeleteUpdateVaccinationRecordView(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Vaccination record not found."}, status=status.HTTP_404_NOT_FOUND)
     
     
-class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = VitalSignsSerializer
-    queryset = VitalSigns.objects.all()
-    lookup_field = 'vital_id'
+# class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VitalSignsSerializer
+#     queryset = VitalSigns.objects.all()
+#     lookup_field = 'vital_id'
     
-    def get_object(self):
-        try:
-            return super().get_object()
-        except NotFound:
-            return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)
+#     def get_object(self):
+#         try:
+#             return super().get_object()
+#         except NotFound:
+#             return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)

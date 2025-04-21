@@ -4,13 +4,14 @@ from datetime import date
 from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers import VitalSignsSerializer
 # serializers.py
 
 
-class VitalSignsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = VitalSigns
-        fields = '__all__'
+# class VitalSignsSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = VitalSigns
+#         fields = '__all__'
 
 class VaccinationHistorySerializer(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)

@@ -25,3 +25,17 @@ class PatientRecord(models.Model):
     class Meta:
         db_table = 'patient_record'
         ordering = ['-patrec_id']
+        
+        
+        
+
+class VitalSigns(models.Model):
+    vital_id = models.BigAutoField(primary_key=True)
+    vital_bp_systolic = models.CharField(max_length=100)
+    vital_bp_diastolic = models.CharField(max_length=100)
+    vital_temp = models.CharField(max_length=100)
+    vital_RR = models.CharField(max_length=100)
+    vital_o2 = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        db_table = 'vital_signs'
