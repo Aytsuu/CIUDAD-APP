@@ -17,14 +17,13 @@ const styles = {
 
 type BudgetPlanPage2FormData = z.infer<typeof CurrentExpenditureMaintandOtherExpensesSchema1>;
 
-type Props = {
+function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData, isBeyondLimit}: {
     onPrevious1: () => void;
     onNext3: () => void;
     updateFormData: (data: Partial<BudgetPlanPage2FormData>) => void;
     formData: BudgetPlanPage2FormData;
-};
-
-function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}: Props) {
+    isBeyondLimit: boolean,
+}) {
     const budgetItems = [
         { name: "travelingExpenses", label: "Traveling Expense" },
         { name: "trainingExpenses", label: "Training Expenses" },
@@ -133,10 +132,10 @@ function CreateBudgetPlanPage2({ onPrevious1, onNext3, updateFormData, formData}
 
                     {/* Buttons */}
                     <div className="flex justify-between">
-                        <Button type="button" onClick={handlePrevious} className="w-[100px]">
+                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isBeyondLimit}>
                             Previous
                         </Button>
-                        <Button type="submit" className="w-[100px]">
+                        <Button type="submit" className="w-[100px]" disabled={isBeyondLimit}>
                             Next
                         </Button>
                     </div>

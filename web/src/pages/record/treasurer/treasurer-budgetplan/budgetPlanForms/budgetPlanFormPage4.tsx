@@ -18,7 +18,7 @@ const styles = {
 
 type BudgetPlanPage4FormData = z.infer<typeof CapitalOutlaysAndNonOfficeSchema>;
 
-function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData, balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit }: {
+function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData, balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit, isBeyondLimit }: {
     onPrevious3: () => void,
     onSubmit: () => void,
     updateFormData: (data: Partial<BudgetPlanPage4FormData>) => void,
@@ -31,6 +31,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     localDevLimit: string,
     skFundLimit: string,
     calamityFundLimit: string,
+    isBeyondLimit: boolean,
 }) {
     // page 4 budget items
     const budgetItems = [
@@ -252,10 +253,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                     </div>
 
                     <div className="flex justify-between">
-                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit}>
+                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit || isBeyondLimit}>
                             Previous
                         </Button>
-                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit || isBeyondLimit}>
                             Submit
                         </Button>
                     </div>

@@ -7,7 +7,6 @@ import { CurrentExpendituresPersonalServicesSchema, FormData } from "@/form-sche
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { toast } from "sonner";
 
@@ -18,12 +17,13 @@ const styles = {
 
 type BudgetPlanPage1FormData = z.infer<typeof CurrentExpendituresPersonalServicesSchema>;
 
-function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServicesLimit, actualIncome }:{
+function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServicesLimit, actualIncome, isBeyondLimit }:{
     onNext2: () => void,
     updateFormData: (data: Partial<BudgetPlanPage1FormData>) => void,
     formData: BudgetPlanPage1FormData,
     personalServicesLimit: number,
     actualIncome: number,
+    isBeyondLimit: boolean,
 }) {
     // Page 1 budget items
     const budgetItems = [
@@ -152,7 +152,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
                     </div>
 
                     <div className="flex justify-end">
-                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>Next</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit || isBeyondLimit}>Next</Button>
                     </div>
                 </div>
             </form>

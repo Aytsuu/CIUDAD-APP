@@ -52,6 +52,7 @@ function BudgetPlanForm() {
 
     const [totalBudgetObligations, settotalBudgetObligations] = useState(0.00);
     const [balUnappropriated, setbalUnappropriated] = useState(0.00);
+    const [isBeyondLimit, setIsBeyondLimit] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const initialForms = getInitialFormData(isEdit, originalData?.details);
@@ -75,6 +76,7 @@ function BudgetPlanForm() {
         
         if (newBalance < 0) {
             if (!totalBudgetToast.current) {
+                setIsBeyondLimit(true)
                 totalBudgetToast.current = toast.error("Insufficient funds! Budget obligations exceed available resources.", {
                     duration: Infinity, 
                     style: {
@@ -87,6 +89,7 @@ function BudgetPlanForm() {
             }
         } else {
             if(totalBudgetToast.current !== null){
+                setIsBeyondLimit(false)
                 toast.dismiss(totalBudgetToast.current);
                 totalBudgetToast.current = null;
             }
@@ -294,7 +297,7 @@ function BudgetPlanForm() {
                                 actualIncome = {actualIncome}
                                 updateFormData={updateFormData}
                                 formData={formData1}
-
+                                isBeyondLimit = {isBeyondLimit}
                                 />
                         )}
 
@@ -304,6 +307,7 @@ function BudgetPlanForm() {
                                 onNext3={handleNext}
                                 updateFormData={updateFormData}
                                 formData={formData2}
+                                isBeyondLimit = {isBeyondLimit}
                             />
                         )}
 
@@ -315,6 +319,7 @@ function BudgetPlanForm() {
                                 formData={formData3}
                                 actualRPT = {actualRPT}
                                 miscExpenseLimit = {miscExpenseLimit}
+                                isBeyondLimit = {isBeyondLimit}
                             />
                         )}
 
@@ -332,6 +337,7 @@ function BudgetPlanForm() {
                                 localDevLimit = {localDevLimit}
                                 skFundLimit = {skFundLimit}
                                 calamityFundLimit = {calamityFundLimit}
+                                isBeyondLimit = {isBeyondLimit}
                             />
                         )}
                     </div>
