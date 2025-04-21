@@ -20,10 +20,10 @@ export const useAddPersonalHealth = (values: z.infer<typeof personalInfoSchema>)
   });
 };
 
-export const useAddResidentProfileHealth = (params: any) => {
-  const navigate = useNavigate();
+export const useAddResidentProfileHealth = () => {
+  
   const queryClient = useQueryClient();
-  const { mutateAsync: deleteRequest } = useDeleteRequest();
+  
   return useMutation({
     mutationFn: ({
       personalId,
@@ -31,14 +31,15 @@ export const useAddResidentProfileHealth = (params: any) => {
     }: {
       personalId: string;
       staffId: string;
+      params: any
     }) => addResidentProfileHealth(personalId, staffId),
     onSuccess: async (newData) => {
-      
-      // Exit registration page after request has been approved
-      if (params.type === Type.Request) {
-        await deleteRequest(params.data.req_id);
-        navigate(-1);
-      }
+      queryClient.setQueryData(["residents"], (old: any[] = []) => [
+        ...old,
+        newData
+      ]);
+
+      queryClient.invalidateQueries({ queryKey: ["residents"] });
     },
   });
 };

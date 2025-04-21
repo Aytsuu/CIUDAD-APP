@@ -3,7 +3,7 @@ from datetime import date
 
 # Create your models here.
 class Position(models.Model):
-    pos_id = models.BigAutoField(primary_key=True)
+    pos_id = models.CharField(max_length=50, primary_key=True)
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions')

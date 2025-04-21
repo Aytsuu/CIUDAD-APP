@@ -1,7 +1,7 @@
 import { api2 } from "@/api/api";
 
 // Fetch residents
-export const getResidents = async () => {
+export const getResidentsHealth = async () => {
   try {
     const res = await api2.get("health-profiling/resident/");
     return res.data;
@@ -11,7 +11,7 @@ export const getResidents = async () => {
 };
 
 // Fetch families
-export const getFamilies = async () => {
+export const getFamiliesHealth = async () => {
   try {
     const res = await api2.get("health-profiling/family/");
     return res.data;
@@ -21,7 +21,7 @@ export const getFamilies = async () => {
 };
 
 // Fetch family composition
-export const getFamilyComposition = async () => {
+export const getFamilyCompositionHealth = async () => {
   try {
     const res = await api2.get("health-profiling/family-composition/");
     return res.data;
@@ -31,7 +31,7 @@ export const getFamilyComposition = async () => {
 }
 
 // Fetch households
-export const getHouseholds = async () => {
+export const getHouseholdsHealth = async () => {
   try {
     const res = await api2.get("health-profiling/household/");
     return res.data;
@@ -41,7 +41,7 @@ export const getHouseholds = async () => {
 };
 
 // Fetch sitio
-export const getSitio = async () => {
+export const getSitioHealth = async () => {
   try {
     const res = await api2.get("health-profiling/sitio/");
     return res.data;
@@ -51,7 +51,7 @@ export const getSitio = async () => {
 };
 
 // Fetch registration requests
-export const getRequests = async () => {
+export const getRequestsHealth = async () => {
   try {
     const res = await api2.get("health-profiling/request/");
     return res.data;

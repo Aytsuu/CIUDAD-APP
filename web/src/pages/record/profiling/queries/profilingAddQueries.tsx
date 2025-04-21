@@ -2,10 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Type } from "../profilingEnums";
-import { useDeleteRequest } from "./profilingDeleteQueries";
-import { z } from "zod";
-import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import {
   addBusiness,
   addBusinessFile,
@@ -17,16 +13,14 @@ import {
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
 
-export const useAddPersonal = (values: z.infer<typeof personalInfoSchema>) => {
+export const useAddPersonal = () => {
   return useMutation({
-    mutationFn: () => addPersonal(values),
+    mutationFn: (values: any) => addPersonal(values),
   });
 };
 
-export const useAddResidentProfile = (params: any) => {
-  const navigate = useNavigate();
+export const useAddResidentProfile = () => {
   const queryClient = useQueryClient();
-  const { mutateAsync: deleteRequest } = useDeleteRequest();
   return useMutation({
     mutationFn: ({
       personalId,
@@ -34,20 +28,15 @@ export const useAddResidentProfile = (params: any) => {
     }: {
       personalId: string;
       staffId: string;
+      params: any
     }) => addResidentProfile(personalId, staffId),
     onSuccess: async (newData) => {
-      queryClient.setQueryData(["residents"], (old: any) => [
+      queryClient.setQueryData(["residents"], (old: any[] = []) => [
         ...old,
-        newData,
+        newData
       ]);
 
       queryClient.invalidateQueries({ queryKey: ["residents"] });
-
-      // Exit registration page after request has been approved
-      if (params.type === Type.Request) {
-        await deleteRequest(params.data.req_id);
-        navigate(-1);
-      }
     },
   });
 };
@@ -60,7 +49,7 @@ export const useAddFamily = () => {
       staffId: string;
     }) => addFamily(demographicInfo, staffId),
     onSuccess: async (newData) => {
-      queryClient.setQueryData(["families"], (old: any) => [
+      queryClient.setQueryData(["families"], (old: any[] = []) => [
         ...old,
         newData,
       ]);
@@ -82,7 +71,7 @@ export const useAddFamilyComposition = () => {
       const {familyId, role, residentId} = variables;
 
       // Update family compositions list
-      queryClient.setQueryData(['familyCompositions'], (old: any) => [...old, newData]);
+      queryClient.setQueryData(['familyCompositions'], (old: any[] = []) => [...old, newData]);
 
       // Update the families list (if you have one)
       queryClient.setQueryData(['families'], (old: any[] = []) => {
@@ -147,7 +136,7 @@ export const useAddHousehold = () => {
       staffId: string;
     }) => addHousehold(householdInfo, staffId),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["households"], (old: any) => [
+      queryClient.setQueryData(["households"], (old: any[] = []) => [
         ...old,
         newData,
       ]);
@@ -176,7 +165,7 @@ export const useAddBusiness = () => {
       staffId: string;
     }) => addBusiness(businessInfo, staffId),
     onSuccess: (newData) => {
-      queryClient.setQueryData(["businesses"], (old: any) => [
+      queryClient.setQueryData(["businesses"], (old: any[] = []) => [
         ...old,
         newData
       ]);

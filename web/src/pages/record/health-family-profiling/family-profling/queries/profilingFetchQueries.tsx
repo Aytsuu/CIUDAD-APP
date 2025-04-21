@@ -1,58 +1,58 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  getFamilies,
-  getFamilyComposition,
-  getHouseholds,
-  getRequests,
-  getResidents,
-  getSitio,
+  getFamiliesHealth,
+  getFamilyCompositionHealth,
+  getHouseholdsHealth,
+  getRequestsHealth,
+  getResidentsHealth,
+  getSitioHealth,
 } from "../restful-api/profilingGetAPI";
 
 // Retrieving
-export const useResidents = () => {
+export const useResidentsHealth = () => {
   return useQuery({
     queryKey: ["residents"],
-    queryFn: getResidents,
+    queryFn: getResidentsHealth,
     staleTime: 1000 * 60 * 30,
   });
 };
 
-export const useRequests = () => {
+export const useRequestsHealth = () => {
   return useQuery({
     queryKey: ["requests"],
-    queryFn: getRequests,
+    queryFn: getRequestsHealth,
     staleTime: 60 * 30,
   });
 };
 
-export const useSitio = () => {
+export const useSitioHealth = () => {
   return useQuery({
     queryKey: ["sitio"],
-    queryFn: getSitio,
+    queryFn: getSitioHealth,
     staleTime: 1000 * 60 * 5,
   });
 };
 
-export const useHouseholds = () => {
+export const useHouseholdsHealth = () => {
   return useQuery({
     queryKey: ["households"],
-    queryFn: getHouseholds,
+    queryFn: getHouseholdsHealth,
     staleTime: 1000 * 60 * 30,
   });
 };
 
-export const useFamilies = () => {
+export const useFamiliesHealth = () => {
   return useQuery({
     queryKey: ["families"],
-    queryFn: getFamilies,
+    queryFn: getFamiliesHealth,
     staleTime: 1000 * 60 * 5,
   });
 };
 
-export const useFamilyComposition = () => {
+export const useFamilyCompositionHealth = () => {
   return useQuery({
     queryKey: ["familyCompositions"],
-    queryFn: getFamilyComposition,
+    queryFn: getFamilyCompositionHealth,
     staleTime: 1000 * 60 * 5
   })
 }

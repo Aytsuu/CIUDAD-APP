@@ -17,8 +17,18 @@ class PersonalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Personal
         fields = '__all__'
+        extra_kwargs = {
+            'per_mname': {'required': False},
+            'per_suffix': {'required': False},
+            'per_edAttainment': {'required': False}
+        }
 
 class BusinessFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessFile
+        fields = '__all__'
+
+class RequestFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequestFile
         fields = '__all__'

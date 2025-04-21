@@ -1,8 +1,8 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
 import ParentsFormLayout from "@/pages/record/health-family-profiling/family-profling/parents/ParentsFormLayout";
-import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
-import DemographicForm from "./demographic/DemographicForm";
+import DependentsInfoLayout from "./family-profling/dependents/DependentsInfoLayout";
+import DemographicForm from "./family-profling/demographic/DemographicForm";
 
 import { Button } from "@/components/ui/button/button";
 import { useLocation } from "react-router";
@@ -18,12 +18,12 @@ import {
 import { DependentRecord } from "@/pages/record/profiling/profilingTypes";
 import { Separator } from "@/components/ui/separator";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import RespondentsInfoLayout from "./family/RespondentsInfoLayout";
-import HouseholdHeadLayout from "./householdInfo/HouseholdHeadLayout";
-import HealthInfoLayout from "./healthInfo/HealthInfoLayout";
-import EnvironmentalFormLayout from "./householdInfo/EnvironmentalFormLayout";
-import NoncomDiseaseFormLayout from "./householdInfo/NonComDiseaseFormLayout";
-import TbSurveilanceInfoLayout from "./householdInfo/TbSurveilanceInfoLayout";
+import RespondentsInfoLayout from "./family-profling/family/RespondentsInfoLayout";
+import HouseholdHeadLayout from "./family-profling/householdInfo/HouseholdHeadLayout";
+import HealthInfoLayout from "./family-profling/healthInfo/HealthInfoLayout";
+import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
+import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
+import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
 
 export default function HealthFamilyForm() {
   const location = useLocation();

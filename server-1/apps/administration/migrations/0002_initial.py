@@ -14,23 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='staff',
-            name='rp',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignments', to='profiling.residentprofile'),
-        ),
-        migrations.AddField(
-            model_name='position',
-            name='staff',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='positions', to='administration.staff'),
-        ),
-        migrations.AddField(
-            model_name='assignment',
-            name='staff',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='assignments', to='administration.staff'),
-        ),
-        migrations.AlterUniqueTogether(
-            name='assignment',
-            unique_together={('feat', 'pos')},
-        ),
+
     ]

@@ -27,6 +27,7 @@ urlpatterns = [
     # Request Urls
     path("request/", RequestRegistrationView.as_view(), name="request-details"),
     path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
+    path("request/file/", RequestFileView.as_view(), name="request-files"),
 
     # Business Urls
     path("business/", BusinessView.as_view(), name="business-details"),

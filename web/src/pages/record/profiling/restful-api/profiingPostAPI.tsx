@@ -11,35 +11,28 @@ import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 export const addPersonal = async (personalInfo: Record<string, string>) => {
   try {
     const res = await api.post("profiling/personal/", {
-      per_lname: capitalize(personalInfo.per_lname),
-      per_fname: capitalize(personalInfo.per_fname),
-      per_mname: capitalize(personalInfo.per_mname) || null,
-      per_suffix: capitalize(personalInfo.per_suffix) || null,
+      per_lname: personalInfo.per_lname,
+      per_fname: personalInfo.per_fname,
+      per_mname: personalInfo.per_mname || null,
+      per_suffix: personalInfo.per_suffix || null,
       per_dob: formatDate(personalInfo.per_dob),
-      per_sex: capitalize(personalInfo.per_sex),
-      per_status: capitalize(personalInfo.per_status),
-      per_address: capitalize(personalInfo.per_address),
-      per_edAttainment: capitalize(personalInfo.per_edAttainment) || null,
-      per_religion: capitalize(personalInfo.per_religion),
-      per_contact: capitalize(personalInfo.per_contact),
+      per_sex: personalInfo.per_sex,
+      per_status: personalInfo.per_status,
+      per_address: personalInfo.per_address,
+      per_edAttainment: personalInfo.per_edAttainment || null,
+      per_religion: personalInfo.per_religion,
+      per_contact: personalInfo.per_contact,
     });
 
     return res.data.per_id;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
 // POST request for resident_profile model 
 export const addResidentProfile = async (personalId: string, staffId: string) => {
   try {
-
-    console.log({
-      rp_id: await generateResidentNo(),
-      rp_date_registered: formatDate(new Date()),
-      per_id: personalId,
-      staff: staffId,
-    })
     const res = await api.post("profiling/resident/", {
       rp_id: await generateResidentNo(),
       rp_date_registered: formatDate(new Date()),
@@ -49,7 +42,7 @@ export const addResidentProfile = async (personalId: string, staffId: string) =>
 
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -70,7 +63,7 @@ export const addFamily = async (
 
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -85,7 +78,7 @@ export const addFamilyComposition = async (familyId: string, role: string, resid
 
     return res.data
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -107,7 +100,7 @@ export const addHousehold = async (householdInfo: Record<string, string>, staffI
 
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -149,16 +142,12 @@ export const addBusiness = async (businessInfo: Record<string, string>, staffId:
 
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
 export const addBusinessFile = async (businessId: string, fileId: string) => {
   try {
-    console.log({
-      bus: businessId,
-      file: fileId
-    })
     const res = await api.post('profiling/business/file/', {
       bus: businessId,
       file: fileId
@@ -166,7 +155,7 @@ export const addBusinessFile = async (businessId: string, fileId: string) => {
 
     return res.data
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 }
 
@@ -181,7 +170,7 @@ export const addFile = async (name: string, type: string, path: string, url: str
 
     return res.data
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 }
 
