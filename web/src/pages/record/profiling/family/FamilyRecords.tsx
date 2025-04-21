@@ -107,7 +107,7 @@ export default function FamilyRecords() {
 
         {/* DialogLayout with state management */}
         <Link
-          to="/health-family-form"
+          to="/family/family-profile-form"
           state={{
             params: {
               residents: residents,

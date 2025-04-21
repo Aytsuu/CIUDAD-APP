@@ -11,6 +11,7 @@ import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 import HouseholdRecordView from "@/pages/record/profiling/household/HouseholdRecordView";
 import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLayout";
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
+import HealthFamilyForm from "@/pages/record/health-family-profiling/family-profling/HealthFamilyForm";
 
 export const profiling_router = [
   // Account
@@ -45,6 +46,10 @@ export const profiling_router = [
   {
     path: "family/form",
     element: <FamilyProfileForm />,
+  },
+  {
+    path: "family/family-profile-form",
+    element: <HealthFamilyForm />,
   },
   {
     path: "family/form/solo",
