@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import type React from "react"
 import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import SignatureCanvas from "react-signature-canvas"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { FormData, ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
+import { page6Schema, type FormData, type ServiceProvisionRecord } from "@/form-schema/FamilyPlanningSchema"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
 
 
@@ -31,6 +32,7 @@ const pregnancyQuestions = [
 ]
 
 type Props = {
+  
   onPrevious5: () => void
   onSubmitFinal: () => void
   updateFormData: (data: Partial<FormData>) => void
@@ -51,6 +53,7 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
   const navigate = useNavigate()
 
   const form = useForm<FormData>({
+     resolver: zodResolver(page6Schema),
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
       pregnancyCheck: formData?.pregnancyCheck || Object.fromEntries(pregnancyQuestions.map(q => [q.id, false])),

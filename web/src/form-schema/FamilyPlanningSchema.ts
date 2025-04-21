@@ -30,9 +30,9 @@ const pregnancyCheck = z.object({
 export const FamilyPlanningSchema = z.object({
   pat_id: z.string(),
   fpt_id: z.string(),
-  clientID: z.string().nonempty("Client ID is required"),
+  clientID: z.string().optional(),
   philhealthNo: z.string().optional(),
-  nhts_status: z.boolean(),
+  nhts_status: z.boolean({required_error: "You must choose Yes or No"}),
   pantawid_4ps: z.boolean(),
 
   lastName: z.string().nonempty("Last name is required"),
@@ -75,12 +75,13 @@ export const FamilyPlanningSchema = z.object({
   averageMonthlyIncome: z.string().nonempty("Average monthly income is required"),
 
   typeOfClient: z.string().nonempty("Type of client is required"),
-  subTypeOfClient: z.string().optional(),
+  subTypeOfClient: z.string().nonempty("Sub-type of client is required"),
 
-  reasonForFP: z.string().optional(),
-
-  reason: z.string().optional(),
-  otherReason: z.string().optional(),
+  reasonForFP: z.string().nonempty("Reason for family planning is required"),
+  // Current user reason
+  reason: z.string().nonempty("Reason is required"), 
+  otherReason: z.string().nonempty("bogo ka haha"),
+  sideeffects: z.string().nonempty("Side effects are required"),
   methodCurrentlyUsed: z
     .enum([
       "COC",
@@ -103,10 +104,9 @@ export const FamilyPlanningSchema = z.object({
       "Bilateral Tubal Ligation",
       "Vasectomy",
       "Source",
-    ])
-    .optional(),
+    ]),
 
-  otherMethod: z.string().optional(), // For 'Others' input field
+  otherMethod: z.string().nonempty("Specify other method"),
 
   // Page 2 fields
   medicalHistory: z.object({
@@ -122,7 +122,7 @@ export const FamilyPlanningSchema = z.object({
     phenobarbitalOrRifampicin: z.boolean(),
     smoker: z.boolean(),
     disability: z.boolean(),
-    disabilityDetails: z.string().optional(),
+    disabilityDetails: z.string().nonempty("Specify disability details"),
   }),
 
   // Obstetrical History
@@ -209,18 +209,18 @@ export const FamilyPlanningSchema = z.object({
   uterinePosition: z
     .enum(["mid", "anteflexed", "retroflexed", "not_applicable"])
     .refine((val) => val !== undefined, { message: "Please select uterine position" }),
-  uterineDepth: z.string().optional(),
+  uterineDepth: z.string().nonempty("Uterine depth is required"),
 
   // Page 5 fields
   acknowledgement: z.object({
     selectedMethod: z
       .enum(["coc","bom/cmm","lam","pop","iud-interval","iud-postpartum","bbt","sdm","injectable","stm","implant","condom","others",])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
-    clientSignature: z.string().optional(),
-    clientName: z.string().optional(),
+    clientSignature: z.string().nonempty("Client signature date is required"),
+    clientName: z.string().nonempty("Name is required"),
     clientSignatureDate: z.string().nonempty("Client signature date is required"),
     guardianName: z.string().optional(),
-    guardianSignature: z.string().optional(),
+    guardianSignature: z.string().nonempty("Signature date is required"),
     guardianSignatureDate: z.string().optional(),
   }),
 
