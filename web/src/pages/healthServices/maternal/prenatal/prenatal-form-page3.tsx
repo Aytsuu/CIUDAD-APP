@@ -1,20 +1,20 @@
 import { UseFormReturn } from "react-hook-form";
 import { Form } from "react-router";
-import { z } from "zod"
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Separator } from "@/components/ui/separator";
 import { CalendarCheck } from 'lucide-react';
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { FormSelect } from "@/components/ui/form/form-select";
 
 export default function PrenatalFormThirdPg(
     {form, onSubmit, back}: {
@@ -29,10 +29,10 @@ export default function PrenatalFormThirdPg(
                 onSubmit(); //proceed to next page
             }
         })
+        window.scrollTo(0, 0);
     }
 
     // for the schedule of follow-up visit 
-    // -----
     const calculatedDate = (option: 'week' | 'twoweeks' | 'month'):string | null => {
         const today = new Date();
 
@@ -54,98 +54,50 @@ export default function PrenatalFormThirdPg(
 
     const [selectedOption, setSelectedOption] = useState('');
 
-    // validate for specific string
     const isValidOption = (value: string): value is 'week' | 'twoweeks' | 'month' => {
         return ['week', 'twoweeks', 'month'].includes(value);
     }
-    // -----
 
     // checklist 
-    // -----
     type AssessmentChecklistKeys = keyof z.infer<typeof PrenatalFormSchema>['assessmentChecklist'];
     const preEclampsiaChecklist: { name: AssessmentChecklistKeys; label: string }[] = [
-        {
-            name: "increasedBP", label: "INCREASED BP",
-        },
-        {
-            name: "epigastricPain", label: "EPIGASTRIC PAIN",
-        },
-        {
-            name: "nausea", label: "NAUSEA",
-        },
-        {
-            name: "blurringOfVision", label: "BLURRING OF VISION",
-        },
-        {
-            name: "edema", label: "EDEMA",
-        },
-        {
-            name: "severeHeadache", label: "SEVERE HEADACHE",
-        },
-        {
-            name: "abnormalVaginalDischarges", label: "ABNORMAL VAGINAL DISCHARGES",
-        },
-        {
-            name: "vaginalBleeding", label: "VAGINAL BLEEDING",
-        },
-        {
-            name: "chillsFever", label: "CHILLS & FEVER",
-        },
-        {
-            name: "diffInBreathing", label: "DIFF. IN BREATHING",
-        },
-        {
-            name: "varicosities", label: "VARICOSITIES",
-        },
-        {
-            name: "abdominalPain", label: "ABDOMINAL PAIN",
-        },
+        { name: "increasedBP", label: "INCREASED BP" },
+        { name: "epigastricPain", label: "EPIGASTRIC PAIN" },
+        { name: "nausea", label: "NAUSEA" },
+        { name: "blurringOfVision", label: "BLURRING OF VISION" },
+        { name: "edema", label: "EDEMA" },
+        { name: "severeHeadache", label: "SEVERE HEADACHE" },
+        { name: "abnormalVaginalDischarges", label: "ABNORMAL VAGINAL DISCHARGES" },
+        { name: "vaginalBleeding", label: "VAGINAL BLEEDING" },
+        { name: "chillsFever", label: "CHILLS & FEVER" },
+        { name: "diffInBreathing", label: "DIFF. IN BREATHING" },
+        { name: "varicosities", label: "VARICOSITIES" },
+        { name: "abdominalPain", label: "ABDOMINAL PAIN" },
     ]
 
     const preEclampsiaChecklistGroup = [
         [preEclampsiaChecklist[0], preEclampsiaChecklist[1], preEclampsiaChecklist[2], preEclampsiaChecklist[3], preEclampsiaChecklist[4], preEclampsiaChecklist[5]],
         [preEclampsiaChecklist[6], preEclampsiaChecklist[7], preEclampsiaChecklist[8], preEclampsiaChecklist[9], preEclampsiaChecklist[10], preEclampsiaChecklist[11]]
     ]
-    // -----
-
 
     // risk codes
-    // -----
     type RiskCodes = z.infer<typeof PrenatalFormSchema>['riskCodes'];
-
     type HasOneOrMoreOfTheFFKeys = keyof RiskCodes["hasOneOrMoreOfTheFF"];
     type HasOneOrMoreOneConditionsKeys = keyof RiskCodes["hasOneOrMoreOneConditions"];
     const riskCodesList = {
         hasOneOrMoreOfTheFF: [
-            {
-                name: "prevCaesarian" as HasOneOrMoreOfTheFFKeys, label: "Previous Caesarian Section",
-            },
-            {
-                name: "miscarriages" as HasOneOrMoreOfTheFFKeys, label: "3 consecutive micarriages of stillborn baby",
-            },
-            {
-                name: "postpartumHemorrhage" as HasOneOrMoreOfTheFFKeys, label: "Postpartum Hemorrhage",
-            }
+            { name: "prevCaesarian" as HasOneOrMoreOfTheFFKeys, label: "Previous Caesarian Section" },
+            { name: "miscarriages" as HasOneOrMoreOfTheFFKeys, label: "3 consecutive micarriages of stillborn baby" },
+            { name: "postpartumHemorrhage" as HasOneOrMoreOfTheFFKeys, label: "Postpartum Hemorrhage" }
         ],
         hasOneOrMoreOneConditions: [
-            {
-                name: "tuberculosis" as HasOneOrMoreOneConditionsKeys, label: " Tuberculosis",
-            },
-            {
-                name: "heartDisease" as HasOneOrMoreOneConditionsKeys, label: "Heart Disease",
-            },
-            {
-                name: "diabetes" as HasOneOrMoreOneConditionsKeys, label: "Diabetes",
-            },
-            {
-                name: "bronchialAsthma" as HasOneOrMoreOneConditionsKeys, label: "Bronchial Asthma",
-            },
-            {
-                name: "goiter" as HasOneOrMoreOneConditionsKeys, label: "Goiter",
-            },
+            { name: "tuberculosis" as HasOneOrMoreOneConditionsKeys, label: " Tuberculosis" },
+            { name: "heartDisease" as HasOneOrMoreOneConditionsKeys, label: "Heart Disease" },
+            { name: "diabetes" as HasOneOrMoreOneConditionsKeys, label: "Diabetes" },
+            { name: "bronchialAsthma" as HasOneOrMoreOneConditionsKeys, label: "Bronchial Asthma" },
+            { name: "goiter" as HasOneOrMoreOneConditionsKeys, label: "Goiter" },
         ]
     }
-
 
     return(
         <>
@@ -168,7 +120,6 @@ export default function PrenatalFormThirdPg(
                                             <FormItem className="ml-8 pt-3">
                                                 <FormLabel className="text-semibold">Select follow-up period</FormLabel>
                                                 <FormControl>
-                                                    {/* radio button */}
                                                     <RadioGroup
                                                         onValueChange={(value) => {
                                                             field.onChange(value);
@@ -177,7 +128,6 @@ export default function PrenatalFormThirdPg(
                                                         defaultValue={field.value}
                                                         className="flex flex-col space-y-1"
                                                     >
-                                                        {/* after a week option */}
                                                         <FormItem className="flex items-center space-x-3 space-y-0"> 
                                                             <FormControl>
                                                                 <RadioGroupItem value="week"/>
@@ -185,7 +135,6 @@ export default function PrenatalFormThirdPg(
                                                             <FormLabel>After a week (preferably for AOG within 9 months)</FormLabel>
                                                         </FormItem>
 
-                                                        {/* after 2 week option */}
                                                         <FormItem className="flex items-center space-x-3 space-y-0"> 
                                                             <FormControl>
                                                                 <RadioGroupItem value="twoweeks"/>
@@ -193,7 +142,6 @@ export default function PrenatalFormThirdPg(
                                                             <FormLabel>After 2 week (preferably for AOG within 7-8 months)</FormLabel>
                                                         </FormItem>
 
-                                                        {/* after a week option */}
                                                         <FormItem className="flex items-center space-x-3 space-y-0"> 
                                                             <FormControl>
                                                                 <RadioGroupItem value="month"/>
@@ -207,7 +155,6 @@ export default function PrenatalFormThirdPg(
                                     />
                                 </div>
                                 
-                                {/* follow-up visit date display */}
                                 <div className="flex items-center border rounded-lg ml-4 mr-4 mb-4 p-2 border-gray">
                                     <FormItem>
                                         <div className="flex">
@@ -225,7 +172,6 @@ export default function PrenatalFormThirdPg(
                                 <Button className="mr-4 mb-4 ml-4">Schedule Follow-Up</Button>
                             </div>
                             
-                            {/* follow-up history */}
                             <div className="flex flex-col m-2 pl-5 pr-5 h-[389px] border-l-2 border-gray-300">
                                 <h3 className="text-md font-bold p-5">FOLLOW-UP HISTORY</h3>
                                 <div className="overflow-auto">
@@ -250,7 +196,6 @@ export default function PrenatalFormThirdPg(
                                             </FormItem>
                                         </div>
                                     </div>
-
 
                                     <div className="flex flex-col border m-5 p-4 rounded-xl border-gray">
                                         <div className="w-full grid grid-cols-2 gap-2 mb-5">
@@ -278,101 +223,72 @@ export default function PrenatalFormThirdPg(
                         </div>
 
                         <Separator className="mt-10 mb-5"/>
-                        {/* guide for 4ANC Visit */}
                         <div className="grid grid-cols- gap-4 mt-3">
                             <div className="flex flex-col w-full">
                                 <h3 className="text-md font-bold p-5">GUIDE FOR 4ANC VISITS</h3>
                                 <div>
                                     <div className="grid grid-cols-3 gap-3 pl-5 pr-5 mb-5">
-                                        <FormField
+                                        <FormInput
                                             control={form.control}
                                             name="ancVisits.aog.aogWeeks"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>AOG weeks</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} type="number"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
+                                            label="AOG weeks"
+                                            type="number"
                                         />
-                                        <FormField
+                                        <FormInput
                                             control={form.control}
                                             name="ancVisits.aog.aogDays"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>AOG days</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} type="number"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
+                                            label="AOG days"
+                                            type="number"
                                         />
                                         <div className="">
                                             <Button className="mt-[2rem] w-[10rem]" variant="default">Check</Button>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-3 pl-5 pr-5 mb-5 gap-3">
-                                        <FormField
-                                            control={form.control}
-                                            name="ancVisits.firstTri"
-                                            render={({ field }) => (
-                                                <FormItem className="border rounded-md p-5">
-                                                    <FormLabel>1st Trimester</FormLabel>
-                                                    <Label className="text-black text-opacity-50 italic ml-1">(up to 12 wks and 6 days)</Label>
-                                                    <FormControl>
-                                                        <Input {...field} type="date"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="ancVisits.secondTri"
-                                            render={({ field }) => (
-                                                <FormItem className="border rounded-md p-5">
-                                                    <FormLabel>2nd Trimester</FormLabel>
-                                                    <Label className="text-black text-opacity-50 italic ml-1">(13-27 wks and 6 days)</Label>
-                                                    <FormControl>
-                                                        <Input {...field} type="date"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        {/* <Label className="ml-5">3rd tri 28 wks and more</Label> */}
-                                        <div className="grid grid-cols-2 gap-3 border p-5">
-                                            <FormField
+                                        <div className="border rounded-md p-5">
+                                            <FormDateTimeInput
                                                 control={form.control}
-                                                name="ancVisits.thirdTriOne"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>(1st visit in 3rd trimester)</FormLabel>
-                                                        <FormControl>
-                                                            <Input {...field} type="date"/>
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
+                                                name="ancVisits.firstTri"
+                                                label="1st Trimester"
+                                                type="date"
                                             />
-                                            <FormField
-                                                control={form.control}
-                                                name="ancVisits.thirdTriTwo"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>(2nd visit in 3rd Tri)</FormLabel>
-                                                        <FormControl>
-                                                            <Input {...field} type="date"/>
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            <Label className="text-black text-opacity-50 italic ml-1">(up to 12 wks and 6 days)</Label>
                                         </div>
-                                        
+                                        <div className="border rounded-md p-5">
+                                            <FormDateTimeInput
+                                                control={form.control}
+                                                name="ancVisits.secondTri"
+                                                label="2nd Trimester"
+                                                type="date"
+                                            />
+                                            <Label className="text-black text-opacity-50 italic ml-1">(13-27 wks and 6 days)</Label>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 border p-5">
+                                            <Label className="col-span-2">3rd Trimester</Label>
+                                            <div>
+                                                <FormDateTimeInput
+                                                    control={form.control}
+                                                    name="ancVisits.thirdTriOne"
+                                                    label="1st visit"
+                                                    type="date"
+                                                    
+                                                />
+                                            </div>
+                                            <div>
+                                                <FormDateTimeInput
+                                                    control={form.control}
+                                                    name="ancVisits.thirdTriTwo"
+                                                    label="2nd visit"
+                                                    type="date"
+                                                />
+                                            </div>
+                                            
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <Separator className="mt-10"/> 
-                            {/* checklist */}
                             <div className="flex flex-col w-full">
                                 <h3 className="text-md font-bold p-5">CHECKLIST</h3>
                                 <Label className="ml-10 mb-5">()PRE-ECLAMPSIA</Label>
@@ -401,23 +317,16 @@ export default function PrenatalFormThirdPg(
                             </div>
                         </div>
 
-                        <Separator className="mt-10 mb-5"/>
-                        <div className="grid grid-cols-2 mt-3">
-                            {/* birth plan */}
-                            <div className=" p-5">
+                        <Separator className="mt-10 mb-10"/>
+                        <div className="grid grid-cols-2 mt-3 gap-3">
+                            <div className=" p-5 border-r-2 border-gray-300">
                                 <h3 className="text-md font-bold">BIRTH PLANS</h3>
-                                <div className="grid grid-cols-2 gap-5 mt-5">
-                                    <FormField
+                                <div className="grid grid-cols- gap-7 mt-5">
+                                    <FormInput
                                         control={form.control}
                                         name="pregnancyPlan.planPlaceOfDel"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>PLAN FOR PLACE OF DELIVERY</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Enter plan of delivery place"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
+                                        label="PLAN FOR PLACE OF DELIVERY"
+                                        placeholder="Enter plan of delivery place"
                                     />
 
                                     <FormField 
@@ -432,6 +341,7 @@ export default function PrenatalFormThirdPg(
                                                             field.onChange(value);
                                                             setSelectedOption(value);
                                                         }}
+                                                        className="ml-3"
                                                     >
                                                         <FormItem className="mr-4">
                                                             <FormControl>
@@ -453,59 +363,36 @@ export default function PrenatalFormThirdPg(
                                 </div>
                             </div>
                             
-                            {/* micronutrient supplementation */}
-                            <div className="mt-3 pr-5 pl-5 border-l-2 border-gray-300">
+                            <div className="mt-3 ml-5 pr-5 pl-5">
                                 <h3 className="text-md font-bold">MICRONUTRIENT SUPPLEMENTATION</h3>
-                                {/* iron folic w/ acid */}
                                 <div className="flex flex-col">
                                     <Label className="mt-5">IRON W/ FOLIC ACID:</Label>
                                     <div className="grid grid-cols-2 gap-4">
-                                        
-                                        <FormField
+                                        <FormDateTimeInput
                                             control={form.control}
                                             name="micronutrientSupp.ironFolicStarted"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Date Started</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} type="date"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
+                                            label="Date Started"
+                                            type="date"
                                         />
-                                        <FormField
+                                        <FormDateTimeInput
                                             control={form.control}
                                             name="micronutrientSupp.ironFolicCompleted"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Date Completed</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} type="date"/>
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
+                                            label="Date Completed"
+                                            type="date"
                                         />
                                     </div>
 
-                                    {/* deworming */}
                                     <Label className="mt-5">DEWORMING TAB: (preferably 3rd trimester):</Label>
-                                    <FormField
+                                    <FormDateTimeInput
                                         control={form.control}
                                         name="micronutrientSupp.deworming"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Date Given</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} type="date"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
+                                        label="Date Given"
+                                        type="date"
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        {/* risk codes */}
                         <Separator className="mt-10 mb-5"/>
                         <div className="flex flex-col mt-3 p-5 border-gray"> 
                             <h3 className="text-md font-bold">RISK CODES</h3>
@@ -515,7 +402,7 @@ export default function PrenatalFormThirdPg(
                             </div>
                             <div className="flex flex-row gap-[10rem] ml-10">
                                 <div>
-                                        {riskCodesList.hasOneOrMoreOfTheFF.map((item) => (
+                                    {riskCodesList.hasOneOrMoreOfTheFF.map((item) => (
                                         <FormField
                                             key={item.name}
                                             control={form.control}
@@ -538,53 +425,39 @@ export default function PrenatalFormThirdPg(
                                 
                                 <div>
                                     {riskCodesList.hasOneOrMoreOneConditions.map((item) => (
-                                    <FormField
-                                        key={item.name}
-                                        control={form.control}
-                                        name={`riskCodes.hasOneOrMoreOneConditions.${item.name}`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl className="mt-2">
-                                                    <Checkbox
-                                                        className="mr-2"
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel>{item.label}</FormLabel>
-                                            </FormItem>
-                                        )}
-                                    />
-                                ))}
+                                        <FormField
+                                            key={item.name}
+                                            control={form.control}
+                                            name={`riskCodes.hasOneOrMoreOneConditions.${item.name}`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl className="mt-2">
+                                                        <Checkbox
+                                                            className="mr-2"
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel>{item.label}</FormLabel>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         </div>
 
                         <Separator className="mt-10 mb-5"/>
-                        {/* assessed by */}
                         <div className="flex w-full m-2">
-                            <FormField 
+                            <FormSelect
                                 control={form.control}
                                 name="assessedBy.assessedby"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>ASSESSED BY:</FormLabel>
-                                        <FormControl>
-                                            <SelectLayout 
-                                                label="BHWs"
-                                                placeholder='Select'
-                                                className="w-[200px]"
-                                                options={[
-                                                    {id: "0", name: "Juliana Zamora"},
-                                                    {id: "1", name: "Inka Kamarani"},
-                                                    {id: "2", name: "Lowe Anika"}
-                                                ]}
-                                                value={field.value ?? ''}
-                                                onChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="ASSESSED BY:"
+                                options={[
+                                    {id: "0", name: "Juliana Zamora"},
+                                    {id: "1", name: "Inka Kamarani"},
+                                    {id: "2", name: "Lowe Anika"}
+                                ]}
                             />
                         </div>
 

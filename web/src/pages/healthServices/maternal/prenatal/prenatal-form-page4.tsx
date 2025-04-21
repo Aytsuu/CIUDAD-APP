@@ -5,14 +5,14 @@ import { z } from 'zod';
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema";
 import { DataTable } from "@/components/ui/table/data-table";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { FormSelect } from "@/components/ui/form/form-select";
 
-
-export default function PrenatalFormFourthPq(
+export default function PrenatalFormFourthPg(
     {form, onSubmit, back}: {
         form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>,
         onSubmit: () => void,
@@ -26,6 +26,9 @@ export default function PrenatalFormFourthPq(
             }
         })
     }
+
+    // date today
+    const today = new Date();
 
     type prenatalCareTypes = {
         date: string;
@@ -47,7 +50,6 @@ export default function PrenatalFormFourthPq(
             complaints: string;
             advises: string;
         }
-        
     }
 
     const prenatalCareColumn: ColumnDef<prenatalCareTypes>[] = [
@@ -144,7 +146,6 @@ export default function PrenatalFormFourthPq(
         }
     ]
 
-
     return(
         <>
             <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
@@ -157,179 +158,109 @@ export default function PrenatalFormFourthPq(
                     >
                         <div className="border rounded-md border-gray p-5">
                             <div className="flex mb-3">
-                                <FormField
+                                <FormDateTimeInput
                                     control={form.control}
                                     name="prenatalCare.date"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Date</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Date"
+                                    type="date"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3 mb-3 ">
+                            <div className="grid grid-cols-3 gap-3 mb-3">
                                 <Label>Weight</Label>
                                 <Label>AOG</Label>
                                 <Label>BP</Label>
 
-                                <div>
-                                    <FormField
-                                        control={form.control}
-                                        name="prenatalCare.wt"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                {/* <FormLabel>Weight</FormLabel> */}
-                                                <FormControl>
-                                                    <Input {...field} placeholder="wt in kg"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                                <FormInput
+                                    control={form.control}
+                                    name="prenatalCare.wt"
+                                    label=""
+                                    placeholder="wt in kg"
+                                    type="number"
+                                />
 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <FormField
+                                    <FormInput
                                         control={form.control}
                                         name="prenatalCare.aog.aogWeeks"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                {/* <FormLabel>AOG</FormLabel> */}
-                                                <FormControl>
-                                                    <Input {...field} placeholder="AOG in weeks"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
+                                        label=""
+                                        placeholder="AOG in weeks"
+                                        type="number"
                                     />
-                                    <FormField
+                                    <FormInput
                                         control={form.control}
                                         name="prenatalCare.aog.aogDays"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="AOG in days"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
+                                        label=""
+                                        placeholder="AOG in days"
+                                        type="number"
                                     />
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-3">
-                                    <FormField
+                                    <FormInput
                                         control={form.control}
                                         name="prenatalCare.bp.systolic"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="systolic"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
+                                        label=""
+                                        placeholder="systolic"
+                                        type="number"
                                     />
-                                    <FormField
+                                    <FormInput
                                         control={form.control}
                                         name="prenatalCare.bp.diastolic"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="diastolic"/>
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
+                                        label=""
+                                        placeholder="diastolic"
+                                        type="number"
                                     />
                                 </div>
-                                
                             </div>
                             
                             <div className="grid grid-cols-3 gap-3 mb-3">
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="prenatalCare.leopoldsFindings.fundalHeight"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Fundal Height</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="FH in cm"/>
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Fundal Height"
+                                    placeholder="FH in cm"
                                 />
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="prenatalCare.leopoldsFindings.fetalHeartRate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Fetal Heartbeat</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="FHB bpm"/>
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Fetal Heartbeat"
+                                    placeholder="FHB bpm"
                                 />
-                                <FormField
+                                <FormSelect
                                     control={form.control}
                                     name="prenatalCare.leopoldsFindings.fetalPosition"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Fetal Position</FormLabel>
-                                            <FormControl>
-                                                <SelectLayout 
-                                                    label="Fetal Position"
-                                                    placeholder='Select'
-                                                    className="w-full"
-                                                    options={[
-                                                        {id: "0", name: "Cephalic"},
-                                                        {id: "1", name: "Occiput Posterior"},
-                                                        {id: "2", name: "Breech"},
-                                                        {id: "3", name: "Transvere Lie"},
-                                                        {id: "4", name: "Other"}
-                                                    ]}
-                                                    value={field.value ?? ''}
-                                                    onChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Fetal Position"
+                                    options={[
+                                        {id: "0", name: "Cephalic"},
+                                        {id: "1", name: "Occiput Posterior"},
+                                        {id: "2", name: "Breech"},
+                                        {id: "3", name: "Transvere Lie"},
+                                        {id: "4", name: "Other"}
+                                    ]}
                                 />
                             </div>
                             
                             <div className="grid grid-cols-2 gap-3 mb-5">
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="prenatalCare.notes.complaints"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Complaints</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Complaints"
+                                    placeholder="Enter complaints"
                                 />
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="prenatalCare.notes.advises"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Advises</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Advises"
+                                    placeholder="Enter advises"
                                 />
                             </div>
 
-                            {/* add button to table */}
                             <div className="flex justify-end">
                                 <Button>Add</Button>
                             </div>
                         </div>
 
-                        {/* prenatal table */} 
                         <div className="mt-10">
                             <DataTable columns={prenatalCareColumn} data={sampleData}/>
                         </div>  

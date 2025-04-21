@@ -18,7 +18,8 @@ import { Trash } from "lucide-react";
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 
 export default function PrenatalFormFirstPg(
     {form, onSubmit}: {
@@ -26,15 +27,21 @@ export default function PrenatalFormFirstPg(
         onSubmit: () => void,
     }
 ){
-
     const submit = () => {
+        window.scroll({
+            top: 0,
+            left: 0,
+            behavior: 'smooth',
+        });
+
         form.trigger(["motherPersonalInfo", "obstreticHistory", "medicalHistory"]).then((isValid) => {
             if(isValid) {
+                console.log("Form is valid: ", isValid)
                 onSubmit(); // proceed to next page
             }
         })
     }
-    const { getValues, setValue } = useFormContext()
+    const { getValues, setValue } = useFormContext();
 
     type previousIllness= {
         prevIllness: string;
@@ -234,17 +241,11 @@ export default function PrenatalFormFirstPg(
                     >
 
                         <div className="flex justify-between">  
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.familyNo"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Family No.</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} name="family" placeholder="Enter Family No." />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Family No."
+                                placeholder="Enter Family No."
                             />
                             <FormField
                                 control={form.control}
@@ -260,206 +261,113 @@ export default function PrenatalFormFirstPg(
                             />
                         </div>
                         <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherLName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Last Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Last Name" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Last Name"
+                                placeholder="Enter Last Name"
                             />
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherFName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>First Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter First Name" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="First Name"
+                                placeholder="Enter First Name"
                             />
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherMName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Middle Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Middle Name" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Middle Name"
+                                placeholder="Enter Middle Name"
                             />
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherAge"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Age</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Age" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Age"
+                                placeholder="Enter Age"
+                                type="number"
                             />
                         </div>
 
                         {/* dob, husband's name, occupation */}
                         <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormField 
+                            <FormDateTimeInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherDOB"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Date of Birth</FormLabel>
-                                        <FormControl>
-                                            {/* <DatePicker /> */}
-                                            <Input {...field} type="Date" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Date of Birth"
+                                type="date"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.husbandLName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Husband's Last Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field}placeholder="Enter Last Name" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Husband's Last Name"
+                                placeholder="Enter Last Name"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.husbandFName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Husband's First Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter First Name" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Husband's First Name"
+                                placeholder="Enter First Name"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.husbandMName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Husband's Middle Name</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Middle Name" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Husband's Middle Name"
+                                placeholder="Enter Middle Name"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.occupation"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Occupation</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Occupation" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Occupation"
+                                placeholder="Enter Occupation"
                             />
                         </div>
 
                         {/* address */}
                         <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.address.street"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Street</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Street" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Street"
+                                placeholder="Enter Street"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.address.barangay"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Barangay</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Barangay" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Barangay"
+                                placeholder="Enter Barangay"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.address.city"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>City</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter City" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="City"
+                                placeholder="Enter City"
                             />
-                            <FormField 
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.address.province"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Province</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Enter Province" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Province"
+                                placeholder="Enter Province"
                             />
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherWt"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Weight</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Wt in kg" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Weight"
+                                placeholder="Wt in kg"
+                                type="number"
                             />
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherHt"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Height</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="Ht in cm" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="Height"
+                                placeholder="Ht in cm"
+                                type="number"
                             />
-                            <FormField
+                            <FormInput
                                 control={form.control}
                                 name="motherPersonalInfo.motherBMI"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>BMI</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="BMI" />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
+                                label="BMI"
+                                placeholder="BMI"
+                                type="number"
                             />
                         </div>
                         <Separator className="mt-8 mb-6" />
@@ -467,80 +375,48 @@ export default function PrenatalFormFirstPg(
                         <h3 className="text-md font-bold">OBSTRETIC HISTORY</h3>
                         <div className="flex flex-col mt-2">
                             <div className="grid grid-cols-4 gap-4">
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="obstreticHistory.noOfChBornAlive"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>No. of Children Born Alive</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="Enter No. " />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="No. of Children Born Alive"
+                                    placeholder="Enter No."
+                                    type="number"
                                 />
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="obstreticHistory.noOfLivingCh"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>No. of Living Children</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="Enter No." />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="No. of Living Children"
+                                    placeholder="Enter No."
+                                    type="number"
                                 />
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="obstreticHistory.noOfAbortion"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>No. of Abortion</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="Enter No." />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="No. of Abortion"
+                                    placeholder="Enter No."
+                                    type="number"
                                 />
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="obstreticHistory.noOfStillBirths"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>No. of Still Births</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="Enter No." />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="No. of Still Births"
+                                    placeholder="Enter No."
+                                    type="number"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                            
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="obstreticHistory.historyOfLBabies"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>History of Large Babies</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="Enter No." />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="History of Large Babies"
+                                    placeholder="Enter No."
+                                    type="number"
                                 />
-                                <FormField
+                                <FormInput
                                     control={form.control}
                                     name="obstreticHistory.historyOfDiabetes"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>History of Diabetes</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} placeholder="Enter History of Diabetes" />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="History of Diabetes"
+                                    placeholder="Enter History of Diabetes"
                                 />
                             </div>
                         </div>
@@ -554,16 +430,11 @@ export default function PrenatalFormFirstPg(
                                     <Label>Previous Illness</Label>
                                     <div className="flex gap-4">
                                         <div className="flex-1">
-                                            <FormField
+                                            <FormInput
                                                 control={form.control}
                                                 name="medicalHistory.prevIllness"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Enter Previous Illness" />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
+                                                label=""
+                                                placeholder="Enter Previous Illness"
                                             />
                                         </div>
                                         <Button onClick={addPrevIllness} type="button" variant="default">Add</Button>
@@ -577,30 +448,20 @@ export default function PrenatalFormFirstPg(
                                     <Label>Previous Hospitalization</Label>
                                     <div className="flex gap-4">
                                         <div className="flex-1">
-                                            <FormField
+                                            <FormInput
                                                 control={form.control}
                                                 name="medicalHistory.prevHospitalization"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Enter previous hospitalization" />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
+                                                label=""
+                                                placeholder="Enter previous hospitalization"
                                             />
-                                            
                                         </div>
                                         <div className="flex-1">
-                                            <FormField
+                                            <FormInput
                                                 control={form.control}
                                                 name="medicalHistory.prevHospitalizationYr"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormControl>
-                                                            <Input {...field} placeholder="Enter year" type="number"/>
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
+                                                label=""
+                                                placeholder="Enter year"
+                                                type="number"
                                             />
                                         </div>
                                         

@@ -31,6 +31,7 @@ export default function PrenatalForm(){
     // set to next page
     const nextPage = () => {
         setCurrentPage((prev) => prev + 1);
+        // window.scrollTo(0, 0);
     }
 
     const prevPage = () => {

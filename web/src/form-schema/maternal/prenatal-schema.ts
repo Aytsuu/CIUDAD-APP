@@ -74,6 +74,7 @@ export const PrenatalFormSchema = z.object({
         isAdministered: z.enum(['Yes', 'No']),
         ttStatus: z.string(),
         ttDateGiven: z.string(),
+        fullyImmunized: z.boolean(),
         tdapDateGiven: z.string().optional()
     }),
 

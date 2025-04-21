@@ -1,6 +1,6 @@
 import { UseFormReturn } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
-import { z } from "zod"
+import { record, z } from "zod"
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
@@ -11,7 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { useState } from "react";
 
 export default function PrenatalFormSecPg(
     {form, onSubmit, back}: {
@@ -26,7 +29,32 @@ export default function PrenatalFormSecPg(
                 onSubmit();
             }
         })
+        window.scrollTo(0, 0);
     }
+
+	 //tt type
+	 type TetanusToxoidType = {
+		ttOrtd: string;
+		ttStatus: string;
+		ttDateGiven: string;
+	 }
+
+	 const [ttRecords, setTTRecords] = useState<TetanusToxoidType[]>([]);
+
+	 const addTTRecord = () => {
+		const newTTData: TetanusToxoidType = {
+			ttOrtd: form.getValues("prenatalVaccineInfo.ttOrtd"),
+			ttStatus: form.getValues("prenatalVaccineInfo.ttStatus"),
+			ttDateGiven: form.getValues("prenatalVaccineInfo.ttDateGiven")
+		}
+
+		setTTRecords(prev => [...prev, newTTData]);
+
+		// clear fields after adding
+		// form.setValue("prenatalVaccineInfo.ttOrtd", "TD")
+		form.setValue("prenatalVaccineInfo.ttStatus", "");
+		form.setValue("prenatalVaccineInfo.ttDateGiven", "");
+	 }
 
     return(
         <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
@@ -39,127 +67,61 @@ export default function PrenatalFormSecPg(
                 >
                     <h3 className="text-md font-bold">PREVIOUS PREGNANCY</h3>
                     <div className="grid grid-cols-4 gap-4 mt-2">
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="previousPregnancy.dateOfDelivery"
-                            render={({ field }) => (
-                                <FormItem>  
-                                    <FormLabel>DATE OF DELIVERY</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date" placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="DATE OF DELIVERY"
+                            type="date"
                         />
-                        <FormField
+                        <FormSelect
                             control={form.control}
                             name="previousPregnancy.outcome"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>OUTCOME</FormLabel>
-                                    <FormControl>
-                                        <SelectLayout 
-                                            label="outcome"
-                                            placeholder='Select'
-                                            className="w-full"
-                                            options={[
-                                                {id: "0", name: "FULLTERM"},
-                                                {id: "1", name: "PRETERM"}
-                                            ]}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="OUTCOME"
+                            options={[
+                                {id: "0", name: "FULLTERM"},
+                                {id: "1", name: "PRETERM"}
+                            ]}
                         />
-                        <FormField
+                        <FormSelect
                             control={form.control}
                             name="previousPregnancy.typeOfDelivery"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>TYPE OF DELIVERY</FormLabel>
-                                    <FormControl>
-                                    <SelectLayout 
-                                            label="typeOfDelivery"
-                                            placeholder='Select'
-                                            className="w-full"
-                                            options={[
-                                                {id: "0", name: "Vaginal Delivery"},
-                                                {id: "1", name: "C-Section"}
-                                            ]}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="TYPE OF DELIVERY"
+                            options={[
+                                {id: "0", name: "Vaginal Delivery"},
+                                {id: "1", name: "C-Section"}
+                            ]}
                         />
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="previousPregnancy.babysWt"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>BABY'S WT</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder="Baby's wt in lbs"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="BABY'S WT"
+                            placeholder="Baby's wt in lbs"
                         />
-                        <FormField
+                        <FormSelect
                             control={form.control}
                             name="previousPregnancy.gender"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>GENDER</FormLabel>
-                                    <FormControl>
-                                        <SelectLayout 
-                                            label="gender"
-                                            placeholder='Select'
-                                            className="w-full"
-                                            options={[
-                                                {id: "0", name: "Female"},
-                                                {id: "1", name: "Male"}
-                                            ]}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="GENDER"
+                            options={[
+                                {id: "0", name: "Female"},
+                                {id: "1", name: "Male"}
+                            ]}
                         />
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="previousPregnancy.ballardScore"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>BALLARD SCORE</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="BALLARD SCORE"
+                            placeholder=""
                         />
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="previousPregnancy.apgarScore"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>APGAR SCORE</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="APGAR SCORE"
+                            placeholder=""
                         />
                     </div>
                     
                     {/* tetanus toxoid status */}
                     <Separator className="mt-10 mb-10"/>
-                    <div>
-
-                    </div>
                     <h3 className="text-md font-bold"> TETANUS TOXOID GIVEN: (DATE GIVEN)</h3>
                     <div className="grid gap-3">
                         <div className="flex flex-col">
@@ -174,7 +136,6 @@ export default function PrenatalFormSecPg(
                                                 <RadioGroup
                                                     onValueChange={(value) => {
                                                         field.onChange(value);
-                                                        // setSelectedOption(value);
                                                     }}
                                                     defaultValue={field.value ?? ''}
                                                     className="flex flex-row" 
@@ -186,7 +147,6 @@ export default function PrenatalFormSecPg(
                                                         <FormLabel>Tetanus Toxoid (TT)</FormLabel>
                                                     </FormItem>
 
-                                                    {/* after 2 week option */}
                                                     <FormItem className="flex items-center space-x-1 space-y-0"> 
                                                         <FormControl>
                                                             <RadioGroupItem value="TD"/>
@@ -202,7 +162,7 @@ export default function PrenatalFormSecPg(
                                     control={form.control}
                                     name="prenatalVaccineInfo.isAdministered"
                                     render={({ field }) => (
-                                        <FormItem className="ml-10 mt-[1.7rem]">
+                                        <FormItem className="ml-10 mt-[1.8rem]">
                                             <FormControl>
                                                 <Checkbox {...field} className="mr-1"></Checkbox>
                                             </FormControl>
@@ -212,43 +172,23 @@ export default function PrenatalFormSecPg(
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4 mt-2">
-                                <FormField
+                                <FormSelect
                                     control={form.control}
                                     name="prenatalVaccineInfo.ttStatus"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>TT Status</FormLabel>
-                                            <FormControl>
-                                                <SelectLayout 
-                                                    label="TT Status"
-                                                    placeholder='Select'
-                                                    className="w-full"
-                                                    options={[
-                                                        {id: "0", name: "TT1"},
-                                                        {id: "1", name: "TT2"},
-                                                        {id: "2", name: "TT3"},
-                                                        {id: "3", name: "TT4"},
-                                                        {id: "4", name: "TT5"},
-                                                        {id: "5", name: "FIM"},
-                                                    ]}
-                                                    value={field.value ?? ''}
-                                                    onChange={field.onChange}
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="TT Status"
+                                    options={[
+                                        {id: "0", name: "TT1"},
+                                        {id: "1", name: "TT2"},
+                                        {id: "2", name: "TT3"},
+                                        {id: "3", name: "TT4"},
+                                        {id: "4", name: "TT5"},
+                                    ]}
                                 />
-                                <FormField
+                                <FormDateTimeInput
                                     control={form.control}
                                     name="prenatalVaccineInfo.ttDateGiven"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Date Given</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} type="date" placeholder=""/>
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                                    label="Date Given"
+                                    type="date"
                                 />
                             </div>
                             <div className="mt-4">
@@ -267,51 +207,90 @@ export default function PrenatalFormSecPg(
                                 />
                             </div>
                             
-                            <hr className="mt-5 mb-2"/>
+                            <Separator className="mt-8 mb-3"/>
 
-                            <div className="flex justify-end">
-                                <Button className="mt-5">
+                            <div className="flex justify-end mt-2 mb-5">
+                                <Button type="button"  onClick={addTTRecord}>
                                     Add
                                 </Button>
                             </div>
                         </div>
-
-                        <div>
-                            <h3 className="text-md font-bold"> TT STATUS HISTORY</h3>
-                        </div>
-                        <div className="flex flex-col ">
-                            <div className="grid grid-cols-6 gap-2">
-                                <div className="border h-[80px] rounded-md text-center" id="tt1-div">
-                                    <h3 className="font-bold">TT1</h3>
-                                    <p className="text-[10px]">(FIRST VISIT)</p>
-                                    <Label className="tt1Input text-[18px]"></Label>
-                                </div>
-                                <div className="border h-[80px] rounded-md text-center" id="tt2-div">
-                                    <h3 className="font-bold">TT2</h3>
-                                    <p className="text-[10px] mb-2">(ONE MO. AFTER THE FIRST DOSE)</p>
-                                    <Label className="tt2Input mb-2"></Label>
-                                </div>
-                                <div className="border h-[80px] rounded-md text-center" id="tt3-div">
-                                    <h3 className="font-bold">TT3</h3>
-                                    <p className="text-[10px] mb-2">(6 MONTHS AFTER THE SECOND DOSE)</p>
-                                    <Label className="tt3Input mb-2"></Label>
-                                </div>
-                                <div className="border h-[80px] rounded-md text-center" id="tt4-div">
-                                    <h3 className="font-bold">TT4</h3>
-                                    <p className="text-[10px] mb-2">(1 YEAR AFTER THE THIRD DOSE)</p>
-                                    <Label className="tt4Input mb-2"></Label>
-                                </div>
-                                <div className="border h-[80px] rounded-md text-center" id="tt5-div">
-                                    <h3 className="font-bold">TT5</h3>
-                                    <p className="text-[10px] mb-2">(1 YEAR AFTER THE FOURTH DOSE)</p>
-                                    <Label className="tt5Input mb-2"></Label>
-                                </div>
-                                <div className="border h-[80px] rounded-md text-center" id="fim-div">
-                                    <h3 className="font-bold">FIM</h3>
-                                    <Label className="fimInput mb-2"></Label>
-                                </div>
-                            </div>
-                        </div>
+                        
+								<div className="border rounded-lg p-5">
+									<div>
+										<h3 className="text-sm font-bold pl-3 pb-3"> TT STATUS HISTORY</h3>
+									</div>
+									<div className="flex flex-col pl-3 pr-3 ">
+										<div className="grid grid-cols-6 gap-2">
+											{/* TT1 */}
+											<div className="border h-[80px] rounded-md text-center" id="tt1-div">
+													<h3 className="font-bold">TT1</h3>
+													<p className="text-[10px]">(FIRST VISIT)</p>
+													{ttRecords
+														.filter(record => record.ttStatus === "TT1")
+														.map((record, idx) => (
+															<div key={`tt1-${idx}`} className="text-[12px]">
+																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+															</div>
+														))
+													}
+											</div>
+											<div className="border h-[80px] rounded-md text-center" id="tt2-div">
+													<h3 className="font-bold">TT2</h3>
+													<p className="text-[10px] mb-2">(ONE MO. AFTER THE FIRST DOSE)</p>
+													{ttRecords
+														.filter(record => record.ttStatus === "TT2")
+														.map((record, idx) => (
+															<div key={`tt2-${idx}`} className="text-[12px]">
+																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+															</div>
+														))
+													}
+											</div>
+											<div className="border h-[80px] rounded-md text-center" id="tt3-div">
+													<h3 className="font-bold">TT3</h3>
+													<p className="text-[10px] mb-2">(6 MONTHS AFTER THE SECOND DOSE)</p>
+													{ttRecords
+														.filter(record => record.ttStatus === "TT4")
+														.map((record, idx) => (
+															<div key={`tt3-${idx}`} className="text-[12px]">
+																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+															</div>
+														))
+													}
+											</div>
+											<div className="border h-[80px] rounded-md text-center" id="tt4-div">
+													<h3 className="font-bold">TT4</h3>
+													<p className="text-[10px] mb-2">(1 YEAR AFTER THE THIRD DOSE)</p>
+													{ttRecords
+														.filter(record => record.ttStatus === "TT4")
+														.map((record, idx) => (
+															<div key={`tt4-${idx}`} className="text-[12px]">
+																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+															</div>
+														))
+													}
+											</div>
+											<div className="border h-[80px] rounded-md text-center" id="tt5-div">
+													<h3 className="font-bold">TT5</h3>
+													<p className="text-[10px] mb-2">(1 YEAR AFTER THE FOURTH DOSE)</p>
+													{ttRecords
+														.filter(record => record.ttStatus === "TT5")
+														.map((record, idx) => (
+															<div key={`tt5-${idx}`} className="text-[12px]">
+																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+															</div>
+														))
+													}
+											</div>
+											<div className="border h-[80px] rounded-md text-center" id="fim-div">
+													<h3 className="font-bold">FIM</h3>
+													<Label className="fimInput mb-2"></Label>
+											</div>
+										</div>
+									</div>
+								</div>
+                        
                     </div>
                     
 
@@ -319,77 +298,41 @@ export default function PrenatalFormSecPg(
                     <Separator className="mt-10"/>
                     <h3 className="text-md font-bold mt-8">PRESENT PREGNANCY</h3>
                     <div className="grid grid-cols-6 gap-4 mt-2">
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="presentPregnancy.gravida"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>GRAVIDA</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="GRAVIDA"
+                            placeholder=""
                         />
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="presentPregnancy.para"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>PARA</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="PARA"
+                            placeholder=""
                         />
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="presentPregnancy.fullterm"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>FULLTERM</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="FULLTERM"
+                            placeholder=""
                         />
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="presentPregnancy.preterm"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>PRETERM</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="PRETERM"
+                            placeholder=""
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="presentPregnancy.lmp"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>LMP</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date" placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="LMP"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="presentPregnancy.edc"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>EDC</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date" placeholder=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="EDC"
+                            type="date"
                         />
                     </div>
 
@@ -401,154 +344,80 @@ export default function PrenatalFormSecPg(
                     </div>
                     <Label>PRE-ECLAMPSIA PANEL:</Label>
                     <div className="grid grid-cols-6 gap-4 mt-2">
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.urinalysisDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>URINALYSIS</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="URINALYSIS"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.cbcDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>CBC</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="CBC"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.sgotSgptDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>SGOT/SGPT</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="SGOT/SGPT"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.creatinineDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>CREATININE SERUM</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="CREATININE SERUM"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.buaBunDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>BUA/BUN</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="BUA/BUN"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.syphillisDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>SYPHILLIS</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="SYPHILLIS"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.hivTestDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>HIV TEST</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="HIV TEST"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.hepaBDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>HEPA B</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="HEPA B"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.bloodTypingDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>BLOOD TYPING</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="BLOOD TYPING"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.ogct50Date"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>OGCT: 50 GMS</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="OGCT: 50 GMS"
+                            type="date"
                         />
-                        <FormField
+                        <FormDateTimeInput
                             control={form.control}
                             name="labResults.ogct50Date"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>100 GMS</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} type="date"/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="100 GMS"
+                            type="date"
                         />
-                        
                     </div>
 
                     <div className="mt-8">
-                        <FormField
+                        <FormInput
                             control={form.control}
                             name="labResults.laboratoryRemarks"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Laboratory Remarks</FormLabel>
-                                    <FormLabel className="ml-1 text-black text-opacity-50 italic">(Optional)</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} className=""/>
-                                    </FormControl>
-                                </FormItem>
-                            )}
+                            label="Laboratory Remarks"
+                            placeholder="(Optional)"
                         />
                     </div>
 
