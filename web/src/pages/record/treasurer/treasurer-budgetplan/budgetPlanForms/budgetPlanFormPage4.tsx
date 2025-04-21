@@ -170,7 +170,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                     render={({ field }) => (
                                         <FormItem>
                                             <div className={styles.fieldStyle}>
-                                                <FormLabel className="w-[20rem]">{label}</FormLabel>
+                                                <FormLabel className="w-[20rem] text-black">{label}</FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         {...field}
@@ -231,20 +231,20 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                         </div>
                                         <div className='p-2 flex flex-col gap-1'>
                                             <h1 className='font-bold flex justify-center w-[21rem]'>NON-OFFICE</h1>
-                                            <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Local Development Fund</h3>
+                                            <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Local Development Fund ({localDevLimit}%)</h3>
                                         </div>
                                     </div>
                                 )}
 
                                 {name === "rehabMultPurpose" && (
                                     <div className='p-2 flex flex-col gap-1'>
-                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Sangguniang Kabataan Fund</h3>
+                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Sangguniang Kabataan Fund ({skFundLimit}%)</h3>
                                     </div>
                                 )}
 
                                 {name === "skFund" && (
                                     <div className='p-2 flex flex-col gap-1'>
-                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>LDRRM Fund (Calamity Fund)</h3>
+                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>LDRRM Fund / Calamity Fund ({calamityFundLimit}%)</h3>
                                     </div>
                                 )}
                             </div>

@@ -38,7 +38,7 @@ function CreateBudgetPlanPage3({ onPrevious2, onNext4, updateFormData, formData,
         { name: "aidsProg", label: "Combating AIDS Program" },
         { name: "assemblyExpenses", label: "Barangay Assembly Expenses" },
         { name: "disasterProg", label: "Disaster Response Program" },
-        { name: "miscExpense", label: "Extraordinary & Miscellaneous Expense" },
+        { name: "miscExpense", label: `Extraordinary & Miscellaneous Expense (${miscExpenseLimit}%)` },
     ]
 
     const [total, setTotal] = useState(0.00);
