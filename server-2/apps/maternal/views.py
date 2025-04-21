@@ -47,3 +47,10 @@ class TTStatusView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
+# **Lab Result Dates**
+class LabResultDatesView(generics.ListCreateAPIView):
+    serializer_class = LabResultSerializer
+    queryset = Lab_Result_Dates.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)

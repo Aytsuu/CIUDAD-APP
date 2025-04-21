@@ -33,7 +33,7 @@ class Obstetrical_History(models.Model):
     # pat_id = models.ForeignKey('healthProfiling.Patient', on_delete=models.CASCADE,)
 
     class Meta:
-        db_table = 'obstretical_history'
+        db_table = 'obstetrical_history'
 
 # next: illness
 
@@ -65,13 +65,14 @@ class TT_Status(models.Model):
     pfts_vaccine_type = models.CharField(max_length=100)
     pfts_status = models.CharField(max_length=10)
     pfts_date_given = models.DateField()
+    pfts_fim = models.BooleanField()
     pfts_tdap = models.BooleanField(default=False)
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,)
 
     class Meta:
         db_table = 'pf_tt_status'
 
-class Lab_Result(models.Model):
+class Lab_Result_Dates(models.Model):
     pflr_id = models.BigAutoField(primary_key=True)
     pflr_urinalysis = models.DateField()
     pflr_cbc = models.DateField()

@@ -31,5 +31,5 @@ class TTStatusSerializer(serializers.ModelSerializer):
 
 class LabResultSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Lab_Result
+        model = Lab_Result_Dates
         fields = '__all__'
