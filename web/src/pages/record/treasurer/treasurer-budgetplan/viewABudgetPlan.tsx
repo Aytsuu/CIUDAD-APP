@@ -226,7 +226,7 @@ function ViewBudgetPlan(){
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
                 <Link to={`/budgetplan-forms/${plan_id}`}
-                        state={{budgetData: fetchedData, isEdit: true}}> 
+                        state={{budgetData: fetchedData, isEdit: true, from: 'view'}} > 
                     <Button>
                         <Pen size={16} /> <span>Edit</span>
                     </Button>
