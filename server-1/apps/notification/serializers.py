@@ -5,6 +5,9 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+        extra_kwargs = {
+            'user': {'read_only': True} 
+        }
 
 class FCMTokenSerializer(serializers.ModelSerializer):
     class Meta:

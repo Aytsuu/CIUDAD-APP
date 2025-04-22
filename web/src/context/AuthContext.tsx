@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
+  id: string,
   username: string;
   email: string;
   profile_image: string;
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const storedUser = localStorage.getItem("token")
       ? {
+          id: localStorage.getItem("id") || "",
           username: localStorage.getItem("username") || "",
           email: localStorage.getItem("email") || "",
           profile_image: localStorage.getItem("profile_image") || "",

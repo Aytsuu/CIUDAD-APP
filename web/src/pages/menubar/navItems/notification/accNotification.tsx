@@ -11,33 +11,86 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useAuth } from "@/context/AuthContext";
 
 dayjs.extend(relativeTime);
 
 export default function AccNotification(): JSX.Element {
-  const [notifications, setNotifications] = useState<Notification[]>([]); // Initialize as empty array
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const { user } = useAuth(); // Get just the user object
+  
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get('/api/notifications/global-notifications/');
-        // Ensure we're working with an array
-        const notificationsData = Array.isArray(response.data) ? response.data : [];
-        setNotifications(notificationsData);
-        setUnreadCount(notificationsData.length);
+        if (!user?.id || !user?.token) return;
+        
+        const response = await axios.get(
+          "http://127.0.0.1:8000/notification/lists/",
+          {
+            headers: {
+              Authorization: `Token ${user.token}`,
+            },
+          }
+        );
+        console.log("API Response:", response.data);
+        setNotifications(response.data);
       } catch (error) {
         console.error("Error fetching notifications:", error);
-        setNotifications([]); // Fallback to empty array
       } finally {
         setLoading(false);
       }
     };
 
     fetchNotifications();
-  }, []);
+  }, [user?.id, user?.token]); // Depend on both user ID and token
 
+  const handleNotificationClick = async (notificationId: number) => {
+    try {
+      if (!user?.token) return;
+      
+      await axios.patch(
+        `http://127.0.0.1:8000/notification/mark-read/${notificationId}/`,
+        {},
+        {
+          headers: {
+            Authorization: `Token ${user.token}`,
+          },
+        }
+      );
+
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          Number(n.id) === notificationId ? { ...n, is_read: true } : n
+        )
+      );
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      if (!user?.token) return;
+      
+      await axios.patch(
+        "http://127.0.0.1:8000/notification/mark-read/",
+        {},
+        {
+          headers: {
+            Authorization: `Token ${user.token}`,
+          },
+        }
+      );
+
+      // Update all notifications to read
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
+  
   const notificationPopover = (
     <div className="max-h-96 overflow-y-auto">
       <hr className="mb-2" />
@@ -46,18 +99,19 @@ export default function AccNotification(): JSX.Element {
       ) : notifications.length > 0 ? (
         notifications.map((notif) => (
           <div
-            key={notif.notif_id}
+            key={notif.id}
             className="flex items-start p-3 hover:bg-lightBlue hover:rounded-md cursor-pointer"
+            onClick={() => handleNotificationClick(Number(notif.id))}
           >
             <div className="ml-3 flex-1">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">{notif.notif_title}</p>
+                <p className="text-sm font-semibold">{notif.notif_message}</p>
                 {!notif.is_read && (
                   <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                {notif.notif_message}
+                From: {notif.sender}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
                 {dayjs(notif.created_at).fromNow()}
@@ -77,9 +131,11 @@ export default function AccNotification(): JSX.Element {
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-x-2">
         <p className="text-base font-medium text-black">Notifications</p>
-        <p className="flex items-center justify-center text-xs font-semibold text-white bg-red-500 w-5 h-5 rounded-full">
-          {notifications.filter((n) => !n.is_read).length}
-        </p>
+        {notifications.filter((n) => !n.is_read).length > 0 && (
+          <p className="flex items-center justify-center text-xs font-semibold text-white bg-red-500 w-5 h-5 rounded-full">
+            {notifications.filter((n) => !n.is_read).length}
+          </p>
+        )}
       </div>
       <DropdownLayout
         trigger={
@@ -95,9 +151,7 @@ export default function AccNotification(): JSX.Element {
             icon: <CheckCheck size={16} />,
           },
         ]}
-        onSelect={(id) => {
-          if (id === "mark-as-read") markAsRead();
-        }}
+        onSelect={() => markAllAsRead()}
       />
     </div>
   );
@@ -122,7 +176,3 @@ export default function AccNotification(): JSX.Element {
     </Popover>
   );
 }
-function markAsRead() {
-  throw new Error("Function not implemented.");
-}
-

@@ -1,8 +1,9 @@
 from rest_framework import generics, status, permissions
-from rest_framework.authentication import TokenAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from .models import Account
@@ -28,18 +29,19 @@ class SignUp(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        # Get or create a token for the user
-        token, _ = Token.objects.get_or_create(user=user)
+        # Generate JWT tokens for the user
+        refresh = RefreshToken.for_user(user)
 
         return Response({
             "user": UserAccountSerializer(user, context=self.get_serializer_context()).data,
-            "token": token.key  
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
         }, status=status.HTTP_201_CREATED)
     
-class LoginView(APIView):
+class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
     
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         email_or_username = request.data.get('email_or_username')
         password = request.data.get('password')
         
@@ -60,7 +62,8 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
                 
-            token, _ = Token.objects.get_or_create(user=user)
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
             
             # Fetch ResidentProfile data
             rp_data = ResidentProfileFullSerializer(user.rp).data if user.rp else None
@@ -70,14 +73,14 @@ class LoginView(APIView):
             staff_data = StaffFullSerializer(staff).data if staff else None
             
             return Response({
-                "token": token.key,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
                 "username": user.username,
                 "email": user.email,
                 "profile_image": user.profile_image,
                 "rp": rp_data,
                 "staff": staff_data,
             })
-            
             
         except Account.DoesNotExist:
             return Response(
@@ -94,6 +97,7 @@ class LoginView(APIView):
 class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer
+    authentication_classes = [JWTAuthentication]
     
     def get_permissions(self):
         return [permissions.AllowAny()]
@@ -101,7 +105,7 @@ class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
 class UploadImage(APIView):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     
     def post(self, request, *args, **kwargs):
         if 'profile_image' not in request.FILES:
@@ -111,7 +115,7 @@ class UploadImage(APIView):
         user = request.user
         
         try:
-            #  Delete previous image if exists
+            # Delete previous image if exists
             if user.profile_image:
                 try:
                     # Extract the filename from the URL
@@ -122,7 +126,7 @@ class UploadImage(APIView):
                 except Exception as delete_error:
                     print(f"WARNING: Failed to delete old image - {str(delete_error)}")
 
-            #  Generate new filename and upload
+            # Generate new filename and upload
             file_ext = os.path.splitext(file.name)[1]
             filename = f"user_{user.id}/{uuid.uuid4()}{file_ext}"
             file_content = file.read()
@@ -132,7 +136,7 @@ class UploadImage(APIView):
                 file=file_content,
                 file_options={"content-type": file.content_type},
             )
-            #  Get public URL and update user
+            # Get public URL and update user
             url = supabase.storage.from_("userimage").get_public_url(filename)
 
             user.profile_image = url
@@ -153,7 +157,7 @@ class UploadImage(APIView):
     
 class ChangePassword(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     
     def post(self, request):
         print("Raw Request Data:", json.dumps(request.data, indent=2))  

@@ -1,8 +1,10 @@
 from django.urls import path
-from .views import SaveTokenView, NotificationListCreateView, MarkNotificationReadView
+from .views import *
 
 urlpatterns = [
-    path('', NotificationListCreateView.as_view(), name='notification-list'),
+    path('lists/', NotificationListCreateView.as_view(), name='notification-list'),
+    path('view-notif/', NotificationListView.as_view(), name='notification-list'),
     path('save-token/', SaveTokenView.as_view(), name='save-token'),
-    path('mark-read/', MarkNotificationReadView.as_view(), name='mark-read'),
-]
+    path('mark-read/', MarkAsReadView.as_view(), name='mark-all-read'),
+    path('mark-read/<int:pk>/', MarkAsReadView.as_view(), name='mark-single-read'),
+    ]
