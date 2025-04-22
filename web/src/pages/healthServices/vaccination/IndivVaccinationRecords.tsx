@@ -66,34 +66,50 @@ interface VaccineStock {
   updated_at: string;
 }
 
+
 interface VaccinationHistory {
-  vachist_id: number;
-  vital_signs: {
-    vital_id: number;
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_RR: string;
-    vital_o2: string;
-    created_at: string;
-  } | null;
-  vaccine_stock: VaccineStock | null;
-  vachist_doseNo: string;
-  vachist_status: string;
-  vachist_age: number;
-  assigned_to: number | null;
-  staff_id: number;
-  updated_at: string;
-  vital: number;
-  vacrec: number;
-  vacStck: number;
+  // vachist_id: number;
+  // vital_signs: {
+  //   vital_id: number;
+  //   vital_bp_systolic: string;
+  //   vital_bp_diastolic: string;
+  //   vital_temp: string;
+  //   vital_RR: string;
+  //   vital_o2: string;
+  //   created_at: string;
+  // } | null;
+
+  // vaccine_stock: VaccineStock | null;
+  // vachist_doseNo: string;
+  // vachist_status: string;
+  // vachist_age: number;
+  // assigned_to: number | null;
+  // staff_id: number;
+  // updated_at: string;
+  // vital: number;
+  // vacrec: number;
+  // vacStck: number;
+  // follow_up_visit: {
+  //   followv_id: number;
+  //   followv_date: string;
+  //   followv_status: string;
+  // } ;
 }
+
 
 export interface VaccinationRecord {
   vachist_id: number;
   vachist_doseNo: string;
   vachist_status: string;
   vachist_age: number;
+  assigned_to: number | null;
+  staff_id: number;
+  vital: number;
+  vacrec: number;
+  vacStck: number;
+
+
+
   vital_signs: {
     vital_bp_systolic: string;
     vital_bp_diastolic: string;
@@ -102,6 +118,8 @@ export interface VaccinationRecord {
     vital_o2: string;
     created_at: string;
   };
+  vaccine_stock: VaccineStock | null;
+
   vaccine_name: string;
   batch_number: string;
   updated_at: string;
@@ -110,6 +128,11 @@ export interface VaccinationRecord {
     no_of_doses: number;
     age_group: string;
     vac_type: string;
+  };
+  follow_up_visit: {
+    followv_id: number;
+    followv_date: string;
+    followv_status: string;
   };
 }
 
@@ -137,8 +160,8 @@ export default function IndivVaccinationRecords() {
     if (!vaccinationRecords) return [];
 
     return vaccinationRecords.flatMap(
-      (record: { vaccination_histories: VaccinationHistory[] }) =>
-        record.vaccination_histories.map((history: VaccinationHistory) => ({
+      (record: { vaccination_histories: VaccinationRecord[] }) =>
+        record.vaccination_histories.map((history: VaccinationRecord) => ({
           vachist_id: history.vachist_id,
           vachist_doseNo: history.vachist_doseNo,
           vachist_status: history.vachist_status,
@@ -151,19 +174,27 @@ export default function IndivVaccinationRecords() {
             vital_o2: "N/A",
             created_at: "N/A",
           },
-          vaccine_name: history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+          vaccine_name:history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
           batch_number: history.vaccine_stock?.batch_number || "N/A",
           updated_at: history.updated_at,
           intervals: history.vaccine_stock?.vaccinelist?.intervals || [],
           vaccine_details: {
             no_of_doses: history.vaccine_stock?.vaccinelist?.no_of_doses || 0,
             age_group: history.vaccine_stock?.vaccinelist?.age_group || "N/A",
-            vac_type: history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+            vac_type:history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
           },
+          follow_up_visit :{
+            followv_id: history.follow_up_visit?.followv_id || 0,
+            followv_date: "",
+            followv_status: "",
+          }
         }))
     );
   }, [vaccinationRecords]);
 
+
+  console.log(vaccinationRecords)
+  
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
       const searchText = `${record.vachist_id} 
@@ -265,11 +296,10 @@ export default function IndivVaccinationRecords() {
         <div className="flex justify-center">
           <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
             {row.original.vachist_doseNo}
-           
-              <div className="text-xs text-gray-500 mt-1">
-              Required Doses {row.original.vaccine_details.no_of_doses} doses
-              </div>
-          
+
+            <div className="text-xs text-gray-500 mt-1">
+              Required Doses {row.original.vaccine_details.no_of_doses} dose/s
+            </div>
           </div>
         </div>
       ),
@@ -280,15 +310,14 @@ export default function IndivVaccinationRecords() {
       cell: ({ row }) => {
         const statusColors = {
           completed: "bg-green-100 text-green-800",
-          pending: "bg-yellow-100 text-yellow-800",
-          cancelled: "bg-red-100 text-red-800",
+          "Partially Vaccinated": " text-red-500",
         };
         return (
           <div className="flex justify-center">
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 statusColors[
-                  row.original.vachist_status.toLowerCase() as keyof typeof statusColors
+                  row.original.vachist_status as keyof typeof statusColors
                 ] || "bg-gray-100 text-gray-800"
               }`}
             >
@@ -306,6 +335,11 @@ export default function IndivVaccinationRecords() {
           {new Date(row.original.updated_at).toLocaleDateString()}
           <div className="text-xs text-gray-400">
             {new Date(row.original.updated_at).toLocaleTimeString()}
+
+          </div>
+          <div>  
+            {row.original.follow_up_visit.followv_date
+ }
           </div>
         </div>
       ),
@@ -315,30 +349,20 @@ export default function IndivVaccinationRecords() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <TooltipLayout
-            trigger={
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <Eye className="h-4 w-4" />
-              </Button>
-            }
-            content="View Details"
-          />
-          <TooltipLayout
-            trigger={
-              <Button
-                variant="destructive"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => {
-                  setRecordToArchive(row.original.vachist_id);
-                  setIsArchiveConfirmationOpen(true);
-                }}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            }
-            content="Archive Record"
-          />
+          <Link
+            to="/vaccinationView"
+            state={{ params: { Vaccination: row.original, patientData} }}
+          >
+            <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
+              View
+            </Button>
+          </Link>
+
+          {row.original.vachist_status.toLowerCase() !== "completed" && (
+            <Button variant="destructive" size="sm" className="h-8  p-2">
+              update{" "}
+            </Button>
+          )}
         </div>
       ),
     },

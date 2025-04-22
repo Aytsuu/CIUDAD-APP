@@ -38,8 +38,14 @@ class PatientRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
   
   
-  
+    
 class VitalSignsSerializer(serializers.ModelSerializer):
     class Meta:
         model = VitalSigns
+        fields = '__all__'
+        
+        
+class FollowUpVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FollowUpVisit
         fields = '__all__'

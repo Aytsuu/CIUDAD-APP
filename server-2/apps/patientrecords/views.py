@@ -48,3 +48,11 @@ class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
             return super().get_object()
         except NotFound:
             return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+class FollowUpVisitView(generics.ListCreateAPIView):
+        serializer_class = FollowUpVisitSerializer
+        queryset = FollowUpVisit.objects.all()
+        
+        def create(self, request, *args, **kwargs):
+            return super().create(request, *args, **kwargs)

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./VaccinationForm";
+import VaccinationForm from "./NewVacRecForm";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -328,7 +328,7 @@ export default function AllVaccinationRecords() {
 
           <div>
             <Button className="w-full sm:w-auto">
-              <Link to={`/vaccinationForm`}>New Record</Link>
+              <Link to={`/patNewVacRecForm`}>New Record</Link>
             </Button>
           </div>
         </div>

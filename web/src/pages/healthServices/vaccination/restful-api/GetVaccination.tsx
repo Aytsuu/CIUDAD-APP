@@ -58,14 +58,14 @@ export const getVaccinationRecordById =  async (id: number) => {
 
 
 
-export const getVaccintStocks =  async () => {
-    try {
-        const response = await api.get(`/inventory/vaccine_stocks/`);
-        return response.data;
-    } catch (err) {
-        console.error(err);
-    }
-}
+  export const getVaccintStocks =  async () => {
+      try {
+          const response = await api.get(`/inventory/vaccine_stocks/`);
+          return response.data;
+      } catch (err) {
+          console.error(err);
+      }
+  }
 
 
 

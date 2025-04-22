@@ -39,3 +39,14 @@ class VitalSigns(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'vital_signs'
+        
+        
+class FollowUpVisit(models.Model):
+    followv_id = models.BigAutoField(primary_key=True)
+    followv_date = models.DateField()
+    followv_status = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
+    class Meta:
+        db_table = 'follow_up_visit'
