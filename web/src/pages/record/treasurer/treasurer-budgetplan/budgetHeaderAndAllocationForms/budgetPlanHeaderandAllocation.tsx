@@ -221,8 +221,8 @@ function HeaderAndAllocationForm({ headerForm, allocationForm, onSubmit, isEdit,
             ) : (
                 // Budget Allocation Form
                 <Form {...allocationForm}>
-                    <form onSubmit={allocationForm.handleSubmit(handleAllocationSubmit)} className="space-y-6">
-                        <Card className="p-10 relative">
+                    <form onSubmit={allocationForm.handleSubmit(handleAllocationSubmit)} className="space-y-3">
+                        <Card className="p-8 relative">
                             <MainLayoutComponent title={formText.allocationForm.title} description={formText.allocationForm.description}>
                                 <div className="flex flex-col gap-4">
                                     <FormField

@@ -93,14 +93,14 @@ export function getInitialFormData(isEdit: boolean, details?: any[]) {
           if (fieldName) {
               // Find which form contains this field
               if (fieldName in forms.form1) {
-                  forms.form1[fieldName] = item.dtl_proposed_budget;
-              } else if (fieldName in forms.form2) {
-                  forms.form2[fieldName] = item.dtl_proposed_budget;
-              } else if (fieldName in forms.form3) {
-                  forms.form3[fieldName] = item.dtl_proposed_budget;
-              } else if (fieldName in forms.form4) {
-                  forms.form4[fieldName] = item.dtl_proposed_budget;
-              }
+          (forms.form1 as Record<string, string>)[fieldName] = item.dtl_proposed_budget;
+        } else if (fieldName in forms.form2) {
+          (forms.form2 as Record<string, string>)[fieldName] = item.dtl_proposed_budget;
+        } else if (fieldName in forms.form3) {
+          (forms.form3 as Record<string, string>)[fieldName] = item.dtl_proposed_budget;
+        } else if (fieldName in forms.form4) {
+          (forms.form4 as Record<string, string>)[fieldName] = item.dtl_proposed_budget;
+        }
           }
       });
   }

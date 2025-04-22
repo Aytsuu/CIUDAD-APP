@@ -1,24 +1,26 @@
 import { useState, useEffect } from 'react';
-import HeaderAndAllocationForm from '../budgetHeaderAndAllocationForms/budgetPlanHeaderandAllocation';
-import BudgetPlanForm from './budgetplanMainForm';
-import { useNavigate, useLocation } from 'react-router';
-import BudgetHeaderSchema from '@/form-schema/treasurer/budgetplan-header-schema';
-import BudgetAllocationSchema from '@/form-schema/treasurer/budget-allocation-schema';
+import { useNavigate, useLocation, useParams } from 'react-router';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import HeaderAndAllocationForm from '../budgetHeaderAndAllocationForms/budgetPlanHeaderandAllocation';
+import BudgetPlanForm from './budgetplanMainForm';
+
+import BudgetHeaderSchema from '@/form-schema/treasurer/budgetplan-header-schema';
+import BudgetAllocationSchema from '@/form-schema/treasurer/budget-allocation-schema';
+
 const CombinedBudgetForm = () => {
   const [step, setStep] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Get state from navigation
-  const { budgetData, isEdit: isEditProp } = location.state || {};
-  const [isEdit, setIsEdit] = useState(isEditProp || false);
-  const [editId, setEditId] = useState<string | undefined>(budgetData?.plan_id);
+  const { plan_id } = useParams();
 
-  // Combined form for both header and allocation
+  const { budgetData, isEdit: isEditProp } = location.state || {};
+  const isEdit = Boolean(isEditProp);
+
   const headerForm = useForm<z.infer<typeof BudgetHeaderSchema>>({
     resolver: zodResolver(BudgetHeaderSchema),
     defaultValues: {
@@ -43,9 +45,8 @@ const CombinedBudgetForm = () => {
     }
   });
 
-  // Set form values when in edit mode
   useEffect(() => {
-    if (isEdit == true && budgetData) {
+    if (isEdit && !isInitialized && budgetData) {
       headerForm.reset({
         balance: budgetData.plan_balance,
         realtyTaxShare: budgetData.plan_tax_share,
@@ -64,35 +65,27 @@ const CombinedBudgetForm = () => {
         calamityFundLimit: budgetData.plan_calamityFund_limit
       });
 
-      if (budgetData.plan_personalService_limit) {
-        setStep(2);
-      }
+    //   if (budgetData.plan_personalService_limit) {
+    //     setStep(2);
+    //   }
+
+      setIsInitialized(true);
     }
-  }, [isEdit, budgetData, headerForm, allocationForm]);
+  }, [isEdit, budgetData, headerForm, allocationForm, isInitialized]);
 
-  const handleHeaderSubmit = () => {
-    setStep(2);
-  };
+  const handleHeaderSubmit = () => setStep(2);
 
-  const handleBack = () => {
-    setStep(1);
-  };
+  const handleBack = () => setStep(1);
 
   const handleExit = () => {
-    if (isEdit && editId) {
-      navigate(`/treasurer-budgetplan-view/${editId}`);
-    } else {
-      navigate('/treasurer-budget-plan');
-    }
+    navigate(isEdit && plan_id ? `/treasurer-budgetplan-view/${plan_id}` : '/treasurer-budget-plan');
   };
 
-  const getCombinedFormData = () => {
-    return {
-      ...headerForm.getValues(),
-      ...allocationForm.getValues(),
-      ...(isEdit && editId ? { id: editId } : {}),
-    };
-  };
+  const getCombinedFormData = () => ({
+    ...headerForm.getValues(),
+    ...allocationForm.getValues(),
+    ...(isEdit && plan_id ? { id: plan_id } : {}),
+  });
 
   return (
     <div>
@@ -102,7 +95,7 @@ const CombinedBudgetForm = () => {
           allocationForm={allocationForm}
           onSubmit={handleHeaderSubmit} 
           isEdit={isEdit}
-          editId={editId}
+          editId={plan_id}
           onExit={handleExit}
         />
       )}
@@ -111,8 +104,8 @@ const CombinedBudgetForm = () => {
           onBack={handleBack} 
           headerData={getCombinedFormData()}
           isEdit={isEdit}
-          editId={editId}
-          budgetData = {budgetData.details}
+          editId={plan_id}
+          budgetData={budgetData?.details}
         />
       )}
     </div>
