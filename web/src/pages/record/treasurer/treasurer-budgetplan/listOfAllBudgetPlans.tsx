@@ -118,7 +118,7 @@ function BudgetPlan() {
                     <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> 
                 </div>
             
-                <Link to="/header-and-allocation-form" state={({isEdit : false})}>
+                <Link to="/budgetplan-forms" state={({isEdit : false})}>
                     <div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>
                 </Link>
             </div>

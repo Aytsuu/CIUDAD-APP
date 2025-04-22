@@ -24,6 +24,7 @@ export const updateBudgetPlan = async (plan_id: number, budgetInfo: Record<strin
             plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit)
         };
 
+
         // Prepare the budget details data
         const detailsData = budgetInfo.details.map((detail: any) => ({
             dtl_id: detail.dtl_id,

@@ -41,3 +41,7 @@ export const AllocationEditSchema = z.object({
     calamityFundLimitEdit: AllocationRequirement,
 })
 
+
+export type HeaderEditValues = z.infer<typeof HeaderEditSchema>;
+export type AllocationEditValues = z.infer<typeof AllocationEditSchema>;
+export type EditHeaderAndAllocationValues = z.infer<typeof EditHeaderAndAllocationSchema>;

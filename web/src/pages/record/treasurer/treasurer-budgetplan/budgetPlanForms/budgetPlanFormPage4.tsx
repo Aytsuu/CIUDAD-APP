@@ -47,7 +47,6 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
 
     const availableResources = parseFloat(balance) + parseFloat(realtyTaxShare) + 
     parseFloat(taxAllotment) + parseFloat(clearanceAndCertFees) + parseFloat(otherSpecificIncome);
-    console.log('Available Resources:', availableResources)
 
     const [totalOutlays, setTotalOutlays] = useState(0.00);
     const [totalDevFund, settotalDevFund] = useState(0.00);

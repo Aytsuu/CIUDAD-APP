@@ -2,7 +2,6 @@ import CreateBudgetPlanPage1 from "./budgetPlanFormPage1.tsx";
 import CreateBudgetPlanPage2 from "./budgetPlanFormPage2.tsx";
 import CreateBudgetPlanPage3 from "./budgetPlanFormPage3.tsx";
 import CreateBudgetPlanPage4 from "./budgetPlanFormPage4.tsx";
-import { useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { useRef, useState } from "react";
 import { FormData, CreateBudgetPlanSchema } from "@/form-schema/treasurer/budgetplan-create-schema.ts";
@@ -12,12 +11,11 @@ import { Button } from "@/components/ui/button/button";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { budget_plan, budget_plan_details } from "../restful-API/budgetPlanPostAPI";
 import { toast } from "sonner";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DisplayBreakdown from "../netBreakdownDisplay.tsx";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Link } from "react-router-dom";
 import { getInitialFormData } from "../budgetPlanFormEditInitializer.tsx";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "../budgetItemDefinition.tsx";
+import { useNavigate } from "react-router-dom";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -33,14 +31,41 @@ const styles = {
 }; 
 
 
-function BudgetPlanForm() {
+function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData}: {
+    headerData: any;
+    onBack: () => void;
+    isEdit: boolean;
+    editId?: string;
+    budgetData: any,
+}) {
     const year = new Date().getFullYear()
     const totalBudgetToast = useRef <string | number | null>(null);
+    const navigate = useNavigate();
 
-    const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, 
-            actualIncome, actualRPT, personalServicesLimit, miscExpenseLimit, 
-            localDevLimit, skFundLimit, calamityFundLimit, isEdit, id, originalData } = location.state || 0;
+    const {
+        balance = "0",
+        realtyTaxShare = "0",
+        taxAllotment = "0",
+        clearanceAndCertFees = "0",
+        otherSpecificIncome = "0",
+        actualIncome = "0",
+        actualRPT = "0",
+        personalServicesLimit = "0",
+        miscExpenseLimit = "0",
+        localDevLimit = "0",
+        skFundLimit = "0",
+        calamityFundLimit = "0",
+      } = headerData || {};
+
+    const [initialized, setInitialized] = useState(false)
+    const initialForms = getInitialFormData(isEdit, budgetData);
+    const [formData1, setFormData1] = useState(initialForms.form1);
+    const [formData2, setFormData2] = useState(initialForms.form2);
+    const [formData3, setFormData3] = useState(initialForms.form3);
+    const [formData4, setFormData4] = useState(initialForms.form4);
+    const [totalBudgetObligations, settotalBudgetObligations] = useState(0.00);
+    const [balUnappropriated, setbalUnappropriated] = useState(0.00);
+    const [isBeyondLimit, setIsBeyondLimit] = useState(false);
 
     // Calculating net available resources
     const availableResources =
@@ -50,16 +75,10 @@ function BudgetPlanForm() {
     (parseFloat(clearanceAndCertFees) || 0) +
     (parseFloat(otherSpecificIncome) || 0);
 
-    const [totalBudgetObligations, settotalBudgetObligations] = useState(0.00);
-    const [balUnappropriated, setbalUnappropriated] = useState(0.00);
-    const [isBeyondLimit, setIsBeyondLimit] = useState(false);
-
+    const backButtonHandler = () => {
+        onBack();
+      };
     const [currentPage, setCurrentPage] = useState(1);
-    const initialForms = getInitialFormData(isEdit, originalData?.details);
-    const [formData1, setFormData1] = useState(initialForms.form1);
-    const [formData2, setFormData2] = useState(initialForms.form2);
-    const [formData3, setFormData3] = useState(initialForms.form3);
-    const [formData4, setFormData4] = useState(initialForms.form4);
 
     // auto calculation of total budgetary obligations and balance unappropriated
     useEffect(() => {
@@ -67,16 +86,17 @@ function BudgetPlanForm() {
             Object.values(formData)
                 .map((value) => parseFloat(value) || 0)
                 .reduce((acc, curr) => acc + curr, 0);
-    
-        const totalBudget = sumFormData(formData1) + sumFormData(formData2) + sumFormData(formData3) + sumFormData(formData4);
-        settotalBudgetObligations(totalBudget);
+
+        const totalBudget = sumFormData(formData1) + sumFormData(formData2) + 
+                            sumFormData(formData3) + sumFormData(formData4);
         
+        settotalBudgetObligations(totalBudget);
         const newBalance = availableResources - totalBudget;
         setbalUnappropriated(newBalance);
         
         if (newBalance < 0) {
             if (!totalBudgetToast.current) {
-                setIsBeyondLimit(true)
+                setIsBeyondLimit(true);
                 totalBudgetToast.current = toast.error("Insufficient funds! Budget obligations exceed available resources.", {
                     duration: Infinity, 
                     style: {
@@ -89,63 +109,29 @@ function BudgetPlanForm() {
             }
         } else {
             if(totalBudgetToast.current !== null){
-                setIsBeyondLimit(false)
+                setIsBeyondLimit(false);
                 toast.dismiss(totalBudgetToast.current);
                 totalBudgetToast.current = null;
             }
         }
     }, [formData1, formData2, formData3, formData4, availableResources]);
 
-    // Function for next button
-    const handleNext = () => {
-        setCurrentPage((prev) => {
-            return prev + 1;
-        });
-    };
-    // function for Previous Button
-    const handlePrevious = () => {
-        setCurrentPage((prev) => prev - 1);
-    };
+    const handleNext = () => setCurrentPage(prev => prev + 1);
+    const handlePrevious = () => setCurrentPage(prev => prev - 1);
 
-    const updateFormData = (data: Partial<FormData>) => {
-        if (currentPage === 1) {
-            setFormData1((prev) => ({ ...prev, ...data }));
-        } else if (currentPage === 2) {
-            setFormData2((prev) => ({ ...prev, ...data }));
-        } else if (currentPage === 3) {
-            setFormData3((prev) => ({ ...prev, ...data }));
-        } else if (currentPage === 4) {
-            setFormData4((prev) => ({ ...prev, ...data }));
-        }
+    // Update form data based on current page
+    const updateFormData = (data: Record<string, string>) => {
+        if (currentPage === 1) setFormData1(prev => ({ ...prev, ...data }));
+        else if (currentPage === 2) setFormData2(prev => ({ ...prev, ...data }));
+        else if (currentPage === 3) setFormData3(prev => ({ ...prev, ...data }));
+        else if (currentPage === 4) setFormData4(prev => ({ ...prev, ...data }));
     };
-
 
     // Data insertion
     const onSubmit = async () => {
-        const toastId = toast.loading('Submitting budget plan...', {
-            duration: Infinity  // Keep open until we manually close it
-        });
+        const toastId = toast.loading('Submitting budget plan...');
     
-        // Transform data from each page into the desired format
-        const transformData = (formData: Record<string, any>, budgetItems: { name: string; label: string; category: string }[]) => {
-            return budgetItems.map(({ name, label, category }) => ({
-                dtl_budget_item: label,
-                dtl_proposed_budget: formData[name] || "0.00",
-                dtl_budget_category: category,
-            }));
-        };
-    
-        const page1Data = transformData(formData1, budgetItemsPage1);
-        const page2Data = transformData(formData2, budgetItemsPage2);
-        const page3Data = transformData(formData3, budgetItemsPage3);
-        const page4Data = transformData(formData4, budgetItemsPage4);
-    
-        // Combine data from all pages into a single array
-        const combinedData = [...page1Data, ...page2Data, ...page3Data, ...page4Data];
-    
-        console.log("Combined Data:", combinedData);
-    
-        try{
+        try {
             const budgetHeader = {
                 actualIncome,
                 actualRPT,
@@ -163,27 +149,26 @@ function BudgetPlanForm() {
                 calamityFundLimit
             };
 
-            if(isEdit == false){
+            if (!isEdit) {
                 const planId = await budget_plan(budgetHeader);
-                console.log("Budget Header Uploaded!")
-
-                const res = await budget_plan_details(combinedData, planId);
-                console.log("Budget plan and expenditures submitted successfully!");
-
-                if (res && planId) {
-                    toast.success('Budget plan created successfully', {
-                        id: toastId, 
-                        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                        duration: 2000
-                    });
-
-                    window.location.href = '/treasurer-budget-plan';
-                }
+                await budget_plan_details(transformFormData(), planId);
+                
+                toast.success('Budget plan created successfully', {
+                    id: toastId,
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000
+                });
+                navigate('/treasurer-budget-plan');
             } else {
-                // for edit
+                // Handle edit case
+                toast.success('Budget plan updated successfully', {
+                    id: toastId,
+                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                    duration: 2000
+                });
+                navigate(`/treasurer-budgetplan-view/${editId}`);
             }
-
-        } catch (error){
+        } catch (error) {
             toast.error(`Failed to ${isEdit ? 'update' : 'create'} budget plan`, {
                 id: toastId,
                 duration: 2000
@@ -191,28 +176,32 @@ function BudgetPlanForm() {
             console.error("Error submitting budget plan", error);
         }
     };
+
+    // Transform form data for API submission
+    const transformFormData = () => {
+        const transformPageData = (formData: Record<string, any>, budgetItems: any[]) => {
+            return budgetItems.map(({ name, label, category }) => ({
+                dtl_budget_item: label,
+                dtl_proposed_budget: formData[name] || "0.00",
+                dtl_budget_category: category,
+            }));
+        };
+
+        return [
+            ...transformPageData(formData1, budgetItemsPage1),
+            ...transformPageData(formData2, budgetItemsPage2),
+            ...transformPageData(formData3, budgetItemsPage3),
+            ...transformPageData(formData4, budgetItemsPage4)
+        ];
+    };
     
     return (
         <div className='w-full h-full bg-snow'>
             {/* Header Title */}
             <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
-                    {/* ihe form is in editing mode then the confirmation modal not will appear, otherwise it will. */}
-                    {isEdit == false ? 
-                        (<ConfirmationModal
-                        trigger={<Button className="text-black p-2 self-start" variant={"outline"}> <ChevronLeft /></Button>}
-                        title="Unsaved Changes"
-                        description="Are you sure you want to go back? All progress on your budget plan will be lost."
-                        actionLabel="Confirm"
-                        onClick={() => (
-                            window.location.href = '/treasurer-budget-plan'
-                        )}/>
-                        ) : (
-                            <Link to={`/header-and-allocation-form/${id}`}>
-                                <Button className="text-black p-2 self-start" variant={"outline"}><ChevronLeft /></Button>
-                            </Link>
-                        )
-                    }
+                    <Button className="text-black p-2 self-start" variant={"outline"} onClick={() => backButtonHandler()}><ChevronLeft /></Button>
+
                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
                         <div>{isEdit ? 'Edit Budget Plan' : "Create Budget Plan"}</div>
                     </h1>

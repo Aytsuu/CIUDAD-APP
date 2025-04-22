@@ -6,12 +6,12 @@ import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests
 import BarangayService from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-barangayService";
 import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/listOfAllBudgetPlans";
 import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
-import BudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/budgetplanMainForm";
+// import BudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/budgetplanMainForm";
 import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/viewABudgetPlan";
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
-import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main";
-import HeaderAndAllocationForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetHeaderAndAllocationForms/budgetPlanHeaderandAllocation";
+import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main"; 
+import CombinedBudgetForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/budgetPlanCombinedForms";
 
 export const treasurer_router = [
     {
@@ -19,8 +19,8 @@ export const treasurer_router = [
         element: <BudgetPlan/>,
     },
     {
-        path: "treasurer-budgetplan-form",
-        element: <BudgetPlanForm/>
+        path: "budgetplan-forms/:plan_id?",
+        element: <CombinedBudgetForm/>
     },
     {
         path: 'treasurer-budgetplan-view/:plan_id',
@@ -65,9 +65,5 @@ export const treasurer_router = [
     {
         path: 'treasurer-rates',
         element: <RatesForm/>
-    },
-    {
-        path: 'header-and-allocation-form/:plan_id?',
-        element: <HeaderAndAllocationForm/>
     },
 ]

@@ -225,7 +225,7 @@ function ViewBudgetPlan(){
                 <h1 className={`${styles.headerTitle} text-center flex-grow`}>
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
-                <Link to={`/header-and-allocation-form/${plan_id}`}
+                <Link to={`/budgetplan-forms/${plan_id}`}
                         state={{budgetData: fetchedData, isEdit: true}}> 
                     <Button>
                         <Pen size={16} /> <span>Edit</span>

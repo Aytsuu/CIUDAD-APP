@@ -1,5 +1,4 @@
 import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,56 +14,14 @@ import { UseFormReturn } from "react-hook-form";
 function BudgetHeaderForm({form}: {
     form: UseFormReturn<z.infer<typeof BudgetHeaderSchema>>
 }){
-    // const navigate = useNavigate();
-    // const [isDialogOpen, setIsDialogOpen] = useState(false);
-    // const [showHeaderForm, setShowHeaderForm] = useState(true);
-    // const [ formValues, setFormValues] = useState<z.infer<typeof BudgetHeaderSchema>>();
-
-    // const form = useForm<z.infer<typeof BudgetHeaderSchema>>({
-    //     resolver: zodResolver(BudgetHeaderSchema),
-    //     defaultValues:{
-    //         balance: "",
-    //         realtyTaxShare: "",
-    //         taxAllotment: "",
-    //         clearanceAndCertFees: "",
-    //         otherSpecificIncome: "",
-    //         actualIncome: "",
-    //         actualRPT: ""
-    //     }
-    // })
-
     const onSubmit = (values: z.infer<typeof BudgetHeaderSchema>) => {
         // setFormValues(values);
         // setShowHeaderForm(false);
         // setIsDialogOpen(true); 
     }
-
-    const handleFinalSubmit = (allocationValues: z.infer<typeof BudgetAllocationSchema>) => {
-        // if (!formValues) return;
-        
-        // const completeData = {
-        //   ...formValues,
-        //   ...allocationValues,
-        //   isEdit: false,
-        //   id: "",
-        // };
-
-        // navigate("/treasurer-budgetplan-form", {state : completeData});
-        
-        // console.log("Complete submission:", completeData);
-        // setIsDialogOpen(false);
-        // setShowHeaderForm(false); 
-      };
-
-    const handleDialogClose = () => {
-        // setIsDialogOpen(false);
-        // setShowHeaderForm(true); 
-    };
     
     return(
         <>
-         {/* {showHeaderForm && ( */}
-
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -163,32 +120,8 @@ function BudgetHeaderForm({form}: {
                         )}></FormField>
                     </div>
                 </div>
-
-                    {/* <div className="flex justify-end mt-[20px]"> 
-                        <Button type="submit">Proceed</Button>
-                    </div> */}
             </form>
         </Form>
-            {/* )} */}
-        
-            {/* <DialogLayout
-            isOpen={isDialogOpen}
-            onOpenChange={(open) => {
-                if (!open) handleDialogClose();
-                else setIsDialogOpen(open);
-            }}
-            title="Budget Allocation Form"
-            description="Allocate percentages for each budget category, ensuring the total does not exceed 100%."
-            mainContent={
-                formValues ? ( 
-                <div> 
-                    <BudgetAllocationForm headerValues={formValues} onFinalSubmit={handleFinalSubmit} setIsDialogOpen = {setIsDialogOpen} />
-                </div>
-                ) : (
-                <div /> 
-                )
-            }
-            /> */}
 
         </>
     )
