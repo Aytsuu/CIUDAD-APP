@@ -20,6 +20,9 @@ import IncomeandExpenseTracking from "./treasurer-expense-tracker-main";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Calendar, Search, X, Plus } from 'lucide-react';
 import { Progress } from "@/components/ui/progress"; 
+import { useIncomeExpenseMainCard } from "./queries/treasurerIncomeExpenseFetchQueries";
+
+
 
 
 export const BudgetTracker = [
@@ -42,6 +45,8 @@ export const BudgetTracker = [
 
 
 function IncomeExpenseMain() {
+
+    const { data: fetchedData = [], isLoading } = useIncomeExpenseMainCard();
 
     let styles = {
         budgetLabel: "w-[12rem]",
@@ -82,8 +87,9 @@ function IncomeExpenseMain() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-                {BudgetTracker.map((tracker, index) => {
-                    const progress = tracker.budget > 0 ? (tracker.expenses / tracker.budget) * 100 : 0;
+                {fetchedData.map((tracker, index) => {
+                    const progress = tracker.ie_main_tot_budget > 0 ? (tracker.ie_main_exp / tracker.ie_main_tot_budget) * 100 : 0;
+                    const remainingBal = tracker.ie_main_tot_budget - tracker.ie_main_exp;
 
                     return (
                         <CardLayout
@@ -91,11 +97,11 @@ function IncomeExpenseMain() {
                             title={
                                 <div className="flex flex-row">
                                     <div className="flex justify-between items-center w-full">
-                                        <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3">
+                                        <h1 className="font-semibold text-xl sm:text-2xl text-primary flex items-center gap-3 pb-4">
                                             <div className="rounded-full border-2 border-solid border-primary p-3 flex items-center">
                                                 <Calendar />
                                             </div>
-                                            <div>{tracker.year} Budget Overview</div>
+                                            <div>{tracker.ie_main_year} Budget Overview</div>
                                         </h1>
                                     </div>
                                     <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
@@ -103,22 +109,22 @@ function IncomeExpenseMain() {
                             }
                             description=""
                             content={
-                                <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-4 pl-3">
                                     <div className="flex flex-col sm:flex-row">
                                         <Label className={styles.budgetLabel}>Total Budget:</Label>
-                                        <Label className="text-blue">Php {tracker.budget.toFixed(2)}</Label>
+                                        <Label className="text-blue">Php {tracker.ie_main_tot_budget.toFixed(2)}</Label>
                                     </div>
                                     <div className="flex flex-col sm:flex-row">
                                         <Label className={styles.budgetLabel}>Total Income:</Label>
-                                        <Label className="text-green-600">Php {tracker.income.toFixed(2)}</Label>
+                                        <Label className="text-green-600">Php {tracker.ie_main_inc.toFixed(2)}</Label>
                                     </div>
                                     <div className="flex flex-col sm:flex-row">
                                         <Label className="w-[12rem]">Total Expenses:</Label>
-                                        <Label className="text-red-600">Php {tracker.expenses.toFixed(2)}</Label>
+                                        <Label className="text-red-600">Php {tracker.ie_main_exp.toFixed(2)}</Label>
                                     </div>
                                     <div className="flex flex-col sm:flex-row"> 
                                         <Label className="w-[12rem]">Remaining Balance:</Label>
-                                        <Label className="text-yellow-600">Php {tracker.remainingBal.toFixed(2)}</Label>
+                                        <Label className="text-yellow-600">Php {remainingBal.toFixed(2)}</Label>
                                     </div>
 
                                     <div className="mt-4">

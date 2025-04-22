@@ -95,3 +95,14 @@ class Income_Tracking(models.Model):
     class Meta:
         db_table = "income_tracking"
 
+
+
+class Income_Expense_Main(models.Model):
+    ie_main_year = models.CharField(max_length=4)
+    ie_main_tot_budget = models.DecimalField(max_digits=10, decimal_places=2)
+    ie_main_inc = models.DecimalField(max_digits=10, decimal_places=2)
+    ie_main_exp = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = "income_expense_main"
+

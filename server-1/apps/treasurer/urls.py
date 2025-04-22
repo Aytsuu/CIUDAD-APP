@@ -22,6 +22,9 @@ urlpatterns=[
     path('income-particular/', Income_ParticularView.as_view(), name = 'treasurer-income-particular'),
     path('update-income-tracking/<int:inc_num>/', UpdateIncomeTrackingView.as_view(), name='treasurer-income-tracking-update'),
     path('income-tracking/<int:inc_num>/', DeleteIncomeTrackingView.as_view(), name = 'treasurer-income-tracking-delete'),
-    path('delete-income-particular/<int:incp_id>/', DeleteIncome_ParticularView.as_view(), name='treasurer-income-particular-delete')
+    path('delete-income-particular/<int:incp_id>/', DeleteIncome_ParticularView.as_view(), name='treasurer-income-particular-delete'),
+
+    #INCOME EXPENSE MAIN
+    path('income-expense-main/', Income_Expense_MainView.as_view(), name='income-expense-main-card')
 
 ]

@@ -46,3 +46,16 @@ export const getIncomeData = async (year?: number) => {
         throw err;
     }
 };
+
+
+
+export const getIncomeExpenseMainCard = async () => {
+    try {
+
+        const res = await api.get('treasurer/income-expense-main/');
+        return res.data;
+        
+    } catch (err) {
+        console.error(err);
+    }
+};

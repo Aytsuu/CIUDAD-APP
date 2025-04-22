@@ -56,3 +56,9 @@ class Income_TrackingSerializers(serializers.ModelSerializer):
     class Meta:
         model = Income_Tracking
         fields = '__all__'
+
+
+class Income_Expense_MainSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Income_Expense_Main
+        fields = '__all__'

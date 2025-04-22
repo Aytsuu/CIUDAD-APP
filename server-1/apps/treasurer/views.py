@@ -46,9 +46,7 @@ class Delete_Update_Retrieve_BudgetPlanView(generics.RetrieveUpdateDestroyAPIVie
 
 # -------------------------------- INCOME & EXPENSE ------------------------------------
 
-# class Income_Expense_TrackingView(generics.ListCreateAPIView):
-#     serializer_class = Income_Expense_TrackingSerializers
-#     queryset = Income_Expense_Tracking.objects.all().select_related('dtl_id')
+
 
 class Income_Expense_TrackingView(generics.ListCreateAPIView):
     serializer_class = Income_Expense_TrackingSerializers
@@ -170,4 +168,11 @@ class DeleteIncome_ParticularView(generics.DestroyAPIView):
 
     def get_object(self):
         incp_id = self.kwargs.get('incp_id')
-        return get_object_or_404(Income_Particular, incp_id=incp_id)     
+        return get_object_or_404(Income_Particular, incp_id=incp_id)   
+
+
+# ---------- INCOME EXPENSE MAIN
+
+class Income_Expense_MainView(generics.ListCreateAPIView):
+    serializer_class = Income_Expense_MainSerializers
+    queryset = Income_Expense_Main.objects.all()

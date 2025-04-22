@@ -3,6 +3,8 @@ import { getIncomeExpense } from "../request/income-ExpenseTrackingGetRequest";
 import { getParticulars } from "../request/particularsGetRequest";
 import { getIncomeData } from "../request/income-ExpenseTrackingGetRequest";
 import { getIncomeParticulars } from "../request/particularsGetRequest";
+import { getIncomeExpenseMainCard } from "../request/income-ExpenseTrackingGetRequest";
+
 
 // FETCHING EXPENSE DATA
 export type IncomeExpense = {
@@ -154,3 +156,21 @@ export const useIncomeData = (year?: number) => {
 };
 
 
+
+
+// INCOME EXPENSE MAIN CARD
+export type IncomeExpenseCard = {
+    ie_main_year: string;
+    ie_main_tot_budget: number;
+    ie_main_inc: number;
+    ie_main_exp: number;
+};
+
+
+export const useIncomeExpenseMainCard = () => {
+    return useQuery<IncomeExpenseCard[]>({
+        queryKey: ["income_expense_card"],
+        queryFn: getIncomeExpenseMainCard,
+        staleTime: 1000 * 60 * 30, // 30 minutes stale time
+    });
+};
