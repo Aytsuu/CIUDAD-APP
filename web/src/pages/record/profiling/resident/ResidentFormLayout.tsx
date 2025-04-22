@@ -16,10 +16,8 @@ import { Type, Origin } from "../profilingEnums";
 import { Card } from "@/components/ui/card/card";
 import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router";
-import { useLocation, useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert, CircleCheck } from "lucide-react";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { useForm } from "react-hook-form";
@@ -27,7 +25,6 @@ import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
-import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
@@ -53,15 +50,13 @@ export default function ResidentFormLayout() {
   const formattedResidents = React.useMemo(() => {
     return formatResidents(params);
   }, [params.residents]);
-  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
-  const { mutateAsync: addResidentProfileHealth, isPending: isSubmittingProfileHealth } = useAddResidentProfileHealth(params);
-  const { mutateAsync: addPersonal } = useAddPersonal(form.getValues());
-  const { mutateAsync: addPersonalHealth } = useAddPersonalHealth(form.getValues());
-  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile(form.getValues(), setFormType);
+  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile();
+  const { mutateAsync: addPersonal } = useAddPersonal();
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {
-    setIsSubmitting(isSubmittingProfile || isUpdatingProfile || isSubmittingProfileHealth);
-  }, [isSubmittingProfile, isUpdatingProfile, isSubmittingProfileHealth]) 
+    setIsSubmitting(isSubmittingProfile || isUpdatingProfile);
+  }, [isSubmittingProfile, isUpdatingProfile]) 
 
   // Performs side effects when formType changes
   React.useEffect(() => {
@@ -185,14 +180,8 @@ export default function ResidentFormLayout() {
 
       const resident = await addResidentProfile({
         personalId: personalId, 
-        staffId: user?.staff.staff_id
-      });
-      
-      const healthPersonalId = await addPersonalHealth();
-
-      await addResidentProfileHealth({
-        personalId: healthPersonalId, 
-        staffId: "",
+        staffId: user?.staff.staff_id,
+        params: params // Ensure 'params' is passed as required
       });
 
       // Reset the values of all fields in the form
