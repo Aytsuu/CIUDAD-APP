@@ -37,14 +37,14 @@ export const getVaccinationRecords =  async () => {
     const response = await api.get(`/vaccination/all-vaccine-records/`);
     return response.data;
   } catch (err) {
-    console.error(err);
+    console.error(err); 
   }
 };
 
 
 export const getVaccinationRecordById =  async (id: number) => {
   try {
-    const response = await api.get(`/vaccination/indv-vaccination-records/${id}/`);
+    const response = await api.get(`/vaccination/indiv-patient-record/${id}/`);
     console.log("API Response:", response); // Add logging
     if (!response.data) {
       throw new Error("No data returned from API");
@@ -54,6 +54,9 @@ export const getVaccinationRecordById =  async (id: number) => {
     console.error(err);
   }
 }
+
+
+
 
 export const getVaccintStocks =  async () => {
     try {
@@ -80,3 +83,6 @@ export const getVaccinelist =  async () => {
 
 
    
+
+
+    

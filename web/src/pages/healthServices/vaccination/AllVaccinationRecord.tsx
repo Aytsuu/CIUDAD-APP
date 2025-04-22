@@ -40,6 +40,7 @@ export interface VaccinationRecord {
   pat_type: string;
   address: string;
   vaccination_count: number;
+  dob: string;
 }
 
 export default function AllVaccinationRecords() {
@@ -68,30 +69,43 @@ export default function AllVaccinationRecords() {
 
   }, []);
 
-  // Format the data for display
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
-
-    return vaccinationRecords.map((record: any) => ({
-      pat_id: record.pat_id,
-      fname: record.fname,
-      lname: record.lname,
-      mname: record.mname,
-      sex: record.sex,
-      age: record.age,
-      householdno: record.householdno,
-      street: record.street,
-      sitio: record.sitio,
-      barangay: record.barangay,
-      city: record.city,
-      province: record.province,
-      pat_type: record.pat_type,
-      address: `${record.householdno} ${record.street}, ${record.sitio}, ${record.barangay}`,
-      vaccination_count: record.vaccination_count,  
   
-    }));
+    return vaccinationRecords.map((record: any) => {
+      const details = record.patient_details || {};
+      const info = details.personal_info || {};
+  
+      return {
+        pat_id: record.pat_id,
+        fname: info.per_fname,
+        lname: info.per_lname,
+        mname: info.per_mname,
+        sex: info.per_sex,
+        age: calculateAge(info.per_dob).toString(),
+        dob: info.per_dob,
+        householdno: "12", // optional if not present
+        street: info.per_address,
+        sitio: "Keneme", // optional if not present
+        barangay: "KornDog", // optional if not present
+        city: "dsds", // optional if not present
+        province: "sdsds", // optional if not present
+        pat_type: details.pat_type,
+        address: `${info.per_address ?? ''}`,
+        vaccination_count: record.vaccination_count,
+      };
+    });
   }, [vaccinationRecords]);
-
+  
+  // Optional: A helper function to compute age from DOB
+  const calculateAge = (dob: string): number => {
+    if (!dob) return 0;
+    const birthDate = new Date(dob);
+    const diff = Date.now() - birthDate.getTime();
+    const ageDt = new Date(diff);
+    return Math.abs(ageDt.getUTCFullYear() - 1970);
+  };
+  
 
 
 

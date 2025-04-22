@@ -1,13 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./VaccinationForm";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpDown, Eye, Trash, Search, ChevronLeft } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
   DropdownMenu,
@@ -18,92 +15,176 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getVaccinationRecordById } from "./restful-api/GetVaccination"; // import { archiveVaccinationRecord } from "../REQUEST/archive"; // You'll need to create this
+import { getVaccinationRecordById } from "./restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { CircleCheck, Loader2, ChevronLeft } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import { useLocation, useParams } from "react-router-dom";
+import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
+
+interface VaccineInterval {
+  vacInt_id: number;
+  interval: number;
+  dose_number: number;
+  time_unit: string;
+  vac_id: number;
+}
+
+interface VaccineCategory {
+  vaccat_id: number;
+  vaccat_type: string;
+}
+
+interface VaccineList {
+  vac_id: number;
+  vaccat_details: VaccineCategory;
+  intervals: VaccineInterval[];
+  routine_frequency: string | null;
+  vac_type_choices: string;
+  vac_name: string;
+  no_of_doses: number;
+  age_group: string;
+  specify_age: string;
+  created_at: string;
+  updated_at: string;
+  vaccat_id: number;
+}
+
+interface VaccineStock {
+  vacStck_id: number;
+  vaccinelist: VaccineList;
+  inv_id: number;
+  vac_id: number;
+  solvent: string;
+  batch_number: string;
+  volume: number;
+  qty: number;
+  dose_ml: number;
+  vacStck_used: number;
+  vacStck_qty_avail: number;
+  wasted_dose: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface VaccinationHistory {
+  vachist_id: number;
+  vital_signs: {
+    vital_id: number;
+    vital_bp_systolic: string;
+    vital_bp_diastolic: string;
+    vital_temp: string;
+    vital_RR: string;
+    vital_o2: string;
+    created_at: string;
+  } | null;
+  vaccine_stock: VaccineStock | null;
+  vachist_doseNo: string;
+  vachist_status: string;
+  vachist_age: number;
+  assigned_to: number | null;
+  staff_id: number;
+  updated_at: string;
+  vital: number;
+  vacrec: number;
+  vacStck: number;
+}
+
 export interface VaccinationRecord {
   vachist_id: number;
   vachist_doseNo: string;
   vachist_status: string;
-  vachist_age: string;
- 
+  vachist_age: number;
+  vital_signs: {
+    vital_bp_systolic: string;
+    vital_bp_diastolic: string;
+    vital_temp: string;
+    vital_RR: string;
+    vital_o2: string;
+    created_at: string;
+  };
+  vaccine_name: string;
+  batch_number: string;
+  updated_at: string;
+  intervals: VaccineInterval[];
+  vaccine_details: {
+    no_of_doses: number;
+    age_group: string;
+    vac_type: string;
+  };
 }
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
-  // Now you can use patientData in your component
-  console.log("data",patientData); // This will log the entire row data
-  console.log("data",patientData.pat_id); // This will log the entire row data
-
+  const navigate = useNavigate();
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const navigate = useNavigate();
   const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [value, setValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
 
-  // Fetch vaccination records from API
-  const { data: vaccinationRecords, isLoading } = useQuery<VaccinationRecord[]>({
+  const { data: vaccinationRecords, isLoading } = useQuery({
     queryKey: ["patientVaccinationDetails", patientData.pat_id],
     queryFn: () => getVaccinationRecordById(patientData.pat_id),
     refetchOnMount: true,
     staleTime: 0,
-
   });
 
-  console.log("pat:", patientData.pat_id);
-
-
-  // Format the data for display
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
 
-    return vaccinationRecords.map((record: any) => ({
-     vachist_id: record.vachist_id,
-     vachist_doseNo: record.vachist_doseNo,
-     vachist_status: record.vachist_status,
-     vachist_age: record.vachist_age,
-
-
-    }));
+    return vaccinationRecords.flatMap(
+      (record: { vaccination_histories: VaccinationHistory[] }) =>
+        record.vaccination_histories.map((history: VaccinationHistory) => ({
+          vachist_id: history.vachist_id,
+          vachist_doseNo: history.vachist_doseNo,
+          vachist_status: history.vachist_status,
+          vachist_age: history.vachist_age,
+          vital_signs: history.vital_signs || {
+            vital_bp_systolic: "N/A",
+            vital_bp_diastolic: "N/A",
+            vital_temp: "N/A",
+            vital_RR: "N/A",
+            vital_o2: "N/A",
+            created_at: "N/A",
+          },
+          vaccine_name: history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+          batch_number: history.vaccine_stock?.batch_number || "N/A",
+          updated_at: history.updated_at,
+          intervals: history.vaccine_stock?.vaccinelist?.intervals || [],
+          vaccine_details: {
+            no_of_doses: history.vaccine_stock?.vaccinelist?.no_of_doses || 0,
+            age_group: history.vaccine_stock?.vaccinelist?.age_group || "N/A",
+            vac_type: history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+          },
+        }))
+    );
   }, [vaccinationRecords]);
 
-
-
-  // Filter data based on search query
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
       const searchText = `${record.vachist_id} 
+        ${record.vaccine_name} 
+        ${record.batch_number} 
         ${record.vachist_doseNo} 
-        ${record.vachist_doseNo} 
-        ${record.vachist_age}`.toLowerCase();
+        ${record.vachist_status}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
   }, [searchQuery, formatVaccinationData]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  // Archive confirmation handler
   const confirmArchiveRecord = async () => {
     if (recordToArchive !== null) {
       try {
-        // Add your archive logic here, e.g., API call to archive the record
         // await archiveVaccinationRecord(recordToArchive);
-
         toast.success("Record archived successfully!");
         queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
       } catch (error) {
@@ -114,147 +195,154 @@ export default function IndivVaccinationRecords() {
       }
     }
   };
- 
-const columns: ColumnDef<VaccinationRecord>[] = [
-  {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-          {row.index + 1}
+
+  const columns: ColumnDef<VaccinationRecord>[] = [
+    {
+      accessorKey: "id",
+      header: "#",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
+            {row.index + 1}
+          </div>
         </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "patient",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Patient <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const fullName =
-        `${row.original.vachist_age}, ${row.original.vachist_age} ${row.original.vachist_age}`.trim();
-      return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {row.original.vachist_age}, {row.original.vachist_age}
+      ),
+    },
+    {
+      accessorKey: "vaccine_name",
+      header: "Vaccine",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[150px] px-2">
+          <div className="font-medium">
+            {row.original.vaccine_name}
+            <div className="text-xs text-gray-500">
+              Batch: {row.original.batch_number}
+            </div>
+            <div className="text-xs text-gray-500">
+              Type: {row.original.vaccine_details.vac_type}
             </div>
           </div>
         </div>
-      );
+      ),
     },
-  },
-  {
-    accessorKey: "vital_signs",
-    header: "Vital Signs",
-    cell: ({ row }) => {
-      // const latestVital = row.original.vital_signs.length > 0 
-      //   ? row.original.vital_signs[row.original.vital_signs.length - 1]
-      //   : null;
-      
-      // return (
-      //   <div className="flex flex-col items-center">
-      //     {latestVital ? (
-      //       <>
-      //         <div className="text-sm">
-      //           <span className="font-medium">Dose {latestVital.doseNo}</span>
-      //         </div>
-      //         <div className="text-xs">
-      //           BP: {latestVital.bp} | Temp: {latestVital.temp}
-      //         </div>
-      //       </>
-      //     ) : (
-      //       <span className="text-gray-400 text-sm">No vitals</span>
-      //     )}
-      //   </div>
-      // );
-    },
-  },
-  // ... keep all your existing columns exactly as they are ...
-  {
-    accessorKey: "address",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Address <ArrowUpDown size={15} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.vachist_age}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "sitio",
-    header: "Sitio",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "vaccination_count",
-    header: "No of Records",
-    cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.vachist_doseNo}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
-        <TooltipLayout
-          trigger={
-            <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-              <Link to={`/invVaccinationRecord/${row.original.vachist_doseNo}`}>
-                <Eye size={15} />
-              </Link>
+    {
+      accessorKey: "vital_signs",
+      header: "Vital Signs",
+      cell: ({ row }) => {
+        const vital = row.original.vital_signs;
+        return (
+          <div className="flex justify-center items-center gap-2 min-w-[150px] px-2 py-1 bg-gray-50 rounded-md shadow-sm">
+            <div className="flex flex-col justify-start text-sm min-w-[180px]">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="flex items-center">
+                  <span className="font-medium mr-1">BP:</span>
+                  <span>
+                    {vital.vital_bp_systolic}/{vital.vital_bp_diastolic} mmHg
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-medium mr-1">Temp:</span>
+                  <span>{vital.vital_temp}°C</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-medium mr-1">RR:</span>
+                  <span>{vital.vital_RR}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="font-medium mr-1">O2:</span>
+                  <span>{vital.vital_o2}%</span>
+                </div>
+              </div>
             </div>
-          }
-          content="View"
-        />
-        <TooltipLayout
-          trigger={
-            <div
-              className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-              onClick={() => {
-                setRecordToArchive(row.original.vachist_id);
-                setIsArchiveConfirmationOpen(true);
-              }}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "vachist_doseNo",
+      header: "Dose",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+            {row.original.vachist_doseNo}
+           
+              <div className="text-xs text-gray-500 mt-1">
+              Required Doses {row.original.vaccine_details.no_of_doses} doses
+              </div>
+          
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "vachist_status",
+      header: "Status",
+      cell: ({ row }) => {
+        const statusColors = {
+          completed: "bg-green-100 text-green-800",
+          pending: "bg-yellow-100 text-yellow-800",
+          cancelled: "bg-red-100 text-red-800",
+        };
+        return (
+          <div className="flex justify-center">
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                statusColors[
+                  row.original.vachist_status.toLowerCase() as keyof typeof statusColors
+                ] || "bg-gray-100 text-gray-800"
+              }`}
             >
-              <Trash size={16} />
-            </div>
-          }
-          content="Archive"
-        />
-      </div>
-    ),
-  },
-];
+              {row.original.vachist_status}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "updated_at",
+      header: "Last Updated",
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-600">
+          {new Date(row.original.updated_at).toLocaleDateString()}
+          <div className="text-xs text-gray-400">
+            {new Date(row.original.updated_at).toLocaleTimeString()}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "action",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <TooltipLayout
+            trigger={
+              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                <Eye className="h-4 w-4" />
+              </Button>
+            }
+            content="View Details"
+          />
+          <TooltipLayout
+            trigger={
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => {
+                  setRecordToArchive(row.original.vachist_id);
+                  setIsArchiveConfirmationOpen(true);
+                }}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            }
+            content="Archive Record"
+          />
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -271,30 +359,67 @@ const columns: ColumnDef<VaccinationRecord>[] = [
     <>
       <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <Button
-          className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => {
-           navigate(-1);
-          }}
-        >
-          <ChevronLeft />
-        </Button>
-        <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Individual Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view patients information
-          </p>
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <Button
+            className="text-black p-2 mb-2 self-start"
+            variant={"outline"}
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="flex-col items-center mb-4">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Vaccination Records
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Manage and view patient's vaccination records
+            </p>
+          </div>
         </div>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
+        <hr className="border-gray mb-5 sm:mb-8" />
 
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
+            <UserRound className="h-5 w-5" />
+            Patient Information
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <Fingerprint className="h-4 w-4" />
+                Patient ID
+              </p>
+              <p className="font-medium">{patientData.pat_id}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <UserRound className="h-4 w-4" />
+                Full Name
+              </p>
+              <p className="font-medium">{`${patientData.lname}, ${
+                patientData.fname
+              } ${patientData.mname || ""}`}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <Syringe className="h-4 w-4" />
+                Total Vaccinations
+              </p>
+              <p className="font-medium">
+                {formatVaccinationData().length} records
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                Address
+              </p>
+              <p className="font-medium">{patientData.address}</p>
+            </div>
+          </div>
+        </div>
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          {/* Search Input and Filter Dropdown */}
           <div className="flex flex-col md:flex-row gap-4 w-full">
             <div className="flex gap-x-2">
               <div className="relative flex-1">
@@ -303,37 +428,24 @@ const columns: ColumnDef<VaccinationRecord>[] = [
                   size={17}
                 />
                 <Input
-                  placeholder="Search..."
+                  placeholder="Search records..."
                   className="pl-10 w-72 bg-white"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <SelectLayout
-                placeholder="Filter records"
-                label=""
-                className="bg-white"
-                options={[
-                  { id: "1", name: "All Types" },
-                  { id: "2", name: "Recent" },
-                  { id: "3", name: "Archived" },
-                ]}
-                value=""
-                onChange={() => {}}
-              />
             </div>
           </div>
 
-       
-
           <div>
             <Button className="w-full sm:w-auto">
-              <Link to={`/vaccinationForm`}>New Record</Link>
+              <Link to="/vaccinationForm" state={{ params: { patientData } }}>
+                New Vaccination Record
+              </Link>
             </Button>
           </div>
         </div>
 
-        {/* Table Container */}
         <div className="h-full w-full rounded-md">
           <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
@@ -354,7 +466,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" aria-label="Export data">
-                    <FileInput />
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
@@ -374,7 +486,7 @@ const columns: ColumnDef<VaccinationRecord>[] = [
               Showing{" "}
               {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
               {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-              {filteredData.length} rows
+              {filteredData.length} records
             </p>
 
             <div className="w-full sm:w-auto flex justify-center">

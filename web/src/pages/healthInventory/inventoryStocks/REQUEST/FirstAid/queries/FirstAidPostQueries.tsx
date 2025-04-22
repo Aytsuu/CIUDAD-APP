@@ -10,11 +10,7 @@ export const useAddFirstAidInventory = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({
-      formData,
-      inv_id,
-      parseFirstAidID
-    }: {
+    mutationFn: ({formData,inv_id,parseFirstAidID}: {
       formData: any;
       inv_id: number;
       parseFirstAidID: number;
@@ -23,7 +19,7 @@ export const useAddFirstAidInventory = () => {
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
     }
   });
-};
+}; 
 
 export const useAddFirstAidTransaction = () => {
   const queryClient = useQueryClient();
@@ -69,11 +65,7 @@ export const useSubmitFirstAidStock = () => {
       }
 
       // ADD FIRSTAID STOCKS
-      const firstAidInventoryResponse = await addFirstAidInventory({
-        formData: data,
-        inv_id,
-        parseFirstAidID
-      });
+      const firstAidInventoryResponse = await addFirstAidInventory({formData: data,inv_id,parseFirstAidID});
 
       if (!firstAidInventoryResponse) {
         throw new Error("Failed to add FirstAid inventory.");
