@@ -26,6 +26,8 @@ import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
 import { patient } from "@/pages/animalbites/postrequest";
+import {calculateNextVisitDate} from "./FunctionHelpers";
+
 
 export default function VaccinationForm() {
   const navigate = useNavigate();
@@ -33,7 +35,6 @@ export default function VaccinationForm() {
     "self"
   );
 
-  const [vaccineLoading, setVaccineLoading] = useState(false);
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
@@ -71,6 +72,9 @@ export default function VaccinationForm() {
       bpdiastolic: undefined,
     },
   });
+
+
+
 
   useEffect(() => {
     console.log("Form errors:", form.formState.errors);
@@ -117,6 +121,9 @@ export default function VaccinationForm() {
       throw error;
     }
   };
+
+
+
 
 
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
@@ -218,6 +225,7 @@ export default function VaccinationForm() {
     let vacrec_id: string | null = null;
     let vital_id: string | null = null;
     let vachist_id: string | null = null;
+    let followv_id: string | null = null;
 
     try {
       // Step 1: Create patient record
@@ -229,8 +237,7 @@ export default function VaccinationForm() {
       patrec_id = serviceResponse.data.patrec_id;
 
       // Step 2: Create vaccination record
-      const vaccinationRecordResponse = await api.post(
-        "vaccination/vaccination-record/",
+      const vaccinationRecordResponse = await api.post( "vaccination/vaccination-record/",
         { patrec_id: patrec_id }
       );
       vacrec_id = vaccinationRecordResponse.data.vacrec_id;
@@ -249,10 +256,10 @@ export default function VaccinationForm() {
       const vacStck = form.getValues("vaccinetype");
       const vacStck_id = parseInt(vacStck, 10);
 
-      // Step 5: Deduct vaccine from stock
+      // Step 4: Deduct vaccine from stock
       await deductVaccineStock(vacStck_id);
 
-      // Step 6: Create vaccination history with incremented dose number
+      // Step 5: Create vaccination history with partial status
       const vaccinationhistResponse = await api.post(
         "vaccination/vaccination-history/",
         {
@@ -265,9 +272,43 @@ export default function VaccinationForm() {
           vital: vital_id,
           vacStck: vacStck_id,
           updated_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
           assigned_to: null,
         }
       );
+      const vacStckResponse = await api.get( `inventory/vaccine_stocks/${vacStck_id}/`);
+
+      const vaccineData = vacStckResponse.data;
+
+      if (vaccineData.vaccinelist.no_of_doses >= 2) {
+        const dose2Interval = vaccineData.vaccinelist.intervals.find(
+          (interval: {
+            dose_number: number;
+            interval: number;
+            time_unit: string;
+          }) => interval.dose_number === 2
+        );
+
+        if (dose2Interval) {
+          const nextVisitDate = calculateNextVisitDate(
+            dose2Interval.interval,
+            dose2Interval.time_unit,
+            new Date().toISOString()
+          );
+
+          console.log("Next visit should be on:", nextVisitDate.toISOString());
+            const followUpVisitResponse = await api.post("patientrecords/follow-up-visit/",
+            {
+              followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
+              patrec: patrec_id,
+              followv_status: "pending",
+              created_at: new Date().toISOString(),
+            }
+            );
+          followv_id = followUpVisitResponse.data.followv_id;
+        }
+      }
+    
 
       vachist_id = vaccinationhistResponse.data.vachist_id;
       console.log("Vaccination history ID:", vachist_id);
@@ -281,9 +322,7 @@ export default function VaccinationForm() {
         : 0;
       const doseNumber = doseCount + 1;
 
-      const inventoryResponse = await api.get(
-        `inventory/vaccine_stocks/${vacStck}/`
-      );
+      const inventoryResponse = await api.get(`inventory/vaccine_stocks/${vacStck}/`);
 
       const { no_of_doses: maxDoses } = inventoryResponse.data.vaccinelist;
       console.log("Max doses allowed:", maxDoses);
@@ -300,6 +339,7 @@ export default function VaccinationForm() {
         await api.put(`vaccination/vaccination-history/${vachist_id}/`, {
           vachist_doseNo: doseNumber,
           vachist_status: "Partially Vaccinated",
+          followv: followv_id,
         });
         toast.success(`Vaccination record created successfully! `);
 
@@ -349,6 +389,7 @@ export default function VaccinationForm() {
       });
     }
   };
+
 
 
   const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock();

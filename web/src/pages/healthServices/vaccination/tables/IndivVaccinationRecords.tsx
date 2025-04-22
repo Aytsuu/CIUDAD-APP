@@ -15,7 +15,7 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getVaccinationRecordById } from "./restful-api/GetVaccination";
+import { getVaccinationRecordById } from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
@@ -66,7 +66,6 @@ interface VaccineStock {
   updated_at: string;
 }
 
-
 interface VaccinationHistory {
   // vachist_id: number;
   // vital_signs: {
@@ -78,7 +77,6 @@ interface VaccinationHistory {
   //   vital_o2: string;
   //   created_at: string;
   // } | null;
-
   // vaccine_stock: VaccineStock | null;
   // vachist_doseNo: string;
   // vachist_status: string;
@@ -96,7 +94,6 @@ interface VaccinationHistory {
   // } ;
 }
 
-
 export interface VaccinationRecord {
   vachist_id: number;
   vachist_doseNo: string;
@@ -107,8 +104,6 @@ export interface VaccinationRecord {
   vital: number;
   vacrec: number;
   vacStck: number;
-
-
 
   vital_signs: {
     vital_bp_systolic: string;
@@ -177,24 +172,25 @@ export default function IndivVaccinationRecords() {
           vaccine_name:history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
           batch_number: history.vaccine_stock?.batch_number || "N/A",
           updated_at: history.updated_at,
+          vacStck: history.vacStck,
           intervals: history.vaccine_stock?.vaccinelist?.intervals || [],
           vaccine_details: {
             no_of_doses: history.vaccine_stock?.vaccinelist?.no_of_doses || 0,
             age_group: history.vaccine_stock?.vaccinelist?.age_group || "N/A",
-            vac_type:history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+            vac_type:
+              history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
           },
-          follow_up_visit :{
+          follow_up_visit: {
             followv_id: history.follow_up_visit?.followv_id || 0,
-            followv_date: "",
-            followv_status: "",
-          }
+            followv_date: history.follow_up_visit?.followv_date || "N/A",
+            followv_status: history.follow_up_visit?.followv_status || "N/A",
+          },
         }))
     );
   }, [vaccinationRecords]);
 
+  console.log(vaccinationRecords);
 
-  console.log(vaccinationRecords)
-  
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
       const searchText = `${record.vachist_id} 
@@ -313,7 +309,7 @@ export default function IndivVaccinationRecords() {
           "Partially Vaccinated": " text-red-500",
         };
         return (
-          <div className="flex justify-center">
+          <div className="flex flex-col justify-center">
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 statusColors[
@@ -323,6 +319,20 @@ export default function IndivVaccinationRecords() {
             >
               {row.original.vachist_status}
             </span>
+            <div>
+            {row.original.follow_up_visit.followv_date &&
+              row.original.follow_up_visit.followv_date !== "N/A" && (
+                <div className="text-xs mt-1">
+                  Next Dose:{" "}
+                  {new Date(
+                    row.original.follow_up_visit.followv_date
+                  ).toLocaleDateString()}
+                  {/* <div className="text-xs text-gray-500">
+                    Status: {row.original.follow_up_visit.followv_status}
+                  </div> */}
+                </div>
+              )}
+          </div>
           </div>
         );
       },
@@ -335,12 +345,8 @@ export default function IndivVaccinationRecords() {
           {new Date(row.original.updated_at).toLocaleDateString()}
           <div className="text-xs text-gray-400">
             {new Date(row.original.updated_at).toLocaleTimeString()}
-
           </div>
-          <div>  
-            {row.original.follow_up_visit.followv_date
- }
-          </div>
+         
         </div>
       ),
     },
@@ -351,7 +357,7 @@ export default function IndivVaccinationRecords() {
         <div className="flex justify-center gap-2">
           <Link
             to="/vaccinationView"
-            state={{ params: { Vaccination: row.original, patientData} }}
+            state={{ params: { Vaccination: row.original, patientData } }}
           >
             <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View
@@ -359,9 +365,14 @@ export default function IndivVaccinationRecords() {
           </Link>
 
           {row.original.vachist_status.toLowerCase() !== "completed" && (
-            <Button variant="destructive" size="sm" className="h-8  p-2">
+
+            <Link to="/updateVaccinationForm"
+            state={{ params: { Vaccination: row.original, patientData } }}>
+             <Button variant="destructive" size="sm" className="h-8  p-2">
               update{" "}
             </Button>
+            </Link>
+           
           )}
         </div>
       ),

@@ -83,6 +83,13 @@ export const getVaccinelist =  async () => {
 
 
    
-
+    export const getSpecificVaccintStocks =  async (id:number) => {
+      try {
+          const response = await api.get(`/inventory/vaccine_stocks/${id}/`);
+          return response.data;
+      } catch (err) {
+          console.error(err);
+      }
+  }
 
     

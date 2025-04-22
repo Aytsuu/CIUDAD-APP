@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "./NewVacRecForm";
+import VaccinationForm from "../NewVacRecForm";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -18,7 +18,7 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getVaccinationRecords } from "./restful-api/GetVaccination"; // import { archiveVaccinationRecord } from "../REQUEST/archive"; // You'll need to create this
+import { getVaccinationRecords } from "../restful-api/GetVaccination"; // import { archiveVaccinationRecord } from "../REQUEST/archive"; // You'll need to create this
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";

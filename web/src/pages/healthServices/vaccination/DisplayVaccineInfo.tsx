@@ -52,7 +52,6 @@ export default function VaccinationView() {
         </div>
       </div>
       <hr className="border-gray mb-5 sm:mb-8" />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
@@ -67,7 +66,7 @@ export default function VaccinationView() {
                 <p className="text-sm text-gray-500">Vaccine Type</p>
                 <p className="font-medium">{Vaccination.vaccine_name}</p>
               </div>
-             
+
               <div>
                 <p className="text-sm text-gray-500">Date Vaccinated</p>
                 <p className="font-medium">
@@ -137,7 +136,6 @@ export default function VaccinationView() {
           </CardContent>
         </Card>
       </div>
-
       <Card className="mb-6">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2 text-green-600">
@@ -189,10 +187,10 @@ export default function VaccinationView() {
           <Separator className="my-4" />
 
           <div>
-          <CardTitle className="text-lg flex items-center gap-2 text-green-600">
-            <MapPin className="h-5 w-5 " />
-            Patient Information
-          </CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2 text-green-600">
+              <MapPin className="h-5 w-5 " />
+              Patient Information
+            </CardTitle>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Household No.</p>
@@ -224,34 +222,25 @@ export default function VaccinationView() {
           </div>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2 text-blue">
-            <Calendar className="h-5 w-5 " />
-            Vaccination Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {Vaccination.intervals.map((interval: VaccinationInterval, index: number) => (
-      <div key={interval.vacInt_id} className="bg-gray-50 p-4 rounded-md border border-gray-100">
-        <p className="font-medium text-blue-700">
-        {index === 0 ? "First" : index === 1 ? "Second" : "Booster"} Dose
-        </p>
-        <p className="text-sm text-gray-600">
-        {Vaccination.vachist_doseNo === interval.dose_number.toString()
-          ? `Completed on ${format(new Date(Vaccination.updated_at), "MMMM d, yyyy")}`
-          : index === 0
-            ? `Start at ${Vaccination.vaccine_details.age_group}`
-            : `After ${interval.interval} ${interval.time_unit}${interval.interval > 1 ? 's' : ''}`}
-        </p>
-      </div>
-    ))}
-    </div>
-        </CardContent>
-      </Card>
-
+      {Vaccination.vachist_status !== "completed" && (
+        <Card className="border rounded-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2 text-blue">
+              <Calendar className="h-5 w-5" />
+              Vaccination Schedule
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-gray-500 font-medium">
+              Next Dose Schedule will be on:{" "}
+              <span className="text-red-600">
+                {Vaccination.follow_up_visit.followv_date}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="flex justify-end gap-3 mt-6">
         <Button variant="outline" onClick={() => navigate(-1)}>
           Back
