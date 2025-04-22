@@ -99,7 +99,7 @@ const items: MenuItem[] = [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
       {
         title: "Income & Expense Tracking",
-        url: "/treasurer-income-and-expense-tracking",
+        url: "/treasurer-income-expense-main",
       },
       {
         title: "Income & Disbursement",

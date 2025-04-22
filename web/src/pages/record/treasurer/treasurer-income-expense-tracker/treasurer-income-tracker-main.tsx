@@ -367,7 +367,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus } from 'lucide-react';
+import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ChevronLeft} from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeCreateForm from "./treasurer-income-tracker-create";
@@ -376,9 +376,11 @@ import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigge
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Link } from 'react-router';
+import { Link } from "react-router";
+import { NavLink } from "react-router";
 import { useIncomeData, type Income } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDeleteIncome } from "./queries/treasurerIncomeExpenseDeleteQueries";
+import { useParams } from 'react-router-dom';
 
 
 
@@ -390,8 +392,8 @@ function IncomeTracking() {
     const [currentPage, setCurrentPage] = useState(1);
 
     // Fetch data from the backend
-    const [currentYear] = useState(() => new Date().getFullYear());
-    const { data: fetchedData = [], isLoading } = useIncomeData(currentYear );
+    const { year } = useParams<{ year: string }>();
+    const { data: fetchedData = [], isLoading } = useIncomeData(year ? parseInt(year) : new Date().getFullYear());
 
 
 
@@ -546,38 +548,47 @@ function IncomeTracking() {
 
     return (
         <div className="w-full h-full">
-            <div className="flex flex-col gap-3 mb-4">
-                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                    <div>Income Tracking</div>
-                </h1>
-                <p className="text-xs sm:text-sm text-darkGray">
-                    Manage and view income and expense records for this year.
-                </p>
+            <div className="flex flex-col gap-4 mb-4">
+                <div className="flex items-center gap-4">
+                    <Link to="/treasurer-income-expense-main"> <Button className="text-black hover:bg-gray-100 p-2" variant="outline"> <ChevronLeft size={20} /></Button> </Link>
+                    <div>
+                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-5">
+                        Income Tracking
+                    </h1>
+                    <p className="text-xs sm:text-sm text-darkGray pt-2">
+                        Manage and view income and expense records for this year.
+                    </p>
+                    </div>
+                </div>
             </div>
             <hr className="border-gray mb-7 sm:mb-9" /> 
 
             <div className="flex justify-center mb-9">
                 <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-                    <Link 
-                    to="/treasurer-income-and-expense-tracking" 
-                    className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                        location.pathname.includes("/treasurer-income-and-expense-tracking")
-                        ? "bg-primary text-white shadow"
-                        : "text-gray-700 hover:bg-white"
-                    }`}
-                    >
-                    Expense Tracking
-                    </Link>
-                    <Link 
-                    to="/treasurer-income-tracking" 
-                    className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                        location.pathname.includes("/treasurer-income-tracking")
-                        ? "bg-primary text-white shadow"
-                        : "text-gray-700 hover:bg-white"
-                    }`}
-                    >
-                    Income Tracking
-                    </Link>
+                    <NavLink 
+                        to={`/treasurer-income-and-expense-tracking/${year}`}
+                        className={({ isActive }) => 
+                            `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                            isActive 
+                                ? "bg-primary text-white shadow" 
+                                : "text-gray-700 hover:bg-white"
+                            }`
+                        }
+                        >
+                        Expense Tracking
+                    </NavLink>
+                    <NavLink 
+                        to={`/treasurer-income-tracking/${year}`}
+                        className={({ isActive }) => 
+                            `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                            isActive 
+                                ? "bg-primary text-white shadow" 
+                                : "text-gray-700 hover:bg-white"
+                            }`
+                        }
+                        >
+                        Income Tracking
+                    </NavLink>
                 </div>
             </div>
 

@@ -304,13 +304,15 @@ interface IncomeandExpenseEditProps{
     iet_additional_notes: string;
     iet_receipt_image: string;
     inv_num: string;
+    year: string;
     onSuccess?: () => void; 
 }
 
 
 
-function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_additional_notes, iet_receipt_image, inv_num, onSuccess} : IncomeandExpenseEditProps) {    
+function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_particulars_name, iet_particular_id, iet_amount, iet_additional_notes, iet_receipt_image, inv_num, year, onSuccess} : IncomeandExpenseEditProps) {    
 
+    const years = Number(year)
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [formValues, setFormValues] = useState<z.infer<typeof IncomeExpenseEditFormSchema>>();
 
@@ -324,7 +326,7 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
     ];
 
 
-    const { data: budgetItems = [] } = useBudgetItems();
+    const { data: budgetItems = [] } = useBudgetItems(years);
     
 
     const particularSelector = budgetItems.map(item => ({

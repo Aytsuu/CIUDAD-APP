@@ -321,7 +321,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ArrowUpCircle, ArrowDownCircle, ChevronLeft  } from 'lucide-react';
 import { Label } from "@/components/ui/label";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeandExpenseCreateForm from "./treasurer-expense-tracker-create";
@@ -332,7 +332,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useIncomeExpense, type IncomeExpense } from "./queries/treasurerIncomeExpenseFetchQueries";
 import { useDeleteIncomeExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
-import { Link } from 'react-router';
+import { NavLink } from 'react-router-dom';
+import { Link } from "react-router-dom";
+import { useParams } from 'react-router-dom';
 
 
 
@@ -346,8 +348,8 @@ function IncomeandExpenseTracking() {
     // Fetch data from the backend
     // const { data: fetchedData = [], isLoading } = useIncomeExpense();
 
-    const [currentYear] = useState(() => new Date().getFullYear());
-    const { data: fetchedData = [], isLoading } = useIncomeExpense(currentYear);
+    const { year } = useParams<{ year: string }>();
+    const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
 
 
     // Filter options
@@ -462,7 +464,8 @@ function IncomeandExpenseTracking() {
                                             iet_particulars_name={row.original.dtl_budget_item}
                                             iet_additional_notes={row.original.iet_additional_notes}
                                             iet_receipt_image={row.original.iet_receipt_image}
-                                            inv_num={row.original.inv_num}    
+                                            inv_num={row.original.inv_num}
+                                            year={year || new Date().getFullYear().toString()}    
                                             onSuccess={() => setEditingRowId(null)}                                        
                                         />
                                     </div>
@@ -506,39 +509,48 @@ function IncomeandExpenseTracking() {
 
     return (
         <div className="w-full h-full">
-            <div className="flex flex-col gap-3 mb-4">
-                <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                    <div>Expense Tracking</div>
-                </h1>
-                <p className="text-xs sm:text-sm text-darkGray">
-                    Manage and view income and expense records for this year.
-                </p>
+            <div className="flex flex-col gap-4 mb-4">
+                <div className="flex items-center gap-4">
+                    <Link to="/treasurer-income-expense-main"> <Button className="text-black hover:bg-gray-100 p-2" variant="outline"> <ChevronLeft size={20} /> </Button> </Link>
+                    <div>
+                        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-5">
+                            Expense Tracking
+                        </h1>
+                        <p className="text-xs sm:text-sm text-darkGray pt-2">
+                            Manage and view income and expense records for this year.
+                        </p>
+                    </div>
+                </div>
             </div>
             <hr className="border-gray mb-7 sm:mb-9" /> 
 
 
             <div className="flex justify-center mb-9">
                 <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-                    <Link 
-                        to="/treasurer-income-and-expense-tracking" 
-                        className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                            location.pathname.includes("/treasurer-income-and-expense-tracking")
-                            ? "bg-primary text-white shadow"
-                            : "text-gray-700 hover:bg-white"
-                        }`}
-                    >
+                    <NavLink 
+                        to={`/treasurer-income-and-expense-tracking/${year}`}
+                        className={({ isActive }) => 
+                            `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                            isActive 
+                                ? "bg-primary text-white shadow" 
+                                : "text-gray-700 hover:bg-white"
+                            }`
+                        }
+                        >
                         Expense Tracking
-                    </Link>
-                    <Link 
-                        to="/treasurer-income-tracking" 
-                        className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                            location.pathname.includes("/treasurer-income-tracking")
-                            ? "bg-primary text-white shadow"
-                            : "text-gray-700 hover:bg-white"
-                        }`}
-                    >
+                    </NavLink>
+                    <NavLink 
+                        to={`/treasurer-income-tracking/${year}`}
+                        className={({ isActive }) => 
+                            `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                            isActive 
+                                ? "bg-primary text-white shadow" 
+                                : "text-gray-700 hover:bg-white"
+                            }`
+                        }
+                        >
                         Income Tracking
-                    </Link>
+                    </NavLink>
                 </div>
             </div>
 
@@ -582,7 +594,10 @@ function IncomeandExpenseTracking() {
                     description="Fill in the details for your entry."
                     mainContent={
                         <div className="w-full h-full">
-                            <IncomeandExpenseCreateForm onSuccess={() => setIsDialogOpen(false)}/>
+                            <IncomeandExpenseCreateForm 
+                                onSuccess={() => setIsDialogOpen(false)}
+                                year={year || new Date().getFullYear().toString()}
+                            />
                         </div>
                     }
                     isOpen={isDialogOpen}

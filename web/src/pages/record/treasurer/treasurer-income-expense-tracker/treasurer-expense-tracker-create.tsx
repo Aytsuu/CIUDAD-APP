@@ -274,17 +274,19 @@ import { useCreateIncomeExpense } from "./queries/treasurerIncomeExpenseAddQueri
 
 interface IncomeandExpenseCreateFormProps {
     onSuccess?: () => void; // Add this prop type
+    year: string;
 }
 
 
 
-function IncomeandExpenseCreateForm( { onSuccess }: IncomeandExpenseCreateFormProps) {
+function IncomeandExpenseCreateForm( { onSuccess, year }: IncomeandExpenseCreateFormProps) {
 
+    const years = Number(year)
     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
 
 
-    const { data: budgetItems = [] } = useBudgetItems(2025);
+    const { data: budgetItems = [] } = useBudgetItems(years);
 
     console.log("FRONTEND: ", budgetItems)
 
