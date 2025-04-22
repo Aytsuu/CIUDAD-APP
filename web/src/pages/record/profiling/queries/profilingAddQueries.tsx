@@ -9,18 +9,11 @@ import {
   addFamilyComposition,
   addFile,
   addHousehold,
-  addPersonal,
+  addResidentAndPersonal,
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
 
-export const useAddPersonal = () => {
-  return useMutation({
-    mutationFn: (values: any) => addPersonal(values),
-  });
-};
-
-export const useAddResidentProfile = () => {
-  const queryClient = useQueryClient();
+export const useAddResidentProfile = () => { // For registration request
   return useMutation({
     mutationFn: ({
       personalId,
@@ -28,18 +21,24 @@ export const useAddResidentProfile = () => {
     }: {
       personalId: string;
       staffId: string;
-      params: any
-    }) => addResidentProfile(personalId, staffId),
-    onSuccess: async (newData) => {
-      queryClient.setQueryData(["residents"], (old: any[] = []) => [
-        ...old,
-        newData
-      ]);
-
-      queryClient.invalidateQueries({ queryKey: ["residents"] });
-    },
+    }) => addResidentProfile(personalId, staffId)
   });
 };
+
+export const useAddResidentAndPersonal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({personalInfo, staffId} : {
+      personalInfo: Record<string, any>;
+      staffId: string;
+    }) => addResidentAndPersonal(personalInfo, staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['residentsTableData'],
+      });
+    }
+  })
+}
 
 export const useAddFamily = () => {
   const queryClient = useQueryClient();

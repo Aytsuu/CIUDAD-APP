@@ -16,7 +16,7 @@ export default function ResidentRequestForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const navigate = useNavigate();
   const { user } = useAuth(); 
-  const { mutateAsync: addResidentProfile, isPending: isCreating } = useAddResidentProfile();
+  const { mutateAsync: addResidentProfile } = useAddResidentProfile();
   const { mutateAsync: deleteRequest } = useDeleteRequest();
   const { form, handleSubmitError, handleSubmitSuccess } = useResidentForm(
     params.data?.per
@@ -38,20 +38,21 @@ export default function ResidentRequestForm({ params }: { params: any }) {
       return;
     }
 
-    await addResidentProfile({
+    addResidentProfile({
       personalId: params.data?.per.per_id,
       staffId: user?.staff.staff_id,
-      params: params
+    }, {
+      onSuccess: () => {
+        deleteRequest(params.data.req_id, {
+          onSuccess: () => {
+            navigate(-1);
+            handleSubmitSuccess(
+              "New record created successfully"
+            );
+          }
+        });
+      }
     });
-
-    if (!isCreating) {
-      console.log(params.data.req_id)
-      await deleteRequest(params.data.req_id);
-      navigate(-1);
-      handleSubmitSuccess(
-        "New record created successfully"
-      );
-    }
   };
 
   return (

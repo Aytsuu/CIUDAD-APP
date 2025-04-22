@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import {
   getBusinesses,
@@ -6,16 +7,26 @@ import {
   getHouseholds,
   getRequests,
   getResidents,
+  getResidentsTable,
   getSitio,
 } from "../restful-api/profilingGetAPI";
 
-// Retrieving
+// ================ RESIDENTS ================ (Status: Optmizing....)
 export const useResidents = () => {
   return useQuery({
     queryKey: ["residents"],
     queryFn: getResidents,
   });
 };
+
+
+export const useResidentsTable = (page: number, pageSize: number, searchQuery?: string) => {
+  return useQuery({
+    queryKey: ['residentsTableData', page, pageSize, searchQuery],
+    queryFn: () => getResidentsTable(page, pageSize, searchQuery),
+    staleTime: 5000,
+  })
+}
 
 export const useRequests = () => {
   return useQuery({

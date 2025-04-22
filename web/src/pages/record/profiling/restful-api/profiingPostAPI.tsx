@@ -1,50 +1,51 @@
 import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { generateFamilyNo } from "@/helpers/generateFamilyNo";
-import { generateResidentNo } from "@/helpers/generateResidentNo";
 import { capitalize } from "@/helpers/capitalize";
 import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
 
-// POST request for personal model 
-export const addPersonal = async (personalInfo: Record<string, string>) => {
-  try {
-    const res = await api.post("profiling/personal/", {
-      per_lname: personalInfo.per_lname,
-      per_fname: personalInfo.per_fname,
-      per_mname: personalInfo.per_mname || null,
-      per_suffix: personalInfo.per_suffix || null,
-      per_dob: formatDate(personalInfo.per_dob),
-      per_sex: personalInfo.per_sex,
-      per_status: personalInfo.per_status,
-      per_address: personalInfo.per_address,
-      per_edAttainment: personalInfo.per_edAttainment || null,
-      per_religion: personalInfo.per_religion,
-      per_contact: personalInfo.per_contact,
-    });
-
-    return res.data.per_id;
-  } catch (err) {
-    throw err;
-  }
-};
-
 // POST request for resident_profile model 
 export const addResidentProfile = async (personalId: string, staffId: string) => {
   try {
-    const res = await api.post("profiling/resident/", {
-      rp_id: await generateResidentNo(),
+    const res = await api.post("profiling/resident/create/", {
       rp_date_registered: formatDate(new Date()),
-      per_id: personalId,
-      staff_id: staffId,
+      per: personalId,
+      staff: staffId,
     });
 
     return res.data;
   } catch (err) {
     throw err;
   }
-};
+}; 
+
+// POST request for resident_profile combined with personal model 
+export const addResidentAndPersonal = async (personalInfo: Record<string, any>, staffId: string) => {
+  try {
+    const res = await api.post("profiling/resident/create/combined/", {
+      per: {
+        per_lname: personalInfo.per_lname,
+        per_fname: personalInfo.per_fname,
+        per_mname: personalInfo.per_mname || null,
+        per_suffix: personalInfo.per_suffix || null,
+        per_dob: formatDate(personalInfo.per_dob),
+        per_sex: personalInfo.per_sex,
+        per_status: personalInfo.per_status,
+        per_address: personalInfo.per_address,
+        per_edAttainment: personalInfo.per_edAttainment || null,
+        per_religion: personalInfo.per_religion,
+        per_contact: personalInfo.per_contact,
+      },
+      staff: staffId
+    })
+    
+    return res.data
+  } catch (err) { 
+    throw err;
+  }
+}
 
 // POST request for family model 
 export const addFamily = async (

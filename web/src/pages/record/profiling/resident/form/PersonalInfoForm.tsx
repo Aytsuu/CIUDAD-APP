@@ -40,7 +40,7 @@ const MARITAL_STATUS_OPTIONS = [
 ];
 
 // ==================== COMPONENT ====================
-export default function PersonalInfoForm({
+const PersonalInfoForm = ({
   formattedResidents,
   form,
   formType,
@@ -54,7 +54,7 @@ export default function PersonalInfoForm({
   submit,
   reject,
   onComboboxChange,
-}: PersonalInfoFormProps) {
+}: PersonalInfoFormProps) => {
   const { control, setValue, watch } = form;
 
   // ==================== RENDER ====================
@@ -179,3 +179,5 @@ export default function PersonalInfoForm({
     </>
   );
 } 
+
+export default React.memo(PersonalInfoForm);

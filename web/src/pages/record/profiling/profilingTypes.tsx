@@ -1,16 +1,16 @@
 
 // Define the type for the Report object
 export type ResidentRecord = {
-  id: string;
-  householdNo: string;
-  familyNo: string;
-  sitio: string;
+  rp_id: string;
+  household_noe: string;
+  family_no: string;
+  sitio_name: string;
   lname: string;
   fname: string;
   mname: string;
   suffix: string;
-  dateRegistered: string;
-  registeredBy: string;
+  rp_date_registered: string;
+  registered_by: string;
 };
 
 export type DependentRecord = {

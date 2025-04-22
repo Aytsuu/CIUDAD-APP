@@ -1,14 +1,29 @@
 import { api } from "@/api/api";
 
-// Fetch residents
+// ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
 export const getResidents = async () => {
   try {
     const res = await api.get("profiling/resident/");
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
+
+export const getResidentsTable = async (page: number, pageSize: number, searchQuery?: string) => {
+  try {
+    const res = await api.get("profiling/resident/list/table/", {
+      params: { 
+        page, 
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
 // Fetch families
 export const getFamilies = async () => {
@@ -16,7 +31,7 @@ export const getFamilies = async () => {
     const res = await api.get("profiling/family/");
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -26,7 +41,7 @@ export const getFamilyComposition = async () => {
     const res = await api.get("profiling/family-composition/");
     return res.data;
   } catch (err) {
-    console.error(err)
+    throw err
   }
 }
 
@@ -36,7 +51,7 @@ export const getHouseholds = async () => {
     const res = await api.get("profiling/household/");
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -46,7 +61,7 @@ export const getSitio = async () => {
     const res = await api.get("profiling/sitio/");
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -56,7 +71,7 @@ export const getRequests = async () => {
     const res = await api.get("profiling/request/");
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };
 
@@ -66,6 +81,6 @@ export const getBusinesses = async () => {
     const res = await api.get("profiling/business/");
     return res.data;
   } catch (err) {
-    console.error(err);
+    throw err;
   }
 };

@@ -1,11 +1,14 @@
 from django.urls import path
 from .views import *
+from .view.resident_profile_views import *
+from .view.personal_views import *
 
 urlpatterns = [
     
     # Personal Urls
     path("personal/", PersonalView.as_view(), name="personal-details-list"),
     path("personal/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
+    path("personal/create/", PersonalCreateView.as_view(), name="create_personal"),
 
     # Family Urls
     path("family/", FamilyView.as_view(), name="family-details"),
@@ -21,8 +24,11 @@ urlpatterns = [
     # Househould Urls
     path("household/", HouseholdView.as_view(), name="household-details"),
 
-    # Registered Urls
+    # Resident Urls
     path("resident/", ResidentProfileView.as_view(), name="resident-details"),
+    path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
+    path("resident/create/", ResidentProfileCreateView.as_view(), name="resident-create"),
+    path("resident/create/combined/", ResidentPersonalCreateSerializer.as_view(), name="resident-combined-create"),
 
     # Request Urls
     path("request/", RequestRegistrationView.as_view(), name="request-details"),

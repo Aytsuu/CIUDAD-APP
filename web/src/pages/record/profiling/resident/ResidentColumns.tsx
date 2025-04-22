@@ -12,7 +12,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     accessorKey: 'account',
     header: '',
     cell: ({ row }) => {
-      const resident = residents.find((resident) => resident.rp_id === row.original.id)
+      const resident = residents.find((resident) => resident.rp_id === row.original.rp_id)
       const account = resident?.account
 
       return (
@@ -23,7 +23,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
                 <Link to="/account/create"
                   state={{
                     params: {
-                      residentId: row.original.id
+                      residentId: row.original.rp_id
                     }
                   }}
                 >
@@ -38,7 +38,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     }
   },
   {
-    accessorKey: "id",
+    accessorKey: "rp_id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -50,7 +50,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     ),
   },
   {
-    accessorKey: "householdNo",
+    accessorKey: "household_no",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -61,7 +61,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-        const householdNo: string = row.getValue("householdNo");
+        const householdNo: string = row.getValue("household_no");
         
         return householdNo ? (<div>{householdNo}</div>) :
         (<div className="flex justify-center items-center">
@@ -73,7 +73,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     },
   },
   {
-    accessorKey: "familyNo",
+    accessorKey: "family_no",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -84,7 +84,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-        const familyNo: string = row.getValue("familyNo");
+        const familyNo: string = row.getValue("family_no");
         
         return familyNo ? (<div>{familyNo}</div>) :
         (<div className="flex justify-center items-center">
@@ -96,7 +96,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     },
   },
   {
-    accessorKey: "sitio",
+    accessorKey: "sitio_name",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -107,7 +107,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
       </div>
     ),
     cell: ({ row }) => {
-      const sitio: string = row.getValue("sitio");
+      const sitio: string = row.getValue("sitio_name");
       
       return sitio ? (<div>{sitio}</div>) :
       (<div className="flex justify-center items-center">
@@ -161,16 +161,11 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     header: "Suffix"
   },
   {
-    accessorKey: "dateRegistered",
-    header: "Date Registered",
-    cell: ({ row }) => (
-        <div className="hidden lg:block max-w-xs truncate">
-          {row.getValue("dateRegistered")}
-        </div>
-    ),
+    accessorKey: "rp_date_registered",
+    header: "Date Registered"
   },
   {
-    accessorKey: "registeredBy",
+    accessorKey: "registered_by",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -179,11 +174,6 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
         Registered By
         <ArrowUpDown size={14} />
       </div>
-    ),
-    cell: ({ row }) => (
-        <div className="hidden lg:block max-w-xs truncate">
-          {row.getValue("registeredBy") ? row.getValue("registeredBy") : '-'}
-        </div>
     ),
   },
   {
@@ -196,7 +186,7 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
             type: 'viewing',
             title: 'Resident Details',
             description: 'Information is displayed in a clear, organized, and secure manner.',
-            data: residents.find((resident) => resident.rp_id === row.original.id),
+            data: residents.find((resident) => resident.rp_id === row.original.rp_id),
           }
         }}
       >
