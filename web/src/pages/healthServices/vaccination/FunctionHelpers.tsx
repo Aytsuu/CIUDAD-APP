@@ -1,45 +1,35 @@
 export const calculateNextVisitDate = (
-    interval: number,
-    timeUnit: string,
-    createdDate: string
-  ): Date => {
-    const date = new Date(createdDate);
+  interval: number,
+  timeUnit: string,
+  createdDate: string
+): Date => {
+  if (!timeUnit) {
+    console.warn("⚠️ timeUnit is undefined");
+    return new Date(createdDate); // Return the original date if no unit provided
+  }
 
-    switch (timeUnit.toLowerCase()) {
-      case "days":
-        date.setDate(date.getDate() + interval);
-        break;
-      case "weeks":
-        date.setDate(date.getDate() + interval * 7);
-        break;
-      case "months":
-        date.setMonth(date.getMonth() + interval);
-        break;
-      case "years":
-        date.setFullYear(date.getFullYear() + interval);
-        break;
-      default:
-        // If time unit is not recognized, return the same date
-        break;
-    }
+  const date = new Date(createdDate);
+  console.log("📅 Created date:", createdDate);
+  console.log("➕ Interval:", interval, "Unit:", timeUnit);
 
-    return date;
-  };
+  switch (timeUnit.toUpperCase()) {
+    case "DAYS":
+      date.setDate(date.getDate() + interval);
+      break;
+    case "WEEKS":
+      date.setDate(date.getDate() + interval * 7);
+      break;
+    case "MONTHS":
+      date.setMonth(date.getMonth() + interval);
+      break;
+    case "YEARS":
+      date.setFullYear(date.getFullYear() + interval);
+      break;
+    default:
+      console.warn("⚠️ Unknown time unit:", timeUnit);
+      break;
+  }
 
-
-  export const calculateAge = (dob: string) => {
-    if (!dob) return 0;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-
-    return age;
-  };
+  console.log("🗓️ Next visit date calculated:", date.toISOString());
+  return date;
+};

@@ -29,7 +29,7 @@ class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerialize
         model = VaccinationHistory
         fields = '__all__'
 
-class VaccinationRecordSerializer(serializers.ModelSerializer):
+class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
     class Meta:
         model = VaccinationRecord
@@ -40,7 +40,7 @@ class VaccinationRecordSerializer(serializers.ModelSerializer):
 # VACCINATION RECORD 
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
-    vaccination_records = serializers.SerializerMethodField()
+    # vaccination_records = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
 
     class Meta:
@@ -48,22 +48,16 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        # Get all vaccination records
-        vaccination_records = obj.patient_records.filter(
-            patrec_type__iexact='Vaccination'
-        )
-        
-        # Exclude records with forwarded status
-        valid_records = vaccination_records.exclude(
-            vaccination_records__vaccination_histories__vachist_status__iexact='forwarded'
-        )
-        
-        return valid_records.count()
-    def get_vaccination_records(self, obj):
-        # Get filtered vaccination records excluding "forwarded" status
-        records = obj.patient_records.filter(
+        return obj.patient_records.filter(
             patrec_type__iexact='Vaccination'
         ).exclude(
-            vaccination_records__vaccination_histories__vachist_status__iexact='forwarded'
-        )
-        return PatientRecordSerializer(records, many=True).data
+            vaccination_records__vacrec_status__iexact='forwarded'
+        ).distinct().count()
+
+
+    # def get_vaccination_records(self, obj):
+    #     records = obj.patient_records.filter(
+    #         patrec_type__iexact='Vaccination',
+    #         vaccination_records__vacrec_status__iexact='complete'
+    #     ).distinct()
+    #     return PatientRecordSerializer(records, many=True).data

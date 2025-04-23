@@ -6,6 +6,15 @@ from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSeria
 from apps.healthProfiling.models import FamilyComposition,Household
 # from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 # serializers.py
+
+
+class PartialUpdateMixin:
+    def to_internal_value(self, data):
+        if self.instance:
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = PersonalSerializer(source='per_id', read_only=True)
     resident_profile = ResidentProfileMinimalSerializer(source='per_id.personal_information', many=True, read_only=True)
@@ -45,7 +54,7 @@ class VitalSignsSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
         
-class FollowUpVisitSerializer(serializers.ModelSerializer):
+class FollowUpVisitSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     class Meta:
         model = FollowUpVisit
         fields = '__all__'

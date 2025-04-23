@@ -25,17 +25,17 @@ class VitalSignsView(generics.ListCreateAPIView):
 class VaccinationHistoryView(generics.ListCreateAPIView):
     serializer_class = VaccinationHistorySerializer
     queryset  =VaccinationHistory.objects.all()
-   
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     
     def get_queryset(self):
-        # Get patients who have at least one vaccination record that's not "forwarded"
         return Patient.objects.filter(
-            patient_records__patrec_type__iexact='Vaccination'
-        ).exclude(
-            patient_records__vaccination_records__vaccination_histories__vachist_status__iexact='forwarded'
+            Q(patient_records__patrec_type__iexact='Vaccination'),
+    Q(patient_records__vaccination_records__vacrec_status__iexact='completed') |
+    Q(patient_records__vaccination_records__vacrec_status__iexact='pending')
         ).distinct()
+
+
 
 class PatientRecordWithVaccinationSerializer(PatientRecordSerializer):
     vaccination_records = VaccinationRecordSerializer(
@@ -57,19 +57,20 @@ class VaccinationRecordByPatientView(generics.ListAPIView):
         pat_id = self.kwargs['pat_id']
 
         # Subquery to get the latest updated_at for each vacrec_id
-        latest_updated_at = VaccinationHistory.objects.filter(
-            vacrec_id=OuterRef('pk'),
-            vacrec_id__patrec_id__pat_id=pat_id
+        latest_updated_at = VaccinationRecord.objects.filter(
+        patrec_id=OuterRef('patrec_id'),
+        patrec_id__pat_id=pat_id
         ).order_by('-updated_at').values('updated_at')[:1]
+
 
         # Annotate VaccinationRecord with latest updated_at
         queryset = VaccinationRecord.objects.filter(
-            patrec_id__pat_id=pat_id
+        patrec_id__pat_id=pat_id
         ).annotate(
             latest_updated_at=Subquery(latest_updated_at)
         ).exclude(
-            vaccination_histories__updated_at=F('latest_updated_at'),
-            vaccination_histories__vachist_status='forwarded'
+            updated_at=F('latest_updated_at'),
+            vacrec_status='forwarded'
         ).order_by('-latest_updated_at')
 
         return queryset

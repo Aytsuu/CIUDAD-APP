@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { fetchSpecificVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
 import { patient } from "@/pages/animalbites/postrequest";
+import { calculateNextVisitDate } from "./FunctionHelpers";
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function UpdateVaccinationForm() {
     number: number;
     className?: string;
   }
+
   const OrdinalNumber: React.FC<OrdinalNumberProps> = ({
     number,
     className,
@@ -59,10 +61,21 @@ export default function UpdateVaccinationForm() {
     );
   };
 
-  console.log("Dose No:", Vaccination.vachist_doseNo);
 
-  let doseNo = Vaccination.vachist_doseNo;
-  let newDoseNo = doseNo + 1;
+
+  let displayDoses = Vaccination.vachist_doseNo + 1;
+
+  const renderDoseLabel = (className?: string) => {
+    if (Vaccination.vaccine_details.vac_type === "routine") {
+      return <span className={className}>Routine</span>;
+    } else {
+      return <OrdinalNumber number={displayDoses} className={className} />;
+    }
+  };
+
+  console.log("Dose No:", Vaccination.vachist_doseNo);
+  console.log("Vaccination Data:", Vaccination.vaccine_details.vac_type);
+
 
   console.log("VacStck:", Vaccination.vacStck);
 
@@ -165,30 +178,34 @@ export default function UpdateVaccinationForm() {
           patrec_id = serviceResponse.data.patrec_id;
 
           // Step 2: Create vaccination record
+          // Step 2: Create vaccination record
           const vaccinationRecordResponse = await api.post(
             "vaccination/vaccination-record/",
             {
               patrec_id: patrec_id,
+              vacrec_status: "forwarded",
+              varec_total_doses: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
             }
           );
           vacrec_id = vaccinationRecordResponse.data.vacrec_id;
 
           // Step 4: Create vaccination history
           await api.post("vaccination/vaccination-history/", {
-            vachist_doseNo: 1,
+            vachist_doseNo: 0,
             vachist_status: "forwarded",
             vachist_age: data.age,
+
             staff_id: 1,
             vacrec: vacrec_id,
             vital: null,
-            updated_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
             vacStck: data.vaccinetype,
             assigned_to: parseInt(data.assignto, 10),
           });
 
-          toast.success(
-            `Form assigned to ${data.assignto} for Step 2 completion!`
-          );
+          toast.success(`Form assigned to others for Step 2 completion!`);
           form.reset();
         } catch (error) {
           console.error("Error during submission:", error);
@@ -224,10 +241,6 @@ export default function UpdateVaccinationForm() {
     }
   };
 
-
-
-
-  
   const onSubmitStep2 = async (data: VitalSignsType) => {
     // First check if form2 (Step 2) is valid
     const vaccineType = form.getValues("vaccinetype");
@@ -242,26 +255,41 @@ export default function UpdateVaccinationForm() {
       return;
     }
 
-    let patrec_id: string | null = null;
-    let vacrec_id: string | null = null;
-    let vital_id: string | null = null;
-    let vachist_id: string | null = null;
+    let patrec_id = Vaccination.patrec_id;
+    // let vacrec_id;
+    let vital_id;
+    let vachist_id;
+    let newfollowv_id;
+    let newpatrec_id;
+    let newVaccrec_id;
+    let oldVaccrec_id = Vaccination.vacrec;
+    let oldpatrec_id = Vaccination.patrec_id;
+    let oldFollowv_id = Vaccination.follow_up_visit.followv_id;
+    console.log("old Vacine ID:", oldFollowv_id);
+console.log("oldvacrec_id:", oldVaccrec_id);
 
     try {
       // Step 1: Create patient record
-      const serviceResponse = await api.post("patientrecords/patient-record/", {
-        patrec_type: "Vaccination",
-        pat_id: patientData.pat_id,
-        created_at: new Date().toISOString(),
-      });
-      patrec_id = serviceResponse.data.patrec_id;
-
-      // Step 2: Create vaccination record
-      const vaccinationRecordResponse = await api.post(
-        "vaccination/vaccination-record/",
-        { patrec_id: patrec_id }
+      const pat_id = patientData.pat_id;
+      const vac_type = Vaccination.vaccine_details.vac_type;
+      const vacStck = form.getValues("vaccinetype");
+      const vacStck_id = parseInt(vacStck, 10);
+      const vacStckResponse = await api.get(
+        `inventory/vaccine_stocks/${vacStck_id}/`
       );
-      vacrec_id = vaccinationRecordResponse.data.vacrec_id;
+      const vaccineData = vacStckResponse.data;
+
+      const { no_of_doses: maxDoses } = vacStckResponse.data.vaccinelist;
+      console.log("Max doses allowed:", maxDoses);
+      const previousDoses = await api.get(
+        `vaccination/vaccination-history/${Vaccination.vachist_id}/`
+      );
+
+      const doseCount = Array.isArray(previousDoses.data)
+        ? previousDoses.data.length
+        : 0;
+      const doseNumber = doseCount + 1;
+
 
       // Step 3: Create vital signs record
       const vitalSignsResponse = await api.post("patientrecords/vital-signs/", {
@@ -274,67 +302,137 @@ export default function UpdateVaccinationForm() {
       });
       vital_id = vitalSignsResponse.data.vital_id;
 
-      const vacStck = form.getValues("vaccinetype");
-      const vacStck_id = parseInt(vacStck, 10);
-
       // Step 5: Deduct vaccine from stock
       await deductVaccineStock(vacStck_id);
 
-      // Step 6: Create vaccination history with incremented dose number
-      const vaccinationhistResponse = await api.post(
-        "vaccination/vaccination-history/",
-        {
-          vachist_doseNo: 0,
-          vachist_status: "processing",
+      if (vac_type === "routine") {
+        // UPDATE PREVIOUS VACCINATION HISTORY
+        await api.put(`patientrecords/follow-up-visit/${oldFollowv_id}/`, {
+          followv_status: "completed",
+        });
+
+        //NEW PATIENT RECORD
+        const patientRecResponse = await api.post(
+          "patientrecords/patient-record/",
+          {
+            patrec_type: "Vaccination",
+            pat_id: pat_id,
+            created_at: new Date().toISOString(),
+          }
+        );
+        newpatrec_id = patientRecResponse.data.patrec_id;
+
+        //NEW VACCINATION RECORD
+        const newvaccinationRecordResponse = await api.post(
+          "vaccination/vaccination-record/",
+          {
+            patrec_id: patrec_id,
+            vacrec_status: "pending",
+            varec_total_doses: maxDoses,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        );
+        newVaccrec_id = newvaccinationRecordResponse.data.vacrec_id;
+
+        //NEW SCHEDULE
+        let interval = vaccineData.vaccinelist.routine_frequency.interval;
+        let time_unit = vaccineData.vaccinelist.routine_frequency.time_unit;
+        const nextVisitDate = calculateNextVisitDate(
+          interval,
+          time_unit,
+          new Date().toISOString()
+        );
+
+        //NEW FOLLOW UP VISIT
+        const followUpVisitResponse = await api.post(
+          "patientrecords/follow-up-visit/",
+          {
+            followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
+            patrec: newpatrec_id,
+            followv_status: "pending",
+            created_at: new Date().toISOString(),
+          }
+        );
+        newfollowv_id = followUpVisitResponse.data.followv_id;
+
+        //NEW VACCINE HISTORY
+        await api.post("vaccination/vaccination-history/", {
+          vachist_doseNo: 1,
           vachist_age: form.getValues("age"),
+          vachist_status: "completed",
+
+          created_at: new Date().toISOString(),
           staff_id: 1,
-          serv_id: patrec_id,
-          vacrec: vacrec_id,
           vital: vital_id,
           vacStck: vacStck_id,
-          updated_at: new Date().toISOString(),
+          vacrec: newVaccrec_id,
           assigned_to: null,
+          followv: newfollowv_id,
+        });
+      } else {
+
+
+        if (vaccineData.vaccinelist.no_of_doses > doseNumber) {
+
+            //UPDATE FOLLOW UP VISIT
+           await api.put(
+            `patientrecords/follow-up-visit/${oldFollowv_id}/`,
+            {
+              followv_status: "completed",
+            }
+          );
+
+          await api.put(`vaccination/vaccination-record/${oldVaccrec_id}/`, {
+            updated_at: new Date().toISOString(),
+          });
+
+
+          const doseInterval = vaccineData.vaccinelist.intervals.find(
+            (interval: {
+              dose_number: number;
+              interval: number;
+              time_unit: string;
+            }) => interval.dose_number === doseNumber
+          );   
+          if (doseInterval) {
+            const nextVisitDate = calculateNextVisitDate(
+              doseInterval.interval,
+              doseInterval.time_unit,
+              new Date().toISOString()
+            );
+
+            console.log(
+              "Next visit should be on:",
+              nextVisitDate.toISOString()
+            );
+           
+            //NEW SCHEDULE
+            const followUpVisitResponse = await api.post(
+              "patientrecords/follow-up-visit/",
+              {
+                followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
+                patrec:oldpatrec_id ,
+                followv_status: "pending",
+                created_at: new Date().toISOString(),
+              }
+            );
+            newfollowv_id = followUpVisitResponse.data.followv_id;
+          }
+
         }
-      );
 
-      vachist_id = vaccinationhistResponse.data.vachist_id;
-      console.log("Vaccination history ID:", vachist_id);
+        else{
+          await api.put(
+            `patientrecords/follow-up-visit/${oldFollowv_id}/`,
+            {
+              followv_status: "completed",
+            }
+          ); 
+        }
 
-      //  Step 4: Get previous dose number for this vaccine and patient
-    //   const previousDoses = await api.get(
-    //     `vaccination/vaccination-history/${vachist_id}/`
-    //   );
-
-      //   const doseCount = Array.isArray(previousDoses.data)
-      //     ? previousDoses.data.length
-      //     : 0;
-      //   const doseNumber = doseCount + 1;
-
-      const inventoryResponse = await api.get(
-        `inventory/vaccine_stocks/${vacStck}/`
-      );
-
-      const { no_of_doses: maxDoses } = inventoryResponse.data.vaccinelist;
-      console.log("Max doses allowed:", maxDoses);
-
-      if (maxDoses ===  newDoseNo) {
-        await api.put(`vaccination/vaccination-history/${vachist_id}/`, {
-          vachist_doseNo: newDoseNo,
-          vachist_status: "completed",
-        });
-        console.log("Vaccination max dose 1 updated successfully");
-        toast.success(`Vaccination record created successfully! `);
-        return;
       }
-      else if (maxDoses > newDoseNo) {
-        await api.put(`vaccination/vaccination-history/${vachist_id}/`, {
-          vachist_doseNo: newDoseNo,
-          vachist_status: "Partially Vaccinated",
-        });
-        toast.success(`Vaccination record created successfully! `);
-
-        return;
-      }
+   
 
       form.reset();
       form2.reset();
@@ -352,16 +450,16 @@ export default function UpdateVaccinationForm() {
       }
 
       try {
-        if (vacrec_id) {
-          await api.delete(`vaccination/vaccination-record/${vacrec_id}/`);
+        if (newVaccrec_id) {
+          await api.delete(`vaccination/vaccination-record/${newVaccrec_id}/`);
         }
       } catch (deleteError) {
         console.error("Error rolling back vaccination record:", deleteError);
       }
 
       try {
-        if (patrec_id) {
-          await api.delete(`patientrecords/patient-record/${patrec_id}/`);
+        if (newpatrec_id) {
+          await api.delete(`patientrecords/patient-record/${newpatrec_id}/`);
         }
       } catch (deleteError) {
         console.error("Error rolling back patient record:", deleteError);
@@ -398,7 +496,7 @@ export default function UpdateVaccinationForm() {
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            <OrdinalNumber number={newDoseNo} /> Vaccination Form{" "}
+            {renderDoseLabel()} Vaccination Form
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Please fill up all required fields

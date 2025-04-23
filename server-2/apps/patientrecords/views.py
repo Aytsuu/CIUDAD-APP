@@ -56,3 +56,16 @@ class FollowUpVisitView(generics.ListCreateAPIView):
         
         def create(self, request, *args, **kwargs):
             return super().create(request, *args, **kwargs)
+
+
+        
+class DeleteUpdateFollowUpVisitView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = FollowUpVisitSerializer
+    queryset = FollowUpVisit.objects.all()
+    lookup_field = 'followv_id'
+    
+    def get_object(self):
+        try:
+            return super().get_object()
+        except NotFound:
+            return Response({"error": "Follow-up visit record not found."}, status=status.HTTP_404_NOT_FOUND)
