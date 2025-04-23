@@ -58,10 +58,6 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
             });
 
             navigate(-1)
-            // navigate('/treasurer-budgetplan-view', {
-            //     state: { planId } // Passing planId as state
-            // });
-
         
             if (onSuccess) onSuccess(planId);
         },

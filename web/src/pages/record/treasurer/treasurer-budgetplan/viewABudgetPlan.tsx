@@ -39,8 +39,6 @@ function ViewBudgetPlan(){
     const planId = location.state?.planId;
     const [currentPage, setCurrentPage] = useState(1);
 
-    console.log('PlanId:', planId)
-
     const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
     console.log('Api res:', fetchedData)
     console.log('Detail:', fetchedData?.details)
@@ -228,8 +226,8 @@ function ViewBudgetPlan(){
                 <h1 className={`${styles.headerTitle} text-center flex-grow`}>
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
-                <Link to={`/budgetplan-forms/${planId}`}
-                        state={{budgetData: fetchedData, isEdit: true, from: 'view'}} > 
+                <Link to={'/budgetplan-forms'}
+                        state={{budgetData: fetchedData, isEdit: true, from: 'view', plan_id: planId}} > 
                     <Button>
                         <Pen size={16} /> <span>Edit</span>
                     </Button>

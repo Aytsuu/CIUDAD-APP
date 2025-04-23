@@ -16,9 +16,8 @@ const CombinedBudgetForm = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { plan_id } = useParams();
 
-  const { budgetData, isEdit: isEditProp } = location.state || {};
+  const { budgetData, isEdit: isEditProp, plan_id } = location.state || {};
   const isEdit = Boolean(isEditProp);
 
   const headerForm = useForm<z.infer<typeof BudgetHeaderSchema>>({
@@ -74,7 +73,10 @@ const CombinedBudgetForm = () => {
   const handleBack = () => setStep(1);
 
   const handleExit = () => {
-    navigate(isEdit && plan_id ? `/treasurer-budgetplan-view/${plan_id}` : '/treasurer-budget-plan');
+    navigate(
+      isEdit && plan_id ? '/treasurer-budgetplan-view' : '/treasurer-budget-plan',
+      isEdit && plan_id ? { state: { planId: plan_id } } : undefined
+    );    
   };
 
   const getCombinedFormData = () => ({

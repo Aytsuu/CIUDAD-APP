@@ -18,7 +18,7 @@ export const treasurer_router = [
         element: <BudgetPlan/>,
     },
     {
-        path: "budgetplan-forms/:plan_id?",
+        path: "budgetplan-forms",
         element: <CombinedBudgetForm/>
     },
     {
