@@ -22,6 +22,7 @@ class PatientSerializer(serializers.ModelSerializer):
         resident_profiles = obj.per_id.personal_information.all()
         compositions = FamilyComposition.objects.filter(rp__in=resident_profiles)
         return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
+    
     def get_households(self, obj):
         # 🔎 Find all ResidentProfiles related to this personal info
         resident_profiles = obj.per_id.personal_information.all()
@@ -42,4 +43,10 @@ class PatientRecordSerializer(serializers.ModelSerializer):
 class VitalSignsSerializer(serializers.ModelSerializer):
     class Meta:
         model = VitalSigns
+        fields = '__all__'
+
+
+class ObstetricalHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obstetrical_History
         fields = '__all__'

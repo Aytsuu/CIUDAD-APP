@@ -3,6 +3,7 @@ from django.db.models import Max
 from datetime import datetime
 from django.utils import timezone
 from django.core.validators import MinValueValidator
+from apps.patientrecords.models import PatientRecord
 
 # Create your models here.
 class Prenatal_Form(models.Model):
@@ -12,28 +13,10 @@ class Prenatal_Form(models.Model):
     pf_h_mname = models.CharField(max_length=100)
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
-    # pat_id = models.ForeignKey('healthProfiling.Patient', on_delete=models.CASCADE,)
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id')
 
     class Meta:
         db_table = 'prenatal_form'
-    
-
-class Obstetrical_History(models.Model):
-    obs_id = models.BigAutoField(primary_key=True)
-    obs_ch_born_alive = models.PositiveIntegerField()
-    obs_living_ch = models.PositiveIntegerField()
-    obs_abortion = models.PositiveIntegerField()
-    obs_still_birth = models.PositiveIntegerField()
-    obs_lg_babies = models.PositiveIntegerField()
-    obs_gravida = models.PositiveIntegerField()
-    obs_para = models.PositiveIntegerField()
-    obs_fullterm = models.PositiveIntegerField()
-    obs_preterm = models.PositiveIntegerField()
-    obs_record_from = models.CharField(max_length=100)
-    # pat_id = models.ForeignKey('healthProfiling.Patient', on_delete=models.CASCADE,)
-
-    class Meta:
-        db_table = 'obstetrical_history'
 
 # next: illness
 
@@ -41,7 +24,7 @@ class Previous_Hospitalization(models.Model):
     pfph_id = models.BigAutoField(primary_key=True)
     pfph_prev_hospi = models.CharField(max_length=250)
     pfph_prev_hospi_year = models.PositiveIntegerField()
-    pf_id =models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,)
+    pf_id =models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_previous_hospitalization', db_column='pf_id')
 
     class Meta:
         db_table = 'pf_previous_hospitalization'
@@ -55,7 +38,7 @@ class Previous_Pregnancy(models.Model):
     pfpp_gender = models.CharField(max_length=10)
     pfpp_ballard_score = models.PositiveIntegerField()
     pfpp_apgar_score = models.PositiveIntegerField()
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,)
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_previous_pregnancy', db_column='pf_id')
     
     class Meta:
         db_table = 'pf_previous_pregnancy'
@@ -67,7 +50,7 @@ class TT_Status(models.Model):
     pfts_date_given = models.DateField()
     pfts_fim = models.BooleanField()
     pfts_tdap = models.BooleanField(default=False)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,)
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_tt_status', db_column='pf_id')
 
     class Meta:
         db_table = 'pf_tt_status'
@@ -85,9 +68,9 @@ class Lab_Result_Dates(models.Model):
     pflr_ogct_50 = models.DateField()
     pflr_ogct_100 = models.DateField()
     pflr_lab_remarks = models.CharField(max_length=250)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,)
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,  related_name='pf_lab_result_dates', db_column='pf_id')
 
     class Meta:
-        db_table = 'pf_lab_result'
+        db_table = 'pf_lab_result_dates'
 
 # next: lab result docs

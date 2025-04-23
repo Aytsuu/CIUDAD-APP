@@ -42,16 +42,20 @@ export default function PrenatalFormSecPg(
 	 const [ttRecords, setTTRecords] = useState<TetanusToxoidType[]>([]);
 
 	 const addTTRecord = () => {
+        const ttstatus = form.getValues("prenatalVaccineInfo.ttStatus")
+
 		const newTTData: TetanusToxoidType = {
 			ttOrtd: form.getValues("prenatalVaccineInfo.ttOrtd"),
-			ttStatus: form.getValues("prenatalVaccineInfo.ttStatus"),
+			ttStatus: `TT${ttstatus}`,
 			ttDateGiven: form.getValues("prenatalVaccineInfo.ttDateGiven")
 		}
 
-		setTTRecords(prev => [...prev, newTTData]);
+		setTTRecords(prev => {
+			const upd = [...prev, newTTData]
+			console.log("Updated TT Records:", upd);
+			return upd;
+		});
 
-		// clear fields after adding
-		// form.setValue("prenatalVaccineInfo.ttOrtd", "TD")
 		form.setValue("prenatalVaccineInfo.ttStatus", "");
 		form.setValue("prenatalVaccineInfo.ttDateGiven", "");
 	 }
@@ -216,83 +220,81 @@ export default function PrenatalFormSecPg(
                             </div>
                         </div>
                         
-								<div className="border rounded-lg p-5">
-									<div>
-										<h3 className="text-sm font-bold pl-3 pb-3"> TT STATUS HISTORY</h3>
-									</div>
-									<div className="flex flex-col pl-3 pr-3 ">
-										<div className="grid grid-cols-6 gap-2">
-											{/* TT1 */}
-											<div className="border h-[80px] rounded-md text-center" id="tt1-div">
-													<h3 className="font-bold">TT1</h3>
-													<p className="text-[10px]">(FIRST VISIT)</p>
-													{ttRecords
-														.filter(record => record.ttStatus === "TT1")
-														.map((record, idx) => (
-															<div key={`tt1-${idx}`} className="text-[12px]">
-																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
-															</div>
-														))
-													}
-											</div>
-											<div className="border h-[80px] rounded-md text-center" id="tt2-div">
-													<h3 className="font-bold">TT2</h3>
-													<p className="text-[10px] mb-2">(ONE MO. AFTER THE FIRST DOSE)</p>
-													{ttRecords
-														.filter(record => record.ttStatus === "TT2")
-														.map((record, idx) => (
-															<div key={`tt2-${idx}`} className="text-[12px]">
-																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
-															</div>
-														))
-													}
-											</div>
-											<div className="border h-[80px] rounded-md text-center" id="tt3-div">
-													<h3 className="font-bold">TT3</h3>
-													<p className="text-[10px] mb-2">(6 MONTHS AFTER THE SECOND DOSE)</p>
-													{ttRecords
-														.filter(record => record.ttStatus === "TT4")
-														.map((record, idx) => (
-															<div key={`tt3-${idx}`} className="text-[12px]">
-																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
-															</div>
-														))
-													}
-											</div>
-											<div className="border h-[80px] rounded-md text-center" id="tt4-div">
-													<h3 className="font-bold">TT4</h3>
-													<p className="text-[10px] mb-2">(1 YEAR AFTER THE THIRD DOSE)</p>
-													{ttRecords
-														.filter(record => record.ttStatus === "TT4")
-														.map((record, idx) => (
-															<div key={`tt4-${idx}`} className="text-[12px]">
-																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
-															</div>
-														))
-													}
-											</div>
-											<div className="border h-[80px] rounded-md text-center" id="tt5-div">
-													<h3 className="font-bold">TT5</h3>
-													<p className="text-[10px] mb-2">(1 YEAR AFTER THE FOURTH DOSE)</p>
-													{ttRecords
-														.filter(record => record.ttStatus === "TT5")
-														.map((record, idx) => (
-															<div key={`tt5-${idx}`} className="text-[12px]">
-																{record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
-															</div>
-														))
-													}
-											</div>
-											<div className="border h-[80px] rounded-md text-center" id="fim-div">
-													<h3 className="font-bold">FIM</h3>
-													<Label className="fimInput mb-2"></Label>
-											</div>
-										</div>
-									</div>
-								</div>
-                        
+                        <div className="border rounded-lg p-5">
+                            <div>
+                                <h3 className="text-sm font-bold pl-3 pb-3"> TT STATUS HISTORY</h3>
+                            </div>
+                            <div className="flex flex-col pl-3 pr-3 ">
+                                <div className="grid grid-cols-6 gap-2">
+                                    {/* TT1 */}
+                                    <div className="border h-[80px] rounded-md text-center" id="tt1-div">
+                                        <h3 className="font-bold">TT1</h3>
+                                        <p className="text-[10px]">(FIRST VISIT)</p>
+                                        {ttRecords
+                                            .filter(record => record.ttStatus === "TT0")
+                                            .map((record, idx) => (
+                                                <div key={`tt1-${idx}`} className="text-[18px] font-bold">
+                                                    {record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                    <div className="border h-[80px] rounded-md text-center" id="tt2-div">
+                                        <h3 className="font-bold">TT2</h3>
+                                        <p className="text-[10px] mb-2">(ONE MO. AFTER THE FIRST DOSE)</p>
+                                        {ttRecords
+                                            .filter(record => record.ttStatus === "TT1")
+                                            .map((record, idx) => (
+                                                <div key={`tt2-${idx}`} className="text-[18px] font-bold">
+                                                    {record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                    <div className="border h-[80px] rounded-md text-center" id="tt3-div">
+                                        <h3 className="font-bold">TT3</h3>
+                                        <p className="text-[10px] mb-2">(6 MONTHS AFTER THE SECOND DOSE)</p>
+                                        {ttRecords
+                                            .filter(record => record.ttStatus === "TT2")
+                                            .map((record, idx) => (
+                                                <div key={`tt3-${idx}`} className="text-[18px] font-bold">
+                                                    {record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                    <div className="border h-[80px] rounded-md text-center" id="tt4-div">
+                                        <h3 className="font-bold">TT4</h3>
+                                        <p className="text-[10px] mb-2">(1 YEAR AFTER THE THIRD DOSE)</p>
+                                        {ttRecords
+                                            .filter(record => record.ttStatus === "TT3")
+                                            .map((record, idx) => (
+                                                <div key={`tt4-${idx}`} className="text-[18px] font-bold">
+                                                    {record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                    <div className="border h-[80px] rounded-md text-center" id="tt5-div">
+                                        <h3 className="font-bold">TT5</h3>
+                                        <p className="text-[10px] mb-2">(1 YEAR AFTER THE FOURTH DOSE)</p>
+                                        {ttRecords
+                                            .filter(record => record.ttStatus === "TT4")
+                                            .map((record, idx) => (
+                                                <div key={`tt5-${idx}`} className="text-[18px] font-bold">
+                                                    {record.ttOrtd} {new Date(record.ttDateGiven).toLocaleDateString()}
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                    <div className="border h-[80px] rounded-md text-center" id="fim-div">
+                                        <h3 className="font-bold">FIM</h3>
+                                        <Label className="fimInput mb-2"></Label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
 
                     {/* present pregnancy */}
                     <Separator className="mt-10"/>

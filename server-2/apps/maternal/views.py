@@ -15,14 +15,6 @@ class PrenatalFormView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
-# **Obstetrical History**
-class ObstetricalHistoryView(generics.ListCreateAPIView):
-    serializer_class = ObstetricalHistorySerializer
-    queryset = Obstetrical_History.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-
 # **Previous Hospitalization
 class PreviousHospitalizationView(generics.ListCreateAPIView):
     serializer_class = PreviousHospitalizationSerializer

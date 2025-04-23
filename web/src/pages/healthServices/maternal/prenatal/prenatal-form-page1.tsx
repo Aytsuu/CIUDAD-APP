@@ -5,7 +5,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { z } from "zod";
 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
@@ -372,52 +371,17 @@ export default function PrenatalFormFirstPg(
                         </div>
                         <Separator className="mt-8 mb-6" />
                         {/* obstetric history */}
-                        <h3 className="text-md font-bold">OBSTRETIC HISTORY</h3>
+                        <h3 className="text-md font-bold">OBSTETRIC HISTORY</h3>
                         <div className="flex flex-col mt-2">
-                            <div className="grid grid-cols-4 gap-4">
-                                <FormInput
-                                    control={form.control}
-                                    name="obstreticHistory.noOfChBornAlive"
-                                    label="No. of Children Born Alive"
-                                    placeholder="Enter No."
-                                    type="number"
-                                />
-                                <FormInput
-                                    control={form.control}
-                                    name="obstreticHistory.noOfLivingCh"
-                                    label="No. of Living Children"
-                                    placeholder="Enter No."
-                                    type="number"
-                                />
-                                <FormInput
-                                    control={form.control}
-                                    name="obstreticHistory.noOfAbortion"
-                                    label="No. of Abortion"
-                                    placeholder="Enter No."
-                                    type="number"
-                                />
-                                <FormInput
-                                    control={form.control}
-                                    name="obstreticHistory.noOfStillBirths"
-                                    label="No. of Still Births"
-                                    placeholder="Enter No."
-                                    type="number"
-                                />
+                            <div className="grid grid-cols-4 gap-4 mb-2">
+                                <FormInput control={form.control} name="obstreticHistory.noOfChBornAlive" label="No. of Children Born Alive" placeholder="Enter No." type="number"/>
+                                <FormInput control={form.control} name="obstreticHistory.noOfLivingCh" label="No. of Living Children" placeholder="Enter No." type="number"/>
+                                <FormInput control={form.control} name="obstreticHistory.noOfAbortion" label="No. of Abortion" placeholder="Enter No." type="number"/>
+                                <FormInput control={form.control} name="obstreticHistory.noOfStillBirths" label="No. of Still Births" placeholder="Enter No." type="number"/>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <FormInput
-                                    control={form.control}
-                                    name="obstreticHistory.historyOfLBabies"
-                                    label="History of Large Babies"
-                                    placeholder="Enter No."
-                                    type="number"
-                                />
-                                <FormInput
-                                    control={form.control}
-                                    name="obstreticHistory.historyOfDiabetes"
-                                    label="History of Diabetes"
-                                    placeholder="Enter History of Diabetes"
-                                />
+                                <FormInput control={form.control} name="obstreticHistory.historyOfLBabies" label="History of Large Babies" placeholder="Enter No." type="number"/>
+                                <FormInput control={form.control} name="obstreticHistory.historyOfDiabetes" label="History of Diabetes" placeholder="Enter History of Diabetes"/>
                             </div>
                         </div>
 
