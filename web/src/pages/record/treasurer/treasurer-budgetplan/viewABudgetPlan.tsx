@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, Pen, ChevronRightIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { Skeleton } from "@/components/ui/skeleton";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -35,12 +35,15 @@ const headerProp = ["", "Per Proposed Budget", "Budgetary Limitation", "Balance"
 
 function ViewBudgetPlan(){
     //get the passed Id
-    const { plan_id } = useParams<{ plan_id: string }>();
+    const location = useLocation();
+    const planId = location.state?.planId;
     const [currentPage, setCurrentPage] = useState(1);
 
-        const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(plan_id || "");
-        console.log('Api res:', fetchedData)
-        console.log('Detail:', fetchedData?.details)
+    console.log('PlanId:', planId)
+
+    const { data: fetchedData, isLoading } = usegetBudgetPlanDetail(planId || "");
+    console.log('Api res:', fetchedData)
+    console.log('Detail:', fetchedData?.details)
 
 
     // calculating net available resources
@@ -225,7 +228,7 @@ function ViewBudgetPlan(){
                 <h1 className={`${styles.headerTitle} text-center flex-grow`}>
                     ANNUAL BUDGET PLAN {fetchedData?.plan_year}
                 </h1>
-                <Link to={`/budgetplan-forms/${plan_id}`}
+                <Link to={`/budgetplan-forms/${planId}`}
                         state={{budgetData: fetchedData, isEdit: true, from: 'view'}} > 
                     <Button>
                         <Pen size={16} /> <span>Edit</span>

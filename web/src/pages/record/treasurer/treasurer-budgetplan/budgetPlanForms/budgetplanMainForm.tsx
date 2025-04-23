@@ -16,6 +16,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { getInitialFormData } from "../budgetPlanFormEditInitializer.tsx";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "../budgetItemDefinition.tsx";
 import { useNavigate } from "react-router-dom";
+import { useInsertBudgetPlan } from "../queries/budgetPlanInsertQueries.tsx";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -31,12 +32,13 @@ const styles = {
 }; 
 
 
-function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData}: {
+function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSuccess}: {
     headerData: any;
     onBack: () => void;
     isEdit: boolean;
     editId?: string;
-    budgetData: any,
+    budgetData: any;
+    onSuccess?: () => void;
 }) {
     const year = new Date().getFullYear()
     const totalBudgetToast = useRef <string | number | null>(null);
@@ -127,55 +129,36 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData}: {
         else if (currentPage === 4) setFormData4(prev => ({ ...prev, ...data }));
     };
 
-    // Data insertion
+    const {mutate: createBudgetPlan} = useInsertBudgetPlan(onSuccess)
+
+    // send values on query function
     const onSubmit = async () => {
-        const toastId = toast.loading('Submitting budget plan...');
-    
-        try {
+
+        if(isEdit == false){
             const budgetHeader = {
-                actualIncome,
-                actualRPT,
-                balance,
-                realtyTaxShare,
-                taxAllotment,
-                clearanceAndCertFees,
-                otherSpecificIncome,
-                totalBudgetObligations, 
-                balUnappropriated,
-                personalServicesLimit,
-                miscExpenseLimit,
-                localDevLimit, 
-                skFundLimit,
-                calamityFundLimit
+                plan_actual_income: actualIncome,
+                plan_rpt_income: actualRPT,
+                plan_balance: balance,
+                plan_tax_share: realtyTaxShare,
+                plan_tax_allotment: taxAllotment,
+                plan_cert_fees: clearanceAndCertFees,
+                plan_other_income: otherSpecificIncome,
+                plan_budgetaryObligations: totalBudgetObligations, 
+                plan_balUnappropriated: balUnappropriated,
+                plan_personalService_limit: personalServicesLimit,
+                plan_miscExpense_limit: miscExpenseLimit,
+                plan_localDev_limit: localDevLimit, 
+                plan_skFund_limit: skFundLimit,
+                plan_calamityFund_limit: calamityFundLimit,
+                plan_year: new Date().getFullYear().toString(),
+                plan_issue_date: new Date().toISOString().split('T')[0]
             };
 
-            if (!isEdit) {
-                const planId = await budget_plan(budgetHeader);
-                await budget_plan_details(transformFormData(), planId);
-                
-                toast.success('Budget plan created successfully', {
-                    id: toastId,
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
-                navigate('/treasurer-budget-plan');
-            } else {
-                // Handle edit case
-                toast.success('Budget plan updated successfully', {
-                    id: toastId,
-                    icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-                    duration: 2000
-                });
-                navigate(`/treasurer-budgetplan-view/${editId}`);
-            }
-        } catch (error) {
-            toast.error(`Failed to ${isEdit ? 'update' : 'create'} budget plan`, {
-                id: toastId,
-                duration: 2000
-            });
-            console.error("Error submitting budget plan", error);
+            const budgetDetails = transformFormData()
+            createBudgetPlan({ budgetHeader, budgetDetails })
+
         }
-    };
+    }
 
     // Transform form data for API submission
     const transformFormData = () => {

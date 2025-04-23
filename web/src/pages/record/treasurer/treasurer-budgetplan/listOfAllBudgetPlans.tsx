@@ -70,7 +70,10 @@ function BudgetPlan() {
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
                             trigger={
-                                <Link to={`/treasurer-budgetplan-view/${planId}`}>
+                                <Link
+                                to="/treasurer-budgetplan-view"
+                                state={{ type: "viewing", planId: planId }}
+                                >
                                     <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
                                         <Eye size={16} />
                                     </div>
@@ -83,7 +86,7 @@ function BudgetPlan() {
                             title="Confirm Delete"
                             description="Are you sure you want to delete this budget plan?"
                             actionLabel="Confirm"
-                            onClick={() => handleDelete(planId)}
+                            onClick={() => handleDelete(planId!)}
                         />
                     </div>
                 );

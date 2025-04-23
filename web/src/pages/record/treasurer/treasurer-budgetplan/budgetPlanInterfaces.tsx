@@ -1,6 +1,5 @@
-
 export interface BudgetPlan {
-    plan_id: number;
+    plan_id?: number;
     plan_year: string;
     plan_actual_income: number;
     plan_rpt_income: number;
@@ -17,13 +16,13 @@ export interface BudgetPlan {
     plan_localDev_limit: number,
     plan_skFund_limit: number,
     plan_calamityFund_limit: number,
-    details: BudgetPlanDetail[];
+    details?: BudgetPlanDetail[];
 }
 
 export interface BudgetPlanDetail {
-    dtl_id: number;
+    // dtl_id: number;
     dtl_budget_item: string;
     dtl_proposed_budget: number;
     dtl_budget_category: string;
-    plan: number; 
+    // plan?: number; 
 }

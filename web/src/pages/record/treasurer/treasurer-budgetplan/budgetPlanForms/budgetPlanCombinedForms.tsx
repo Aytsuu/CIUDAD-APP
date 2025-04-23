@@ -65,10 +65,6 @@ const CombinedBudgetForm = () => {
         calamityFundLimit: budgetData.plan_calamityFund_limit
       });
 
-    //   if (budgetData.plan_personalService_limit) {
-    //     setStep(2);
-    //   }
-
       setIsInitialized(true);
     }
   }, [isEdit, budgetData, headerForm, allocationForm, isInitialized]);
