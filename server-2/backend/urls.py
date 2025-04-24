@@ -21,7 +21,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('inventory/', include('apps.inventory.urls')),
     path('health-profiling/', include("apps.healthProfiling.urls")),
+    path('animalbites/', include("apps.animalbites.urls")),
     path('vaccination/', include("apps.vaccination.urls")),
     path('family-planning/', include("apps.familyplanning.urls")),
+    path('patientrecords/', include("apps.patientrecords.urls")),
+    
     
 ]

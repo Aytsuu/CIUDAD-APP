@@ -1,6 +1,4 @@
-
-
-import { zodResolver } from "@hookform/resolvers/zod"
+"use client"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
@@ -11,10 +9,8 @@ import { Link, useLocation, useNavigate } from "react-router"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
-import { page1Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
-// import { Input } from "@mui/material"
+import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Label } from "@radix-ui/react-dropdown-menu"
-// import PatientsRecord from "../record/health/patientsRecord/PatientsRecordMain"
 import { Combobox } from "@/components/ui/combobox"
 import { toast } from "sonner"
 import api from "../api/api"
@@ -35,24 +31,26 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
 
   interface PatientRecord {
     clientID: string
-    pat_id: string
-    fname: string
-    lname: string
-    mname: string
-    dob: string
-    age: string
-    sex: string
-    householdno: string
-    street: string
-    sitio: string
-    barangay: string
-    city: string
-    province: string
-    pat_type: string
+    per_id: string
+    per_fname: string
+    per_lname: string
+    per_mname: string
+    per_dob: string
+    per_age: string
+    per_sex: string
+    per_address: string
+    per_edAttainment: string
+    // street: string
+    // sitio: string
+    // barangay: string
+    // city: string
+    // province: string
+    // pat_type: string
+    per_religion: string
   }
 
   interface FormattedPatient {
-     id: string
+    id: string
     name: string
   }
 
@@ -69,11 +67,13 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     const fetchPatients = async () => {
       setLoading(true)
       try {
-        const response = await api.get("/vaccination/patient-record/")
+        const response = await api.get("/health-profiling/personal/")
         const patientData = response.data
+
+        // Make sure we're mapping the data correctly based on the API response
         const formatted = patientData.map((patient: PatientRecord) => ({
-          id: patient.pat_id.toString(),
-          name: `${patient.lname}, ${patient.fname} ${patient.mname || ""}`.trim(),
+          id: patient.per_id.toString(),
+          name: `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname || ""}`.trim(),
         }))
 
         setPatients({
@@ -91,35 +91,35 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
     fetchPatients()
   }, [])
 
-  // Update the handlePatientSelection function to correctly store the patient ID
+  // Update the handlePatientSelection function
   const handlePatientSelection = (id: string) => {
     setSelectedPatientId(id)
-    const selectedPatient = patients.default.find((patient) => patient.pat_id.toString() === id)
+    const selectedPatient = patients.default.find((patient) => patient.per_id.toString() === id)
 
     if (selectedPatient) {
-      // Store the patient ID in the form data
-      updateFormData({
-        pat_id: selectedPatient.pat_id,
-        clientID: selectedPatient.clientID,
-        lastName: selectedPatient.lname,
-        givenName: selectedPatient.fname,
-        middleInitial: selectedPatient.mname || "",
-        dateOfBirth: selectedPatient.dob,
-        age: calculateAge(selectedPatient.dob),
+      // Store the patient ID and information in the form data
+      const patientData = {
+        per_id: selectedPatient.per_id,
+        clientID: selectedPatient.clientID || "",
+        lastName: selectedPatient.per_lname,
+        givenName: selectedPatient.per_fname,
+        middleInitial: selectedPatient.per_mname || "",
+        dateOfBirth: selectedPatient.per_dob,
+        age: calculateAge(selectedPatient.per_dob),
+        educationalAttainment: selectedPatient.per_edAttainment,
         address: {
           ...formData.address,
-          street: selectedPatient.street || "",
-          barangay: selectedPatient.barangay || "",
-          municipality: selectedPatient.city || "",
-          province: selectedPatient.province || "",
+          // Since per_address is a single field in the API but split in your form
+          // You might need to parse it or use it as is
+          street: selectedPatient.per_address || "",
         },
-      })
+      }
+
+      updateFormData(patientData)
 
       // For debugging:
-      console.log("Patient data loaded:", {
-        ...selectedPatient,
-        computedAge: calculateAge(selectedPatient.dob),
-      })
+      console.log("Patient data loaded:", selectedPatient)
+      console.log("Updated form data with patient ID:", patientData.per_id)
     }
   }
 
@@ -162,11 +162,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
   ]
 
   const EDUCATION_OPTIONS = [
-    { id: "elementary", name: "Elementary" },
-    { id: "highschool", name: "High school" },
-    { id: "shs", name: "Senior Highschool" },
-    { id: "collegegrad", name: "College level" },
-    { id: "collegelvl", name: "College Graduate" },
+    { id: "Elementary", name: "Elementary" },
+    { id: "High School", name: "High School" },
+    { id: "Senior High School", name: "Senior High School" },
+    { id: "College level", name: "College level" },
+    { id: "College Graduate", name: "College Graduate" },
   ]
 
   const INCOME_OPTIONS = [
@@ -282,7 +282,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 <Combobox
                   options={patients.formatted}
                   value={selectedPatientId}
-                  onChange={handlePatientSelection}
+                  onChange={(value) => {
+                    handlePatientSelection(value)
+                  }}
                   placeholder={loading ? "Loading patients..." : "Select a patient"}
                   triggerClassName="font-normal w-[30rem]"
                   emptyMessage={
@@ -326,7 +328,8 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
               <FormInput control={form.control} name="philhealthNo" label="PHILHEALTH NO:" />
 
               {/* NHTS Checkbox */}
-              <FormField control={form.control}
+              <FormField
+                control={form.control}
                 name="nhts_status"
                 render={({ field }) => (
                   <FormItem className="ml-5 mt-2 flex flex-col">
@@ -337,7 +340,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
-                        <Checkbox className="ml-4" checked={!field.value} onCheckedChange={() => field.onChange(false)} />
+                        <Checkbox
+                          className="ml-4"
+                          checked={!field.value}
+                          onCheckedChange={() => field.onChange(false)}
+                        />
                       </FormControl>
                       <Label>No</Label>
                     </div>
@@ -359,7 +366,11 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
-                        <Checkbox className="ml-4" checked={!field.value} onCheckedChange={() => field.onChange(false)} />
+                        <Checkbox
+                          className="ml-4"
+                          checked={!field.value}
+                          onCheckedChange={() => field.onChange(false)}
+                        />
                       </FormControl>
                       <Label>No</Label>
                     </div>
@@ -371,38 +382,135 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
 
             {/* Name and Basic Info Section */}
             <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-6">
-              <FormInput control={form.control} name="lastName" label="NAME OF CLIENT" placeholder="Last name" className="col-span-1" />
-              <FormInput control={form.control} label="" name="givenName" placeholder="Given name" className="col-span-1 mt-6" />
-              <FormInput control={form.control} name="middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6" />
+              <FormInput
+                control={form.control}
+                name="lastName"
+                label="NAME OF CLIENT"
+                placeholder="Last name"
+                className="col-span-1"
+              />
+              <FormInput
+                control={form.control}
+                label=""
+                name="givenName"
+                placeholder="Given name"
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="middleInitial"
+                label=""
+                placeholder="Middle Initial"
+                className="col-span-1 mt-6"
+              />
               <FormDateTimeInput control={form.control} type="date" name="dateOfBirth" label="Date of Birth:" />
-              <FormInput control={form.control} name="age" label="Age" type="number" readOnly value={computedAge || ""} className="col-span-1"/>
-              <FormSelect control={form.control} name="educationalAttainment" label="Education Attainment" options={EDUCATION_OPTIONS} />
-              <FormInput control={form.control} name="occupation" label="Occupation" placeholder="Occupation" className="col-span-1 sm:col-span-2 md:col-span-1" />
+              <FormInput
+                control={form.control}
+                name="age"
+                label="Age"
+                type="number"
+                readOnly
+                value={computedAge || ""}
+                className="col-span-1"
+              />
+              <FormSelect
+                control={form.control}
+                name="educationalAttainment"
+                label="Educational Attainment"
+                options={EDUCATION_OPTIONS}
+              />
+              <FormInput
+                control={form.control}
+                name="occupation"
+                label="Occupation"
+                placeholder="Occupation"
+                className="col-span-1 sm:col-span-2 md:col-span-1"
+              />
             </div>
 
             {/* Address Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mt-6">
               <FormInput control={form.control} name="" label="ADDRESS" placeholder="No." className="col-span-1" />
-              <FormInput control={form.control} name="address.street" label="" placeholder="Street" className="col-span-1 mt-6" />
-              <FormInput control={form.control} name="address.barangay" placeholder="Barangay" label="" className="col-span-1 mt-6" />
-              <FormInput control={form.control} name="address.municipality" placeholder="Municipality/City" label="" className="col-span-1 mt-6" />
-              <FormInput control={form.control} name="address.province" placeholder="Province" label="" className="col-span-1 mt-6" />
+              <FormInput
+                control={form.control}
+                name="address.street"
+                label=""
+                placeholder="Street"
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="address.barangay"
+                placeholder="Barangay"
+                label=""
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="address.municipality"
+                placeholder="Municipality/City"
+                label=""
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="address.province"
+                placeholder="Province"
+                label=""
+                className="col-span-1 mt-6"
+              />
             </div>
 
             {/* Spouse Information */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
-              <FormInput control={form.control} name="spouse.s_lastName" label="NAME OF SPOUSE" placeholder="Last name" className="col-span-1"/>
-              <FormInput control={form.control} name="spouse.s_givenName" label="" placeholder="Given name" className="col-span-1 mt-6" />
               <FormInput
-                control={form.control} name="spouse.s_middleInitial" label="" placeholder="Middle Initial" className="col-span-1 mt-6" />
+                control={form.control}
+                name="spouse.s_lastName"
+                label="NAME OF SPOUSE"
+                placeholder="Last name"
+                className="col-span-1"
+              />
+              <FormInput
+                control={form.control}
+                name="spouse.s_givenName"
+                label=""
+                placeholder="Given name"
+                className="col-span-1 mt-6"
+              />
+              <FormInput
+                control={form.control}
+                name="spouse.s_middleInitial"
+                label=""
+                placeholder="Middle Initial"
+                className="col-span-1 mt-6"
+              />
               <FormDateTimeInput control={form.control} type="date" name="spouse.s_dateOfBirth" label="Date of Birth" />
-              <FormInput control={form.control} name="spouse.s_age" label="Age" type="number" readOnly value={spouseAge || ""} className="col-span-1" />
-              <FormInput control={form.control} name="spouse.s_occupation" label="Occupation" placeholder="Occupation" className="col-span-1" />
+              <FormInput
+                control={form.control}
+                name="spouse.s_age"
+                label="Age"
+                type="number"
+                readOnly
+                value={spouseAge || ""}
+                className="col-span-1"
+              />
+              <FormInput
+                control={form.control}
+                name="spouse.s_occupation"
+                label="Occupation"
+                placeholder="Occupation"
+                className="col-span-1"
+              />
             </div>
 
             {/* Children and Income */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-              <FormInput control={form.control} name="numOfLivingChildren" label="NO. OF LIVING CHILDREN" type="number"/>
+              <FormInput
+                control={form.control}
+                name="numOfLivingChildren"
+                label="NO. OF LIVING CHILDREN"
+                type="number"
+              />
               <FormField
                 control={form.control}
                 name="planToHaveMoreChildren"
@@ -411,11 +519,19 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     <Label className="mb-2">PLAN TO HAVE MORE CHILDREN?</Label>
                     <div className="flex items-center space-x-2">
                       <FormControl>
-                        <Checkbox className="border" checked={field.value} onCheckedChange={() => field.onChange(true)} />
+                        <Checkbox
+                          className="border"
+                          checked={field.value}
+                          onCheckedChange={() => field.onChange(true)}
+                        />
                       </FormControl>
                       <Label>Yes</Label>
                       <FormControl>
-                        <Checkbox className="border ml-4"checked={!field.value} onCheckedChange={() => field.onChange(false)} />
+                        <Checkbox
+                          className="border ml-4"
+                          checked={!field.value}
+                          onCheckedChange={() => field.onChange(false)}
+                        />
                       </FormControl>
                       <Label>No</Label>
                     </div>
@@ -423,7 +539,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   </FormItem>
                 )}
               />
-              <FormSelect control={form.control} name="averageMonthlyIncome" label="AVERAGE MONTHLY INCOME" options={INCOME_OPTIONS} />
+              <FormSelect
+                control={form.control}
+                name="averageMonthlyIncome"
+                label="AVERAGE MONTHLY INCOME"
+                options={INCOME_OPTIONS}
+              />
             </div>
 
             {/* Client Type and Methods Section */}
@@ -452,7 +573,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 <div className="col-span-4 space-y-6">
                   {/* Reason for FP Section - only show for New Acceptor */}
                   {isNewAcceptor && (
-                    <FormSelect control={form.control} name="reasonForFP" label="Reason for Family Planning" options={REASON_FOR_FP_OPTIONS}/>
+                    <FormSelect
+                      control={form.control}
+                      name="reasonForFP"
+                      label="Reason for Family Planning"
+                      options={REASON_FOR_FP_OPTIONS}
+                    />
                   )}
 
                   {/* Show specify reason field when "Others" is selected as reason for FP */}
@@ -461,7 +587,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                   )}
 
                   {isChangingMethod && (
-                    <FormSelect control={form.control} name="reason" label="Reason (Current User)" options={REASON_OPTIONS} />
+                    <FormSelect
+                      control={form.control}
+                      name="reason"
+                      label="Reason (Current User)"
+                      options={REASON_OPTIONS}
+                    />
                   )}
 
                   {/* Show specify side effects field when "Side Effects" is selected as reason */}
@@ -473,7 +604,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                 {/* Right Column - Methods */}
                 <div className="col-span-5">
                   {isChangingMethod && (
-                    <FormSelect control={form.control} name="methodCurrentlyUsed" label="Method currently used (for Changing Method):" options={METHOD_OPTIONS} />
+                    <FormSelect
+                      control={form.control}
+                      name="methodCurrentlyUsed"
+                      label="Method currently used (for Changing Method):"
+                      options={METHOD_OPTIONS}
+                    />
                   )}
 
                   {isNewAcceptor && (
@@ -522,7 +658,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     const currentValues = form.getValues()
                     updateFormData(currentValues)
                     onNext2()
-                  }}}>
+                  }
+                }}
+              >
                 Next
               </Button>
             </div>

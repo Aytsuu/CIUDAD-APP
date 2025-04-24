@@ -2,12 +2,11 @@ import { api } from "@/api/api"
 import axios from "axios"
 // import { formatDate } from "@/helpers/dateFormatter"
 
-// Update the fp_record function to correctly format the patient ID
 export const fp_record = async (data: Record<string, any>) => {
   try {
     // Make sure we have a patient ID
-    if (!data.pat_id) {
-      console.error("❌ Missing patient ID (pat_id) in form data")
+    if (!data.per_id) {
+      console.error("❌ Missing patient ID (per_id) in form data")
       throw new Error("Patient ID is required")
     }
 
@@ -17,7 +16,7 @@ export const fp_record = async (data: Record<string, any>) => {
       four_ps: data.pantawid_4ps || false,
       plan_more_children: data.planToHaveMoreChildren || false,
       avg_monthly_income: data.averageMonthlyIncome || "0",
-      pat_id: data.pat_id,
+      per_id: data.per_id,
     }
 
     console.log("Sending FP record data:", requestData)
@@ -242,7 +241,7 @@ export const acknowledgement = async (data: Record<string, any>, fprecord_id?: n
       client_name: `${data.lastName}, ${data.givenName} ${data.middleInitial || ""}`.trim(),
       guardian_signature: data.acknowledgement?.guardianSignature || "",
       guardian_signature_date: data.acknowledgement?.guardianSignatureDate || new Date().toISOString().split("T")[0],
-      patient_ack_id: data.pat_id, // This is the foreign key to PatientRecordSample
+      patient_ack_id: data.per_id, // This is the foreign key to PatientRecordSample
       fprecord_id: recordId, // This is the foreign key to FP_Record
       fpt_id: data.fpt_id || null, // This is needed if your model requires it
     }
@@ -262,8 +261,8 @@ export const acknowledgement = async (data: Record<string, any>, fprecord_id?: n
 export const pregnancy_check = async (data: Record<string, any>, fpRecordId?: number) => {
   try {
     // Use the provided fpRecordId or try to get it from data
+    // const recordId = fpRecordId || data.fprecord_id
     const recordId = fpRecordId || data.fprecord_id
-
     if (!recordId) {
       throw new Error("FP Record ID is required for creating FP Findings & Pregnancy check")
     }
@@ -280,11 +279,11 @@ export const pregnancy_check = async (data: Record<string, any>, fpRecordId?: nu
       recent_period: data.pregnancyCheck?.recent_period || false,
       recent_abortion: data.pregnancyCheck?.recent_abortion || false,
       using_contraceptive: data.pregnancyCheck?.using_contraceptive || false,
-      pregnancy_patient: data.pat_id, // This is the foreign key to PatientRecordSample
       fprecord_id: recordId, // This is the foreign key to FP_Record
+      pregnancy_patient: data.per_id, // This is the foreign key to Personal table
       fpt_id: data.fpt_id || null // fk in fp_type for method used
     }
-
+    console.log("PREGNANCY ID: ",requestData.pregnancy_patient)
     console.log("Sending FP findings & Pregnancy check data:", requestData)
     const res = await api.post("family-planning/fp_pregnancycheck/", requestData)
     console.log("FP findings & Pregnancy check created successfully:", res.data)

@@ -1,3 +1,4 @@
+
 import { fp_obstetrical, fp_record, physical_exam, fp_type, risk_sti, risk_vaw, acknowledgement, pelvic_exam, pregnancy_check } from "./request-db/PostRequest"
 import { useState } from "react"
 import FamilyPlanningForm from "./FpPage1"
@@ -160,6 +161,7 @@ export default function FamilyPlanningMain() {
       const fpt_id = await fp_type(formData,fprecord_id)
       formData.fpt_id = fpt_id
 
+      await fp_type(formData,fprecord_id)
       await fp_obstetrical(formData,fprecord_id)
       await risk_sti(formData,fprecord_id)
       await risk_vaw(formData,fprecord_id)

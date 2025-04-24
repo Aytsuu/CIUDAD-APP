@@ -16,46 +16,44 @@ class FP_typeView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
-
-
 class RiskStiView(generics.ListCreateAPIView):
     serializer_class = RiskStiSerializer
-    queryset = RiskSti.objects.all()
+    queryset = FP_RiskSti.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
 class RiskVawView(generics.ListCreateAPIView):
     serializer_class = RiskVawSerializer
-    queryset = RiskVaw.objects.all()
+    queryset = FP_RiskVaw.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
 class PhysicalExamView(generics.ListCreateAPIView):
     serializer_class = PhysicalExamSerializer
-    queryset = Physical_Exam.objects.all()
+    queryset = FP_Physical_Exam.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
 class PelvicExamView(generics.ListCreateAPIView):
     serializer_class = PelvicExamSerializer
-    queryset = Pelvic_Exam.objects.all()
+    queryset = FP_Pelvic_Exam.objects.all()
     
     def create(self, validated_data):
         return super().create(validated_data)
 
 class AssessmentView(generics.ListCreateAPIView):
     serializer_class = AssessmentSerializer
-    queryset = Assessment_Record.objects.all()
+    queryset = FP_Assessment_Record.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
 class AcknowledgementView(generics.ListCreateAPIView):
     serializer_class = AcknowledgementSerializer
-    queryset = Acknowledgement.objects.all()
+    queryset = FP_Acknowledgement.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -69,7 +67,7 @@ class FP_ObstetricalView(generics.ListCreateAPIView):
 
 class FP_PregnancyCheckView(generics.ListCreateAPIView):
     serializer_class = FP_PregnancyCheckSerializer
-    queryset = fp_pregnancy_check.objects.all()
+    queryset = FP_pregnancy_check.objects.all()
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)

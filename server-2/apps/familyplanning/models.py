@@ -1,6 +1,7 @@
 from django.db import models
 from .models import *
-from apps.vaccination.models import PatientRecordSample
+from apps.healthProfiling.models import HealthRelatedDetails
+from apps.patientrecords.models import PatientRecord
 
 class FP_Record(models.Model):
     fprecord_id = models.BigAutoField(primary_key=True)
@@ -11,16 +12,16 @@ class FP_Record(models.Model):
     avg_monthly_income = models.CharField(max_length=15)
     transient = models.BooleanField(default=False)
     
-    pat_id = models.ForeignKey(PatientRecordSample, on_delete=models.CASCADE)
-
-    
+    #For personal info
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE)
+    # For philhealth id
+    hrd_id = models.ForeignKey(HealthRelatedDetails, on_delete=models.CASCADE, null=True, blank=True)
+   
     # philhealth_id = models.CharField(max_length=14)
     # serv_id = models.ForeignKey(ServicesRecords,on_delete=models.CASCADE)
     # fprecord_id = models.AutoField(primary_key=True)
     # personal = models.ForeignKey(Personal, on_delete=models.CASCADE, null=True)
-    
-    # def patient(self):
-    #     return self.serv_id.pat_idz
+
     
     class Meta:
         db_table = "fp_record"
@@ -46,12 +47,12 @@ class Illness(models.Model):
     class Meta:
         db_table = "illness"
         
-class Medical_history(models.Model):
+class FP_Medical_history(models.Model):
     medic_id = models.AutoField(primary_key=True)
     ilness = models.ForeignKey(Illness, on_delete=models.CASCADE)
     patient = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     class Meta:
-        db_table = "medical_history"
+        db_table = "fp_medical_history"
     
     
 # class Spouse(models.Model):
@@ -82,7 +83,7 @@ class Medical_history(models.Model):
 #     obs_fullterm = models.PositiveIntegerField(default=0)
 #     obs_category = models.CharField(max_length=20)
      
-class RiskSti(models.Model):
+class FP_RiskSti(models.Model):
     sti_id = models.AutoField(primary_key=True)
     abnormalDischarge = models.BooleanField(default=False)
     dischargeFrom = models.CharField(max_length=10, null=True, blank=True)
@@ -94,9 +95,9 @@ class RiskSti(models.Model):
     fprecord_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     
     class Meta: 
-        db_table = "risk_sti"
+        db_table = "fp_risk_sti"
 
-class RiskVaw(models.Model):
+class FP_RiskVaw(models.Model):
     vaw_id = models.AutoField(primary_key=True)
     unpleasant_relationship = models.BooleanField(default=False)
     partner_disapproval = models.BooleanField(default=False)
@@ -106,9 +107,9 @@ class RiskVaw(models.Model):
     fprecord_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = 'risk_vaw'
+        db_table = 'fp_risk_vaw'
 
-class Physical_Exam(models.Model):
+class FP_Physical_Exam(models.Model):
     fp_pe_id = models.AutoField(primary_key=True)
 
     # Examination Fields
@@ -132,10 +133,10 @@ class Physical_Exam(models.Model):
     # bm_id = models.ForeignKey(,on_delete=models.CASCADE)
     
     class Meta:
-        db_table = 'physical_exam'
+        db_table = 'fp_physical_exam'
         
  
-class Pelvic_Exam(models.Model):
+class FP_Pelvic_Exam(models.Model):
     pelvic_id = models.AutoField(primary_key=True)
     PELVIC_EXAM_CHOICES = [("normal", "Normal"),("mass", "Mass"),("abnormal_discharge", "Abnormal Discharge"),("cervical_abnormalities", "Cervical Abnormalities"),("warts", "Warts"),("polyp_or_cyst", "Polyp or Cyst"),("inflammation_or_erosion", "Inflammation or Erosion"),("bloody_discharge", "Bloody Discharge"),]
     
@@ -155,22 +156,22 @@ class Pelvic_Exam(models.Model):
     fpt_id = models.ForeignKey(FP_type, on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "pelvic_exam"
+        db_table = "fp_pelvic_exam"
         
            
-class Acknowledgement(models.Model):
+class FP_Acknowledgement(models.Model):
     ack_id = models.AutoField(primary_key=True)
     ack_clientSignature = models.TextField()
     ack_clientSignatureDate = models.DateField()
     client_name = models.CharField(max_length=50)
     guardian_signature = models.TextField()
     guardian_signature_date = models.DateField()
-    patient_ack_id = models.ForeignKey(PatientRecordSample,on_delete=models.CASCADE)
+    patient_ack_id = models.ForeignKey(PatientRecord,on_delete=models.CASCADE)
     
     fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE)
     
     class Meta:
-        db_table = "acknowledgement"
+        db_table = "fp_acknowledgement"
 
 
 class FP_Obstetrical_History(models.Model):
@@ -188,26 +189,26 @@ class FP_Obstetrical_History(models.Model):
     # obs_history = models.ForeignKey(Obstetrical_History,on_delete=True)
     # wala pa ma merge kang mayi
     class Meta:
-        db_table = "Fp_Obs_History"
+        db_table = "fp_obs_history"
     
-class Assessment_Record(models.Model):
+class FP_Assessment_Record(models.Model):
     assessment_id = models.AutoField(primary_key=True)
     quantity = models.IntegerField(default=0)
     as_provider_signature = models.CharField()
     as_provider_name= models.CharField(max_length=35)
     as_followup_date = models.CharField(max_length=15)
     medical_findings = models.CharField(max_length=100,default="None")
-    ack_id = models.ForeignKey(Acknowledgement,on_delete=models.CASCADE)
+    ack_id = models.ForeignKey(FP_Acknowledgement,on_delete=models.CASCADE)
     # for method used
     fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE) 
     # vital signs fk pud
     # staff_id = models.ForeignKey(Staff,on_delete=True)
     
     class Meta:
-        db_table = "Assessment"
+        db_table = "fp_assessment"
 
 
-class fp_pregnancy_check(models.Model):
+class FP_pregnancy_check(models.Model):
     fp_pc_id = models.AutoField(primary_key=True)
     breastfeeding = models.BooleanField(default=False)
     abstained = models.BooleanField(default=False)
@@ -223,4 +224,4 @@ class fp_pregnancy_check(models.Model):
     fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE)
     
     class Meta:
-        db_table = 'FP_pregnancy_check'
+        db_table = 'fp_pregnancy_check'

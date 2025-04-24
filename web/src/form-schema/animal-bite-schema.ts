@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 const ReferralFormSchema = z.object({
-  // Referral Information
+  pat_id: z.string(),
   receiver: z.string().nonempty("Receiver is required"),
   sender: z.string().nonempty("Sender is required"),
   date: z.string().nonempty("Date is required"),

@@ -54,27 +54,43 @@ class VaccinationRecordByPatientView(generics.ListAPIView):
 
 
     def get_queryset(self):
-        return PatientRecordSample.objects.all()
+            pat_id = self.kwargs['pat_id']
+            # Subquery to get the latest vachist_status from VaccinationHistory
+            latest_status_subquery = VaccinationHistory.objects.filter(
+                vacrec_id=OuterRef('pk')
+            ).order_by('-updated_at').values('vachist_status')[:1]
 
-# class PatientVaccinationRecordsView(generics.ListAPIView):
-#     serializer_class = PatientRecordSerializer
+            # Annotate each record with the latest vachist_status
+            queryset = VaccinationRecord.objects.filter(
+                patrec_id__pat_id=pat_id
+            ).annotate(
+                latest_status=Subquery(latest_status_subquery)
+            ).exclude(
+                latest_status='forwarded'
+            )
+            return queryset
 
 
-#     def get_queryset(self):
-#         return PatientRecord.objects.filter(
-#             services__serv_name__iexact='Vaccination'
-#         ).distinct()
-       
-# View ALl RECORDS
-class InvPatientVaccinationRecordsView(generics.ListAPIView):
-    serializer_class = PatientRecordSerializer
-    lookup_field = 'pat_id'
-
-
-    def get_queryset(self):
-        # Using filter to return all records for the given pat_id and vaccination service
-        return PatientRecordSample.objects.filter(
-            services__serv_name__iexact='Vaccination',  # Filter by service name
-            pat_id=self.kwargs['pat_id']  # Filter by patient ID
-        )
-
+# UPDATE DELETE
+class DeleteUpdateVaccinationRecordView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VaccinationRecordSerializer
+    queryset = VaccinationRecord.objects.all()
+    lookup_field = 'vacrec_id'
+    
+    def get_object(self):
+        try:
+            return super().get_object()
+        except NotFound:
+            return Response({"error": "Vaccination record not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+# class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VitalSignsSerializer
+#     queryset = VitalSigns.objects.all()
+#     lookup_field = 'vital_id'
+    
+#     def get_object(self):
+#         try:
+#             return super().get_object()
+#         except NotFound:
+#             return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)

@@ -19,12 +19,12 @@ class Illness_Serializer(serializers.ModelSerializer):
 
 class MedicalHistorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Medical_history
+        model = FP_Medical_history
         fields = '__all__'
 
 class RiskStiSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RiskSti
+        model = FP_RiskSti
         fields = '__all__'
 
     # def validate(self, data):
@@ -40,12 +40,12 @@ class RiskStiSerializer(serializers.ModelSerializer):
         
 class RiskVawSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RiskVaw
+        model = FP_RiskVaw
         fields = '__all__'
     
 class PhysicalExamSerializer(serializers.ModelSerializer):
        class Meta:
-        model = Physical_Exam
+        model = FP_Physical_Exam
         fields = '__all__'
 
     # def validate(self, data):
@@ -65,12 +65,12 @@ class PhysicalExamSerializer(serializers.ModelSerializer):
 
 class PelvicExamSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Pelvic_Exam
+        model = FP_Pelvic_Exam
         fields = '__all__'
         
 class AcknowledgementSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Acknowledgement
+        model = FP_Acknowledgement
         fields = '__all__'
        
 class FP_ObstetricalSerializer(serializers.ModelSerializer):
@@ -80,7 +80,7 @@ class FP_ObstetricalSerializer(serializers.ModelSerializer):
         
 class AssessmentSerializer(serializers.ModelSerializer): 
     class Meta:
-        model = Assessment_Record
+        model = FP_Assessment_Record
         fields = '__all__'
         
 
@@ -91,5 +91,5 @@ class ObstetricalSerializer(serializers.ModelSerializer):
 
 class FP_PregnancyCheckSerializer(serializers.ModelSerializer):
     class Meta:
-        model = fp_pregnancy_check
+        model = FP_pregnancy_check
         fields = '__all__'
