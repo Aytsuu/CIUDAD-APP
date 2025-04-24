@@ -48,6 +48,7 @@ export default function FirstAidStockForm({
   });
 
   const firstaid = fetchFirstAid();
+  
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] =

@@ -99,7 +99,7 @@ const items: MenuItem[] = [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
       {
         title: "Income & Expense Tracking",
-        url: "/treasurer-income-and-expense-tracking",
+        url: "/treasurer-income-expense-main",
       },
       {
         title: "Income & Disbursement",
@@ -120,7 +120,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Donation",
-    url: "/donation",
+    url: "/donation-record",
   },
   {
     title: "Illegal Dumping Reports",
@@ -142,17 +142,13 @@ const items: MenuItem[] = [
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
-      {title: "Family Profile Form", url: "/family-profiling-main"},
-      {title: "Patients Records", url: "patients-record-main"},
       {
         title: "Inventory",
         url: "/",
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
-          { title: "Transaction", url: "/transactionMainInventoryList" },
-         
-    ],
+        ],
       },
       {
         title: "Queueing",

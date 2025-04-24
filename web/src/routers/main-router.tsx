@@ -23,8 +23,6 @@ import { vaccination } from './vaccination';
 import { childHealthServices } from './childHealthServices';
 import { gad_router } from './gad-router';
 import { bites_route } from './AnimalBite-router';
-import { familyProfilingRoute } from './family-profiling-route';
-import { patientsRecordRouter } from './patients-record-router';
 import { announcement_route } from './Announcement-router';
 import { famplanning_route } from './FamilyPlanning-router';
 import { medicalConsultation } from './medConsultation';
@@ -72,10 +70,7 @@ export const main_router: RouteObject[] = [
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
-            ...doctorRouting,
-            ...familyProfilingRoute,
-            ...patientsRecordRouter,
-            
+            ...doctorRouting
         ]
     }
 ]

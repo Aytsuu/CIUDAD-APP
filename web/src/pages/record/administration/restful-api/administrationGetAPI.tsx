@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import {api} from "@/api/api";
 
 // Fetch staffs
 export const getStaffs = async () => {

@@ -1,60 +1,67 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button/button"
-import { ChevronLeft, Save, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { toast } from "@/hooks/use-toast"
-import CardLayout from "@/components/ui/card/card-layout"
-import { useForm } from "react-hook-form"
-import type { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form/form"
-import { useLocation } from "react-router"
-import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues"
-import { personal } from "@/pages/record/health/patientsRecord/patientPostRequest"
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import React from "react";
+import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button/button";
+import { ChevronLeft, Save, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import CardLayout from "@/components/ui/card/card-layout";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { patientRecordSchema } from "@/pages/record/health/patientsRecord/patients-record-schema";
+import { Form } from "@/components/ui/form/form";
+import { useLocation } from "react-router";
+import { generateDefaultValues } from "@/pages/record/health/patientsRecord/generateDefaultValues";
+import { personal } from "@/pages/record/health/patientsRecord/patientPostRequest";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 
-
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { Combobox } from "@/components/ui/combobox";
+import { Label } from '@/components/ui/label';
 
 export default function CreatePatientRecord() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const location = useLocation()
-  const defaultValues = generateDefaultValues(patientRecordSchema)
-  const { params } = location.state || { params: {} }
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
+  const location = useLocation();
+  const defaultValues = generateDefaultValues(patientRecordSchema);
+  const { params } = location.state || { params: {} };
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<z.infer<typeof patientRecordSchema>>({
     resolver: zodResolver(patientRecordSchema),
     defaultValues,
-  })
+  });
+
+  const handleHouseholdChange = React.useCallback((value: any) => {
+      form.setValue('houseNo', value);
+  }, [form]);
 
   const submit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const res = await personal(form.getValues())
+      const res = await personal(form.getValues());
 
       if (res) {
         toast({
           title: "Success",
           description: "Patient record has been created successfully",
-        })
-        form.reset(defaultValues)
+        });
+        form.reset(defaultValues);
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to create patient record. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="w-full">
@@ -69,8 +76,12 @@ export default function CreatePatientRecord() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex flex-col">
-            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Patients Records</h1>
-            <p className="text-xs sm:text-sm text-darkGray">Create Patient Record</p>
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Patients Records
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Create Patient Record
+            </p>
           </div>
         </div>
       </div>
@@ -91,247 +102,53 @@ export default function CreatePatientRecord() {
       </div>
 
       <CardLayout
-        cardTitle="Patients Information"
-        cardDescription="Fill in the required fields to create a new patient record"
-        cardContent={
-          <div className="w-full mx-auto border-none">
+        title="Patients Information"
+        description="Fill in the required fields to create a new patient record"
+        content={
+          <div className="w-full mx-auto border-none ">
             <Separator className="w-full bg-gray" />
             <div className="pt-4">
               <Form {...form}>
                 <form
                   onSubmit={(e) => {
-                    e.preventDefault()
-                    submit()
+                    e.preventDefault();
+                    submit();
                   }}
                   className="space-y-6"
                 >
                   {/* Personal Information Section */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Last Name */}
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Last Name <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter last name" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
+                    <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isReadOnly} />
                     {/* First Name */}
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            First Name <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter first name" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
+                    <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isReadOnly} />
                     {/* Middle Name */}
-                    <FormField
-                      control={form.control}
-                      name="middleName"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">Middle Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter middle name" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                    <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={isReadOnly} />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    {/* Gender */}
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Gender <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select gender" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="male">Male</SelectItem>
-                              <SelectItem value="female">Female</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Contact Number */}
-                    <FormField
-                      control={form.control}
-                      name="contact"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Contact Number <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter contact number" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Date of Birth */}
-                    <FormField
-                      control={form.control}
-                      name="dateOfBirth"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Date of Birth <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Patient Type */}
-                    <FormField
-                      control={form.control}
-                      name="patientType"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            Patient Type <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select patient type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Resident">Resident</SelectItem>
-                              <SelectItem value="Transient">Transient</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                    <FormSelect control={form.control} name="gender" label="Sex" options={[{ id: "female", name: "Female" }, { id: "male", name: "Male" },]}/>
+                    <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} />
+                    <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type='date'/>            
+                    <FormSelect control={form.control} name="patientType" label="Patient Type" options={[{ id: "Resident", name: "Resident" }, { id: "Transient", name: "Transient" },]}/>
                   </div>
 
                   {/* Address Section */}
-                  <h3 className="text-md font-medium pt-4">Address Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="houseNo"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">
-                            House Number <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter House No." {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
+                    
+                    <div className='grid gap-2 items-end'>
+                      <Label className="mb-1">Household</Label>
+                        <Combobox 
+                          options={[]}
+                          value={form.watch(`houseNo`)}
+                          onChange={handleHouseholdChange}
+                          placeholder='Search for household...'
+                          contentClassName='w-full'
+                          emptyMessage='No household found'
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="street"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">Street</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter street address" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="sitio"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">Sitio</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter Sitio" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="barangay"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">Barangay</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter Barangay" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter City" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="province"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium">Province</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter Province" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-red-500 text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                    </div>
+                    <FormInput control={form.control} name="street" label="Street Address" placeholder="Enter street address" readOnly={isReadOnly} />
+                    <FormSelect control={form.control} name="sitio" label="Select Sitio" options={[{ id: "Palma", name: "Palma" }, { id: "Cuenco", name: "Cuenco" },]}/>
                   </div>
 
                   {/* Form Actions */}
@@ -366,12 +183,11 @@ export default function CreatePatientRecord() {
               </Form>
             </div>
           </div>
-        }
-        cardClassName="border-none pb-2 p-3"
-        cardHeaderClassName="pb-2 bt-2 text-xl"
-        cardContentClassName="pt-0"
+        {/* }
+        cardClassName="border-none pb-2 p-3 rounded-lg"
+        headerClassName="pb-2 bt-2 text-xl"
+        contentClassName="pt-0"
       />
     </div>
-  )
+  );
 }
-

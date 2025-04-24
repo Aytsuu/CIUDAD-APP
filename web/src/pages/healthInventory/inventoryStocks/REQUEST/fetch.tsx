@@ -32,6 +32,8 @@ export const fetchMedicines = () => {
   return medicines;
 };
 
+
+
 export const fetchFirstAid = () => {
   const [firstAid, setFirstAid] = useState<{ id: string; name: string }[]>([]);
 

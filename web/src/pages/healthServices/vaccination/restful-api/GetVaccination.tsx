@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import {api} from "@/api/api";
 
 export const getPatientRecord =  async () => {
   try {
@@ -18,6 +18,15 @@ export const getVaccinationRecords =  async () => {
   }
 };
 
+
+export const getVaccintStocks =  async () => {
+    try {
+        const response = await api.get(`/inventory/vaccine_stocks/`);
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }
+}
 
 
 export const getVaccinelist =  async () => {
