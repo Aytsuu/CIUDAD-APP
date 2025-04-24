@@ -69,7 +69,12 @@ function CreateBudgetPlanPage3({ onPrevious2, onNext4, updateFormData, formData,
 
     useEffect(() => {
         const MiscExpenseNum = Number(miscExpenseVal) || 0;
-        const remainingBal = budgetLimitValue - MiscExpenseNum;
+        let remainingBal = budgetLimitValue - MiscExpenseNum;
+    
+        if (Math.abs(remainingBal) < 0.01) {
+            remainingBal = 0;
+        }
+        
         setBalance(remainingBal);
             if (remainingBal < 0) {
                     setOverLimit(true);
