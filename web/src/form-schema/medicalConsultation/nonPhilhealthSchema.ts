@@ -10,13 +10,15 @@ export const nonPhilHealthSchema = z.object({
   age: z.string(),  //z.number().min(1, "Age is Required"),
   sex: z.string().min(1, "Sex is Required").default(""),
   dob: z.string().min(1, "Date of Birth is required").default(""),
-
   houseno: z.string().default(""),
   street: z.string().default(""),
   sitio: z.string().default(""),
   barangay: z.string().min(1, "Barangay is required").default(""),
   province: z.string().default(""),
   city: z.string().default(""),
+
+
+
   bhwAssign: z.string().min(1, "BHW Assignment is Required").default(""),
   hr: positiveNumberSchema, //z.number().min(1, "Heart rate is required"),
   bpsystolic: positiveNumberSchema, //z.number().min(1, "Blood pressure Systolic is required"),
@@ -25,6 +27,7 @@ export const nonPhilHealthSchema = z.object({
   temp: positiveNumberSchema,           //z.number().min(1, "Temperature is required"),
   ht: z.number(),
   wt:positiveNumberSchema,
+  
   chiefComplaint: z.string().default(""),
   doctor: z.string().min(1,"Doctor is required")
 
@@ -34,3 +37,6 @@ export const nonPhilHealthSchema = z.object({
 
 
 export type nonPhilHealthType = z.infer<typeof nonPhilHealthSchema>;
+
+
+
