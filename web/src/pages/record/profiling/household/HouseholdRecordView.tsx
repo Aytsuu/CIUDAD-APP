@@ -6,6 +6,10 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { HouseholdFamRecord } from "../profilingTypes";
 import { householdFamColumns } from "./HouseholdColumns";
 import { Card } from "@/components/ui/card/card";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Button } from "@/components/ui/button/button";
+import { Pen } from "lucide-react";
+import EditGeneralDetails from "./EditGeneralDetails";
 
 export default function HouseholdRecordView() {
   // Initialize states
@@ -14,6 +18,7 @@ export default function HouseholdRecordView() {
     () => location.state?.params || {},
     [location.state]
   );
+  const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false);
   const families = React.useMemo(() => params.families || {}, [params]);
   const household = React.useMemo(() => params.household || {}, [params]);
 
@@ -28,6 +33,7 @@ export default function HouseholdRecordView() {
     });
   }, [families]);
 
+
   return (
     <LayoutWithBack
       title="Household Details"
@@ -36,7 +42,29 @@ export default function HouseholdRecordView() {
       <Card className="flex">
         <div className="w-1/4 flex flex-col border-r">
           <div className="flex flex-col p-5">
-            <Label className="text-[17px] text-darkBlue1 mb-2">General</Label>
+            <div className="flex justify-between items-center mb-2">
+              <Label className="text-[17px] text-darkBlue1">General</Label>
+              <DialogLayout 
+                trigger= {
+                  <Button 
+                    variant={"outline"} 
+                    className="border-none shadow-none text-black/50"
+                  >
+                    <Pen/> Edit
+                  </Button>
+                }
+                title="General Details"
+                description="Edit form for household general details. "
+                mainContent={
+                  <EditGeneralDetails 
+                    householdData={household} 
+                    setIsOpenDialog={setIsOpenEditDialog}
+                  />
+                }
+                isOpen={isOpenEditDialog}
+                onOpenChange={setIsOpenEditDialog}
+              />
+            </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Household No.</Label>
               <Label className="text-[16px] text-black/70">{household.hh_id}</Label>

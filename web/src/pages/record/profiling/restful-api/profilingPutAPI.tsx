@@ -33,3 +33,15 @@ export const updateFamily = async (
     console.error(err);
   }
 }
+
+export const updateHousehold = async (householdInfo: Record<string, any>) => {
+  try {
+    const res = await api.put(`profiling/household/update/${householdInfo.hh_id}/`, {
+      
+    })
+    
+    return res.data
+  } catch (err) {
+    throw err;
+  }
+}

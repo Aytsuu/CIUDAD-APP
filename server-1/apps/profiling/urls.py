@@ -40,6 +40,7 @@ urlpatterns = [
     path("household/list/table/", HouseholdTableView.as_view(), name="household-table"),
     path("household/<str:hh_id>/data/", HouseholdListView.as_view(), name="household-details"),
     path("household/create/", HouseholdCreateView.as_view(), name="create-household"),
+    path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
     # Resident Urls
     path("resident/", ResidentProfileListView.as_view(), name="resident-details"),
