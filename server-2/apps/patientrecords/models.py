@@ -50,3 +50,17 @@ class FollowUpVisit(models.Model):
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
     class Meta:
         db_table = 'follow_up_visit'
+        
+        
+        
+class Spouse(models.Model):
+    spouse_id = models.BigAutoField(primary_key=True)
+    spouse_type = models.CharField(max_length=10)
+    spouse_lname = models.CharField(max_length=50, default="")
+    spouse_fname = models.CharField(max_length=50, default="")
+    spouse_mnane = models.CharField(max_length=50, default="")
+    spouse_occupation = models.CharField(max_length=50)
+    spouse_dob = models.DateField()
+
+    class Meta:
+        db_table = 'spouse'

@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FormSelect } from "@/components/ui/form/form-select";
 
 export default function NonPHMedicalForm() {
   const form = useForm<nonPhilHealthType>({
@@ -33,7 +34,7 @@ export default function NonPHMedicalForm() {
       lname: "",
       mname: "",
       date: "",
-      age: 0,
+      age: "",
       sex: "",
       dob: "",
       houseno: "",
@@ -147,49 +148,39 @@ export default function NonPHMedicalForm() {
               ) : null}
 
               {/* Transient Checkbox */}
-              <div
-                className={recordType === "existingPatient" ? "sm:ml-auto" : ""}
-              >
-                <FormField
+              <div>
+                <FormSelect
                   control={form.control}
                   name="isTransient"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-2 space-y-1">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value === "transient"}
-                          onCheckedChange={(checked) =>
-                            field.onChange(checked ? "transient" : "resident")
-                          }
-                        />
-                      </FormControl>
-                      <FormLabel className="font-medium text-black/65">
-                        Transient
-                      </FormLabel>
-                    </FormItem>
-                  )}
+                  label="Patient Type"
+                  options={[
+                    { id: "Resident", name: "Resident" },
+                    { id: "Transient", name: "Transient" },
+                    { id: "Regular", name: "Regular" },
+                  ]}
+                  readOnly
                 />
               </div>
             </div>
 
-          <div className="w-full flex justify-end">
+            <div className="w-full flex justify-end">
               {/* Date Field */}
               <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem >
-                  <FormLabel className="font-medium text-black/65">
-                    Date
-                  </FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} value={currentDate} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium text-black/65">
+                      Date
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} value={currentDate} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Name Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

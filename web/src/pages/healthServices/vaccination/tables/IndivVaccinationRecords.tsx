@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
-
+import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 
 export interface VaccinationRecord {
   patrec_id: number;
@@ -34,7 +34,6 @@ export interface VaccinationRecord {
   vacrec: number;
   vacStck: number;
   vacrec_status: string;
-  
 
   vacrec_totaldose: number;
 
@@ -71,6 +70,7 @@ export interface VaccinationRecord {
       updated_at: string;
       vaccat_id: number;
     };
+
     inv_id: number;
     vac_id: number;
     solvent: string;
@@ -89,6 +89,7 @@ export interface VaccinationRecord {
   batch_number: string;
   updated_at: string;
   created_at: string;
+
   vaccine_details: {
     no_of_doses: number;
     age_group: string;
@@ -114,6 +115,7 @@ export default function IndivVaccinationRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  let currentAge = calculateAge(patientData.dob).toString()
 
   const { data: vaccinationRecords, isLoading } = useQuery({
     queryKey: ["patientVaccinationDetails", patientData.pat_id],
@@ -121,53 +123,59 @@ export default function IndivVaccinationRecords() {
     refetchOnMount: true,
     staleTime: 0,
   });
+
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
-  
-    return vaccinationRecords.map((record: any) => ({
-      patrec_id: record.vacrec_details?.patrec_id,
-      vachist_id: record.vachist_id,
-      vachist_doseNo: record.vachist_doseNo,
-      vachist_status: record.vachist_status,
-      vachist_age: record.vachist_age,
-      assigned_to: record.assigned_to,
-      staff_id: record.staff_id,
-      vital: record.vital,
-      vacrec: record.vacrec,
-      vacStck: record.vacStck,
-      vacrec_totaldose: record.vacrec_totaldose,
-      vacrec_status: record.vacrec_status,
-      created_at: record.created_at || "N/A",
 
-  
-      vital_signs: record.vital_signs || {
-        vital_bp_systolic: "N/A",
-        vital_bp_diastolic: "N/A",
-        vital_temp: "N/A",
-        vital_RR: "N/A",
-        vital_o2: "N/A",
-        created_at: "N/A",
-      },
-      vaccine_stock: record.vaccine_stock || null,
-      vaccine_name: record.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
-      batch_number: record.vaccine_stock?.batch_number || "N/A",
-      vaccine_details: {
-        no_of_doses: record.vaccine_stock?.vaccinelist?.no_of_doses || 0,
-        age_group: record.vaccine_stock?.vaccinelist?.age_group || "N/A",
-        vac_type: record.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
-      },
-      follow_up_visit: {
-        followv_id: record.follow_up_visit?.followv_id,
-        followv_date: record.follow_up_visit?.followv_date || "N/A",
-        followv_status: record.follow_up_visit?.followv_status || "N/A",
-      },
-    }));
+    return vaccinationRecords.map((record: any) => {
+      console.log(
+        "Vaccine Type Choice:",
+        record?.vaccine_stock?.vaccinelist?.vac_type_choices
+      ); // 👈 Console log here
+
+      return {
+        patrec_id: record.vacrec_details?.patrec_id,
+        vachist_id: record.vachist_id,
+        vachist_doseNo: record.vachist_doseNo,
+        vachist_status: record.vachist_status,
+        vachist_age: record.vachist_age,
+        assigned_to: record.assigned_to,
+        staff_id: record.staff_id,
+        vital: record.vital,
+        vacrec: record.vacrec,
+        vacStck: record.vacStck,
+        vacrec_totaldose: record.vacrec_totaldose,
+        vacrec_status: record.vacrec_status,
+        created_at: record.created_at || "N/A",
+
+        vital_signs: record.vital_signs || {
+          vital_bp_systolic: "N/A",
+          vital_bp_diastolic: "N/A",
+          vital_temp: "N/A",
+          vital_RR: "N/A",
+          vital_o2: "N/A",
+          created_at: "N/A",
+        },
+        vaccine_stock: record.vaccine_stock || null,
+        vaccine_name: record.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+        batch_number: record.vaccine_stock?.batch_number || "N/A",
+        vaccine_details: {
+          no_of_doses: record.vaccine_stock?.vaccinelist?.no_of_doses || 0,
+          age_group: record.vaccine_stock?.vaccinelist?.age_group || "N/A",
+          vac_type:
+            record.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+        },
+        follow_up_visit: {
+          followv_id: record.follow_up_visit?.followv_id,
+          followv_date: record.follow_up_visit?.followv_date || "No Schedule",
+          followv_status: record.follow_up_visit?.followv_status || "N/A",
+        },
+      };
+    });
   }, [vaccinationRecords]);
-  
-
 
   // console.log("created_at", vaccinationRecords.created_at);
-  console.log(vaccinationRecords);
+  console.log("data", vaccinationRecords);
 
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
@@ -284,7 +292,7 @@ export default function IndivVaccinationRecords() {
       cell: ({ row }) => {
         const statusColors = {
           completed: "bg-green-100 text-green-800",
-          "partially Vaccinated": " text-red-500",
+          "partially vaccinated": " text-red-500",
         };
         return (
           <div className="flex flex-col justify-center">
@@ -298,42 +306,46 @@ export default function IndivVaccinationRecords() {
               {row.original.vachist_status}
             </span>
             <div>
-              {row.original.vaccine_details.vac_type === "routine" || row.original.vacrec_status === "pending" &&
-                row.original.follow_up_visit.followv_date !== "N/A" && (
-                  <div className="text-xs mt-1">
-                    Next Dose:{" "}
-                    {new Date(
+              {(row.original.vaccine_details.vac_type === "routine" ||
+                row.original.vachist_status === "partially Vaccinated") && (
+                <div className="text-xs mt-1">
+                  Next Dose:{" "}
+                  {isNaN(
+                    new Date(
                       row.original.follow_up_visit.followv_date
-                    ).toLocaleDateString()}
-                    {/* <div className="text-xs text-gray-500">
-                    Status: {row.original.follow_up_visit.followv_status}
-                  </div> */}
-                  </div>
-                )}
+                    ).getTime()
+                  )
+                    ? "No Schedule"
+                    : new Date(
+                        row.original.follow_up_visit.followv_date
+                      ).toLocaleDateString()}
+                  {/* <div className="text-xs text-gray-500">
+      Status: {row.original.follow_up_visit.followv_status}
+    </div> */}
+                </div>
+              )}
             </div>
           </div>
         );
       },
     },
     {
-      accessorKey: "updated_at",
-      header: "Last Updated",
+      accessorKey: "created_at",
+      header: "Created At",
       cell: ({ row }) => {
         const updatedAt = new Date(row.original.created_at);
-        const formattedDate = updatedAt.toLocaleDateString();  // Localized date
-        const formattedTime = updatedAt.toLocaleTimeString();  // Localized time
-    
+        const formattedDate = updatedAt.toLocaleDateString(); // Localized date
+        const formattedTime = updatedAt.toLocaleTimeString(); // Localized time
+
         return (
           <div className="text-sm text-gray-600">
             {formattedDate}
-            <div className="text-xs text-gray-400">
-              {formattedTime}
-            </div>
+            <div className="text-xs text-gray-400">{formattedTime}</div>
           </div>
         );
       },
     },
-    
+
     {
       accessorKey: "action",
       header: "Actions",
@@ -348,7 +360,8 @@ export default function IndivVaccinationRecords() {
             </Button>
           </Link>
 
-          {row.original.follow_up_visit.followv_status.toLowerCase() === "pending" && (
+          {row.original.follow_up_visit.followv_status.toLowerCase() ===
+            "pending" && (
             <Link
               to="/updateVaccinationForm"
               state={{ params: { Vaccination: row.original, patientData } }}
@@ -403,13 +416,7 @@ export default function IndivVaccinationRecords() {
             Patient Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <Fingerprint className="h-4 w-4" />
-                Patient ID
-              </p>
-              <p className="font-medium">{patientData.pat_id}</p>
-            </div>
+           
             <div className="space-y-1">
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <UserRound className="h-4 w-4" />
@@ -419,6 +426,23 @@ export default function IndivVaccinationRecords() {
                 patientData.fname
               } ${patientData.mname || ""}`}</p>
             </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <UserRound className="h-4 w-4" />
+                BirthDate and Age
+              </p>
+              <p className="font-medium">{`${patientData.dob}, 
+              `} {currentAge} </p>
+            </div>
+           
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                Address
+              </p>
+              <p className="font-medium">{patientData.address}</p>
+            </div>
             <div className="space-y-1">
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <Syringe className="h-4 w-4" />
@@ -427,13 +451,6 @@ export default function IndivVaccinationRecords() {
               <p className="font-medium">
                 {formatVaccinationData().length} records
               </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                Address
-              </p>
-              <p className="font-medium">{patientData.address}</p>
             </div>
           </div>
         </div>

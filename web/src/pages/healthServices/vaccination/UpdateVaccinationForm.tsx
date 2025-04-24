@@ -436,7 +436,7 @@ console.log("Patrec",Vaccination.patrec_id);
           await api.post("vaccination/vaccination-history/", {
             vachist_doseNo: doseNumber,
             vachist_age: form.getValues("age"),
-            vachist_status: "partially Vaccinated",
+            vachist_status: "partially vaccinated",
             created_at: new Date().toISOString(),
             staff_id: 1,
             vital: vital_id,

@@ -57,11 +57,13 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        return obj.patient_records.filter(
-            patrec_type__iexact='Vaccination'
+        return VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=obj,
+            vacrec__patrec_id__patrec_type__iexact='Vaccination'
         ).exclude(
-            vaccination_records__vacrec_status__iexact='forwarded'
-        ).distinct().count()
+            vachist_status__iexact='forwarded'
+        ).count()
+
 
 
     # def get_vaccination_records(self, obj):

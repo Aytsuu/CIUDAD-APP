@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-
+import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 export interface VaccinationRecord {
   pat_id: number;
   fname: string;
@@ -97,14 +97,6 @@ export default function AllVaccinationRecords() {
     });
   }, [vaccinationRecords]);
   
-  // Optional: A helper function to compute age from DOB
-  const calculateAge = (dob: string): number => {
-    if (!dob) return 0;
-    const birthDate = new Date(dob);
-    const diff = Date.now() - birthDate.getTime();
-    const ageDt = new Date(diff);
-    return Math.abs(ageDt.getUTCFullYear() - 1970);
-  };
   
 
 

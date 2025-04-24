@@ -461,7 +461,7 @@ export default function VaccinationForm() {
          await api.post("vaccination/vaccination-history/", {
           vachist_doseNo: 1,
           vachist_age: form.getValues("age"),
-          vachist_status: "partially Vaccinated",
+          vachist_status: "partially vaccinated",
 
           created_at: new Date().toISOString(),
           staff_id: 1,
@@ -539,7 +539,7 @@ export default function VaccinationForm() {
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Medical Consultation
+           Vaccination Form
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view patients information
