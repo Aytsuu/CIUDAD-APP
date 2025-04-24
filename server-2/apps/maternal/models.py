@@ -13,7 +13,8 @@ class Prenatal_Form(models.Model):
     # pf_h_mname = models.CharField(max_length=100)
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
-    # patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id')
+    patrec_id = models.OneToOneField(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id',        null=True  # TEMPORARY to handle existing records
+)
     
     class Meta:
         db_table = 'prenatal_form'
