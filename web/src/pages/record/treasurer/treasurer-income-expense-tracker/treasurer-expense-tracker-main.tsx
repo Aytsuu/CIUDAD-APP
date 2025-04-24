@@ -1,7 +1,8 @@
 
 
-//PINAKA LATEST NAA TANAN
 
+
+// LATEST WITH EVERYTHING..
 // import React, { useState } from "react";
 // import { DataTable } from "@/components/ui/table/data-table";
 // import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@
 // import { SelectLayout } from "@/components/ui/select/select-layout";
 // import { Button } from "@/components/ui/button/button";
 // import { ColumnDef } from "@tanstack/react-table";
-// import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus } from 'lucide-react';
+// import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ArrowUpCircle, ArrowDownCircle, ChevronLeft  } from 'lucide-react';
 // import { Label } from "@/components/ui/label";
 // import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 // import IncomeandExpenseCreateForm from "./treasurer-expense-tracker-create";
@@ -20,6 +21,9 @@
 // import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 // import { useIncomeExpense, type IncomeExpense } from "./queries/treasurerIncomeExpenseFetchQueries";
 // import { useDeleteIncomeExpense } from "./queries/treasurerIncomeExpenseDeleteQueries";
+// import { NavLink } from 'react-router-dom';
+// import { Link } from "react-router-dom";
+// import { useParams } from 'react-router-dom';
 
 
 
@@ -31,7 +35,10 @@
 //     const [currentPage, setCurrentPage] = useState(1);
 
 //     // Fetch data from the backend
-//     const { data: fetchedData = [], isLoading } = useIncomeExpense();
+//     // const { data: fetchedData = [], isLoading } = useIncomeExpense();
+
+//     const { year } = useParams<{ year: string }>();
+//     const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
 
 
 //     // Filter options
@@ -102,7 +109,6 @@
 //             )
 //         },
 //         { accessorKey: "iet_amount", header: "Amount" },
-//         { accessorKey: "iet_entryType", header: "Entry Type" },
 //         { 
 //             accessorKey: "iet_receipt_image", 
 //             header: "Receipt",
@@ -114,12 +120,10 @@
 //                         title="Receipt"
 //                         description="Here are the details of receipt."
 //                         mainContent={
-//                             <div className="max-h-[80vh] flex flex-col">
-//                                 <img
-//                                     src={row.getValue("iet_receipt_image")}
-//                                     alt="Receipt"
-//                                     className="w-full h-auto"
-//                                 />
+//                             <div className="flex flex-col gap-4 border p-5 rounded-md">
+//                                 <div>
+//                                     <img src={row.getValue("iet_receipt_image")} className="w-52 h-52 border shadow-sm"/>
+//                                 </div>
 //                             </div>
 //                         }
 //                     />
@@ -148,7 +152,9 @@
 //                                             iet_particular_id={row.original.dtl_id}
 //                                             iet_particulars_name={row.original.dtl_budget_item}
 //                                             iet_additional_notes={row.original.iet_additional_notes}
-//                                             inv_num={row.original.inv_num}    
+//                                             iet_receipt_image={row.original.iet_receipt_image}
+//                                             inv_num={row.original.inv_num}
+//                                             year={year || new Date().getFullYear().toString()}    
 //                                             onSuccess={() => setEditingRowId(null)}                                        
 //                                         />
 //                                     </div>
@@ -192,15 +198,51 @@
 
 //     return (
 //         <div className="w-full h-full">
-//             <div className="flex flex-col gap-3 mb-4">
-//                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-//                     <div>Expense Tracking</div>
-//                 </h1>
-//                 <p className="text-xs sm:text-sm text-darkGray">
-//                     Gain clear insights into your finances by tracking expenses in real time.
-//                 </p>
+//             <div className="flex flex-col gap-4 mb-4">
+//                 <div className="flex items-center gap-4">
+//                     <Link to="/treasurer-income-expense-main"> <Button className="text-black hover:bg-gray-100 p-2" variant="outline"> <ChevronLeft size={20} /> </Button> </Link>
+//                     <div>
+//                         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-5">
+//                             Expense Tracking
+//                         </h1>
+//                         <p className="text-xs sm:text-sm text-darkGray pt-2">
+//                             Manage and view income and expense records for this year.
+//                         </p>
+//                     </div>
+//                 </div>
 //             </div>
 //             <hr className="border-gray mb-7 sm:mb-9" /> 
+
+
+//             <div className="flex justify-center mb-9">
+//                 <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
+//                     <NavLink 
+//                         to={`/treasurer-income-and-expense-tracking/${year}`}
+//                         className={({ isActive }) => 
+//                             `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+//                             isActive 
+//                                 ? "bg-primary text-white shadow" 
+//                                 : "text-gray-700 hover:bg-white"
+//                             }`
+//                         }
+//                         >
+//                         Expense Tracking
+//                     </NavLink>
+//                     <NavLink 
+//                         to={`/treasurer-income-tracking/${year}`}
+//                         className={({ isActive }) => 
+//                             `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+//                             isActive 
+//                                 ? "bg-primary text-white shadow" 
+//                                 : "text-gray-700 hover:bg-white"
+//                             }`
+//                         }
+//                         >
+//                         Income Tracking
+//                     </NavLink>
+//                 </div>
+//             </div>
+
 
 //             <div className="mb-[1rem] flex flex-col md:flex-row items-center justify-between gap-4">
 //                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
@@ -241,7 +283,10 @@
 //                     description="Fill in the details for your entry."
 //                     mainContent={
 //                         <div className="w-full h-full">
-//                             <IncomeandExpenseCreateForm onSuccess={() => setIsDialogOpen(false)}/>
+//                             <IncomeandExpenseCreateForm 
+//                                 onSuccess={() => setIsDialogOpen(false)}
+//                                 year={year || new Date().getFullYear().toString()}
+//                             />
 //                         </div>
 //                     }
 //                     isOpen={isDialogOpen}
@@ -313,7 +358,6 @@
 
 
 
-// LATEST WITH EVERYTHING..
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -321,8 +365,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ArrowUpCircle, ArrowDownCircle, ChevronLeft  } from 'lucide-react';
-import { Label } from "@/components/ui/label";
+import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, Calendar, ChevronLeft  } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeandExpenseCreateForm from "./treasurer-expense-tracker-create";
 import IncomeandExpenseEditForm from "./treasurer-expense-tracker-edit";
@@ -336,8 +379,6 @@ import { NavLink } from 'react-router-dom';
 import { Link } from "react-router-dom";
 import { useParams } from 'react-router-dom';
 
-
-
 function IncomeandExpenseTracking() {
     const [isDialogOpen, setIsDialogOpen] = useState(false); 
     const [editingRowId, setEditingRowId] = useState<number | null>(null);
@@ -345,30 +386,41 @@ function IncomeandExpenseTracking() {
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Fetch data from the backend
-    // const { data: fetchedData = [], isLoading } = useIncomeExpense();
+    // Month filter options
+    const monthOptions = [
+        { id: "All", name: "All" },
+        { id: "01", name: "January" },
+        { id: "02", name: "February" },
+        { id: "03", name: "March" },
+        { id: "04", name: "April" },
+        { id: "05", name: "May" },
+        { id: "06", name: "June" },
+        { id: "07", name: "July" },
+        { id: "08", name: "August" },
+        { id: "09", name: "September" },
+        { id: "10", name: "October" },
+        { id: "11", name: "November" },
+        { id: "12", name: "December" }
+    ];
+    const [selectedMonth, setSelectedMonth] = useState("All");
 
+    // Fetch data from the backend
     const { year } = useParams<{ year: string }>();
     const { data: fetchedData = [], isLoading } = useIncomeExpense(year ? parseInt(year) : new Date().getFullYear());
 
-
-    // Filter options
-    const filter = [
-        { id: "All", name: "All" },
-        { id: "Income", name: "Income" },
-        { id: "Expense", name: "Expense" }
-    ];
-    const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-
-
-    // Filter the data based on the selected filter and search query
+    // Filter the data based on the selected month and search query
     const filteredData = React.useMemo(() => {
-        let result = selectedFilter === "All" 
-            ? fetchedData 
-            : fetchedData.filter((item) => item.iet_entryType === selectedFilter);
-    
+        let result = fetchedData;
+      
+        if (selectedMonth !== "All") {
+            result = result.filter(item => {
+                const month = item.iet_date?.slice(5, 7); // "YYYY-MM-DD" → MM
+                return month === selectedMonth;
+            });
+        }
+      
         if (searchQuery) {
-            result = result.filter((item) =>
+            result = result.filter(item =>
                 Object.values(item)
                     .join(" ")
                     .toLowerCase()
@@ -376,7 +428,7 @@ function IncomeandExpenseTracking() {
             );
         }
         return result;
-    }, [fetchedData, selectedFilter, searchQuery]);
+    }, [fetchedData, selectedMonth, searchQuery]);
 
     // Calculate total pages for pagination
     const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -387,14 +439,11 @@ function IncomeandExpenseTracking() {
         currentPage * pageSize
     );
 
-
     const { mutate: deleteEntry } = useDeleteIncomeExpense();
-
 
     const handleDelete = (iet_num: number) => {
         deleteEntry(iet_num);
     };
-
 
     const columns: ColumnDef<IncomeExpense>[] = [
         { 
@@ -452,7 +501,7 @@ function IncomeandExpenseTracking() {
                                 trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Eye size={16} /></div>}
                                 className="max-w-[45%] max-h-[90%] overflow-auto p-10 verflow-y-auto"
                                 title="Edit Entry"
-                                description="Update income or expense details to keep records accurate."
+                                description="Update expense details to keep records accurate."
                                 mainContent={
                                     <div className="flex flex-col">
                                         <IncomeandExpenseEditForm 
@@ -506,24 +555,25 @@ function IncomeandExpenseTracking() {
           );
     }
 
-
     return (
         <div className="w-full h-full">
             <div className="flex flex-col gap-4 mb-4">
                 <div className="flex items-center gap-4">
                     <Link to="/treasurer-income-expense-main"> <Button className="text-black hover:bg-gray-100 p-2" variant="outline"> <ChevronLeft size={20} /> </Button> </Link>
                     <div>
-                        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-5">
-                            Expense Tracking
+                        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-2">
+                            <div className="rounded-full border-2 border-solid border-darkBlue2 p-3 flex items-center">
+                                <Calendar />
+                            </div>
+                            <div>{year}</div>
                         </h1>
                         <p className="text-xs sm:text-sm text-darkGray pt-2">
                             Manage and view income and expense records for this year.
                         </p>
                     </div>
-                </div>
+                </div>  
             </div>
             <hr className="border-gray mb-7 sm:mb-9" /> 
-
 
             <div className="flex justify-center mb-9">
                 <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
@@ -554,7 +604,6 @@ function IncomeandExpenseTracking() {
                 </div>
             </div>
 
-
             <div className="mb-[1rem] flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                     <div className="relative flex-1">
@@ -568,21 +617,19 @@ function IncomeandExpenseTracking() {
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
-                                setCurrentPage(1); // Reset to first page when searching
+                                setCurrentPage(1);
                             }}
                         />
                     </div>
                     <div className="flex flex-row gap-2 justify-center items-center">
-                        <Label>Filter: </Label>
-                        <SelectLayout 
+                        <SelectLayout
                             className="bg-white" 
-                            options={filter} 
-                            placeholder="Filter" 
-                            value={selectedFilter} 
-                            label="Entry Type" 
+                            placeholder="Month"
+                            value={selectedMonth} 
+                            options={monthOptions}
                             onChange={(value) => {
-                                setSelectedFilter(value);
-                                setCurrentPage(1); // Reset to first page when filter changes
+                                setSelectedMonth(value);
+                                setCurrentPage(1);
                             }}
                         />
                     </div>                            
@@ -617,7 +664,7 @@ function IncomeandExpenseTracking() {
                                 const value = +e.target.value;
                                 if (value >= 1) {
                                     setPageSize(value);
-                                    setCurrentPage(1); // Reset to first page when page size changes
+                                    setCurrentPage(1);
                                 }
                             }}
                         />

@@ -175,21 +175,20 @@ function IncomeExpenseMain() {
              <hr className="border-gray mb-7 sm:mb-9" /> 
 
 
-             <div className="mb-[1rem] flex flex-col md:flex-row items-center justify-between gap-4">
-                 <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                     <div className="relative flex-1">
-                         <Search
-                             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                             size={17}
-                         />
-                         <Input 
-                             placeholder="Search..." 
-                             className="pl-10 w-full bg-white text-sm" 
-                         />
-                     </div>
-                        
-                 </div>
-             </div>
+
+            <div className="flex flex-col sm:flex-row w-full pb-5">
+                <div className="relative flex-1">
+                    <Search
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                        size={17}
+                    />
+                    <Input 
+                        placeholder="Search..." 
+                        className="pl-10 w-full bg-white text-sm" 
+                    />
+                </div>     
+            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
                 {fetchedData.map((tracker: any, index: any) => {

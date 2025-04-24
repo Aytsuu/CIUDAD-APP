@@ -419,28 +419,12 @@ function IncomeandExpenseEditForm({iet_num, iet_serial_num, iet_entryType, iet_p
                             <FormItem>
                                 <FormLabel>Serial No.</FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="(e.g. 123456)" type="text" readOnly />
+                                    <Input {...field} placeholder="(e.g. 123456)" type="text" readOnly={!isEditing} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
                         )}
                     />
-                </div>
-
-
-                <div className="pb-5">
-                    <FormField
-                    control={form.control}
-                    name="iet_entryType"
-                    render={({field }) =>(
-                        <FormItem>
-                            <FormLabel>Entry Type</FormLabel>
-                            <FormControl>   
-                                <SelectLayout {...field} options={entrytypeSelector} value={field.value || ""} onChange={field.onChange} label="Select Entry Type" placeholder="Select Entry Type" className="w-full"></SelectLayout>                                 
-                            </FormControl>
-                            <FormMessage/>
-                        </FormItem>
-                    )}></FormField>
                 </div>
 
                 <div className="pb-5">

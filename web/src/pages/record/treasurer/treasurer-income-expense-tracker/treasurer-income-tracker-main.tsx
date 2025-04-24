@@ -1,3 +1,4 @@
+
 // import React, { useState } from "react";
 // import { DataTable } from "@/components/ui/table/data-table";
 // import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@
 // import { SelectLayout } from "@/components/ui/select/select-layout";
 // import { Button } from "@/components/ui/button/button";
 // import { ColumnDef } from "@tanstack/react-table";
-// import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus } from 'lucide-react';
+// import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ChevronLeft} from 'lucide-react';
 // import { Label } from "@/components/ui/label";
 // import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 // import IncomeCreateForm from "./treasurer-income-tracker-create";
@@ -14,10 +15,11 @@
 // import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 // import { Skeleton } from "@/components/ui/skeleton";
 // import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-// import { Link } from 'react-router';
+// import { Link } from "react-router";
+// import { NavLink } from "react-router";
 // import { useIncomeData, type Income } from "./queries/treasurerIncomeExpenseFetchQueries";
 // import { useDeleteIncome } from "./queries/treasurerIncomeExpenseDeleteQueries";
-// import { useIncomeParticular, type IncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
+// import { useParams } from 'react-router-dom';
 
 
 
@@ -29,17 +31,9 @@
 //     const [currentPage, setCurrentPage] = useState(1);
 
 //     // Fetch data from the backend
-//     const { data: fetchedData = [], isLoading } = useIncomeData();
+//     const { year } = useParams<{ year: string }>();
+//     const { data: fetchedData = [], isLoading } = useIncomeData(year ? parseInt(year) : new Date().getFullYear());
 
-
-//     const { data: IncomeParticularItems = [] } = useIncomeParticular();
-
-//     const IncomeParticulars = IncomeParticularItems
-//             .filter(item => item.id && item.name)
-//             .map(item => ({
-//                 id: item.id,
-//                 name: item.name,
-//     }));
 
 
 //     // Filter options
@@ -81,8 +75,8 @@
 //     const { mutate: deleteIncome } = useDeleteIncome();
 
 
-//     const handleDelete = (iet_num: number) => {
-//         deleteIncome(iet_num);
+//     const handleDelete = (inc_num: number) => {
+//         deleteIncome(inc_num);
 //     };
 
 
@@ -105,14 +99,10 @@
 //         { 
 //             accessorKey: "incp_item", 
 //             header: "Particulars",
-//             cell: ({row}) => (
-//                 <div>{row.getValue("incp_item")}</div>
-//             )
 //         },
 //         { accessorKey: "inc_amount", header: "Amount" },
-//         { accessorKey: "inc_entryType", header: "Entry Type" },
 //         { 
-//             accessorKey: "iet_receipt_image", 
+//             accessorKey: "inc_receipt_image", 
 //             header: "Receipt",
 //             cell: ({row}) => (
 //                 <div className="flex justify-center"> 
@@ -122,12 +112,10 @@
 //                         title="Receipt"
 //                         description="Here are the details of receipt."
 //                         mainContent={
-//                             <div className="max-h-[80vh] flex flex-col">
-//                                 <img
-//                                     src={row.getValue("iet_receipt_image")}
-//                                     alt="Receipt"
-//                                     className="w-full h-auto"
-//                                 />
+//                             <div className="flex flex-col gap-4 border p-5 rounded-md">
+//                                 <div>
+//                                     <img src={row.getValue("inc_receipt_image")} className="w-52 h-52 border shadow-sm"/>
+//                                 </div>
 //                             </div>
 //                         }
 //                     />
@@ -150,10 +138,12 @@
 //                                     <div className="flex flex-col">
 //                                         <IncomeEditForm
 //                                             inc_num = {row.original.inc_num}
+//                                             inc_serial_num= {row.original.inc_serial_num}
+//                                             incp_id = {row.original.incp_id}
 //                                             inc_particulars = {row.original.incp_item} 
 //                                             inc_amount = {String(row.original.inc_amount)}
 //                                             inc_additional_notes = {row.original.inc_additional_notes}
-//                                             inc_receipt_image = {row.original.iet_receipt_image}
+//                                             inc_receipt_image = {row.original.inc_receipt_image}
 //                                             onSuccess={() => setEditingRowId(null)}  
 //                                         />
 //                                     </div>
@@ -197,38 +187,47 @@
 
 //     return (
 //         <div className="w-full h-full">
-//             <div className="flex flex-col gap-3 mb-4">
-//                 <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-//                     <div>Income Tracking</div>
-//                 </h1>
-//                 <p className="text-xs sm:text-sm text-darkGray">
-//                     Gain clear insights into your finances by tracking incomes in real time.
-//                 </p>
+//             <div className="flex flex-col gap-4 mb-4">
+//                 <div className="flex items-center gap-4">
+//                     <Link to="/treasurer-income-expense-main"> <Button className="text-black hover:bg-gray-100 p-2" variant="outline"> <ChevronLeft size={20} /></Button> </Link>
+//                     <div>
+//                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-5">
+//                         Income Tracking
+//                     </h1>
+//                     <p className="text-xs sm:text-sm text-darkGray pt-2">
+//                         Manage and view income and expense records for this year.
+//                     </p>
+//                     </div>
+//                 </div>
 //             </div>
 //             <hr className="border-gray mb-7 sm:mb-9" /> 
 
 //             <div className="flex justify-center mb-9">
 //                 <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-//                     <Link 
-//                     to="/treasurer-income-and-expense-tracking" 
-//                     className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-//                         location.pathname.includes("/treasurer-income-and-expense-tracking")
-//                         ? "bg-primary text-white shadow"
-//                         : "text-gray-700 hover:bg-white"
-//                     }`}
-//                     >
-//                     Expense Tracking
-//                     </Link>
-//                     <Link 
-//                     to="/treasurer-income-tracking" 
-//                     className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-//                         location.pathname.includes("/treasurer-income-tracking")
-//                         ? "bg-primary text-white shadow"
-//                         : "text-gray-700 hover:bg-white"
-//                     }`}
-//                     >
-//                     Income Tracking
-//                     </Link>
+//                     <NavLink 
+//                         to={`/treasurer-income-and-expense-tracking/${year}`}
+//                         className={({ isActive }) => 
+//                             `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+//                             isActive 
+//                                 ? "bg-primary text-white shadow" 
+//                                 : "text-gray-700 hover:bg-white"
+//                             }`
+//                         }
+//                         >
+//                         Expense Tracking
+//                     </NavLink>
+//                     <NavLink 
+//                         to={`/treasurer-income-tracking/${year}`}
+//                         className={({ isActive }) => 
+//                             `px-5 py-2 rounded-full text-sm font-medium transition-all ${
+//                             isActive 
+//                                 ? "bg-primary text-white shadow" 
+//                                 : "text-gray-700 hover:bg-white"
+//                             }`
+//                         }
+//                         >
+//                         Income Tracking
+//                     </NavLink>
 //                 </div>
 //             </div>
 
@@ -271,7 +270,7 @@
 //                     description="Fill in the details for your entry."
 //                     mainContent={
 //                         <div className="w-full h-full">
-//                             <IncomeCreateForm onSuccess={() => setIsDialogOpen(false)} IncomeParticularSelector={IncomeParticulars}/>
+//                             <IncomeCreateForm onSuccess={() => setIsDialogOpen(false)}/>
 //                         </div>
 //                     }
 //                     isOpen={isDialogOpen}
@@ -342,24 +341,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -367,8 +348,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ChevronLeft} from 'lucide-react';
-import { Label } from "@/components/ui/label";
+import { ArrowUpDown, Trash, Eye, Search, FileInput, Plus, ChevronLeft, Calendar} from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import IncomeCreateForm from "./treasurer-income-tracker-create";
 import IncomeEditForm from "./treasurer-income-tracker-edit";
@@ -398,30 +378,45 @@ function IncomeTracking() {
 
 
     // Filter options
-    const filter = [
+    const monthOptions = [
         { id: "All", name: "All" },
-        { id: "Income", name: "Income" },
-        { id: "Expense", name: "Expense" }
-    ];
-    const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
+        { id: "01", name: "January" },
+        { id: "02", name: "February" },
+        { id: "03", name: "March" },
+        { id: "04", name: "April" },
+        { id: "05", name: "May" },
+        { id: "06", name: "June" },
+        { id: "07", name: "July" },
+        { id: "08", name: "August" },
+        { id: "09", name: "September" },
+        { id: "10", name: "October" },
+        { id: "11", name: "November" },
+        { id: "12", name: "December" }
+      ];
+    const [selectedMonth, setSelectedMonth] = useState("All");
 
 
     // Filter the data based on the selected filter and search query
     const filteredData = React.useMemo(() => {
-        let result = selectedFilter === "All" 
-            ? fetchedData 
-            : fetchedData.filter((item) => item.inc_entryType === selectedFilter);
-    
+        let result = fetchedData;
+      
+        if (selectedMonth !== "All") {
+          result = result.filter(item => {
+            const month = item.inc_date?.slice(5, 7); // "YYYY-MM-DD" → MM
+            return month === selectedMonth;
+          });
+        }
+      
         if (searchQuery) {
-            result = result.filter((item) =>
-                Object.values(item)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-            );
+          result = result.filter(item =>
+            Object.values(item)
+              .join(" ")
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())
+          );
         }
         return result;
-    }, [fetchedData, selectedFilter, searchQuery]);
+    }, [fetchedData, selectedMonth, searchQuery]);
 
     // Calculate total pages for pagination
     const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -494,7 +489,7 @@ function IncomeTracking() {
                                 trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"> <Eye size={16} /></div>}
                                 className="max-w-[45%] max-h-[90%] overflow-auto p-10 verflow-y-auto"
                                 title="Edit Entry"
-                                description="Update income or expense details to keep records accurate."
+                                description="Update income details to keep records accurate."
                                 mainContent={
                                     <div className="flex flex-col">
                                         <IncomeEditForm
@@ -552,12 +547,15 @@ function IncomeTracking() {
                 <div className="flex items-center gap-4">
                     <Link to="/treasurer-income-expense-main"> <Button className="text-black hover:bg-gray-100 p-2" variant="outline"> <ChevronLeft size={20} /></Button> </Link>
                     <div>
-                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-5">
-                        Income Tracking
-                    </h1>
-                    <p className="text-xs sm:text-sm text-darkGray pt-2">
-                        Manage and view income and expense records for this year.
-                    </p>
+                        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2 pt-2">
+                            <div className="rounded-full border-2 border-solid border-darkBlue2 p-3 flex items-center">
+                                <Calendar />
+                            </div>
+                            <div>{year}</div>
+                        </h1>
+                        <p className="text-xs sm:text-sm text-darkGray pt-2">
+                            Manage and view income and expense records for this year.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -610,15 +608,13 @@ function IncomeTracking() {
                         />
                     </div>
                     <div className="flex flex-row gap-2 justify-center items-center">
-                        <Label>Filter: </Label>
-                        <SelectLayout 
+                        <SelectLayout
                             className="bg-white" 
-                            options={filter} 
-                            placeholder="Filter" 
-                            value={selectedFilter} 
-                            label="Entry Type" 
+                            placeholder="Month"
+                            value={selectedMonth} 
+                            options={monthOptions}
                             onChange={(value) => {
-                                setSelectedFilter(value);
+                                setSelectedMonth(value);
                                 setCurrentPage(1); // Reset to first page when filter changes
                             }}
                         />
@@ -697,3 +693,5 @@ function IncomeTracking() {
 }
 
 export default IncomeTracking;
+
+
