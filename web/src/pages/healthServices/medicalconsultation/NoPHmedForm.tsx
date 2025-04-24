@@ -24,10 +24,73 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { z } from "zod";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+
+// Define the physical exam schema with arrays for multiple selections
+const physicalExamSchema = z.object({
+  skin: z.object({
+    status: z.array(z.enum(["normal", "edema", "rash", "pallor", "cyanosis", "jaundice", "other"])).nonempty({
+      message: "At least one option must be selected",
+    })
+  }).optional(),
+  eyes: z.object({
+    status: z.array(z.enum(["normal", "yellowish", "redness", "discharge", "swelling", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  ears: z.object({
+    status: z.array(z.enum(["normal", "discharge", "redness", "swelling", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }),
+  nose: z.object({
+    status: z.array(z.enum(["normal", "discharge", "congestion", "bleeding", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  throat: z.object({
+    status: z.array(z.enum(["normal", "redness", "swelling", "exudate", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  chest: z.object({
+    status: z.array(z.enum(["normal", "wheezing", "crackles", "decreased breath sounds", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  heart: z.object({
+    status: z.array(z.enum(["normal", "murmur", "irregular rhythm", "tachycardia", "bradycardia", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  abdomen: z.object({
+    status: z.array(z.enum(["normal", "tender", "distended", "mass", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  extremities: z.object({
+    status: z.array(z.enum(["normal", "edema", "deformity", "limited range of motion", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+  neurological: z.object({
+    status: z.array(z.enum(["normal", "weakness", "numbness", "altered mental status", "other"])).nonempty({
+      message: "At least one option must be selected",
+    }),
+  }).optional(),
+});
+
+// Combine both schemas
+const combinedSchema = nonPhilHealthSchema.merge(physicalExamSchema);
+type CombinedFormType = nonPhilHealthType & z.infer<typeof physicalExamSchema>;
 
 export default function NonPHMedicalForm() {
-  const form = useForm<nonPhilHealthType>({
-    resolver: zodResolver(nonPhilHealthSchema),
+  const form = useForm<CombinedFormType>({
+    resolver: zodResolver(combinedSchema),
     defaultValues: {
       isTransient: "resident",
       fname: "",
@@ -53,12 +116,22 @@ export default function NonPHMedicalForm() {
       wt: 0,
       chiefComplaint: "",
       doctor: "",
+      skin: { status: ["normal"] },
+      eyes: { status: ["normal"] },
+      ears: { status: ["normal"] },
+      nose: { status: ["normal"] },
+      throat: { status: ["normal"] },
+      chest: { status: ["normal"] },
+      heart: { status: ["normal"] },
+      abdomen: { status: ["normal"] },
+      extremities: { status: ["normal"] },
+      neurological: { status: ["normal"] },
     },
   });
 
-  function onSubmit(values: nonPhilHealthType) {
+  function onSubmit(values: CombinedFormType) {
     console.log(values);
-    alert("success");
+    alert("sumakses ka")
   }
 
   const formFields = {
@@ -102,6 +175,60 @@ export default function NonPHMedicalForm() {
 
   const currentDate = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
+  // Define the body parts and their options for physical exam
+  const bodyParts = [
+    {
+      id: "skin",
+      name: "Skin",
+      options: ["normal", "edema", "rash", "pallor", "cyanosis", "jaundice", "other"],
+    },
+    {
+      id: "eyes",
+      name: "Eyes",
+      options: ["normal", "yellowish", "redness", "discharge", "swelling", "other"],
+    },
+    {
+      id: "ears",
+      name: "Ears",
+      options: ["normal", "discharge", "redness", "swelling", "other"],
+    },
+    {
+      id: "nose",
+      name: "Nose",
+      options: ["normal", "discharge", "congestion", "bleeding", "other"],
+    },
+    {
+      id: "throat",
+      name: "Throat",
+      options: ["normal", "redness", "swelling", "exudate", "other"],
+    },
+    {
+      id: "chest",
+      name: "Chest",
+      options: ["normal", "wheezing", "crackles", "decreased breath sounds", "other"],
+    },
+    {
+      id: "heart",
+      name: "Heart",
+      options: ["normal", "murmur", "irregular rhythm", "tachycardia", "bradycardia", "other"],
+    },
+    {
+      id: "abdomen",
+      name: "Abdomen",
+      options: ["normal", "tender", "distended", "mass", "other"],
+    },
+    {
+      id: "extremities",
+      name: "Extremities",
+      options: ["normal", "edema", "deformity", "limited range of motion", "other"],
+    },
+    {
+      id: "neurological",
+      name: "Neurological",
+      options: ["normal", "weakness", "numbness", "altered mental status", "other"],
+    },
+  ];
+
   return (
     <div className="p-4 sm:p-8">
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -128,9 +255,10 @@ export default function NonPHMedicalForm() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-8">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Patient Information Section */}
+          <div className="bg-white rounded-lg shadow p-4 sm:p-8 mb-6">
             {/* Search and Add Resident Section */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
               {recordType !== "existingPatient" ? (
@@ -427,7 +555,6 @@ export default function NonPHMedicalForm() {
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-              {" "}
               <FormField
                 control={form.control}
                 name="bhwAssign"
@@ -466,16 +593,85 @@ export default function NonPHMedicalForm() {
                 )}
               />
             </div>
+          </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <Button type="submit" className="w-full sm:w-[100px]">
-                Submit
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
+          {/* Physical Exam Section */}
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle>Physical Examination</CardTitle>
+              <CardDescription>
+                Complete the physical examination form by selecting the appropriate findings for each body system.
+                You can select multiple options for each body part.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[600px] pr-4">
+                <Accordion type="multiple" className="w-full">
+                  {bodyParts.map((bodyPart) => (
+                    <AccordionItem key={bodyPart.id} value={bodyPart.id}>
+                      <AccordionTrigger className="text-lg font-semibold">{bodyPart.name}</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name={`${bodyPart.id}.status` as any}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Status</FormLabel>
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                                  {bodyPart.options.map((option) => (
+                                    <FormItem
+                                      key={option}
+                                      className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(option)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...(field.value as string[]), option])
+                                              : field.onChange(
+                                                (field.value as string[])?.filter((value) => value !== option)
+                                              )
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal capitalize">{option}</FormLabel>
+                                    </FormItem>
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Submit Button */}
+          <div className="flex justify-end gap-4">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => form.reset()}
+              className="w-full sm:w-[150px]"
+            >
+              Reset Form
+            </Button>
+            <Button 
+              type="submit" 
+              className="w-full sm:w-[150px]"
+            >
+              Submit
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

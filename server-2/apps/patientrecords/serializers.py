@@ -8,7 +8,7 @@ from apps.healthProfiling.models import FamilyComposition,Household
 # serializers.py
 
 
-class PartialUpdateMixin:
+class PartialUpdateMixin:  
     def to_internal_value(self, data):
         if self.instance:
             for field in self.fields:
@@ -65,3 +65,33 @@ class FollowUpVisitSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     class Meta:
         model = FollowUpVisit
         fields = '__all__'
+        
+        
+class BodyMeasurementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BodyMeasurement
+        fields = '__all__'
+
+class IllnessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Illness
+class FindingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Finding
+        fields = '__all__'
+        
+class PhysicalExaminationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalExamination
+        fields = '__all__'
+
+class PhysicalExamListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalExamList
+        fields = '__all__'
+        
+class DiagnosisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Diagnosis
+        fields = '__all__'
+

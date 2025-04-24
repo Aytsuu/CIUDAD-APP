@@ -24,4 +24,5 @@ urlpatterns = [
     path('maternal/', include('apps.maternal.urls')),
     path('vaccination/', include("apps.vaccination.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
+    path('medical-consultation/', include("apps.medicalConsultation.urls")),
 ]

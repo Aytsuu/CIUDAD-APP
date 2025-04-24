@@ -25,6 +25,7 @@ class VitalSignsView(generics.ListCreateAPIView):
 class VaccinationHistoryView(generics.ListCreateAPIView):
     serializer_class = VaccinationHistorySerializer
     queryset  =VaccinationHistory.objects.all()
+    
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     
