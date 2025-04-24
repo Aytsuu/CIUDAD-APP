@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import api from "@/pages/api/api";
 
 
 export const deldonationreq = async (don_num: number) => {

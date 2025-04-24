@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
@@ -160,9 +160,10 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
             />
 
             {/* Donation Date */}
-            <FormDateInput
+            <FormDateTimeInput
               control={form.control}
               name="don_date"
+              type="date"
               label="Donation Date"
               readOnly={false}
             />
@@ -171,7 +172,7 @@ function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
             <div className="mt-8 flex justify-end gap-3">
             <Button
                 type="submit"
-                className="bg-buttonBlue hover:bg-buttonBlue/90"
+                className="bg-blue hover:bg-blue/90"
                 disabled={isPending} // Disable button during submission
               >
                 {isPending ? "Saving..." : "Save"}

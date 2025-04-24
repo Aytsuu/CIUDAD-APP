@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import ClerkDonateViewSchema from "@/form-schema/donate-view-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useUpdateDonation } from "./queries/donationUpdateQueries";
@@ -141,9 +141,10 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
           />
 
           {/* Donation Date */}
-          <FormDateInput
+          <FormDateTimeInput
             control={form.control}
             name="don_date"
+            type='date'
             label="Donation Date"
             readOnly={!isEditing}
           />
@@ -167,7 +168,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
                   trigger={
                     <Button
                       type="button"
-                      className="bg-buttonBlue hover:bg-buttonBlue/90"
+                      className="bg-blue hover:bg-blue/90"
                       disabled={isPending}
                     >
                       {isPending ? "Saving..." : "Save Changes"}
@@ -183,7 +184,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
               <Button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="bg-buttonBlue hover:bg-buttonBlue/90"
+                className="bg-blue hover:bg-blue/90"
               >
                 Edit
               </Button>

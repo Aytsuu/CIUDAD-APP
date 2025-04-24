@@ -38,7 +38,7 @@ function DonationTracker() {
 
   // Filter data based on search query
   const filteredData = donations.filter((donation) => {
-    const searchString = `${donation.don_num} ${donation.don_donorfname} ${donation.don_donorlname} ${donation.don_item_name} ${donation.don_category}`.toLowerCase();
+    const searchString = `${donation.don_num} ${donation.don_donorfname} ${donation.don_donorlname} ${donation.don_item_name} ${donation.don_category} ${donation.don_qty} ${donation.don_receiver} ${donation.don_date}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
 
@@ -164,7 +164,7 @@ function DonationTracker() {
       <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Search and Create Section */}
-      <div className="hidden lg:flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4">
         <div className="relative w-full flex gap-2 mr-2">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
@@ -179,7 +179,7 @@ function DonationTracker() {
         </div>
         <DialogLayout
           trigger={
-            <div className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+            <div className="flex items-center bg-blue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-blue/90">
               <Plus size={15} /> Create
             </div>
           }

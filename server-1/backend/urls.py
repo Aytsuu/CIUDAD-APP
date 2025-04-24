@@ -31,6 +31,6 @@ urlpatterns = [
     path('administration/', include("apps.administration.urls")),
     path('file/', include('apps.file.urls')),
     path('treasurer/', include('apps.treasurer.urls')),
-    path('drr/', include('apps.drr.urls'))
+    path('drr/', include('apps.drr.urls')),
     path('donation/', include('apps.donation.urls')),
 ]

@@ -1,5 +1,4 @@
-import api from "@/api/api";
-
+import api from "@/pages/api/api";
 
 export const getdonationreq = async () => {
     try {
