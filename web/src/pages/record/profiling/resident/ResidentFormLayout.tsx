@@ -12,16 +12,17 @@ import { z } from "zod";
 import { Type, Origin } from "../profilingEnums";
 import { Card } from "@/components/ui/card/card";
 import { toast } from "sonner";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { useForm } from "react-hook-form";
 import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
+import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
@@ -31,6 +32,7 @@ export default function ResidentFormLayout() {
   const { user } = React.useRef(useAuth()).current;
 
   // Initializing states
+  const navigate = useNavigate();
   const location = useLocation();
   const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema)).current;
   const form = useForm<z.infer<typeof personalInfoSchema>>({
@@ -52,12 +54,14 @@ export default function ResidentFormLayout() {
   }, [params.residents]);
 
   const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
+  const { mutateAsync: addResidentProfileHealth, isPending: isSubmittingProfileHealth } = useAddResidentProfileHealth(params);
   const { mutateAsync: addPersonal } = useAddPersonal(form.getValues());
+  const { mutateAsync: addPersonalHealth } = useAddPersonalHealth(form.getValues());
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile(form.getValues(), setFormType);
 
   React.useEffect(() => {
-    setIsSubmitting(isSubmittingProfile || isUpdatingProfile);
-  }, [isSubmittingProfile, isUpdatingProfile]) 
+    setIsSubmitting(isSubmittingProfile || isUpdatingProfile || isSubmittingProfileHealth);
+  }, [isSubmittingProfile, isUpdatingProfile, isSubmittingProfileHealth]) 
 
   // Performs side effects when formType changes
   React.useEffect(() => {
@@ -105,11 +109,8 @@ export default function ResidentFormLayout() {
         { key: "per_contact", value: resident?.per_contact || "" },
       ];
 
-      fields.forEach(({ key, value }) => {
-        form.setValue(
-          key as keyof z.infer<typeof personalInfoSchema>,
-          value || ""
-        );
+      fields.map((f: any) => {
+        form.setValue(f.key , f.value);
       });
 
       // Toggle read only
@@ -186,13 +187,35 @@ export default function ResidentFormLayout() {
           ? reqPersonalId
           : await addPersonal();
 
-      await addResidentProfile({
+      const resident = await addResidentProfile({
         personalId: personalId, 
         staffId: user?.staff.staff_id
+      });
+      
+      const healthPersonalId = await addPersonalHealth();
+
+      await addResidentProfileHealth({
+        personalId: healthPersonalId, 
+        staffId: "",
       });
 
       // Reset the values of all fields in the form
       form.reset(defaultValues.current);
+      toast("New record created successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
+        },
+      });
+      
+      navigate("/account/create", {
+        state: {
+          params: {
+            residentId: resident.rp_id
+          }
+        }
+      });
     }
   };
 

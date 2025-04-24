@@ -63,10 +63,10 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Resident Report", url: "/drr-resident-report" },
-      { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
-      { title: "Monthly Report", url: "/drr-monthly-report" },
-      { title: "Staff", url: "/drr-staff" },
+      { title: "Resident Report", url: "/drr/resident-report" },
+      { title: "Acknowledgement Report", url: "/drr/acknowledgement-report" },
+      { title: "Monthly Report", url: "/drr/monthly-report" },
+      { title: "Staff", url: "/drr/staff" },
     ],
   },
 

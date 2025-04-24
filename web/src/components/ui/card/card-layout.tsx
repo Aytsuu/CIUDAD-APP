@@ -22,7 +22,7 @@ export default function CardLayout({
   description,
   content,
   cardClassName,
-  titleClassName,
+  titleClassName, 
   headerClassName,
   contentClassName
 }: CardProps) {

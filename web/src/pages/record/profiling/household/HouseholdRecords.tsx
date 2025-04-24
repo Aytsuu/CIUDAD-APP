@@ -10,12 +10,14 @@ import { HouseholdRecord } from "../profilingTypes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
-import { useHouseholds } from "../queries/profilingFetchQueries";
+import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
 
 export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
   const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format households to populate data table
@@ -29,6 +31,7 @@ export default function HouseholdRecords() {
 
       return {
         id: house.hh_id || "-",
+        families: house.family.length ||  "-",
         streetAddress: house.hh_street || "-",
         sitio: sitio?.sitio_name || "-",
         nhts: house.hh_nhts || "-",
@@ -37,13 +40,13 @@ export default function HouseholdRecords() {
           (`${personal.per_lname},
            ${personal.per_fname} 
            ${personal.per_mname ? 
-            personal.per_mname?.slice(0, 1) + '.' : ''
+            personal.per_mname[0] + '.' : ''
           }` || "-"),
         dateRegistered: house.hh_date_registered || "-",
         registeredBy: 
           (staff ? `${staff.per_lname}, 
           ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname.slice(0,1) + '.' : ''}` : '-')
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   }, [households]);
@@ -69,7 +72,11 @@ export default function HouseholdRecords() {
     currentPage * pageSize
   );
 
-  if ( isLoadingHouseholds ) {
+  if (
+    isLoadingHouseholds ||
+    isLoadingSitio ||
+    isLoadingResidents
+  ) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -100,7 +107,16 @@ export default function HouseholdRecords() {
             />
           </div>
         </div>
-        <Link to="/household/form">
+        <Link
+          to="/household/form"
+          state={{
+            params: {
+              sitio: sitio,
+              residents: residents,
+              households: households,
+            },
+          }}
+        >
           <Button>
             <Plus size={15} /> Register
           </Button>
@@ -142,7 +158,7 @@ export default function HouseholdRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={householdColumns(households)}
+            columns={householdColumns(residents, households)}
             data={paginatedHouseholds}
           />
         </div>

@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateInput } from "@/components/ui/form/form-date-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Control } from "react-hook-form";
@@ -52,7 +52,7 @@ export default function BusinessProfileForm({
             {id: "female", name: "Female"},
             {id: "male", name: "Male"}
           ]} readOnly={isReadOnly}/>
-          <FormDateInput control={control} name="bus_respondentDob" label="Date of Birth" readOnly={isReadOnly}/>
+          <FormDateTimeInput control={control} name="bus_respondentDob" label="Date of Birth" type="date" readOnly={isReadOnly}/>
         </div>
       </div>
 

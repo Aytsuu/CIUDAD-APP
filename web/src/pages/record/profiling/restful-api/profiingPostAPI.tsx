@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 import { generateResidentNo } from "@/helpers/generateResidentNo";
@@ -53,74 +53,9 @@ export const addResidentProfile = async (personalId: string, staffId: string) =>
   }
 };
 
-// POST request for mother model 
-export const addMother = async (residentId: string) => {
-  try {
-    const res = await api.post("profiling/mother/", {
-      rp: residentId,
-    });
-
-    return res.data.mother_id;
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-// POST request for father model 
-export const addFather = async (residentId: string) => {
-  try {
-    console.log({
-      rp: residentId,
-    });
-
-    const res = await api.post("profiling/father/", {
-      rp: residentId,
-    });
-
-    return res.data.father_id;
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-// POST request for guardian model 
-export const addGuardian = async (residentId: string) => {
-  try {
-    const res = await api.post("profiling/guardian/", {
-      rp_id: residentId
-    });
-    
-    return res.data.guard_id
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-// POST request for dependent model 
-export const addDependent = (
-  dependentsInfo: Record<string, string>[],
-  familyId: string
-) => {
-  try {
-    dependentsInfo.map((dependent) => {
-      api.post("profiling/dependent/", {
-        rp_id: dependent.id,
-        fam: familyId,
-      });
-
-      addFamilyComposition(familyId, dependent.id);
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
 // POST request for family model 
 export const addFamily = async (
   demographicInfo: Record<string, string>,
-  fatherId: string | null,
-  motherId: string | null,
-  guardId: string | null,
   staffId: string
 ) => {
   try {
@@ -129,9 +64,6 @@ export const addFamily = async (
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
       fam_date_registered: formatDate(new Date()),
-      father_id: fatherId || null,
-      mother_id: motherId || null,
-      guard_id: guardId || null,
       hh_id: demographicInfo.householdNo || null,
       staff_id: staffId,
     });
@@ -143,11 +75,12 @@ export const addFamily = async (
 };
 
 // POST request for family_composition model 
-export const addFamilyComposition = async (familyId: string, residentId: string) => {
+export const addFamilyComposition = async (familyId: string, role: string, residentId: string) => {
   try {
     const res = await api.post("profiling/family-composition/", {
-      fam: familyId,
-      rp: residentId,
+      fc_role: capitalize(role),
+      fam_id: familyId,
+      rp_id: residentId,
     });
 
     return res.data

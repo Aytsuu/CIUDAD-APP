@@ -44,13 +44,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
+    'corsheaders',
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'corsheaders',
     'apps.account',
-    'apps.file'
+    'apps.file',
+    'apps.drr'
 ]
 
 MIDDLEWARE = [
@@ -155,7 +156,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# New User Model
+# # New User Model
 AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
