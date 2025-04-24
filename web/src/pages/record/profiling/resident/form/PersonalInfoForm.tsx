@@ -56,11 +56,13 @@ const PersonalInfoForm = ({
   onComboboxChange,
 }: PersonalInfoFormProps) => {
   const { control, setValue, watch } = form;
+  // ============= INITIALIZING STATES =============
+
 
   // ==================== RENDER ====================
   return (
     <>
-      {origin === Origin.Administration && formattedResidents && (
+      {origin === Origin.Administration && (
         <Combobox
           options={formattedResidents}
           value={watch("per_id")}

@@ -13,6 +13,7 @@ import { residentColumns } from "./ResidentColumns";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useResidentsTable } from "../queries/profilingFetchQueries";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Description } from "@radix-ui/react-dialog";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -61,6 +62,13 @@ export default function ResidentRecords() {
           </Link>
           <Link
             to="/resident/form"
+            state={{
+              params: {
+                origin: 'create',
+                title: "Resident Registration",
+                Description: "Provide the necessary details, and complete the registration."
+              }
+            }}
           >
             <Button variant="default">
               <Plus size={15} /> Register

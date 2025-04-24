@@ -6,18 +6,31 @@ import { useAuth } from "@/context/AuthContext";
 import { Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
-import { formatResidents } from "../../profilingFormats";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
+import { useResidentsList } from "../../queries/profilingFetchQueries";
+import { formatResidents } from "../../profilingFormats";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function ResidentCreateForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm();
+  const {showLoading, hideLoading} = useLoading();
+  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
+  
+    React.useEffect(() => {
+      if(isLoadingResidents) {
+        showLoading();
+      } else {
+        hideLoading();
+      }
+    }, [origin, isLoadingResidents])
 
   // ================== SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -29,11 +42,11 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   // ==================== HANDLERS ====================
   const handleComboboxChange = React.useCallback(() => { 
-    const data = params.residents.find(
+    const data = residentsList.find(
       (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
     );
 
-    populateFields(data?.per);
+    populateFields(data?.personal_info);
   }, [form.watch("per_id")]);
 
   const submit = async () => {
@@ -69,10 +82,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   return (
     // ==================== RENDER ====================
-    <LayoutWithBack 
-      title="Resident Registration" 
-      description="Provide the necessary details, and complete the registration."
-    >
+    <LayoutWithBack title={params.title} description={params.description} >
       <Card className="w-full p-10">
         <div className="pb-4">
           <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -87,13 +97,17 @@ export default function ResidentCreateForm({ params }: { params: any }) {
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm
+              formattedResidents={formattedResidents}
               form={form}
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
+              origin={params.origin ? params.origin : ''}
               isReadOnly={false}
               isAllowSubmit={isAllowSubmit}
               onComboboxChange={handleComboboxChange}
+              isAssignmentOpen={isAssignmentOpen}
+              setIsAssignmentOpen={setIsAssignmentOpen}
             />
           </form>
         </Form>

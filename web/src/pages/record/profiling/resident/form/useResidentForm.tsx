@@ -7,8 +7,9 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
+import { Origin } from "../../profilingEnums";
 
-export const useResidentForm = (defaultData?: any) => {
+export const useResidentForm = (defaultData?: any, origin?: any) => {
   const navigate = useNavigate();
   const defaultValues = generateDefaultValues(personalInfoSchema);
   const form = useForm<z.infer<typeof personalInfoSchema>>({
@@ -23,7 +24,12 @@ export const useResidentForm = (defaultData?: any) => {
   const populateFields = React.useCallback((values: Record<string, any>) => {
     const resident = values;
     const fields = [
-      { key: "per_id", value: String(resident?.per_id) || ""},
+      { key: "per_id",
+        value:
+          origin === Origin.Administration
+            ? String(form.watch("per_id"))
+            : String(resident?.per_id) || "",
+      },
       { key: "per_lname", value: resident?.per_lname || ""},
       { key: "per_fname", value: resident?.per_fname || "" },
       { key: "per_mname", value: resident?.per_mname || "" },
