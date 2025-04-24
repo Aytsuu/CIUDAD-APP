@@ -1,6 +1,6 @@
 import React from "react";
 import { z } from "zod";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,11 +16,11 @@ import {
   useAddFamily,
   useAddFamilyComposition,
 } from "../../queries/profilingAddQueries";
+import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function SoloFormLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const params = React.useMemo(() => location.state?.params, [location.state]);
   const defaultValues = React.useRef(
     generateDefaultValues(demographicInfoSchema)
   );
@@ -31,20 +31,31 @@ export default function SoloFormLayout() {
   });
 
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
   const [invalidHousehold, setInvalidHousehold] =
     React.useState<boolean>(false);
   const formattedResidents = React.useMemo(
-    () => formatResidents(params),
-    [params.resident]
+    () => formatResidents(residentsList),
+    [residentsList]
   );
   const formattedHouseholds = React.useMemo(
-    () => formatHouseholds(params),
-    [params.households]
+    () => formatHouseholds(householdsList),
+    [householdsList]
   );
+
+  React.useEffect(() => {
+    if(isLoadingHouseholds || isLoadingResidents) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoadingHouseholds, isLoadingResidents])
 
   const submit = async () => {
     setIsSubmitting(true);
@@ -58,6 +69,12 @@ export default function SoloFormLayout() {
       setInvalidHousehold(true);
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
       });
       return;
     }
@@ -67,20 +84,22 @@ export default function SoloFormLayout() {
       staffId: user?.staff.staff_id 
     });
 
-    const composition = await addFamilyComposition({
-      familyId: family.fam_id,
-      role: "Independent",
-      residentId: residentId,
+    addFamilyComposition([
+      {
+        "fam": family.fam_id, 
+        "fc_role": "Independent", 
+        "rp": residentId
+      }
+    ], {
+      onSuccess: () => {
+        toast("Record added successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        });
+        navigate(-1);
+        setIsSubmitting(false);
+        form.reset(defaultValues.current);
+      }
     });
-
-    if (composition) {
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-      navigate(-1);
-      setIsSubmitting(false);
-      form.reset(defaultValues.current);
-    }
   };
 
   return (

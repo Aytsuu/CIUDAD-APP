@@ -20,7 +20,6 @@ export default function ResidentRecords() {
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const debouncedSearchQuery = useDebounce(searchQuery, 100);
   const debouncedPageSize = useDebounce(pageSize, 100);
-
   const {data: residentsTableData, isLoading } = useResidentsTable(
     currentPage, 
     debouncedPageSize,
@@ -62,13 +61,6 @@ export default function ResidentRecords() {
           </Link>
           <Link
             to="/resident/form"
-            state={{
-              params: {
-                title: "Resident Registration",
-                description:
-                  "Provide the necessary details, and complete the registration.",
-              },
-            }}
           >
             <Button variant="default">
               <Plus size={15} /> Register

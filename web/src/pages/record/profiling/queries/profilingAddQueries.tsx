@@ -61,59 +61,55 @@ export const useAddFamily = () => {
 export const useAddFamilyComposition = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({familyId, role, residentId}: {
-      familyId: string;
-      role: string;
-      residentId: string;
-    }) => addFamilyComposition(familyId, role, residentId),
+    mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
     onSuccess: (newData, variables) => {
-      const {familyId, role, residentId} = variables;
+      // const {familyId, role, residentId} = variables;
 
-      // Update family compositions list
-      queryClient.setQueryData(['familyCompositions'], (old: any[] = []) => [...old, newData]);
+      // // Update family compositions list
+      // queryClient.setQueryData(['familyCompositions'], (old: any[] = []) => [...old, newData]);
 
-      // Update the families list (if you have one)
-      queryClient.setQueryData(['families'], (old: any[] = []) => {
-        return old.map(family => {
-          if (family.fam_id === familyId) {
-            return {
-              ...family,
-              family_compositions: [
-                ...(family.family_compositions || []),
-                newData
-              ]
-            };
-          }
+      // // Update the families list (if you have one)
+      // queryClient.setQueryData(['families'], (old: any[] = []) => {
+      //   return old.map(family => {
+      //     if (family.fam_id === familyId) {
+      //       return {
+      //         ...family,
+      //         family_compositions: [
+      //           ...(family.family_compositions || []),
+      //           newData
+      //         ]
+      //       };
+      //     }
 
-          return family;
-        });
-      });
+      //     return family;
+      //   });
+      // });
 
-      // Update residents list
-      queryClient.setQueryData(['residents'], (oldResidents: any[] = []) => {
-        return oldResidents.map(resident => {
-          if(resident.rp_id === residentId) {
-            return {
-              ...resident,
-              family_compositions: [
-                ...(resident.family_compositions || []),
-                { 
-                  fc_role: role, 
-                  fam: { 
-                    fam_id: familyId,
-                    hh: {
-                      hh_id: newData.fam?.hh?.hh_id,
-                      sitio: newData.fam?.hh?.sitio
-                    },
-                  } 
-                },
-              ],
-            }
-          }
+      // // Update residents list
+      // queryClient.setQueryData(['residents'], (oldResidents: any[] = []) => {
+      //   return oldResidents.map(resident => {
+      //     if(resident.rp_id === residentId) {
+      //       return {
+      //         ...resident,
+      //         family_compositions: [
+      //           ...(resident.family_compositions || []),
+      //           { 
+      //             fc_role: role, 
+      //             fam: { 
+      //               fam_id: familyId,
+      //               hh: {
+      //                 hh_id: newData.fam?.hh?.hh_id,
+      //                 sitio: newData.fam?.hh?.sitio
+      //               },
+      //             } 
+      //           },
+      //         ],
+      //       }
+      //     }
 
-          return resident
-        })}
-      );
+      //     return resident
+      //   })}
+      // );
 
       // Invalidate queries to ensure fresh data is fetched if needed
       queryClient.invalidateQueries({queryKey: ['familyCompositions']});
@@ -144,11 +140,9 @@ export const useAddHousehold = () => {
 
       toast("Record added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        action: {
-          label: "View",
-          onClick: () => navigate(-1),
-        },
       });
+      
+      navigate(-1)
     },
   });
 };

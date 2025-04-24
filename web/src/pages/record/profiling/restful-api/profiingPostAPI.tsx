@@ -1,6 +1,5 @@
 import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
-import { generateFamilyNo } from "@/helpers/generateFamilyNo";
 import { capitalize } from "@/helpers/capitalize";
 import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 
@@ -53,13 +52,11 @@ export const addFamily = async (
   staffId: string
 ) => {
   try {
-    const res = await api.post("profiling/family/", {
-      fam_id: await generateFamilyNo(demographicInfo.building),
+    const res = await api.post("profiling/family/create/", {
       fam_indigenous: capitalize(demographicInfo.indigenous),
       fam_building: capitalize(demographicInfo.building),
-      fam_date_registered: formatDate(new Date()),
-      hh_id: demographicInfo.householdNo || null,
-      staff_id: staffId,
+      hh: demographicInfo.householdNo || null,
+      staff: staffId,
     });
 
     return res.data;
@@ -69,13 +66,10 @@ export const addFamily = async (
 };
 
 // POST request for family_composition model 
-export const addFamilyComposition = async (familyId: string, role: string, residentId: string) => {
+export const addFamilyComposition = async (data: Record<string, any>[]) => {
   try {
-    const res = await api.post("profiling/family-composition/", {
-      fc_role: capitalize(role),
-      fam_id: familyId,
-      rp_id: residentId,
-    });
+    console.log(data)
+    const res = await api.post("profiling/family/composition/bulk/create/", data);
 
     return res.data
   } catch (err) {
@@ -86,17 +80,12 @@ export const addFamilyComposition = async (familyId: string, role: string, resid
 // POST request for household model 
 export const addHousehold = async (householdInfo: Record<string, string>, staffId: string) => {
   try {
-    const res = await api.post("profiling/household/", {
-      hh_id: await generateHouseholdNo(),
+    const res = await api.post("profiling/household/create/", {
       hh_nhts: capitalize(householdInfo.nhts),
-      hh_province: "Cebu",
-      hh_city: "Cebu City",
-      hh_barangay: "San Roque",
       hh_street: capitalize(householdInfo.street),
-      hh_date_registered: formatDate(new Date()),
-      rp_id: householdInfo.householdHead.split(" ")[0],
-      sitio_id: householdInfo.sitio,
-      staff_id: staffId,
+      rp: householdInfo.householdHead.split(" ")[0],
+      sitio: householdInfo.sitio,
+      staff: staffId,
     });
 
     return res.data;

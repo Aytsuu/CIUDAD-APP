@@ -6,12 +6,14 @@ import { Type } from "../../profilingEnums";
 import { useUpdateProfile } from "../../queries/profilingUpdateQueries";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
+import { toast } from "sonner";
+import { CircleAlert } from "lucide-react";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } =
-    useResidentForm(params.data?.per);
-  const { mutateAsync: updateProfile, isPending: isUpdating } =
+    useResidentForm(params.data);
+  const { mutateAsync: updateProfile} =
     useUpdateProfile();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [formType, setFormType] = React.useState<Type>(params.type);
@@ -35,7 +37,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     }
 
     const values = form.getValues();
-    if (checkDefaultValues(values, params.data?.per)) {
+    if (checkDefaultValues(values, params.data)) {
       setIsSubmitting(false);
       setFormType(Type.Viewing);
       handleSubmitError("No changes made");
@@ -43,21 +45,24 @@ export default function ResidentViewForm({ params }: { params: any }) {
     }
 
     await updateProfile({
-      personalId: params.data.per.per_id,
+      personalId: params.data.per_id,
       values: values,
+    }, {
+      onSuccess: () => {
+        handleSubmitSuccess("Profile updated successfully");
+        setIsSubmitting(false);
+        setFormType(Type.Viewing);
+        params.data = values;
+      }
     });
-
-    if (!isUpdating) {
-      handleSubmitSuccess("Profile updated successfully");
-      setIsSubmitting(false);
-      setFormType(Type.Viewing);
-      params.data.per = values;
-    }
   };
 
   return (
     // ==================== RENDER ====================
-    <LayoutWithBack title={params.title} description={params.description}>
+    <LayoutWithBack 
+      title='Resident Details'
+      description='Information is displayed in a clear, organized, and secure manner.'
+    >
       <Card className="w-full p-10">
         <div className="pb-4">
           <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -65,7 +70,10 @@ export default function ResidentViewForm({ params }: { params: any }) {
         </div>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(submit)}
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm

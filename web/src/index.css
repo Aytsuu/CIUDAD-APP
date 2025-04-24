@@ -141,3 +141,13 @@ p[data-margin] {
 .MuiCardContent-root{
   border-bottom-color: transparent !important;
 }
+
+@keyframes loading-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-loading-line {
+  width: 50%;
+  animation: loading-line 1.5s infinite ease-in-out;
+}

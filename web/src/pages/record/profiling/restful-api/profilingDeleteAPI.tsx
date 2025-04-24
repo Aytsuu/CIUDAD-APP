@@ -14,7 +14,7 @@ export const deleteRequest = async (requestId: string) => {
 // Delete family member
 export const deleteFamilyComposition = async (familyId: string, residentId: string) => {
   try {
-    const res = await api.delete(`profiling/family-composition/delete/${familyId}/${residentId}/`);
+    const res = await api.delete(`profiling/family/composition/delete/${familyId}/${residentId}/`);
     return res;
   } catch (err) {
     console.error(err);

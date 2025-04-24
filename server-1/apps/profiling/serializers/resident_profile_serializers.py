@@ -5,7 +5,7 @@ from ..models import *
 from ..serializers.personal_serializers import *
 from datetime import datetime
 
-class ResidentProfileSerializer(serializers.ModelSerializer):
+class ResidentProfileBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = '__all__'
@@ -23,11 +23,12 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     sitio_name = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
+    has_account = serializers.SerializerMethodField()
     
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'suffix', 'household_no', 'sitio_name', 'family_no', 'registered_by']
+                  'suffix', 'household_no', 'sitio_name', 'family_no', 'registered_by', 'has_account']
     
     def get_household_no(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
@@ -45,11 +46,14 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
         return ""
     
     def get_registered_by(self, obj):
-        if obj.staff and hasattr(obj.staff, 'per'):
-            staff = obj.staff.per
+        if obj.staff and hasattr(obj.staff, 'rp'):
+            staff = obj.staff.rp.per
             return f"{staff.per_lname}, {staff.per_fname}" + \
                    (f" {staff.per_mname[0]}." if staff.per_mname else "")
         return '-'
+    
+    def get_has_account(self, obj):
+        return hasattr(obj, 'account')
 
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
@@ -73,10 +77,10 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
 
         # Create ResidentProfile record
         resident_profile = ResidentProfile.objects.create(
-            rp_id=self.generate_resident_no(),
-            rp_date_registered=timezone.now().date(),
-            per=personal,
-            staff_id=validated_data['staff']
+            rp_id = self.generate_resident_no(),
+            rp_date_registered = timezone.now().date(),
+            per = personal,
+            staff_id = validated_data['staff']
         )
         
         return resident_profile
@@ -92,3 +96,36 @@ class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
         resident_id = f"{formatted}{year}{month}{day}"
         
         return resident_id
+
+class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
+    per_id = serializers.IntegerField(source='per.per_id')
+    per_lname = serializers.CharField(source='per.per_lname')
+    per_fname = serializers.CharField(source='per.per_fname')
+    per_mname = serializers.CharField(source='per.per_mname')
+    per_suffix = serializers.CharField(source='per.per_suffix')
+    per_sex = serializers.CharField(source="per.per_sex")
+    per_dob = serializers.DateField(source="per.per_dob")
+    per_status = serializers.CharField(source="per.per_status")
+    per_address = serializers.CharField(source="per.per_address")
+    per_edAttainment = serializers.CharField(source="per.per_edAttainment")
+    per_religion = serializers.CharField(source="per.per_religion")
+    per_contact = serializers.CharField(source="per.per_contact")
+
+    class Meta:
+        model = ResidentProfile
+        fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
+                  'per_status', 'per_address', 'per_edAttainment', 'per_religion', 'per_contact']
+        read_only_fields = fields
+
+class ResidentProfileListSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    personal_info = ResidentPersonalInfoSerializer(source='*')
+
+    class Meta:
+        model = ResidentProfile
+        fields = ['rp_id', 'name', 'personal_info']
+
+    def get_name(self, obj):
+        info = obj.per
+        return f"{info.per_lname}, {info.per_fname}" + \
+            (f" {info.per_mname[0]}." if info.per_mname else "")

@@ -13,14 +13,11 @@ import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
 export default function ResidentCreateForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('',params.origin);
+  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm();
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
-  const formattedResidents = React.useMemo(() => {
-    return formatResidents(params);
-  }, [params.residents]);
 
   // ================== SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -50,7 +47,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
-      await addResidentAndPersonal({
+      addResidentAndPersonal({
         personalInfo: personalInfo,
         staffId: user?.staff.staff_id,
       }, {
@@ -72,7 +69,10 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   return (
     // ==================== RENDER ====================
-    <LayoutWithBack title={params.title} description={params.description}>
+    <LayoutWithBack 
+      title="Resident Registration" 
+      description="Provide the necessary details, and complete the registration."
+    >
       <Card className="w-full p-10">
         <div className="pb-4">
           <h2 className="text-lg font-semibold">Personal Information</h2>
@@ -87,16 +87,12 @@ export default function ResidentCreateForm({ params }: { params: any }) {
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm
-              formattedResidents={formattedResidents} // For combobox
               form={form}
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
               isReadOnly={false}
               isAllowSubmit={isAllowSubmit}
-              isAssignmentOpen={isAssignmentOpen} 
-              setIsAssignmentOpen={setIsAssignmentOpen}
-              origin={params.origin}
               onComboboxChange={handleComboboxChange}
             />
           </form>

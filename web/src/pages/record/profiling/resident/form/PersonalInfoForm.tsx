@@ -180,4 +180,4 @@ const PersonalInfoForm = ({
   );
 } 
 
-export default React.memo(PersonalInfoForm);
+export default PersonalInfoForm;

@@ -37,14 +37,14 @@ export default function EditGeneralDetails({
   });
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
-  const { mutateAsync: updateFamily, isPending: isUpdating } = useUpdateFamily(); 
+  const { mutateAsync: updateFamily } = useUpdateFamily(); 
   const formattedHouseholds = React.useMemo(() => 
-    formatHouseholds({households: households}), [households]
-  )
+    formatHouseholds(households), [households]
+  );
 
   React.useEffect(() => {
     if(familyData) {
-      form.setValue("householdNo", familyData.hh.hh_id)
+      form.setValue("householdNo", familyData.household_no)
       form.setValue("building", familyData.fam_building)
       form.setValue("indigenous", familyData.fam_indigenous)
     }
@@ -53,7 +53,7 @@ export default function EditGeneralDetails({
   // Check if values are not changed when saving
   const checkDefaultValues = (values: any) => {
     const isDefault = 
-      values.householdNo === familyData.hh.hh_id &&
+      values.householdNo === familyData.household_no &&
       values.building === familyData.fam_building &&
       values.indigenous === familyData.fam_indigenous
 
@@ -84,24 +84,20 @@ export default function EditGeneralDetails({
     await updateFamily({
       demographicInfo: values,
       familyId: familyData.fam_id,
-      oldHouseholdId: familyData.hh.hh_id
-    })
+      oldHouseholdId: familyData.household_no
+    }, {
+      onSuccess: () => {
+        setIsSaving(false);
+        setIsOpenDialog(false);
 
-    if(!isUpdating) {
-      setIsSaving(false);
-      setIsOpenDialog(false);
-
-      setFamily((prev: any) => ({
-        ...prev,
-        fam_building: capitalize(values.building),
-        fam_indigenous: capitalize(values.indigenous),
-        hh: {
-          ...prev.hh,
-          hh_id: values.householdNo
-        }
-      }))
-    }
-
+        setFamily((prev: any) => ({
+          ...prev,
+          fam_building: capitalize(values.building),
+          fam_indigenous: capitalize(values.indigenous),
+          household_no: values.householdNo
+        }));
+      }
+    });
   }
 
   return (

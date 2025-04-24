@@ -8,73 +8,23 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
-import { FamilyRecord } from "../profilingTypes";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useFamilies, useFamilyComposition, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
+import { useFamiliesTable } from "../queries/profilingFetchQueries";
 
 export default function FamilyRecords() {
   // Initialize states
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-
-  const { data: familyCompositions, isLoading: isLoadingFC} = useFamilyComposition();
-  const { data: families, isLoading: isLoadingFamilies } = useFamilies();
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
-  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
-
-  // Format family to populate data table
-  const formatFamilyData = (): FamilyRecord[] => {
-    if (!families) return [];
-    return families.map((family: any) => {
-      const staff = family?.staff?.rp?.per;
-      const totalMembers = family.family_compositions.length
-
-      return {
-        id: family.fam_id || "-",
-        noOfMembers: totalMembers || "-",
-        building: family.fam_building || "-",
-        indigenous: family.fam_indigenous || "-",
-        dateRegistered: family.fam_date_registered || "-",
-        registeredBy: 
-          (staff ? `${staff.per_lname}, 
-          ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
-      };
-    });
-  };
-
-  const filteredFamilies = React.useMemo(() => {
-    let filtered = formatFamilyData();
-
-    filtered = filtered.filter((record: any) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-
-    return filtered;
-  }, [searchQuery, families]);
-
-  const totalPages = Math.ceil(filteredFamilies.length / pageSize);
-
-  const paginatedFamilies = filteredFamilies.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  const { data: familiesTableData, isLoading } = useFamiliesTable(
+    currentPage, 
+    pageSize, 
+    searchQuery
   );
-  if (isLoadingFamilies || isLoadingResidents || 
-    isLoadingHouseholds || isLoadingFC) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
-
+ 
+  const families = familiesTableData?.results || [];
+  const totalCount = familiesTableData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+ 
   return (
     <div className="w-full">
       <div className="mb-4">
@@ -112,11 +62,7 @@ export default function FamilyRecords() {
             </Button>
           }
           mainContent={
-            <FamilyProfileOptions
-              familyCompositions={familyCompositions}
-              residents={residents}
-              households={households}
-            />
+            <FamilyProfileOptions />
           }
         />
       </div>
@@ -156,17 +102,18 @@ export default function FamilyRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={familyColumns(residents, families, households)}
-            data={paginatedFamilies}
+            columns={familyColumns}
+            data={families}
+            isLoading={isLoading}
           />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredFamilies.length)} of{" "}
-            {filteredFamilies.length} rows
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} rows
           </p>
-          {filteredFamilies.length > 0 && (
+          {totalPages > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}

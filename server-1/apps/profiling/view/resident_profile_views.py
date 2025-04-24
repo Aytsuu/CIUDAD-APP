@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
 from ..pagination import *
+from apps.account.models import *
 
 class ResidentProfileCreateView(generics.CreateAPIView):
-  serializer_class = ResidentProfileSerializer
+  serializer_class = ResidentProfileBaseSerializer
   queryset=ResidentProfile.objects.all()
 
   def perform_create(self, serializer):
@@ -14,9 +15,6 @@ class ResidentProfileCreateView(generics.CreateAPIView):
 class ResidentProfileTableView(generics.ListCreateAPIView):
     serializer_class = ResidentProfileTableSerializer
     pagination_class = StandardResultsPagination
-
-    def get(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = ResidentProfile.objects.select_related(
@@ -28,7 +26,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                        'fam',
                        'fam__hh',
                        'fam__hh__sitio'
-                   ).only('fam'))
+                   ).only('fam')),
         ).only(
             'rp_id',
             'rp_date_registered',
@@ -52,11 +50,24 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
 
         return queryset
     
-class ResidentPersonalCreateSerializer(generics.CreateAPIView):
+class ResidentPersonalCreateView(generics.CreateAPIView):
     serializer_class = ResidentPersonalCreateSerializer
     
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return super().create(request, *args, **kwargs)
+
+class ResidentPersonalInfoView(generics.RetrieveAPIView):
+    serializer_class = ResidentPersonalInfoSerializer
+    queryset=ResidentProfile.objects.all()
+    lookup_field='rp_id'
+
+class ResidentProfileListView(generics.ListAPIView):
+    serializer_class = ResidentProfileListSerializer
+    
+    def get_queryset(self):
+        excluded_fam_id = self.kwargs.get('fam_id', None)
+        if excluded_fam_id:
+            return ResidentProfile.objects.filter(~Q(family_compositions__fam_id=excluded_fam_id))
+        
+        return ResidentProfile.objects.all()
+   

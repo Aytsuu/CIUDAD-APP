@@ -11,6 +11,7 @@ export type ResidentRecord = {
   suffix: string;
   rp_date_registered: string;
   registered_by: string;
+  has_account: boolean;
 };
 
 export type DependentRecord = {
@@ -25,12 +26,12 @@ export type DependentRecord = {
 }
 
 export type FamilyRecord = {
-  id: string;
-  noOfMembers: string;
-  building: string;
-  indigenous: string;
-  dateRegistered: string;
-  registeredBy: string;
+  fam_id: string;
+  members: string;
+  fam_building: string;
+  fam_indigenous: string;
+  fam_date_registered: string;
+  registered_by: string;
 }
 
 export type MemberRecord = {
@@ -38,15 +39,14 @@ export type MemberRecord = {
 }
 
 export type HouseholdRecord = {
-  id: string;
-  families: string;
-  streetAddress: string;
+  hh_id: string;
+  total_families: string;
+  street: string;
   sitio: string;
   nhts: string;
-  headNo: string;
   head: string;
-  dateRegistered: string;
-  registeredBy: string;
+  date_registered: string;
+  registered_by: string;
 }
 
 export type HouseholdFamRecord = {
