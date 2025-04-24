@@ -8,7 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type CardProps = {
-  title?: string;
+  title?: React.ReactNode; 
   description?: React.ReactNode;
   content: React.ReactNode;
   cardClassName?: string;
@@ -22,7 +22,7 @@ export default function CardLayout({
   description,
   content,
   cardClassName,
-  titleClassName,
+  titleClassName, 
   headerClassName,
   contentClassName
 }: CardProps) {

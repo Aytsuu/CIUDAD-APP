@@ -51,7 +51,11 @@ INSTALLED_APPS = [
     'apps.profiling',
     'apps.account',
     'apps.file',
-    'apps.drr'
+    'apps.drr',
+    'apps.donation',
+    # 'apps.useraccount',
+    # 'apps.blotter',
+    # 'apps.gad',
 ]
 
 MIDDLEWARE = [
@@ -59,7 +63,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -161,7 +164,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# New User Model
+# # New User Model
 AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [

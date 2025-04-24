@@ -81,6 +81,7 @@ import z from "zod"
 
 const IncomeExpenseFormSchema = z.object({
 
+    iet_serial_num: z.string().nonempty('Serial number is required'),
     iet_entryType: z.string().optional(),
     iet_particulars: z.string().nonempty('Particulars is required'),
     iet_amount: z.string().nonempty('Amount is required'),
@@ -89,27 +90,7 @@ const IncomeExpenseFormSchema = z.object({
     // iet_receipt_image: z.instanceof(File).refine((file) => file.size > 0, {
     //     message: "Receipt is required.",
     // }), 
-    iet_receipt_image: z.any()
-    .refine((file) => {
-        if (!file) return false;
-        
-        if (file instanceof File) {
-            return file.size > 0;
-        }
-        
-        if (file?.file instanceof File) {
-            return file.file.size > 0;
-        }
-        
-        if (typeof file === 'string') {
-            // If it's already a URL string from server
-            return true;
-        }
-        
-        return false;
-    }, {
-        message: "Please upload a valid receipt image"
-    })
+    iet_receipt_image: z.string().url("Please upload a valid receipt image"),
 })
 
 export default IncomeExpenseFormSchema

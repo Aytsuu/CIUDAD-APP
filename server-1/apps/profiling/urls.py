@@ -1,11 +1,12 @@
 from django.urls import path
 from .views import *
-from .view.resident_profile_views import *
-from .view.personal_views import *
-from .view.family_views import *
-from .view.family_composition_views import * 
-from .view.household_views import *
-from .view.sitio_views import *
+from .views.resident_profile_views import *
+from .views.personal_views import *
+from .views.family_views import *
+from .views.family_composition_views import * 
+from .views.household_views import *
+from .views.sitio_views import *
+from .views_deprecated import * # To be removed
 
 urlpatterns = [
     

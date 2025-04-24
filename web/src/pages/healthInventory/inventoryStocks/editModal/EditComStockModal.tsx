@@ -1,310 +1,162 @@
 // EditCommodityStockForm.tsx
-import React, { useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
-  CommodityStockType,
-  CommodityStocksSchema,
-} from "@/form-schema/inventory/inventoryStocksSchema";
+  AddCommoditySchema,
+  AddCommodityStockType,
+} from "@/form-schema/inventory/addStocksSchema";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { CommodityStocksRecord } from "../tables/CommodityStocks";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { updateCommodityStock } from "../REQUEST/Post/Commodity/EditModalCommodity";
+import { set } from "date-fns";
 
 interface EditCommodityStockFormProps {
-  initialData: {
-    id: number;
-    commodityName: string;
-    category: string;
-    recevFrom: string;
-    qty: string;
-    availQty: string;
-    expiryDate: string;
-    dispensed: string;
-  };
+  initialData: CommodityStocksRecord;
+  setIsDialog: (isOpen: boolean) => void;
 }
 
-
-export default function EditCommodityStockForm({
-  initialData,
-}: 
-EditCommodityStockFormProps) {
-  
+export default function EditCommodityStockForm({initialData, setIsDialog,}: EditCommodityStockFormProps) {
   UseHideScrollbar();
-  
-  
-  const parseQuantity = (qtyString: string) => {
-    try {
-      if (!qtyString) {
-        return { qty: 0, pcs: 0, unit: "pcs" as const };
-      }
+  const [isConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [submissionData, setSubmissionData] =
+    useState<AddCommodityStockType | null>(null);  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-      const boxMatch = qtyString.match(/(\d+) bx\/s \((\d+) pc\/s\)/);
-      if (boxMatch && boxMatch[1] && boxMatch[2]) {
-        return {
-          qty: parseInt(boxMatch[1]),
-          pcs: parseInt(boxMatch[2]),
-          unit: "boxes" as const,
-        };
-      }
-
-      const piecesMatch = qtyString.match(/(\d+)/);
-      return {
-        qty: piecesMatch ? parseInt(piecesMatch[0]) : 0,
-        pcs: 0,
-        unit: "pcs" as const,
-      };
-    } catch (error) {
-      console.error("Error parsing quantity:", error);
-      return { qty: 0, pcs: 0, unit: "pcs" as const };
-    }
-  };
-
-  const form = useForm<CommodityStockType>({
-    resolver: zodResolver(CommodityStocksSchema),
+  const form = useForm<AddCommodityStockType>({
+    resolver: zodResolver(AddCommoditySchema),
     defaultValues: {
-      commodityName: initialData?.commodityName || "",
-      category: initialData?.category || "",
-      recevFrom: initialData?.recevFrom || "",
-      ...parseQuantity(initialData?.qty || ""),
-      expiryDate: initialData?.expiryDate || "",
+      cinv_qty: undefined,
+      cinv_qty_unit: initialData.cinv_qty_unit,
+      cinv_pcs: initialData.qty?.cinv_pcs || 0,
     },
   });
 
-  useEffect(() => {
-    if (initialData) {
-      const parsed = parseQuantity(initialData.qty);
-      form.reset({
-        commodityName: initialData.commodityName,
-        category: initialData.category,
-        // id: initialData.id,
-        recevFrom: initialData.recevFrom,
-        ...parsed,
-        expiryDate: initialData.expiryDate,
-      });
-    }
-  }, [initialData, form]);
+  
+  const handleSubmit = async (data: AddCommodityStockType) => {
+    setIsSubmitting(true);
 
-  const onSubmit = async (data: CommodityStockType) => {
-    console.log(data);
-    alert("✅ Data saved successfully!");
+    try {
+      await updateCommodityStock(data, initialData, queryClient);
+      toast.success("First aid item updated successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 3000,
+        onAutoClose: () => {
+          setIsDialog(false);
+        },
+      });
+
+      // Wait for toast to complete before closing dialog
+      setTimeout(() => setIsDialog(false), 3000);
+    } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
+      toast.error(error.message || "Failed to update first aid item", {
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const currentUnit = form.watch("unit");
-  const qty = form.watch("qty") || 0;
-  const pcs = form.watch("pcs") || 0;
+
+  
+  const onSubmit = (data: AddCommodityStockType) => {
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = () => {
+    if (submissionData) {
+      setIsAddConfirmationOpen(false);
+      setIsSubmitting(true); // Set submitting state here
+      handleSubmit(submissionData);
+    }
+  };
+
+  const currentUnit = form.watch("cinv_qty_unit");
+  const qty = form.watch("cinv_qty") || 0;
+  const pcs = form.watch("cinv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : 0;
 
-  // Form options
-  const commodityOptions = [
-    { id: "Condom", name: "Condom" },
-    { id: "pills COC", name: "Pills COC" },
-  ];
-
-  const categoryOptions = [
-    { id: "Condom", name: "Condom" },
-    { id: "Pills", name: "Pills" },
-  ];
-
-  const recevFromOptions = [
-    { id: "DOH", name: "DOH" },
-    { id: "CHD", name: "CHD" },
-    { id: "OTHERS", name: "OTHERS" },
-  ];
-
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1  hide-scrollbar">
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
+            <FormInput
               control={form.control}
-              name="commodityName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Commodity Name</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Commodity"
-                      options={commodityOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="cinv_qty"
+              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
+              type="number"
+              placeholder="Quantity"
             />
-            <FormField
+            <FormSelect
               control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Category"
-                      options={categoryOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="expiryDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      value={field.value?.split("T")[0] || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="recevFrom"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Received From</FormLabel>
-                <FormControl>
-                  <SelectLayout
-                    label=""
-                    className="w-full"
-                    placeholder="Select Source"
-                    options={recevFromOptions}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="qty"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="quantity"
-                      min={0}
-                      value={field.value || ""} // Handle undefined and 0
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <SelectLayout
-                      label=""
-                      className="w-full"
-                      placeholder="Select Unit"
-                      options={[
-                        { id: "boxes", name: "Boxes" },
-                        { id: "pcs", name: "Pieces" },
-                      ]}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              name="cinv_qty_unit"
+              label="Unit"
+              options={[
+                { id: "boxes", name: "Boxes" },
+                { id: "bottles", name: "Bottles" },
+                { id: "packs", name: "Packs" },
+              ]}
+              readOnly
             />
           </div>
 
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormField
+              <FormInput
                 control={form.control}
-                name="pcs"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pieces per Box</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="pcs"
-                        value={field.value || ""} // Handle undefined and 0
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                name="cinv_pcs"
+                label="Pieces per Box"
+                type="number"
+                placeholder="pcs"
+                readOnly
               />
-
-              <FormItem className="sm:col-span-2">
-                <FormLabel>Total Pieces</FormLabel>
+              <div className="sm:col-span-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block">
+                  Total Pieces
+                </label>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
                   {totalPieces.toLocaleString()} pieces
                   <span className="ml-2 text-muted-foreground text-xs">
                     ({qty} boxes × {pcs} pieces/box)
                   </span>
                 </div>
-              </FormItem>
+              </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-3  bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save Changes
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <span className="loader mr-2"></span> Saving...
+                </span>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </form>
       </Form>
+
+      <ConfirmationDialog
+        isOpen={isConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Confirm Update"
+        description="Are you sure you want to update this commodity stock? This action cannot be undone."
+      />
     </div>
   );
 }

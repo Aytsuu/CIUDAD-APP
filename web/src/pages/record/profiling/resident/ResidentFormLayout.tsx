@@ -25,6 +25,7 @@ import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
+import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
@@ -55,8 +56,8 @@ export default function ResidentFormLayout() {
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {
-    setIsSubmitting(isSubmittingProfile || isUpdatingProfile);
-  }, [isSubmittingProfile, isUpdatingProfile]) 
+    setIsSubmitting(isSubmittingProfile || isUpdatingProfile || isSubmittingProfileHealth);
+  }, [isSubmittingProfile, isUpdatingProfile, isSubmittingProfileHealth]) 
 
   // Performs side effects when formType changes
   React.useEffect(() => {
@@ -181,6 +182,13 @@ export default function ResidentFormLayout() {
       const resident = await addResidentProfile({
         personalId: personalId, 
         staffId: user?.staff.staff_id
+      });
+      
+      const healthPersonalId = await addPersonalHealth();
+
+      await addResidentProfileHealth({
+        personalId: healthPersonalId, 
+        staffId: "",
       });
 
       // Reset the values of all fields in the form

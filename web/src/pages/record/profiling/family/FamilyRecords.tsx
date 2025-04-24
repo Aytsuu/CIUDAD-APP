@@ -55,6 +55,19 @@ export default function FamilyRecords() {
         </div>
 
         {/* DialogLayout with state management */}
+        {/* <Link
+          to="/health-family-form"
+          state={{
+            params: {
+              residents: residents,
+              households: households,
+            },
+          }}
+        >
+          <Button>
+            <Plus /> Register
+          </Button>
+        </Link> */}
         <DialogLayout
           trigger={
             <Button>
