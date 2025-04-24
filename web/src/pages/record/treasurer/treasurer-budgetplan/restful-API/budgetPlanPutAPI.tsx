@@ -1,10 +1,12 @@
-import {api} from '@/api/api'
-import { parseFloatSafe } from '@/helpers/floatformatter';
+import {api} from "@/api/api";
+import { parseFloatSafe } from "@/helpers/floatformatter";
 
-const budget_plan = async (budgetInfo: Record<string, any>) => {
-    try {
+
+
+const updateBudgetPlan = async(budgetInfo: Record<string, any>) => {
+    try{
+
         console.log({
-            plan_year: new Date().getFullYear().toString(),
             plan_actual_income: parseFloatSafe(budgetInfo.plan_actual_income), 
             plan_rpt_income: parseFloatSafe(budgetInfo.plan_rpt_income), 
             plan_balance: parseFloatSafe(budgetInfo.plan_balance), 
@@ -14,7 +16,6 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
-            plan_issue_date: new Date().toISOString().split('T')[0], 
             plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
             plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
             plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
@@ -22,8 +23,8 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
         });
 
-        const res = await api.post('treasurer/budget-plan/', {
-            plan_year: new Date().getFullYear().toString(),
+
+        const res = await api.put(`treasurer/update-budget-plan/${budgetInfo.plan_id}/`,{
             plan_actual_income: parseFloatSafe(budgetInfo.plan_actual_income), 
             plan_rpt_income: parseFloatSafe(budgetInfo.plan_rpt_income), 
             plan_balance: parseFloatSafe(budgetInfo.plan_balance), 
@@ -33,37 +34,48 @@ const budget_plan = async (budgetInfo: Record<string, any>) => {
             plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
             plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
             plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
-            plan_issue_date: new Date().toISOString().split('T')[0], 
             plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
             plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
             plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
             plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
             plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
-        });
 
-        return res.data.plan_id;
-    } catch (err) {
+        })
+
+        return res.data;
+    }
+    catch (err){
         console.error(err);
     }
-};
+}
 
-const budget_plan_details = async (detailInfo: Array<{ dtl_budget_item: string; dtl_proposed_budget: string, dtl_budget_category: string }>, planId: number) => {
+
+const updateBudgetDetails = async (details: Array<{dtl_id: number; dtl_budget_item?: string; dtl_proposed_budget?: number; dtl_budget_category?: string;}>) => {
     try {
-        const transformedDetails = detailInfo.map((item) => ({
-            dtl_budget_item: item.dtl_budget_item,
-            dtl_proposed_budget: parseFloatSafe(item.dtl_proposed_budget) || 0.00,
-            dtl_budget_category: item.dtl_budget_category,
-            plan: planId,
-        }));
-        console.log("Submitting Budget Plan Details:", transformedDetails);
+        const results = await Promise.allSettled(
+            details.map(item => 
+                api.patch(`treasurer/update-budget-details/${item.dtl_id}/`, {
+                    dtl_budget_item: item.dtl_budget_item,
+                    dtl_proposed_budget: item.dtl_proposed_budget,
+                    dtl_budget_category: item.dtl_budget_category,
+                })
+            )
+        );
 
-        const res = await api.post('treasurer/budget-plan-details/', transformedDetails);
-        return res.data;
+        // Check for any failures
+        const failedUpdates = results.filter(r => r.status === 'rejected');
+        if (failedUpdates.length > 0) {
+            console.error('Some updates failed:', failedUpdates);
+            throw new Error(`${failedUpdates.length} detail updates failed`);
+        }
+
+        return results.map(r => 
+            r.status === 'fulfilled' ? r.value.data : null
+        ).filter(Boolean);
     } catch (error) {
-        const axiosError = error as { response?: { data: any }; message: string };
-        console.error("Error submitting budget plan details:", axiosError.response?.data || axiosError.message);
+        console.error("Error updating budget details:", error);
+        throw error;
     }
 };
 
-
-export {budget_plan, budget_plan_details}
+export {updateBudgetPlan, updateBudgetDetails}

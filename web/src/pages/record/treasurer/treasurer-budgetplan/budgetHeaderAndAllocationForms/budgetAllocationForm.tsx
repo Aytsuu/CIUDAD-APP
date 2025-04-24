@@ -1,33 +1,36 @@
 import { FormField, Form, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
-import BudgetAllocationSchema from "@/form-schema/budget-allocation-schema";
+import BudgetAllocationSchema from "@/form-schema/treasurer/budget-allocation-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
-import BudgetHeaderSchema from "@/form-schema/budgetplan-header-schema";
+import BudgetHeaderSchema from "@/form-schema/treasurer/budgetplan-header-schema";
+import { UseFormReturn } from "react-hook-form";
 
-interface BudgetAllocationFormProps {
-    headerValues: z.infer<typeof BudgetHeaderSchema>; // Just pass them as props
-    onFinalSubmit: (allocationValues: z.infer<typeof BudgetAllocationSchema>) => void;
-    setIsDialogOpen: (isOpen: boolean) => void;
-}
+// interface BudgetAllocationFormProps {
+//     headerValues: z.infer<typeof BudgetHeaderSchema>; // Just pass them as props
+//     onFinalSubmit: (allocationValues: z.infer<typeof BudgetAllocationSchema>) => void;
+//     setIsDialogOpen: (isOpen: boolean) => void;
+// }
 
-function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: BudgetAllocationFormProps) {
-    const form = useForm<z.infer<typeof BudgetAllocationSchema>>({
-        resolver: zodResolver(BudgetAllocationSchema),
-        defaultValues: {
-            personalServicesLimit: "",
-            miscExpenseLimit: "",
-            localDevLimit: "",
-            skFundLimit: "",
-            calamityFundLimit: "",
-        }
-    });
+function BudgetAllocationForm({form}:{
+    form: UseFormReturn<z.infer<typeof BudgetAllocationSchema>>
+}) {
+    // const form = useForm<z.infer<typeof BudgetAllocationSchema>>({
+    //     resolver: zodResolver(BudgetAllocationSchema),
+    //     defaultValues: {
+    //         personalServicesLimit: "",
+    //         miscExpenseLimit: "",
+    //         localDevLimit: "",
+    //         skFundLimit: "",
+    //         calamityFundLimit: "",
+    //     }
+    // });
 
     const onSubmit = (values: z.infer<typeof BudgetAllocationSchema>) => {
-        onFinalSubmit(values);
-        setIsDialogOpen(false);
+        // onFinalSubmit(values);
+        // setIsDialogOpen(false);
     };
 
     return (
@@ -40,9 +43,9 @@ function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: B
                             name="personalServicesLimit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Personal Services</FormLabel>
+                                    <FormLabel className="text-black">Personal Services</FormLabel>
                                     <FormControl>
-                                        <Input {...field} type="number" placeholder="0" />
+                                        <Input {...field} type="number" placeholder="0.0" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -54,9 +57,9 @@ function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: B
                             name="miscExpenseLimit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Extraordinary & Miscellaneous Expense</FormLabel>
+                                    <FormLabel className="text-black">Extraordinary & Miscellaneous Expense</FormLabel>
                                     <FormControl>
-                                        <Input {...field} type="number" placeholder="0" />
+                                        <Input {...field} type="number" placeholder="0.0" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -68,9 +71,9 @@ function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: B
                             name="localDevLimit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Local Development Fund</FormLabel>
+                                    <FormLabel className="text-black">Local Development Fund</FormLabel>
                                     <FormControl>
-                                        <Input {...field} type="number" placeholder="0" />
+                                        <Input {...field} type="number" placeholder="0.0" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -82,9 +85,9 @@ function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: B
                             name="skFundLimit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>SK Fund</FormLabel>
+                                    <FormLabel className="text-black">Sangguniang Kabataan (SK) Fund</FormLabel>
                                     <FormControl>
-                                        <Input {...field} type="number" placeholder="0" />
+                                        <Input {...field} type="number" placeholder="0.0" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -96,18 +99,15 @@ function BudgetAllocationForm({ headerValues, onFinalSubmit, setIsDialogOpen}: B
                             name="calamityFundLimit"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Calamity Fund</FormLabel>
+                                    <FormLabel className="text-black">Calamity Fund</FormLabel>
                                     <FormControl>
-                                        <Input {...field} type="number" placeholder="0" />
+                                        <Input {...field} type="number" placeholder="0.0" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <div className="flex justify-end mt-[20px]">
-                            <Button type="submit">Proceed</Button>
-                        </div>
                     </div>
                 </form>
             </Form>

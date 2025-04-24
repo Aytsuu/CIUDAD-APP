@@ -3,11 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { CurrentExpendituresPersonalServicesSchema, FormData } from "@/form-schema/budgetplan-create-schema";
+import { CurrentExpendituresPersonalServicesSchema, FormData } from "@/form-schema/treasurer/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { toast } from "sonner";
 
@@ -18,13 +17,14 @@ const styles = {
 
 type BudgetPlanPage1FormData = z.infer<typeof CurrentExpendituresPersonalServicesSchema>;
 
-type Props = {
-    onNext2: () => void;
-    updateFormData: (data: Partial<BudgetPlanPage1FormData>) => void;
-    formData: BudgetPlanPage1FormData;
-};
-
-function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
+function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServicesLimit, actualIncome, isBeyondLimit }:{
+    onNext2: () => void,
+    updateFormData: (data: Partial<BudgetPlanPage1FormData>) => void,
+    formData: BudgetPlanPage1FormData,
+    personalServicesLimit: number,
+    actualIncome: number,
+    isBeyondLimit: boolean,
+}) {
     // Page 1 budget items
     const budgetItems = [
         { name: "honorariaOfficials", label: "Honoraria for Officials" },
@@ -38,28 +38,26 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         { name: "leaveCredits", label: "Commutation of Leave Credits" },
     ];
 
-    // receiving the passed values
-    const location = useLocation();
-    const { actualIncome, personalServicesLimit } = location.state;
-
-    // budgetLimit and initializing states for total and balance
     const [total, setTotal] = useState(0);
     const [Balance, setBalance] = useState(0);
     const [isOverLimit, setOverLimit] = useState(false);
-    const personalServicesBudgetLimit = actualIncome * (personalServicesLimit/100);
+    const personalServicesBudgetLimit = actualIncome * (personalServicesLimit/100); //personalService is some percent of the barangay's actual Income
 
     const form = useForm<BudgetPlanPage1FormData>({
         resolver: zodResolver(CurrentExpendituresPersonalServicesSchema),
         defaultValues: formData,
     });
 
+    // Fields Watcher 
     const { watch } = form;
     const formValues = watch();
-    const toastId = useRef<string | number | null> (null);
+    const personalServiceToast = useRef<string | number | null> (null);
 
+    // Auto Update
     useEffect(() => {
         updateFormData(formValues);
     }, [formValues, updateFormData]);
+
 
     useEffect(() => {
         const calculatedTotal = Object.values(formValues).reduce((acc, val) => acc + (Number(val) || 0), 0);
@@ -73,11 +71,11 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
         if (calculatedBalance < 0) {
             setOverLimit(true);
             // Only show toast if one isn't already showing
-            if (!toastId.current) {
-                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+            if (!personalServiceToast.current) {
+                personalServiceToast.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
                     duration: Infinity, 
                     style: {
-                        border: '1px solid #f87171',
+                        border: '1px solid rgb(225, 193, 193)',
                         padding: '16px',
                         color: '#b91c1c',
                         background: '#fef2f2',
@@ -85,9 +83,11 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                 });
             }
         } else {
-            setOverLimit(false);
-            toast.dismiss();
-            toastId.current = null;
+            if (personalServiceToast.current !== null) {
+                setOverLimit(false)
+                toast.dismiss(personalServiceToast.current);
+                personalServiceToast.current = null;
+            }
         }
     }, [total, personalServicesBudgetLimit]);
 
@@ -107,7 +107,7 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                     <div className="mb-5 bg-white p-5 w-full">
                         <div className="p-2 flex flex-col gap-1">
                             <h1 className="font-bold flex justify-center w-[21rem]">CURRENT OPERATING EXPENDITURES</h1>
-                            <h3 className="font-semibold text-blue flex justify-center w-[21rem]">Personal Services</h3>
+                            <h3 className="font-semibold text-blue flex justify-center w-[21rem]">Personal Services ({personalServicesLimit}%)</h3>
                         </div>
                         {budgetItems.map(({ name, label }) => (
                             <FormField
@@ -141,14 +141,18 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData }: Props) {
                         <div className="flex justify-end p-2">
                             <div className="flex flex-row justify-center gap-[2rem]">
                                 <Label className={styles.formfooter}>Total: {formatNumber(total)}</Label>
-                                <Label className={styles.formfooter}>{formatNumber(personalServicesBudgetLimit)}</Label>
-                                <Label className={styles.formfooter}>{formatNumber(Balance)}</Label>
+                                <Label className={styles.formfooter}>
+                                    {formatNumber(personalServicesBudgetLimit)}
+                                </Label>
+                                <Label className={styles.formfooter}>
+                                    {formatNumber(Balance)}
+                                </Label>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex justify-end">
-                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>Next</Button>
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit || isBeyondLimit}>Next</Button>
                     </div>
                 </div>
             </form>
