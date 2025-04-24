@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useRef, useState } from "react";
 import { useEffect } from "react";
 import { ChevronLeft, CircleCheck, ChevronRightIcon } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button/button.tsx";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { toast } from "sonner";
 import DisplayBreakdown from "../netBreakdownDisplay.tsx";
@@ -155,7 +155,8 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
                 plan_issue_date: new Date().toISOString().split('T')[0]
             };
     
-            const budgetDetails = transformFormData();
+            const budgetDetails = transformFormDataCreate();
+
             createBudgetPlan({ budgetHeader, budgetDetails });
         } else { 
     
@@ -177,14 +178,9 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
                 plan_skFund_limit: skFundLimit,
                 plan_calamityFund_limit: calamityFundLimit,
             };
-    
-            // console.log('Budget Details:', budgetData)
-            // Transform form data for updates
-            const updatedBudgetDetails = transformFormData();
 
-            // console.log('Before Submit:', updatedBudgetDetails)
-            // console.log('Header:', updatedBudgetHeader)
-            
+            const updatedBudgetDetails = transformFormDataUpdate();
+
             await updateBudgetPlan({
                 budgetHeader: updatedBudgetHeader,
                 budgetDetails: updatedBudgetDetails
@@ -192,13 +188,10 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
         }
     };
 
-    
-    
-    const transformFormData = () => {
+    const transformFormDataUpdate = () => {
         const existingDetails = budgetData || [];
         const transformPageData = (formData: Record<string, any>, budgetItems: any[], pageIndex: number) => {
             return budgetItems.map(({ name, label, category }) => {
-                // Find the existing detail that matches this item
                 const existingDetail = existingDetails.find(
                     (detail: BudgetPlanDetail) => detail.dtl_budget_item === label
                 );
@@ -219,6 +212,32 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
             ...transformPageData(formData4, budgetItemsPage4, 3)
         ];
     };
+
+    const transformFormDataCreate = () => {
+        const existingDetails = budgetData?.budget_detail || []; 
+        const transformPageData = (formData: Record<string, any>, budgetItems: any[], pageIndex: number) => {
+            return budgetItems.map(({ name, label, category }) => {
+                const existingDetail = existingDetails.find(
+                    (detail: BudgetPlanDetail) => detail?.dtl_budget_item === label
+                );
+                
+                return {
+                    dtl_id: existingDetail?.dtl_id || 0, 
+                    dtl_proposed_budget: formData[name] || "0.00",
+                    dtl_budget_item: label,
+                    dtl_budget_category: category,
+                };
+            });
+        };
+    
+        return [
+            ...transformPageData(formData1, budgetItemsPage1, 0),
+            ...transformPageData(formData2, budgetItemsPage2, 1),
+            ...transformPageData(formData3, budgetItemsPage3, 2),
+            ...transformPageData(formData4, budgetItemsPage4, 3)
+        ].filter(item => item !== undefined); 
+    };
+
     
     return (
         <div className='w-full h-full bg-snow'>

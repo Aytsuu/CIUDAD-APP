@@ -10,6 +10,7 @@ import { Skeleton } from "@mui/material";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteBudgetPlan } from "./queries/budgetPlanDeleteQueries";
 import { usegetBudgetPlan, type BudgetPlanType } from "./queries/budgetplanFetchQueries";
+import { Button } from "@/components/ui/button/button";
 
 function BudgetPlan() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -122,7 +123,7 @@ function BudgetPlan() {
                 </div>
             
                 <Link to="/budgetplan-forms" state={({isEdit : false})}>
-                    <div className="bg-buttonBlue text-white text-[14px] font-semibold cursor-pointer rounded-md p-3">+ Add New</div>
+                    <Button>+ Add New</Button>
                 </Link>
             </div>
 

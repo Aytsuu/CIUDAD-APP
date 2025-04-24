@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CircleCheck } from "lucide-react";
 import { updateBudgetPlan, updateBudgetDetails } from "../restful-API/budgetPlanPutAPI";
+import { useNavigate } from "react-router";
 
 type BudgetHeaderUpdate ={
     plan_id?: number,
@@ -27,11 +28,11 @@ type BudgetDetailUpdate = {
     dtl_budget_item?: string;
     dtl_proposed_budget?: number;
     dtl_budget_category?: string;
-    // plan_id: number;
 };
 
-export const useUpdateBudgetPlan = (onSuccess?: () => void) => {
+export const useUpdateBudgetPlan = (onSuccess?: (planId?: number) => void) => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     return useMutation({
         mutationFn: async (values: {
@@ -41,13 +42,9 @@ export const useUpdateBudgetPlan = (onSuccess?: () => void) => {
             toast.loading("Updating Budget plan...", { id: "updateBudgetPlan" });
 
             try {
-                // 1. First update header
                 const headerResponse = await updateBudgetPlan(values.budgetHeader);
-                if (!headerResponse) {
-                    throw new Error("Budget header update failed");
-                }
+                if (!headerResponse) throw new Error("Budget header update failed");
 
-                // 2. Only proceed if we have details to update
                 if (values.budgetDetails?.length > 0) {
                     const detailsResponse = await updateBudgetDetails(values.budgetDetails);
                     if (!detailsResponse || detailsResponse.length !== values.budgetDetails.length) {
@@ -55,13 +52,13 @@ export const useUpdateBudgetPlan = (onSuccess?: () => void) => {
                     }
                 }
 
-                return { headerResponse, detailsResponse: values.budgetDetails };
+                return values.budgetHeader.plan_id;
             } catch (error) {
                 console.error("Update error:", error);
-                throw error; // Make sure to re-throw
+                throw error;
             }
         },
-        onSuccess: () => {
+        onSuccess: (planId) => {
             toast.success('Budget Plan updated successfully', {
                 id: 'updateBudgetPlan',
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -70,10 +67,11 @@ export const useUpdateBudgetPlan = (onSuccess?: () => void) => {
 
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetPlanDetails'] });
-            
-            onSuccess?.();
+
+            onSuccess?.(planId);
+            navigate("/treasurer-budgetplan-view", { state: { planId } });
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error("Mutation error:", error);
             toast.error(`Failed to update budget plan: ${error.message}`, {
                 id: 'updateBudgetPlan'

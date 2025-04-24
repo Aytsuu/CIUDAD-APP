@@ -57,9 +57,9 @@ export const useInsertBudgetPlan = (onSuccess?: (planId?: number) => void) => {
                 duration: 2000
             });
 
-            navigate(-1)
-        
+            
             if (onSuccess) onSuccess(planId);
+            navigate("/treasurer-budgetplan-view", { state: { planId } });
         },
         onError: (error) => {
             toast.error(error.message || 'Failed to create budget plan', {
