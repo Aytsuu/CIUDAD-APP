@@ -18,7 +18,6 @@ const messaging = getMessaging(app);
 
 export {app, messaging, onMessage};
 
-
 export const generateToken = async () => {
   const permission = await Notification.requestPermission();
   if (permission === "granted") {

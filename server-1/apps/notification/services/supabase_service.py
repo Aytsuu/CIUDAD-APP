@@ -9,4 +9,4 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Initialize Supabase Client
-url = supabase.config.
+# url = supabase.config.

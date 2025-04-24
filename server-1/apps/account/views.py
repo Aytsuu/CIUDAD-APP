@@ -64,20 +64,24 @@ class LoginView(TokenObtainPairView):
                 
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            print("access token: " + access_token + " refresh token: " + refresh_token)
+            # Fetch additional user data
+            rp_data = ResidentProfileFullSerializer(user.rp).data if hasattr(user, 'rp') and user.rp else None
             
-            # Fetch ResidentProfile data
-            rp_data = ResidentProfileFullSerializer(user.rp).data if user.rp else None
-
-            # Fetch Staff where staff_id == rp_id
-            staff = Staff.objects.filter(staff_id=str(user.rp.rp_id)).first() if user.rp else None
+            staff = None
+            if user.rp:
+                staff = Staff.objects.filter(staff_id=str(user.rp.rp_id)).first()
             staff_data = StaffFullSerializer(staff).data if staff else None
             
             return Response({
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
+                "refresh": refresh_token,
+                "access": access_token,
+                "token": access_token,
                 "username": user.username,
                 "email": user.email,
-                "profile_image": user.profile_image,
+                "profile_image": user.profile_image.url if user.profile_image else None,
                 "rp": rp_data,
                 "staff": staff_data,
             })
@@ -90,10 +94,10 @@ class LoginView(TokenObtainPairView):
         except Exception as e:
             print(f"Login error: {str(e)}")
             return Response(
-                {"error": f"An unexpected error occurred: {str(e)}"},
+                {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            
+                        
 class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer

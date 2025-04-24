@@ -14,41 +14,57 @@ class Notification(models.Model):
     DELIVERY_CHANNELS = (
         ('web', 'Web Notification'),
         ('mobile', 'Mobile Notification'),
-        ('Mobile and Web', 'Mobile and Web Notification'),
+        ('both', 'Mobile and Web Notification'),
     )
     
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    title = models.CharField(max_length=255)
-    message = models.TextField()
-    notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES, default='info')
-    deliver_channel = models.CharField(max_length=10, choices=DELIVERY_CHANNELS, default='Mobile and Web')
+    RECIPIENT_TYPES = (
+        ('user', "All Authenticated Users"),
+        ('staff', "Staff Users Only"),
+        ('specific', "Specific User"),
+    )
     
-    # Optional link to related object (using generic relations)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    related_object - GenericForeignKey('content_type', 'object_id')
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications', null=True, blank=True)
     
-    #Status Tracking
-    is_read = models.BooleanField(default=False)
-    sent_web = models.BooleanField(default=False)
-    sent_mobile = models.BooleanField(default=False)
+    notif_recipient_type = models.CharField(max_length=20, choices=RECIPIENT_TYPES, default='specific')
     
-    #Timestamps
+    notif_title = models.CharField(max_length=255)
+    notif_message = models.TextField()
+    notif_type = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPES,
+        default='info'
+    )
+    notif_delivery_channel = models.CharField(
+        max_length=20,
+        choices=DELIVERY_CHANNELS,
+        default='both'
+    )
+    
+    # Status Tracking
+    notif_is_read = models.BooleanField(default=False)
+    notif_sent_web = models.BooleanField(default=False)
+    notif_sent_mobile = models.BooleanField(default=False)
+    
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['-created_at']
-        db_table = 'notification'
+        db_table = 'notifications'
         
     def __str__(self):
-        return f"{self.title} to {self.recipient.username}"
-    
-    
+        if self.recipient:
+            return f"{self.title} to {self.recipient.username}"
+        return f"{self.title} ({self.get_recipient_type_display()})"
+
 
 class FCMToken(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    token = models.TextField()
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fcm_tokens')
+    fcm_token = models.CharField(max_length=255, unique=True)
+    fcm_device_id = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        db_table = 'fcm_token'
+        db_table = 'fcm_tokens'
+        unique_together = [['user_id', 'fcm_device_id']]  
