@@ -17,6 +17,7 @@ import { getInitialFormData } from "../budgetPlanFormEditInitializer.tsx";
 import { budgetItemsPage1, budgetItemsPage2, budgetItemsPage3, budgetItemsPage4 } from "../budgetItemDefinition.tsx";
 import { useNavigate } from "react-router-dom";
 import { useInsertBudgetPlan } from "../queries/budgetPlanInsertQueries.tsx";
+import { useUpdateBudgetPlan } from "../queries/budgetPlanUpdateQueries.tsx";
 
 const styles = {
     header: "font-bold text-lg text-blue w-[18rem] justify-center flex",
@@ -36,13 +37,13 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
     headerData: any;
     onBack: () => void;
     isEdit: boolean;
-    editId?: string;
+    editId?: number;
     budgetData: any;
     onSuccess?: () => void;
 }) {
     const year = new Date().getFullYear()
     const totalBudgetToast = useRef <string | number | null>(null);
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     const {
         balance = "0",
@@ -59,7 +60,7 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
         calamityFundLimit = "0",
       } = headerData || {};
 
-    const [initialized, setInitialized] = useState(false)
+    // const [initialized, setInitialized] = useState(false)
     const initialForms = getInitialFormData(isEdit, budgetData);
     const [formData1, setFormData1] = useState(initialForms.form1);
     const [formData2, setFormData2] = useState(initialForms.form2);
@@ -130,11 +131,12 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
     };
 
     const {mutate: createBudgetPlan} = useInsertBudgetPlan(onSuccess)
+    const {mutate: updateBudgetPlan} = useUpdateBudgetPlan(Number(editId), onSuccess)
 
     // send values on query function
     const onSubmit = async () => {
-
-        if(isEdit == false){
+        if (isEdit == false) {
+            // Existing create logic...
             const budgetHeader = {
                 plan_actual_income: actualIncome,
                 plan_rpt_income: actualRPT,
@@ -153,14 +155,59 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
                 plan_year: new Date().getFullYear().toString(),
                 plan_issue_date: new Date().toISOString().split('T')[0]
             };
-
-            const budgetDetails = transformFormData()
-            createBudgetPlan({ budgetHeader, budgetDetails })
-
+    
+            const budgetDetails = transformFormData();
+            createBudgetPlan({ budgetHeader, budgetDetails });
+        } else {
+            console.log('clicked')
+    
+            if (!editId) {
+                toast.error("Missing budget plan ID for update");
+                return;
+            }
+    
+            // Prepare updated header data
+            const updatedBudgetHeader = {
+                plan_id: editId,
+                plan_actual_income: actualIncome,
+                plan_rpt_income: actualRPT,
+                plan_balance: balance,
+                plan_tax_share: realtyTaxShare,
+                plan_tax_allotment: taxAllotment,
+                plan_cert_fees: clearanceAndCertFees,
+                plan_other_income: otherSpecificIncome,
+                plan_budgetaryObligations: totalBudgetObligations, 
+                plan_balUnappropriated: balUnappropriated,
+                plan_personalService_limit: personalServicesLimit,
+                plan_miscExpense_limit: miscExpenseLimit,
+                plan_localDev_limit: localDevLimit, 
+                plan_skFund_limit: skFundLimit,
+                plan_calamityFund_limit: calamityFundLimit,
+            };
+    
+            // Transform form data for updates
+            const budgetDetails = transformFormData();
+            
+            // Get existing detail IDs from budgetData (passed as prop)
+            const existingDetails = budgetData?.details || [];
+            
+            // Match existing details with new data to include dtl_id
+            const updates = budgetDetails.map((newDetail, index) => {
+                const existingDetail = existingDetails[index];
+                return {
+                    dtl_id: existingDetail?.dtl_id, // Include the existing ID
+                    ...newDetail
+                };
+            });
+    
+            // Call the update mutation
+            updateBudgetPlan({
+                budgetHeader: updatedBudgetHeader,
+                budgetDetails: updates
+            });
         }
-    }
-
-    // Transform form data for API submission
+    };
+    
     const transformFormData = () => {
         const transformPageData = (formData: Record<string, any>, budgetItems: any[]) => {
             return budgetItems.map(({ name, label, category }) => ({
@@ -169,7 +216,7 @@ function BudgetPlanForm({headerData, onBack, isEdit, editId, budgetData, onSucce
                 dtl_budget_category: category,
             }));
         };
-
+    
         return [
             ...transformPageData(formData1, budgetItemsPage1),
             ...transformPageData(formData2, budgetItemsPage2),

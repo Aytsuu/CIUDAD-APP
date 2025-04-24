@@ -1,6 +1,6 @@
 export interface BudgetPlan {
     plan_id?: number;
-    plan_year: string;
+    plan_year?: string;
     plan_actual_income: number;
     plan_rpt_income: number;
     plan_balance: number;
@@ -10,7 +10,7 @@ export interface BudgetPlan {
     plan_other_income: number;
     plan_budgetaryObligations: number;
     plan_balUnappropriated: number;
-    plan_issue_date: string;
+    plan_issue_date?: string;
     plan_personalService_limit: number,
     plan_miscExpense_limit: number,
     plan_localDev_limit: number,

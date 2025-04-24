@@ -9,11 +9,11 @@ from django.db.models import Q
 from datetime import datetime
 
 
-class Budget_HeaderView(generics.ListCreateAPIView):
+class BudgetHeaderView(generics.ListCreateAPIView):
     serializer_class = Budget_HeaderSerializer
     queryset = Budget_Plan.objects.all()
 
-class Budget_Plan_DetailView(generics.ListCreateAPIView):
+class BudgetPlanDetailView(generics.ListCreateAPIView):
     serializer_class = Budget_Plan_DetailSerializer
     queryset = Budget_Plan_Detail.objects.all()
 
@@ -27,10 +27,40 @@ class Budget_Plan_DetailView(generics.ListCreateAPIView):
         else:
             return super().create(request, *args, **kwargs) 
         
-class Delete_Update_Retrieve_BudgetPlanView(generics.RetrieveUpdateDestroyAPIView):
+class DeleteRetrieveBudgetPlanAndDetails(generics.RetrieveDestroyAPIView):
     queryset = Budget_Plan.objects.all()
     serializer_class = Budget_HeaderSerializer
     lookup_field = 'plan_id'
+
+
+class UpdateBudgetPlan(generics.UpdateAPIView):
+    serializer_class = Budget_HeaderSerializer
+    queryset = Budget_Plan.objects.all()
+    lookup_field = 'plan_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class UpdateBudgetDetails(generics.UpdateAPIView):
+    serialzer_class = Budget_Plan_DetailSerializer
+    queryset = Budget_Plan_Detail.objects.all()
+    lookup_field = 'dtl_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 # class Income_FileView(generics.ListCreateAPIView):
