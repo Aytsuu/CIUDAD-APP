@@ -68,7 +68,6 @@ class Income_Expense_Tracking(models.Model):
     iet_additional_notes = models.CharField(max_length=100)
     iet_receipt_image = models.CharField(null=False)
     # inv_num = models.ForeignKey('Invoice', on_delete=models.CASCADE, null=True, blank=True, default=None)
-    inv_num = models.CharField(max_length=100, default=None)
     dtl_id = models.ForeignKey('budget_plan_detail', on_delete=models.CASCADE)
 
     class Meta:
@@ -85,12 +84,26 @@ class Income_Particular(models.Model):
 
 class Income_Tracking(models.Model):
     inc_num = models.BigAutoField(primary_key=True)
+    inc_serial_num = models.CharField(max_length=100, default='None') 
     inc_date = models.DateField(default=date.today)
     inc_entryType = models.CharField(max_length=100, default='Income')
     inc_amount = models.DecimalField(max_digits=10, decimal_places=2)
     inc_additional_notes = models.CharField(max_length=100)
     inc_receipt_image = models.CharField(null=False)
+    inv_num = models.CharField(max_length=100, default='None')
     incp_id = models.ForeignKey('income_particular', on_delete=models.CASCADE)
 
     class Meta:
         db_table = "income_tracking"
+
+
+
+class Income_Expense_Main(models.Model):
+    ie_main_year = models.CharField(max_length=4)
+    ie_main_tot_budget = models.DecimalField(max_digits=10, decimal_places=2)
+    ie_main_inc = models.DecimalField(max_digits=10, decimal_places=2)
+    ie_main_exp = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = "income_expense_main"
+

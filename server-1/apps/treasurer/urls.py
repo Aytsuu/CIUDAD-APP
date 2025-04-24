@@ -4,9 +4,14 @@ from .views import *
 
 urlpatterns=[
 
-    path('budget-plan/', Budget_HeaderView.as_view(), name = 'treasurer-budget-plan'),
-    path('budget-plan-details/', Budget_Plan_DetailView.as_view(), name='treasurer-budget-plan-details'),
-    path('budget-plan/<int:plan_id>/', Delete_Update_Retrieve_BudgetPlanView.as_view(), name='treasurer-manage-budget-plan'),
+    # Budget Plan and Budget Details URL
+    path('budget-plan/', BudgetHeaderView.as_view(), name = 'treasurer-budget-plan'),
+    path('budget-plan-details/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),
+    path('budget-plan/<int:plan_id>/', DeleteRetrieveBudgetPlanAndDetails.as_view(), name='treasurer-manage-budget-plan'),
+    path('update-budget-plan/<int:plan_id>/', UpdateBudgetPlan.as_view(), name='treasurer-update-budget-plan'),
+    path('update-budget-details/<int:dtl_id>/', UpdateBudgetDetails.as_view(), name='treasurer-update-budget-details'),
+
+
     # path('income-file/', Income_FileView.as_view(), name = 'treasurer-income-file'),
     # path('disbursement-file/', Disbursement_FileView.as_view(), name = 'treasurer-disbursement-file'),
     
@@ -21,6 +26,9 @@ urlpatterns=[
     path('income-particular/', Income_ParticularView.as_view(), name = 'treasurer-income-particular'),
     path('update-income-tracking/<int:inc_num>/', UpdateIncomeTrackingView.as_view(), name='treasurer-income-tracking-update'),
     path('income-tracking/<int:inc_num>/', DeleteIncomeTrackingView.as_view(), name = 'treasurer-income-tracking-delete'),
-    path('delete-income-particular/<int:incp_id>/', DeleteIncome_ParticularView.as_view(), name='treasurer-income-particular-delete')
+    path('delete-income-particular/<int:incp_id>/', DeleteIncome_ParticularView.as_view(), name='treasurer-income-particular-delete'),
+
+    #INCOME EXPENSE MAIN
+    path('income-expense-main/', Income_Expense_MainView.as_view(), name='income-expense-main-card')
 
 ]

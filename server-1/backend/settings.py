@@ -52,7 +52,10 @@ INSTALLED_APPS = [
     'apps.account',
     'apps.file',
     'apps.drr',
-    'apps.gad'  
+    'apps.donation',
+    # 'apps.useraccount',
+    # 'apps.blotter',
+    'apps.gad',
 ]
 
 MIDDLEWARE = [
@@ -60,7 +63,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

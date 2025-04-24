@@ -3,11 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/budgetplan-create-schema";
+import { FormData, CapitalOutlaysAndNonOfficeSchema } from "@/form-schema/treasurer/budgetplan-create-schema";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router";
 import { formatNumber } from "@/helpers/currencynumberformatter";
 import { toast } from "sonner";
 
@@ -19,35 +18,35 @@ const styles = {
 
 type BudgetPlanPage4FormData = z.infer<typeof CapitalOutlaysAndNonOfficeSchema>;
 
-type Props = {
-    onPrevious3: () => void;
-    onSubmit: () => void;
-    updateFormData: (data: Partial<BudgetPlanPage4FormData>) => void;
-    formData: BudgetPlanPage4FormData;
-};
-
-function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData }: Props) {
+function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData, balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit, isBeyondLimit }: {
+    onPrevious3: () => void,
+    onSubmit: () => void,
+    updateFormData: (data: Partial<BudgetPlanPage4FormData>) => void,
+    formData: BudgetPlanPage4FormData,
+    balance: string,
+    realtyTaxShare: string,
+    taxAllotment: string,
+    clearanceAndCertFees: string,
+    otherSpecificIncome: string,
+    localDevLimit: string,
+    skFundLimit: string,
+    calamityFundLimit: string,
+    isBeyondLimit: boolean,
+}) {
     // page 4 budget items
     const budgetItems = [
         { name: "capitalOutlays", label: "Total Capital Outlays" },
         { name: "cleanAndGreen", label: "Clean & Green Environmental" },
         { name: "streetLighting", label: "Street Lighting Project" },
         { name: "rehabMultPurpose", label: "Rehabilitation of Multi-Purpose" },
-        { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) FUnd" },
+        { name: "skFund", label: "Subsidy to Sangguniang Kabataan (SK) Fund" },
         { name: "qrfFund", label: "Quick Response Fund (QRF)" },
         { name: "disasterTraining", label: "Disaster Training" },
         { name: "disasterSupplies", label: "Disaster Supplies" },
     ];
 
-    const location = useLocation();
-    const { balance, realtyTaxShare, taxAllotment, clearanceAndCertFees, otherSpecificIncome, localDevLimit, skFundLimit, calamityFundLimit} = location.state
-
-    const availableResources =
-    (parseFloat(balance) || 0) +
-    (parseFloat(realtyTaxShare) || 0) +
-    (parseFloat(taxAllotment) || 0) +
-    (parseFloat(clearanceAndCertFees) || 0) +
-    (parseFloat(otherSpecificIncome) || 0);
+    const availableResources = parseFloat(balance) + parseFloat(realtyTaxShare) + 
+    parseFloat(taxAllotment) + parseFloat(clearanceAndCertFees) + parseFloat(otherSpecificIncome);
 
     const [totalOutlays, setTotalOutlays] = useState(0.00);
     const [totalDevFund, settotalDevFund] = useState(0.00);
@@ -57,11 +56,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     const [localDevBalance, setlocalDevBalance] = useState(0.00);
     const [isOverLimit, setOverLimit] = useState(false);
 
-    const toastId = useRef<string | number | null>(null);
-    const isOverBudget = useRef(false);
-    const localDevBudgetLimit = taxAllotment * (localDevLimit/100);
-    const skBudgetLimit = availableResources * (skFundLimit/100);
-    const calamityFundBudgetLimit = availableResources * (calamityFundLimit/100);
+    const capitalAndNonOfficeToast = useRef<string | number | null>(null);
+    const localDevBudgetLimit = parseFloat(taxAllotment) * (parseFloat(localDevLimit)/100);
+    const skBudgetLimit = availableResources * (parseFloat(skFundLimit)/100);
+    const calamityFundBudgetLimit = availableResources * (parseFloat(calamityFundLimit)/100);
 
     const form = useForm<BudgetPlanPage4FormData>({
         resolver: zodResolver(CapitalOutlaysAndNonOfficeSchema),
@@ -125,9 +123,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
         
         if (currentlyExceeded) {
             setOverLimit(true);
-            if (!toastId.current) {  
+            if (!capitalAndNonOfficeToast.current) {  
                 console.log('toast displayed');
-                toastId.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
+                capitalAndNonOfficeToast.current = toast.error("Input exceeds the allocated budget. Please enter a lower amount.", {
                     duration: Infinity, 
                     style: {
                         border: '1px solid #f87171',
@@ -139,9 +137,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
             }
         } else {
             setOverLimit(false);
-            if (toastId.current) {  
-                toast.dismiss(toastId.current);
-                toastId.current = null;
+            if (capitalAndNonOfficeToast.current) {  
+                toast.dismiss(capitalAndNonOfficeToast.current);
+                capitalAndNonOfficeToast.current = null;
             }
         }
     }
@@ -172,7 +170,7 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                     render={({ field }) => (
                                         <FormItem>
                                             <div className={styles.fieldStyle}>
-                                                <FormLabel className="w-[20rem]">{label}</FormLabel>
+                                                <FormLabel className="w-[20rem] text-black">{label}</FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         {...field}
@@ -233,20 +231,20 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                                         </div>
                                         <div className='p-2 flex flex-col gap-1'>
                                             <h1 className='font-bold flex justify-center w-[21rem]'>NON-OFFICE</h1>
-                                            <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Local Development Fund</h3>
+                                            <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Local Development Fund ({localDevLimit}%)</h3>
                                         </div>
                                     </div>
                                 )}
 
                                 {name === "rehabMultPurpose" && (
                                     <div className='p-2 flex flex-col gap-1'>
-                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Sangguniang Kabataan Fund</h3>
+                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>Sangguniang Kabataan Fund ({skFundLimit}%)</h3>
                                     </div>
                                 )}
 
                                 {name === "skFund" && (
                                     <div className='p-2 flex flex-col gap-1'>
-                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>LDRRM Fund (Calamity Fund)</h3>
+                                        <h3 className='font-semibold text-blue flex justify-center w-[21rem]'>LDRRM Fund / Calamity Fund ({calamityFundLimit}%)</h3>
                                     </div>
                                 )}
                             </div>
@@ -254,10 +252,10 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
                     </div>
 
                     <div className="flex justify-between">
-                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit}>
+                        <Button type="button" onClick={handlePrevious} className="w-[100px]" disabled={isOverLimit || isBeyondLimit}>
                             Previous
                         </Button>
-                        <Button type="submit" className="w-[100px]" disabled={isOverLimit}>
+                        <Button type="submit" className="w-[100px]" disabled={isOverLimit || isBeyondLimit}>
                             Submit
                         </Button>
                     </div>
