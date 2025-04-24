@@ -65,7 +65,13 @@ function CreateBudgetPlanPage1({ onNext2, updateFormData, formData, personalServ
     }, [formValues]);
 
     useEffect(() => {
-        const calculatedBalance = personalServicesBudgetLimit - total;
+        // const calculatedBalance = personalServicesBudgetLimit - total;
+        let calculatedBalance = personalServicesBudgetLimit - total;
+
+        if (Math.abs(calculatedBalance) < 0.01) {
+            calculatedBalance = 0;
+        }
+        
         setBalance(calculatedBalance);
         
         if (calculatedBalance < 0) {

@@ -81,8 +81,9 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     useEffect(() => {
         const calculatedTotal = Object.values(localDevVal).reduce((acc, val) => acc + (Number(val) || 0), 0);
         const remainingBal = localDevBudgetLimit - calculatedTotal;
+        const normalizedBal = Math.abs(remainingBal) < 0.01 ? 0 : remainingBal;
         settotalDevFund(calculatedTotal);
-        setlocalDevBalance(remainingBal);
+        setlocalDevBalance(normalizedBal);
         displayToast();
     }, [localDevVal, localDevBudgetLimit]);
     
@@ -91,16 +92,18 @@ function CreateBudgetPlanPage4({ onPrevious3, onSubmit, updateFormData, formData
     useEffect(() => {
         const calculatedTotal = Object.values(calamityFundVal).reduce((acc, val) => acc + (Number(val) || 0), 0);
         const remainingBal = calamityFundBudgetLimit - calculatedTotal;
+        const normalizedBal = Math.abs(remainingBal) < 0.01 ? 0 : remainingBal;
         settotalCalamityFund(calculatedTotal);
-        setcalamityFundBalance(remainingBal);
+        setcalamityFundBalance(normalizedBal);
         displayToast();
     }, [calamityFundVal, calamityFundBudgetLimit]);
 
 
     // SkFund
     useEffect(() => {
-        const remainingBal = skBudgetLimit - (Number(skVal) || 0)
-        setskFundBalance(remainingBal)
+        const remainingBal = skBudgetLimit - (Number(skVal) || 0);
+        const normalizedBal = Math.abs(remainingBal) < 0.01 ? 0 : remainingBal;
+        setskFundBalance(normalizedBal)
         displayToast();
     }, [skVal, skBudgetLimit])
 
