@@ -57,7 +57,24 @@ class ObstetricalHistoryView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+
+# **Spouse**
+class SpouseView(generics.ListCreateAPIView):
+    serializer_class = SpouseSerializer
+    queryset = Spouse.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
     
+class SpouseRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = SpouseSerializer
+    queryset = Spouse.objects.all()
+    lookup_field = 'spouse_id'
+
+    def get_object(self):
+        spouse_id = self.kwargs.get('spouse_id')
+        return get_object_or_404(Spouse, spouse_id=spouse_id)
 
         
 class FollowUpVisitView(generics.ListCreateAPIView):

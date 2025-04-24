@@ -65,3 +65,9 @@ class FollowUpVisitSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     class Meta:
         model = FollowUpVisit
         fields = '__all__'
+
+
+class SpouseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Spouse
+        fields = '__all__'
