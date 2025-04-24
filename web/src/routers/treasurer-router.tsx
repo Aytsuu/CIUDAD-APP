@@ -34,11 +34,11 @@ export const treasurer_router = [
         element: <IncomeExpenseMain/>
     },
     {
-        path: "treasurer-income-and-expense-tracking/:year",
+        path: "treasurer-income-and-expense-tracking",
         element: <IncomeandExpenseTracking/>
     },
     {
-        path: "treasurer-income-tracking/:year",
+        path: "treasurer-income-tracking",
         element: <IncomeTracking/>
     },
     {
