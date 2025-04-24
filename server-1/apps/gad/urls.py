@@ -29,18 +29,27 @@ from django.urls import path
 from .views import (
     GAD_Budget_TrackerView,
     GAD_Budget_TrackerDetailView,
-    get_gad_budget
+    GAD_Budget_YearView
 )
 
+# urlpatterns = [
+#     # Main page endpoint (no year parameter)
+#     path("gad-budget-tracker-main/", GAD_Budget_YearView.as_view(), name="gad-budget-tracker-main"),
+    
+#     # Table CRUD endpoints
+#     # path("gad-budget-tracker-table/", GAD_Budget_TrackerView.as_view(), name="gad-budget-tracker-table"),
+#     path("gad-budget-tracker-table/<int:gbud_num>/", GAD_Budget_TrackerDetailView.as_view(), 
+#          name="gad-budget-tracker-table-detail"),
+#     path("gad-budget-tracker-table/<str:gbudy_year>/", 
+#      GAD_Budget_TrackerView.as_view(), 
+#      name="gad-budget-tracker-table"),
+# ]
+
+
 urlpatterns = [
-    # Main page endpoint (no year parameter)
-    path("gad-budget-tracker-main/", get_gad_budget, name="gad-budget-tracker-main"),
-    
-    # # Year-specific endpoint (with year parameter)
-    # path('gad-budget/total/<int:year>/', get_gad_budget, name='gad-total-budget'),
-    
-    # Table CRUD endpoints
-    path("gad-budget-tracker-table/", GAD_Budget_TrackerView.as_view(), name="gad-budget-tracker-table"),
-    path("gad-budget-tracker-table/<int:gbud_num>/", GAD_Budget_TrackerDetailView.as_view(), 
-         name="gad-budget-tracker-table-detail"),
+    path("gad-budget-tracker-main/", GAD_Budget_YearView.as_view()),
+    # Works with both filtered and unfiltered requests
+    path("gad-budget-tracker-table/", GAD_Budget_TrackerView.as_view()),
+    path("gad-budget-tracker-table/<str:year>/", GAD_Budget_TrackerView.as_view()),
+    path("gad-budget-tracker-entry/<int:gbud_num>/", GAD_Budget_TrackerDetailView.as_view()),
 ]

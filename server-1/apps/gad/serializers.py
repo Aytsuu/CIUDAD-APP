@@ -13,8 +13,9 @@ class GAD_Budget_TrackerSerializer(serializers.ModelSerializer):
         }
 
 class GADBudgetYearSerializer(serializers.ModelSerializer):
-    year = serializers.CharField(source='budget_plan.plan_year')
-    
     class Meta:
         model = GAD_Budget_Year
-        fields = ['year', 'gad_budget_total', 'last_updated']
+        fields = '__all__'
+        extra_kwargs = {
+            'gbudy_num': {'read_only': True}  # Prevent ID updates
+        }

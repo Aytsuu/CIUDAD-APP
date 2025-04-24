@@ -11,48 +11,61 @@ import { Input } from "@/components/ui/input";
 import GADEditEntryForm from "./budget-tracker-edit-form";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
+import { useParams } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type GADBudgetEntry, useDeleteGADBudget } from "./queries/BTDeleteQueries";
 import { useGetGADBudgets } from "./queries/BTFetchQueries";
+import { useGetGADYearBudgets } from "./queries/BTYearQueries";
 
 function BudgetTracker() {
   const [budget_item, setTotalBalance] = useState<number>(0);
-  const [year] = useState(new Date().getFullYear().toString());
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All Entry Types");
+  const { year: gbudy_year } = useParams<{ year: string }>();
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  
 
   const { 
-    data: budgetEntries = [], 
-    isLoading, 
-    error,
-    refetch 
-  } = useGetGADBudgets();
+      data: budgetEntries = [], 
+      isLoading, 
+      error,
+      refetch 
+    } = useGetGADBudgets(gbudy_year||''); 
+
+  const currentYearBudget = yearBudgets?.find(
+    (budget) => budget.gbudy_year === gbudy_year
+  )?.gbudy_budget;
+
+  const formattedBudget = currentYearBudget 
+  ? Number(currentYearBudget).toFixed(2) 
+  : '0.00';
 
   const { mutate: deleteEntry } = useDeleteGADBudget();
   const handleDelete = async (gbud_num: number) => {
     deleteEntry(gbud_num);
   };
 
-  useEffect(() => {
-    if (budgetEntries.length > 0) {
-      const income = budgetEntries
-        .filter((entry) => entry.gbud_type === "Income")
-        .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
+  
+  // useEffect(() => {
+  //   if (budgetEntries.length > 0) {
+  //     const income = budgetEntries
+  //       .filter((entry) => entry.gbud_type === "Income")
+  //       .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
 
-      const expenses = budgetEntries
-        .filter((entry) => entry.gbud_type === "Expense")
-        .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
+  //     const expenses = budgetEntries
+  //       .filter((entry) => entry.gbud_type === "Expense")
+  //       .reduce((sum, entry) => sum + (Number(entry.gbud_amount) || 0), 0);
 
-      setTotalBalance(income - expenses);
-      // setAmountUsed(expenses);
-    }
-  }, [budgetEntries]);
+  //     setTotalBalance(income - expenses);
+  //     // setAmountUsed(expenses);
+  //   }
+  // }, [budgetEntries]);
 
   const filterOptions = [
     { id: "All Entry Types", name: "All Entry Types" },
@@ -136,7 +149,7 @@ function BudgetTracker() {
                 mainContent={
                   <div className="w-full h-full">
                     <GADEditEntryForm
-                      gbud_num={row.original.gbud_num}
+                      gbud_num={row.original.gbud_num!}
                       onSaveSuccess={refetch}
                     />
                   </div>
@@ -153,7 +166,7 @@ function BudgetTracker() {
                   title="Confirm Delete"
                   description="Are you sure you want to delete this entry?"
                   actionLabel="Confirm"
-                  onClick={() => handleDelete(row.original.gbud_num)} 
+                  onClick={() => handleDelete(row.original.gbud_num!)} 
                 />                    
               </div>   
             }
@@ -200,10 +213,10 @@ function BudgetTracker() {
           <div className="rounded-full border-2 border-solid border-darkBlue2 p-2 flex items-center">
             <Calendar />
           </div>
-          <div className="ml-2">{year}</div>
+          <div className="ml-2">{gbudy_year || 'N/A'}</div> 
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
-          Manage and view income and expense records for year {year}.
+          Manage and view income and expense records for year {gbudy_year}.
         </p>
       </div>
       <hr className="border-gray mb-6 sm:mb-6" />
@@ -214,7 +227,7 @@ function BudgetTracker() {
           {/* here is where I must display the budget from budget_plan_detail of the year selected */}
           <Label className="w-35 text-md">Budget:</Label> 
           <Label className="text-red-500 text-md font-bold">
-            Php {budget_item.toFixed(2)}
+          Php {formattedBudget}
           </Label>
         </div>
     </div>
@@ -331,14 +344,3 @@ function BudgetTracker() {
 }
 
 export default BudgetTracker;
-
-
-//frontend
-//Remaining Balance per row
-//remove amount used
-//separate income and expense
-
-//backend
-//retrieve gad budget from budget_plan_detail then display it as remaining balance (expense amount - (closes to current_date = remaining bal))
-//every expense deducts per row on the remaining bal. column
-//search-create particulars

@@ -1,9 +1,9 @@
-import api from "@/api/api";
+import api from '@/pages/api/api';
 
 
 export const getbudgettrackreq = async () => {
     try {
-        const res = await api.get('gad/gad-budget-tracker-table/');
+        const res = await api.get('/gad/gad-budget-tracker-table/:year/');
         
         // Handle empty/undefined responses
         const data = res.data?.data ?? res.data ?? [];
