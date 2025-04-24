@@ -201,10 +201,10 @@ export default function InvMedicalConRecords() {
       </div>
       <div className="w-full px-2 sm:px-4 md:px-6 bg-snow">
         <CardLayout
-          cardTitle="Patient Information"
-          CardTitleClassName="text-blue text-xl"
+          title="Patient Information"
+          titleClassName="text-blue text-xl"
           cardClassName="mb-8"
-          cardContent={
+          content={
             <div className="w-full flex gap-3 flex-col mt-[-10px]">
               <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-20 ">
                 {/* Name */}

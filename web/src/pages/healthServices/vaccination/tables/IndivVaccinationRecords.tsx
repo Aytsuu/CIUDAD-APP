@@ -258,8 +258,8 @@ export default function IndivVaccinationRecords() {
                   <span>{vital.vital_temp}°C</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="font-medium mr-1">RR:</span>
-                  <span>{vital.vital_RR}</span>
+                  {/* <span className="font-medium mr-1">RR:</span>
+                  <span>{vital.vital_RR}</span> */}
                 </div>
                 <div className="flex items-center">
                   <span className="font-medium mr-1">O2:</span>

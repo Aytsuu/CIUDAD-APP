@@ -32,11 +32,13 @@ class PatientRecord(models.Model):
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
     vital_bp_systolic = models.CharField(max_length=100)
-    vital_bp_diastolic = models.CharField(max_length=100)
-    vital_temp = models.CharField(max_length=100)
-    vital_RR = models.CharField(max_length=100)
-    vital_o2 = models.CharField(max_length=100)
+    vital_bp_diastolic = models.CharField(max_length=100,default="N/A")
+    vital_temp = models.CharField(max_length=100,default="N/A")
+    vital_RR = models.CharField(max_length=100,default="N/A")
+    vital_o2 = models.CharField(max_length=100,default="N/A")
+    vital_pulse = models.CharField(max_length=100,default="N/A")
     created_at = models.DateTimeField(auto_now_add=True)
+    
     class Meta:
         db_table = 'vital_signs'
 

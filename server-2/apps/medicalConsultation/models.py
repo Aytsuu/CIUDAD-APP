@@ -15,5 +15,8 @@ class MedicalConsultation_Record(models.Model):
      patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='medical_consultation_record')
      vital = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='medical_consultation_record')
      bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='medical_consultation_record')
-     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='medical_consultation_record')
+     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='medical_consultation_record',null=True)
      
+     class Meta:
+           db_table = 'medical_consultation_record'
+           
