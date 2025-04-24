@@ -101,7 +101,7 @@ export default function PrenatalFormThirdPg(
 
     return(
         <>
-            <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
+            <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
                 <Label className="text-black text-opacity-50 italic mb-10">Page 3</Label>
                 <Form {...form}>
                     <form onSubmit={(e) => {

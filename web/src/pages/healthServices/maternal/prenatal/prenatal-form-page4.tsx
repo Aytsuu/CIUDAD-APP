@@ -191,7 +191,7 @@ export default function PrenatalFormFourthPg(
 
     return(
         <>
-            <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
+            <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
                 <Label className="text-black text-opacity-50 italic mb-10">Page 4</Label>
                 <Form>
                     <form onSubmit={(e) => {
@@ -300,7 +300,7 @@ export default function PrenatalFormFourthPg(
                             </div>
 
                             <div className="flex justify-end">
-                                <Button onClick={addPrenatalCare}>Add</Button>
+                                <Button type="button" onClick={addPrenatalCare}>Add</Button>
                             </div>
                         </div>
 

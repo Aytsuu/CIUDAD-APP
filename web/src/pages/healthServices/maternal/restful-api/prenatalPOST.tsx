@@ -11,9 +11,6 @@ export const addPrenatalRecord = async (data: Record<string, string>) => {
         }
 
         const requestData: Record<string, any> = {
-            pf_h_lname: data.pf_h_lname,    
-            pf_h_fname: data.pf_h_fname,
-            pf_h_mname: data.pf_h_mname,
             pf_lmp: data.pf_lmp,
             pf_edc: data.pf_edc,
             patrec_id: data.patrec_id,

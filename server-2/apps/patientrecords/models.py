@@ -57,10 +57,6 @@ class Obstetrical_History(models.Model):
 
     class Meta:
         db_table = 'obstetrical_history'
-
-
-
-
         
         
 class FollowUpVisit(models.Model):

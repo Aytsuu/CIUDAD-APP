@@ -123,6 +123,7 @@ export default function PrenatalFormFirstPg(
           form.setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
           form.setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
           form.setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
+          form.setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
           //   form.setValue("p_address", personalInfo?.per_address)
         //   form.setValue("p_gender", personalInfo?.per_sex)
         }
