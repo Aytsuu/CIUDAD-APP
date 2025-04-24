@@ -14,6 +14,4 @@ path('patient-record/<int:patrec_id>/', DeleteUpdatePatientRecordView.as_view(),
      path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
 
      path("obstetrical_history/", ObstetricalHistoryView.as_view(), name="obstetricalhistory"),
-     
-     # path("spouse/", SpouseView.as_view(), name='spouse'),
 ]

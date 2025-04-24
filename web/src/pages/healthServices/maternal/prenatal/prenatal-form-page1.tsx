@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFormContext, UseFormReturn } from "react-hook-form"
 import { ColumnDef } from "@tanstack/react-table";
+import { Link } from "react-router";
 
 import { z } from "zod";
 import api from "@/pages/api/api";
@@ -11,7 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
-// import { Combobox } from "@/components/ui/combobox";
+import { Combobox } from "@/components/ui/combobox";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Trash } from "lucide-react";
 
 // schema import
@@ -32,8 +34,6 @@ interface PatientRecord{
     per_mname: string
     per_dob: string
     per_age: string
-    per_sex: string
-    // per_address: string
 }
 
 // interface SpouseRecord{
@@ -88,7 +88,7 @@ export default function PrenatalFormFirstPg(
             setLoading(true)
 
             try {
-                const response = await api.get("patientrecords/patient")
+                const response = await api.get("patientrecords/patient/")
                 const patientData = response.data
 
                 const formatted = patientData.map((patient: any) => ({
@@ -110,23 +110,23 @@ export default function PrenatalFormFirstPg(
         fetchPatients()
     }, [])
 
-    // const handlePatientSelection = (id: string) => {
-    //     setSelectedPatientId(id)
-    //     const selectedPatient = patients.default.find(p => p.pat_id.toString() === id)
+    const handlePatientSelection = (id: string) => {
+        setSelectedPatientId(id)
+        const selectedPatient = patients.default.find(p => p.pat_id.toString() === id)
     
-    //     if (selectedPatient) {
-    //       console.log("Selected Patient:", selectedPatient)
-    //       setSelectedPatientId(selectedPatient.pat_id.toString());
-    //       const personalInfo = selectedPatient.personal_info;
-    //       form.setValue("pat_id", selectedPatient.pat_id)
-    //       form.setValue("p_lname", personalInfo?.per_lname)
-    //       form.setValue("p_fname", personalInfo?.per_fname)
-    //       form.setValue("p_mname", personalInfo?.per_mname)
-    //       form.setValue("p_address", personalInfo?.per_address)
-    //       form.setValue("p_age", calculateAge(personalInfo?.per_dob))
-    //       form.setValue("p_gender", personalInfo?.per_sex)
-    //     }
-    //   }
+        if (selectedPatient) {
+          console.log("Selected Patient:", selectedPatient)
+          setSelectedPatientId(selectedPatient.pat_id.toString());
+          const personalInfo = selectedPatient.personal_info;
+          form.setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
+          form.setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname)
+          form.setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
+          form.setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
+          form.setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
+          //   form.setValue("p_address", personalInfo?.per_address)
+        //   form.setValue("p_gender", personalInfo?.per_sex)
+        }
+      }
 
     type previousIllness= {
         prevIllness: string;
@@ -304,235 +304,252 @@ export default function PrenatalFormFirstPg(
     
     return (
         <>
-            <div>   
-                {/* <Combobox
-                    options={}
-                    value={form.watch(``)}
-                    onChange={}
-                    placeholder="Search for patients..."
-                    contentClassName="w-[20rem]"
-                    emptyMessage="No patient found"
-                /> */}
-            </div>
-            <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
-                <Label className="text-black text-opacity-50 italic mb-10">Page 1</Label>
-                <div className="pb-4">
-                    <h2 className="text-3xl font-bold text-center">MATERNAL HEALTH RECORD</h2>
+            <LayoutWithBack
+                title="Maternal Health Record"
+                description="New record"
+            >
+                <div> 
+                    <Combobox
+                    options={patients.formatted}
+                    value={selectedPatientId}
+                    onChange={handlePatientSelection}
+                    placeholder={loading ? "Loading patients..." : "Select a patient"}
+                    triggerClassName="font-normal w-[30rem]"
+                    emptyMessage={
+                        <div className="flex gap-2 justify-center items-center">
+                        <Label className="font-normal text-[13px]">
+                            {loading ? "Loading..." : "No patient found."}
+                        </Label>
+                        <Link to="/patient-records/new">
+                            <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                            Register New Patient
+                            </Label>
+                        </Link>
+                        </div>
+                    }
+                    />
                 </div>
-                <Form {...form}>
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        submit();
-                    }}
-                    >
 
-                        <div className="flex justify-between">  
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.familyNo"
-                                label="Family No."
-                                placeholder="Enter Family No."
-                            />
-                            <FormField
-                                control={form.control}
-                                name="motherPersonalInfo.isTransient"
-                                render={({ field }) => (
-                                    <FormItem className="mt-8">
-                                        <FormControl>
-                                            <Checkbox {...field}></Checkbox>
-                                        </FormControl>
-                                        <FormLabel className="ml-1">Transient</FormLabel>
-                                    </FormItem>   
-                                )}
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherLName"
-                                label="Last Name"
-                                placeholder="Enter Last Name"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherFName"
-                                label="First Name"
-                                placeholder="Enter First Name"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherMName"
-                                label="Middle Name"
-                                placeholder="Enter Middle Name"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherAge"
-                                label="Age"
-                                placeholder="Enter Age"
-                                type="number"
-                            />
-                        </div>
+                <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto mt-2">
+                    <Label className="text-black text-opacity-50 italic mb-10">Page 1</Label>
+                    <div className="pb-4">
+                        <h2 className="text-3xl font-bold text-center">MATERNAL HEALTH RECORD</h2>
+                    </div>
+                    <Form {...form}>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            submit();
+                        }}
+                        >
 
-                        {/* dob, husband's name, occupation */}
-                        <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormDateTimeInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherDOB"
-                                label="Date of Birth"
-                                type="date"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.husbandLName"
-                                label="Husband's Last Name"
-                                placeholder="Enter Last Name"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.husbandFName"
-                                label="Husband's First Name"
-                                placeholder="Enter First Name"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.husbandMName"
-                                label="Husband's Middle Name"
-                                placeholder="Enter Middle Name"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.occupation"
-                                label="Occupation"
-                                placeholder="Enter Occupation"
-                            />
-                        </div>
-
-                        {/* address */}
-                        <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.address.street"
-                                label="Street"
-                                placeholder="Enter Street"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.address.barangay"
-                                label="Barangay"
-                                placeholder="Enter Barangay"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.address.city"
-                                label="City"
-                                placeholder="Enter City"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.address.province"
-                                label="Province"
-                                placeholder="Enter Province"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherWt"
-                                label="Weight"
-                                placeholder="Wt in kg"
-                                type="number"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherHt"
-                                label="Height"
-                                placeholder="Ht in cm"
-                                type="number"
-                            />
-                            <FormInput
-                                control={form.control}
-                                name="motherPersonalInfo.motherBMI"
-                                label="BMI"
-                                placeholder="BMI"
-                                type="number"
-                            />
-                        </div>
-                        <Separator className="mt-8 mb-6" />
-                        {/* obstetric history */}
-                        <h3 className="text-md font-bold">OBSTETRIC HISTORY</h3>
-                        <div className="flex flex-col mt-2">
-                            <div className="grid grid-cols-4 gap-4 mb-2">
-                                <FormInput control={form.control} name="obstreticHistory.noOfChBornAlive" label="No. of Children Born Alive" placeholder="Enter No." type="number"/>
-                                <FormInput control={form.control} name="obstreticHistory.noOfLivingCh" label="No. of Living Children" placeholder="Enter No." type="number"/>
-                                <FormInput control={form.control} name="obstreticHistory.noOfAbortion" label="No. of Abortion" placeholder="Enter No." type="number"/>
-                                <FormInput control={form.control} name="obstreticHistory.noOfStillBirths" label="No. of Still Births" placeholder="Enter No." type="number"/>
+                            <div className="flex justify-between">  
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.familyNo"
+                                    label="Family No."
+                                    placeholder="Enter Family No."
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="motherPersonalInfo.isTransient"
+                                    render={({ field }) => (
+                                        <FormItem className="mt-8">
+                                            <FormControl>
+                                                <Checkbox {...field}></Checkbox>
+                                            </FormControl>
+                                            <FormLabel className="ml-1">Transient</FormLabel>
+                                        </FormItem>   
+                                    )}
+                                />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <FormInput control={form.control} name="obstreticHistory.historyOfLBabies" label="History of Large Babies" placeholder="Enter No." type="number"/>
-                                <FormInput control={form.control} name="obstreticHistory.historyOfDiabetes" label="History of Diabetes" placeholder="Enter History of Diabetes"/>
+                            <div className="grid grid-cols-4 gap-4 mt-2">
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherLName"
+                                    label="Last Name"
+                                    placeholder="Enter Last Name"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherFName"
+                                    label="First Name"
+                                    placeholder="Enter First Name"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherMName"
+                                    label="Middle Name"
+                                    placeholder="Enter Middle Name"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherAge"
+                                    label="Age"
+                                    placeholder="Enter Age"
+                                    type="number"
+                                />
                             </div>
-                        </div>
 
-                        <Separator className="mt-8 mb-6" />
-                        {/* medical history */}
-                        <h3 className="text-md font-bold">MEDICAL HISTORY</h3>
-                        <div className="p-4 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4 border rounded-md p-4">
-                                    <Label>Previous Illness</Label>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <FormInput
-                                                control={form.control}
-                                                name="medicalHistory.prevIllness"
-                                                label=""
-                                                placeholder="Enter Previous Illness"
-                                            />
-                                        </div>
-                                        <Button onClick={addPrevIllness} type="button" variant="default">Add</Button>
-                                    </div>
-                                    <div className="flex bg-white w-full overflow-x-auto mt-4">
-                                        <DataTable columns={illnessColumn} data={prevIllnessData} />
-                                    </div>
+                            {/* dob, husband's name, occupation */}
+                            <div className="grid grid-cols-4 gap-4 mt-2">
+                                <FormDateTimeInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherDOB"
+                                    label="Date of Birth"
+                                    type="date"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.husbandLName"
+                                    label="Husband's Last Name"
+                                    placeholder="Enter Last Name"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.husbandFName"
+                                    label="Husband's First Name"
+                                    placeholder="Enter First Name"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.husbandMName"
+                                    label="Husband's Middle Name"
+                                    placeholder="Enter Middle Name"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.occupation"
+                                    label="Occupation"
+                                    placeholder="Enter Occupation"
+                                />
+                            </div>
+
+                            {/* address */}
+                            <div className="grid grid-cols-4 gap-4 mt-2">
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.address.street"
+                                    label="Street"
+                                    placeholder="Enter Street"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.address.barangay"
+                                    label="Barangay"
+                                    placeholder="Enter Barangay"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.address.city"
+                                    label="City"
+                                    placeholder="Enter City"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.address.province"
+                                    label="Province"
+                                    placeholder="Enter Province"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherWt"
+                                    label="Weight"
+                                    placeholder="Wt in kg"
+                                    type="number"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherHt"
+                                    label="Height"
+                                    placeholder="Ht in cm"
+                                    type="number"
+                                />
+                                <FormInput
+                                    control={form.control}
+                                    name="motherPersonalInfo.motherBMI"
+                                    label="BMI"
+                                    placeholder="BMI"
+                                    type="number"
+                                />
+                            </div>
+                            <Separator className="mt-8 mb-6" />
+                            {/* obstetric history */}
+                            <h3 className="text-md font-bold">OBSTETRIC HISTORY</h3>
+                            <div className="flex flex-col mt-2">
+                                <div className="grid grid-cols-4 gap-4 mb-2">
+                                    <FormInput control={form.control} name="obstreticHistory.noOfChBornAlive" label="No. of Children Born Alive" placeholder="Enter No." type="number"/>
+                                    <FormInput control={form.control} name="obstreticHistory.noOfLivingCh" label="No. of Living Children" placeholder="Enter No." type="number"/>
+                                    <FormInput control={form.control} name="obstreticHistory.noOfAbortion" label="No. of Abortion" placeholder="Enter No." type="number"/>
+                                    <FormInput control={form.control} name="obstreticHistory.noOfStillBirths" label="No. of Still Births" placeholder="Enter No." type="number"/>
                                 </div>
-                                
-                                <div className="space-y-4 border rounded-md p-4">
-                                    <Label>Previous Hospitalization</Label>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <FormInput
-                                                control={form.control}
-                                                name="medicalHistory.prevHospitalization"
-                                                label=""
-                                                placeholder="Enter previous hospitalization"
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <FormInput
-                                                control={form.control}
-                                                name="medicalHistory.prevHospitalizationYr"
-                                                label=""
-                                                placeholder="Enter year"
-                                                type="number"
-                                            />
-                                        </div>
-                                        
-                                        <Button onClick={addPrevHospitalization} type="button" variant="default">Add</Button>
-                                    </div>
-                                    <div className="flex bg-white w-full overflow-x-auto mt-4">
-                                        <DataTable columns={hospitalizationColumn} data={prevHospitalizationData} />
-                                    </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <FormInput control={form.control} name="obstreticHistory.historyOfLBabies" label="History of Large Babies" placeholder="Enter No." type="number"/>
+                                    <FormInput control={form.control} name="obstreticHistory.historyOfDiabetes" label="History of Diabetes" placeholder="Enter History of Diabetes"/>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="mt-8 sm:mt-auto flex justify-end">
-                            <Button type="submit" className="mt-4 mr-4 sm-w-32" onClick={onSubmit}>
-                                Next
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
-            </div>
+                            <Separator className="mt-8 mb-6" />
+                            {/* medical history */}
+                            <h3 className="text-md font-bold">MEDICAL HISTORY</h3>
+                            <div className="p-4 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4 border rounded-md p-4">
+                                        <Label>Previous Illness</Label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <FormInput
+                                                    control={form.control}
+                                                    name="medicalHistory.prevIllness"
+                                                    label=""
+                                                    placeholder="Enter Previous Illness"
+                                                />
+                                            </div>
+                                            <Button onClick={addPrevIllness} type="button" variant="default">Add</Button>
+                                        </div>
+                                        <div className="flex bg-white w-full overflow-x-auto mt-4">
+                                            <DataTable columns={illnessColumn} data={prevIllnessData} />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-4 border rounded-md p-4">
+                                        <Label>Previous Hospitalization</Label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <FormInput
+                                                    control={form.control}
+                                                    name="medicalHistory.prevHospitalization"
+                                                    label=""
+                                                    placeholder="Enter previous hospitalization"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <FormInput
+                                                    control={form.control}
+                                                    name="medicalHistory.prevHospitalizationYr"
+                                                    label=""
+                                                    placeholder="Enter year"
+                                                    type="number"
+                                                />
+                                            </div>
+                                            
+                                            <Button onClick={addPrevHospitalization} type="button" variant="default">Add</Button>
+                                        </div>
+                                        <div className="flex bg-white w-full overflow-x-auto mt-4">
+                                            <DataTable columns={hospitalizationColumn} data={prevHospitalizationData} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 sm:mt-auto flex justify-end">
+                                <Button type="submit" className="mt-4 mr-4 sm-w-32" onClick={onSubmit}>
+                                    Next
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </div> 
+            </LayoutWithBack>
         </>
     )
 }

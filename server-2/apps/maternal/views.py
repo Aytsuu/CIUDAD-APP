@@ -41,8 +41,29 @@ class TTStatusView(generics.ListCreateAPIView):
     
 # **Lab Result Dates**
 class LabResultDatesView(generics.ListCreateAPIView):
-    serializer_class = LabResultSerializer
+    serializer_class = LabResultDatesSerializer
     queryset = Lab_Result_Dates.objects.all()
 
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+    
+class Guide4ANCVisitView(generics.ListCreateAPIView):
+    serializer_class = Guide4ANCVisitSerializer
+    queryset = Guide4ANCVisit.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+class ChecklistView(generics.ListCreateAPIView):
+    serializer_class = ChecklistSerializer
+    queryset = Checklist.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+# class BirthPlanView(generics.ListCreateAPIView):
+#     serializer_class = BirthPlanSerializer
+#     queryset = BirthPlan.objects.all()
+
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)

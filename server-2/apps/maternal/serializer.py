@@ -24,7 +24,22 @@ class TTStatusSerializer(serializers.ModelSerializer):
         model = TT_Status
         fields = '__all__'
 
-class LabResultSerializer(serializers.ModelSerializer):
+class LabResultDatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lab_Result_Dates
         fields = '__all__'
+
+class Guide4ANCVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Guide4ANCVisit
+        fields = '__all__'
+
+class ChecklistSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Checklist
+        fields = '__all__'
+
+# class BirthPlanSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = BirthPlan
+#         fields = '__all__'

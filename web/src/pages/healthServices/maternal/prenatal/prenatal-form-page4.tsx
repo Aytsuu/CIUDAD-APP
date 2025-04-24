@@ -10,7 +10,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function PrenatalFormFourthPg(
     {form, onSubmit, back}: {
@@ -30,7 +30,7 @@ export default function PrenatalFormFourthPg(
     const { setValue, getValues }  = useFormContext();
 
     // date today
-    const today = new Date();
+    const today = new Date().toLocaleDateString('en-CA');
 
 
     type prenatalCareTypes = {
@@ -152,7 +152,12 @@ export default function PrenatalFormFourthPg(
         }
     ]
 
+    useEffect(() => {
+        setValue("prenatalCare.date", today);
+    },[setValue,today])
+
     const addPrenatalCare = () => {
+        
         const date = getValues("prenatalCare.date");
         const weight = parseFloat(getValues("prenatalCare.wt")); 
         const aogWks = parseInt(getValues("prenatalCare.aog.aogWeeks"), 10); 
@@ -165,7 +170,6 @@ export default function PrenatalFormFourthPg(
         const complaints = getValues("prenatalCare.notes.complaints");
         const advises = getValues("prenatalCare.notes.advises");
     
-        // Log the values for debugging
         console.log("Date: ", date, "Wt: ", weight, "AOG Wks: ", aogWks, "AOG Days: ", aogDays, "BP: ", systolic, "/", diastolic, "Fundal Ht: ", fundalHt, "Fetal HR: ", fetalHR, "Fetal Position: ", fetalPos, "Complaints: ", complaints, "Advises: ", advises);
     
         if (date && !isNaN(weight) && !isNaN(aogWks) && !isNaN(aogDays) && !isNaN(systolic) && !isNaN(diastolic)) {
@@ -182,7 +186,6 @@ export default function PrenatalFormFourthPg(
             ]);
         } else {
             console.error("Please fill in all required fields.");
-            // Optionally show an alert or message to the user.
         }        
     }
 

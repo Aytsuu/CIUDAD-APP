@@ -74,3 +74,42 @@ class Lab_Result_Dates(models.Model):
         db_table = 'pf_lab_result_dates'
 
 # next: lab result docs
+
+class Guide4ANCVisit(models.Model):
+    pfav_id = models.BigAutoField(primary_key=True)
+    pfav_1st_tri = models.DateField()
+    pfav_2nd_tri = models.DateField()
+    pfav_3rd_tri = models.DateField()
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_anc_visit', db_column='pf_id')
+
+    class Meta:
+        db_table = 'pf_anc_visit'
+
+class Checklist(models.Model):
+    pfc_id = models.BigAutoField(primary_key=True)
+    pfc_increased_bp = models.BooleanField()
+    pfc_nausea= models.BooleanField()
+    pfc_edema = models.BooleanField()
+    pfc_abno_vaginal_disch = models.BooleanField()
+    pfc_chills_fever = models.BooleanField()
+    pfc_varicosities = models.BooleanField()
+    pfc_epigastric_pain = models.BooleanField()
+    pfc_blurring_vision = models.BooleanField()
+    pfc_severe_headache = models.BooleanField()
+    pfc_vaginal_bleeding = models.BooleanField()
+    pfc_diff_in_bleeding = models.BooleanField()
+    pfc_abdominal_pain = models.BooleanField()
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_checklist', db_column='pf_id')
+
+    class Meta:
+        db_table = 'pf_checklist'
+
+# class BirthPlan(models.Model):
+#     pfbp_id = models.BigAutoField(primary_key=True)
+#     pfbp_pob_plan = models.DateField()
+#     pfbp_newborn_s_plan = models.DateField()
+#     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_birth_plan', db_column='pf_id')
+
+#     class Meta:
+#         db_table = 'pf_birth_plan'
+

@@ -52,7 +52,7 @@ export default function PrenatalForm(){
 
     return(
         <div>
-            <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">
+            {/* <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none"> */}
                 <FormProvider {...form}>
                     {currentPage === 1 && (
                         <PrenatalFormFirstPg 
@@ -83,7 +83,7 @@ export default function PrenatalForm(){
                     )}
                 </FormProvider>
                 
-            </Card>
+            {/* </Card> */}
         </div>
     )
 }
