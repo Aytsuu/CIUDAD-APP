@@ -20,10 +20,19 @@ class PartialUpdateMixin:
 #         model = VitalSigns
 #         fields = '__all__'
 
+
+class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VaccinationRecord
+        fields = '__all__'
+
+
+
 class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
     vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
+    vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
 
     class Meta:
         model = VaccinationHistory

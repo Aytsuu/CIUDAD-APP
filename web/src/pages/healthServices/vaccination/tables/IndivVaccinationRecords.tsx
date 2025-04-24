@@ -21,77 +21,6 @@ import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
 
-// interface VaccineInterval {
-//   vacInt_id: number;
-//   interval: number;
-//   dose_number: number;
-//   time_unit: string;
-//   vac_id: number;
-// }
-
-// interface VaccineCategory {
-//   vaccat_id: number;
-//   vaccat_type: string;
-// }
-
-// interface VaccineList {
-//   vac_id: number;
-//   vaccat_details: VaccineCategory;
-//   intervals: VaccineInterval[];
-//   routine_frequency: string | null;
-//   vac_type_choices: string;
-//   vac_name: string;
-//   no_of_doses: number;
-//   age_group: string;
-//   specify_age: string;
-//   created_at: string;
-//   updated_at: string;
-//   vaccat_id: number;
-// }
-
-// interface VaccineStock {
-//   vaccinelist: VaccineList;
-//   inv_id: number;
-//   vac_id: number;
-//   solvent: string;
-//   batch_number: string;
-//   volume: number;
-//   qty: number;
-//   dose_ml: number;
-//   vacStck_used: number;
-//   vacStck_qty_avail: number;
-//   wasted_dose: number;
-//   created_at: string;
-//   updated_at: string;
-// }
-
-interface VaccinationHistory {
-  // vachist_id: number;
-  // vital_signs: {
-  //   vital_id: number;
-  //   vital_bp_systolic: string;
-  //   vital_bp_diastolic: string;
-  //   vital_temp: string;
-  //   vital_RR: string;
-  //   vital_o2: string;
-  //   created_at: string;
-  // } | null;
-  // vaccine_stock: VaccineStock | null;
-  // vachist_doseNo: string;
-  // vachist_status: string;
-  // vachist_age: number;
-  // assigned_to: number | null;
-  // staff_id: number;
-  // updated_at: string;
-  // vital: number;
-  // vacrec: number;
-  // vacStck: number;
-  // follow_up_visit: {
-  //   followv_id: number;
-  //   followv_date: string;
-  //   followv_status: string;
-  // } ;
-}
 
 export interface VaccinationRecord {
   patrec_id: number;
@@ -104,6 +33,7 @@ export interface VaccinationRecord {
   vital: number;
   vacrec: number;
   vacStck: number;
+  vacrec_status: string;
   
 
   vacrec_totaldose: number;
@@ -158,6 +88,7 @@ export interface VaccinationRecord {
   vaccine_name: string;
   batch_number: string;
   updated_at: string;
+  created_at: string;
   vaccine_details: {
     no_of_doses: number;
     age_group: string;
@@ -190,50 +121,52 @@ export default function IndivVaccinationRecords() {
     refetchOnMount: true,
     staleTime: 0,
   });
-
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
   
-    return vaccinationRecords.flatMap((record: any) => 
-    
-      record.vaccination_histories.map((history: any) => ({
-        patrec_id: record.patrec_id,
-        vachist_id: history.vachist_id,
-        vachist_doseNo: history.vachist_doseNo,
-        vachist_status: history.vachist_status,
-        vachist_age: history.vachist_age,
-        assigned_to: history.assigned_to,
-        staff_id: history.staff_id,
-        vital: history.vital,
-        vacrec: history.vacrec,
-        vacStck: history.vacStck,
-        vacrec_totaldose: record.vacrec_totaldose,
-        vital_signs: history.vital_signs || {
-          vital_bp_systolic: "N/A",
-          vital_bp_diastolic: "N/A",
-          vital_temp: "N/A",
-          vital_RR: "N/A",
-          vital_o2: "N/A",
-          created_at: "N/A",
-        },
-        vaccine_stock: history.vaccine_stock || null,
-        vaccine_name: history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
-        batch_number: history.vaccine_stock?.batch_number || "N/A",
-        updated_at: record.updated_at,
-        vaccine_details: {
-          no_of_doses: history.vaccine_stock?.vaccinelist?.no_of_doses || 0,
-          age_group: history.vaccine_stock?.vaccinelist?.age_group || "N/A",
-          vac_type: history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
-        },
-        follow_up_visit: {
-          followv_id: history.follow_up_visit?.followv_id || 0,
-          followv_date: history.follow_up_visit?.followv_date || "N/A",
-          followv_status: history.follow_up_visit?.followv_status || "N/A",
-        },
-      }))
-    );
-  }, [vaccinationRecords]);
+    return vaccinationRecords.map((record: any) => ({
+      patrec_id: record.vacrec_details?.patrec_id,
+      vachist_id: record.vachist_id,
+      vachist_doseNo: record.vachist_doseNo,
+      vachist_status: record.vachist_status,
+      vachist_age: record.vachist_age,
+      assigned_to: record.assigned_to,
+      staff_id: record.staff_id,
+      vital: record.vital,
+      vacrec: record.vacrec,
+      vacStck: record.vacStck,
+      vacrec_totaldose: record.vacrec_totaldose,
+      vacrec_status: record.vacrec_status,
+      created_at: record.created_at || "N/A",
 
+  
+      vital_signs: record.vital_signs || {
+        vital_bp_systolic: "N/A",
+        vital_bp_diastolic: "N/A",
+        vital_temp: "N/A",
+        vital_RR: "N/A",
+        vital_o2: "N/A",
+        created_at: "N/A",
+      },
+      vaccine_stock: record.vaccine_stock || null,
+      vaccine_name: record.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+      batch_number: record.vaccine_stock?.batch_number || "N/A",
+      vaccine_details: {
+        no_of_doses: record.vaccine_stock?.vaccinelist?.no_of_doses || 0,
+        age_group: record.vaccine_stock?.vaccinelist?.age_group || "N/A",
+        vac_type: record.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+      },
+      follow_up_visit: {
+        followv_id: record.follow_up_visit?.followv_id,
+        followv_date: record.follow_up_visit?.followv_date || "N/A",
+        followv_status: record.follow_up_visit?.followv_status || "N/A",
+      },
+    }));
+  }, [vaccinationRecords]);
+  
+
+
+  // console.log("created_at", vaccinationRecords.created_at);
   console.log(vaccinationRecords);
 
   const filteredData = React.useMemo(() => {
@@ -351,7 +284,7 @@ export default function IndivVaccinationRecords() {
       cell: ({ row }) => {
         const statusColors = {
           completed: "bg-green-100 text-green-800",
-          "Partially Vaccinated": " text-red-500",
+          "partially Vaccinated": " text-red-500",
         };
         return (
           <div className="flex flex-col justify-center">
@@ -365,7 +298,7 @@ export default function IndivVaccinationRecords() {
               {row.original.vachist_status}
             </span>
             <div>
-              {row.original.follow_up_visit.followv_date &&
+              {row.original.vaccine_details.vac_type === "routine" || row.original.vacrec_status === "pending" &&
                 row.original.follow_up_visit.followv_date !== "N/A" && (
                   <div className="text-xs mt-1">
                     Next Dose:{" "}
@@ -385,15 +318,22 @@ export default function IndivVaccinationRecords() {
     {
       accessorKey: "updated_at",
       header: "Last Updated",
-      cell: ({ row }) => (
-        <div className="text-sm text-gray-600">
-          {new Date(row.original.updated_at).toLocaleDateString()}
-          <div className="text-xs text-gray-400">
-            {new Date(row.original.updated_at).toLocaleTimeString()}
+      cell: ({ row }) => {
+        const updatedAt = new Date(row.original.created_at);
+        const formattedDate = updatedAt.toLocaleDateString();  // Localized date
+        const formattedTime = updatedAt.toLocaleTimeString();  // Localized time
+    
+        return (
+          <div className="text-sm text-gray-600">
+            {formattedDate}
+            <div className="text-xs text-gray-400">
+              {formattedTime}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
+    
     {
       accessorKey: "action",
       header: "Actions",

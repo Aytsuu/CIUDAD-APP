@@ -9,7 +9,7 @@ urlpatterns = [
   
 #   all records view
     path('all-vaccine-records/', PatientVaccinationRecordsView.as_view(), name='services-records-list'),
-    path('indiv-patient-record/<int:pat_id>/', VaccinationRecordByPatientView.as_view(), name='patient-record'),
+    path('indiv-patient-record/<int:pat_id>/', VaccinationHistorRecordView.as_view(), name='patient-record'),
     
     # # UPDATE DELETE
     path('vaccination-record/<int:vacrec_id>/', DeleteUpdateVaccinationRecordView.as_view(), name='vaccination-record-detail'),

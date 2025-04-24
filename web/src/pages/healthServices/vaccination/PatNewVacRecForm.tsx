@@ -28,6 +28,7 @@ import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
 import { calculateNextVisitDate } from "./FunctionHelpers";
 import { calculateAge } from "@/helpers/ageCalculator";
+import {fetchPatientRecords} from "./restful-api/FetchPatient";
 
 export default function PatNewVacRecForm() {
   const navigate = useNavigate();
@@ -42,35 +43,22 @@ export default function PatNewVacRecForm() {
   const [loading, setLoading] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<any>(null);
 
-  // Fetch patient records
+  
   useEffect(() => {
-    const fetchPatients = async () => {
+    const loadPatients = async () => {
       setLoading(true);
       try {
-        const response = await api.get("patientrecords/patient/");
-        const patientData = response.data;
-
-        const formatted = patientData.map((patient: any) => ({
-          id: patient.pat_id.toString(),
-          name: `${patient.personal_info?.per_lname || ""}, ${
-            patient.personal_info?.per_fname || ""
-          } ${patient.personal_info?.per_mname || ""}`.trim(),
-        }));
-
-        setPatients({
-          default: patientData,
-          formatted,
-        });
+        const data = await fetchPatientRecords();
+        setPatients(data);
       } catch (error) {
-        console.error("Error fetching patients:", error);
-        toast.error("Failed to load patient records");
+        // Error already handled with toast inside fetchPatientRecords
       } finally {
         setLoading(false);
       }
     };
-
-    fetchPatients();
+    loadPatients();
   }, []);
+  
 
   // Handle patient selection
   const handlePatientSelection = (id: string) => {
@@ -105,6 +93,9 @@ export default function PatNewVacRecForm() {
       }
     }
   };
+
+
+  
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -230,7 +221,7 @@ export default function PatNewVacRecForm() {
             {
               patrec_id: patrec_id,
               vacrec_status: "forwarded",
-              varec_total_doses: 0,
+              vacrec_totaldose: 0,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             }
@@ -316,7 +307,7 @@ export default function PatNewVacRecForm() {
       );
       const vaccineData = vacStckResponse.data;
 
-      const { no_of_doses: maxDoses } = vacStckResponse.data.vaccinelist;
+      const maxDoses  = vacStckResponse.data.vaccinelist.no_of_doses;
       console.log("Max doses allowed:", maxDoses);
 
       // Step 1: Create patient record
@@ -346,7 +337,7 @@ export default function PatNewVacRecForm() {
           {
             patrec_id: patrec_id,
             vacrec_status: "completed",
-            varec_total_doses: maxDoses,
+            vacrec_totaldose: maxDoses,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
@@ -357,8 +348,8 @@ export default function PatNewVacRecForm() {
           "vaccination/vaccination-record/",
           {
             patrec_id: patrec_id,
-            vacrec_status: "pending",
-            varec_total_doses: maxDoses,
+            vacrec_status: "partially vaccinated",
+            vacrec_totaldose: maxDoses,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
@@ -380,7 +371,7 @@ export default function PatNewVacRecForm() {
       // Step 4: Deduct vaccine from stock
       await deductVaccineStock(vacStck_id);
 
-      let vac_type_choices = vaccineData.vaccat_details.vac_type_choices;
+      let vac_type_choices = vaccineData.vaccinelist.vac_type;
 
       if (vac_type_choices === "routine") {
         let interval = vaccineData.vaccinelist.routine_frequency.interval;
@@ -460,7 +451,7 @@ export default function PatNewVacRecForm() {
         await api.post("vaccination/vaccination-history/", {
           vachist_doseNo: 1,
           vachist_age: form.getValues("age"),
-          vachist_status: "Partially Vaccinated",
+          vachist_status: "partially Vaccinated",
 
           created_at: new Date().toISOString(),
           staff_id: 1,

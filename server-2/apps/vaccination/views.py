@@ -30,10 +30,10 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
     
     def get_queryset(self):
         return Patient.objects.filter(
-            Q(patient_records__patrec_type__iexact='Vaccination'),
-    Q(patient_records__vaccination_records__vacrec_status__iexact='completed') |
-    Q(patient_records__vaccination_records__vacrec_status__iexact='pending')
-        ).distinct()
+        Q(patient_records__patrec_type__iexact='Vaccination'),
+        Q(patient_records__vaccination_records__vacrec_status__iexact='completed') |
+        Q(patient_records__vaccination_records__vacrec_status__iexact='partially vaccinated')
+            ).distinct()
 
 
 
@@ -48,32 +48,43 @@ class PatientRecordWithVaccinationSerializer(PatientRecordSerializer):
         model = PatientRecord
         fields = '__all__'
 
-
 # INDIVIDUAL RECORDS VIEW
-class VaccinationRecordByPatientView(generics.ListAPIView):
-    serializer_class = VaccinationRecordSerializer
+class VaccinationHistorRecordView(generics.ListAPIView):
+    serializer_class = VaccinationHistorySerializer
 
     def get_queryset(self):
         pat_id = self.kwargs['pat_id']
-
-        # Subquery to get the latest updated_at for each vacrec_id
-        latest_updated_at = VaccinationRecord.objects.filter(
-        patrec_id=OuterRef('patrec_id'),
-        patrec_id__pat_id=pat_id
-        ).order_by('-updated_at').values('updated_at')[:1]
-
-
-        # Annotate VaccinationRecord with latest updated_at
-        queryset = VaccinationRecord.objects.filter(
-        patrec_id__pat_id=pat_id
-        ).annotate(
-            latest_updated_at=Subquery(latest_updated_at)
+        return VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=pat_id
         ).exclude(
-            updated_at=F('latest_updated_at'),
-            vacrec_status='forwarded'
-        ).order_by('-latest_updated_at')
+            vacrec__vacrec_status='forwarded'
+        ).order_by('-created_at')  # Optional: latest first
+    
+    
+# class VaccinationRecordByPatientView(generics.ListAPIView):
+#     serializer_class = VaccinationRecordSerializer
 
-        return queryset
+#     def get_queryset(self):
+#         pat_id = self.kwargs['pat_id']
+
+#         # Subquery to get the latest updated_at for each vacrec_id
+#         latest_updated_at = VaccinationRecord.objects.filter(
+#         patrec_id=OuterRef('patrec_id'),
+#         patrec_id__pat_id=pat_id
+#         ).order_by('-updated_at').values('updated_at')[:1]
+
+
+#         # Annotate VaccinationRecord with latest updated_at
+#         queryset = VaccinationRecord.objects.filter(
+#         patrec_id__pat_id=pat_id
+#         ).annotate(
+#             latest_updated_at=Subquery(latest_updated_at)
+#         ).exclude(
+#             updated_at=F('latest_updated_at'),
+#             vacrec_status='forwarded'
+#         ).order_by('-latest_updated_at')
+
+#         return queryset
 
 
     # UPDATE DELETE

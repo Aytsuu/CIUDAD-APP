@@ -196,6 +196,7 @@ export default function UpdateVaccinationForm() {
             vachist_doseNo: 0,
             vachist_status: "forwarded",
             vachist_age: data.age,
+            patrec: patrec_id,
 
             staff_id: 1,
             vacrec: vacrec_id,
@@ -244,7 +245,7 @@ export default function UpdateVaccinationForm() {
   const onSubmitStep2 = async (data: VitalSignsType) => {
     // First check if form2 (Step 2) is valid
     const vaccineType = form.getValues("vaccinetype");
-
+console.log("Patrec",Vaccination.patrec_id);
     // Check if vaccine type is selected
     if (!vaccineType) {
       form.setError("vaccinetype", {
@@ -266,7 +267,7 @@ export default function UpdateVaccinationForm() {
     let oldpatrec_id = Vaccination.patrec_id;
     let oldFollowv_id = Vaccination.follow_up_visit.followv_id;
     console.log("old Vacine ID:", oldFollowv_id);
-console.log("oldvacrec_id:", oldVaccrec_id);
+    console.log("oldvacrec_id:", oldVaccrec_id);
 
     try {
       // Step 1: Create patient record
@@ -278,6 +279,7 @@ console.log("oldvacrec_id:", oldVaccrec_id);
         `inventory/vaccine_stocks/${vacStck_id}/`
       );
       const vaccineData = vacStckResponse.data;
+      console.log("Vaccine No of Doses:", vaccineData.vaccinelist.no_of_doses);
 
       const { no_of_doses: maxDoses } = vacStckResponse.data.vaccinelist;
       console.log("Max doses allowed:", maxDoses);
@@ -285,10 +287,11 @@ console.log("oldvacrec_id:", oldVaccrec_id);
         `vaccination/vaccination-history/${Vaccination.vachist_id}/`
       );
 
-      const doseCount = Array.isArray(previousDoses.data)
-        ? previousDoses.data.length
-        : 0;
+      const doseCount = previousDoses.data.vachist_doseNo;
       const doseNumber = doseCount + 1;
+
+      console.log("Dose Count:", doseCount);
+      console.log("Dose Number:", doseNumber);
 
 
       // Step 3: Create vital signs record
@@ -327,8 +330,8 @@ console.log("oldvacrec_id:", oldVaccrec_id);
           "vaccination/vaccination-record/",
           {
             patrec_id: patrec_id,
-            vacrec_status: "pending",
-            varec_total_doses: maxDoses,
+            vacrec_status: "completed",
+            varec_total_doses: 1,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }
@@ -354,6 +357,7 @@ console.log("oldvacrec_id:", oldVaccrec_id);
             created_at: new Date().toISOString(),
           }
         );
+
         newfollowv_id = followUpVisitResponse.data.followv_id;
 
         //NEW VACCINE HISTORY
@@ -370,11 +374,13 @@ console.log("oldvacrec_id:", oldVaccrec_id);
           assigned_to: null,
           followv: newfollowv_id,
         });
-      } else {
+        
+      }
+       else {
 
 
         if (vaccineData.vaccinelist.no_of_doses > doseNumber) {
-
+          console.log("Not the last dose");
             //UPDATE FOLLOW UP VISIT
            await api.put(
             `patientrecords/follow-up-visit/${oldFollowv_id}/`,
@@ -385,8 +391,8 @@ console.log("oldvacrec_id:", oldVaccrec_id);
 
           await api.put(`vaccination/vaccination-record/${oldVaccrec_id}/`, {
             updated_at: new Date().toISOString(),
+            // vacrec_status: "partially vaccinated",
           });
-
 
           const doseInterval = vaccineData.vaccinelist.intervals.find(
             (interval: {
@@ -420,15 +426,58 @@ console.log("oldvacrec_id:", oldVaccrec_id);
             newfollowv_id = followUpVisitResponse.data.followv_id;
           }
 
+          // // UPDATE VACCINA
+          // await api.put(`vaccination/vaccination-history/${Vaccination.vachist_id}/`, {
+          //   vachist_doseNo: doseNumber,
+          //   vachist_status: "completed",
+          // });    
+          
+          // ADD NEW VACCINE HISTORY
+          await api.post("vaccination/vaccination-history/", {
+            vachist_doseNo: doseNumber,
+            vachist_age: form.getValues("age"),
+            vachist_status: "partially Vaccinated",
+            created_at: new Date().toISOString(),
+            staff_id: 1,
+            vital: vital_id,
+            vacStck: vacStck_id,
+            vacrec: oldVaccrec_id,
+            assigned_to: null,
+            followv: newfollowv_id,
+          });
         }
 
         else{
+
+          console.log("last dose");
+
           await api.put(
             `patientrecords/follow-up-visit/${oldFollowv_id}/`,
             {
               followv_status: "completed",
             }
           ); 
+
+          await api.put(`vaccination/vaccination-record/${oldVaccrec_id}/`, {
+            updated_at: new Date().toISOString(),
+            vacrec_status: "completed",
+          });
+
+
+         // ADD NEW VACCINE HISTORY
+         await api.post("vaccination/vaccination-history/", {
+          vachist_doseNo: doseNumber,
+          vachist_age: form.getValues("age"),
+          vachist_status: "completed",
+          created_at: new Date().toISOString(),
+          staff_id: 1,
+          vital: vital_id,
+          vacStck: vacStck_id,
+          vacrec: oldVaccrec_id,
+          assigned_to: null,
+          followv: null,
+        });
+          
         }
 
       }

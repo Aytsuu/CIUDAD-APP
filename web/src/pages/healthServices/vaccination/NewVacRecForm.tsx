@@ -461,7 +461,7 @@ export default function VaccinationForm() {
          await api.post("vaccination/vaccination-history/", {
           vachist_doseNo: 1,
           vachist_age: form.getValues("age"),
-          vachist_status: "Partially Vaccinated",
+          vachist_status: "partially Vaccinated",
 
           created_at: new Date().toISOString(),
           staff_id: 1,
