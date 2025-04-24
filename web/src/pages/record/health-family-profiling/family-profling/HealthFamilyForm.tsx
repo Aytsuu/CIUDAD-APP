@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
 import ParentsFormLayout from "@/pages/record/health-family-profiling/family-profling/parents/ParentsFormLayout";
-import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
+// import DependentsInfoLayout from "./dependents/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
 
 import { Button } from "@/components/ui/button/button";

@@ -84,4 +84,3 @@ class RequestDeleteView(generics.DestroyAPIView):
     serializer_class = RequestRegistrationSerializer
     queryset = RequestRegistration.objects.all()
     lookup_field = 'req_id'
-

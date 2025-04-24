@@ -1,18 +1,17 @@
-# from .models import *
-# from rest_framework import serializers
+from rest_framework import serializers
+from .models import *
 
+# class AnimalBiteRecordSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = AnimalBite_Record
+#         fields = '__all__'
 
-# class PatientsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Patient
-#         fields = '__all__'
-        
-# class ReferralSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Referral
-#         fields = '__all__'
-        
-# class BiteDetailsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = BiteDetails
-#         fields = '__all__'
+class AnimalBiteReferralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnimalBite_Referral
+        fields = '__all__'
+
+class AnimalBiteDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnimalBite_Details
+        fields = '__all__'

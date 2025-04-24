@@ -22,7 +22,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 // import { toast } from "sonner";
-import { usePatients, useSpouse } from "../queries/prenatalFetchQueries";
+import { usePatients } from "../queries/prenatalFetchQueries";
 
 
 interface PatientRecord{
@@ -86,8 +86,8 @@ export default function PrenatalFormFirstPg(
     const [selectedPatientId, setSelectedPatientId] = useState<string>("")
     const { data: patientData, isLoading: patientLoading } = usePatients();
 
-    const [selectedSpouseId, setSelectedSpouseId] = useState<number | null>(null);
-    const { data: spouseData } = useSpouse(selectedSpouseId);
+    // const [selectedSpouseId, setSelectedSpouseId] = useState<number | null>(null);
+    // const { data: spouseData } = useSpouse(selectedSpouseId);
     // const {data: spouseData, isLoading} = useSpouse();
     // const [isSubmitting, setIsSubmitting] = useState(false)
     // const [error, setError] = useState<string | null>(null)
@@ -122,22 +122,22 @@ export default function PrenatalFormFirstPg(
         //   if(!spouseId && (selectedPatient as any).spouse_id){
         //     spouseId = (selectedPatient as any).spouse.spouse_id;
         //   }
-          setSelectedSpouseId(selectedPatient.spouse_id ?? null);
+        //   setSelectedSpouseId(selectedPatient.spouse_id ?? null);
         }
     }
 
-    useEffect(() => {
-        if(spouseData &&  spouseData.length > 0){
-            const spouse = spouseData[0]
-            console.log("Spouse data: ", spouseData)
-            // const personal_info = spouse.personal_info
+    // useEffect(() => {
+    //     if(spouseData &&  spouseData.length > 0){
+    //         const spouse = spouseData[0]
+    //         console.log("Spouse data: ", spouseData)
+    //         // const personal_info = spouse.personal_info
 
-            form.setValue("motherPersonalInfo.husbandLName", spouse?.spouse_lname)
-            form.setValue("motherPersonalInfo.husbandFName", spouse?.spouse_fname)
-            form.setValue("motherPersonalInfo.husbandMName", spouse?.spouse_mname)
-            form.setValue("motherPersonalInfo.occupation", spouse?.spouse_occupation)
-        }
-    },[spouseData, form])
+    //         form.setValue("motherPersonalInfo.husbandLName", spouse?.spouse_lname)
+    //         form.setValue("motherPersonalInfo.husbandFName", spouse?.spouse_fname)
+    //         form.setValue("motherPersonalInfo.husbandMName", spouse?.spouse_mname)
+    //         form.setValue("motherPersonalInfo.occupation", spouse?.spouse_occupation)
+    //     }
+    // },[spouseData, form])
     // if(isError){
     //     return <div>Error fetching patients: {error.message}</div>;
     // }
