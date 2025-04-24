@@ -53,9 +53,6 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.drr',
     'apps.donation',
-    # 'apps.useraccount',
-    # 'apps.blotter',
-    # 'apps.gad',
 ]
 
 MIDDLEWARE = [
