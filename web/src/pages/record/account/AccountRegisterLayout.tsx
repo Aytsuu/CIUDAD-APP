@@ -38,7 +38,7 @@ export default function AccountRegistrationLayout() {
     };
 
     const accountInfo = form.getValues();
-    await addAccount({ 
+    addAccount({ 
       accountInfo: accountInfo,
       residentId: residentId
     }, {
