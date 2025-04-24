@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 
 // Fetch residents
 export const getResidents = async () => {
@@ -19,6 +19,16 @@ export const getFamilies = async () => {
     console.error(err);
   }
 };
+
+// Fetch family composition
+export const getFamilyComposition = async () => {
+  try {
+    const res = await api.get("profiling/family-composition/");
+    return res.data;
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 // Fetch households
 export const getHouseholds = async () => {
@@ -41,7 +51,7 @@ export const getSitio = async () => {
 };
 
 // Fetch registration requests
-export const getRequest = async () => {
+export const getRequests = async () => {
   try {
     const res = await api.get("profiling/request/");
     return res.data;
@@ -51,7 +61,7 @@ export const getRequest = async () => {
 };
 
 // Fetch businesses
-export const getBusiness = async () => {
+export const getBusinesses = async () => {
   try {
     const res = await api.get("profiling/business/");
     return res.data;

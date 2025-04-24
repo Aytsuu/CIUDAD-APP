@@ -22,13 +22,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('user/', include('apps.account.urls')),
     path('waste/', include('apps.waste.urls')),
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
+    path('file/', include('apps.file.urls')),
     path('treasurer/', include('apps.treasurer.urls')),
+    path('drr/', include('apps.drr.urls'))
     path('donation/', include('apps.donation.urls')),
 ]

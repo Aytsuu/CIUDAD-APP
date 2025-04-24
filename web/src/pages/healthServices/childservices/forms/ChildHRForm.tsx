@@ -36,7 +36,6 @@ const initialFormData: FormData = {
   city: "",
   landmarks: "",
   isTransient: "Resident",
-
   dateNewbornScreening: "",
   hasDisability: false,
   disabilityTypes: [],

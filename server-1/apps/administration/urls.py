@@ -28,7 +28,8 @@ urlpatterns = [
 
     path('staffs/', StaffView.as_view(), name='staff-list'),
     path('position/', PositionView.as_view(), name="positions-list"),
-    path('position/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
+    path('position/delete/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
+    path('position/update/<int:pos_id>/', PositionUpdateView.as_view(), name='position-update'),
 
     # Feature Urls 
 
@@ -38,13 +39,13 @@ urlpatterns = [
     # Assignment Urls
 
     path('assignment/', AssignmentView.as_view(), name='role-assignment'),
-    path('assignment/<int:pos>/', AssignmentView.as_view(), name='assigned-feature'),
-    path('assignment/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
+    path('assignment/<int:pos>/', AssignmentFilteredView.as_view(), name='assigned-feature'),
+    path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
 
     # Permission Urls 
 
     path('permission/', PermissionView.as_view(), name='permissions-list'),
-    path('permission/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
+    path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
 
     # Staff Urls
 

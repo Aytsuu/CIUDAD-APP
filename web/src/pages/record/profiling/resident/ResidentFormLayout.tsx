@@ -15,27 +15,29 @@ import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck, CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { useForm } from "react-hook-form";
 import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { updateProfile } from "../restful-api/profilingPutAPI";
-import { deleteRequest } from "../restful-api/profilingDeleteAPI";
-import {
-  addPersonal,
-  addResidentProfile,
-} from "../restful-api/profiingPostAPI";
+import { useAuth } from "@/context/AuthContext";
+import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
+import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
+import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
 export default function ResidentFormLayout() {
+
+  // Get user information from useContext
+  const { user } = React.useRef(useAuth()).current;
+
   // Initializing states
-  const location = useLocation();
   const navigate = useNavigate();
-  const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema));
+  const location = useLocation();
+  const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema)).current;
   const form = useForm<z.infer<typeof personalInfoSchema>>({
     resolver: zodResolver(personalInfoSchema),
-    defaultValues: defaultValues.current,
+    defaultValues
   });
   const params = React.useMemo(() => {
     return location.state?.params || {};
@@ -48,13 +50,22 @@ export default function ResidentFormLayout() {
     React.useState<boolean>(false);
 
   const formattedResidents = React.useMemo(() => {
-    return formatResidents(params, false);
+    return formatResidents(params);
   }, [params.residents]);
+
+  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
+  const { mutateAsync: addResidentProfileHealth, isPending: isSubmittingProfileHealth } = useAddResidentProfileHealth(params);
+  const { mutateAsync: addPersonal } = useAddPersonal(form.getValues());
+  const { mutateAsync: addPersonalHealth } = useAddPersonalHealth(form.getValues());
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile(form.getValues(), setFormType);
+
+  React.useEffect(() => {
+    setIsSubmitting(isSubmittingProfile || isUpdatingProfile || isSubmittingProfileHealth);
+  }, [isSubmittingProfile, isUpdatingProfile, isSubmittingProfileHealth]) 
 
   // Performs side effects when formType changes
   React.useEffect(() => {
     if (formType === Type.Viewing || formType === Type.Request) {
-      toast.dismiss();
       populateFields(params.data.per);
       form.clearErrors();
     }
@@ -70,14 +81,13 @@ export default function ResidentFormLayout() {
       (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
     );
 
-    populateFields(data.per);
+    populateFields(data?.per);
   }, [form.watch("per_id")]);
 
   // For resident|request viewing, populate form fields with data
   const populateFields = React.useCallback(
     (data: any) => {
       const resident = data;
-
       const fields = [
         {
           key: "per_id",
@@ -99,19 +109,13 @@ export default function ResidentFormLayout() {
         { key: "per_contact", value: resident?.per_contact || "" },
       ];
 
-      fields.forEach(({ key, value }) => {
-        form.setValue(
-          key as keyof z.infer<typeof personalInfoSchema>,
-          value || ""
-        );
+      fields.map((f: any) => {
+        form.setValue(f.key , f.value);
       });
 
       // Toggle read only
-      if (resident) {
-        setIsReadOnly(true);
-      } else {
-        setIsReadOnly(false);
-      }
+      if (resident) setIsReadOnly(true); 
+      else setIsReadOnly(false);
     },
     [params.data || params.resident]
   );
@@ -143,22 +147,13 @@ export default function ResidentFormLayout() {
     return isDefault;
   };
 
-  // For type edit, save click feedback
-  const handleEditSaved = (message: string, icon: React.ReactNode) => {
-    setFormType(Type.Viewing);
-    toast(message, {
-      icon: icon,
-    });
-  };
-
   // Handle form submission
   const submit = async () => {
     setIsSubmitting(true);
+
     const formIsValid = await form.trigger();
 
     if (!formIsValid) {
-      const errors = form.formState.errors;
-      console.log("Validation Errors:", errors);
       setIsSubmitting(false);
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
@@ -170,23 +165,18 @@ export default function ResidentFormLayout() {
     const values = form.getValues();
 
     if (formType === Type.Editing) {
+      setIsSubmitting(false);
       if (checkDefaultValues(values, params.data.per)) {
-        handleEditSaved(
-          "No changes made",
-          <CircleAlert size={24} className="fill-orange-500 stroke-white" />
-        );
+        toast("No changes made", {
+          icon: <CircleAlert size={24} className="fill-orange-500 stroke-white" />
+        });
         return;
       }
 
-      const res = await updateProfile(params.data.per.per_id, values);
+      const personalId = params.data.per.per_id
+      await updateProfile({ personalId: personalId });
+      params.data.per = values;
 
-      if (res) {
-        params.data.per = values;
-        handleEditSaved(
-          "Record updated successfully",
-          <CircleCheck size={24} className="fill-green-500 stroke-white" />
-        );
-      }
     } else {
       // For registration request
       const reqPersonalId = params.data?.per.per_id;
@@ -195,32 +185,37 @@ export default function ResidentFormLayout() {
       const personalId =
         params.type === Type.Request
           ? reqPersonalId
-          : await addPersonal(values);
-      const res = await addResidentProfile(personalId);
+          : await addPersonal();
 
-      if (res) {
-        setIsSubmitting(false);
-        toast("New record created successfully", {
-          icon: (
-            <CircleCheck size={24} className="fill-green-500 stroke-white" />
-          ),
-          action: {
-            label: "View",
-            onClick: () => navigate(-1),
-          },
-        });
+      const resident = await addResidentProfile({
+        personalId: personalId, 
+        staffId: user?.staff.staff_id
+      });
+      
+      const healthPersonalId = await addPersonalHealth();
 
-        // Exit registration page after request has been approved
-        if (params.type === Type.Request) {
-          const res = await deleteRequest(params.data.req_id);
-          if (res === 204) {
-            navigate(-1);
+      await addResidentProfileHealth({
+        personalId: healthPersonalId, 
+        staffId: "",
+      });
+
+      // Reset the values of all fields in the form
+      form.reset(defaultValues.current);
+      toast("New record created successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
+        },
+      });
+      
+      navigate("/account/create", {
+        state: {
+          params: {
+            residentId: resident.rp_id
           }
         }
-
-        // Reset the values of all fields in the form
-        form.reset(defaultValues.current);
-      }
+      });
     }
   };
 

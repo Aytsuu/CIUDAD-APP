@@ -10,62 +10,72 @@ import SoloFormLayout from "@/pages/record/profiling/family/living-solo/SoloForm
 import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 import HouseholdRecordView from "@/pages/record/profiling/household/HouseholdRecordView";
 import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLayout";
+import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
 
 export const profiling_router = [
+  // Account
+  {
+    path: "account/create",
+    element: <AccountRegistrationLayout/>
+  },
 
-    // Resident
-    {
-        path: "resident-records",
-        element: <ResidentRecords />
-    },
-    {
-        path: "resident-form",
-        element: <ResidentFormLayout />
-    },
-    {
-        path: "registration-request",
-        element: <RegistrationRequests />
-    },
-    
-    // Family
-    {
-        path: "family-records",
-        element: <FamilyRecords />
-    },
-    {
-        path: "family-form",
-        element: <FamilyProfileForm />
-    },
-    {
-        path: "family-solo-form",
-        element: <SoloFormLayout />
-    },
-    {
-        path: "family-record-view",
-        element: <FamilyRecordView />
-    },
+  // Resident
+  {
+    path: "resident",
+    element: <ResidentRecords />,
+  },
+  {
+    path: "resident/form",
+    element: <ResidentFormLayout />,
+  },
+  {
+    path: "resident/view",
+    element: <ResidentFormLayout />,
+  },
+  {
+    path: "resident/pending",
+    element: <RegistrationRequests />,
+  },
 
-    // Household
-    {
-        path: "household-records",
-        element: <HouseholdRecords />
-    },
-    {
-        path: "household-form",
-        element: <HouseholdFormLayout />
-    },
-    {
-        path: "household-record-view",
-        element: <HouseholdRecordView />
-    },
+  // Family
+  {
+    path: "family",
+    element: <FamilyRecords />,
+  },
+  {
+    path: "family/form",
+    element: <FamilyProfileForm />,
+  },
+  {
+    path: "family/form/solo",
+    element: <SoloFormLayout />,
+  },
+  {
+    path: "family/view",
+    element: <FamilyRecordView />,
+  },
 
-    // Business
-    {
-        path: "business-records",
-        element: <BusinessRecords />
-    },
-    {
-        path: "business-form",
-        element: <BusinessFormLayout />
-    },
+  // Household
+  {
+    path: "household",
+    element: <HouseholdRecords />,
+  },
+  {
+    path: "household/form",
+    element: <HouseholdFormLayout />,
+  },
+  {
+    path: "household/view",
+    element: <HouseholdRecordView />,
+  },
+
+  // Business
+  {
+    path: "business",
+    element: <BusinessRecords />,
+  },
+  {
+    path: "business/form",
+    element: <BusinessFormLayout />,
+  },
 ];

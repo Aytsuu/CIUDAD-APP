@@ -11,23 +11,16 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
 import { ResidentRecord } from "../profilingTypes";
-import { useQuery } from "@tanstack/react-query";
-import { getResidents } from "../restful-api/profilingGetAPI";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useResidents } from "../queries/profilingFetchQueries";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // Fetch residents using useQuery
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true, // Force refetch on mount
-    staleTime: 0, // Ensure data is never considered stale
-  });
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
 
   // Format resident to populate data table
   const formatResidentData = React.useCallback((): ResidentRecord[] => {
@@ -35,8 +28,10 @@ export default function ResidentRecords() {
 
     return residents.map((resident: any) => {
       const personal = resident?.per;
-      const [family]  = resident?.family;
-      const household = family?.hh
+      const [family_composition] = resident?.family_compositions;
+      const family = family_composition?.fam
+      const household = family?.hh;
+      const staff = resident?.staff?.rp?.per;
 
       return {
         id: resident.rp_id || "",
@@ -48,15 +43,17 @@ export default function ResidentRecords() {
         mname: personal.per_mname || "-",
         suffix: personal.per_suffix || "-",
         dateRegistered: resident.rp_date_registered || "",
-        registeredBy: resident.staff || "",
+        registeredBy: (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   }, [residents]);
-
+  
   // Filter residents based on search query
   const filteredResidents = React.useMemo(() => {
     const formattedData = formatResidentData();
-    if (!formattedData.length) return [];
+    if (!formattedData?.length) return [];
 
     return formattedData.filter((record: any) =>
       Object.values(record)
@@ -67,7 +64,7 @@ export default function ResidentRecords() {
   }, [searchQuery, residents]);
 
   // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredResidents.length / pageSize);
+  const totalPages = Math.ceil(filteredResidents?.length / pageSize);
 
   // Slice the data for the current page
   const paginatedResidents = filteredResidents.slice(
@@ -105,13 +102,13 @@ export default function ResidentRecords() {
           />
         </div>
         <div className="flex gap-2">
-          <Link to="/registration-request">
+          <Link to="/resident/pending">
             <Button variant="outline">
               <ClockArrowUp /> Pending
             </Button>
           </Link>
           <Link
-            to="/resident-form"
+            to="/resident/form"
             state={{
               params: {
                 title: "Resident Registration",
@@ -120,7 +117,7 @@ export default function ResidentRecords() {
               },
             }}
           >
-            <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90">
+            <Button variant="default">
               <Plus size={15} /> Register
             </Button>
           </Link>
@@ -168,10 +165,10 @@ export default function ResidentRecords() {
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredResidents.length)} of{" "}
-            {filteredResidents.length} rows
+            {Math.min(currentPage * pageSize, filteredResidents?.length)} of{" "}
+            {filteredResidents?.length} rows
           </p>
-          {paginatedResidents.length > 0 && (
+          {paginatedResidents?.length > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}

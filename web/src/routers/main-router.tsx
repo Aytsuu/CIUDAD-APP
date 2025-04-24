@@ -2,9 +2,8 @@ import MainLayout from '@/layout/MainLayout';
 import Dashboard from '@/pages/dashboard/Dashboard';
 import AnnouncementDashboard from '@/pages/announcement/AnnouncementList';
 
-import { RouteObject} from "react-router";
+import { RouteObject } from 'react-router';
 import { Navigate } from 'react-router';
-
 import { administration_router } from './administration-router';
 import { profiling_router } from './profiling-router';
 import { drr_router } from "./drr-router";
@@ -28,6 +27,7 @@ import { announcement_route } from './Announcement-router';
 import { famplanning_route } from './FamilyPlanning-router';
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
+
 
 
 

@@ -16,7 +16,7 @@ interface TooltipProps{
 const TooltipLayout = ({trigger, content, contentClassName} : TooltipProps) => (
     <TooltipProvider>
     <Tooltip>
-        <TooltipTrigger>{trigger}</TooltipTrigger>
+        <TooltipTrigger asChild>{trigger}</TooltipTrigger>
         <TooltipContent className={cn("bg-darkGray", contentClassName)}>
         <p>{content}</p>
         </TooltipContent>

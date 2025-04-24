@@ -39,7 +39,7 @@ export function ConfirmationModal({
           <AlertDialogAction
             type={(type as "button" | "submit" | "reset") || "button"}
             onClick={onClick}
-          >
+          > 
             {actionLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

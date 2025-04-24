@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 interface Option {
   id: string;
   name: string;
-}
+} 
 
 interface SelectProps {
   placeholder: string;
@@ -22,6 +22,8 @@ interface SelectProps {
   options: Option[];
   value: string;
   onChange: (value: string) => void;
+  onAdd?: (newValue: string) => void; // Updated to match confirmation flow
+  onDelete?: (id: string) => void;
 }
 
 export function SelectLayoutWithAdd({
@@ -31,27 +33,41 @@ export function SelectLayoutWithAdd({
   options,
   value,
   onChange,
+  onAdd,
+  onDelete,
 }: SelectProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [dynamicOptions, setDynamicOptions] = useState<Option[]>(options);
 
-  const filteredOptions = dynamicOptions.filter((option) =>
+  // Filter options based on search term
+  const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSelect = (selectedValue: string) => {
-    const existingOption = dynamicOptions.find((opt) => opt.id === selectedValue);
+    if (!selectedValue.trim()) return;
+
+    // Check if the selected value already exists in the options
+    const existingOption = options.find((opt) => opt.id === selectedValue);
     if (!existingOption) {
-      // Add new option if it doesn't exist
-      const newOption = { id: selectedValue, name: selectedValue };
-      setDynamicOptions((prev) => [...prev, newOption]);
+      // If it doesn't exist, trigger the onAdd function (which will open the confirmation dialog)
+      if (onAdd) {
+        onAdd(selectedValue); // Pass the new category name to the parent for confirmation
+      }
+    } else {
+      // If it exists, simply call onChange
+      onChange(selectedValue);
     }
-    onChange(selectedValue);
-    setSearchTerm(""); // Reset search after selection
+    setSearchTerm("");
+  };
+
+  const handleDelete = (id: string) => {
+    if (onDelete) {
+      onDelete(id);
+    }
   };
 
   return (
-    <Select value={value} onValueChange={handleSelect}>
+    <Select value={value || undefined} onValueChange={handleSelect}>
       <SelectTrigger className={cn("w-[180px]", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
@@ -67,24 +83,33 @@ export function SelectLayoutWithAdd({
         </div>
         <SelectGroup>
           <SelectLabel>{label}</SelectLabel>
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((option) => (
-              <SelectItem
-                key={option.id}
-                value={option.id}
-                className="cursor-pointer"
-              >
+          {filteredOptions.map((option) => (
+            <div key={option.id} className="flex justify-between items-center">
+              <SelectItem value={option.id} className="cursor-pointer flex-1">
                 {option.name}
               </SelectItem>
-            ))
-          ) : (
-            <SelectItem
-              value={searchTerm}
-              className="cursor-pointer italic"
-            >
-              Add "{searchTerm}"
-            </SelectItem>
-          )}
+              {onDelete && (
+                <button
+                  onClick={() => handleDelete(option.id)}
+                  className="ml-2 text-red-500 hover:text-red-700"
+                >
+                  ❌
+                </button>
+              )}
+            </div>
+          ))}
+          {searchTerm.trim() &&
+            !filteredOptions.some(
+              (option) => option.name.toLowerCase() === searchTerm.toLowerCase()
+            ) && (
+              <SelectItem
+                value={searchTerm.trim()}
+                className="cursor-pointer italic"
+                onClick={() => handleSelect(searchTerm.trim())}
+              >
+                Add "{searchTerm}"
+              </SelectItem>
+            )}
         </SelectGroup>
       </SelectContent>
     </Select>

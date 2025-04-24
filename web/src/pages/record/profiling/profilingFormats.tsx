@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 
 // Format residents for searching
-export const formatResidents = (params: any, isHousehold: boolean) => {
+export const formatResidents = (params: any) => {
   if (!params.residents) return [];
 
   // Begin formatting
@@ -18,18 +18,6 @@ export const formatResidents = (params: any, isHousehold: boolean) => {
       </div>
     ),
   }));
-
-  // Filter unassigned residents for household registration
-  if (isHousehold) {
-    const filtered = formatted.filter(
-      (resident: any) =>
-        !params.households?.some(
-          (household: any) => household.rp.rp_id === resident.id.split(" ")[0]
-        )
-    );
-
-    return filtered;
-  }
 
   return formatted;
 };
@@ -61,7 +49,7 @@ export const formatHouseholds = (params: any) => {
         </span>
         <div className="flex items-center gap-2">
           <Label>Head:</Label>
-          {`${household.rp.per.per_lname}, ${household.rp.per.per_fname}, ${
+          {`${household.rp.per.per_lname}, ${household.rp.per.per_fname} ${
             household.rp.per.per_mname
               ? household.rp.per.per_mname.charAt(0) + "."
               : ""

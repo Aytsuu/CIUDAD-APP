@@ -1,4 +1,4 @@
-import IncomeandExpenseTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-tracker-main";
+import IncomeandExpenseTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-expense-tracker-main";
 import IncomeandDisbursementView from "@/pages/record/treasurer/treasurer-income-and-disbursement/treasurer-income-and-disbursement-monitoring-view";
 import PersonalClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-personalClearance";
 import PermitClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permitClearance";
@@ -9,50 +9,55 @@ import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/
 import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/treasurer-budgetplan-Form";
 import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-view";
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
+import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
 
 export const treasurer_router = [
     {
-        path: "/treasurer-budget-plan",
+        path: "treasurer-budget-plan",
         element: <BudgetPlan/>,
     },
     {
-        path: "/treasurer-budgetplan-form",
+        path: "treasurer-budgetplan-form",
         element: <CreateBudgetPlanForm/>
     },
     {
-        path: '/treasurer-budgetplan-view/:plan_id',
+        path: 'treasurer-budgetplan-view/:plan_id',
         element: <ViewBudgetPlan/>
     },
     {
-        path: "/treasurer-donation",
+        path: "treasurer-donation",
         element: <TreasurerDonationTable/>
     },
     {
-        path: "/treasurer-income-and-expense-tracking",
+        path: "treasurer-income-and-expense-tracking",
         element: <IncomeandExpenseTracking/>
     },
     {
-        path: '/treasurer-income-and-disbursement',
+        path: "treasurer-income-tracking",
+        element: <IncomeTracking/>
+    },
+    {
+        path: 'treasurer-income-and-disbursement',
         element: <IncomeandDisbursementView/>
     },
     {
-        path: '/treasurer-personal-and-others',
+        path: 'treasurer-personal-and-others',
         element: <PersonalClearance/>,
     },
     {
-        path: '/treasurer-permit',
+        path: 'treasurer-permit',
         element: <PermitClearance/>
     },
     {
-        path: '/treasurer-service-charge',
+        path: 'treasurer-service-charge',
         element: <ServiceCharge/>
     },
     {
-        path: '/treasurer-barangay-service',
+        path: 'treasurer-barangay-service',
         element: <BarangayService/>
     },
     {
-        path: '/treasurer-rates',
+        path: 'treasurer-rates',
         element: <RatesForm/>
     },
 ]

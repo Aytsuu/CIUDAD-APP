@@ -61,7 +61,7 @@ class Household(models.Model):
     hh_date_registered = models.DateField(default=date.today)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name="households")
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
 
     class Meta:
         db_table = 'household'
@@ -69,81 +69,25 @@ class Household(models.Model):
     def __str__(self):
         return f"Household {self.hh_id} - {self.rp} in {self.sitio}"
 
-
-class Mother(models.Model):
-    mother_id = models.BigAutoField(primary_key=True)
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'mother'
-
-    def __str__(self):
-        return f"Mother: {self.rp}"
-
-
-class Father(models.Model):
-    father_id = models.BigAutoField(primary_key=True)
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'father'
-
-    def __str__(self):
-        return f"Father: {self.rp}"
-
-
-class Guardian(models.Model):
-    guard_id = models.BigAutoField(primary_key=True)
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'guardian'
-
-    def __str__(self):
-        return f"Guardian: {self.rp}"
-
-
 class Family(models.Model):
     fam_id = models.CharField(max_length=50, primary_key=True)
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
     fam_date_registered = models.DateField(default=date.today)
-    father = models.ForeignKey(Father, on_delete=models.CASCADE, null=True, related_name="families")
-    mother = models.ForeignKey(Mother, on_delete=models.CASCADE, null=True, related_name="families")
-    guard = models.ForeignKey(Guardian, on_delete=models.CASCADE, null=True, related_name="families")
     hh = models.ForeignKey(Household, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name="families")
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 
     class Meta:
         db_table = 'family' 
 
     def __str__(self):
-        members = []
-        if self.father:
-            members.append(str(self.father))
-        if self.mother:
-            members.append(str(self.mother))
-        if self.guard:
-            members.append(str(self.guard))
-        return f"Family {self.fam_id} ({', '.join(members)})"
-
-
-class Dependent(models.Model):
-    dep_id = models.BigAutoField(primary_key=True)
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='dependents') 
-
-    class Meta:
-        db_table = 'dependent'
-
-    def __str__(self):
-        return f"Dependent: {self.rp} in Family {self.fam.fam_id}"
-
+        return f"Family {self.fam_id}"
 
 class FamilyComposition(models.Model):
     fc_id = models.BigAutoField(primary_key=True)
-    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='compositions')
-    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='compositions')
+    fc_role = models.CharField(max_length=50)
+    fam = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='family_compositions')
+    rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='family_compositions')
 
     class Meta:
         db_table = 'family_composition'
@@ -177,14 +121,21 @@ class Business(models.Model):
     bus_respondentMname = models.CharField(max_length=50)
     bus_respondentSex = models.CharField(max_length=50)
     bus_respondentDob = models.DateField()
-    bus_doc_url = models.TextField()
     bus_date_registered = models.DateField(default=date.today)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, related_name='businesses')
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name='businesses')
 
     class Meta:
         db_table = 'business'
 
     def __str__(self):
         return f"{self.bus_name} (Owner: {self.bus_respondentLname})"
+
+class BusinessFile(models.Model):
+    bf_id = models.BigAutoField(primary_key=True)
+    bus = models.ForeignKey(Business, on_delete=models.CASCADE)
+    file = models.ForeignKey('file.File', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'business_file'
     

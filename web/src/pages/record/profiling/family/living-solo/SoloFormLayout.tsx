@@ -1,6 +1,6 @@
 import React from "react";
 import { z } from "zod";
-import { useNavigate, useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,23 +10,17 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
-import {
-  addFamily,
-  addFamilyComposition,
-} from "../../restful-api/profiingPostAPI";
 import { Form } from "@/components/ui/form/form";
-
+import { useAuth } from "@/context/AuthContext";
+import {
+  useAddFamily,
+  useAddFamilyComposition,
+} from "../../queries/profilingAddQueries";
 
 export default function SoloFormLayout() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
-  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false)
-  const params = React.useMemo(() => location?.state.params || {}, [location.state]);
-  const residents = React.useMemo(() => formatResidents(params, false), [params.residents]);
-  const households = React.useMemo(() => formatHouseholds(params), [params.households]);
-
+  const location = useLocation();
+  const params = React.useMemo(() => location.state?.params, [location.state]);
   const defaultValues = React.useRef(
     generateDefaultValues(demographicInfoSchema)
   );
@@ -36,38 +30,58 @@ export default function SoloFormLayout() {
     mode: "onChange",
   });
 
+  const { user } = useAuth();
+  const { mutateAsync: addFamily } = useAddFamily();
+  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
+  const [invalidHousehold, setInvalidHousehold] =
+    React.useState<boolean>(false);
+  const formattedResidents = React.useMemo(
+    () => formatResidents(params),
+    [params.resident]
+  );
+  const formattedHouseholds = React.useMemo(
+    () => formatHouseholds(params),
+    [params.households]
+  );
+
   const submit = async () => {
-      setIsSubmitting(true);
-      const formIsValid = await form.trigger();
-      const residentId = form.watch("id");
-      const householdId = form.watch("householdNo");
-  
-      if (!formIsValid && !residentId && !householdId) {
-        setIsSubmitting(false);
-        setInvalidResident(true);
-        setInvalidHousehold(true);
-        toast("Please fill out all required fields", {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        });
-        return;
-      }
-  
-      const data = form.getValues();
-      const familyNo = await addFamily(data, null, null);
-      const res = await addFamilyComposition(familyNo, data.id.split(" ")[0]);
-  
-      if (res) {
-        toast("Record added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          action: {
-            label: "View",
-            onClick: () => navigate(-1),
-          },
-        });
-        setIsSubmitting(false);
-        form.reset(defaultValues.current);
-      }
-    };
+    setIsSubmitting(true);
+    const formIsValid = await form.trigger();
+    const residentId = form.watch("id").split(" ")[0];
+    const householdId = form.watch("householdNo");
+
+    if (!formIsValid && !residentId && !householdId) {
+      setIsSubmitting(false);
+      setInvalidResident(true);
+      setInvalidHousehold(true);
+      toast("Please fill out all required fields", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+      return;
+    }
+
+    const family = await addFamily({ 
+      demographicInfo: form.getValues(),
+      staffId: user?.staff.staff_id 
+    });
+
+    const composition = await addFamilyComposition({
+      familyId: family.fam_id,
+      role: "Independent",
+      residentId: residentId,
+    });
+
+    if (composition) {
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+      navigate(-1);
+      setIsSubmitting(false);
+      form.reset(defaultValues.current);
+    }
+  };
 
   return (
     <div className="w-full flex justify-center">
@@ -84,13 +98,14 @@ export default function SoloFormLayout() {
               }}
               className="flex flex-col gap-10"
             >
-              <LivingSoloForm 
-                residents={residents} 
-                households={households} 
+              <LivingSoloForm
+                residents={formattedResidents}
+                households={formattedHouseholds}
                 isSubmitting={isSubmitting}
                 invalidResident={invalidResdent}
                 invalidHousehold={invalidHousehold}
                 form={form}
+                onSubmit={submit}
               />
             </form>
           </Form>

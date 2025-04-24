@@ -8,14 +8,10 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
-import { useQuery } from "@tanstack/react-query";
 import { FamilyRecord } from "../profilingTypes";
-import {
-  getFamilies,
-  getHouseholds,
-  getResidents,
-} from "../restful-api/profilingGetAPI";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFamilies, useFamilyComposition, useHouseholds, useResidents } from "../queries/profilingFetchQueries";
+import { Link } from "react-router-dom";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -23,47 +19,28 @@ export default function FamilyRecords() {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
-  // Fetch families and residents using useQuery
-  const { data: families, isLoading: isLoadingFamilies } = useQuery({
-    queryKey: ["families"],
-    queryFn: getFamilies,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: residents, isLoading: isLoadingResidents } = useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
-  const { data: households, isLoading: isLoadingHouseholds } = useQuery({
-    queryKey: ["households"],
-    queryFn: getHouseholds,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  const { data: familyCompositions, isLoading: isLoadingFC} = useFamilyComposition();
+  const { data: families, isLoading: isLoadingFamilies } = useFamilies();
+  const { data: residents, isLoading: isLoadingResidents } = useResidents();
+  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
 
   // Format family to populate data table
   const formatFamilyData = (): FamilyRecord[] => {
     if (!families) return [];
-
     return families.map((family: any) => {
-      const mother = family.mother;
-      const father = family.father;
-      const dependents = family.dependents;
-
-      const totalMembers =
-        (mother ? 1 : 0) + (father ? 1 : 0) + dependents.length;
+      const staff = family?.staff?.rp?.per;
+      const totalMembers = family.family_compositions.length
 
       return {
         id: family.fam_id || "-",
-        noOfMembers: totalMembers || 1,
+        noOfMembers: totalMembers || "-",
         building: family.fam_building || "-",
         indigenous: family.fam_indigenous || "-",
         dateRegistered: family.fam_date_registered || "-",
-        registeredBy: family.staff || "-",
+        registeredBy: 
+          (staff ? `${staff.per_lname}, 
+          ${staff.per_fname} 
+          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
       };
     });
   };
@@ -87,8 +64,8 @@ export default function FamilyRecords() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  if (isLoadingFamilies || isLoadingResidents || isLoadingHouseholds) {
+  if (isLoadingFamilies || isLoadingResidents || 
+    isLoadingHouseholds || isLoadingFC) {
     return (
       <div className="w-full h-full">
         <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
@@ -129,6 +106,19 @@ export default function FamilyRecords() {
         </div>
 
         {/* DialogLayout with state management */}
+        <Link
+          to="/health-family-form"
+          state={{
+            params: {
+              residents: residents,
+              households: households,
+            },
+          }}
+        >
+          <Button>
+            <Plus /> Register
+          </Button>
+        </Link>
         <DialogLayout
           trigger={
             <Button>
@@ -137,6 +127,7 @@ export default function FamilyRecords() {
           }
           mainContent={
             <FamilyProfileOptions
+              familyCompositions={familyCompositions}
               residents={residents}
               households={households}
             />
@@ -179,7 +170,7 @@ export default function FamilyRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={familyColumns(families)}
+            columns={familyColumns(residents, families, households)}
             data={paginatedFamilies}
           />
         </div>
