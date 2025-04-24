@@ -1,10 +1,8 @@
 import api from "@/pages/api/api"
 import axios from "axios";
-// import { toTitleCase } from "../case"
 
 export const addPrenatalRecord = async (data: Record<string, string>) => {
     try {
-        //check patient id 
         if(!data.patrec_id){
             console.error("Missing Patient ID (pat_id) in form data")
             throw new Error("Patient ID is required")
@@ -28,3 +26,4 @@ export const addPrenatalRecord = async (data: Record<string, string>) => {
 
     }
 }
+

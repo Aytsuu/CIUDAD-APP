@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useFormContext, UseFormReturn } from "react-hook-form"
 import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router";
 
 import { z } from "zod";
-import api from "@/pages/api/api";
 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,7 +21,8 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import { toast } from "sonner";
+// import { toast } from "sonner";
+import { usePatients } from "../queries/prenatalFetchQueries";
 
 
 interface PatientRecord{
@@ -36,9 +36,6 @@ interface PatientRecord{
     per_age: string
 }
 
-// interface SpouseRecord{
-
-// }
 
 const calculateAge = (dobStr: string): number => {
     const dob = new Date(dobStr)
@@ -73,46 +70,23 @@ export default function PrenatalFormFirstPg(
     }
     const { getValues, setValue } = useFormContext();
 
-    const [patients, setPatients] = useState<{ default: PatientRecord[]; formatted: { id: string; name: string }[] }>({
-        default: [],
-        formatted: [],
-    })
-
     const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-    const [loading, setLoading] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const { data: patientData, isLoading, isError, error } = usePatients();
+    // const [isSubmitting, setIsSubmitting] = useState(false)
+    // const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        const fetchPatients = async () => {
-            setLoading(true)
-
-            try {
-                const response = await api.get("patientrecords/patient/")
-                const patientData = response.data
-
-                const formatted = patientData.map((patient: any) => ({
-                    id: patient.pat_id.toString(),
-                    name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
-                }))
-
-                setPatients({
-                    default: patientData,
-                    formatted
-                })
-            } catch (error) {
-                console.error("Error fetching patients:", error)
-                toast.error("Failed to load patient records")
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchPatients()
-    }, [])
+    const patients = {
+        default: patientData || [],
+        formatted: 
+            patientData?.map((patient: any) => ({
+                id: patient.pat_id.toString(),
+                name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
+            })) || []
+    };
 
     const handlePatientSelection = (id: string) => {
         setSelectedPatientId(id)
-        const selectedPatient = patients.default.find(p => p.pat_id.toString() === id)
+        const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
     
         if (selectedPatient) {
           console.log("Selected Patient:", selectedPatient)
@@ -125,9 +99,13 @@ export default function PrenatalFormFirstPg(
           form.setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
           form.setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
           //   form.setValue("p_address", personalInfo?.per_address)
-        //   form.setValue("p_gender", personalInfo?.per_sex)
+          //   form.setValue("p_gender", personalInfo?.per_sex)
         }
-      }
+    }
+    if(isError){
+        return <div>Error fetching patients: {error.message}</div>;
+    }
+
 
     type previousIllness= {
         prevIllness: string;
@@ -314,12 +292,12 @@ export default function PrenatalFormFirstPg(
                     options={patients.formatted}
                     value={selectedPatientId}
                     onChange={handlePatientSelection}
-                    placeholder={loading ? "Loading patients..." : "Select a patient"}
+                    placeholder={isLoading ? "Loading patients..." : "Select a patient"}
                     triggerClassName="font-normal w-[30rem]"
                     emptyMessage={
                         <div className="flex gap-2 justify-center items-center">
                         <Label className="font-normal text-[13px]">
-                            {loading ? "Loading..." : "No patient found."}
+                            {isLoading ? "Loading..." : "No patient found."}
                         </Label>
                         <Link to="/patient-records/new">
                             <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">

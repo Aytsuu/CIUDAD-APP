@@ -3,7 +3,7 @@ import { getPatients } from "../restful-api/prenatalGetAPI";
 
 export const usePatients = () => {
     return useQuery({
-        queryKey: [""],
+        queryKey: ["patientsData"],
         queryFn: getPatients,
         staleTime: 1000 * 60 * 30,
     })

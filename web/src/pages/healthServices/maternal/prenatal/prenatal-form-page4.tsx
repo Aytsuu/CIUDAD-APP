@@ -29,8 +29,8 @@ export default function PrenatalFormFourthPg(
 
     const { setValue, getValues }  = useFormContext();
 
-    // date today
-    const today = new Date().toLocaleDateString('en-CA');
+    // // date today
+    // const today = new Date().toLocaleDateString('en-CA');
 
 
     type prenatalCareTypes = {
@@ -128,33 +128,33 @@ export default function PrenatalFormFourthPg(
         day: "2-digit"
     });
 
-    const sampleData: prenatalCareTypes[] = [
-        {
-            date: currentDate,
-            aog: {
-                aogWeeks: 10,
-                aogDays: 5
-            },
-            wt: 50,
-            bp: {
-                systolic: 120,
-                diastolic: 80
-            },
-            leopoldsFindings: {
-                fundalHeight: "20 cm",
-                fetalHeartRate: "140 bpm",
-                fetalPosition: "Cephalic"
-            },
-            notes: {
-                complaints: "Nausea",
-                advises: "Take rest"
-            }
-        }
-    ]
+    // const sampleData: prenatalCareTypes[] = [
+    //     {
+    //         date: currentDate,
+    //         aog: {
+    //             aogWeeks: 10,
+    //             aogDays: 5
+    //         },
+    //         wt: 50,
+    //         bp: {
+    //             systolic: 120,
+    //             diastolic: 80
+    //         },
+    //         leopoldsFindings: {
+    //             fundalHeight: "20 cm",
+    //             fetalHeartRate: "140 bpm",
+    //             fetalPosition: "Cephalic"
+    //         },
+    //         notes: {
+    //             complaints: "Nausea",
+    //             advises: "Take rest"
+    //         }
+    //     }
+    // ]
 
     useEffect(() => {
-        setValue("prenatalCare.date", today);
-    },[setValue,today])
+        setValue("prenatalCare.date", currentDate);
+    },[setValue, currentDate])
 
     const addPrenatalCare = () => {
         
