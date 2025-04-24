@@ -14,6 +14,7 @@ export const positiveNumberSchema = z.union([
   message: "Value must be a positive number"
 });
 
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD.");
 
 // mother's basic info
 export const PrenatalFormSchema = z.object({
@@ -24,7 +25,7 @@ export const PrenatalFormSchema = z.object({
         motherFName: z.string().min(1, 'First name is required'),
         motherMName: z.string().optional(),
         motherAge: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
-        motherDOB: z.string().date(),
+        motherDOB: dateSchema,
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
         husbandMName: z.string().optional(),
@@ -84,8 +85,8 @@ export const PrenatalFormSchema = z.object({
         para: z.string(),
         fullterm: z.string(),
         preterm: z.string(),
-        lmp: z.string().date(),
-        edc: z.string().date(),
+        lmp: dateSchema,
+        edc: dateSchema,
     }),
 
     // laboratory results

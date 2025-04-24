@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormContext, UseFormReturn } from "react-hook-form"
 import { ColumnDef } from "@tanstack/react-table";
 
 import { z } from "zod";
+import api from "@/pages/api/api";
 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +20,36 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { toast } from "sonner";
+
+
+interface PatientRecord{
+    personal_info: any
+    pat_id: any
+    patrec_id: number
+    per_fname: string
+    per_lname: string
+    per_mname: string
+    per_dob: string
+    per_age: string
+    per_sex: string
+    // per_address: string
+}
+
+// interface SpouseRecord{
+
+// }
+
+const calculateAge = (dobStr: string): number => {
+    const dob = new Date(dobStr)
+    const today = new Date()
+    const age = today.getFullYear() - dob.getFullYear()
+    const hasHadBirthday =
+        today.getMonth() > dob.getMonth() ||
+        (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate())
+    return hasHadBirthday ? age : age - 1
+}
+
 
 export default function PrenatalFormFirstPg(
     {form, onSubmit}: {
@@ -41,6 +72,61 @@ export default function PrenatalFormFirstPg(
         })
     }
     const { getValues, setValue } = useFormContext();
+
+    const [patients, setPatients] = useState<{ default: PatientRecord[]; formatted: { id: string; name: string }[] }>({
+        default: [],
+        formatted: [],
+    })
+
+    const [selectedPatientId, setSelectedPatientId] = useState<string>("")
+    const [loading, setLoading] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchPatients = async () => {
+            setLoading(true)
+
+            try {
+                const response = await api.get("patientrecords/patient")
+                const patientData = response.data
+
+                const formatted = patientData.map((patient: any) => ({
+                    id: patient.pat_id.toString(),
+                    name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
+                }))
+
+                setPatients({
+                    default: patientData,
+                    formatted
+                })
+            } catch (error) {
+                console.error("Error fetching patients:", error)
+                toast.error("Failed to load patient records")
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchPatients()
+    }, [])
+
+    // const handlePatientSelection = (id: string) => {
+    //     setSelectedPatientId(id)
+    //     const selectedPatient = patients.default.find(p => p.pat_id.toString() === id)
+    
+    //     if (selectedPatient) {
+    //       console.log("Selected Patient:", selectedPatient)
+    //       setSelectedPatientId(selectedPatient.pat_id.toString());
+    //       const personalInfo = selectedPatient.personal_info;
+    //       form.setValue("pat_id", selectedPatient.pat_id)
+    //       form.setValue("p_lname", personalInfo?.per_lname)
+    //       form.setValue("p_fname", personalInfo?.per_fname)
+    //       form.setValue("p_mname", personalInfo?.per_mname)
+    //       form.setValue("p_address", personalInfo?.per_address)
+    //       form.setValue("p_age", calculateAge(personalInfo?.per_dob))
+    //       form.setValue("p_gender", personalInfo?.per_sex)
+    //     }
+    //   }
 
     type previousIllness= {
         prevIllness: string;
@@ -183,8 +269,7 @@ export default function PrenatalFormFirstPg(
                         />
                     </div>
                 );
-                
-            }
+            }   
         }
     ]
 
@@ -213,11 +298,13 @@ export default function PrenatalFormFirstPg(
             setValue("medicalHistory.prevHospitalizationYr", "");
         }   
     }
+
+    
     
     
     return (
         <>
-            <div>
+            <div>   
                 {/* <Combobox
                     options={}
                     value={form.watch(``)}

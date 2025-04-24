@@ -38,6 +38,18 @@ export default function PrenatalForm(){
         setCurrentPage((prev) => prev -1);
     }
 
+    // interface FormData {
+    //     [key: string]: any; // Replace with specific fields if known
+    // }
+
+    // const onSubmit = async (data: FormData): Promise<void> => {
+    //     if (currentPage < 4) {
+    //         nextPage();
+    //     } else {
+    //         console.log("Final Form Data: ", data);
+    //     }
+    // }
+
     return(
         <div>
             <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none">

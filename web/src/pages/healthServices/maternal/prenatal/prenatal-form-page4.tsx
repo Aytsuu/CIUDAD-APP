@@ -1,4 +1,4 @@
-import { UseFormReturn } from "react-hook-form";
+import { useFormContext, UseFormReturn } from "react-hook-form";
 import { Form } from "react-router";
 import { z } from 'zod';
 
@@ -10,6 +10,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
+import { useState } from "react";
 
 export default function PrenatalFormFourthPg(
     {form, onSubmit, back}: {
@@ -26,8 +27,11 @@ export default function PrenatalFormFourthPg(
         })
     }
 
+    const { setValue, getValues }  = useFormContext();
+
     // date today
     const today = new Date();
+
 
     type prenatalCareTypes = {
         date: string;
@@ -50,6 +54,9 @@ export default function PrenatalFormFourthPg(
             advises: string;
         }
     }
+
+    const [ prenatalCareData, setPrenatalCareData ] = useState<prenatalCareTypes[]>([]);
+
 
     const prenatalCareColumn: ColumnDef<prenatalCareTypes>[] = [
         {
@@ -144,6 +151,40 @@ export default function PrenatalFormFourthPg(
             }
         }
     ]
+
+    const addPrenatalCare = () => {
+        const date = getValues("prenatalCare.date");
+        const weight = parseFloat(getValues("prenatalCare.wt")); 
+        const aogWks = parseInt(getValues("prenatalCare.aog.aogWeeks"), 10); 
+        const aogDays = parseInt(getValues("prenatalCare.aog.aogDays"), 10); 
+        const systolic = parseInt(getValues("prenatalCare.bp.systolic"), 10); 
+        const diastolic = parseInt(getValues("prenatalCare.bp.diastolic"), 10); 
+        const fundalHt = getValues("prenatalCare.leopoldsFindings.fundalHeight");
+        const fetalHR = getValues("prenatalCare.leopoldsFindings.fetalHeartRate");
+        const fetalPos = getValues("prenatalCare.leopoldsFindings.fetalPosition");
+        const complaints = getValues("prenatalCare.notes.complaints");
+        const advises = getValues("prenatalCare.notes.advises");
+    
+        // Log the values for debugging
+        console.log("Date: ", date, "Wt: ", weight, "AOG Wks: ", aogWks, "AOG Days: ", aogDays, "BP: ", systolic, "/", diastolic, "Fundal Ht: ", fundalHt, "Fetal HR: ", fetalHR, "Fetal Position: ", fetalPos, "Complaints: ", complaints, "Advises: ", advises);
+    
+        if (date && !isNaN(weight) && !isNaN(aogWks) && !isNaN(aogDays) && !isNaN(systolic) && !isNaN(diastolic)) {
+            setPrenatalCareData((prev) => [
+                ...prev,
+                {
+                    date,
+                    wt: weight,
+                    aog: { aogWeeks: aogWks, aogDays: aogDays },
+                    bp: { systolic, diastolic },
+                    leopoldsFindings: { fundalHeight: fundalHt, fetalHeartRate: fetalHR, fetalPosition: fetalPos },
+                    notes: { complaints, advises },
+                },
+            ]);
+        } else {
+            console.error("Please fill in all required fields.");
+            // Optionally show an alert or message to the user.
+        }        
+    }
 
     return(
         <>
@@ -256,12 +297,12 @@ export default function PrenatalFormFourthPg(
                             </div>
 
                             <div className="flex justify-end">
-                                <Button>Add</Button>
+                                <Button onClick={addPrenatalCare}>Add</Button>
                             </div>
                         </div>
 
                         <div className="mt-10">
-                            <DataTable columns={prenatalCareColumn} data={sampleData}/>
+                            <DataTable columns={prenatalCareColumn} data={prenatalCareData} />
                         </div>  
                         
                         <hr className="border-gray mb-6 mt-10 sm:mb-5" />

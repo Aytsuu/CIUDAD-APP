@@ -54,3 +54,15 @@ class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
 class ObstetricalHistoryView(generics.ListCreateAPIView):
     serializer_class = ObstetricalHistorySerializer
     queryset = Obstetrical_History.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+
+# **Spouse**
+# class SpouseView(generics.ListCreateAPIView):
+#     serializer_class = SpouseSerializer
+#     queryset = Spouse.objects.all()
+
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)

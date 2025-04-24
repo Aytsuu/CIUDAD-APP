@@ -59,14 +59,14 @@ class Obstetrical_History(models.Model):
         db_table = 'obstetrical_history'
 
 
-class Spouse(models.Model):
-    spouse_id = models.BigAutoField(primary_key=True),
-    spouse_type = models.CharField(max_length=10),
-    spouse_lname = models.CharField(max_length=50),
-    spouse_fname = models.CharField(max_length=50),
-    spouse_mnane = models.CharField(max_length=50),
-    spouse_occupation = models.CharField(max_length=50),
-    spouse_dob = models.DateField()
+# class Spouse(models.Model):
+#     spouse_id = models.BigAutoField(primary_key=True)
+#     spouse_type = models.CharField(max_length=10)
+#     spouse_lname = models.CharField(max_length=50)
+#     spouse_fname = models.CharField(max_length=50)
+#     spouse_mnane = models.CharField(max_length=50)
+#     spouse_occupation = models.CharField(max_length=50)
+#     spouse_dob = models.DateField()
 
-    class Meta:
-        db_table = 'spouse'
+#     class Meta:
+#         db_table = 'spouse'

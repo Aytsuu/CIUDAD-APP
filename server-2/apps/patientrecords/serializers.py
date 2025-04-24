@@ -50,3 +50,9 @@ class ObstetricalHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Obstetrical_History
         fields = '__all__'
+
+
+# class SpouseSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Spouse
+#         fields = '__all__'
