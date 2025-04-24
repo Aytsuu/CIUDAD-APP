@@ -60,3 +60,29 @@ class Obstetrical_History(models.Model):
 
 
 
+
+        
+        
+class FollowUpVisit(models.Model):
+    followv_id = models.BigAutoField(primary_key=True)
+    followv_date = models.DateField()
+    followv_status = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
+    class Meta:
+        db_table = 'follow_up_visit'
+        
+        
+        
+class Spouse(models.Model):
+    spouse_id = models.BigAutoField(primary_key=True)
+    spouse_type = models.CharField(max_length=10)
+    spouse_lname = models.CharField(max_length=50, default="")
+    spouse_fname = models.CharField(max_length=50, default="")
+    spouse_mnane = models.CharField(max_length=50, default="")
+    spouse_occupation = models.CharField(max_length=50)
+    spouse_dob = models.DateField()
+
+    class Meta:
+        db_table = 'spouse'

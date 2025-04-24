@@ -3,25 +3,42 @@ from .models import *
 from datetime import date
 from apps.inventory.serializers import VaccineStockSerializer,VacccinationListSerializer
 from apps.patientrecords.models import Patient,PatientRecord
-from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers import PatientSerializer,PatientRecordSerializer,FollowUpVisitSerializer
 from apps.patientrecords.serializers import VitalSignsSerializer
 # serializers.py
 
+class PartialUpdateMixin:
+    def to_internal_value(self, data):
+        if self.instance:
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
 
 # class VitalSignsSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = VitalSigns
 #         fields = '__all__'
 
-class VaccinationHistorySerializer(serializers.ModelSerializer):
+
+class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VaccinationRecord
+        fields = '__all__'
+
+
+
+class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
     vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
+    follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
+    vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
 
     class Meta:
         model = VaccinationHistory
         fields = '__all__'
 
-class VaccinationRecordSerializer(serializers.ModelSerializer):
+class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
     class Meta:
         model = VaccinationRecord
@@ -29,22 +46,29 @@ class VaccinationRecordSerializer(serializers.ModelSerializer):
 
 
 # VACCCINATION RECORD 
+# VACCINATION RECORD 
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
-    # vaccination_services = serializers.SerializerMethodField()
     vaccination_count = serializers.SerializerMethodField()
+    # vaccination_records = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
 
     class Meta:
-        model = Patient  # This model should be Patient
-        fields = '__all__'
-
-    # def get_vaccination_services(self, obj):
-    #     # Access the related Patient object and filter PatientRecords based on "Vaccination"
-    #     records = obj.patient_records.filter(patrec_type__iexact='Vaccination')
-    #     return PatientRecordSerializer(records, many=True).data
+        model = Patient
+        fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        # Count the related PatientRecords based on "Vaccination"
-        return obj.patient_records.filter(patrec_type__iexact='Vaccination').count()
+        return VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=obj,
+            vacrec__patrec_id__patrec_type__iexact='Vaccination'
+        ).exclude(
+            vachist_status__iexact='forwarded'
+        ).count()
 
 
+
+    # def get_vaccination_records(self, obj):
+    #     records = obj.patient_records.filter(
+    #         patrec_type__iexact='Vaccination',
+    #         vaccination_records__vacrec_status__iexact='complete'
+    #     ).distinct()
+    #     return PatientRecordSerializer(records, many=True).data

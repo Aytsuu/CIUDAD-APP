@@ -15,85 +15,28 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getVaccinationRecordById } from "./restful-api/GetVaccination";
+import { getVaccinationRecordById } from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
+import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 
-interface VaccineInterval {
-  vacInt_id: number;
-  interval: number;
-  dose_number: number;
-  time_unit: string;
-  vac_id: number;
-}
-
-interface VaccineCategory {
-  vaccat_id: number;
-  vaccat_type: string;
-}
-
-interface VaccineList {
-  vac_id: number;
-  vaccat_details: VaccineCategory;
-  intervals: VaccineInterval[];
-  routine_frequency: string | null;
-  vac_type_choices: string;
-  vac_name: string;
-  no_of_doses: number;
-  age_group: string;
-  specify_age: string;
-  created_at: string;
-  updated_at: string;
-  vaccat_id: number;
-}
-
-interface VaccineStock {
-  vacStck_id: number;
-  vaccinelist: VaccineList;
-  inv_id: number;
-  vac_id: number;
-  solvent: string;
-  batch_number: string;
-  volume: number;
-  qty: number;
-  dose_ml: number;
-  vacStck_used: number;
-  vacStck_qty_avail: number;
-  wasted_dose: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface VaccinationHistory {
+export interface VaccinationRecord {
+  patrec_id: number;
   vachist_id: number;
-  vital_signs: {
-    vital_id: number;
-    vital_bp_systolic: string;
-    vital_bp_diastolic: string;
-    vital_temp: string;
-    vital_RR: string;
-    vital_o2: string;
-    created_at: string;
-  } | null;
-  vaccine_stock: VaccineStock | null;
   vachist_doseNo: string;
   vachist_status: string;
   vachist_age: number;
   assigned_to: number | null;
   staff_id: number;
-  updated_at: string;
   vital: number;
   vacrec: number;
   vacStck: number;
-}
+  vacrec_status: string;
 
-export interface VaccinationRecord {
-  vachist_id: number;
-  vachist_doseNo: string;
-  vachist_status: string;
-  vachist_age: number;
+  vacrec_totaldose: number;
+
   vital_signs: {
     vital_bp_systolic: string;
     vital_bp_diastolic: string;
@@ -102,14 +45,61 @@ export interface VaccinationRecord {
     vital_o2: string;
     created_at: string;
   };
+
+  vaccine_stock: {
+    vaccinelist: {
+      vac_id: number;
+      vaccat_details: {
+        vaccat_id: number;
+        vaccat_type: string;
+      };
+      intervals: {
+        vacInt_id: number;
+        interval: number;
+        dose_number: number;
+        time_unit: string;
+        vac_id: number;
+      }[];
+      routine_frequency: string | null;
+      vac_type_choices: string;
+      vac_name: string;
+      no_of_doses: number;
+      age_group: string;
+      specify_age: string;
+      created_at: string;
+      updated_at: string;
+      vaccat_id: number;
+    };
+
+    inv_id: number;
+    vac_id: number;
+    solvent: string;
+    batch_number: string;
+    volume: number;
+    qty: number;
+    dose_ml: number;
+    vacStck_used: number;
+    vacStck_qty_avail: number;
+    wasted_dose: number;
+    created_at: string;
+    updated_at: string;
+  };
+
   vaccine_name: string;
   batch_number: string;
   updated_at: string;
-  intervals: VaccineInterval[];
+  created_at: string;
+
   vaccine_details: {
     no_of_doses: number;
     age_group: string;
     vac_type: string;
+  };
+
+  follow_up_visit: {
+    followv_id: number;
+    followv_date: string;
+    followv_status: string;
   };
 }
 
@@ -125,6 +115,7 @@ export default function IndivVaccinationRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  let currentAge = calculateAge(patientData.dob).toString()
 
   const { data: vaccinationRecords, isLoading } = useQuery({
     queryKey: ["patientVaccinationDetails", patientData.pat_id],
@@ -136,33 +127,55 @@ export default function IndivVaccinationRecords() {
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
 
-    return vaccinationRecords.flatMap(
-      (record: { vaccination_histories: VaccinationHistory[] }) =>
-        record.vaccination_histories.map((history: VaccinationHistory) => ({
-          vachist_id: history.vachist_id,
-          vachist_doseNo: history.vachist_doseNo,
-          vachist_status: history.vachist_status,
-          vachist_age: history.vachist_age,
-          vital_signs: history.vital_signs || {
-            vital_bp_systolic: "N/A",
-            vital_bp_diastolic: "N/A",
-            vital_temp: "N/A",
-            vital_RR: "N/A",
-            vital_o2: "N/A",
-            created_at: "N/A",
-          },
-          vaccine_name: history.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
-          batch_number: history.vaccine_stock?.batch_number || "N/A",
-          updated_at: history.updated_at,
-          intervals: history.vaccine_stock?.vaccinelist?.intervals || [],
-          vaccine_details: {
-            no_of_doses: history.vaccine_stock?.vaccinelist?.no_of_doses || 0,
-            age_group: history.vaccine_stock?.vaccinelist?.age_group || "N/A",
-            vac_type: history.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
-          },
-        }))
-    );
+    return vaccinationRecords.map((record: any) => {
+      console.log(
+        "Vaccine Type Choice:",
+        record?.vaccine_stock?.vaccinelist?.vac_type_choices
+      ); // 👈 Console log here
+
+      return {
+        patrec_id: record.vacrec_details?.patrec_id,
+        vachist_id: record.vachist_id,
+        vachist_doseNo: record.vachist_doseNo,
+        vachist_status: record.vachist_status,
+        vachist_age: record.vachist_age,
+        assigned_to: record.assigned_to,
+        staff_id: record.staff_id,
+        vital: record.vital,
+        vacrec: record.vacrec,
+        vacStck: record.vacStck,
+        vacrec_totaldose: record.vacrec_totaldose,
+        vacrec_status: record.vacrec_status,
+        created_at: record.created_at || "N/A",
+
+        vital_signs: record.vital_signs || {
+          vital_bp_systolic: "N/A",
+          vital_bp_diastolic: "N/A",
+          vital_temp: "N/A",
+          vital_RR: "N/A",
+          vital_o2: "N/A",
+          created_at: "N/A",
+        },
+        vaccine_stock: record.vaccine_stock || null,
+        vaccine_name: record.vaccine_stock?.vaccinelist?.vac_name || "Unknown",
+        batch_number: record.vaccine_stock?.batch_number || "N/A",
+        vaccine_details: {
+          no_of_doses: record.vaccine_stock?.vaccinelist?.no_of_doses || 0,
+          age_group: record.vaccine_stock?.vaccinelist?.age_group || "N/A",
+          vac_type:
+            record.vaccine_stock?.vaccinelist?.vac_type_choices || "N/A",
+        },
+        follow_up_visit: {
+          followv_id: record.follow_up_visit?.followv_id,
+          followv_date: record.follow_up_visit?.followv_date || "No Schedule",
+          followv_status: record.follow_up_visit?.followv_status || "N/A",
+        },
+      };
+    });
   }, [vaccinationRecords]);
+
+  // console.log("created_at", vaccinationRecords.created_at);
+  console.log("data", vaccinationRecords);
 
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
@@ -265,11 +278,10 @@ export default function IndivVaccinationRecords() {
         <div className="flex justify-center">
           <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
             {row.original.vachist_doseNo}
-           
-              <div className="text-xs text-gray-500 mt-1">
-              Required Doses {row.original.vaccine_details.no_of_doses} doses
-              </div>
-          
+
+            <div className="text-xs text-gray-500 mt-1">
+              Required Doses {row.original.vaccine_details.no_of_doses} dose/s
+            </div>
           </div>
         </div>
       ),
@@ -280,65 +292,85 @@ export default function IndivVaccinationRecords() {
       cell: ({ row }) => {
         const statusColors = {
           completed: "bg-green-100 text-green-800",
-          pending: "bg-yellow-100 text-yellow-800",
-          cancelled: "bg-red-100 text-red-800",
+          "partially vaccinated": " text-red-500",
         };
         return (
-          <div className="flex justify-center">
+          <div className="flex flex-col justify-center">
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 statusColors[
-                  row.original.vachist_status.toLowerCase() as keyof typeof statusColors
+                  row.original.vachist_status as keyof typeof statusColors
                 ] || "bg-gray-100 text-gray-800"
               }`}
             >
               {row.original.vachist_status}
             </span>
+            <div>
+              {(row.original.vaccine_details.vac_type === "routine" ||
+                row.original.vachist_status === "partially Vaccinated") && (
+                <div className="text-xs mt-1">
+                  Next Dose:{" "}
+                  {isNaN(
+                    new Date(
+                      row.original.follow_up_visit.followv_date
+                    ).getTime()
+                  )
+                    ? "No Schedule"
+                    : new Date(
+                        row.original.follow_up_visit.followv_date
+                      ).toLocaleDateString()}
+                  {/* <div className="text-xs text-gray-500">
+      Status: {row.original.follow_up_visit.followv_status}
+    </div> */}
+                </div>
+              )}
+            </div>
           </div>
         );
       },
     },
     {
-      accessorKey: "updated_at",
-      header: "Last Updated",
-      cell: ({ row }) => (
-        <div className="text-sm text-gray-600">
-          {new Date(row.original.updated_at).toLocaleDateString()}
-          <div className="text-xs text-gray-400">
-            {new Date(row.original.updated_at).toLocaleTimeString()}
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => {
+        const updatedAt = new Date(row.original.created_at);
+        const formattedDate = updatedAt.toLocaleDateString(); // Localized date
+        const formattedTime = updatedAt.toLocaleTimeString(); // Localized time
+
+        return (
+          <div className="text-sm text-gray-600">
+            {formattedDate}
+            <div className="text-xs text-gray-400">{formattedTime}</div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
+
     {
       accessorKey: "action",
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <TooltipLayout
-            trigger={
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <Eye className="h-4 w-4" />
+          <Link
+            to="/vaccinationView"
+            state={{ params: { Vaccination: row.original, patientData } }}
+          >
+            <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
+              View
+            </Button>
+          </Link>
+
+          {row.original.follow_up_visit.followv_status.toLowerCase() ===
+            "pending" && (
+            <Link
+              to="/updateVaccinationForm"
+              state={{ params: { Vaccination: row.original, patientData } }}
+            >
+              <Button variant="destructive" size="sm" className="h-8  p-2">
+                update{" "}
               </Button>
-            }
-            content="View Details"
-          />
-          <TooltipLayout
-            trigger={
-              <Button
-                variant="destructive"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => {
-                  setRecordToArchive(row.original.vachist_id);
-                  setIsArchiveConfirmationOpen(true);
-                }}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            }
-            content="Archive Record"
-          />
+            </Link>
+          )}
         </div>
       ),
     },
@@ -384,13 +416,7 @@ export default function IndivVaccinationRecords() {
             Patient Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <Fingerprint className="h-4 w-4" />
-                Patient ID
-              </p>
-              <p className="font-medium">{patientData.pat_id}</p>
-            </div>
+           
             <div className="space-y-1">
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <UserRound className="h-4 w-4" />
@@ -400,6 +426,23 @@ export default function IndivVaccinationRecords() {
                 patientData.fname
               } ${patientData.mname || ""}`}</p>
             </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <UserRound className="h-4 w-4" />
+                BirthDate and Age
+              </p>
+              <p className="font-medium">{`${patientData.dob}, 
+              `} {currentAge} </p>
+            </div>
+           
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                Address
+              </p>
+              <p className="font-medium">{patientData.address}</p>
+            </div>
             <div className="space-y-1">
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <Syringe className="h-4 w-4" />
@@ -408,13 +451,6 @@ export default function IndivVaccinationRecords() {
               <p className="font-medium">
                 {formatVaccinationData().length} records
               </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                Address
-              </p>
-              <p className="font-medium">{patientData.address}</p>
             </div>
           </div>
         </div>
