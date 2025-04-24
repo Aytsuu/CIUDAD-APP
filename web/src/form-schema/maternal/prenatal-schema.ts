@@ -107,7 +107,7 @@ export const PrenatalFormSchema = z.object({
 
     // follow-up schedule
     followUpSchedule: z.object({
-        scheduleOption: z.enum(['week', 'twoweeks', 'month']),
+        scheduleOption: z.enum(['week', 'twoweeks', 'month', '']),
         dateOfFollowUp: z.string().date()
     }),
 

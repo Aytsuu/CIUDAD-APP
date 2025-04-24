@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormContext, UseFormReturn } from "react-hook-form"
 import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router";
 
-import { z } from "zod";
+import { string, z } from "zod";
 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,18 +22,31 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 // import { toast } from "sonner";
-import { usePatients } from "../queries/prenatalFetchQueries";
+import { usePatients, useSpouse } from "../queries/prenatalFetchQueries";
 
 
 interface PatientRecord{
     personal_info: any
     pat_id: any
     patrec_id: number
+    spouse_id: number
     per_fname: string
     per_lname: string
     per_mname: string
     per_dob: string
     per_age: string
+}
+
+interface SpouseRecord{
+    spouse: any
+    pat_id: any
+    spouse_id: number
+    // spouse_type: string
+    spouse_lname: string
+    spouse_fname: string
+    spouse_mname: string
+    spouse_occupation: string
+    // spouse_dob: string
 }
 
 
@@ -71,7 +84,11 @@ export default function PrenatalFormFirstPg(
     const { getValues, setValue } = useFormContext();
 
     const [selectedPatientId, setSelectedPatientId] = useState<string>("")
-    const { data: patientData, isLoading, isError, error } = usePatients();
+    const { data: patientData, isLoading: patientLoading } = usePatients();
+
+    const [selectedSpouseId, setSelectedSpouseId] = useState<number | null>(null);
+    const { data: spouseData } = useSpouse(selectedSpouseId);
+    // const {data: spouseData, isLoading} = useSpouse();
     // const [isSubmitting, setIsSubmitting] = useState(false)
     // const [error, setError] = useState<string | null>(null)
 
@@ -87,24 +104,43 @@ export default function PrenatalFormFirstPg(
     const handlePatientSelection = (id: string) => {
         setSelectedPatientId(id)
         const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
-    
+
         if (selectedPatient) {
           console.log("Selected Patient:", selectedPatient)
           setSelectedPatientId(selectedPatient.pat_id.toString());
           const personalInfo = selectedPatient.personal_info;
           form.setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
-          form.setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname)
+          form.setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname) 
           form.setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
           form.setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
           form.setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
           form.setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
           //   form.setValue("p_address", personalInfo?.per_address)
           //   form.setValue("p_gender", personalInfo?.per_sex)
+
+        //   let spouseId = (selectedPatient as any).spouse_id;
+        //   if(!spouseId && (selectedPatient as any).spouse_id){
+        //     spouseId = (selectedPatient as any).spouse.spouse_id;
+        //   }
+          setSelectedSpouseId(selectedPatient.spouse_id ?? null);
         }
     }
-    if(isError){
-        return <div>Error fetching patients: {error.message}</div>;
-    }
+
+    useEffect(() => {
+        if(spouseData &&  spouseData.length > 0){
+            const spouse = spouseData[0]
+            console.log("Spouse data: ", spouseData)
+            // const personal_info = spouse.personal_info
+
+            form.setValue("motherPersonalInfo.husbandLName", spouse?.spouse_lname)
+            form.setValue("motherPersonalInfo.husbandFName", spouse?.spouse_fname)
+            form.setValue("motherPersonalInfo.husbandMName", spouse?.spouse_mname)
+            form.setValue("motherPersonalInfo.occupation", spouse?.spouse_occupation)
+        }
+    },[spouseData, form])
+    // if(isError){
+    //     return <div>Error fetching patients: {error.message}</div>;
+    // }
 
 
     type previousIllness= {
@@ -277,8 +313,6 @@ export default function PrenatalFormFirstPg(
             setValue("medicalHistory.prevHospitalizationYr", "");
         }   
     }
-
-    
     
     
     return (
@@ -292,12 +326,12 @@ export default function PrenatalFormFirstPg(
                     options={patients.formatted}
                     value={selectedPatientId}
                     onChange={handlePatientSelection}
-                    placeholder={isLoading ? "Loading patients..." : "Select a patient"}
+                    placeholder={patientLoading ? "Loading patients..." : "Select a patient"}
                     triggerClassName="font-normal w-[30rem]"
                     emptyMessage={
                         <div className="flex gap-2 justify-center items-center">
                         <Label className="font-normal text-[13px]">
-                            {isLoading ? "Loading..." : "No patient found."}
+                            {patientLoading ? "Loading..." : "No patient found."}
                         </Label>
                         <Link to="/patient-records/new">
                             <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">

@@ -29,8 +29,8 @@ export default function PrenatalFormFourthPg(
 
     const { setValue, getValues }  = useFormContext();
 
-    // // date today
-    // const today = new Date().toLocaleDateString('en-CA');
+    // date today
+    const today = new Date().toLocaleDateString('en-CA');
 
 
     type prenatalCareTypes = {
@@ -153,8 +153,8 @@ export default function PrenatalFormFourthPg(
     // ]
 
     useEffect(() => {
-        setValue("prenatalCare.date", currentDate);
-    },[setValue, currentDate])
+        setValue("prenatalCare.date", today);
+    },[setValue,today])
 
     const addPrenatalCare = () => {
         
