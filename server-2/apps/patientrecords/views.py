@@ -49,6 +49,16 @@ class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
         except NotFound:
             return Response({"error": "Vital signs record not found."}, status=status.HTTP_404_NOT_FOUND)
         
+
+# # **Obstetrical History**
+class ObstetricalHistoryView(generics.ListCreateAPIView):
+    serializer_class = ObstetricalHistorySerializer
+    queryset = Obstetrical_History.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+
         
 class FollowUpVisitView(generics.ListCreateAPIView):
         serializer_class = FollowUpVisitSerializer

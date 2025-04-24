@@ -52,6 +52,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.healthProfiling',
     'apps.inventory',
+    'apps.maternal',
+    # 'apps.profiling',
+    # 'apps.administration'
     'apps.vaccination',
     'apps.administration',
     'apps.familyplanning',

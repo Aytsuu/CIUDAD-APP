@@ -6,6 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('patientrecords', '0024_delete_spouse'),
         ('patientrecords', '0024_alter_followupvisit_followv_date'),
     ]
 

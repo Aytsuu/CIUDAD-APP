@@ -39,6 +39,24 @@ class VitalSigns(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         db_table = 'vital_signs'
+
+
+class Obstetrical_History(models.Model):
+    obs_id = models.BigAutoField(primary_key=True)
+    obs_ch_born_alive = models.PositiveIntegerField()
+    obs_living_ch = models.PositiveIntegerField()
+    obs_abortion = models.PositiveIntegerField()
+    obs_still_birth = models.PositiveIntegerField()
+    obs_lg_babies = models.PositiveIntegerField()
+    obs_gravida = models.PositiveIntegerField()
+    obs_para = models.PositiveIntegerField()
+    obs_fullterm = models.PositiveIntegerField()
+    obs_preterm = models.PositiveIntegerField()
+    obs_record_from = models.CharField(max_length=100)
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='obstetrical_history', db_column='patrec_id')
+
+    class Meta:
+        db_table = 'obstetrical_history'
         
         
 class FollowUpVisit(models.Model):

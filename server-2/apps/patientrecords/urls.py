@@ -13,6 +13,7 @@ urlpatterns = [
      path('vital-signs/', VitalSignsView.as_view(), name='vital-signs'),
      path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
 
+     path("obstetrical_history/", ObstetricalHistoryView.as_view(), name="obstetricalhistory"),
      path('follow-up-visit/', FollowUpVisitView.as_view(), name='follow-up-visit'),
-    path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
+     path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
 ]
