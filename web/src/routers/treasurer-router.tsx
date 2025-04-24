@@ -4,12 +4,13 @@ import PersonalClearance from "@/pages/record/treasurer/treasurer-clearance-requ
 import PermitClearance from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permitClearance";
 import ServiceCharge from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-serviceCharge";
 import BarangayService from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-barangayService";
-import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budget-plan-main";
+import BudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/listOfAllBudgetPlans";
 import TreasurerDonationTable from "@/pages/record/treasurer/treasurer-donation/treasurer-donation-main";
-import CreateBudgetPlanForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/treasurer-budgetplan-Form";
-import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/treasurer-budgetplan-view";
+import ViewBudgetPlan from "@/pages/record/treasurer/treasurer-budgetplan/viewABudgetPlan";
 import RatesForm from "@/pages/record/treasurer/treasurer-clearance-requests/Rates/treasurer-rates-form";
 import IncomeTracking from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-tracker-main";
+import IncomeExpenseMain from "@/pages/record/treasurer/treasurer-income-expense-tracker/treasurer-income-expense-main"; 
+import CombinedBudgetForm from "@/pages/record/treasurer/treasurer-budgetplan/budgetPlanForms/budgetPlanCombinedForms";
 
 export const treasurer_router = [
     {
@@ -17,16 +18,20 @@ export const treasurer_router = [
         element: <BudgetPlan/>,
     },
     {
-        path: "treasurer-budgetplan-form",
-        element: <CreateBudgetPlanForm/>
+        path: "budgetplan-forms",
+        element: <CombinedBudgetForm/>
     },
     {
-        path: 'treasurer-budgetplan-view/:plan_id',
-        element: <ViewBudgetPlan/>
+        path: 'treasurer-budgetplan-view',
+        element: <ViewBudgetPlan/>,
     },
     {
         path: "treasurer-donation",
         element: <TreasurerDonationTable/>
+    },
+    {
+        path: "treasurer-income-expense-main",
+        element: <IncomeExpenseMain/>
     },
     {
         path: "treasurer-income-and-expense-tracking",

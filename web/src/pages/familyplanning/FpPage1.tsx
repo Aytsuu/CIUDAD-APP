@@ -632,7 +632,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     />
                   )}
 
-                  {(() => {
+                  {/* {(() => {
                     const methodUsed = form.watch("methodCurrentlyUsed")
                     return (
                       (methodUsed === "Others" || methodUsed === "Source") && (

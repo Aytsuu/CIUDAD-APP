@@ -15,7 +15,7 @@ export const useDeleteIncomeExpense = () => {
     mutationFn: (iet_num: number) => deleteIncomeExpense(iet_num),
     onMutate: async (iet_num) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['expense'] });
+      await queryClient.cancelQueries({ queryKey: ['incomeExpense'] });
       
       // Show loading toast
       toast.loading("Deleting entry...", { id: "deleteExpense" });
@@ -24,7 +24,7 @@ export const useDeleteIncomeExpense = () => {
     },
     onSuccess: () => {
       // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['Expense'] });
+      queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
       
       // Show success toast
       toast.success("Expense Entry Deleted", {
