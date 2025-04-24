@@ -239,7 +239,7 @@ function IncomeExpenseMain() {
                                         </div>
 
                                         <div className="mt-4">
-                                            <Progress value={progress} className="w-full h-4 bg-gray-300" />
+                                            <Progress value={progress} className="w-full h-4 bg-gray-300 border" />
                                             <div className="text-sm text-gray-600 text-center mt-2">
                                                 {progress.toFixed(2)}% of budget spent
                                             </div>
