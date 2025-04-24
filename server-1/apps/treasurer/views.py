@@ -48,7 +48,7 @@ class UpdateBudgetPlan(generics.UpdateAPIView):
     
 
 class UpdateBudgetDetails(generics.UpdateAPIView):
-    serialzer_class = Budget_Plan_DetailSerializer
+    serializer_class = Budget_Plan_DetailSerializer
     queryset = Budget_Plan_Detail.objects.all()
     lookup_field = 'dtl_id'
 

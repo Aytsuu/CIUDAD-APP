@@ -20,9 +20,9 @@ export interface BudgetPlan {
 }
 
 export interface BudgetPlanDetail {
-    // dtl_id: number;
+    dtl_id?: number;
     dtl_budget_item: string;
     dtl_proposed_budget: number;
     dtl_budget_category: string;
-    // plan?: number; 
+    plan?: number; 
 }

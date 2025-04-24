@@ -9,7 +9,7 @@ urlpatterns=[
     path('budget-plan-details/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),
     path('budget-plan/<int:plan_id>/', DeleteRetrieveBudgetPlanAndDetails.as_view(), name='treasurer-manage-budget-plan'),
     path('update-budget-plan/<int:plan_id>/', UpdateBudgetPlan.as_view(), name='treasurer-update-budget-plan'),
-    path('update-bduget-details/<int:dtl_id>/', UpdateBudgetDetails.as_view(), name='treasurer-update-budget-details'),
+    path('update-budget-details/<int:dtl_id>/', UpdateBudgetDetails.as_view(), name='treasurer-update-budget-details'),
 
 
     # path('income-file/', Income_FileView.as_view(), name = 'treasurer-income-file'),

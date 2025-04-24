@@ -1,64 +1,64 @@
 import z from "zod";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BudgetPlan } from "../budgetPlanInterfaces";
 import { CircleCheck } from "lucide-react";
 import { updateBudgetPlan, updateBudgetDetails } from "../restful-API/budgetPlanPutAPI";
 
-const BudgetPlanDetailSchema = z.object({
-    dtl_id: z.number().optional(), 
-    dtl_budget_item: z.string().min(1, "Budget item is required"),
-    dtl_proposed_budget: z.union([
-        z.string(),
-        z.number()
-    ]).transform(val => typeof val === 'number' ? val.toString() : val),
-    dtl_budget_category: z.string().min(1, "Category is required")
-});
+type BudgetHeaderUpdate ={
+    plan_id?: number,
+    plan_actual_income: number,
+    plan_rpt_income: number,
+    plan_balance: number,
+    plan_tax_share: number,
+    plan_tax_allotment: number,
+    plan_cert_fees: number,
+    plan_other_income: number,
+    plan_budgetaryObligations: number, 
+    plan_balUnappropriated: number,
+    plan_personalService_limit: number,
+    plan_miscExpense_limit: number,
+    plan_localDev_limit: number, 
+    plan_skFund_limit: number,
+    plan_calamityFund_limit: number,
+}
 
-export const useUpdateBudgetPlan = (plan_id: number, onSuccess?: () => void) => {
+type BudgetDetailUpdate = {
+    dtl_id: number;
+    dtl_budget_item?: string;
+    dtl_proposed_budget?: number;
+    dtl_budget_category?: string;
+    // plan_id: number;
+};
+
+export const useUpdateBudgetPlan = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (values: {
-            budgetHeader: BudgetPlan;
-            budgetDetails: z.infer<typeof BudgetPlanDetailSchema>[];
+            budgetHeader: BudgetHeaderUpdate,
+            budgetDetails: BudgetDetailUpdate[]
         }) => {
             toast.loading("Updating Budget plan...", { id: "updateBudgetPlan" });
 
-            console.log('Values:', values.budgetHeader)
-        
             try {
-                const validatedDetails = values.budgetDetails.map(detail => {
-                    const parsed = BudgetPlanDetailSchema.parse(detail);
-                    return {
-                        dtl_id: parsed.dtl_id,
-                        dtl_budget_item: parsed.dtl_budget_item,
-                        dtl_proposed_budget: parsed.dtl_proposed_budget,
-                        dtl_budget_category: parsed.dtl_budget_category
-                    };
-                });
-        
-                // Update budget plan header
-                const updatedPlan = await updateBudgetPlan(plan_id, values.budgetHeader);
-                if (!updatedPlan) throw new Error("Failed to update budget plan header");
-        
-                // Filter and type guard
-                const detailsToUpdate = validatedDetails
-                    .filter((detail): detail is {
-                        dtl_id: number;
-                        dtl_budget_item: string;
-                        dtl_proposed_budget: string;
-                        dtl_budget_category: string;
-                    } => detail.dtl_id !== undefined);
-                
-                if (detailsToUpdate.length > 0) {
-                    await updateBudgetDetails(detailsToUpdate);
+                // 1. First update header
+                const headerResponse = await updateBudgetPlan(values.budgetHeader);
+                if (!headerResponse) {
+                    throw new Error("Budget header update failed");
                 }
-        
-                return updatedPlan;
+
+                // 2. Only proceed if we have details to update
+                if (values.budgetDetails?.length > 0) {
+                    const detailsResponse = await updateBudgetDetails(values.budgetDetails);
+                    if (!detailsResponse || detailsResponse.length !== values.budgetDetails.length) {
+                        throw new Error("Some budget details failed to update");
+                    }
+                }
+
+                return { headerResponse, detailsResponse: values.budgetDetails };
             } catch (error) {
-                toast.dismiss("updateBudgetPlan");
-                throw error;
+                console.error("Update error:", error);
+                throw error; // Make sure to re-throw
             }
         },
         onSuccess: () => {
@@ -68,15 +68,14 @@ export const useUpdateBudgetPlan = (plan_id: number, onSuccess?: () => void) => 
                 duration: 2000
             });
 
-            // Invalidate relevant queries
             queryClient.invalidateQueries({ queryKey: ['budgetPlan'] });
             queryClient.invalidateQueries({ queryKey: ['budgetPlanDetails'] });
             
-            if (onSuccess) onSuccess();
+            onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error updating budget plan:", err);
-            toast.error("Failed to update budget plan", {
+        onError: (error) => {
+            console.error("Mutation error:", error);
+            toast.error(`Failed to update budget plan: ${error.message}`, {
                 id: 'updateBudgetPlan'
             });
         }

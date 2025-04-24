@@ -2,7 +2,8 @@ import api from "@/api/api";
 import { parseFloatSafe } from "@/helpers/floatformatter";
 
 
-const updateBudgetPlan = async( plan_id: number, budgetInfo: Record<string, any>) => {
+
+const updateBudgetPlan = async(budgetInfo: Record<string, any>) => {
     try{
 
         console.log({
@@ -22,7 +23,8 @@ const updateBudgetPlan = async( plan_id: number, budgetInfo: Record<string, any>
             plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
         });
 
-        const res = await api.put(`treasurer/update-budget-plan/${plan_id}/`,{
+
+        const res = await api.put(`treasurer/update-budget-plan/${budgetInfo.plan_id}/`,{
             plan_actual_income: parseFloatSafe(budgetInfo.plan_actual_income), 
             plan_rpt_income: parseFloatSafe(budgetInfo.plan_rpt_income), 
             plan_balance: parseFloatSafe(budgetInfo.plan_balance), 
@@ -47,35 +49,32 @@ const updateBudgetPlan = async( plan_id: number, budgetInfo: Record<string, any>
     }
 }
 
-const updateBudgetDetails = async ( details: Array<{ dtl_id: number; dtl_budget_item?: string; dtl_proposed_budget?: string; dtl_budget_category?: string;}>) => {
 
+const updateBudgetDetails = async (details: Array<{dtl_id: number; dtl_budget_item?: string; dtl_proposed_budget?: number; dtl_budget_category?: string;}>) => {
     try {
-        const transformedUpdates = details.map((item) => ({
-            ...item,
-            dtl_proposed_budget: item.dtl_proposed_budget !== undefined 
-                ? parseFloatSafe(item.dtl_proposed_budget) || 0.00 
-                : undefined
-        }));
-
-        console.log("Updating Budget Details:", transformedUpdates);
-
-        const updatePromises = transformedUpdates.map((item) =>
-            api.put(`treasurer/update-budget-details/${item.dtl_id}/`, {
-                dtl_budget_item: item.dtl_budget_item,
-                dtl_proposed_budget: item.dtl_proposed_budget,
-                dtl_budget_category: item.dtl_budget_category,
-            })
+        const results = await Promise.allSettled(
+            details.map(item => 
+                api.patch(`treasurer/update-budget-details/${item.dtl_id}/`, {
+                    dtl_budget_item: item.dtl_budget_item,
+                    dtl_proposed_budget: item.dtl_proposed_budget,
+                    dtl_budget_category: item.dtl_budget_category,
+                })
+            )
         );
 
-        const results = await Promise.all(updatePromises);
-        return results.map(res => res.data);
+        // Check for any failures
+        const failedUpdates = results.filter(r => r.status === 'rejected');
+        if (failedUpdates.length > 0) {
+            console.error('Some updates failed:', failedUpdates);
+            throw new Error(`${failedUpdates.length} detail updates failed`);
+        }
+
+        return results.map(r => 
+            r.status === 'fulfilled' ? r.value.data : null
+        ).filter(Boolean);
     } catch (error) {
-        const axiosError = error as { response?: { data: any }; message: string };
-        console.error(
-            "Error updating budget details:", 
-            axiosError.response?.data || axiosError.message
-        );
-        throw error; 
+        console.error("Error updating budget details:", error);
+        throw error;
     }
 };
 
