@@ -8,7 +8,6 @@ import { formatQuantityString } from "../../FormatQuantityString";
 
 export const useAddFirstAidInventory = () => {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: ({formData,inv_id,parseFirstAidID}: {
       formData: any;
@@ -19,18 +18,13 @@ export const useAddFirstAidInventory = () => {
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
     }
   });
-}; 
+};
+
 
 export const useAddFirstAidTransaction = () => {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: ({
-      finv_id,
-      string_qty,
-      action,
-      staffId
-    }: {
+    mutationFn: ({finv_id,string_qty,action,staffId}: {
       finv_id: number;
       string_qty: string;
       action: string;
@@ -41,6 +35,7 @@ export const useAddFirstAidTransaction = () => {
     }
   });
 };
+
 
 export const useSubmitFirstAidStock = () => {
   const queryClient = useQueryClient();
@@ -92,7 +87,7 @@ export const useSubmitFirstAidStock = () => {
       // Refresh all related data
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["firstaidtransactions"] });
-      
+    
       toast.success('First Aid item added successfully', {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,     

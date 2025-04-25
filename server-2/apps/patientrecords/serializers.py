@@ -6,6 +6,15 @@ from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSeria
 from apps.healthProfiling.models import FamilyComposition,Household
 # from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 # serializers.py
+
+
+class PartialUpdateMixin:  
+    def to_internal_value(self, data):
+        if self.instance:
+            for field in self.fields:
+                if field not in data:
+                    self.fields[field].required = False
+        return super().to_internal_value(data)
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = PersonalSerializer(source='per_id', read_only=True)
     resident_profile = ResidentProfileMinimalSerializer(source='per_id.personal_information', many=True, read_only=True)
@@ -22,6 +31,7 @@ class PatientSerializer(serializers.ModelSerializer):
         resident_profiles = obj.per_id.personal_information.all()
         compositions = FamilyComposition.objects.filter(rp__in=resident_profiles)
         return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
+    
     def get_households(self, obj):
         # 🔎 Find all ResidentProfiles related to this personal info
         resident_profiles = obj.per_id.personal_information.all()
@@ -38,8 +48,50 @@ class PatientRecordSerializer(serializers.ModelSerializer):
         fields = '__all__'
   
   
-  
+    
 class VitalSignsSerializer(serializers.ModelSerializer):
     class Meta:
         model = VitalSigns
         fields = '__all__'
+
+
+class ObstetricalHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obstetrical_History
+        fields = '__all__'
+
+
+class FollowUpVisitSerializer(PartialUpdateMixin,serializers.ModelSerializer):
+    class Meta:
+        model = FollowUpVisit
+        fields = '__all__'
+        
+        
+class BodyMeasurementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BodyMeasurement
+        fields = '__all__'
+
+class IllnessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Illness
+class FindingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Finding
+        fields = '__all__'
+        
+class PhysicalExaminationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalExamination
+        fields = '__all__'
+
+class PhysicalExamListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalExamList
+        fields = '__all__'
+        
+class DiagnosisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Diagnosis
+        fields = '__all__'
+

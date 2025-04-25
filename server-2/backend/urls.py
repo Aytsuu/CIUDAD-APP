@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('inventory/', include('apps.inventory.urls')),
     path('health-profiling/', include("apps.healthProfiling.urls")),
+    path('maternal/', include('apps.maternal.urls')),
     # path('maternal/', include('apps.maternal.urls')),
     path('animalbites/', include("apps.animalbites.urls")),
     path('vaccination/', include("apps.vaccination.urls")),
@@ -39,4 +40,6 @@ urlpatterns = [
     # path('treasurer/', include('apps.treasurer.urls')),
     # path('donation/', include('apps.donation.urls')),
     # path('gad/', include('apps.gad.urls')),   
+]
+    path('medical-consultation/', include("apps.medicalConsultation.urls")),
 ]

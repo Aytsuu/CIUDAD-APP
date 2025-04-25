@@ -40,6 +40,6 @@ export const CombinedSchema = VaccineSchema.merge(VitalSignsSchema);
 // Define TypeScript types from schemas
 export type VaccineSchemaType = z.infer<typeof VaccineSchema>;
 export type VitalSignsType = z.infer<typeof VitalSignsSchema>; 
-export type VaccineFormData = z.infer<typeof CombinedSchema>;
+export type CombineVaccineType = z.infer<typeof CombinedSchema>;
 
 export default CombinedSchema;
