@@ -6,11 +6,11 @@ from ..pagination import *
 from apps.account.models import *
 
 class ResidentProfileCreateView(generics.CreateAPIView):
-  serializer_class = ResidentProfileBaseSerializer
-  queryset=ResidentProfile.objects.all()
-
-  def perform_create(self, serializer):
-    serializer.save()
+    serializer_class = ResidentProfileBaseSerializer
+    queryset=ResidentProfile.objects.all()
+    
+    def perform_create(self, serializer):
+        serializer.save()
 
 class ResidentProfileTableView(generics.ListCreateAPIView):
     serializer_class = ResidentProfileTableSerializer
@@ -18,23 +18,20 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = ResidentProfile.objects.select_related(
-            'per',
-            'staff',
+          'per',
         ).prefetch_related(
             Prefetch('family_compositions', 
-                   queryset=FamilyComposition.objects.select_related(
-                       'fam',
-                       'fam__hh',
-                       'fam__hh__sitio'
-                   ).only('fam')),
+                queryset=FamilyComposition.objects.select_related(
+                    'fam',
+                    'fam__hh',
+                    'fam__hh__sitio'
+                ).only('fam')),
         ).only(
-            'rp_id',
-            'rp_date_registered',
-            'per__per_lname',
-            'per__per_fname',
-            'per__per_mname',
-            'per__per_suffix',
-            'staff__staff_id',
+          'rp_id',
+          'rp_date_registered',
+          'per__per_lname',
+          'per__per_fname',
+          'per__per_mname',
         )
 
         search_query = self.request.query_params.get('search', '').strip()
@@ -54,14 +51,14 @@ class ResidentPersonalCreateView(generics.CreateAPIView):
     serializer_class = ResidentPersonalCreateSerializer
     
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        return super().create(request, *args, **kwargs) 
 
 class ResidentPersonalInfoView(generics.RetrieveAPIView):
     serializer_class = ResidentPersonalInfoSerializer
     queryset=ResidentProfile.objects.all()
     lookup_field='rp_id'
 
-class ResidentProfileListView(generics.ListAPIView):
+class ResidentProfileListExcludeFamView(generics.ListAPIView):
     serializer_class = ResidentProfileListSerializer
     
     def get_queryset(self):
@@ -70,4 +67,12 @@ class ResidentProfileListView(generics.ListAPIView):
             return ResidentProfile.objects.filter(~Q(family_compositions__fam_id=excluded_fam_id))
         
         return ResidentProfile.objects.all()
+    
+class ResidentProfileFamSpecificListView(generics.ListAPIView):
+    serializer_class = ResidentProfileListSerializer
+    
+    def get_queryset(self):
+        fam_id = self.kwargs['fam']
+        return ResidentProfile.objects.filter(family_compositions__fam_id=fam_id)
+
    

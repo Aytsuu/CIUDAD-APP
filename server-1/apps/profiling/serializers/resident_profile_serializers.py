@@ -17,18 +17,19 @@ class ResidentProfileBaseSerializer(serializers.ModelSerializer):
 class ResidentProfileTableSerializer(serializers.ModelSerializer):
     lname = serializers.CharField(source='per.per_lname')
     fname = serializers.CharField(source='per.per_fname')
-    mname = serializers.CharField(source='per.per_mname')
-    suffix = serializers.CharField(source='per.per_suffix')
+    mname = serializers.SerializerMethodField()
     household_no = serializers.SerializerMethodField()
     sitio_name = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
-    registered_by = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
     
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'suffix', 'household_no', 'sitio_name', 'family_no', 'registered_by', 'has_account']
+                  'household_no', 'sitio_name', 'family_no', 'has_account']
+    
+    def get_mname(self, obj):
+        return obj.per.per_mname if obj.per.per_mname else '-'
     
     def get_household_no(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
@@ -44,13 +45,6 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
             return obj.family_compositions.first().fam.fam_id
         return ""
-    
-    def get_registered_by(self, obj):
-        if obj.staff and hasattr(obj.staff, 'rp'):
-            staff = obj.staff.rp.per
-            return f"{staff.per_lname}, {staff.per_fname}" + \
-                   (f" {staff.per_mname[0]}." if staff.per_mname else "")
-        return '-'
     
     def get_has_account(self, obj):
         return hasattr(obj, 'account')

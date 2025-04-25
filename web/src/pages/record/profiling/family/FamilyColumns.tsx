@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } from "../restful-api/profilingGetAPI";
 import { Badge } from "@/components/ui/badge";
+import { Combobox } from "@/components/ui/combobox";
+import { useFamilyData, useFamilyMembers, useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
+import { formatResidents } from "../profilingFormats";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -19,18 +22,6 @@ const CardContainer = ({ children }: { children: React.ReactNode }) => (
   <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
     {children}
   </div>
-);
-
-const IdBadge = ({ id, className = '' }: { id: string; className?: string }) => (
-  <Label className={`w-[90%] py-1.5 text-black/70 bg-muted rounded-full ${className}`}>
-    {id}
-  </Label>
-);
-
-const RoleBadge = ({ role }: { role: string }) => (
-  <Label className="w-[90%] py-1.5 text-white rounded-full bg-green-500 cursor-pointer">
-    {role}
-  </Label>
 );
 
 const NameDisplay = ({ lname, fname, mname }: { lname: string; fname: string; mname?: string }) => (
@@ -91,30 +82,52 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => {
+      const {showLoading, hideLoading} = useLoading();
+      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.getValue('fam_id'));
+      const formattedResidents = React.useMemo(() => 
+        formatResidents(residentsFamSpecificList)
+      , [residentsFamSpecificList])
+
+      React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading])
+
+      return (
+        <Combobox
+          options={formattedResidents}
+          value={row.getValue('members')}
+          placeholder="Search member"
+          emptyMessage="No resident found"
+          staticVal={true}
+          size={400}
+        />
+      )
+    }
   },
   {
     accessorKey: "fam_building",
     header: "Building",
   },
   {
-    accessorKey: "fam_indigenous",
-    header: "Indigenous",
+    accessorKey: "father",
+    header: "Father",
+  },
+  {
+    accessorKey: "mother",
+    header: "Mother",
+  },
+  {
+    accessorKey: "guardian",
+    header: "Guardian",
   },
   {
     accessorKey: "fam_date_registered",
     header: "Date Registered",
-  },
-  {
-    accessorKey: "registered_by",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
   },
   {
     accessorKey: "action",

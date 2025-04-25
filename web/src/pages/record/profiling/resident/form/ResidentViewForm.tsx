@@ -8,13 +8,18 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } =
     useResidentForm(params.data);
-  const { mutateAsync: updateProfile} =
-    useUpdateProfile();
+  const { mutateAsync: updateProfile } = useUpdateProfile();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
@@ -44,24 +49,27 @@ export default function ResidentViewForm({ params }: { params: any }) {
       return;
     }
 
-    await updateProfile({
-      personalId: params.data.per_id,
-      values: values,
-    }, {
-      onSuccess: () => {
-        handleSubmitSuccess("Profile updated successfully");
-        setIsSubmitting(false);
-        setFormType(Type.Viewing);
-        params.data = values;
+    await updateProfile(
+      {
+        personalId: params.data.per_id,
+        values: values,
+      },
+      {
+        onSuccess: () => {
+          handleSubmitSuccess("Profile updated successfully");
+          setIsSubmitting(false);
+          setFormType(Type.Viewing);
+          params.data = values;
+        },
       }
-    });
+    );
   };
 
   return (
     // ==================== RENDER ====================
-    <LayoutWithBack 
-      title='Resident Details'
-      description='Information is displayed in a clear, organized, and secure manner.'
+    <LayoutWithBack
+      title="Resident Details"
+      description="Information is displayed in a clear, organized, and secure manner."
     >
       <Card className="w-full p-10">
         <div className="pb-4">
@@ -87,6 +95,20 @@ export default function ResidentViewForm({ params }: { params: any }) {
           </form>
         </Form>
       </Card>
+      <Accordion type="multiple" className="mt-8">
+        <AccordionItem key={"Family Details"} value={"Family Details"}>
+          <AccordionTrigger className="text-[18px] text-black/60">Family Details</AccordionTrigger>
+          <AccordionContent>
+            
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem key={"Household Details"} value={"Household Details"}>
+          <AccordionTrigger className="text-[18px] text-black/60">Household Details</AccordionTrigger>
+          <AccordionContent>
+            
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </LayoutWithBack>
   );
 }

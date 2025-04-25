@@ -19,6 +19,15 @@ export const getResidentsWithFamExclusion = async (familyId: string) => {
   }
 }
 
+export const getResidentsFamSpecificList = async (familyId: string) => {
+  try {
+    const res = await api.get(`profiling/resident/fam/${familyId}/list/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
 export const getResidentsTable = async (page: number, pageSize: number, searchQuery?: string) => {
   try {
     const res = await api.get("profiling/resident/list/table/", {

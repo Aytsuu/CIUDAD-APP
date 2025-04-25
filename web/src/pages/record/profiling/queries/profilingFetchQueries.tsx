@@ -4,9 +4,12 @@ import {
   getBusinesses,
   getFamiliesTable,
   getFamilyComposition,
+  getFamilyData,
+  getFamilyMembers,
   getHouseholdList,
   getHouseholdTable,
   getRequests,
+  getResidentsFamSpecificList,
   getResidentsList,
   getResidentsTable,
   getResidentsWithFamExclusion,
@@ -39,6 +42,14 @@ export const useResidentsWithFamExclusion = (familyId: string) => {
   })
 }
 
+export const useResidentsFamSpecificList = (familyId: string) => {
+  return useQuery({
+    queryKey: ['residentsFamSpecificList', familyId],
+    queryFn: () => getResidentsFamSpecificList(familyId),
+    staleTime: 5000,
+  })
+}
+
 export const useRequests = () => {
   return useQuery({
     queryKey: ["requests"],
@@ -63,6 +74,22 @@ export const useFamiliesTable = (page: number, pageSize: number, searchQuery: st
     queryFn: () => getFamiliesTable(page, pageSize, searchQuery),
     staleTime: 5000,
   });
+}
+
+export const useFamilyData = (familyId: string) => {
+  return useQuery({
+    queryKey: ["familyData", familyId],
+    queryFn: () => getFamilyData(familyId),
+    staleTime: 5000,
+  })
+}
+
+export const useFamilyMembers = (familyId: string) => {
+  return useQuery({
+    queryKey: ["familyMembers", familyId],
+    queryFn: () => getFamilyMembers(familyId),
+    staleTime: 5000,
+  })
 }
 
 export const useFamilyComposition = () => {

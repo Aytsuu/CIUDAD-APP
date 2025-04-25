@@ -29,9 +29,10 @@ export type FamilyRecord = {
   fam_id: string;
   members: string;
   fam_building: string;
-  fam_indigenous: string;
+  mother: string;
+  father: string;
+  guardian: string;
   fam_date_registered: string;
-  registered_by: string;
 }
 
 export type MemberRecord = {

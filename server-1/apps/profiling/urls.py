@@ -43,12 +43,13 @@ urlpatterns = [
     path("household/update/<str:hh_id>/", HouseholdUpdateView.as_view(), name="upadate-household"),
 
     # Resident Urls
-    path("resident/", ResidentProfileListView.as_view(), name="resident-details"),
+    path("resident/", ResidentProfileListExcludeFamView.as_view(), name="resident-details"),
     path("resident/list/table/", ResidentProfileTableView.as_view(), name="residents-table"),
     path("resident/create/", ResidentProfileCreateView.as_view(), name="resident-create"),
     path("resident/create/combined/", ResidentPersonalCreateView.as_view(), name="resident-combined-create"),
     path("resident/personal/<str:rp_id>/", ResidentPersonalInfoView.as_view(), name="resident-personal-info"),
-    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListView.as_view(), name="resident-list-with exclusions"),
+    path("resident/exclude/fam/<str:fam_id>/", ResidentProfileListExcludeFamView.as_view(), name="resident-list-with exclusions"),
+    path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
     # Request Urls
     path("request/", RequestRegistrationView.as_view(), name="request-details"),

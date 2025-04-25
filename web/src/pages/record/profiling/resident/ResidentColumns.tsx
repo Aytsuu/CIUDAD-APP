@@ -158,24 +158,8 @@ export const residentColumns = (residents: any[]): ColumnDef<ResidentRecord>[] =
     header: "Middle Name",
   },
   {
-    accessorKey: "suffix",
-    header: "Suffix"
-  },
-  {
     accessorKey: "rp_date_registered",
     header: "Date Registered"
-  },
-  {
-    accessorKey: "registered_by",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
   },
   {
     accessorKey: "action",
