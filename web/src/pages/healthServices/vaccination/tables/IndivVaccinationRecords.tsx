@@ -210,17 +210,7 @@ export default function IndivVaccinationRecords() {
   };
 
   const columns: ColumnDef<VaccinationRecord>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.index + 1}
-          </div>
-        </div>
-      ),
-    },
+  
     {
       accessorKey: "vaccine_name",
       header: "Vaccine",

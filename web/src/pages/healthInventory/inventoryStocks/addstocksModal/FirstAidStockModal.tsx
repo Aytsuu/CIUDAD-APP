@@ -20,13 +20,13 @@ import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-lay
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useCategoriesFirstAid } from "../REQUEST/Category/FirstAidCategory";
-// import { submitFirstAidStock } from "../REQUEST/FirstAid/FirstAidSubmit";
 import { toast } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-import {useSubmitFirstAidStock} from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
+import { useSubmitFirstAidStock } from "../REQUEST/FirstAid/queries/FirstAidPostQueries";
+
 interface FirstAidStockFormProps {
   setIsDialog: (isOpen: boolean) => void;
 }
@@ -48,11 +48,9 @@ export default function FirstAidStockForm({
   });
 
   const firstaid = fetchFirstAid();
-  
   const queryClient = useQueryClient();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
-  const [submissionData, setSubmissionData] =
-    useState<FirstAidStockType | null>(null);
+  const [submissionData, setSubmissionData] = useState<FirstAidStockType | null>(null);
 
   const { mutate: submitFirstAidStock, isPending: isSubmitting } = useSubmitFirstAidStock();
 
@@ -63,25 +61,32 @@ export default function FirstAidStockForm({
     ConfirmationDialogs,
   } = useCategoriesFirstAid();
 
-  const handleSubmit = (data: FirstAidStockType) => {
-    submitFirstAidStock(data, {
-      onSuccess: () => {
-        setIsDialog(false);
-      }
-    });
-  };
-  
   const onSubmit = (data: FirstAidStockType) => {
+    console.log('Form submitted, opening confirmation dialog');
     setSubmissionData(data);
     setIsAddConfirmationOpen(true);
   };
   
   const confirmAdd = () => {
-    if (submissionData) {
-      setIsAddConfirmationOpen(false);
-      handleSubmit(submissionData);
-    }
-  }
+    if (!submissionData) return;
+    
+    console.log('Confirming addition of first aid item');
+    setIsAddConfirmationOpen(false);
+    submitFirstAidStock(submissionData, {
+      onSuccess: () => {
+        toast.success('First aid item added successfully', {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+        });
+        setIsDialog(false);
+      },
+      onError: (error) => {
+        console.error("Error adding first aid item:", error);
+        toast.error('Failed to add first aid item');
+      }
+    });
+  };
+
   const currentUnit = form.watch("finv_qty_unit");
   const qty = form.watch("finv_qty") || 0;
   const pcs = form.watch("finv_pcs") || 0;
@@ -95,7 +100,7 @@ export default function FirstAidStockForm({
             <FormSelect
               control={form.control}
               name="fa_id"
-              label="Unit"
+              label="First Aid Item"
               options={firstaid}
             />
             <FormField
@@ -167,7 +172,7 @@ export default function FirstAidStockForm({
                 <FormItem className="sm:col-span-2">
                   <FormLabel>Total Pieces</FormLabel>
                   <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    {totalPieces.toLocaleString() } pieces
+                    {totalPieces.toLocaleString()} pieces
                     <span className="ml-2 text-muted-foreground text-xs">
                       ({qty} boxes × {pcs} pieces/box)
                     </span>
@@ -191,14 +196,18 @@ export default function FirstAidStockForm({
           </div>
         </form>
       </Form>
-      {ConfirmationDialogs()}
+
+      {/* First Aid Add Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
-        title="Add First Aid"
-        description={`Are you sure you want to add the First Aid?`}
+        title="Add First Aid Item"
+        description={`Are you sure you want to add this first aid item?`}
       />
+
+      {/* Category Confirmation Dialogs */}
+      <ConfirmationDialogs />
     </div>
   );
 }

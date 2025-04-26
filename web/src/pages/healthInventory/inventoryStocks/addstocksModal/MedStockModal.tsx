@@ -49,7 +49,7 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
     },
   });
 
-  const { categories, handleDeleteConfirmation, categoryHandleAdd } = useCategoriesMedicine();
+  const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesMedicine();
   const medicines = fetchMedicines();
   const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
   const [submissionData, setSubmissionData] = useState<MedicineStockType | null>(null);
@@ -66,22 +66,26 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const handleSubmit = async (data: MedicineStockType) => {
+  const onSubmit = (data: MedicineStockType) => {
+    console.log('Form submitted, opening confirmation dialog');
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
+  
+  const confirmAdd = async () => {
+    if (!submissionData) return;
+    
+    console.log('Confirming addition of medicine');
+    setIsAddConfirmationOpen(false);
     setIsSubmitting(true);
     
     try {
-      await submitMedicineStock(data, queryClient);
-      
-      // Close the dialog first
+      await submitMedicineStock(submissionData, queryClient);
+      toast.success("Medicine item added successfully", {
+        icon: <CircleCheck size={20} className="text-green-500" />,
+        duration: 2000,
+      });
       setIsDialog(false);
-      
-      // Use setTimeout to ensure the toast shows after dialog is fully closed
-      setTimeout(() => {
-        toast.success("Medicine item added successfully", {
-          icon: <CircleCheck size={20} className="text-green-500" />,
-          duration: 2000,
-        });
-      }, 100);
     } catch (error: any) {
       console.error("Error in handleSubmit:", error);
       toast.error(error.message || "Failed to add medicine item", {
@@ -89,18 +93,6 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
       });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const onSubmit = (data: MedicineStockType) => {
-    setSubmissionData(data);
-    setIsAddConfirmationOpen(true);
-  };
-
-  const confirmAdd = () => {
-    if (submissionData) {
-      setIsAddConfirmationOpen(false);
-      handleSubmit(submissionData);
     }
   };
 
@@ -152,13 +144,25 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
             <FormSelect control={form.control} name="form" label="Form" options={formOptions} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput control={form.control} name="qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} placeholder="Quantity" type="number" />
+            <FormInput 
+              control={form.control} 
+              name="qty" 
+              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} 
+              placeholder="Quantity" 
+              type="number" 
+            />
             <FormSelect control={form.control} name="unit" label="Unit" options={unitOptions} />
           </div>
           
           {currentUnit === "boxes" && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormInput control={form.control} name="pcs" label="Pieces per Box" type="number" placeholder="Pieces per box" />
+              <FormInput 
+                control={form.control} 
+                name="pcs" 
+                label="Pieces per Box" 
+                type="number" 
+                placeholder="Pieces per box" 
+              />
               <div className="sm:col-span-2">
                 <FormItem>
                   <FormLabel className="text-black/65">Total Pieces</FormLabel>
@@ -188,13 +192,17 @@ export default function MedicineStockForm({ setIsDialog }: MedicineStocksProps) 
         </form>
       </Form>
 
+      {/* Medicine Add Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
         title="Add Medicine"
-        description={`Are you sure you want to add the medicine?`}
+        description="Are you sure you want to add this medicine item?"
       />
+
+      {/* Category Confirmation Dialogs */}
+      <ConfirmationDialogs />
     </div>
   );
 }

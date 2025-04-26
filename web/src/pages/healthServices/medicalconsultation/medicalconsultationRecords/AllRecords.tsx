@@ -138,17 +138,7 @@ export default function AllMedicalConsRecord() {
   
 
   const columns: ColumnDef<MedicalRecord>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }: { row: any }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.pat_id}
-          </div>
-        </div>
-      ),
-    },
+   
     {
       accessorKey: "patient",
       header: ({ column }: { column: any }) => (
@@ -243,20 +233,7 @@ export default function AllMedicalConsRecord() {
           />
 
 
-          <TooltipLayout
-            trigger={
-              <div
-                className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-                onClick={() => {
-                  setRecordToArchive(row.original.pat_id);
-                  setIsArchiveConfirmationOpen(true);
-                }}
-              >
-                <Trash size={16} />
-              </div>
-            }
-            content="Archive"
-          />
+         
         </div>
       ),
     },
@@ -281,7 +258,7 @@ export default function AllMedicalConsRecord() {
         {/* Header Section */}
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-            Vaccination Records
+            Medical Consultation Records
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view patients information

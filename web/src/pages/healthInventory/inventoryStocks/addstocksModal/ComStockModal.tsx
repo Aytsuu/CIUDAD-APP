@@ -25,7 +25,7 @@ import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { submitCommodityStock } from "../REQUEST/Post/Commodity/AddCommodityPost";
 import { toast } from "sonner";
-import { CircleCheck,Loader2 } from "lucide-react";
+import { CircleCheck, Loader2 } from "lucide-react";
 
 interface CommodiityStockFormProps {  
   setIsDialog: (isOpen: boolean) => void;
@@ -56,6 +56,7 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
     categories,
     handleDeleteConfirmation,
     categoryHandleAdd, 
+    ConfirmationDialogs: CategoryConfirmationDialogs
   } = useCategoriesCommodity();
 
   // Watch for unit changes and reset pcs when not boxes
@@ -70,23 +71,28 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
  
 
   const onSubmit = (data: CommodityStockType) => {
+    console.log('Form submitted, opening confirmation dialog');
     setSubmissionData(data);
     setIsAddConfirmationOpen(true);
   };
   
   const confirmAdd = async () => {
+    if (!submissionData) return;
+    
+    console.log('Confirming addition of commodity');
     setIsAddConfirmationOpen(false);
     setIsSubmitting(true);
     
     try {
       await submitCommodityStock(submissionData, queryClient);
-      toast.success('First Aid item added successfully', {
+      toast.success('Commodity item added successfully', {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
       });
       setIsDialog(false);
     } catch (error: any) {
-    console.error("Error in handleSubmit:", error);
+      console.error("Error in handleSubmit:", error);
+      toast.error('Failed to add commodity item');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +160,12 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput control={form.control}  name="cinv_qty"  label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}   type="number"  placeholder="Quantity"  
+            <FormInput 
+              control={form.control}  
+              name="cinv_qty"  
+              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}   
+              type="number"  
+              placeholder="Quantity"  
             />
             <FormSelect 
               control={form.control}  
@@ -191,7 +202,7 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
             </div>
           )}
   
-  <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
             <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -206,13 +217,17 @@ export default function CommodityStockForm({ setIsDialog }: CommodiityStockFormP
         </form>
       </Form>
 
+      {/* Commodity Add Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={isAddConfirmationOpen}
         onOpenChange={setIsAddConfirmationOpen}
         onConfirm={confirmAdd}
         title="Add Commodity"
-        description={`Are you sure you want to add the commodity?`}
+        description={`Are you sure you want to add this commodity item?`}
       />
+
+      {/* Category Confirmation Dialogs */}
+      <CategoryConfirmationDialogs />
     </div>
   );
 }
