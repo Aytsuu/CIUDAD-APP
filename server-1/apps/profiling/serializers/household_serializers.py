@@ -34,23 +34,17 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   nhts = serializers.CharField(source='hh_nhts')
   head = serializers.SerializerMethodField()
   date_registered = serializers.DateField(source='hh_date_registered')
-  registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Household
     fields = ['hh_id', 'sitio', 'total_families', 'street', 'nhts', 'head', 
-              'date_registered', 'registered_by']
+              'date_registered']
     
   def get_total_families(self, obj):
     return Family.objects.filter(hh=obj).count()
   
   def get_head(self, obj):
     info = obj.rp.per
-    return f"{info.per_lname}, {info.per_fname}" + \
-        (f" {info.per_mname[0]}." if info.per_mname else "")
-  
-  def get_registered_by(self, obj):
-    info = obj.staff.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
   

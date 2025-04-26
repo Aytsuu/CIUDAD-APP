@@ -14,6 +14,15 @@ export type ResidentRecord = {
   has_account: boolean;
 };
 
+export type ResidentAdditionalRecord = {
+  rp_id: string;
+  fc_role: string;
+  name: string;
+  sex: string;
+  dob: string;
+  status: string;
+}
+
 export type DependentRecord = {
   id: string;
   lname: string;
@@ -77,5 +86,5 @@ export type BusinessRecord = {
   respondent: string;
   dateRegistered: string;
   registeredBy: string;
-
 }
+

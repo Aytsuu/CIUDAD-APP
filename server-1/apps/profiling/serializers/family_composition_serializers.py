@@ -8,17 +8,20 @@ class FamilyCompositionBaseSerializer(serializers.ModelSerializer):
 
 class FamilyCompositionExtendedSerializer(serializers.ModelSerializer):
   rp_id = serializers.CharField(source='rp.rp_id')
-  lname = serializers.CharField(source='rp.per.per_lname')
-  fname = serializers.CharField(source='rp.per.per_fname')
-  mname = serializers.CharField(source='rp.per.per_mname')
+  name = serializers.SerializerMethodField()
   sex = serializers.CharField(source='rp.per.per_sex')
   dob = serializers.DateField(source='rp.per.per_dob')
   status = serializers.CharField(source='rp.per.per_status')
 
   class Meta: 
     model = FamilyComposition
-    fields = ['rp_id', 'fc_role', 'lname', 'fname', 'mname',
-               'sex', 'dob', 'status']
+    fields = ['rp_id', 'fc_role', 'name', 'sex', 'dob', 'status']
+  
+  def get_name(self, obj):
+    info = obj.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+          (f" {info.per_mname[0]}." if info.per_mname else '')
+
     
 class FamilyCompositionBulkCreateSerializer(serializers.ModelSerializer):
   class Meta:

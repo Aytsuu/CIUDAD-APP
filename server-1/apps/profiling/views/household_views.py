@@ -1,5 +1,5 @@
 from rest_framework import generics
-from django.db.models import Q
+from django.db.models import Q, Count
 from ..serializers.household_serializers import *
 from ..pagination import *
 
@@ -18,19 +18,34 @@ class HouseholdTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
   
   def get_queryset(self):
-    queryset = Household.objects.all()
-    search_query = self.request.query_params.get('search', '').strip()
-    if search_query:
-      queryset = queryset.filter(
-        Q(hh_id__icontains=search_query) |
-        Q(sitio__icontains=search_query) |
-        Q(total_families__icontains=search_query) |
-        Q(street__icontains=search_query) |
-        Q(nhts__icontains=search_query) |
-        Q(head__icontains=search_query )
-      ).distinct()
+        queryset = Household.objects.annotate(
+           family_count=Count('family_set', distinct=True)
+        ).prefetch_related(
+            'family_set'  # For counting families (assuming Family has hh FK)
+        ).only(
+            'hh_id',
+            'hh_street',
+            'hh_nhts',
+            'hh_date_registered',
+            'sitio__sitio_name',
+            'rp__per__per_lname',
+            'rp__per__per_fname',
+            'rp__per__per_mname'
+        )
 
-    return queryset
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(hh_id__icontains=search_query) |
+                Q(sitio__sitio_name__icontains=search_query) |
+                Q(hh_street__icontains=search_query) |
+                Q(hh_nhts__icontains=search_query) |
+                Q(rp__per__per_lname__icontains=search_query) |
+                Q(rp__per__per_fname__icontains=search_query) | 
+                Q(family_count__icontains=search_query)
+            ).distinct()
+
+        return queryset
 
 class HouseholdCreateView(generics.CreateAPIView):
   serializer_class = HouseholdCreateSerializer

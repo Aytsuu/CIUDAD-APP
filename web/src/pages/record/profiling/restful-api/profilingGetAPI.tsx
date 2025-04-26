@@ -89,11 +89,13 @@ export const getFamilyData = async (familyId: string) => {
 }
 
 export const getFamilyMembers = async (familyId: string) => {
+  if(!familyId) return;
+
   try { 
     const res = await api.get(`profiling/family/${familyId}/members/`)
     return res.data
   } catch (err) {
-
+    throw err;
   }
 }
 
@@ -117,9 +119,15 @@ export const getFamilyComposition = async () => {
 }
 
 // ==================== FETCH HOUSEHOLD ==================== (Status: Optimizing....)
-export const getHouseholdTable = async () => {
+export const getHouseholdTable = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/household/list/table/");
+    const res = await api.get("profiling/household/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
     return res.data
   } catch (err) {
     throw err;

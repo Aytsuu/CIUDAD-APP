@@ -82,7 +82,7 @@ class Family(models.Model):
     fam_indigenous = models.CharField(max_length=50)
     fam_building = models.CharField(max_length=50)
     fam_date_registered = models.DateField(default=date.today)
-    hh = models.ForeignKey(Household, on_delete=models.CASCADE)
+    hh = models.ForeignKey(Household, on_delete=models.CASCADE, related_name="family_set")
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="families")
 
     class Meta:

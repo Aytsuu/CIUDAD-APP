@@ -118,10 +118,10 @@ export const useHouseholdsList = () => {
   })
 }
 
-export const useHouseholdTable = () => {
+export const useHouseholdTable = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ['householdTable'],
-    queryFn: getHouseholdTable,
+    queryKey: ['householdTable', page, pageSize, searchQuery],
+    queryFn: () => getHouseholdTable(page, pageSize, searchQuery),
     staleTime: 5000,
   })
 }

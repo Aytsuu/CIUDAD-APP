@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleChevronRight } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 import { useLoading } from "@/context/LoadingContext";
 import { getFamFilteredByHouse, getFamilyData, getFamilyMembers, getHouseholdList } from "../restful-api/profilingGetAPI";
 import { Badge } from "@/components/ui/badge";
+import ViewButton from "@/components/ui/view-button";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -19,25 +20,6 @@ const CardContainer = ({ children }: { children: React.ReactNode }) => (
 const InfoCell = ({ value, className = '' }: { value: string | number | React.ReactNode; className?: string }) => (
   <div className={`w-full flex flex-col items-start gap-1 ${className}`}>
     <Label className="text-black/70">{value}</Label>
-  </div>
-);
-
-const ViewButton = ({ onClick }: { onClick: () => void }) => (
-  <div 
-    className="group flex justify-center items-center gap-2 px-3 py-2
-              rounded-lg border-none shadow-none hover:bg-muted
-              transition-colors duration-200 ease-in-out cursor-pointer"
-    onClick={onClick}
-  >
-    <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-            transition-colors duration-200 ease-in-out">
-      View
-    </Label> 
-    <CircleChevronRight
-      size={35}
-      className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-          group-hover:stroke-white transition-all duration-200 ease-in-out"
-    />
   </div>
 );
 
@@ -111,18 +93,6 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     header: 'Date Registered'
   },
   {
-    accessorKey: 'registered_by',
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-  },
-  {
     accessorKey: 'action',
     header: 'Action',
     cell: ({ row }) => {
@@ -155,21 +125,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         }
       }
       return (
-        <div className="group flex justify-center items-center gap-2 px-3 py-2
-                  rounded-lg border-none shadow-none hover:bg-muted
-                  transition-colors duration-200 ease-in-out cursor-pointer"
-          onClick={handleViewClick}
-        >
-          <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                  transition-colors duration-200 ease-in-out">
-            View
-          </Label> 
-          <CircleChevronRight
-            size={35}
-            className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                group-hover:stroke-white transition-all duration-200 ease-in-out"
-          />
-        </div>
+        <ViewButton onClick={handleViewClick} />
       ) 
     }
   },

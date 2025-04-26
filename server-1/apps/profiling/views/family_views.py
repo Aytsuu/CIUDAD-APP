@@ -12,7 +12,7 @@ class FamilyTableView(generics.ListCreateAPIView):
   def get_queryset(self):
         # Prefetch family compositions with related person data
         family_compositions = FamilyComposition.objects.select_related(
-            'rp__per'
+            'rp__per' 
         ).only(
             'fam', 'fc_role', 'rp__per__per_fname', 'rp__per__per_lname', 'rp__per__per_mname'
         )
@@ -81,7 +81,7 @@ class FamilyTableView(generics.ListCreateAPIView):
         return queryset
   
 class FamilyDataView(generics.RetrieveAPIView):
-  serializer_class = FamilyTableSerializer
+  serializer_class = FamilyTableSerializer # To be modified
   lookup_field = 'fam_id'
   
   def get_queryset(self):

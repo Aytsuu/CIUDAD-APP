@@ -12,8 +12,9 @@ import { useLoading } from "@/context/LoadingContext";
 import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } from "../restful-api/profilingGetAPI";
 import { Badge } from "@/components/ui/badge";
 import { Combobox } from "@/components/ui/combobox";
-import { useFamilyData, useFamilyMembers, useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
+import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
 import { formatResidents } from "../profilingFormats";
+import ViewButton from "@/components/ui/view-button";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -21,31 +22,6 @@ import { formatResidents } from "../profilingFormats";
 const CardContainer = ({ children }: { children: React.ReactNode }) => (
   <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
     {children}
-  </div>
-);
-
-const NameDisplay = ({ lname, fname, mname }: { lname: string; fname: string; mname?: string }) => (
-  <Label className="text-black/70">
-    {`${lname}, ${fname} ${mname ? mname[0] + "." : ""}`}
-  </Label>
-);
-
-const ViewButton = ({ onClick }: { onClick: () => void }) => (
-  <div 
-    className="group flex justify-center items-center gap-2 px-3 py-2
-              rounded-lg border-none shadow-none hover:bg-muted
-              transition-colors duration-200 ease-in-out cursor-pointer"
-    onClick={onClick}
-  >
-    <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-            transition-colors duration-200 ease-in-out">
-      View
-    </Label> 
-    <CircleChevronRight
-      size={35}
-      className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-          group-hover:stroke-white transition-all duration-200 ease-in-out"
-    />
   </div>
 );
 
@@ -159,21 +135,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       }
 
       return (
-          <div className="group flex justify-center items-center gap-2 px-3 py-2
-                  rounded-lg border-none shadow-none hover:bg-muted
-                  transition-colors duration-200 ease-in-out cursor-pointer"
-            onClick={handleViewClick}        
-          >
-            <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                    transition-colors duration-200 ease-in-out">
-              View
-            </Label> 
-            <CircleChevronRight
-              size={35}
-              className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                  group-hover:stroke-white transition-all duration-200 ease-in-out"
-            />
-          </div>
+        <ViewButton onClick={handleViewClick} />
       )
     },
   },
@@ -215,7 +177,7 @@ export const familyViewColumns = (
           <div className="w-full grid grid-cols-9 items-center justify-center">
             <InfoCell value={<Badge className="bg-black/10 text-black/80 hover:bg-black/10">{data.rp_id}</Badge>}/>
             <InfoCell 
-              value={<NameDisplay lname={data.lname} fname={data.fname} mname={data.mname} />}  
+              value={data.name}  
               className="col-span-2"
             />
             <InfoCell value={data.sex} />
