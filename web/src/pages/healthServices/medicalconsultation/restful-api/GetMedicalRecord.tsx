@@ -41,3 +41,13 @@ export const getMedicalRecord =  async () => {
   }
 };
 
+
+
+export const getMedconRecordById = async (id: number) => {
+  try {
+    const response = await api.get(`/medical-consultation/view-medcon-record/${id}/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+  }
+}

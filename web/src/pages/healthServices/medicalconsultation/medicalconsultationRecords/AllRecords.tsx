@@ -9,7 +9,7 @@ import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
-  DropdownMenu, 
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
@@ -23,7 +23,7 @@ import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
-export interface MedicalRecord{
+export interface MedicalRecord {
   pat_id: number;
   fname: string;
   lname: string;
@@ -54,27 +54,24 @@ export default function AllMedicalConsRecord() {
   const queryClient = useQueryClient();
 
   // Fetch vaccination records from API
-  const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>(
-    {
-      queryKey: ["MedicalRecord"],
-      queryFn: getMedicalRecord,
-      refetchOnMount: true,
-      staleTime: 0,
-    }
-  );
+  const { data: MedicalRecord, isLoading } = useQuery<[MedicalRecord]>({
+    queryKey: ["MedicalRecord"],
+    queryFn: getMedicalRecord,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
 
   useEffect(() => {
     console.log(MedicalRecord);
-
   }, []);
 
   const formatVaccinationData = React.useCallback((): MedicalRecord[] => {
     if (!MedicalRecord) return [];
-  
+
     return MedicalRecord.map((record: any) => {
       const details = record.patient_details || {};
       const info = details.personal_info || {};
-  
+
       return {
         pat_id: record.pat_id,
         fname: info.per_fname,
@@ -90,15 +87,11 @@ export default function AllMedicalConsRecord() {
         city: "dsds", // optional if not present
         province: "sdsds", // optional if not present
         pat_type: details.pat_type,
-        address: `${info.per_address ?? ''}`,
+        address: `${info.per_address ?? ""}`,
         medicalrec_count: record.medicalrec_count,
       };
     });
   }, [MedicalRecord]);
-  
-  
-
-
 
   // Filter data based on search query
   const filteredData = React.useMemo(() => {
@@ -135,10 +128,8 @@ export default function AllMedicalConsRecord() {
       }
     }
   };
-  
 
   const columns: ColumnDef<MedicalRecord>[] = [
-   
     {
       accessorKey: "patient",
       header: ({ column }: { column: any }) => (
@@ -203,7 +194,9 @@ export default function AllMedicalConsRecord() {
       header: "No of Records",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.medicalrec_count}</div>
+          <div className="text-center w-full">
+            {row.original.medicalrec_count}
+          </div>
         </div>
       ),
     },
@@ -215,29 +208,21 @@ export default function AllMedicalConsRecord() {
           <TooltipLayout
             content="View"
             trigger={
-               <Link 
-              to={{
-                pathname: "/invMedicalRecord",
-                // state: {
-                //   params: {
-                //     patientData: row.original,  // Pass entire row data
-                //   }
-                // }
-              }}
-            >
-    
-              <Eye size={15} />
-            </Link> 
-              
+              <Link
+                to="/invMedicalRecord"
+                state={{
+                  params: {
+                    patientData: row.original,
+                  },
+                }}
+              >
+                <Eye size={15} />
+              </Link>
             }
           />
-
-
-         
         </div>
       ),
     },
-    
   ];
 
   if (isLoading) {
@@ -296,8 +281,6 @@ export default function AllMedicalConsRecord() {
               />
             </div>
           </div>
-
-       
 
           <div>
             <Button className="w-full sm:w-auto">

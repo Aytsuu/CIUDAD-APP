@@ -94,7 +94,7 @@ class BodyMeasurement(models.Model):
     bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
+    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', null=True)
     
     class Meta:
         db_table = 'body_measurement'
@@ -134,8 +134,7 @@ class PhysicalExamination(models.Model):
     
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='physical_examinations', null=True)
     pel = models.ForeignKey(PhysicalExamList, on_delete=models.CASCADE, related_name='physical_examinations',null=True)
-    
-    
+
     class Meta:
         db_table = 'physical_examination'
     

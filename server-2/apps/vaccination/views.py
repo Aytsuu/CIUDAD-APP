@@ -60,7 +60,7 @@ class VaccinationHistorRecordView(generics.ListAPIView):
         ).exclude(
             vacrec__vacrec_status='forwarded'
         ).order_by('-created_at')  # Optional: latest first
-    
+     
     
 # class VaccinationRecordByPatientView(generics.ListAPIView):
 #     serializer_class = VaccinationRecordSerializer

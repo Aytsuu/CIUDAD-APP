@@ -18,8 +18,10 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api } from "@/api/api";
+import { DataTable } from "@/components/ui/table/history-table-col"; // Make sure this path is correct
+import { ColumnDef } from "@tanstack/react-table";
 
-type VaccinationHistory = {
+type VaccinationHistory = { 
   vachist_id: string;
   vachist_doseNo: number;
   vachist_status: string;
@@ -129,6 +131,9 @@ export default function VaccinationView() {
     fetchVaccinationHistory();
   }, [fetchVaccinationHistory]);
 
+
+
+  
   const currentVaccination = useMemo(() => {
     return vaccinationHistory.find(
       (history) => history.vachist_id === Vaccination?.vachist_id
@@ -142,16 +147,139 @@ export default function VaccinationView() {
     );
   }, [vaccinationHistory, Vaccination]);
 
-  const { currentRecords, totalPages } = useMemo(() => {
-    const indexOfLastRecord = currentPage * recordsPerPage;
-    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-    const currentRecords = relevantHistory.slice(
-      indexOfFirstRecord,
-      indexOfLastRecord
-    );
+
+
+
+  // Create data for DataTable - transform the records for table display
+  const tableData = useMemo(() => {
+    if (relevantHistory.length === 0) return [];
+    
+    // Create columns for each record
+    const tableRows = [
+      { attribute: "Date", type: "heading" },
+      { attribute: "Vaccine Name", type: "data" },
+      { attribute: "Dose", type: "data" },
+      { attribute: "Status", type: "data" },
+      { attribute: "Age at Vaccination", type: "data" },
+      { attribute: "Blood Pressure", type: "data" },
+      { attribute: "Temperature", type: "data" },
+      { attribute: "Respiratory Rate", type: "data" },
+      { attribute: "Oxygen Saturation", type: "data" },
+    ];
+    
+
+
+    // For each row, add the data from each record
+    return tableRows.map((row) => {
+      const rowData: any = {
+        attribute: row.attribute,
+        type: row.type,
+      };
+      
+      relevantHistory.forEach((record, index) => {
+        const recordId = `record_${record.vachist_id}`;
+        
+        if (row.attribute === "Date") {
+          rowData[recordId] = format(new Date(record.created_at), "MMM d, yyyy");
+        } else if (row.attribute === "Vaccine Name") {
+          rowData[recordId] = record.vaccine_name;
+        } else if (row.attribute === "Dose") {
+          rowData[recordId] = record.vachist_doseNo === record.vaccine_details.no_of_doses ? 
+            `${record.vachist_doseNo} (Final)` : 
+            `${record.vachist_doseNo}`;
+        } else if (row.attribute === "Status") {
+          rowData[recordId] = record.vachist_status;
+        } else if (row.attribute === "Age at Vaccination") {
+          rowData[recordId] = record.vachist_age;
+        } else if (row.attribute === "Blood Pressure") {
+          rowData[recordId] = `${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} mmHg`;
+        } else if (row.attribute === "Temperature") {
+          rowData[recordId] = `${record.vital_signs.vital_temp} °C`;
+        } else if (row.attribute === "Respiratory Rate") {
+          rowData[recordId] = record.vital_signs.vital_RR;
+        } else if (row.attribute === "Oxygen Saturation") {
+          rowData[recordId] = `${record.vital_signs.vital_o2}%`;
+        }
+      });
+      
+      return rowData;
+    });
+  }, [relevantHistory]);
+
+
+
+  // Define columns for the DataTable
+  const columns = useMemo<ColumnDef<any>[]>(() => {
+    const cols: ColumnDef<any>[] = [
+      {
+        accessorKey: "attribute",
+        header: "",
+        cell: ({ row }) => {
+          const rowType = row.original.type;
+          return rowType === "heading" ? (
+            <div className="font-medium text-gray-900">{row.getValue("attribute")}</div>
+          ) : (
+            <div className="font-medium text-gray-600">{row.getValue("attribute")}</div>
+          );
+        },
+      },
+    ];
+    
+    // Add a column for each vaccination record
+    relevantHistory.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage).forEach((record) => {
+      const recordId = `record_${record.vachist_id}`;
+      cols.push({
+        id: recordId,
+        accessorKey: recordId,
+        header: () => {
+          return (
+            <div className="font-medium">
+              {format(new Date(record.created_at), "MMM d, yyyy")}
+            </div>
+          );
+        },
+        cell: ({ row }) => {
+          const value = row.getValue(recordId) as string;
+          const rowData = row.original;
+          
+          if (rowData.attribute === "Status") {
+            const statusClass = value === "completed" 
+              ? "bg-green-100 text-green-800" 
+              : value === "Partially Vaccinated" 
+              ? "bg-yellow-100 text-yellow-800" 
+              : "bg-blue-100 text-blue-800";
+            
+            return (
+              <span className={`inline-flex px-2 py-1 rounded-full text-xs ${statusClass}`}>
+                {value}
+              </span>
+            );
+          }
+          
+          if (rowData.attribute === "Dose" && value?.includes("(Final)")) {
+            const [doseNum] = value.split(" ");
+            return (
+              <div>
+                {doseNum}
+                <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  Final
+                </span>
+              </div>
+            );
+          }
+          
+          return <div>{value || "N/A"}</div>;
+        },
+      });
+    });
+    
+    return cols;
+  }, [relevantHistory, currentPage, recordsPerPage]);
+
+  const { totalPages } = useMemo(() => {
     const totalPages = Math.ceil(relevantHistory.length / recordsPerPage);
-    return { currentRecords, totalPages };
-  }, [currentPage, relevantHistory]);
+    return { totalPages };
+  }, [relevantHistory, recordsPerPage]);
 
   const paginate = useCallback((pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -424,158 +552,14 @@ export default function VaccinationView() {
               </div>
             ) : relevantHistory.length > 0 ? (
               <>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <div className="inline-block min-w-full align-middle">
-                    <div className="overflow-hidden shadow-sm border rounded-lg">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date
-                            </th>
-                            {currentRecords.map((record) => (
-                              <th
-                                key={`date-${record.vachist_id}`}
-                                className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                              >
-                                {format(new Date(record.created_at), "MMM d, yyyy")}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          <tr>
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Vaccine Name
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`vaccine-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vaccine_name}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="bg-gray-50">
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Dose
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`dose-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vachist_doseNo}
-                                {record.vachist_doseNo ===
-                                  record.vaccine_details.no_of_doses && (
-                                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                    Final
-                                  </span>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr>
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Status
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`status-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                <span
-                                  className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                                    record.vachist_status === "completed"
-                                      ? "bg-green-100 text-green-800"
-                                      : record.vachist_status === "Partially Vaccinated"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : "bg-blue-100 text-blue-800"
-                                  }`}
-                                >
-                                  {record.vachist_status}
-                                </span>
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="bg-gray-50">
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Age at Vaccination
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`age-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vachist_age}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr>
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Blood Pressure
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`bp-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vital_signs.vital_bp_systolic}/
-                                {record.vital_signs.vital_bp_diastolic} mmHg
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="bg-gray-50">
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Temperature
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`temp-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vital_signs.vital_temp} °C
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr>
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Respiratory Rate
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`rr-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vital_signs.vital_RR}
-                              </td>
-                            ))}
-                          </tr>
-
-                          <tr className="bg-gray-50">
-                            <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-600">
-                              Oxygen Saturation
-                            </td>
-                            {currentRecords.map((record) => (
-                              <td
-                                key={`o2-${record.vachist_id}`}
-                                className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
-                              >
-                                {record.vital_signs.vital_o2}%
-                              </td>
-                            ))}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                {/* Replace the existing table with DataTable */}
+                <div className="overflow-x-auto">
+                  {tableData.length > 0 && (
+                    <DataTable
+                      columns={columns}
+                      data={tableData}
+                    />
+                  )}
                 </div>
 
                 {/* Pagination Controls */}

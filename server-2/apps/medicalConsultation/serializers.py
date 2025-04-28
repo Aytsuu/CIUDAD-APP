@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import *
 from datetime import date
 from apps.patientrecords.serializers import PatientSerializer, PatientRecordSerializer,VitalSignsSerializer,BodyMeasurementSerializer,FindingSerializer
-from apps.patientrecords.models import Patient
+from apps.patientrecords.models import Patient, PatientRecord
 
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     medicalrec_count = serializers.SerializerMethodField()
@@ -25,13 +25,12 @@ class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
     
 class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
-    bmi_details = BodyMeasurementSerializer(source='bmi', read_only=True)
+    bmi_details = BodyMeasurementSerializer(source='bm', read_only=True)
     find_details = FindingSerializer(source='find', read_only=True)
-    patrec_details = PatientRecordSerializer(source='patrec', read_only=True)  
+    patrec_details = PatientMedConsultationRecordSerializer(source='patrec.pat_id', read_only=True)
     
     class Meta:
         model = MedicalConsultation_Record
         fields = '__all__'
     
     
-   
