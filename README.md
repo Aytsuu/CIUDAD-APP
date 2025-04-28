@@ -73,7 +73,7 @@ git pull
 ```bash
 git checkout master
 git pull
-git merge [yourbranchname]
+git merge --no-commit [yourbranchname]
 ```
 ---
 
