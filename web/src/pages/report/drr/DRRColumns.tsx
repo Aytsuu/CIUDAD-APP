@@ -8,6 +8,10 @@ import DRRReportForm from "./resident-report/ReportFormLayout";
 // Define the columns for the data table
 export const ResidentReportColumns = (): ColumnDef<Report>[] => [
   {
+    accessorKey: "id",
+    header: 'Report No.'
+  },
+  {
       accessorKey: "category",
       header: ({ column }) => (
             <div

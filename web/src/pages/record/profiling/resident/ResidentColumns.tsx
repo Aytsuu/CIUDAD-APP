@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, CircleAlert, UserRoundCheck, UserRoundX } from "lucide-react";
+import { ArrowUpDown, CircleAlert, UserRoundPlus } from "lucide-react";
 import { ResidentAdditionalRecord, ResidentRecord } from "../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
@@ -20,7 +20,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
 
       return (
         <div className="flex items-center justify-center">
-          {account ? (<UserRoundCheck size={18} className="text-green-500"/>) : (
+          {!account && (
             <TooltipLayout 
               trigger={
                 <Link to="/account/create"
@@ -30,7 +30,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
                     }
                   }}
                 >
-                  <UserRoundX size={18} className="text-red-500"/>
+                  <UserRoundPlus size={18} className="text-orange-400"/>
                 </Link> 
               }
               content="Account not registered"
