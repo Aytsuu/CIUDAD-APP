@@ -75,6 +75,15 @@ git checkout master
 git pull
 git merge --no-commit [yourbranchname]
 ```
+
+### Merging Master to your Branch
+
+```bash
+git checkout master
+git pull
+git checkout [yourbranchname]
+git merge --no-commit master
+```
 ---
 
 <br></br>
