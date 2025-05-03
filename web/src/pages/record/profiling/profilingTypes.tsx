@@ -1,5 +1,4 @@
 
-// Define the type for the Report object
 export type ResidentRecord = {
   rp_id: string;
   household_noe: string;

@@ -8,10 +8,15 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import React from "react";
 import { Combobox } from "@/components/ui/combobox";
+import { Button } from "@/components/ui/button/button";
+import { Plus } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
   formattedResidents?: any;
+  addresses: any[];
   form: UseFormReturn<z.infer<typeof personalInfoSchema>>;
   formType: Type;
   isAssignmentOpen?: boolean;
@@ -19,6 +24,7 @@ type PersonalInfoFormProps = {
   isSubmitting: boolean;
   isReadOnly: boolean;
   isAllowSubmit?: boolean;
+  setAddresses: React.Dispatch<React.SetStateAction<any[]>>;
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
@@ -42,6 +48,7 @@ const MARITAL_STATUS_OPTIONS = [
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
   formattedResidents,
+  addresses,
   form,
   formType,
   isAssignmentOpen,
@@ -49,15 +56,15 @@ const PersonalInfoForm = ({
   isSubmitting = false,
   isReadOnly = false,
   isAllowSubmit,
+  setAddresses,
   setIsAssignmentOpen,
   setFormType,
   submit,
   reject,
   onComboboxChange,
 }: PersonalInfoFormProps) => {
-  const { control, setValue, watch } = form;
   // ============= INITIALIZING STATES =============
-
+  const { control, setValue, watch } = form;
 
   // ==================== RENDER ====================
   return (
@@ -76,92 +83,94 @@ const PersonalInfoForm = ({
       )}
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormInput
-          control={control}
-          name="per_lname"
-          label="Last Name"
-          placeholder="Enter Last Name"
-          readOnly={isReadOnly}
-        />
-        <FormInput
-          control={control}
-          name="per_fname"
-          label="First Name"
-          placeholder="Enter First Name"
-          readOnly={isReadOnly}
-        />
-        <FormInput
-          control={control}
-          name="per_mname"
-          label="Middle Name"
-          placeholder="Enter Middle Name"
-          readOnly={isReadOnly}
-        />
-        <FormInput
-          control={control}
-          name="per_suffix"
-          label="Suffix"
-          placeholder="Sfx."
-          readOnly={isReadOnly}
-        />
+        <FormInput control={control} name="per_lname" label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} />
+        <FormInput control={control} name="per_fname" label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} />
+        <FormInput control={control} name="per_mname" label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} />
+        <FormInput control={control} name="per_suffix" label="Suffix" placeholder="Sfx." readOnly={isReadOnly} />
       </div>
 
       {/* Sex, Status, DOB, Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormSelect
-          control={control}
-          name="per_sex"
-          label="Sex"
-          options={SEX_OPTIONS}
-          readOnly={isReadOnly}
-        />
-        <FormDateTimeInput
-          control={control}
-          name="per_dob"
-          label="Date of Birth"
-          type="date"
-          readOnly={isReadOnly}
-        />
-        <FormSelect
-          control={control}
-          name="per_status"
-          label="Marital Status"
-          options={MARITAL_STATUS_OPTIONS}
-          readOnly={isReadOnly}
-        />
-        <FormInput
-          control={control}
-          name="per_address"
-          label="Address"
-          placeholder="Enter address"
-          readOnly={isReadOnly}
-        />
+        <FormSelect control={control} name="per_sex" label="Sex"  options={SEX_OPTIONS} readOnly={isReadOnly} />
+        <FormDateTimeInput control={control} name="per_dob" label="Date of Birth" type="date" readOnly={isReadOnly} />
+        <FormSelect control={control} name="per_status" label="Marital Status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} />
+        <FormInput control={control} name="per_contact" label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" />
       </div>
 
       {/* Education, Religion, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <FormInput
-          control={control}
-          name="per_edAttainment"
-          label="Educational Attainment"
-          placeholder="Enter educational attainment"
-          readOnly={isReadOnly}
-        />
-        <FormInput
-          control={control}
-          name="per_religion"
-          label="Religion"
-          placeholder="Enter religion"
-          readOnly={isReadOnly}
-        />
-        <FormInput
-          control={control}
-          name="per_contact"
-          label="Contact"
-          placeholder="Enter contact"
-          readOnly={isReadOnly}
-          type="number"
-        />
+        <FormInput control={control} name="per_edAttainment" label="Educational Attainment" placeholder="Enter educational attainment" readOnly={isReadOnly} />
+        <FormInput control={control} name="per_religion" label="Religion" placeholder="Enter religion" readOnly={isReadOnly} />
+      </div>
+      <div className="grid grid-cols-1 gap-4">
+        {
+          addresses.map((address, idx) => (
+            <div className="grid gap-3" key={idx}>
+              <Label className="text-black/70">Address {idx + 1}</Label>
+              <div className="flex w-1/2 items-center justify-center border shadow-sm rounded-lg" >
+                <Input
+                  placeholder="Province"
+                  value={address.province}
+                  onChange={(e) => setAddresses((prev) => [
+                    prev.map((address, prevIdx) => {
+                      if(prevIdx === idx) {
+                        console.log(prevIdx, idx)
+                        return {
+                          ...address,
+                          province: e.target.value
+                        }
+                      }
+                    })
+                  ])}
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                /> <p className="opacity-40">/</p>
+                <Input
+                  placeholder="City"
+                  value={address.city}
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                /> <p className="opacity-40">/</p>
+                <Input
+                  placeholder="Barangay"
+                  value={address.barangay}
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                /> <p className="opacity-40">/</p>
+                <Input
+                  placeholder="Sitio"
+                  value={address.sitio}
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                /> <p className="opacity-40">/</p>
+                <Input
+                  placeholder="Street"
+                  value={address.street}
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                />
+              </div>
+            </div>
+          ))
+        }
+        <div>
+          <Button 
+            variant={"outline"} 
+            type="button"
+            className="border-none shadow-none text-black/50 hover:text-black/60"
+            onClick={() => setAddresses((prev) => [
+              ...prev, {
+                province: '',
+                city: '',
+                barangay: '',
+                sitio: '',
+                street: ''
+              }
+            ])}
+          >
+            <Plus/> Add Another Address
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 flex justify-end gap-3">

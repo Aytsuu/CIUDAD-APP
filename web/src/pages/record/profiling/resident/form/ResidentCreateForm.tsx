@@ -17,6 +17,13 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const { user } = useAuth();
   const {showLoading, hideLoading} = useLoading();
   const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
+  const [addresses, setAddresses] = React.useState<any[]>([{
+      province: '',
+      city: '',
+      barangay: '',
+      sitio: '',
+      street: ''
+  }]);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
@@ -41,6 +48,22 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   }, []);
 
   // ==================== HANDLERS ====================
+  const handleSetAddresses = (value: string, _target: string, index: number) => {
+
+    setAddresses((prev) => [
+      prev.map((address, prevIdx) => {
+        if(prevIdx === index) {
+          return {
+            ...address,
+            _target: value
+          }
+        }
+      })
+    ]);
+  }
+
+  console.log(addresses)
+
   const handleComboboxChange = React.useCallback(() => { 
     const data = residentsList.find(
       (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
@@ -98,6 +121,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
           >
             <PersonalInfoForm
               formattedResidents={formattedResidents}
+              addresses={addresses}
               form={form}
               formType={Type.Create}
               isSubmitting={isSubmitting}
@@ -105,6 +129,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
               origin={params.origin ? params.origin : ''}
               isReadOnly={false}
               isAllowSubmit={isAllowSubmit}
+              setAddresses={setAddresses}
               onComboboxChange={handleComboboxChange}
               isAssignmentOpen={isAssignmentOpen}
               setIsAssignmentOpen={setIsAssignmentOpen}
