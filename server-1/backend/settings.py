@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'apps.drr',
     'apps.notification',
     'backend.firebase.notifications',
+    'apps.announcement',
 ]
 
 MIDDLEWARE = [

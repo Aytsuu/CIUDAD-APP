@@ -34,4 +34,5 @@ urlpatterns = [
     path('treasurer/', include('apps.treasurer.urls')),
     path('drr/', include('apps.drr.urls')),
     path('notification/', include('apps.notification.urls')),
+    path('announcement/', include('apps.announcement.urls')),
 ]
