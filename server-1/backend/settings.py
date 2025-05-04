@@ -21,19 +21,17 @@ import firebase_admin
 from firebase_admin import credentials
     
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
 
 
+# Firebase FCM configuration
 FIREBASE_CREDENTIAL_PATH = os.path.join(BASE_DIR, 'firebase', 'firebase-key.json')
 
 if not firebase_admin._apps:
     cred = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
     firebase_admin.initialize_app(cred)
-    
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_'
@@ -51,10 +49,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'corsheaders',
+    'channels',
+    
+    # Local apps
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
@@ -64,6 +67,8 @@ INSTALLED_APPS = [
     'apps.blotter',
     'apps.drr',
     'apps.notification',
+    
+    
     'backend.firebase.notifications',
     'apps.announcement',
 ]
@@ -99,9 +104,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+ASGI_APPLICATION = 'backend.asgi.application'
 
 DATABASES = {
     'default': {
@@ -116,9 +119,6 @@ DATABASES = {
 
 
 # Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -136,25 +136,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
+# Static files 
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
@@ -162,18 +154,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':(
         'rest_framework_simplejwt.authentication.JWTAuthentication',  
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny', 
-        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
 # New User Model
 AUTH_USER_MODEL = 'account.Account'
 
+# CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
     "http://localhost:3000",  

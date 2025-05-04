@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,9 @@ import {
 import { Button } from "@/components/ui/button/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { generateToken, messaging } from "@/firebase/firebase";
+import { onMessage } from "firebase/messaging";
+import { manageNotificationChannel } from "@/supabase/realtime-supabase";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,10 +32,6 @@ export default function SignIn() {
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
-    defaultValues: {
-      usernameOrEmail: "", // Combined field for username or email
-      password: "",
-    },
   });
 
   const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
@@ -47,12 +46,58 @@ export default function SignIn() {
 
       if (response.status === 200) {
         login({
+          id: response.data.id, 
           username: response.data.username,
           email: response.data.email,
           profile_image: response.data.profile_image,
-          token: response.data.token,
+          token: response.data.access,
+          refresh_token: response.data.refresh, 
           rp: response.data.rp,
-          staff: response.data.staff
+          staff: response.data.staff,
+        });
+        console.log(response.data.access);
+
+        // supabase realtime
+        manageNotificationChannel(response.data.id);
+
+        // Generate Firebase Cloud Messaging (FCM) Token
+        generateToken().then((token) => {
+          // Send token to your backend
+          console.log("1: ", token);
+          axios.post(
+            "http://127.0.0.1:8000/notification/save-token/",
+            { token: token },
+            {
+              headers: {
+                Authorization: `Bearer ${response.data.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          axios.post(
+            "http://127.0.0.1:8000/notification/lists/",
+            {
+              notif_title: "Signed in",
+              notif_message: "You have successfully signed in!",
+              notif_type: "success",
+              notif_deliver_channel: "web",
+              notif_recipient: "user",
+              user_id: `${response.data.id}`,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${response.data.token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          // Set up message listener
+          onMessage(messaging, (payload) => {
+            console.log(payload);
+            // Add code to show notification in UI or update notification count
+          });
         });
         navigate("/dashboard");
       }
@@ -69,6 +114,7 @@ export default function SignIn() {
       setLoading(false);
     }
   };
+
   return (
     <Form {...form}>
       <form

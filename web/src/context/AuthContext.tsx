@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
+  id: string,
   username: string;
   email: string;
   profile_image: string;
   token: string;
   rp: any;
-  staff: any
+  staff: any;
+  refresh_token: string;
 }
 
 interface AuthContextType {
@@ -28,10 +30,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const storedUser = localStorage.getItem("token")
       ? {
+          id: localStorage.getItem("id") || "",
           username: localStorage.getItem("username") || "",
           email: localStorage.getItem("email") || "",
           profile_image: localStorage.getItem("profile_image") || "",
           token: localStorage.getItem("token") || "",
+          refresh_token: localStorage.getItem("token") || "",
           rp: JSON.parse(localStorage.getItem("rp") || "null"),
           staff: JSON.parse(localStorage.getItem("staff") || "null"),
         }

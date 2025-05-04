@@ -5,8 +5,11 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+        extra_kwargs = {
+            'user_id': {'read_only': True} 
+        }
 
 class FCMTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = FCMToken
-        fields = ['token']
+        fields = ['fcm_token']

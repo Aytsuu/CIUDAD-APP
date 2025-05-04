@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { BlotterFormValues, MediaFile } from "./blotter-type";
 import { useMutation } from "@tanstack/react-query";
-import supabase from "@/utils/supabase";
+import supabase from "@/supabase/supabase";
 import ComplaintformSchema from "@/form-schema/complaint-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 

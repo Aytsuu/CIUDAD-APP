@@ -7,7 +7,7 @@ from .serializers import NotificationSerializer, FCMTokenSerializer
 from firebase_admin import messaging
 
 class SaveTokenView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request):
         token = request.data.get('token')
@@ -18,7 +18,7 @@ class SaveTokenView(APIView):
         return Response({'status': 'Token saved'})
 
 class NotificationListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
@@ -40,8 +40,31 @@ class NotificationListCreateView(generics.ListCreateAPIView):
             print(f"Error sending FCM notification: {e}")
 
 class MarkNotificationReadView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'Marked as read'})
+    
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.all().order_by('-created_at')
+    
+class MarkAsReadView(generics.UpdateAPIView):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        # Mark single notification as read
+        if 'pk' in kwargs:
+            notification = self.get_object()
+            notification.is_read = True
+            notification.save()
+            return Response({'status': 'marked as read'})
+        
+        # Mark all notifications as read
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({'status': 'all marked as read'})

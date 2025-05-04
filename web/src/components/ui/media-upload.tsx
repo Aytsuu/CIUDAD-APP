@@ -1,7 +1,7 @@
 import React from "react";
 import { Film, Play, Image, Plus, X, FileText, Loader2 } from "lucide-react";
 import { Label } from "./label";
-import supabase from "@/utils/supabase";
+import supabase from "@/supabase/supabase";
 
 export const MediaUpload = ({
   title,
