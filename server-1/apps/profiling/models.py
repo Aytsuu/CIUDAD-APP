@@ -12,6 +12,14 @@ class Sitio(models.Model):
     def __str__(self):
         return self.sitio_name
 
+class Address(models.Model):
+    add_id = models.BigAutoField(primary_key=True)
+    add_province = models.CharField(max_length=50)
+    add_city = models.CharField(max_length=50)
+    add_barangay = models.CharField(max_length=50)
+    add_street = models.CharField(max_length=50)
+    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
+
 class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
