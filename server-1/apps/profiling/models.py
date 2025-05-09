@@ -20,6 +20,12 @@ class Address(models.Model):
     add_street = models.CharField(max_length=50)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
 
+    class Meta:
+        db_table = 'address'
+
+    def __str__(self):
+        return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio}, {self.add_street}'
+
 class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
     per_lname = models.CharField(max_length=100)
