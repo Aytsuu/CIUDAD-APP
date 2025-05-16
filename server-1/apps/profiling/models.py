@@ -13,7 +13,7 @@ class Sitio(models.Model):
         return self.sitio_name
 
 class Address(models.Model):
-    add_id = models.BigAutoField(primary_key=True)
+    add_id = models.BigAutoField(primary_key=True)  
     add_province = models.CharField(max_length=50)
     add_city = models.CharField(max_length=50)
     add_barangay = models.CharField(max_length=50)
@@ -55,6 +55,13 @@ class Personal(models.Model):
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
 
+class PersonalAddress(models.Model):
+    pa_id = models.BigAutoField(primary_key=True)
+    per = models.ForeignKey(Personal, on_delete=models.CASCADE)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'personal_address'
 
 class ResidentProfile(models.Model):
     rp_id = models.CharField(max_length=50, primary_key=True)
@@ -76,13 +83,9 @@ class ResidentProfile(models.Model):
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
-    hh_province = models.CharField(max_length=50)
-    hh_city = models.CharField(max_length=50)       
-    hh_barangay = models.CharField(max_length=50)
-    hh_street = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)
+    add = models.ForeignKey(Address, on_delete=models.CASCADE)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
 
     class Meta:

@@ -17,13 +17,10 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const { user } = useAuth();
   const {showLoading, hideLoading} = useLoading();
   const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
-  const [addresses, setAddresses] = React.useState<any[]>([{
-      province: '',
-      city: '',
-      barangay: '',
-      sitio: '',
-      street: ''
-  }]);
+  const [addresses, setAddresses] = React.useState<any[]>([
+    { province: '', city: '', barangay: '', sitio: '', street: ''},
+    { province: '', city: '', barangay: '', sitio: '', street: ''},
+  ]);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
@@ -48,20 +45,6 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   }, []);
 
   // ==================== HANDLERS ====================
-  const handleSetAddresses = (value: string, _target: string, index: number) => {
-
-    setAddresses((prev) => [
-      prev.map((address, prevIdx) => {
-        if(prevIdx === index) {
-          return {
-            ...address,
-            _target: value
-          }
-        }
-      })
-    ]);
-  }
-
   console.log(addresses)
 
   const handleComboboxChange = React.useCallback(() => { 
@@ -112,7 +95,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
           <p className="text-xs text-black/50">Fill out all necessary fields</p>
         </div>
         <Form {...form}>
-        <form
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               submit();

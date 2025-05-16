@@ -9,7 +9,7 @@ import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import React from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button/button";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -66,6 +66,14 @@ const PersonalInfoForm = ({
   // ============= INITIALIZING STATES =============
   const { control, setValue, watch } = form;
 
+  const handleSetAddress = (idx: number, field: string, value: string) => {
+    setAddresses(prev => 
+      prev.map((address, prevIdx) => {
+        return prevIdx === idx ? {...address, [field]: value} : address
+      })
+    )
+  }
+
   // ==================== RENDER ====================
   return (
     <>
@@ -107,48 +115,56 @@ const PersonalInfoForm = ({
           addresses.map((address, idx) => (
             <div className="grid gap-3" key={idx}>
               <Label className="text-black/70">Address {idx + 1}</Label>
-              <div className="flex w-1/2 items-center justify-center border shadow-sm rounded-lg" >
-                <Input
-                  placeholder="Province"
-                  value={address.province}
-                  onChange={(e) => setAddresses((prev) => [
-                    prev.map((address, prevIdx) => {
-                      if(prevIdx === idx) {
-                        console.log(prevIdx, idx)
-                        return {
-                          ...address,
-                          province: e.target.value
-                        }
-                      }
-                    })
-                  ])}
-                  className="border-none shadow-none focus-visible:ring-0"
-                  readOnly={isReadOnly}
-                /> <p className="opacity-40">/</p>
-                <Input
-                  placeholder="City"
-                  value={address.city}
-                  className="border-none shadow-none focus-visible:ring-0"
-                  readOnly={isReadOnly}
-                /> <p className="opacity-40">/</p>
-                <Input
-                  placeholder="Barangay"
-                  value={address.barangay}
-                  className="border-none shadow-none focus-visible:ring-0"
-                  readOnly={isReadOnly}
-                /> <p className="opacity-40">/</p>
-                <Input
-                  placeholder="Sitio"
-                  value={address.sitio}
-                  className="border-none shadow-none focus-visible:ring-0"
-                  readOnly={isReadOnly}
-                /> <p className="opacity-40">/</p>
-                <Input
-                  placeholder="Street"
-                  value={address.street}
-                  className="border-none shadow-none focus-visible:ring-0"
-                  readOnly={isReadOnly}
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex w-1/2 items-center justify-center border shadow-sm rounded-lg" >
+                  <Input
+                    placeholder="Province"
+                    value={address.province}
+                    onChange={(e) => handleSetAddress(idx, 'province', e.target.value)}
+                    className="border-none shadow-none focus-visible:ring-0"
+                    readOnly={isReadOnly}
+                  /> <p className="opacity-40">/</p>
+                  <Input
+                    placeholder="City"
+                    value={address.city}
+                    onChange={(e) => handleSetAddress(idx, 'city', e.target.value)}
+                    className="border-none shadow-none focus-visible:ring-0"
+                    readOnly={isReadOnly}
+                  /> <p className="opacity-40">/</p>
+                  <Input
+                    placeholder="Barangay"
+                    value={address.barangay}
+                    onChange={(e) => handleSetAddress(idx, 'barangay', e.target.value)}
+                    className="border-none shadow-none focus-visible:ring-0"
+                    readOnly={isReadOnly}
+                  /> <p className="opacity-40">/</p>
+                  <Input
+                    placeholder="Sitio"
+                    value={address.sitio}
+                    onChange={(e) => handleSetAddress(idx, 'sitio', e.target.value)}
+                    className="border-none shadow-none focus-visible:ring-0"
+                    readOnly={isReadOnly}
+                  /> <p className="opacity-40">/</p>
+                  <Input
+                    placeholder="Street"
+                    value={address.street}
+                    onChange={(e) => handleSetAddress(idx, 'street', e.target.value)}
+                    className="border-none shadow-none focus-visible:ring-0"
+                    readOnly={isReadOnly}
+                  />
+                </div>
+                {idx > 1 && 
+                  <Button 
+                    type={"button"}
+                    variant={"outline"} 
+                    className="border-none shadow-none"
+                    onClick={
+                      () => setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx))
+                    }
+                  >
+                    <X className="cursor-pointer  text-red-500"/>
+                  </Button>
+                }
               </div>
             </div>
           ))
