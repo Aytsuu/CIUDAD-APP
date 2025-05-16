@@ -1,9 +1,28 @@
 import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { capitalize } from "@/helpers/capitalize";
-import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
+
+// POST request for address
+export const addAddress =  async (data: Record<string, any>[]) => {
+  try {
+    const res = await api.post("profiling/address/create/", data);
+    return res;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// POST request for personal address
+export const addPersonalAddress = async (data: Record<string, any>[]) => {
+  try {
+    const res = await api.post("profiling/per_address/create/", data);
+    return res;
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // POST request for resident_profile model 
 export const addResidentProfile = async (personalId: string, staffId: string) => {

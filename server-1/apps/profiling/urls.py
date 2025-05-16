@@ -6,14 +6,20 @@ from .views.family_views import *
 from .views.family_composition_views import * 
 from .views.household_views import *
 from .views.sitio_views import *
+from .views.address_views import *
 from .views_deprecated import * # To be removed
 
 urlpatterns = [
+    # Address Urls
+    path("address/create/", AddressBulkCreateView.as_view(), name="create-address"),
     
+    # Personal Address Urls
+    path("per_address/create/", PerAddressBulkCreateView.as_view(), name="create-per-address"),
+
     # Personal Urls
     path("personal/", PersonalView.as_view(), name="personal-details-list"),
     path("personal/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
-    path("personal/create/", PersonalCreateView.as_view(), name="create_personal"),
+    path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
 
     # Family Urls
     path("family/", FamilyView.as_view(), name="family-details"),

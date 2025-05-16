@@ -153,6 +153,21 @@ const PersonalInfoForm = ({
                     readOnly={isReadOnly}
                   />
                 </div>
+                {idx > 0 && 
+                  <Button 
+                    type={"button"}
+                    variant={"secondary"} 
+                    onClick={() => {
+                      setAddresses(prev => 
+                        prev.map((address, prevIdx) => {
+                          return prevIdx === idx ? addresses[0] : address;
+                        })
+                      )
+                    }}
+                  >
+                    Copy first
+                  </Button>
+                }
                 {idx > 1 && 
                   <Button 
                     type={"button"}
