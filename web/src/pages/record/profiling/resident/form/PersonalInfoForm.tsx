@@ -119,36 +119,36 @@ const PersonalInfoForm = ({
                 <div className="flex w-1/2 items-center justify-center border shadow-sm rounded-lg" >
                   <Input
                     placeholder="Province"
-                    value={address.province}
-                    onChange={(e) => handleSetAddress(idx, 'province', e.target.value)}
+                    value={address.add_province}
+                    onChange={(e) => handleSetAddress(idx, 'add_province', e.target.value)}
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
                   <Input
                     placeholder="City"
-                    value={address.city}
-                    onChange={(e) => handleSetAddress(idx, 'city', e.target.value)}
+                    value={address.add_city}
+                    onChange={(e) => handleSetAddress(idx, 'add_city', e.target.value)}
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
                   <Input
                     placeholder="Barangay"
-                    value={address.barangay}
-                    onChange={(e) => handleSetAddress(idx, 'barangay', e.target.value)}
+                    value={address.add_barangay}
+                    onChange={(e) => handleSetAddress(idx, 'add_barangay', e.target.value)}
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
                   <Input
                     placeholder="Sitio"
-                    value={address.sitio}
-                    onChange={(e) => handleSetAddress(idx, 'sitio', e.target.value)}
+                    value={address.add_sitio}
+                    onChange={(e) => handleSetAddress(idx, 'add_sitio', e.target.value)}
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
                   <Input
                     placeholder="Street"
-                    value={address.street}
-                    onChange={(e) => handleSetAddress(idx, 'street', e.target.value)}
+                    value={address.add_street}
+                    onChange={(e) => handleSetAddress(idx, 'add_street', e.target.value)}
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   />

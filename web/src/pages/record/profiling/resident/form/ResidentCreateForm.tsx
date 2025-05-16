@@ -7,7 +7,7 @@ import { Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
-import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
+import { useAddAddress, useAddPerAddress, useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
 import { useResidentsList } from "../../queries/profilingFetchQueries";
 import { formatResidents } from "../../profilingFormats";
 import { useLoading } from "@/context/LoadingContext";
@@ -18,10 +18,12 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const {showLoading, hideLoading} = useLoading();
   const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
   const [addresses, setAddresses] = React.useState<any[]>([
-    { province: '', city: '', barangay: '', sitio: '', street: ''},
-    { province: '', city: '', barangay: '', sitio: '', street: ''},
+    { add_province: '', add_city: '', add_barangay: '', add_sitio: '', add_street: ''},
+    { add_province: '', add_city: '', add_barangay: '', add_sitio: '', add_street: ''},
   ]);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
+  const { mutateAsync: addAddress } = useAddAddress();
+  const { mutateAsync: addPersonalAddress} = useAddPerAddress();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
@@ -45,7 +47,6 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   }, []);
 
   // ==================== HANDLERS ====================
-  console.log(addresses)
 
   const handleComboboxChange = React.useCallback(() => { 
     const data = residentsList.find(
@@ -65,6 +66,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     }
 
     try {
+ 
       const personalInfo = capitalizeAllFields(form.getValues());
       addResidentAndPersonal({
         personalInfo: personalInfo,
@@ -81,6 +83,10 @@ export default function ResidentCreateForm({ params }: { params: any }) {
           form.reset(defaultValues);
         }
       });
+
+      addAddress(addresses);
+
+
     } catch (err) {
       throw err;
     }

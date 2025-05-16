@@ -3,15 +3,29 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import {
+  addAddress,
   addBusiness,
   addBusinessFile,
   addFamily,
   addFamilyComposition,
   addFile,
   addHousehold,
+  addPersonalAddress,
   addResidentAndPersonal,
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
+
+export const useAddAddress = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>[]) => addAddress(data)
+  })
+}
+
+export const useAddPerAddress = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
+  })
+}
 
 export const useAddResidentProfile = () => { // For registration request
   return useMutation({
@@ -25,7 +39,7 @@ export const useAddResidentProfile = () => { // For registration request
   });
 };
 
-export const useAddResidentAndPersonal = () => {
+export const useAddResidentAndPersonal = () => { // For registration from the web
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({personalInfo, staffId} : {

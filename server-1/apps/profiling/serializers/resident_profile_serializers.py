@@ -52,7 +52,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
-    staff = serializers.CharField() 
+    staff = serializers.CharField(allow_null=True, required=False) 
 
     class Meta:
         model = ResidentProfile
@@ -100,7 +100,6 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_sex = serializers.CharField(source="per.per_sex")
     per_dob = serializers.DateField(source="per.per_dob")
     per_status = serializers.CharField(source="per.per_status")
-    per_address = serializers.CharField(source="per.per_address")
     per_edAttainment = serializers.CharField(source="per.per_edAttainment")
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
@@ -108,7 +107,7 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_address', 'per_edAttainment', 'per_religion', 'per_contact']
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact']
         read_only_fields = fields
 
 class ResidentProfileListSerializer(serializers.ModelSerializer):

@@ -42,6 +42,21 @@ export const addResidentProfile = async (personalId: string, staffId: string) =>
 // POST request for resident_profile combined with personal model 
 export const addResidentAndPersonal = async (personalInfo: Record<string, any>, staffId: string) => {
   try {
+    console.log({
+      per: {
+        per_lname: personalInfo.per_lname,
+        per_fname: personalInfo.per_fname,
+        per_mname: personalInfo.per_mname || null,
+        per_suffix: personalInfo.per_suffix || null,
+        per_dob: formatDate(personalInfo.per_dob),
+        per_sex: personalInfo.per_sex,
+        per_status: personalInfo.per_status,
+        per_edAttainment: personalInfo.per_edAttainment || null,
+        per_religion: personalInfo.per_religion,
+        per_contact: personalInfo.per_contact,
+      },
+      staff: staffId || null
+    })
     const res = await api.post("profiling/resident/create/combined/", {
       per: {
         per_lname: personalInfo.per_lname,
@@ -51,12 +66,11 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
         per_dob: formatDate(personalInfo.per_dob),
         per_sex: personalInfo.per_sex,
         per_status: personalInfo.per_status,
-        per_address: personalInfo.per_address,
         per_edAttainment: personalInfo.per_edAttainment || null,
         per_religion: personalInfo.per_religion,
         per_contact: personalInfo.per_contact,
       },
-      staff: staffId
+      staff: staffId || null
     })
     
     return res.data

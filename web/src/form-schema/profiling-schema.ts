@@ -28,10 +28,6 @@ export const personalInfoSchema = z.object({
     .refine((val) => val === "" || val.length >= 2, "Middle Name must be at least 2 letters")
     .optional(),
 
-  per_address: z.string()
-    .min(1, 'Address is required')
-    .min(2, 'Must be atleast 2 letters'),
-
   per_edAttainment: z.string()
     .refine((val) => val === "" || val.length >= 2, {
       message: "Educational Attainment must be at least 2 letters",
