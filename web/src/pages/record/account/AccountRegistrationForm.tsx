@@ -4,14 +4,16 @@ import { accountFormSchema } from "@/form-schema/account-schema"
 import { UseFormReturn } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button/button"
-import { Link } from "react-router"
 import { LoadButton } from "@/components/ui/button/load-button"
+import { useNavigate } from "react-router"
 
 export default function AccountRegistrationForm({form, isSubmitting, onSubmit} : {
   form: UseFormReturn<z.infer<typeof accountFormSchema>>
   isSubmitting: boolean
   onSubmit: () => void
 }) {
+  const navigate = useNavigate();
+
   return (
     <>
       <div className="grid gap-4">
@@ -21,11 +23,13 @@ export default function AccountRegistrationForm({form, isSubmitting, onSubmit} :
         <FormInput control={form.control} name="confirmPassword" label="Confirm Password" placeholder="Re-enter password" type="password"/>
       </div>
       <div className="flex justify-between">
-        <Link to="/resident">
-          <Button variant={"outline"} className="border-none shadow-none font-normal">
-            Skip for now
-          </Button>
-        </Link>
+        <Button 
+          variant={"outline"} 
+          className="border-none shadow-none font-normal"
+          onClick={() => navigate(-1)}
+        >
+          Skip for now
+        </Button>
         {!isSubmitting ? (<ConfirmationModal 
           trigger={<Button>Create</Button>}
           title="Confirm Account Registration"

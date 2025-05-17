@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from ..models import *
 
+class AddressBaseSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Address
+    fields = ['add_province', 'add_city', 'add_barangay', 'add_street']
+
 class AddressBulkCreateSerializer(serializers.ModelSerializer):
   class Meta:
     model = Address

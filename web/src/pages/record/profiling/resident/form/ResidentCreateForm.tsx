@@ -73,19 +73,28 @@ export default function ResidentCreateForm({ params }: { params: any }) {
         staffId: user?.staff.staff_id,
       }, {
         onSuccess: (resident) => {
-          handleSubmitSuccess(
-            "New record created successfully",
-            `/account/create`,
-            {params: {residentId: resident.rp_id}}
-          );
-  
-          setIsSubmitting(false);
-          form.reset(defaultValues);
+          addAddress(addresses, {
+            onSuccess: (result) => {
+              const per_address = result?.data.map((address: any) => (
+                {add: address.add_id, per: resident.per.per_id}
+              ));
+
+              addPersonalAddress(per_address, {
+                onSuccess: () => {
+                  handleSubmitSuccess(
+                    "New record created successfully",  
+                    `/resident/additional-registration`,
+                    {params: {residentId: resident.rp_id}}
+                  );
+          
+                  setIsSubmitting(false);
+                  form.reset(defaultValues);
+                }
+              })
+            }
+          });
         }
       });
-
-      addAddress(addresses);
-
 
     } catch (err) {
       throw err;

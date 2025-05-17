@@ -20,6 +20,9 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
+  const [addresses, setAddresses] = React.useState<Record<string, any>[]>(
+    params.data.personalInfo.per_addresses
+  )
   const { data: familyMembers, isLoading } = useFamilyMembers(params.data.familyId);
 
   const family = familyMembers?.results || [];
@@ -86,6 +89,8 @@ export default function ResidentViewForm({ params }: { params: any }) {
               className="flex flex-col gap-4"
             >
               <PersonalInfoForm
+                addresses={addresses}
+                setAddresses={setAddresses}
                 form={form}
                 formType={formType}
                 isSubmitting={isSubmitting}

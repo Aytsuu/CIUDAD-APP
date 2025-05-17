@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button/button";
 import { Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { capitalize } from "@/helpers/capitalize";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
@@ -69,10 +70,10 @@ const PersonalInfoForm = ({
   const handleSetAddress = (idx: number, field: string, value: string) => {
     setAddresses(prev => 
       prev.map((address, prevIdx) => {
-        return prevIdx === idx ? {...address, [field]: value} : address
+        return prevIdx === idx ? {...address, [field]: capitalize(value)} : address
       })
     )
-  }
+  }   
 
   // ==================== RENDER ====================
   return (
@@ -116,7 +117,7 @@ const PersonalInfoForm = ({
             <div className="grid gap-3" key={idx}>
               <Label className="text-black/70">Address {idx + 1}</Label>
               <div className="flex items-center gap-3">
-                <div className="flex w-1/2 items-center justify-center border shadow-sm rounded-lg" >
+                <div className="flex w-2/3 items-center justify-center border shadow-sm rounded-lg" >
                   <Input
                     placeholder="Province"
                     value={address.add_province}
@@ -153,21 +154,6 @@ const PersonalInfoForm = ({
                     readOnly={isReadOnly}
                   />
                 </div>
-                {idx > 0 && 
-                  <Button 
-                    type={"button"}
-                    variant={"secondary"} 
-                    onClick={() => {
-                      setAddresses(prev => 
-                        prev.map((address, prevIdx) => {
-                          return prevIdx === idx ? addresses[0] : address;
-                        })
-                      )
-                    }}
-                  >
-                    Copy first
-                  </Button>
-                }
                 {idx > 1 && 
                   <Button 
                     type={"button"}
@@ -184,7 +170,7 @@ const PersonalInfoForm = ({
             </div>
           ))
         }
-        <div>
+        {!(formType === Type.Viewing) && <div>
           <Button 
             variant={"outline"} 
             type="button"
@@ -199,9 +185,9 @@ const PersonalInfoForm = ({
               }
             ])}
           >
-            <Plus/> Add Another Address
+            <Plus/> Add Address
           </Button>
-        </div>
+        </div>}
       </div>
 
       <div className="mt-8 flex justify-end gap-3">

@@ -24,7 +24,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                 queryset=FamilyComposition.objects.select_related(
                     'fam',
                     'fam__hh',
-                    'fam__hh__sitio'
+                    'fam__hh__add__sitio'
                 ).only('fam')),
         ).only(
           'rp_id',

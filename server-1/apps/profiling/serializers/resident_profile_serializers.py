@@ -3,6 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from ..models import *
 from ..serializers.personal_serializers import *
+from ..serializers.address_serializers import *
 from datetime import datetime
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
@@ -38,7 +39,7 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     
     def get_sitio_name(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
-            return obj.family_compositions.first().fam.hh.sitio.sitio_name
+            return obj.family_compositions.first().fam.hh.add.sitio.sitio_name
         return ""
     
     def get_family_no(self, obj):
@@ -103,12 +104,18 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_edAttainment = serializers.CharField(source="per.per_edAttainment")
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
+    per_addresses = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact']
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses']
         read_only_fields = fields
+    
+    def get_per_addresses(self, obj):
+        per_addresses = PersonalAddress.objects.filter(per=obj.per)
+        addresses = [pa.add for pa in per_addresses.select_related('add')]
+        return AddressBaseSerializer(addresses, many=True).data
 
 class ResidentProfileListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()

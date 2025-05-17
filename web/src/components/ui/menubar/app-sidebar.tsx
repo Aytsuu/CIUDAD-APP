@@ -54,6 +54,7 @@ const items: MenuItem[] = [
       { title: "Business", url: "/business" },
     ],
   },
+  { title: "Voter", url: "/" },
   {
     title: "Blotter",
     url: "/blotter-record",
