@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     
     
     'backend.firebase.notifications',
+    'apps.announcement',
 ]
 
 MIDDLEWARE = [

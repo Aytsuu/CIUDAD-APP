@@ -27,17 +27,24 @@ export default function AnnouncementList(){
         },
         {
             id: '2',
-            title: 'Tree Planting Activity',
-            description: 'A community effort to plant trees in our neighborhood.',
-            dateCreated: '2025-02-15',
-            time: '10:00 AM'
+            title: 'Community Clean-up',
+            description: 'Join us for a community clean-up event.',
+            dateCreated: '2025-01-22',
+            time: '09:00 AM'
         },
         {
             id: '3',
-            title: 'Operation Tuli',
-            description: 'Libreng tuli San Roque Gym.',
-            dateCreated: '2025-03-05',
+            title: 'Health Awareness Camp',
+            description: 'Free health check-ups and awareness sessions.',
+            dateCreated: '2025-01-25',
             time: '10:00 AM'
+        },
+        {
+            id: '4',
+            title: 'Blood Donation Drive',
+            description: 'Donate blood and save lives.',
+            dateCreated: '2025-01-28',
+            time: '11:00 AM'
         }
     ]);
 
