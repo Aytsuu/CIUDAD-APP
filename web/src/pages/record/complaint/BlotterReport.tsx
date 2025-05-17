@@ -19,8 +19,8 @@ import { MediaUpload } from "@/components/ui/media-upload";
 import { BlotterFormValues, MediaFile } from "./blotter-type";
 import { useMutation } from "@tanstack/react-query";
 import supabase from "@/supabase/supabase";
-import ComplaintformSchema from "@/form-schema/complaint-schema";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormInput } from "@/components/ui/form/form-input";
+import { Plus } from "lucide-react";
 
 export function BlotterReport() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -134,46 +134,47 @@ export function BlotterReport() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex-row space-y-4">
             {/* Complainant Card */}
             <div className="border rounded-md p-4 bg-white">
               <h3 className="font-medium text-lg mb-2 text-darkBlue2">
                 Complainant
               </h3>
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="bc_complainant"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Full Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter Complaint Name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bc_cmplnt_address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Sitio/Barangay/Municipality/City"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="flex flex-col space-y-3">
+                <div className="flex flex-col md:flex-row md:space-x-3">
+                  <FormInput
+                    control={form.control}
+                    name="bc_complainant_lastname"
+                    label="Last Name"
+                    placeholder="Last Name"
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="bc_complainant_firstname"
+                    label="First Name"
+                    placeholder="First Name"
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="bc_complainant_Middlename"
+                    label="Middle Name"
+                    placeholder="Middle Name"
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="bc_complainant_Suffix"
+                    label="Suffix"
+                    placeholder="Suffix"
+                  />
+                </div>
+                <div>
+                  <FormInput
+                    control={form.control}
+                    name="bc_cmplnt_address"
+                    label="Address"
+                    placeholder="Sitio/Barangay/Municipality/City"
+                  />
+                </div>
               </div>
             </div>
 
@@ -182,40 +183,46 @@ export function BlotterReport() {
               <h3 className="font-medium text-lg mb-2 text-darkBlue2">
                 Accused
               </h3>
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="bc_accused"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Full Name
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter Accused Name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="bc_accused_address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm text-darkGray">
-                        Address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Sitio/Barangay/Municipality/City"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="flex flex-col space-y-3">
+                <div className="flex flex-col md:flex-row md:space-x-3">
+                  <FormInput
+                    control={form.control}
+                    name="bc_accused_lastname"
+                    label="Last Name"
+                    placeholder="Last Name"
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="bc_accused_firstname"
+                    label="First Name"
+                    placeholder="First Name"
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="bc_accused_middlename"
+                    label="Middle Name"
+                    placeholder="Middle Name"
+                  />
+                  <FormInput
+                    control={form.control}
+                    name="bc_accused_suffix"
+                    label="Suffix"
+                    placeholder="Suffix"
+                  />
+                </div>
+                <div>
+                  <FormInput
+                    control={form.control}
+                    name="bc_accused_address"
+                    label="Address"
+                    placeholder="Sitio/Barangay/Municipality/City"
+                  />
+                </div>
+                <div className="flex justify-center">
+                  <Button className="flex items-center gap-1 h-8 w-28">
+                    <Plus /> Add
+                  </Button>
+                </div>{" "}
               </div>
             </div>
           </div>
