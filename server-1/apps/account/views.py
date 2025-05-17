@@ -81,7 +81,7 @@ class LoginView(TokenObtainPairView):
                 "token": access_token,
                 "username": user.username,
                 "email": user.email,
-                "profile_image": user.profile_image.url if user.profile_image else None,
+                "profile_image": user.profile_image if user.profile_image else None,
                 "rp": rp_data,
                 "staff": staff_data,
             })

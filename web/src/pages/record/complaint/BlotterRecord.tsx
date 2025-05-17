@@ -94,7 +94,7 @@ export default function BlotterRecord() {
       {/* Header Section */}
       <div className="flex flex-col justify-center mb-4">
         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-          Resident Records
+          Blotter Records
         </h1>
         <p className="text-xs sm:text-sm text-darkGray">
           Manage and view resident information
