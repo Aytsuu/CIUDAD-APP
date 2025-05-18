@@ -11,14 +11,12 @@ import { UseFormReturn } from "react-hook-form";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function HouseholdProfileForm({
-  sitio,
   residents,
   isSubmitting,
   invalidHouseHead,
   form,
   onSubmit
 }: {
-  sitio: any[];
   residents: any[];
   isSubmitting: boolean;
   invalidHouseHead: boolean;
@@ -63,19 +61,24 @@ export default function HouseholdProfileForm({
       />
       <FormSelect
         control={form.control}
+        name="address"
+        label="Address"
+        options={[]}
+        readOnly={false}
+      />
+      <FormInput
+        control={form.control}
         name="sitio"
         label="Sitio"
-        options={sitio}
-        readOnly={false}
+        readOnly={true}
       />
       <FormInput
         control={form.control}
         name="street"
         label="House Street Address"
-        placeholder="Enter your house's street address"
-        readOnly={false}
+        readOnly={true}
       />
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-5">
         {!isSubmitting ? (
           <ConfirmationModal 
             trigger={<Button>Register</Button>}

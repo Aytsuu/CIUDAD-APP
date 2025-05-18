@@ -22,6 +22,8 @@ class AddressBulkCreateView(generics.CreateAPIView):
           item['add_province'],
           item['add_city'],
           item['add_barangay'],
+          item['add_external_sitio'],
+          item['sitio'],
           item['add_street'],
         )
         if key in seen:
@@ -31,6 +33,8 @@ class AddressBulkCreateView(generics.CreateAPIView):
             add_province=item['add_province'],
             add_city=item['add_city'],
             add_barangay=item['add_barangay'],
+            add_external_sitio=item['add_external_sitio'],
+            sitio=item['sitio'],
             add_street=item['add_street'],
         ).first()
         if exists:

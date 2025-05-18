@@ -18,13 +18,14 @@ class Address(models.Model):
     add_city = models.CharField(max_length=50)
     add_barangay = models.CharField(max_length=50)
     add_street = models.CharField(max_length=50)
+    add_external_sitio = models.CharField(max_length=50, null=True, blank=True)
     sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'address'
 
     def __str__(self):
-        return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio}, {self.add_street}'
+        return f'{self.add_province}, {self.add_city}, {self.add_barangay}, {self.sitio if self.sitio else self.add_external_sitio}, {self.add_street}'
 
 class Personal(models.Model):
     per_id = models.BigAutoField(primary_key=True)
@@ -91,7 +92,7 @@ class Household(models.Model):
         db_table = 'household'
 
     def __str__(self):
-        return f"Household {self.hh_id} - {self.rp} in {self.sitio}"
+        return f"Household {self.hh_id} - {self.rp} in {self.add}"
 
 class Family(models.Model):
     fam_id = models.CharField(max_length=50, primary_key=True)

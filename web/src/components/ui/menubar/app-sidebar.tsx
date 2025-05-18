@@ -52,9 +52,9 @@ const items: MenuItem[] = [
       { title: "Family", url: "/family" },
       { title: "Household", url: "/household" },
       { title: "Business", url: "/business" },
+      { title: "Voter", url: "/" },
     ],
   },
-  { title: "Voter", url: "/" },
   {
     title: "Blotter",
     url: "/blotter-record",

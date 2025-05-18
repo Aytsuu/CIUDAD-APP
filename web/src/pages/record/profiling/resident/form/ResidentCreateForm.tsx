@@ -8,8 +8,8 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useAddAddress, useAddPerAddress, useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
-import { useResidentsList } from "../../queries/profilingFetchQueries";
-import { formatResidents } from "../../profilingFormats";
+import { useResidentsList, useSitioList } from "../../queries/profilingFetchQueries";
+import { formatResidents, formatSitio } from "../../profilingFormats";
 import { useLoading } from "@/context/LoadingContext";
 
 export default function ResidentCreateForm({ params }: { params: any }) {
@@ -18,8 +18,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const {showLoading, hideLoading} = useLoading();
   const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
   const [addresses, setAddresses] = React.useState<any[]>([
-    { add_province: '', add_city: '', add_barangay: '', add_sitio: '', add_street: ''},
-    { add_province: '', add_city: '', add_barangay: '', add_sitio: '', add_street: ''},
+    { add_province: '', add_city: '', add_barangay: '', sitio: '', add_external_sitio: '', add_street: ''},
+    { add_province: '', add_city: '', add_barangay: '', sitio: '', add_external_sitio: '', add_street: ''},
   ]);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
@@ -28,17 +28,20 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+
+  const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList]);
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
-  
-    React.useEffect(() => {
-      if(isLoadingResidents) {
-        showLoading();
-      } else {
-        hideLoading();
-      }
-    }, [origin, isLoadingResidents])
 
   // ================== SIDE EFFECTS ==================
+  React.useEffect(() => {
+    if(isLoadingResidents || isLoadingSitio) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [origin, isLoadingResidents, isLoadingSitio])
+
   React.useEffect(() => {
     const subscription = form.watch((value) => {
       setIsAllowSubmit(!checkDefaultValues(value, defaultValues));
@@ -118,6 +121,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm
+              formattedSitio={formattedSitio}
               formattedResidents={formattedResidents}
               addresses={addresses}
               form={form}

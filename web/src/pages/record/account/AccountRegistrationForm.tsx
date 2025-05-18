@@ -1,19 +1,22 @@
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import { FormInput } from "@/components/ui/form/form-input"
-import { accountFormSchema } from "@/form-schema/account-schema"
-import { UseFormReturn } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/ui/button/button"
-import { LoadButton } from "@/components/ui/button/load-button"
-import { useNavigate } from "react-router"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { FormInput } from "@/components/ui/form/form-input";
+import { accountFormSchema } from "@/form-schema/account-schema";
+import { UseFormReturn } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button/button";
+import { LoadButton } from "@/components/ui/button/load-button";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { useDispatch } from "react-redux";
+import { accountCreated } from "@/redux/addRegSlice";
+
 
 export default function AccountRegistrationForm({form, isSubmitting, onSubmit} : {
   form: UseFormReturn<z.infer<typeof accountFormSchema>>
   isSubmitting: boolean
   onSubmit: () => void
 }) {
-  const navigate = useNavigate();
-
+  const { safeNavigate } = useSafeNavigate();
+  const dispatch = useDispatch();
   return (
     <>
       <div className="grid gap-4">
@@ -26,7 +29,11 @@ export default function AccountRegistrationForm({form, isSubmitting, onSubmit} :
         <Button 
           variant={"outline"} 
           className="border-none shadow-none font-normal"
-          onClick={() => navigate(-1)}
+          type="button"
+          onClick={() => {
+            dispatch(accountCreated(false))
+            safeNavigate.back()
+          }}
         >
           Skip for now
         </Button>

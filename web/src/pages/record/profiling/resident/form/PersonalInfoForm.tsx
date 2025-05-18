@@ -13,9 +13,11 @@ import { Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { capitalize } from "@/helpers/capitalize";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
+  formattedSitio: any;
   formattedResidents?: any;
   addresses: any[];
   form: UseFormReturn<z.infer<typeof personalInfoSchema>>;
@@ -48,6 +50,7 @@ const MARITAL_STATUS_OPTIONS = [
 
 // ==================== COMPONENT ====================
 const PersonalInfoForm = ({
+  formattedSitio,
   formattedResidents,
   addresses,
   form,
@@ -70,7 +73,9 @@ const PersonalInfoForm = ({
   const handleSetAddress = (idx: number, field: string, value: string) => {
     setAddresses(prev => 
       prev.map((address, prevIdx) => {
-        return prevIdx === idx ? {...address, [field]: capitalize(value)} : address
+        return (prevIdx === idx ? 
+          {...address, [field]: field !== 'sitio' ? capitalize(value) : value } 
+          : address)
       })
     )
   }   
@@ -139,13 +144,26 @@ const PersonalInfoForm = ({
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
-                  <Input
-                    placeholder="Sitio"
-                    value={address.add_sitio}
-                    onChange={(e) => handleSetAddress(idx, 'add_sitio', e.target.value)}
-                    className="border-none shadow-none focus-visible:ring-0"
-                    readOnly={isReadOnly}
-                  /> <p className="opacity-40">/</p>
+
+                  {
+                    address.add_barangay === "San Roque" ? 
+                    (<SelectLayout
+                      className="border-none w-full"
+                      placeholder="Sitio"
+                      options={formattedSitio}
+                      value={address.sitio?.toLowerCase()}
+                      onChange={(value) => handleSetAddress(idx, 'sitio', value)}
+                      
+                    />) : (<Input
+                      placeholder="Sitio"
+                      value={address.add_external_sitio}
+                      onChange={(e) => handleSetAddress(idx, 'add_external_sitio', e.target.value)}
+                      className="border-none shadow-none focus-visible:ring-0"
+                      readOnly={isReadOnly}
+                    />)
+                  } 
+                  
+                  <p className="opacity-40">/</p>
                   <Input
                     placeholder="Street"
                     value={address.add_street}

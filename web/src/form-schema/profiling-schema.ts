@@ -81,12 +81,11 @@ export const familyFormSchema = z.object({
 });
 
 export const householdFormSchema = z.object({
+  householdHead: z.string(),
   nhts: z.string().min(1, "NHTS household is required"),
-  sitio: z.string().min(1, "Sitio is required"),
+  address: z.string().min(1, "Address is required"),
+  sitio: z.string(),
   street: z.string()
-    .min(1, "Address is required")
-    .min(2, "Address must be atleast 2 letters"),
-  householdHead: z.string()
 });
 
 export const businessFormSchema = z.object({

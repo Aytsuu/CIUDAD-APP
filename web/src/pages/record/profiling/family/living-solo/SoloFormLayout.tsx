@@ -1,6 +1,6 @@
 import React from "react";
 import { z } from "zod";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,13 +20,14 @@ import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetc
 import { useLoading } from "@/context/LoadingContext";
 
 export default function SoloFormLayout() {
+  // ================= STATE INITIALIZATION ==================
   const navigate = useNavigate();
-  const defaultValues = React.useRef(
-    generateDefaultValues(demographicInfoSchema)
-  );
+  const location = useLocation();
+  const params = React.useMemo(() => location.state?.params, [location.state])
+  const defaultValues = generateDefaultValues(demographicInfoSchema);
   const form = useForm<z.infer<typeof demographicInfoSchema>>({
     resolver: zodResolver(demographicInfoSchema),
-    defaultValues: defaultValues.current,
+    defaultValues,
     mode: "onChange",
   });
 
@@ -38,17 +39,11 @@ export default function SoloFormLayout() {
   const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
-  const [invalidHousehold, setInvalidHousehold] =
-    React.useState<boolean>(false);
-  const formattedResidents = React.useMemo(
-    () => formatResidents(residentsList),
-    [residentsList]
-  );
-  const formattedHouseholds = React.useMemo(
-    () => formatHouseholds(householdsList),
-    [householdsList]
-  );
+  const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
+  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
+  const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList]);
 
+  // ==================== SIDE EFFECTS ======================
   React.useEffect(() => {
     if(isLoadingHouseholds || isLoadingResidents) {
       showLoading();
@@ -57,6 +52,14 @@ export default function SoloFormLayout() {
     }
   }, [isLoadingHouseholds, isLoadingResidents])
 
+  React.useEffect(() => {
+      const resident = formattedResidents.find((res: any) => res.id.split(" ")[0] === params.residentId)
+      if(resident) {
+        form.setValue('id', resident.id)
+      }
+    }, [params, formattedResidents])
+
+  // ==================== HANDLERS ======================
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
@@ -102,6 +105,7 @@ export default function SoloFormLayout() {
     });
   };
 
+  // ==================== RENDER ======================
   return (
     <div className="w-full flex justify-center">
       <div className="w-1/2 grid gap-4 bg-white p-10 rounded-md">
