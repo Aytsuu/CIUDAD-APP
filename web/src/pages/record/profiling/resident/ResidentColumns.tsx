@@ -233,7 +233,7 @@ export const additionalDetailsColumns = (residentId: string, familyId: string): 
       if(row.original.rp_id === residentId) {
         return (
           <Badge className="bg-black/20 text-black/70 hover:bg-black/20">
-            Current
+            Viewing
           </Badge>
         )
       }

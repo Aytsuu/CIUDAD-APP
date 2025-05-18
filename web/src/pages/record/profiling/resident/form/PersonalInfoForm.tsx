@@ -74,7 +74,7 @@ const PersonalInfoForm = ({
     setAddresses(prev => 
       prev.map((address, prevIdx) => {
         return (prevIdx === idx ? 
-          {...address, [field]: field !== 'sitio' ? capitalize(value) : value } 
+          {...address, [field]: field !== "sitio" ? capitalize(value) : value} 
           : address)
       })
     )
@@ -145,8 +145,7 @@ const PersonalInfoForm = ({
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
 
-                  {
-                    address.add_barangay === "San Roque" ? 
+                  {!isReadOnly ? (address.add_barangay === "San Roque" ? 
                     (<SelectLayout
                       className="border-none w-full"
                       placeholder="Sitio"
@@ -160,7 +159,13 @@ const PersonalInfoForm = ({
                       onChange={(e) => handleSetAddress(idx, 'add_external_sitio', e.target.value)}
                       className="border-none shadow-none focus-visible:ring-0"
                       readOnly={isReadOnly}
-                    />)
+                    />)) : (
+                      <Input 
+                        className="border-none shadow-none focus-visible:ring-0" 
+                        value={String(capitalize(address.sitio))} 
+                        readOnly
+                      />
+                    )
                   } 
                   
                   <p className="opacity-40">/</p>
@@ -172,7 +177,7 @@ const PersonalInfoForm = ({
                     readOnly={isReadOnly}
                   />
                 </div>
-                {idx > 1 && 
+                {idx + 1 > 1 && 
                   <Button 
                     type={"button"}
                     variant={"outline"} 

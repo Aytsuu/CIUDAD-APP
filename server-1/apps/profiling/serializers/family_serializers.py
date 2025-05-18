@@ -11,7 +11,7 @@ class FamilyBaseSerializer(serializers.ModelSerializer):
 class FamilyTableSerializer(serializers.ModelSerializer):
   members = serializers.SerializerMethodField()
   household_no = serializers.CharField(source='hh.hh_id')
-  sitio = serializers.CharField(source='hh.sitio.sitio_name')
+  sitio = serializers.CharField(source='hh.add.sitio.sitio_name')
   father = serializers.SerializerMethodField()
   mother = serializers.SerializerMethodField()
   guardian = serializers.SerializerMethodField()

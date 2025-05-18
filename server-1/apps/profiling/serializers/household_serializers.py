@@ -28,8 +28,8 @@ class HouseholdListSerialzer(serializers.ModelSerializer):
 
 class HouseholdTableSerializer(serializers.ModelSerializer):
   total_families = serializers.SerializerMethodField()
-  sitio = serializers.CharField(source='sitio.sitio_name')
-  street = serializers.CharField(source='hh_street')
+  sitio = serializers.CharField(source='add.sitio.sitio_name')
+  street = serializers.CharField(source='add.add_street')
   nhts = serializers.CharField(source='hh_nhts')
   head = serializers.SerializerMethodField()
   date_registered = serializers.DateField(source='hh_date_registered')

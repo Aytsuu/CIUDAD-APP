@@ -24,10 +24,10 @@ class HouseholdTableView(generics.ListAPIView):
             'family_set'  # For counting families (assuming Family has hh FK)
         ).only(
             'hh_id',
-            'hh_street',
             'hh_nhts',
             'hh_date_registered',
-            'sitio__sitio_name',
+            'add__add_street',
+            'add__sitio__sitio_name',
             'rp__per__per_lname',
             'rp__per__per_fname',
             'rp__per__per_mname'

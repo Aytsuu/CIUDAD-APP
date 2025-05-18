@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { additionalDetailsColumns } from "../ResidentColumns";
-import { useFamilyData, useFamilyMembers } from "../../queries/profilingFetchQueries";
+import { useFamilyData, useFamilyMembers, useSitioList } from "../../queries/profilingFetchQueries";
+import { formatSitio } from "../../profilingFormats";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -23,9 +24,11 @@ export default function ResidentViewForm({ params }: { params: any }) {
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>(
     params.data.personalInfo.per_addresses
   )
-  const { data: familyMembers, isLoading } = useFamilyMembers(params.data.familyId);
+  const { data: familyMembers, isLoading: isLoadingFam } = useFamilyMembers(params.data.familyId);
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
 
   const family = familyMembers?.results || [];
+  const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList]);
 
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
@@ -89,6 +92,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
               className="flex flex-col gap-4"
             >
               <PersonalInfoForm
+                formattedSitio={formattedSitio}
                 addresses={addresses}
                 setAddresses={setAddresses}
                 form={form}
@@ -111,7 +115,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
                   columns={additionalDetailsColumns(params.data.residentId, params.data.familyId)} 
                   data={family}
                   headerClassName="bg-transparent hover:bg-transparent"
-                  isLoading={isLoading}
+                  isLoading={isLoadingFam || isLoadingSitio}
                 />
               </div>
             </div>

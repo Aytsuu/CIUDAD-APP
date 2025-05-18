@@ -38,7 +38,7 @@ class FamilyMembersListView(generics.ListCreateAPIView):
             'rp__per__per_dob',
             'rp__per__per_status',
             'fam__hh__hh_id',
-            'fam__hh__sitio__sitio_name',
+            'fam__hh__add__sitio__sitio_name',
         ).distinct()
 
 class FamilyCompositionBulkCreateView(generics.CreateAPIView):
