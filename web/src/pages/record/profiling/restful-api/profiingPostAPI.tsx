@@ -8,7 +8,7 @@ import { capitalize } from "@/helpers/capitalize";
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/address/create/", data);
-    return res;
+    return res.data;
   } catch (err) {
     throw err;
   }
@@ -18,7 +18,7 @@ export const addAddress =  async (data: Record<string, any>[]) => {
 export const addPersonalAddress = async (data: Record<string, any>[]) => {
   try {
     const res = await api.post("profiling/per_address/create/", data);
-    return res;
+    return res.data;
   } catch (err) {
     throw err;
   }
@@ -98,12 +98,17 @@ export const addFamilyComposition = async (data: Record<string, any>[]) => {
 // POST request for household model 
 export const addHousehold = async (householdInfo: Record<string, string>, staffId: string) => {
   try {
+    console.log({
+      hh_nhts: capitalize(householdInfo.nhts),
+      add: +householdInfo.add_id,
+      rp: householdInfo.householdHead.split(" ")[0],
+      staff: staffId
+    })
     const res = await api.post("profiling/household/create/", {
       hh_nhts: capitalize(householdInfo.nhts),
-      hh_street: capitalize(householdInfo.street),
+      add: householdInfo.add_id,
       rp: householdInfo.householdHead.split(" ")[0],
-      sitio: householdInfo.sitio,
-      staff: staffId,
+      staff: staffId
     });
 
     return res.data;

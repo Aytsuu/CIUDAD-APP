@@ -41,6 +41,8 @@ class AddressBulkCreateView(generics.CreateAPIView):
           if key not in existing_keys:
             existing_addresses.append({  
               "add_id": exists.add_id,
+              "sitio": exists.sitio.sitio_name,
+              "add_street": exists.add_street
             })
             existing_keys.add(key)
         else:

@@ -19,7 +19,6 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
   const [addresses, setAddresses] = React.useState<any[]>([
     { add_province: '', add_city: '', add_barangay: '', sitio: '', add_external_sitio: '', add_street: ''},
-    { add_province: '', add_city: '', add_barangay: '', sitio: '', add_external_sitio: '', add_street: ''},
   ]);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: addAddress } = useAddAddress();
@@ -61,8 +60,8 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   const submit = async () => {
     setIsSubmitting(true);
-    const isValid = await form.trigger();
-    if (!isValid) {
+    const formIsValid = await form.trigger();
+    if (!formIsValid) {
       setIsSubmitting(false);
       handleSubmitError("Please fill out all required fields");
       return;
@@ -77,17 +76,22 @@ export default function ResidentCreateForm({ params }: { params: any }) {
       }, {
         onSuccess: (resident) => {
           addAddress(addresses, {
-            onSuccess: (result) => {
-              const per_address = result?.data.map((address: any) => (
+            onSuccess: (new_addresses) => {
+              const per_address = new_addresses?.map((address: any) => (
                 {add: address.add_id, per: resident.per.per_id}
               ));
 
               addPersonalAddress(per_address, {
                 onSuccess: () => {
+                  const brgyAddresses = new_addresses.filter((add: any) => add.sitio !== null)
+                  console.log(brgyAddresses);
                   handleSubmitSuccess(
                     "New record created successfully",  
                     `/resident/additional-registration`,
-                    {params: {residentId: resident.rp_id}}
+                    {params: {
+                      residentId: resident.rp_id,
+                      addresses: brgyAddresses
+                    }}
                   );
           
                   setIsSubmitting(false);

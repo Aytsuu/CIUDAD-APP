@@ -125,6 +125,10 @@ export const useAddFamilyComposition = () => {
       //   })}
       // );
 
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+
       // Invalidate queries to ensure fresh data is fetched if needed
       queryClient.invalidateQueries({queryKey: ['familyCompositions']});
       queryClient.invalidateQueries({ queryKey: ["families"] });
@@ -134,7 +138,6 @@ export const useAddFamilyComposition = () => {
 };
 
 export const useAddHousehold = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -155,8 +158,6 @@ export const useAddHousehold = () => {
       toast("Record added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
       });
-      
-      navigate(-1)
     },
   });
 };

@@ -99,29 +99,6 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     },
   },
   {
-    accessorKey: "sitio_name",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Sitio
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const sitio: string = row.getValue("sitio_name");
-      
-      return sitio ? (<div>{sitio}</div>) :
-      (<div className="flex justify-center items-center">
-        <TooltipLayout
-            trigger={<CircleAlert size={24} className="fill-orange-500 stroke-white"/>}
-            content="Family not registered"
-        />
-      </div>)
-    },
-  },
-  {
     accessorKey: "lname",
     header: ({ column }) => (
       <div

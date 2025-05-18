@@ -2,7 +2,7 @@ import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import HouseholdProfileForm from "./HouseholdProfileForm";
-import { formatResidents, formatSitio } from "../profilingFormats";
+import { formatAddresses, formatResidents } from "../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useForm } from "react-hook-form";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
@@ -15,15 +15,21 @@ import { useAddHousehold } from "../queries/profilingAddQueries";
 import { useResidentsList } from "../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { useLocation } from "react-router";
+import { householdRegistered } from "@/redux/addRegSlice";
+import { useDispatch } from "react-redux";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export default function HouseholdFormLayout() {
   // =============== STATE INITIALIZATION ==================
+  const dispatch = useDispatch();
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const { user } = useAuth();
+  const { safeNavigate } = useSafeNavigate(); 
   const {showLoading, hideLoading} = useLoading();
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [residents, setResidents] = React.useState<any[]>([]);
   const defaultValues = generateDefaultValues(householdFormSchema);
   const form = useForm<z.infer<typeof householdFormSchema>>({
       resolver: zodResolver(householdFormSchema),
@@ -32,6 +38,7 @@ export default function HouseholdFormLayout() {
   const { mutateAsync: addHousehold} = useAddHousehold();
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
 
+  const formattedAddresses = React.useMemo(() => formatAddresses(params.addresses) || [], [params.addresses])
   const formattedResidents = React.useMemo(() => formatResidents(residentsList) || [], [residentsList])
 
   // =================== SIDE EFFECTS ======================
@@ -44,8 +51,10 @@ export default function HouseholdFormLayout() {
   }, [isLoadingResidents])
 
   React.useEffect(() => {
+    setResidents(formattedResidents);
     const resident = formattedResidents.find((res: any) => res.id.split(" ")[0] === params.residentId)
     if(resident) {
+      setResidents([resident]);
       form.setValue('householdHead', resident.id)
     }
   }, [params, formattedResidents])
@@ -54,7 +63,7 @@ export default function HouseholdFormLayout() {
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
-    const householdHead = form.watch("householdHead")
+    const householdHead = form.watch("householdHead");
     if (!formIsValid || !householdHead) {
       !householdHead && setInvalidHouseHead(true)
       setIsSubmitting(false);
@@ -75,9 +84,9 @@ export default function HouseholdFormLayout() {
       householdInfo: householdInfo, 
       staffId: user?.staff.staff_id
     }, {
-      onSuccess: () => {
-        setIsSubmitting(false);
-        form.reset(defaultValues.current);
+      onSuccess: (household) => {
+        dispatch(householdRegistered({reg: true, hh_id: household.hh_id}));
+        safeNavigate.back();
       }
     });
   };
@@ -99,7 +108,8 @@ export default function HouseholdFormLayout() {
               className="grid gap-4"
             >
               <HouseholdProfileForm
-                residents={formattedResidents}
+                addresses={formattedAddresses}
+                residents={residents}
                 isSubmitting={isSubmitting}
                 invalidHouseHead={invalidHouseHead}
                 form={form}

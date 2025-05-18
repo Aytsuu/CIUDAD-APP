@@ -18,10 +18,13 @@ import {
 } from "../../queries/profilingAddQueries";
 import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { familyRegistered } from "@/redux/addRegSlice";
+import { useDispatch } from "react-redux";
 
 export default function SoloFormLayout() {
   // ================= STATE INITIALIZATION ==================
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state])
   const defaultValues = generateDefaultValues(demographicInfoSchema);
@@ -32,6 +35,7 @@ export default function SoloFormLayout() {
   });
 
   const { user } = useAuth();
+  const { safeNavigate } = useSafeNavigate();
   const { showLoading, hideLoading } = useLoading();
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
@@ -40,6 +44,8 @@ export default function SoloFormLayout() {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResdent, setInvalidResident] = React.useState<boolean>(false);
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
+  const [residents, setResidents] = React.useState<any[]>([]);
+
   const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
   const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList]);
 
@@ -53,11 +59,20 @@ export default function SoloFormLayout() {
   }, [isLoadingHouseholds, isLoadingResidents])
 
   React.useEffect(() => {
-      const resident = formattedResidents.find((res: any) => res.id.split(" ")[0] === params.residentId)
-      if(resident) {
-        form.setValue('id', resident.id)
-      }
-    }, [params, formattedResidents])
+    setResidents(formattedResidents)
+    const resident = formattedResidents.find((res: any) => res.id.split(" ")[0] === params?.residentId)
+    if(resident) {
+      setResidents([resident])
+      form.setValue('id', resident.id)
+    }
+  }, [params, formattedResidents])
+
+  React.useEffect(() => {
+    const householdNo = form.watch('householdNo').split(" ")[0];
+    if(householdNo && householdNo === params.hh_id) {
+      form.setValue('building', 'owner');
+    }
+  }, [form.watch('householdNo')])
 
   // ==================== HANDLERS ======================
   const submit = async () => {
@@ -95,12 +110,8 @@ export default function SoloFormLayout() {
       }
     ], {
       onSuccess: () => {
-        toast("Record added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        });
-        navigate(-1);
-        setIsSubmitting(false);
-        form.reset(defaultValues.current);
+        dispatch(familyRegistered(true));
+        safeNavigate.back();
       }
     });
   };
@@ -122,7 +133,7 @@ export default function SoloFormLayout() {
               className="flex flex-col gap-10"
             >
               <LivingSoloForm
-                residents={formattedResidents}
+                residents={residents}
                 households={formattedHouseholds}
                 isSubmitting={isSubmitting}
                 invalidResident={invalidResdent}

@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface AddRegState {
   account: boolean | undefined;
-  household: boolean | undefined;
+  household: Record<string, any> | undefined;
   family: boolean | undefined;
 }
 
@@ -19,7 +19,7 @@ export const addRegSlice = createSlice({
     accountCreated: (state, action: PayloadAction<boolean | undefined>) => {
       state.account = action.payload
     },
-    householdRegistered: (state, action: PayloadAction<boolean | undefined>) => {
+    householdRegistered: (state, action: PayloadAction<Record<string, any>>) => {
       state.household = action.payload
     },
     familyRegistered: (state, action: PayloadAction<boolean | undefined>) => {

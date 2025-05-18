@@ -20,14 +20,13 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     fname = serializers.CharField(source='per.per_fname')
     mname = serializers.SerializerMethodField()
     household_no = serializers.SerializerMethodField()
-    sitio_name = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
     
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'household_no', 'sitio_name', 'family_no', 'has_account']
+                  'household_no', 'family_no', 'has_account']
     
     def get_mname(self, obj):
         return obj.per.per_mname if obj.per.per_mname else '-'
@@ -35,11 +34,6 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     def get_household_no(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
             return obj.family_compositions.first().fam.hh.hh_id
-        return ""
-    
-    def get_sitio_name(self, obj):
-        if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
-            return obj.family_compositions.first().fam.hh.add.sitio.sitio_name
         return ""
     
     def get_family_no(self, obj):

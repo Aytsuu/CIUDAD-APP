@@ -4,7 +4,7 @@ from ..models import *
 class AddressBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = Address
-    fields = ['add_province', 'add_city', 'add_barangay', 'add_street']
+    fields = ['add_province', 'add_city', 'add_barangay', 'add_external_sitio', 'add_street', 'sitio']
 
 class AddressBulkCreateSerializer(serializers.ModelSerializer):
   class Meta:
@@ -17,3 +17,9 @@ class PerAddressBulkSerializer(serializers.ModelSerializer):
     model = PersonalAddress
     fields = "__all__"
     read_only_fields = ['pa_id']
+
+class PerAddressesBaseSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = PersonalAddress
+    fields = "__all__"
+    
