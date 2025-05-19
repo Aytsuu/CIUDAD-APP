@@ -34,18 +34,6 @@ class PersonalView(generics.ListCreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
 
-class PersonalUpdateView(generics.RetrieveUpdateAPIView):
-    serializer_class = PersonalSerializer
-    queryset = Personal.objects.all()
-    lookup_field = 'per_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Family Views ------------------------------------------------------------------------
 class FamilyView(generics.ListCreateAPIView):

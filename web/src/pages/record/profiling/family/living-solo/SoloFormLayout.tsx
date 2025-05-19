@@ -69,10 +69,21 @@ export default function SoloFormLayout() {
 
   React.useEffect(() => {
     const householdNo = form.watch('householdNo').split(" ")[0];
-    if(householdNo && householdNo === params.hh_id) {
-      form.setValue('building', 'owner');
+    const residentId = form.watch('id').split(" ")[0];
+    let building = '';
+    if(householdNo && residentId) {
+      const ownedHouseholds = householdsList.filter((household: any) => {
+        if(household.head_id === residentId) {
+          return household.hh_id
+        }
+      });
+
+      building = ownedHouseholds.some((household: any) => 
+        household.hh_id === householdNo) ? 'owner' : '';
+
+      form.setValue('building', building);
     }
-  }, [form.watch('householdNo')])
+  }, [form.watch('householdNo'), form.watch('id')])
 
   // ==================== HANDLERS ======================
   const submit = async () => {

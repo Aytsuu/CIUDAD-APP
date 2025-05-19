@@ -1,5 +1,15 @@
 import { api } from "@/api/api";
 
+//===================== FETCH ADDRESS ====================
+export const getPerAddressesList = async () => {
+  try {
+    const res = await api.get("profiling/per_address/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
 export const getResidentsList = async () => {
   try {
@@ -89,7 +99,7 @@ export const getFamilyData = async (familyId: string) => {
 }
 
 export const getFamilyMembers = async (familyId: string) => {
-  if(!familyId) return;
+  if(!familyId) return [];
 
   try { 
     const res = await api.get(`profiling/family/${familyId}/members/`)

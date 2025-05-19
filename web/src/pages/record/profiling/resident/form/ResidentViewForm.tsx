@@ -12,6 +12,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { additionalDetailsColumns } from "../ResidentColumns";
 import { useFamilyData, useFamilyMembers, useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../profilingFormats";
+import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
@@ -32,7 +33,11 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
-    formType === Type.Viewing && setIsReadOnly(true);
+    // Set the form values when the component mounts
+    if(formType == Type.Viewing) {
+      setIsReadOnly(true);
+      setAddresses(params.data.personalInfo.per_addresses);
+    }
     formType === Type.Editing && setIsReadOnly(false);
   }, [formType]);
 
@@ -47,17 +52,18 @@ export default function ResidentViewForm({ params }: { params: any }) {
       return;
     }
 
-    const values = form.getValues();
-    if (checkDefaultValues(values, params.data)) {
+    const values = {...capitalizeAllFields(form.getValues()), per_addresses: addresses};
+    if (checkDefaultValues({...values, per_addresses: addresses}, 
+      params.data?.personalInfo
+    )) {
       setIsSubmitting(false);
       setFormType(Type.Viewing);
       handleSubmitError("No changes made");
       return;
     }
 
-    await updateProfile(
-      {
-        personalId: params.data.per_id,
+    updateProfile({
+        personalId: params.data.personalInfo.per_id,
         values: values,
       },
       {
@@ -65,7 +71,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
           handleSubmitSuccess("Profile updated successfully");
           setIsSubmitting(false);
           setFormType(Type.Viewing);
-          params.data = values;
+          params.data.personalInfo = values;
         },
       }
     );

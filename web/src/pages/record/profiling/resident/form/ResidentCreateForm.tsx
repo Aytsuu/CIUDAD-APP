@@ -83,13 +83,11 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
               addPersonalAddress(per_address, {
                 onSuccess: () => {
-                  const brgyAddresses = new_addresses.filter((add: any) => add.sitio !== null)
                   handleSubmitSuccess(
                     "New record created successfully",  
                     `/resident/additional-registration`,
                     {params: {
                       residentId: resident.rp_id,
-                      addresses: brgyAddresses
                     }}
                   );
           

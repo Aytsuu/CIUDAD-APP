@@ -10,7 +10,7 @@ class Sitio(models.Model):
         db_table = 'sitio'
 
     def __str__(self):
-        return self.sitio_name
+        return self.sitio_id
 
 class Address(models.Model):
     add_id = models.BigAutoField(primary_key=True)  

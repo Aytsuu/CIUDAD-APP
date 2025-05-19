@@ -16,6 +16,7 @@ export const formatResidents = (residents: any) => {
         {resident.name}
       </div>
     ),
+    per_id: resident.personal_info.per_id
   }));
 
 };
@@ -56,16 +57,15 @@ export const formatAddresses = (addresses: any) => {
   if(!addresses) return [];
 
   return addresses.map( (item: {
-      add_id: string,
-      add_province: string, 
-      add_city: string, 
-      add_barangay: string, 
-      sitio: string,
+      per: string,
+      add: string,
+      add_sitio: string,
       add_street: string,
     }, idx: number) => ({
-      id: `address ${idx+1} - ${item.sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
-      name: `Address ${idx+1} - ${capitalize(item.sitio)}, ${item.add_street}`,
-      add_id: item.add_id
+      per_id: item.per,
+      add_id: item.add,
+      id: `address ${idx+1} - ${item.add_sitio.toLowerCase()}, ${item.add_street.toLowerCase()}`,
+      name: `Address ${idx+1} - ${capitalize(item.add_sitio)}, ${item.add_street}`, 
     })
   )
 }

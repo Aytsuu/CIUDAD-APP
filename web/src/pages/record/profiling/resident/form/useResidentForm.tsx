@@ -64,10 +64,10 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
 
         return (
           (isParamEmpty && isValueEmpty) || // Both empty
-          String(initialValues[key]) === String(currentValues[key]) // Both non-empty and equal
+          String(initialValues[key]) == String(currentValues[key]) // Both non-empty and equal
         );
       } else {
-        return initialValues[key] === currentValues[key] ? true : false;
+        return initialValues[key] == currentValues[key] ? true : false;
       }
     });
 

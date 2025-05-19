@@ -10,15 +10,17 @@ from .views.address_views import *
 from .views_deprecated import * # To be removed
 
 urlpatterns = [
+    # Sitio Urls
+    path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
+    
     # Address Urls
     path("address/create/", AddressBulkCreateView.as_view(), name="create-address"),
-    
-    # Personal Address Urls
     path("per_address/create/", PerAddressBulkCreateView.as_view(), name="create-per-address"),
+    path("per_address/list/", PerAddressListView.as_view(), name="per-address-list"),
 
     # Personal Urls
     path("personal/", PersonalView.as_view(), name="personal-details-list"),
-    path("personal/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
+    path("personal/update/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
 
     # Family Urls
@@ -36,9 +38,6 @@ urlpatterns = [
     path("family/composition/delete/<str:fam>/<str:rp>/", FamilyCompositionDeleteView.as_view(), name="family-composition-delete"),
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
-
-    # Sitio Urls
-    path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
 
     # Househould Urls
     path("household/", HouseholdView.as_view(), name="household-details"),

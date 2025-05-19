@@ -49,9 +49,8 @@ export default function AddRegOptions() {
             onClick={() => {
               !household?.reg && navigate(
                 "/household/form", 
-                {state: {params: {
-                  residentId: params.residentId,
-                  addresses: params.addresses
+                {state: {params: { 
+                  residentId: params.residentId
                 }}}
               )
             }}
@@ -65,7 +64,6 @@ export default function AddRegOptions() {
                 "/family/form/solo", 
                 {state: {params: {
                   residentId: params.residentId,
-                  hh_id: household?.hh_id
                 }}}
               )
             }}

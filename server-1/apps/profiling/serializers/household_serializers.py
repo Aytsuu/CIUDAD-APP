@@ -8,12 +8,13 @@ class HouseholdBaseSerializer(serializers.ModelSerializer):
     fields = '__all__'
 
 class HouseholdListSerialzer(serializers.ModelSerializer):
+  head_id = serializers.CharField(source='rp.rp_id')
   head = serializers.SerializerMethodField()
   registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Household
-    fields = ['hh_id', 'head', "hh_nhts", "add",
+    fields = ['hh_id','head_id', 'head', "hh_nhts", "add",
               "hh_date_registered", "registered_by"]
 
   def get_head(self, obj):

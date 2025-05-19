@@ -12,7 +12,7 @@ import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
 import { useAddHousehold } from "../queries/profilingAddQueries";
-import { useResidentsList } from "../queries/profilingFetchQueries";
+import { usePerAddressesList, useResidentsList } from "../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { useLocation } from "react-router";
 import { householdRegistered } from "@/redux/addRegSlice";
@@ -30,6 +30,7 @@ export default function HouseholdFormLayout() {
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [residents, setResidents] = React.useState<any[]>([]);
+  const [addresses, setAddresses] = React.useState<any[]>([]);
   const defaultValues = generateDefaultValues(householdFormSchema);
   const form = useForm<z.infer<typeof householdFormSchema>>({
       resolver: zodResolver(householdFormSchema),
@@ -37,27 +38,42 @@ export default function HouseholdFormLayout() {
   });
   const { mutateAsync: addHousehold} = useAddHousehold();
   const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: perAddressList, isLoading: isLoadingPerAddress } = usePerAddressesList();
 
-  const formattedAddresses = React.useMemo(() => formatAddresses(params.addresses) || [], [params.addresses])
-  const formattedResidents = React.useMemo(() => formatResidents(residentsList) || [], [residentsList])
+  const formattedAddresses = React.useMemo(() => formatAddresses(perAddressList), [perAddressList])
+  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList])
 
   // =================== SIDE EFFECTS ======================
   React.useEffect(() => {
-    if(isLoadingResidents) {
+    if(isLoadingResidents || isLoadingPerAddress) {
       showLoading();
     } else {
       hideLoading();
     }
-  }, [isLoadingResidents])
+  }, [isLoadingResidents, isLoadingPerAddress])
 
   React.useEffect(() => {
     setResidents(formattedResidents);
-    const resident = formattedResidents.find((res: any) => res.id.split(" ")[0] === params.residentId)
+    const resident = formattedResidents.find((res: any) => res.id.split(" ")[0] === params?.residentId)
     if(resident) {
       setResidents([resident]);
       form.setValue('householdHead', resident.id)
     }
   }, [params, formattedResidents])
+
+  React.useEffect(() => {
+    const head = form.watch('householdHead');
+    if(head) {
+      const resident = residents.find((res: any) => res.id === head);
+      if(resident) {
+        const addresses = formattedAddresses.filter((add: any) => add.per_id === resident.per_id);
+        console.log(addresses)
+        setAddresses(addresses);
+      }
+    } else {
+      setAddresses([]);    
+    }
+  }, [form.watch('householdHead')])
 
   // ==================== HANDLERS ========================
   const submit = async () => {
@@ -108,7 +124,7 @@ export default function HouseholdFormLayout() {
               className="grid gap-4"
             >
               <HouseholdProfileForm
-                addresses={formattedAddresses}
+                addresses={addresses}
                 residents={residents}
                 isSubmitting={isSubmitting}
                 invalidHouseHead={invalidHouseHead}

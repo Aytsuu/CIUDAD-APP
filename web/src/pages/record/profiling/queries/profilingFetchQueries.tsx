@@ -8,6 +8,7 @@ import {
   getFamilyMembers,
   getHouseholdList,
   getHouseholdTable,
+  getPerAddressesList,
   getRequests,
   getResidentsFamSpecificList,
   getResidentsList,
@@ -16,8 +17,16 @@ import {
   getSitioList,
 } from "../restful-api/profilingGetAPI";
 
-// ================ RESIDENTS ================ (Status: Optmizing....)
+// ================ ADDRESS =================
+export const usePerAddressesList = () => {
+  return useQuery({
+    queryKey: ['perAddressesList'],
+    queryFn: () => getPerAddressesList(),
+    staleTime: 5000,
+  })
+}
 
+// ================ RESIDENTS ================ (Status: Optmizing....)
 export const useResidentsList = () => {
   return useQuery({
     queryKey: ['residentsList'],
@@ -67,7 +76,6 @@ export const useSitioList = () => {
 }
 
 // ================ FAMILIES ================ (Status: Optmizing....)
-
 export const useFamiliesTable = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ["familiesTableData", page, pageSize, searchQuery],
@@ -85,6 +93,7 @@ export const useFamilyData = (familyId: string) => {
 }
 
 export const useFamilyMembers = (familyId: string) => {
+  // if(!familyId) return [];
   return useQuery({
     queryKey: ["familyMembers", familyId],
     queryFn: () => getFamilyMembers(familyId),
@@ -109,7 +118,6 @@ export const useBusinesses = () => {
 }
 
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
-
 export const useHouseholdsList = () => {
   return useQuery({
     queryKey: ['householdsList'],

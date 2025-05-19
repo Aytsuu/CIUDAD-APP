@@ -1,14 +1,14 @@
 import { api } from "@/api/api";
-import { capitalizeAllFields, capitalize } from "@/helpers/capitalize";
+import { capitalize } from "@/helpers/capitalize";
 
 export const updateProfile = async (
   perId: string,
-  data: Record<string, string>
+  data: Record<string, any>
 ) => {
   try {
+    console.log(data) 
     const res = await api.put(
-      `profiling/personal/${perId}/`,
-      capitalizeAllFields(data)
+      `profiling/personal/update/${perId}/`, data
     );
     return res.data;
   } catch (err) {

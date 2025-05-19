@@ -65,7 +65,7 @@ export default function HouseholdProfileForm({
         ]}
         readOnly={false}
       />
-      <FormSelect control={form.control} name="address" label="Address" options={addresses} readOnly={false}/>
+      {addresses.length > 0 && <FormSelect control={form.control} name="address" label="Address" options={addresses} readOnly={false}/>}
       <div className="flex justify-end mt-5">
         {!isSubmitting ? (
           <ConfirmationModal 

@@ -1,4 +1,5 @@
 from rest_framework import generics
+from rest_framework.response import Response
 from ..serializers.personal_serializers import *
 from ..models import *
 
@@ -8,3 +9,11 @@ class PersonalCreateView(generics.CreateAPIView):
 
   def perform_create(self, serializer):
     serializer.save()
+
+class PersonalUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = PersonalUpdateSerializer
+    queryset = Personal.objects.all()
+    lookup_field = 'per_id'
+
+    def update(self, request, *args, **kwargs):
+       return super().update(request, *args, **kwargs)

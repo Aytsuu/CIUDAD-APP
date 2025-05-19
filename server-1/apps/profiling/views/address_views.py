@@ -80,3 +80,7 @@ class PerAddressBulkCreateView(generics.CreateAPIView):
     return Response({"detail": "Bulk create successful", "count": len(instances)},
       status=status.HTTP_201_CREATED
     )
+  
+class PerAddressListView(generics.ListAPIView):
+  serializer_class = PerAddressListSerializer
+  queryset = PersonalAddress.objects.all()
