@@ -8,7 +8,7 @@ import LivingSoloForm from "./LivingSoloForm";
 import { formatHouseholds, formatResidents } from "../../profilingFormats";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { toast } from "sonner";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";

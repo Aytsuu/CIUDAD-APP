@@ -13,20 +13,29 @@ import { additionalDetailsColumns } from "../ResidentColumns";
 import { useFamilyData, useFamilyMembers, useSitioList } from "../../queries/profilingFetchQueries";
 import { formatSitio } from "../../profilingFormats";
 import { capitalizeAllFields } from "@/helpers/capitalize";
+import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueries";
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
+  const [initial_personalInfo, setInitialPersonalInfo] = React.useState<any>(
+    params.data.personalInfo
+  );
+  const [initial_addresses, setInitialAddresses] = React.useState<any[]>(
+    params.data.personalInfo.per_addresses
+  );
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } =
-    useResidentForm(params.data.personalInfo);
+    useResidentForm(initial_personalInfo);
   const { mutateAsync: updateProfile } = useUpdateProfile();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
   const [addresses, setAddresses] = React.useState<Record<string, any>[]>(
-    params.data.personalInfo.per_addresses
+    initial_addresses
   )
   const { data: familyMembers, isLoading: isLoadingFam } = useFamilyMembers(params.data.familyId);
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const { mutateAsync: addAddress } = useAddAddress();
+  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
 
   const family = familyMembers?.results || [];
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList]);
@@ -36,7 +45,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     // Set the form values when the component mounts
     if(formType == Type.Viewing) {
       setIsReadOnly(true);
-      setAddresses(params.data.personalInfo.per_addresses);
+      setAddresses(initial_addresses);
     }
     formType === Type.Editing && setIsReadOnly(false);
   }, [formType]);
@@ -52,9 +61,11 @@ export default function ResidentViewForm({ params }: { params: any }) {
       return;
     }
 
-    const values = {...capitalizeAllFields(form.getValues()), per_addresses: addresses};
+    const isAddressAdded = initial_addresses.length !== addresses.length;
+    const values = form.getValues();
+
     if (checkDefaultValues({...values, per_addresses: addresses}, 
-      params.data?.personalInfo
+      {...initial_personalInfo, per_addresses: initial_addresses}
     )) {
       setIsSubmitting(false);
       setFormType(Type.Viewing);
@@ -62,16 +73,39 @@ export default function ResidentViewForm({ params }: { params: any }) {
       return;
     }
 
+    // Add new address to the database
+    if (isAddressAdded) {
+      addAddress(addresses.slice(
+        initial_addresses.length, addresses.length
+      ), {
+        onSuccess: (new_addresses) => {
+          // Format the addresses to match the expected format
+          const per_addresses = new_addresses.map((address: any) => {
+            return {add: address.add_id, per: initial_personalInfo.per_id}
+          });
+
+          // Link personal address
+          addPersonalAddress(per_addresses, {
+            onSuccess: () => {
+              setInitialAddresses(addresses);
+            }
+          });
+        }}
+      )
+    }
+
+    // Update the profile and address if any changes were made
     updateProfile({
-        personalId: params.data.personalInfo.per_id,
-        values: values,
-      },
-      {
+        personalId: initial_personalInfo.per_id,
+        values: {...values, per_addresses: isAddressAdded ? 
+          addresses.slice(0, initial_addresses.length) : addresses
+        },
+      },{
         onSuccess: () => {
           handleSubmitSuccess("Profile updated successfully");
           setIsSubmitting(false);
           setFormType(Type.Viewing);
-          params.data.personalInfo = values;
+          setInitialPersonalInfo(values);
         },
       }
     );

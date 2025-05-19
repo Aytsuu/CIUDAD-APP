@@ -6,7 +6,6 @@ export const updateProfile = async (
   data: Record<string, any>
 ) => {
   try {
-    console.log(data) 
     const res = await api.put(
       `profiling/personal/update/${perId}/`, data
     );

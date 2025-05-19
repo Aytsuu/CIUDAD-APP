@@ -7,27 +7,26 @@ class PersonalBaseSerializer(serializers.ModelSerializer):
         model = Personal
         fields = '__all__'
         extra_kwargs = {
-            'per_mname': {'required': False, 'allow_null': True},
-            'per_suffix': {'required': False, 'allow_null': True},
-            'per_edAttainment': {'required': False, 'allow_null': True},
+            'per_mname': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'per_suffix': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'per_edAttainment': {'required': False, 'allow_null': True, 'allow_blank': True},
         }
 
 class PersonalUpdateSerializer(serializers.ModelSerializer):
     per_addresses = serializers.ListField(child=AddressBaseSerializer(), required=False)
-
     class Meta:
         model = Personal
         fields = '__all__'
         extra_kwargs = {
-            'per_mname': {'required': False, 'allow_null': True},
-            'per_suffix': {'required': False, 'allow_null': True},
-            'per_edAttainment': {'required': False, 'allow_null': True},
+            'per_mname': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'per_suffix': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'per_edAttainment': {'required': False, 'allow_null': True, 'allow_blank': True},
         }
 
-    def update(self, instance, validated_data):
+    def update(self, instance, validated_data): 
         # Handle address data if provided
         addresses_data = validated_data.pop('per_addresses', None)
-        
+
         if addresses_data is not None:
             # Get existing addresses for this person
             existing_addresses = {
@@ -35,44 +34,55 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
                 for pa in PersonalAddress.objects.filter(per=instance)
             }
 
-            
-            # Track which addresses we're keeping
-            kept_address_ids = set()
+            # Track which addresses to keep
+            keep_address_ids = set()
             
             # Process each address in the request
-            for address_data in addresses_data:
+            for address_data in addresses_data: 
                 address_id = address_data.get('add_id', None)
-                print(f"Processing address data: {address_data}")
 
-                if address_id and address_id in existing_addresses:
-                    # Update existing address
+                if address_id and (address_id in existing_addresses):
                     personal_address = existing_addresses[address_id]
-                    address_serializer = AddressBaseSerializer(
-                        personal_address.add,
-                        data=address_data,
-                        partial=True
+
+                    has_changes = (
+                        getattr(personal_address.add, field) != value
+                        for field, value in address_data.items()
                     )
-                    kept_address_ids.add(address_id)
-                else:
-                    # Create new address
-                    address_serializer = AddressBaseSerializer(data=address_data)
-                
-                if address_serializer.is_valid():
-                    address = address_serializer.save()
-                    if not (address_id and address_id in existing_addresses):
-                        PersonalAddress.objects.create(per=instance, add=address)
-                        kept_address_ids.add(address.add_id)
-                else:
-                    raise serializers.ValidationError({'per_addresses': address_serializer.errors})
-            
-            # Delete addresses that weren't included in the request
-            addresses_to_delete = set(existing_addresses.keys()) - kept_address_ids
+
+                    if has_changes:
+                        # Create new address
+                        data = address_data.copy()
+                        data.pop('add_id')
+
+                        # Get similar addresses according to the changes
+                        existing_changes = Address.objects.filter(
+                            add_province=data['add_province'],
+                            add_city=data['add_city'],
+                            add_barangay=data['add_barangay'],
+                            add_external_sitio=data['add_external_sitio'],
+                            sitio=data['sitio'],
+                            add_street=data['add_street']
+                        ).first()
+
+                        if existing_changes:
+                            personal_address.add = existing_changes
+                            personal_address.save()
+                        else:
+                            address_serializer = AddressBaseSerializer(data=data)
+                            if address_serializer.is_valid():
+                                address = address_serializer.save()
+                                PersonalAddress.objects.create(per=instance, add=address)
+                                PersonalAddress.objects.get(add=address).delete()
+
+                        keep_address_ids.add(address_id)
+
+            # Delete addresses that are not in the request
+            addresses_to_delete = set(existing_addresses.keys()) - keep_address_ids
             if addresses_to_delete:
                 PersonalAddress.objects.filter(
                     per=instance,
                     add_id__in=addresses_to_delete
                 ).delete()
-                Address.objects.filter(add_id__in=addresses_to_delete).delete()
 
         # Update personal data
         for attr, value in validated_data.items():

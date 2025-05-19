@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { add } from "date-fns";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
@@ -145,7 +146,7 @@ const PersonalInfoForm = ({
                     readOnly={isReadOnly}
                   /> <p className="opacity-40">/</p>
 
-                  {!isReadOnly ? (address.add_barangay === "San Roque" ? 
+                  {address.add_barangay === "San Roque" ? ( !isReadOnly  ? 
                     (<SelectLayout
                       className="border-none w-full"
                       placeholder="Sitio"
@@ -153,19 +154,19 @@ const PersonalInfoForm = ({
                       value={address.sitio?.toLowerCase()}
                       onChange={(value) => handleSetAddress(idx, 'sitio', value)}
                       
-                    />) : (<Input
-                      placeholder="Sitio"
-                      value={address.add_external_sitio}
-                      onChange={(e) => handleSetAddress(idx, 'add_external_sitio', e.target.value)}
-                      className="border-none shadow-none focus-visible:ring-0"
-                      readOnly={isReadOnly}
-                    />)) : (
+                    />) : (
                       <Input 
                         className="border-none shadow-none focus-visible:ring-0" 
                         value={String(capitalize(address.sitio))} 
                         readOnly
                       />
-                    )
+                    )) : (<Input
+                      placeholder="Sitio"
+                      value={address.add_external_sitio}
+                      onChange={(e) => handleSetAddress(idx, 'add_external_sitio', e.target.value)}
+                      className="border-none shadow-none focus-visible:ring-0"
+                      readOnly={isReadOnly}
+                    />)
                   } 
                   
                   <p className="opacity-40">/</p>
@@ -177,7 +178,7 @@ const PersonalInfoForm = ({
                     readOnly={isReadOnly}
                   />
                 </div>
-                {idx + 1 > 1 && 
+                {idx + 1 > 1 && formType !== Type.Viewing &&
                   <Button 
                     type={"button"}
                     variant={"outline"} 
@@ -200,11 +201,12 @@ const PersonalInfoForm = ({
             className="border-none shadow-none text-black/50 hover:text-black/60"
             onClick={() => setAddresses((prev) => [
               ...prev, {
-                province: '',
-                city: '',
-                barangay: '',
+                add_province: '',
+                add_city: '',
+                add_barangay: '',
                 sitio: '',
-                street: ''
+                add_external_sitio: '',
+                add_street: ''
               }
             ])}
           >
