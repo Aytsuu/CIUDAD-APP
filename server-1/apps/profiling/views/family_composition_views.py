@@ -65,3 +65,8 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         return Response({"detail": "Bulk create successful", "count": len(instances)},
             status=status.HTTP_201_CREATED
         )
+
+class FamilyCompositionUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = FamilyCompositionBaseSerializer
+    queryset = FamilyComposition.objects.all()
+    # two look up fields

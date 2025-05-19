@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   getBusinesses,
+  getFamFilteredByHouse,
   getFamiliesTable,
   getFamilyComposition,
   getFamilyData,
@@ -101,6 +102,14 @@ export const useFamilyMembers = (familyId: string) => {
   })
 }
 
+export const useFamFilteredByHouse = (householdId: string) => {
+  return useQuery({
+    queryKey: ["famFilteredByHouse", householdId],
+    queryFn: () => getFamFilteredByHouse(householdId),
+    staleTime: 5000,
+  })
+}
+
 export const useFamilyComposition = () => {
   return useQuery({
     queryKey: ["familyCompositions"],
@@ -109,6 +118,8 @@ export const useFamilyComposition = () => {
   })
 }
 
+
+// ================ BUSINESS ================
 export const useBusinesses = () => {
   return useQuery({
     queryKey: ["businesses"],

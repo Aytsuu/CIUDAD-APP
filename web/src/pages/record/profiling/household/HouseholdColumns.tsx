@@ -7,6 +7,10 @@ import { useLoading } from "@/context/LoadingContext";
 import { getFamFilteredByHouse, getFamilyData, getFamilyMembers, getHouseholdList } from "../restful-api/profilingGetAPI";
 import { Badge } from "@/components/ui/badge";
 import ViewButton from "@/components/ui/view-button";
+import { Combobox } from "@/components/ui/combobox";
+import React from "react";
+import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
+import { formatFamiles } from "../profilingFormats";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -50,6 +54,30 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => {
+      const { showLoading, hideLoading } = useLoading();
+      const { data: famFilteredByHouse, isLoading } = useFamFilteredByHouse(row.getValue('hh_id'));
+      const formattedFamilies = React.useMemo(() => formatFamiles(famFilteredByHouse), [famFilteredByHouse]);
+
+      React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading])
+
+      return (
+        <Combobox 
+          options={formattedFamilies}
+          value={row.getValue('total_families')}
+          placeholder="Search member"
+          emptyMessage="No resident found"
+          staticVal={true}
+          size={300}
+        />
+      )
+    }
   },
   {
     accessorKey: 'sitio',

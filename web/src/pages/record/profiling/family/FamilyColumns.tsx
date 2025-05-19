@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, CircleCheck, CircleChevronRight, CircleMinus, Loader2 } from "lucide-react";
+import { ArrowUpDown, CircleAlert, CircleCheck, CircleMinus, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
@@ -15,6 +15,9 @@ import { Combobox } from "@/components/ui/combobox";
 import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
 import { formatResidents } from "../profilingFormats";
 import ViewButton from "@/components/ui/view-button";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { Button } from "@/components/ui/button/button";
+import { capitalize } from "@/helpers/capitalize";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -154,22 +157,31 @@ export const familyViewColumns = (
       const navigate = useNavigate();
       const data = row.getValue("data") as any;
       const { showLoading, hideLoading } = useLoading();
+      const [role, setRole] = React.useState<string | null>(data.fc_role);
 
       const handleViewClick = async () => {
         showLoading();
         try {
-          const resident = await getPersonalInfo(data.rp_id);
+          const personalInfo = await getPersonalInfo(data.rp_id);
             navigate("/resident/view", {
               state: {
                 params: {
                   type: 'viewing',
-                  data: resident,
+                  data: {
+                    personalInfo: personalInfo,
+                    residentId: data.rp_id,
+                    familyId: data.fam_id,
+                  },
                 }
               }
             });
         } finally {
           hideLoading();
         }
+      }
+
+      const handleRoleChange = (value: string) => {
+        setRole(capitalize(value));
       }
 
       return (
@@ -181,11 +193,21 @@ export const familyViewColumns = (
               className="col-span-2"
             />
             <InfoCell value={data.sex} />
-            <InfoCell value={calculateAge(data.dob)} className="opac" />
+            <InfoCell value={calculateAge(data.dob)}/>
             <InfoCell value={data.dob} /> 
             <InfoCell value={data.status} />
             <InfoCell value={
-              <Badge className="bg-green-500 hover:bg-green-500">{data.fc_role}</Badge>} 
+              <DropdownLayout
+                  trigger={<Button className="w-full h-6">{role} </Button>}
+                  options={[
+                    {id: "mother", name: "Mother"}, 
+                    {id: "father", name: "Father"},
+                    {id: "guardian", name: "Guardian"},
+                    {id: "dependent" , name: "Dependent"},
+                  ]}
+                  onSelect={handleRoleChange}
+                />
+            } 
             />
           </div>
           

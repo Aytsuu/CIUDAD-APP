@@ -10,7 +10,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { CircleAlert, CircleCheck, Trash } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
 import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAddQueries";
@@ -22,7 +21,6 @@ export default function DependentsInfoLayout({
   selectedParents,
   dependentsList,
   setDependentsList,
-  defaultValues,
   back,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -35,7 +33,6 @@ export default function DependentsInfoLayout({
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
-  const navigate = useNavigate();
   const { user } = React.useRef(useAuth()).current;
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
@@ -169,18 +166,7 @@ export default function DependentsInfoLayout({
       ]
     })
 
-    addFamilyComposition(bulk_composition, {
-      onSuccess: () => {
-        // Provide feedback to the user
-        toast("Record added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-        });
-
-        navigate(-1);
-        setIsSubmitting(false);
-        form.reset(defaultValues);
-      }
-    })
+    addFamilyComposition(bulk_composition);
   }
 
   return (

@@ -122,7 +122,6 @@ export default function SoloFormLayout() {
     ], {
       onSuccess: () => {
         dispatch(familyRegistered(true));
-        safeNavigate.back();
       }
     });
   };

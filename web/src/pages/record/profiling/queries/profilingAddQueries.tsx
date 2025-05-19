@@ -14,6 +14,7 @@ import {
   addResidentAndPersonal,
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export const useAddAddress = () => {
   return useMutation({
@@ -74,6 +75,7 @@ export const useAddFamily = () => {
 
 export const useAddFamilyComposition = () => {
   const queryClient = useQueryClient();
+  const { safeNavigate } = useSafeNavigate();
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
     onSuccess: (newData, variables) => {
@@ -125,14 +127,16 @@ export const useAddFamilyComposition = () => {
       //   })}
       // );
 
-      toast("Record added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
+      
       // Invalidate queries to ensure fresh data is fetched if needed
       queryClient.invalidateQueries({queryKey: ['familyCompositions']});
       queryClient.invalidateQueries({ queryKey: ["families"] });
       queryClient.invalidateQueries({queryKey: ['residents']});
+
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+      safeNavigate.back();
     }
   });
 };
