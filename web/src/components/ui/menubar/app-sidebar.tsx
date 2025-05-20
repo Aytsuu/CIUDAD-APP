@@ -127,6 +127,10 @@ const items: MenuItem[] = [
     url: "/waste-illegaldumping-report",
   },
   {
+    title: "Waste Personnel & Collection Vehicle",
+    url: "/waste-personnel"
+  },
+  {
     title: "Announcement",
     url: "/announcement",
   },
