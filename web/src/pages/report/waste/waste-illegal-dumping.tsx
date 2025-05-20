@@ -271,22 +271,19 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useWasteReport } from "./queries/waste-ReportGetQueries";
+import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
+import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueries";
 
-type Report = {
-  reportNo: string;
-  reportMatter: string;
-  location: string;
-  reportDetails: string;
-  violator: string;
-  reportedBy: string;
-  contactNo: string;
-  dateTime: string;
-};
 
-const columns: ColumnDef<Report>[] = [
+
+
+function WasteIllegalDumping() {
+
+  const { data: fetchedData = [] } = useWasteReport();
+
+  const columns: ColumnDef<WasteReport>[] = [
   {
-    accessorKey: "reportNo",
+    accessorKey: "rep_id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -297,41 +294,41 @@ const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("reportNo")}</div>
+      <div className="capitalize">{row.getValue("rep_id")}</div>
     ),
   },
   {
-    accessorKey: "reportMatter",
+    accessorKey: "rep_matter",
     header: "Report Matter",
   },
   {
-    accessorKey: "location",
+    accessorKey: "rep_location",
     header: "Location",
   },
   {
-    accessorKey: "reportDetails",
+    accessorKey: "rep_add_details",
     header: "Report Details",
   },
   {
-    accessorKey: "violator",
+    accessorKey: "rep_violator",
     header: "Violator",
   },
   {
-    accessorKey: "reportedBy",
-    header: "Reported By",
+    accessorKey: "rep_complainant",
+    header: "Complainant",
   },
   {
-    accessorKey: "contactNo",
+    accessorKey: "rep_contact",
     header: "Contact No.",
   },
   {
-    accessorKey: "dateTime",
+    accessorKey: "rep_date",
     header: "Date and Time",
   },
   {
-    accessorKey: "image",
+    accessorKey: "rep_image",
     header: "Image",
-    cell: ({ row }) => (
+    cell: ({row}) => (
       <DialogLayout
         trigger={
           <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
@@ -339,13 +336,13 @@ const columns: ColumnDef<Report>[] = [
           </div>
         }
         className="max-w-[50%] h-2/3 flex flex-col"
-        title="Image Details"
-        description="Here is the image related to the report."
+        title={row.getValue("rep_id")}
+        description=""
         mainContent={
           <img
-            src="path_to_your_image.jpg"
+            src={row.getValue("rep_image")}
             alt="Report Image"
-            className="w-full h-auto"
+            className="w-full h-30%"
           />
         }
       />
@@ -354,7 +351,7 @@ const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
+    cell: () => (
       <TooltipLayout
         trigger={
           <div className="w-[35px] h-[35px] bg-[#ff2c2c] text-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
@@ -367,33 +364,6 @@ const columns: ColumnDef<Report>[] = [
   },
 ];
 
-const bodyData: Report[] = [
-  {
-    reportNo: "0001",
-    reportMatter: "Littering, Illegal dumping, Illegal disposal of garbage",
-    location: "Sitio 1",
-    reportDetails:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    violator: "Unknown",
-    reportedBy: "Anonymous",
-    contactNo: "09xxxxxxxx",
-    dateTime: "01/11/25 05:00PM",
-  },
-  {
-    reportNo: "0002",
-    reportMatter: "Urinating, defecating, spitting in a public place",
-    location: "Sitio 1",
-    reportDetails:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    violator: "Unknown",
-    reportedBy: "Anonymous",
-    contactNo: "09xxxxxxxx",
-    dateTime: "01/11/25 05:00PM",
-  },
-];
-
-function WasteIllegalDumping() {
-  const data = bodyData;
   const filterOptions = [
     { id: "0", name: "All Report Matter" }, // Added "All Report Category" option
     {
@@ -428,17 +398,13 @@ function WasteIllegalDumping() {
   ];
 
   const [selectedFilterId, setSelectedFilterId] = useState("0");
-  const selectedFilterName =
-    filterOptions.find((option) => option.id === selectedFilterId)?.name || "";
+  const selectedFilterName = filterOptions.find((option) => option.id === selectedFilterId)?.name || "";
 
-  const filteredData =
-    selectedFilterId === "0"
-      ? data
-      : data.filter(
-          (item) =>
-            item.reportMatter.trim().toLowerCase() ===
-            selectedFilterName.trim().toLowerCase()
-        );
+  const filteredData = selectedFilterId === "0"
+    ? fetchedData
+    : fetchedData.filter(item => 
+        item.rep_matter.trim().toLowerCase() === selectedFilterName.trim().toLowerCase()
+      );
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(filteredData.length / 12);
