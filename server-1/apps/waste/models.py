@@ -1,4 +1,6 @@
 from django.db import models
+from datetime import date
+from django.core.validators import MaxValueValidator
 
 # Create your models here.
 # KANI UNA 
@@ -64,9 +66,16 @@ class WasteHotspot(models.Model):
 
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
-    rep_image = models.CharField(max_length=200, null=True)
-    rep_violator = models.CharField(max_length=100, null=True)
+    rep_image = models.CharField(default="none")
+    rep_matter = models.CharField(default="none")
+    rep_location = models.CharField(default="none")
     rep_add_details = models.CharField(max_length=200, null=True)
+    rep_violator = models.CharField(default="none")
+    rep_complainant = models.CharField(default="none")
+    rep_contact = models.CharField(default="none")
+    rep_status = models.CharField(max_length=100, default="pending")
+    rep_date = models.DateField(default=date.today)
+    rep_date_resolved = models.DateField(null=True)
     # ra_id = models.ForeignKey(ResidentAccount, on_delete=models.CASCADE)
     # sitio_id = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
