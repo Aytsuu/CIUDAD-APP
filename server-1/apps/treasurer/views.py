@@ -116,3 +116,4 @@ class DeleteIncomeTrackingView(generics.DestroyAPIView):
     def get_object(self):
         inc_num = self.kwargs.get('inc_num')
         return get_object_or_404(Income_Tracking, inc_num=inc_num) 
+
