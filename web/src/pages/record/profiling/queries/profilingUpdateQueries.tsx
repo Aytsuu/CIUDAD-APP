@@ -1,16 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateFamily, updateProfile } from "../restful-api/profilingPutAPI";
+import { updateFamily, updateFamilyRole, updateProfile } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { capitalize } from "@/helpers/capitalize";
 
+export const useUpdateFamilyRole = () => {
+  return useMutation({
+    mutationFn: ({ familyId, residentId, fc_role } : {
+      familyId: string;
+      residentId: string;
+      fc_role: string | null;
+    }) => updateFamilyRole(familyId, residentId, fc_role)
+  })
+}
+
 export const useUpdateProfile = () => {
   return useMutation({
-    mutationFn: ({ personalId, values}: { 
+    mutationFn: ({ personalId, values} : { 
       personalId: string;
       values: Record<string, any>;
-    }) =>
-      updateProfile(personalId, values),
+    }) => updateProfile(personalId, values),
   });
 };
 

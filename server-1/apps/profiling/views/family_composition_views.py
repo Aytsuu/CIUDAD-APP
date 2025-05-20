@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from ..serializers.family_composition_serializers import *
 from ..models import *
@@ -66,7 +67,22 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED
         )
 
-class FamilyCompositionUpdateView(generics.RetrieveUpdateAPIView):
+class FamilyRoleUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = FamilyCompositionBaseSerializer
     queryset = FamilyComposition.objects.all()
-    # two look up fields
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_object(self):
+        fam = self.kwargs.get('fam')
+        rp = self.kwargs.get('rp')
+        obj = get_object_or_404(FamilyComposition, fam=fam, rp=rp)
+        return obj
+
+    

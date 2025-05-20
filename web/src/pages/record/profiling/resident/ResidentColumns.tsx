@@ -223,7 +223,8 @@ export const additionalDetailsColumns = (residentId: string, familyId: string): 
                   familyId: familyId
                 },
               }
-            }
+            },
+            replace: true
           });
         } finally {
           hideLoading();

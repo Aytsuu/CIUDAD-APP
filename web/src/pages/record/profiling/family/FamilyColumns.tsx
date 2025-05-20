@@ -18,6 +18,7 @@ import ViewButton from "@/components/ui/view-button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { capitalize } from "@/helpers/capitalize";
+import { useUpdateFamily, useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -157,6 +158,7 @@ export const familyViewColumns = (
       const navigate = useNavigate();
       const data = row.getValue("data") as any;
       const { showLoading, hideLoading } = useLoading();
+      const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole();
       const [role, setRole] = React.useState<string | null>(data.fc_role);
 
       const handleViewClick = async () => {
@@ -170,7 +172,7 @@ export const familyViewColumns = (
                   data: {
                     personalInfo: personalInfo,
                     residentId: data.rp_id,
-                    familyId: data.fam_id,
+                    familyId: family.fam_id,
                   },
                 }
               }
@@ -182,6 +184,16 @@ export const familyViewColumns = (
 
       const handleRoleChange = (value: string) => {
         setRole(capitalize(value));
+        updateFamilyRole({
+          familyId: family.fam_id,
+          residentId: data.rp_id,
+          fc_role: capitalize(value)
+        }, {
+          onError: (status) => {
+            setRole(data.fc_role);
+            throw status;
+          }
+        })
       }
 
       return (

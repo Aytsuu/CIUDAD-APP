@@ -25,7 +25,6 @@ export default function FamilyRecordView() {
 
   const formattedData = React.useCallback(() => {
     if(!compositions) return [];
-
     return compositions.map((member: any) => {
       return {
         data: member

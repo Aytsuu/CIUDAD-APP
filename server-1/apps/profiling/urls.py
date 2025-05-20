@@ -12,7 +12,7 @@ from .views_deprecated import * # To be removed
 urlpatterns = [
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
-    
+
     # Address Urls
     path("address/create/", AddressBulkCreateView.as_view(), name="create-address"),
     path("per_address/create/", PerAddressBulkCreateView.as_view(), name="create-per-address"),
@@ -36,6 +36,7 @@ urlpatterns = [
     # Family Composition Urls
     path("family-composition/", FamilyCompositionView.as_view(), name="family-composition-details"),
     path("family/composition/delete/<str:fam>/<str:rp>/", FamilyCompositionDeleteView.as_view(), name="family-composition-delete"),
+    path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
     path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
 

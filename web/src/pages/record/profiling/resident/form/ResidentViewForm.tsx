@@ -17,21 +17,14 @@ import { useAddAddress, useAddPerAddress } from "../../queries/profilingAddQueri
 
 export default function ResidentViewForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
-  const [initial_personalInfo, setInitialPersonalInfo] = React.useState<any>(
-    params.data.personalInfo
-  );
-  const [initial_addresses, setInitialAddresses] = React.useState<any[]>(
-    params.data.personalInfo.per_addresses
-  );
+  const data = React.useMemo(() => params.data?.personalInfo, [params.data]);
   const { form, checkDefaultValues, handleSubmitSuccess, handleSubmitError } =
-    useResidentForm(initial_personalInfo);
+    useResidentForm(data);
   const { mutateAsync: updateProfile } = useUpdateProfile();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
-  const [addresses, setAddresses] = React.useState<Record<string, any>[]>(
-    initial_addresses
-  )
+  const [addresses, setAddresses] = React.useState<Record<string, any>[]>([])
   const { data: familyMembers, isLoading: isLoadingFam } = useFamilyMembers(params.data.familyId);
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
   const { mutateAsync: addAddress } = useAddAddress();
@@ -39,16 +32,20 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
   const family = familyMembers?.results || [];
   const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList]);
-
+ 
   // ================= SIDE EFFECTS ==================
   React.useEffect(() => {
     // Set the form values when the component mounts
     if(formType == Type.Viewing) {
       setIsReadOnly(true);
-      setAddresses(initial_addresses);
+      setAddresses(data.per_addresses);
     }
     formType === Type.Editing && setIsReadOnly(false);
   }, [formType]);
+
+  React.useEffect(() => {
+    setAddresses(data.per_addresses);
+  }, [data])
 
   // ==================== HANDLERS ====================
   const submit = async () => {
@@ -61,11 +58,14 @@ export default function ResidentViewForm({ params }: { params: any }) {
       return;
     }
 
-    const isAddressAdded = initial_addresses.length !== addresses.length;
+    const isAddressAdded = data.per_addresses.length !== addresses.length;
     const values = form.getValues();
 
     if (checkDefaultValues({...values, per_addresses: addresses}, 
-      {...initial_personalInfo, per_addresses: initial_addresses}
+      {
+        ...params.data.personalInfo, 
+        per_addresses: data.per_addresses
+      }
     )) {
       setIsSubmitting(false);
       setFormType(Type.Viewing);
@@ -76,36 +76,33 @@ export default function ResidentViewForm({ params }: { params: any }) {
     // Add new address to the database
     if (isAddressAdded) {
       addAddress(addresses.slice(
-        initial_addresses.length, addresses.length
+        data.per_addresses.length,
+        addresses.length
       ), {
         onSuccess: (new_addresses) => {
           // Format the addresses to match the expected format
           const per_addresses = new_addresses.map((address: any) => {
-            return {add: address.add_id, per: initial_personalInfo.per_id}
+            return {add: address.add_id, per: params.data.personalInfo.per_id}
           });
 
           // Link personal address
-          addPersonalAddress(per_addresses, {
-            onSuccess: () => {
-              setInitialAddresses(addresses);
-            }
-          });
+          addPersonalAddress(per_addresses);
         }}
       )
     }
 
     // Update the profile and address if any changes were made
     updateProfile({
-        personalId: initial_personalInfo.per_id,
+        personalId: params.data.personalInfo.per_id,
         values: {...values, per_addresses: isAddressAdded ? 
-          addresses.slice(0, initial_addresses.length) : addresses
+          addresses.slice(0, data.per_addresses.length) : addresses
         },
       },{
         onSuccess: () => {
           handleSubmitSuccess("Profile updated successfully");
           setIsSubmitting(false);
           setFormType(Type.Viewing);
-          setInitialPersonalInfo(values);
+          params.data.personalInfo.per_addresses = addresses;
         },
       }
     );

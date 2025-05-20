@@ -15,7 +15,6 @@ export const updateProfile = async (
   }
 };
 
-
 export const updateFamily = async (
   demographicInfo: Record<string, any>,
   familyId: string
@@ -30,6 +29,17 @@ export const updateFamily = async (
     return res.data;
   } catch (err) {
     console.error(err);
+  }
+}
+
+export const updateFamilyRole = async (familyId: string, residentId: string, fc_role: string | null) => {
+  try {
+    const res = await api.put(`profiling/family/role/update/${familyId}/${residentId}/`, {
+      fc_role
+    })
+    return res.data;
+  } catch (err) {
+    throw err;
   }
 }
 
