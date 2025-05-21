@@ -11,6 +11,9 @@ import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
 import { formatFamiles } from "../profilingFormats";
+import { Button } from "@/components/ui/button/button";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { capitalize } from "@/helpers/capitalize";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -130,6 +133,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         hh_id: row.original.hh_id,
         nhts: row.original.nhts,
         head: row.original.head,
+        head_id: row.original.head_id,
         sitio: row.original.sitio,
         street: row.original.street,
         date_registered: row.original.date_registered,
@@ -169,6 +173,7 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
       const navigate = useNavigate();
       const { showLoading, hideLoading } = useLoading();
       const family = row.getValue('data') as any;
+      const [building, setBuilding] = React.useState<string | null>(family.fam_building);
       
       const handleViewClick = async () => {
         showLoading();
@@ -195,6 +200,10 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
         }
       };
 
+      const handleBuildingChange = (value: string) => {
+        setBuilding(capitalize(value));
+      };
+
       return (
         <CardContainer>
           <div className="w-full grid grid-cols-7 items-center justify-center">
@@ -203,7 +212,15 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
               <Badge className="bg-black/10 text-black/70 hover:bg-black/10">{family.total_members}</Badge>
             }/>
             <InfoCell value={
-              <Badge className="bg-green-500 hover:bg-green-500">{family.fam_building}</Badge>
+              <DropdownLayout
+                trigger={<Button className="w-full h-6">{building} </Button>}
+                options={[
+                  {id: "owner", name: "Owner"}, 
+                  {id: "renter", name: "Renter"},
+                  {id: "other", name: "Other"}
+                ]}
+                onSelect={handleBuildingChange}
+              />
             }/>      
             <InfoCell value={family.fam_indigenous} />
             <InfoCell value={family.fam_date_registered} />

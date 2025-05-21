@@ -15,11 +15,11 @@ class FamilyTableSerializer(serializers.ModelSerializer):
   father = serializers.SerializerMethodField()
   mother = serializers.SerializerMethodField()
   guardian = serializers.SerializerMethodField()
-
+  registered_by = serializers.SerializerMethodField()
   class Meta: 
     model = Family
     fields = ['fam_id', 'household_no', 'sitio', 'fam_building', 'mother', 
-              'father', 'guardian', 'fam_date_registered', 'members']
+              'father', 'guardian', 'fam_date_registered', 'members', 'registered_by']
     
   def get_members(self, obj):
     return FamilyComposition.objects.filter(fam=obj).count()
@@ -48,6 +48,10 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     
     return "-"
 
+  def get_registered_by(self, obj):
+    info = obj.staff.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+          (f" {info.per_mname[0]}." if info.per_mname else "")
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 

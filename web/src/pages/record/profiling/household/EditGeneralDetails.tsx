@@ -34,22 +34,22 @@ export default function EditGeneralDetails({
   const [invalidHead, setInvalidHead] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
   const { data: residentsList } = useResidentsList();
-  const { data: sitioList } = useSitioList();
   const formattedResidents = React.useMemo(() => 
     formatResidents(residentsList), [residentsList]
   );
-  const formattedSitio = React.useMemo(() => 
-    formatSitio(sitioList), [sitioList]
-  );
-
-  console.log(formattedSitio)
 
   React.useEffect(() => {
     if(householdData) {
-      // form.setValue("householdHead", householdData.head);
+      const head = formattedResidents.find(
+        (res: any) => res.id.split(" ")[0] === householdData.head_id
+      );
+
+      if(head) {
+        form.setValue("householdHead", head.id);
+      }
       form.setValue("nhts", householdData.nhts);
-      form.setValue("sitio", householdData.sitio);
-      form.setValue("street", householdData.street);
+      // form.setValue("address", householdData.);
+
     }
   }, [householdData])
 
@@ -57,9 +57,7 @@ export default function EditGeneralDetails({
   const checkDefaultValues = (values: any) => {
     const isDefault = 
       values.householdHead === householdData.head &&
-      values.nhts === householdData.nhts &&
-      values.sitio === householdData.sitio &&
-      values.street === householdData.street
+      values.nhts === householdData.nhts
 
     return isDefault;
   };
@@ -96,7 +94,7 @@ export default function EditGeneralDetails({
         }}
         className="grid gap-3"
       >
-        {/* <div className="grid gap-2">
+        <div className="grid gap-2">
           <div className="flex justify-between items-center">
             <Label className="text-black/70">Household Head</Label>
           </div>
@@ -122,13 +120,11 @@ export default function EditGeneralDetails({
           {invalidHead ? <Label className="text-[13px] text-red-500">
             Resident is required
           </Label> : ""}
-        </div> */}
+        </div>
         <FormSelect control={form.control} name="nhts" label="NHTS Household" options={[
           { id: "yes", name: "Yes" },
           { id: "no", name: "No" },
         ]}/>
-        <FormSelect control={form.control} name="sitio" label="Sitio" options={formattedSitio}/>
-        <FormInput control={form.control} name="street" label="Street"/>
         <div className="flex justify-end mt-8">
           {!isSaving ? (<Button>Save</Button>) : (
             <LoadButton>

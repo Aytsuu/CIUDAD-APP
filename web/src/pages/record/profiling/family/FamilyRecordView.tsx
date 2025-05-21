@@ -32,6 +32,7 @@ export default function FamilyRecordView() {
     })
   }, [compositions]);
   
+  console.log(family)
   return (
     <LayoutWithBack
       title="Family Details"

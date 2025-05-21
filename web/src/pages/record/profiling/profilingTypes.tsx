@@ -54,6 +54,7 @@ export type HouseholdRecord = {
   sitio: string;
   nhts: string;
   head: string;
+  head_id: string;
   date_registered: string;
   registered_by: string;
 }

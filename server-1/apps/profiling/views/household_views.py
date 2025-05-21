@@ -26,8 +26,7 @@ class HouseholdTableView(generics.ListAPIView):
             'hh_id',
             'hh_nhts',
             'hh_date_registered',
-            'add__add_street',
-            'add__sitio__sitio_name',
+            'rp__rp_id',
             'rp__per__per_lname',
             'rp__per__per_fname',
             'rp__per__per_mname'
