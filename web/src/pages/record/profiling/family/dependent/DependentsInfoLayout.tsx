@@ -8,12 +8,13 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { DependentRecord } from "../../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { CircleAlert, CircleCheck, Trash } from "lucide-react";
+import { CircleAlert, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
 import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export default function DependentsInfoLayout({
   form,
@@ -33,7 +34,8 @@ export default function DependentsInfoLayout({
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
-  const { user } = React.useRef(useAuth()).current;
+  const { user } = useAuth();
+  const { safeNavigate } = useSafeNavigate(); 
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -166,7 +168,11 @@ export default function DependentsInfoLayout({
       ]
     })
 
-    addFamilyComposition(bulk_composition);
+    addFamilyComposition(bulk_composition,{
+      onSuccess: () => {
+        safeNavigate.back();
+      }
+    });
   }
 
   return (

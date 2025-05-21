@@ -18,9 +18,9 @@ import {
 } from "../../queries/profilingAddQueries";
 import { useHouseholdsList, useResidentsList } from "../../queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
-import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 import { familyRegistered } from "@/redux/addRegSlice";
 import { useDispatch } from "react-redux";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export default function SoloFormLayout() {
   // ================= STATE INITIALIZATION ==================
@@ -122,6 +122,7 @@ export default function SoloFormLayout() {
     ], {
       onSuccess: () => {
         dispatch(familyRegistered(true));
+        safeNavigate.back();
       }
     });
   };

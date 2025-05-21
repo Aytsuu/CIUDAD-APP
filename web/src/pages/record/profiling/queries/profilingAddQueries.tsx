@@ -75,7 +75,7 @@ export const useAddFamily = () => {
 
 export const useAddFamilyComposition = () => {
   const queryClient = useQueryClient();
-  const { safeNavigate } = useSafeNavigate();
+    
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
     onSuccess: (newData, variables) => {
@@ -136,8 +136,8 @@ export const useAddFamilyComposition = () => {
       toast("Record added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
       });
-      safeNavigate.back();
-    }
+
+      }
   });
 };
 
