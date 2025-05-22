@@ -13,15 +13,19 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { formatResidents, formatSitio } from "../profilingFormats";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
-import { useResidentsList, useSitioList } from "../queries/profilingFetchQueries";
 import { householdFormSchema } from "@/form-schema/profiling-schema";
-import { FormInput } from "@/components/ui/form/form-input";
+import { useUpdateHousehold } from "../queries/profilingUpdateQueries";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function EditGeneralDetails({
-  householdData, 
+  residents,
+  household, 
+  setHousehold,
   setIsOpenDialog,
 } : {
-  householdData: Record<string, any>
+  residents: Record<string, any>[]
+  household: Record<string, any>;
+  setHousehold: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const defaultValues = React.useRef(
@@ -31,33 +35,34 @@ export default function EditGeneralDetails({
     resolver: zodResolver(householdFormSchema),
     defaultValues,
   });
+
   const [invalidHead, setInvalidHead] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
-  const { data: residentsList } = useResidentsList();
+  const { mutateAsync: updateHousehold } = useUpdateHousehold();
   const formattedResidents = React.useMemo(() => 
-    formatResidents(residentsList), [residentsList]
+    formatResidents(residents), [residents]
   );
 
   React.useEffect(() => {
-    if(householdData) {
+    if(household) {
       const head = formattedResidents.find(
-        (res: any) => res.id.split(" ")[0] === householdData.head_id
-      );
+        (res: any) => res.id.split(" ")[0] === household.head_id
+      ); 
 
       if(head) {
         form.setValue("householdHead", head.id);
       }
-      form.setValue("nhts", householdData.nhts);
-      // form.setValue("address", householdData.);
+      form.setValue("nhts", household.nhts);
+      // form.setValue("address", household.);
 
     }
-  }, [householdData])
+  }, [household])
 
   // Check if values are not changed when saving
   const checkDefaultValues = (values: any) => {
     const isDefault = 
-      values.householdHead === householdData.head &&
-      values.nhts === householdData.nhts
+      values.householdHead === household.head &&
+      values.nhts === household.nhts
 
     return isDefault;
   };
@@ -82,7 +87,19 @@ export default function EditGeneralDetails({
       });
       return;
     }
-
+    
+    updateHousehold({...values, hh_id: household.hh_id}, {
+        onSuccess: () => {
+          setIsSaving(false);
+          setIsOpenDialog(false);
+          setHousehold((prev) => ({
+            ...prev,
+            head_id: values.householdHead,
+            hh_nhts: values.nhts
+          }))
+        }
+      }
+    );
   }
 
   return (

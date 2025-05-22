@@ -14,13 +14,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { capitalize } from "@/helpers/capitalize";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { add } from "date-fns";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
   formattedSitio: any;
   formattedResidents?: any;
   addresses: any[];
+  validAddresses?: boolean[];
   form: UseFormReturn<z.infer<typeof personalInfoSchema>>;
   formType: Type;
   isAssignmentOpen?: boolean;
@@ -29,6 +29,7 @@ type PersonalInfoFormProps = {
   isReadOnly: boolean;
   isAllowSubmit?: boolean;
   setAddresses: React.Dispatch<React.SetStateAction<any[]>>;
+  setValidAddresses?: React.Dispatch<React.SetStateAction<boolean[]>>;
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
@@ -54,6 +55,7 @@ const PersonalInfoForm = ({
   formattedSitio,
   formattedResidents,
   addresses,
+  validAddresses,
   form,
   formType,
   isAssignmentOpen,
@@ -62,6 +64,7 @@ const PersonalInfoForm = ({
   isReadOnly = false,
   isAllowSubmit,
   setAddresses,
+  setValidAddresses,
   setIsAssignmentOpen,
   setFormType,
   submit,
@@ -80,6 +83,11 @@ const PersonalInfoForm = ({
       })
     )
   }   
+
+  const handleRemoveAddress = (idx: number) => {
+    setValidAddresses && setValidAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
+    setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
+  }
 
   // ==================== RENDER ====================
   return (
@@ -183,14 +191,22 @@ const PersonalInfoForm = ({
                     type={"button"}
                     variant={"outline"} 
                     className="border-none shadow-none"
-                    onClick={
-                      () => setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx))
-                    }
+                    onClick={() => handleRemoveAddress(idx)}
                   >
                     <X className="cursor-pointer  text-red-500"/>
                   </Button>
                 }
               </div>
+              {
+                validAddresses 
+                && validAddresses.length > 0 
+                && validAddresses[idx] === false
+                && formType !== Type.Viewing && (
+                  <Label className="text-red-500 text-sm">
+                    Complete address is required
+                  </Label>
+                )
+              }
             </div>
           ))
         }

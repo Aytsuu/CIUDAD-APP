@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { capitalize } from "@/helpers/capitalize";
 
 export const updateProfile = async (
   perId: string,
@@ -16,16 +15,11 @@ export const updateProfile = async (
 };
 
 export const updateFamily = async (
-  demographicInfo: Record<string, any>,
+  data: Record<string, any>,
   familyId: string
 ) => {
   try {
-    const res = await api.put(`profiling/family/update/${familyId}/`, {
-      hh_id: demographicInfo.householdNo,
-      fam_building: capitalize(demographicInfo.building),
-      fam_indigenous: capitalize(demographicInfo.indigenous)
-    })
-
+    const res = await api.put(`profiling/family/update/${familyId}/`, data)
     return res.data;
   } catch (err) {
     console.error(err);
@@ -46,7 +40,8 @@ export const updateFamilyRole = async (familyId: string, residentId: string, fc_
 export const updateHousehold = async (householdInfo: Record<string, any>) => {
   try {
     const res = await api.put(`profiling/household/update/${householdInfo.hh_id}/`, {
-      
+      rp: householdInfo.householdHead.split(" ")[0],
+      hh_nhts: householdInfo.nhts,
     })
     
     return res.data

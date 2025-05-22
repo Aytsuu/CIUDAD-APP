@@ -14,7 +14,7 @@ import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
 import { formatHouseholds } from "../profilingFormats";
 import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { capitalize } from "@/helpers/capitalize";
 
 export default function EditGeneralDetails({
@@ -81,8 +81,15 @@ export default function EditGeneralDetails({
       return;
     }
 
-    await updateFamily({
-      demographicInfo: values,
+    // Formatting data
+    const data = {
+      hh: values.householdNo,
+      fam_building: capitalize(values.building),
+      fam_indigenous: capitalize(values.indigenous)
+    }
+
+    updateFamily({
+      data: data,
       familyId: familyData.fam_id,
       oldHouseholdId: familyData.household_no
     }, {
@@ -96,6 +103,10 @@ export default function EditGeneralDetails({
           fam_indigenous: capitalize(values.indigenous),
           household_no: values.householdNo
         }));
+        
+        toast("Record updated successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+        });
       }
     });
   }

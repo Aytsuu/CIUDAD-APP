@@ -76,3 +76,4 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
     next_val = Household.objects.count() + 1
     house_no = f"HH-{next_val:05d}"
     return house_no
+  

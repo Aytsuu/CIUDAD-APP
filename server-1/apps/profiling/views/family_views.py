@@ -1,4 +1,5 @@
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 from django.db.models import Prefetch, Q, Count, Value, CharField, Subquery, OuterRef, F
 from django.db.models.functions import Coalesce, Concat
 from ..serializers.family_serializers import *
@@ -101,3 +102,17 @@ class FamilyFilteredByHouseholdView(generics.ListAPIView):
   def get_queryset(self):
     household_no = self.kwargs['hh']
     return Family.objects.filter(hh=household_no)
+  
+class FamilyUpdateView(generics.RetrieveUpdateAPIView):
+    serializer_class = FamilyBaseSerializer
+    queryset = Family.objects.all()
+    lookup_field = 'fam_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

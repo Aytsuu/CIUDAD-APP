@@ -14,6 +14,7 @@ import { formatFamiles } from "../profilingFormats";
 import { Button } from "@/components/ui/button/button";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { capitalize } from "@/helpers/capitalize";
+import { useUpdateFamily } from "../queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -172,6 +173,7 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const { showLoading, hideLoading } = useLoading();
+      const { mutateAsync: updateFamily } = useUpdateFamily();
       const family = row.getValue('data') as any;
       const [building, setBuilding] = React.useState<string | null>(family.fam_building);
       
@@ -201,7 +203,22 @@ export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
       };
 
       const handleBuildingChange = (value: string) => {
-        setBuilding(capitalize(value));
+        if(value !== building?.toLowerCase()){
+          setBuilding(capitalize(value));
+
+          const data = {
+            fam_building: capitalize(value),
+          }
+          updateFamily({
+            data: data,
+            familyId: family.fam_id,
+            oldHouseholdId: ""
+          }, {
+            onError: () => {
+              setBuilding(family.fam_building);
+            }
+          })
+        }
       };
 
       return (

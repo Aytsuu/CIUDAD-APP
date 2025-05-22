@@ -1,8 +1,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateFamily, updateFamilyRole, updateProfile } from "../restful-api/profilingPutAPI";
+import { updateFamily, updateFamilyRole, updateHousehold, updateProfile } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { capitalize } from "@/helpers/capitalize";
+
+export const useUpdateHousehold = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (householdInfo: Record<string, any>) => updateHousehold(householdInfo), 
+    onSuccess: () => {
+      toast("Record updated successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+      });
+
+      queryClient.invalidateQueries({queryKey: ['households']});
+    }
+  })
+}
 
 export const useUpdateFamilyRole = () => {
   return useMutation({
@@ -26,13 +39,13 @@ export const useUpdateProfile = () => {
 export const useUpdateFamily = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({demographicInfo, familyId} : {
-      demographicInfo: Record<string, any>;
+    mutationFn: ({data, familyId} : {
+      data: Record<string, any>;
       familyId: string;
-      oldHouseholdId: string;
-    }) => updateFamily(demographicInfo, familyId),
+      oldHouseholdId?: string;
+    }) => updateFamily(data, familyId),
     onSuccess: (newData, variables) => {
-      const { demographicInfo, familyId, oldHouseholdId} = variables;
+      const { data, familyId, oldHouseholdId} = variables;
 
       // Update families list
       queryClient.setQueryData(['families'], (old: any[] = []) => (
@@ -40,11 +53,11 @@ export const useUpdateFamily = () => {
           if(family.fam_id === familyId) {
             return {
               ...(family || []),
-              fam_building: capitalize(demographicInfo.building),
-              fam_indigenous: capitalize(demographicInfo.indigenous),
+              fam_building: data.building,
+              fam_indigenous: data.indigenous,
               hh: {
                 ...family.hh,
-                hh_id: demographicInfo.householdNo
+                hh_id: data.householdNo
               }
             }
           }
@@ -65,7 +78,7 @@ export const useUpdateFamily = () => {
           }
 
           // Transfer to new household
-          if(house.hh_id === demographicInfo.householdNo) { 
+          if(house.hh_id === data.householdNo) { 
             return {
               ...(house || []),
               family: [
@@ -80,10 +93,8 @@ export const useUpdateFamily = () => {
 
       queryClient.invalidateQueries({queryKey: ['households']});
       queryClient.invalidateQueries({queryKey: ['families']});
-
-      toast("Record updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-      });
     }
   })
 }
+
+

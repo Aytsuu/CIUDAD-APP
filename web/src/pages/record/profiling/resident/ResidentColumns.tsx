@@ -201,6 +201,15 @@ export const additionalDetailsColumns = (residentId: string, familyId: string): 
     header: 'Status'
   },
   {
+    accessorKey: 'role',
+    header: 'Role',
+    cell: ({row}) => (
+      <Badge>
+        {row.original.fc_role === null ? "Family Member" : row.original.fc_role}
+      </Badge>
+    )
+  },
+  {
     accessorKey: "action",
     header: "",
     cell: ({ row }) => {

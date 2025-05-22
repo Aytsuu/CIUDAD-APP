@@ -26,7 +26,7 @@ class FamilyMembersListView(generics.ListCreateAPIView):
     def get_queryset(self):
         fam_id = self.kwargs['fam_id']
         return FamilyComposition.objects.filter(
-          fam_id=fam_id
+          fam=fam_id
         ).select_related(
             'rp',
             'fam__hh',
@@ -40,6 +40,16 @@ class FamilyMembersListView(generics.ListCreateAPIView):
             'rp__per__per_status',
             'fam__hh__hh_id',
             'fam__hh__add__sitio__sitio_name',
+        ).distinct()
+
+class FamilyIDView(generics.ListAPIView):
+    serializer_class = FCFetchFamIDSerializer
+    lookup_field = 'rp'
+
+    def get_queryset(self):
+        rp = self.kwargs['rp']
+        return FamilyComposition.objects.filter(
+            rp=rp
         ).distinct()
 
 class FamilyCompositionBulkCreateView(generics.CreateAPIView):

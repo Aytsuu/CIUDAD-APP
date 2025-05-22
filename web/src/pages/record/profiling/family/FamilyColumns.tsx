@@ -183,17 +183,19 @@ export const familyViewColumns = (
       }
 
       const handleRoleChange = (value: string) => {
-        setRole(capitalize(value));
-        updateFamilyRole({
-          familyId: family.fam_id,
-          residentId: data.rp_id,
-          fc_role: capitalize(value)
-        }, {
-          onError: (status) => {
-            setRole(data.fc_role);
-            throw status;
-          }
-        })
+        if(value !== role?.toLowerCase()) {
+          setRole(capitalize(value));
+          updateFamilyRole({
+            familyId: family.fam_id,
+            residentId: data.rp_id,
+            fc_role: capitalize(value)
+          }, {
+            onError: (status) => {
+              setRole(data.fc_role);
+              throw status;
+            }
+          })
+        }
       }
 
       return (

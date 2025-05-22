@@ -54,13 +54,17 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
                         data = address_data.copy()
                         data.pop('add_id')
 
+                        # Ensure sitio is passed as a primary key (not an object)
+                        if 'sitio' in data and hasattr(data['sitio'], 'pk'):
+                            data['sitio'] = data['sitio'].pk
+
                         # Get similar addresses according to the changes
                         existing_changes = Address.objects.filter(
                             add_province=data['add_province'],
                             add_city=data['add_city'],
                             add_barangay=data['add_barangay'],
                             add_external_sitio=data['add_external_sitio'],
-                            sitio=data['sitio'],
+                            sitio=data.get('sitio'),
                             add_street=data['add_street']
                         ).first()
 
@@ -68,11 +72,16 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
                             personal_address.add = existing_changes
                             personal_address.save()
                         else:
+                            print("data", data)
                             address_serializer = AddressBaseSerializer(data=data)
+                            print(address_serializer)
+                            print(address_serializer.is_valid())
                             if address_serializer.is_valid():
-                                address = address_serializer.save()
+                                address = address_serializer.save()        
                                 PersonalAddress.objects.create(per=instance, add=address)
                                 PersonalAddress.objects.get(add=address).delete()
+                            else:
+                                raise serializers.ValidationError(address_serializer.errors)
 
                         keep_address_ids.add(address_id)
 

@@ -18,7 +18,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
   registered_by = serializers.SerializerMethodField()
   class Meta: 
     model = Family
-    fields = ['fam_id', 'household_no', 'sitio', 'fam_building', 'mother', 
+    fields = ['fam_id', 'household_no', 'sitio', 'fam_building', 'fam_indigenous', 'mother', 
               'father', 'guardian', 'fam_date_registered', 'members', 'registered_by']
     
   def get_members(self, obj):

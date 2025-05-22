@@ -6,6 +6,11 @@ class FamilyCompositionBaseSerializer(serializers.ModelSerializer):
     model = FamilyComposition
     fields = '__all__'
 
+class FCFetchFamIDSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = FamilyComposition
+    fields = ['rp']
+
 class FamilyCompositionExtendedSerializer(serializers.ModelSerializer):
   rp_id = serializers.CharField(source='rp.rp_id')
   name = serializers.SerializerMethodField()

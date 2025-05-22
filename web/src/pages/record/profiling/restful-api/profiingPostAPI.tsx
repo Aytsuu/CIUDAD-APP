@@ -7,7 +7,6 @@ import { capitalize } from "@/helpers/capitalize";
 // POST request for address
 export const addAddress =  async (data: Record<string, any>[]) => {
   try {
-    console.log(data);
     const res = await api.post("profiling/address/create/", data);
     return res.data;
   } catch (err) {
