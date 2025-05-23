@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import *
+from .views_deprecated import * # To be deleted
 
 urlpatterns = [
 
@@ -26,7 +26,7 @@ urlpatterns = [
 
     # Staff Urls
 
-    path('staffs/', StaffView.as_view(), name='staff-list'),
+    path('staffs/list/table/', StaffView.as_view(), name='staff-list'),
     path('position/', PositionView.as_view(), name="positions-list"),
     path('position/delete/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
     path('position/update/<int:pos_id>/', PositionUpdateView.as_view(), name='position-update'),

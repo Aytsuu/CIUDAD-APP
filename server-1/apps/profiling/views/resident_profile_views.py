@@ -2,7 +2,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
-from ..pagination import *
+from pagination import *
 from apps.account.models import *
 
 class ResidentProfileCreateView(generics.CreateAPIView):

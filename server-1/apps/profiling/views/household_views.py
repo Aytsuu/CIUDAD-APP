@@ -2,7 +2,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from django.db.models import Q, Count
 from ..serializers.household_serializers import *
-from ..pagination import *
+from pagination import *
 
 class HouseholdListView(generics.ListAPIView):
   serializer_class = HouseholdListSerialzer

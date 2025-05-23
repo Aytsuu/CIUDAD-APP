@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, Ellipsis, Trash } from "lucide-react"
+import { ArrowUpDown, Ellipsis } from "lucide-react"
 import { AdministrationRecord } from "./administrationTypes"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
@@ -13,7 +13,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                 className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
                 onClick={() => (column.toggleSorting(column.getIsSorted() === "asc"))}
             >
-                Staff (#)
+                Staff ID
                 <TooltipLayout
                     trigger={<ArrowUpDown size={15}/>}
                     content={"Sort"}
@@ -72,15 +72,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         cell: ({ row }) => (
             <div className="hidden lg:block max-w-xs truncate">
                 {row.getValue("mname") ? row.getValue("mname") : '-'}
-            </div>
-        )
-    },
-    {
-        accessorKey: 'suffix',
-        header: 'Suffix',
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-                {row.getValue("suffix") ? row.getValue("suffix") : '-'}
             </div>
         )
     },

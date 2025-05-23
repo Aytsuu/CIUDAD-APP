@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from ..serializers.family_composition_serializers import *
 from ..models import *
-from ..pagination import *
+from pagination import *
 
 class FamilyCompositionCreateView(generics.CreateAPIView):
     serializer_class = FamilyCompositionBaseSerializer
