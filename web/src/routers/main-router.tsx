@@ -28,9 +28,6 @@ import { famplanning_route } from './FamilyPlanning-router';
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
 
-
-
-
 export const main_router: RouteObject[] = [
     {
         path: "/",
