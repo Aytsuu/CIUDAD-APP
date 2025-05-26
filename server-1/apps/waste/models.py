@@ -84,8 +84,8 @@ class WasteReport(models.Model):
         db_table = 'waste_report'
 
 class WastePersonnel(models.Model):
-    wstp_id = models.BigAutoField(primary_key=True)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    wstp_id = models.BigAutoField(primary_key=True) 
+    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'waste_personnel'
@@ -94,10 +94,16 @@ class WasteTruck(models.Model):
     truck_id = models.BigAutoField(primary_key=True)
     truck_plate_num = models.CharField(max_length=20)
     truck_model = models.CharField(max_length=50)
-    truck_capacity = models.IntegerField(max_length=500)
-    truck_status = models.CharField(max_length=50, default="operational")
+    truck_capacity = models.IntegerField()
+    truck_status = models.CharField(
+        max_length=50,
+        choices=[
+            ('Operational', 'Operational'),
+            ('Maintenance', 'Maintenance')
+        ],
+        default="Operational"
+    )
     truck_last_maint = models.DateField(default=date.today)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'truck'

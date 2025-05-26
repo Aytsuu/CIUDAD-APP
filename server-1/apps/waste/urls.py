@@ -23,4 +23,7 @@ urlpatterns = [
 
     # Waste Report URLs
     path("waste-report/", WasteReportView.as_view(), name="waste-report-list"),
+
+    path('waste-personnel/', WasteTruckView.as_view(), name='waste-truck'),
+    path('waste-personnel/<int:pk>/', WasteTruckDetailView.as_view(), name='waste-truck-detail'),
 ]

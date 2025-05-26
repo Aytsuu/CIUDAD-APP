@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Shield, Truck, User, Trash2, Plus, Eye, Trash, Edit } from "lucide-react";
+import {
+  Shield,
+  Truck,
+  User,
+  Trash2,
+  Plus,
+  Eye,
+  Trash,
+  Edit,
+  Loader2,
+} from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -7,25 +17,39 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
+import { useUpdateWasteTruck } from "./queries/truckUpdate";
+import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
+import { useDeleteWasteTruck } from "./queries/truckDelQueries";
+import { useAddWasteTruck } from "./queries/truckAddQueries";
+import { toast } from "sonner";
 
-type PersonnelCategory = "Watchmen" | "Truck Drivers" | "Waste Collectors" | "Trucks";
+type PersonnelCategory =
+  | "Watchmen"
+  | "Truck Drivers"
+  | "Waste Collectors"
+  | "Trucks";
 type TruckStatus = "Operational" | "Maintenance";
 
 interface TruckData {
   truck_id: string;
   truck_plate_num: string;
   truck_model: string;
-  truck_capacity: string;
+  truck_capacity: number;
   truck_status: TruckStatus;
   truck_last_maint: string;
 }
@@ -39,65 +63,75 @@ interface PersonnelData {
   Watchmen: PersonnelItem[];
   "Truck Drivers": PersonnelItem[];
   "Waste Collectors": PersonnelItem[];
-  "Trucks": TruckData[];
+  Trucks: TruckData[];
 }
 
 const WastePersonnel = () => {
   const [activeTab, setActiveTab] = useState<PersonnelCategory>("Watchmen");
-  const [trucks, setTrucks] = useState<TruckData[]>([
-    { 
-      truck_id: "1", 
-      truck_plate_num: "ABC123", 
-      truck_model: "Model X", 
-      truck_capacity: "5 tons", 
-      truck_status: "Operational", 
-      truck_last_maint: "2023-05-15" 
-    },
-    { 
-      truck_id: "2", 
-      truck_plate_num: "XYZ789", 
-      truck_model: "Model Y", 
-      truck_capacity: "3 tons", 
-      truck_status: "Maintenance", 
-      truck_last_maint: "2023-06-20" 
-    },
-  ]);
   const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isReadOnly, setIsReadOnly] = useState(true); // Default to view mode
+  const [isReadOnly, setIsReadOnly] = useState(true);
+  const {
+    data: trucks = [],
+    isLoading: isTrucksLoading,
+    isError: isTrucksError,
+  } = useGetTrucks();
+  const {
+    data: personnel = [],
+    isLoading: isPersonnelLoading,
+    isError: isPersonnelError,
+  } = useGetAllPersonnel();
+
+  const addTruck = useAddWasteTruck();
+  const updateTruck = useUpdateWasteTruck();
+  const deleteTruck = useDeleteWasteTruck();
 
   const form = useForm<z.infer<typeof TruckFormSchema>>({
     resolver: zodResolver(TruckFormSchema),
     defaultValues: {
       truck_plate_num: "",
       truck_model: "",
-      truck_capacity: "",
+      truck_capacity: '',
       truck_status: "Operational",
       truck_last_maint: new Date().toISOString().split("T")[0],
     },
   });
+  const validTrucks = Array.isArray(trucks) ? trucks : [];
 
-  // Sample personnel data
   const personnelData: PersonnelData = {
-    Watchmen: [
-      { id: "1", name: "John Smith" },
-      { id: "2", name: "Maria Garcia" },
-      { id: "3", name: "Robert Chen" },
-    ],
-    "Truck Drivers": [
-      { id: "4", name: "Sarah Johnson" },
-      { id: "5", name: "David Kim" },
-    ],
-    "Waste Collectors": [
-      { id: "6", name: "Michael Brown" },
-      { id: "7", name: "Emma Wilson" },
-    ],
-    "Trucks": trucks,
+    Watchmen: personnel
+      .filter((p) => p.role === "Watchmen")
+      .map((p) => ({ id: p.wstp_id.toString(), name: p.name })),
+    "Truck Drivers": personnel
+      .filter((p) => p.role === "Truck Drivers")
+      .map((p) => ({ id: p.wstp_id.toString(), name: p.name })),
+    "Waste Collectors": personnel
+      .filter((p) => p.role === "Waste Collectors")
+      .map((p) => ({ id: p.wstp_id.toString(), name: p.name })),
+    Trucks: validTrucks.map((truck) => ({
+      truck_id: truck.truck_id.toString(),
+      truck_plate_num: truck.truck_plate_num,
+      truck_model: truck.truck_model,
+      truck_capacity: Number(String(truck.truck_capacity).replace(/,/g, "")),
+      truck_status: truck.truck_status as TruckStatus,
+      truck_last_maint: truck.truck_last_maint,
+    })),
   };
+
+  if (isTrucksLoading || isPersonnelLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+  if (isTrucksError || isPersonnelError) {
+    return <div className="text-red-500 p-4">Error loading data</div>;
+  }
 
   // Get icon component for each category
   const getCategoryIcon = (category: PersonnelCategory) => {
-    switch(category) {
+    switch (category) {
       case "Watchmen":
         return <Shield className="h-5 w-5" />;
       case "Truck Drivers":
@@ -116,7 +150,7 @@ const WastePersonnel = () => {
 
   // Get background color for each category
   const getCategoryColor = (category: PersonnelCategory) => {
-    switch(category) {
+    switch (category) {
       case "Watchmen":
         return "bg-green-100 text-green-600";
       case "Truck Drivers":
@@ -130,28 +164,25 @@ const WastePersonnel = () => {
 
   // Handle form submission
   const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
+    const parsedValues = {
+      ...values,
+      truck_capacity: Number(String(values.truck_capacity).replace(/,/g, "")),
+    };
+
     if (currentTruck) {
-      // Update existing truck
-      const updatedTrucks = trucks.map(truck => 
-        truck.truck_id === currentTruck.truck_id ? { ...values, truck_id: currentTruck.truck_id } : truck
-      );
-      setTrucks(updatedTrucks);
+      updateTruck.mutate({
+        truck_id: parseInt(currentTruck.truck_id),
+        truckData: parsedValues,
+      });
     } else {
-      // Add new truck
-      const newTruck: TruckData = {
-        ...values,
-        truck_id: Date.now().toString(),
-      };
-      setTrucks([...trucks, newTruck]);
+      addTruck.mutate(parsedValues);
     }
-    form.reset();
     setIsDialogOpen(false);
     setCurrentTruck(null);
-    setIsReadOnly(true);
   };
 
   const handleDeleteTruck = (id: string) => {
-    setTrucks(trucks.filter(truck => truck.truck_id !== id));
+    deleteTruck.mutate(parseInt(id));
   };
 
   // Open dialog in view or edit mode
@@ -159,7 +190,10 @@ const WastePersonnel = () => {
     setCurrentTruck(truck);
     setIsReadOnly(readOnly);
     if (truck) {
-      form.reset(truck);
+      form.reset({
+        ...truck,
+        truck_capacity: String(truck.truck_capacity).replace(",", "")
+      });
     } else {
       form.reset({
         truck_plate_num: "",
@@ -193,7 +227,9 @@ const WastePersonnel = () => {
             content={
               <div className="flex flex-col items-start gap-3">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${getCategoryColor(category)}`}>
+                  <div
+                    className={`p-2 rounded-lg ${getCategoryColor(category)}`}
+                  >
                     {getCategoryIcon(category)}
                   </div>
                   <span className="text-2xl font-semibold">
@@ -202,15 +238,25 @@ const WastePersonnel = () => {
                 </div>
                 <div>
                   <h3 className="font-medium">{category}</h3>
-                  <div className={`flex items-center gap-1 text-sm ${
-                    category === "Trucks" ? "text-purple-600" : "text-green-600"
-                  }`}>
-                    <span className={`h-2 w-2 rounded-full ${
-                      category === "Trucks" ? "bg-purple-500" : "bg-green-500"
-                    }`}></span>
+                  <div
+                    className={`flex items-center gap-1 text-sm ${
+                      category === "Trucks"
+                        ? "text-purple-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        category === "Trucks" ? "bg-purple-500" : "bg-green-500"
+                      }`}
+                    ></span>
                     <span>
-                      {category === "Trucks" 
-                        ? `Operational: ${trucks.filter(t => t.truck_status === "Operational").length}` 
+                      {category === "Trucks"
+                        ? `Operational: ${
+                            trucks.filter(
+                              (t) => t.truck_status === "Operational"
+                            ).length
+                          }`
                         : "Active"}
                     </span>
                   </div>
@@ -224,24 +270,28 @@ const WastePersonnel = () => {
 
       {/* Personnel Directory Section */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-6">Personnel & Collection Vehicle Directory</h2>
-        
+        <h2 className="text-xl font-semibold mb-6">
+          Personnel & Collection Vehicle Directory
+        </h2>
+
         {/* Tab Navigation */}
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-            {(Object.keys(personnelData) as PersonnelCategory[]).map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveTab(category)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                  activeTab === category
-                    ? "bg-primary text-white shadow"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+            {(Object.keys(personnelData) as PersonnelCategory[]).map(
+              (category) => (
+                <button
+                  key={category}
+                  onClick={() => setActiveTab(category)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeTab === category
+                      ? "bg-primary text-white shadow"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {category}
+                </button>
+              )
+            )}
           </div>
         </div>
 
@@ -249,23 +299,32 @@ const WastePersonnel = () => {
         <div className="bg-white rounded-lg shadow-sm border p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium flex items-center gap-2">
-              <div className={`p-1.5 rounded-md ${getCategoryColor(activeTab)}`}>
+              <div
+                className={`p-1.5 rounded-md ${getCategoryColor(activeTab)}`}
+              >
                 {getCategoryIcon(activeTab)}
               </div>
               {activeTab}
             </h3>
             {activeTab === "Trucks" && (
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="gap-1"
                 onClick={() => openDialog(null, false)}
+                disabled={addTruck.isPending}
               >
-                <Plus className="h-4 w-4" />
-                Add Truck
+                {addTruck.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    Add Truck
+                  </>
+                )}
               </Button>
             )}
           </div>
-          
+
           {activeTab === "Trucks" ? (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -278,16 +337,21 @@ const WastePersonnel = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {trucks.map((truck) => (
-                    <tr key={truck.truck_id} className="border-b hover:bg-gray-50">
+                  {personnelData["Trucks"].map((truck) => (
+                    <tr
+                      key={truck.truck_id}
+                      className="border-b hover:bg-gray-50"
+                    >
                       <td className="p-2">{truck.truck_id}</td>
                       <td className="p-2">{truck.truck_plate_num}</td>
                       <td className="p-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          truck.truck_status === "Operational"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            truck.truck_status === "Operational"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
                           {truck.truck_status}
                         </span>
                       </td>
@@ -304,15 +368,25 @@ const WastePersonnel = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(truck, false)}
+                            disabled={updateTruck.isPending}
                           >
-                            <Edit className="h-4 w-4" />
+                            {updateTruck.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Edit className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteTruck(truck.truck_id)}
+                            disabled={deleteTruck.isPending}
                           >
-                            <Trash className="h-4 w-4 text-red-500" />
+                            {deleteTruck.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash className="h-4 w-4 text-red-500" />
+                            )}
                           </Button>
                         </div>
                       </td>
@@ -324,17 +398,30 @@ const WastePersonnel = () => {
           ) : (
             <ul className="space-y-2">
               {personnelData[activeTab].map((person) => (
-                <li key={person.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    getCategoryColor(activeTab).replace('text', 'bg').split(' ')[0]
-                  } ${getCategoryColor(activeTab).includes('text') ? 
-                    getCategoryColor(activeTab).split(' ')[1] : ''}`}
+                <li
+                  key={person.id}
+                  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded"
+                >
+                  <div
+                    className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                      getCategoryColor(activeTab)
+                        .replace("text", "bg")
+                        .split(" ")[0]
+                    } ${
+                      getCategoryColor(activeTab).includes("text")
+                        ? getCategoryColor(activeTab).split(" ")[1]
+                        : ""
+                    }`}
                   >
-                    {person.name.split(" ").map((n) => n[0]).join("")}
+                    <span className="text-sm font-bold text-white">
+                      {person.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </span>
                   </div>
-                  <div>
-                    <p className="font-medium">{person.name}</p>
-                  </div>
+                  <span>{person.name}</span>
                 </li>
               ))}
             </ul>
@@ -349,11 +436,14 @@ const WastePersonnel = () => {
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <DialogHeader>
                 <DialogTitle>
-                  {isReadOnly ? "Truck Details" : currentTruck ? "Edit Truck" : "Add New Truck"}
+                  {isReadOnly
+                    ? "Truck Details"
+                    : currentTruck
+                    ? "Edit Truck"
+                    : "Add New Truck"}
                 </DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                {/* Plate Number */}
                 <FormField
                   control={form.control}
                   name="truck_plate_num"
@@ -368,7 +458,6 @@ const WastePersonnel = () => {
                   )}
                 />
 
-                {/* Model */}
                 <FormField
                   control={form.control}
                   name="truck_model"
@@ -383,22 +472,20 @@ const WastePersonnel = () => {
                   )}
                 />
 
-                {/* Capacity */}
                 <FormField
                   control={form.control}
                   name="truck_capacity"
                   render={({ field }) => (
                     <FormItem className="space-y-1">
-                      <Label>Capacity</Label>
+                      <Label>Capacity (tons)</Label>
                       <FormControl>
-                        <Input {...field} readOnly={isReadOnly} />
+                        <Input {...field} readOnly={isReadOnly} type="number" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Status */}
                 <FormField
                   control={form.control}
                   name="truck_status"
@@ -407,10 +494,7 @@ const WastePersonnel = () => {
                       <Label>Status</Label>
                       <FormControl>
                         {isReadOnly ? (
-                          <Input 
-                            value={field.value} 
-                            readOnly 
-                          />
+                          <Input value={field.value} readOnly />
                         ) : (
                           <SelectLayout
                             className="w-full"
@@ -430,7 +514,6 @@ const WastePersonnel = () => {
                   )}
                 />
 
-                {/* Last Maintenance */}
                 <FormField
                   control={form.control}
                   name="truck_last_maint"
@@ -438,11 +521,7 @@ const WastePersonnel = () => {
                     <FormItem className="space-y-1">
                       <Label>Last Maintenance</Label>
                       <FormControl>
-                        <Input 
-                          type="date" 
-                          {...field} 
-                          readOnly={isReadOnly} 
-                        />
+                        <Input type="date" {...field} readOnly={isReadOnly} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -451,15 +530,27 @@ const WastePersonnel = () => {
 
                 {!isReadOnly && (
                   <div className="flex justify-end gap-2 mt-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       type="button"
                       onClick={() => setIsDialogOpen(false)}
                     >
                       Cancel
                     </Button>
-                    <Button type="submit">
+                    <Button
+                      type="submit"
+                      disabled={
+                        currentTruck
+                          ? updateTruck.isPending
+                          : addTruck.isPending
+                      }
+                    >
                       {currentTruck ? "Update" : "Add"} Truck
+                      {(currentTruck
+                        ? updateTruck.isPending
+                        : addTruck.isPending) && (
+                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      )}
                     </Button>
                   </div>
                 )}
