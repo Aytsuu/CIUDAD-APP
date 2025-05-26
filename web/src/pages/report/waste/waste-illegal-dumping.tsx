@@ -7,16 +7,24 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
 import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueries";
-
+import { useDeleteWasteReport } from "./queries/waste-ReportDeleteQueries";
 
 
 
 function WasteIllegalDumping() {
 
-  const { data: fetchedData = [] } = useWasteReport();
+  const { data: fetchedData = [], isLoading } = useWasteReport();
+
+  const { mutate: deleteWaste } = useDeleteWasteReport();
+
+  const handleDelete = (rep_id: number) => {
+      deleteWaste(rep_id);
+  };  
 
   const columns: ColumnDef<WasteReport>[] = [
   {
@@ -33,6 +41,10 @@ function WasteIllegalDumping() {
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("rep_id")}</div>
     ),
+  },
+  {
+    accessorKey: "rep_status",
+    header: "Report Status",
   },
   {
     accessorKey: "rep_matter",
@@ -59,10 +71,6 @@ function WasteIllegalDumping() {
     header: "Contact No.",
   },
   {
-    accessorKey: "rep_date",
-    header: "Date and Time",
-  },
-  {
     accessorKey: "rep_image",
     header: "Image",
     cell: ({row}) => (
@@ -72,7 +80,7 @@ function WasteIllegalDumping() {
             View
           </div>
         }
-        className="max-w-[45%] max-h-[90%] overflow-auto p-10 verflow-y-auto"
+        className="max-w-[60%] max-h-[90%] overflow-auto p-7 verflow-y-auto"
         title={`Report No. ${String(row.getValue("rep_id"))}`}
         description=""
         mainContent={
@@ -86,7 +94,8 @@ function WasteIllegalDumping() {
               rep_violator = {row.original.rep_violator}
               rep_contact = {row.original.rep_contact}
               rep_status = {row.original.rep_status}
-              rep_date = {row.original.rep_date}                
+              rep_date = {row.original.rep_date}
+              rep_date_resolved = {row.original.rep_date_resolved}                
             />
           </div>
         }
@@ -96,13 +105,19 @@ function WasteIllegalDumping() {
   {
     accessorKey: "action",
     header: "Action",
-    cell: () => (
+    cell: ({row}) => (
       <TooltipLayout
         trigger={
-          <div className="w-[35px] h-[35px] bg-[#ff2c2c] text-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            <Trash size={16} />
-          </div>
-        }
+            <div className="flex items-center h-8">
+                <ConfirmationModal
+                    trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+                    title="Confirm Delete"
+                    description="Are you sure you want to delete this report?"
+                    actionLabel="Confirm"
+                    onClick={() => handleDelete(row.original.rep_id)} 
+                />                    
+            </div>                   
+        }  
         content="Delete"
       />
     ),
@@ -160,6 +175,18 @@ function WasteIllegalDumping() {
   const startIndex = (currentPage - 1) * 12;
   const endIndex = startIndex + 12;
   const currentRows = filteredData.slice(startIndex, endIndex);
+
+
+  if (isLoading) {
+    return (
+        <div className="w-full h-full">
+          <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+          <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+          <Skeleton className="h-10 w-full mb-4 opacity-30" />
+          <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+        </div>
+      );
+  }
 
   return (
     <div className="w-full h-full">
