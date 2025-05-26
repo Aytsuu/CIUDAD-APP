@@ -1,46 +1,99 @@
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import React from "react"
+import {
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    ColumnFiltersState,
+    SortingState,
+    VisibilityState,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+  } from "@tanstack/react-table"
+   
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from "./table"
+   
+  interface DataTableProps<TData, TValue> {
+    columns: ColumnDef<TData, TValue>[]
+    data: TData[]
+  }
+   
+  export function DataTableViewing<TData, TValue>({ columns, data}: DataTableProps<TData, TValue>) {
 
-interface Column {
-  accessorKey: string;
-  header: string;
-}
+    const [sorting, setSorting] = React.useState<SortingState>([])
+    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+    const [rowSelection, setRowSelection] = React.useState({})
 
-interface DataTableProps {
-  columns: Column[];
-  data: Record<string, any>[];
-}
-
-export default function DataTable({ columns = [], data = [] }: DataTableProps) {
-  return (
-    <div className="p-4 w-full mx-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.length > 0 ? (
-              columns.map((column) => <TableHead className="font-bold text-black border border-black text-center" key={column.accessorKey}>{column.header}</TableHead>)
-            ) : (
-              <TableHead >No Columns</TableHead>
-            )}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.length > 0 ? (
-            data.map((item, index) => (
-              <TableRow key={index}>
-                {columns.map((column) => (
-                  <TableCell className="border border-black h-10" key={column.accessorKey}>{item[column.accessorKey]}</TableCell>
-                ))}
+    const table = useReactTable({
+        data,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
+        state: {
+            sorting,
+            columnFilters,
+            columnVisibility,
+            rowSelection,
+        },
+    })
+   
+    return (
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="border-none h-12">
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id} className="text-center border border-black font-bold text-black">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length || 1} className="text-center">
-                No Data Available
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="text-center border border-black">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+    )
+  }

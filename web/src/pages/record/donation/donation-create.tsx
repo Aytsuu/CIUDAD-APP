@@ -1,146 +1,188 @@
-// import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { SelectLayout } from '@/components/ui/select/select-layout';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import ClerkDonateCreateSchema from '@/form-schema/donate-create-form-schema';
+import { Button } from "@/components/ui/button/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Form } from "@/components/ui/form/form";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import ClerkDonateCreateSchema from "@/form-schema/donate-create-form-schema";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { useAddDonation } from "./queries/donationAddQueries";
 
-function ClerkDonateCreate() {
+interface ClerkDonateCreateFormProps {
+  onSuccess?: () => void; // Add this prop type
+}
 
-    const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
-        resolver: zodResolver(ClerkDonateCreateSchema),
-        defaultValues: {
-            donorName: '',
-            itemname: '',
-            itemqty: '',
-            itemcategory:'',
-            receiver:'',
-            itemDescription: '',
-        },
+function ClerkDonateCreate({onSuccess}:ClerkDonateCreateFormProps) {
+  const form = useForm<z.infer<typeof ClerkDonateCreateSchema>>({
+    resolver: zodResolver(ClerkDonateCreateSchema),
+    defaultValues: {
+      // don_num: 0,
+      don_donorfname: "",
+      don_donorlname: "",
+      don_item_name: "",
+      don_qty: 1,
+      don_description: "",
+      don_category: "",
+      don_receiver: "",
+      don_date: new Date().toISOString().split("T")[0],
+    },
+  });
+  
+  const { mutate: addDonation, isPending } = useAddDonation();
+
+  const onSubmit = (values: z.infer<typeof ClerkDonateCreateSchema>) => {
+    const toastId = toast.loading('Submitting entry...', {
+      duration: Infinity  
     });
 
-    const onSubmit = (values: z.infer<typeof ClerkDonateCreateSchema>) => {
-        console.log(values);
-        // Handle form submission
-    };
+    addDonation(values, {
+      onSuccess: () => {
+        toast.success('Donation entry recorded successfully', {
+          id: toastId, 
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+          onAutoClose: () => {
+            if (onSuccess) onSuccess();
+          }
+        });
+      },
+      onError: (error) => {
+        toast.error(
+          "Failed to submit donation. Please check the input data and try again.",
+          {
+            id: toastId,
+            duration: 2000
+          }
+        );
+        console.error("Error submitting donation", error);
+      }
+    });
+  };
 
-    return (
+  return (
+    <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
+      <div className="pb-2">
+        <h2 className="text-lg font-semibold">ADD DONATION</h2>
+        <p className="text-xs text-black/50">Fill out all necessary fields</p>
+      </div>
+      <div className="grid gap-4">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 max-w-4xl mx-auto">
-                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">ADD DONATION</Label>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
+            {/* Reference Number*/}
+            {/* <FormInput
+              control={form.control}
+              name="don_num"
+              label="Reference Number"
+              placeholder="Please enter reference number"
+              readOnly={false}
+            /> */}
 
-                <FormField
-                    control={form.control}
-                    name="donorName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label>Donor:</Label>
-                            <FormControl>
-                                <Input placeholder="Enter donor's name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                /><br/>
+            {/* Donor First Name */}
+            <FormInput
+              control={form.control}
+              name="don_donorfname"
+              label="Donor First Name"
+              placeholder="Enter donor's first name"
+              readOnly={false}
+            />
 
-                <FormField
-                    control={form.control}
-                    name="itemname"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label>Item Name:</Label>
-                            <FormControl>
-                                <Input placeholder='Enter item name' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                /><br/>
+            {/* Donor Last Name */}
+            <FormInput
+              control={form.control}
+              name="don_donorlname"
+              label="Donor Last Name"
+              placeholder="Enter donor's last name"
+              readOnly={false}
+            />
 
-                <FormField
-                    control={form.control}
-                    name="itemqty"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label>Quantity:</Label>
-                            <FormControl>
-                                <Input placeholder='Enter quantity' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                /><br/>
+            {/* Item Name */}
+            <FormInput
+              control={form.control}
+              name="don_item_name"
+              label="Item Name"
+              placeholder="Enter item name"
+              readOnly={false}
+            />
 
-                <FormField
-                    control={form.control}
-                    name="itemcategory"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label>Category:</Label>
-                            <FormControl>
-                                <SelectLayout className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                    label=""
-                                    placeholder="Select Item Category"
-                                    options={[
-                                        { id: 'Category 1', name: 'Category 1' },
-                                        { id: 'Category 2', name: 'Category 2' }
-                                    ]}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                /><br/>
+            {/* Quantity */}
+            <FormInput
+              control={form.control}
+              name="don_qty"
+              label="Quantity"
+              placeholder="Enter quantity"
+              readOnly={false}
+            />
 
-                <FormField
-                    control={form.control}
-                    name="receiver"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label>Donation Received By:</Label>
-                            <FormControl>
-                                <SelectLayout className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                    label=""
-                                    placeholder="Select employee name who received the donation"
-                                    options={[
-                                        { id: 'Employee 1', name: 'Employee 1' },
-                                        { id: 'Employee 2', name: 'Employee 2' }
-                                    ]}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                /><br/>
+            {/* Category */}
+            <FormSelect
+              control={form.control}
+              name="don_category"
+              label="Category"
+              options={[
+                { id: "Monetary Donations", name: "Monetary Donations" },
+                { id: "Essential Goods", name: "Essential Goods" },
+                { id: "Medical Supplies", name: "Medical Supplies" },
+                { id: "Household Items", name: "Household Items" },
+                { id: "Educational Supplies", name: "Educational Supplies" },
+                { id: "Baby & Childcare Items", name: "Baby & Childcare Items"},
+                { id: "Animal Welfare Items", name: "Animal Welfare Items" },
+                { id: "Shelter & Homeless Aid", name: "Shelter & Homeless Aid"},
+                { id: "Disaster Relief Supplies", name: "Disaster Relief Supplies"},
+              ]}
+              readOnly={false}
+            />
 
-                <FormField
-                    control={form.control}
-                    name="itemDescription"
-                    render={({ field }) => (
-                        <FormItem>
-                            <Label>Item Description:</Label>
-                            <FormControl>
-                                <Textarea placeholder='Enter item description (if there is any)' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                /><br/>
+            {/* Receiver */}
+            <FormSelect
+              control={form.control}
+              name="don_receiver"
+              label="Received by"
+              options={[
+                { id: "Employee 1", name: "Employee 1" },
+                { id: "Employee 2", name: "Employee 2" },
+              ]}
+              readOnly={false}
+            />
 
-                <div className="flex items-center justify-end">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%]">Save</Button>
-                </div>
-            </form>
+            {/* Item Description */}
+            <FormInput
+              control={form.control}
+              name="don_description"
+              label="Item Description"
+              placeholder="Enter item description"
+              readOnly={false}
+            />
+
+            {/* Donation Date */}
+            <FormDateTimeInput
+              control={form.control}
+              name="don_date"
+              type="date"
+              label="Donation Date"
+              readOnly={false}
+            />
+
+            {/* Submit Button */}
+            <div className="mt-8 flex justify-end gap-3">
+            <Button
+                type="submit"
+                className="bg-blue hover:bg-blue/90"
+                disabled={isPending} // Disable button during submission
+              >
+                {isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </form>
         </Form>
-    );
+      </div>
+    </div>
+  );
 }
+
 export default ClerkDonateCreate;

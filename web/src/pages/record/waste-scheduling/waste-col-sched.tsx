@@ -2,12 +2,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SelectLayout } from '@/components/ui/select/select-layout';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { FilterAccordion } from '@/components/ui/filter-accordion';
+import { Button } from '@/components/ui/button/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import WasteColSchedSchema from '@/form-schema/waste-col-form-schema';
 
 const sitioOptions = [
@@ -49,18 +50,6 @@ function WasteColSched() {
         // Handle form submission
     };
 
-    const handleResetSitios = () => {
-        form.setValue('selectedSitios', []);
-    };
-
-    const handleResetCollectors = () => {
-        form.setValue('selectedCollectors', []);
-    };
-
-    const handleResetAnnouncements = () => {
-        form.setValue('selectedAnnouncements', []);
-    };
-
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -73,21 +62,28 @@ function WasteColSched() {
                     render={({ field }) => (
                         <FormItem className="mt-4">
                             <Label>Sitio:</Label>
-                            <FilterAccordion
-                                title="Select Sitio"
-                                options={sitioOptions.map((option) => ({
-                                    ...option,
-                                    checked: field.value?.includes(option.id) || false,
-                                }))}
-                                selectedCount={field.value?.length || 0}
-                                onChange={(id: string, checked: boolean) => {
-                                    const newSelected = checked
-                                        ? [...(field.value || []), id]
-                                        : (field.value || []).filter((category) => category !== id);
-                                    field.onChange(newSelected);
-                                }}
-                                onReset={handleResetSitios}
-                            />
+                            <Accordion type="multiple" className="w-full">
+                                <AccordionItem value="sitios">
+                                    <AccordionTrigger>Select Sitio</AccordionTrigger>
+                                    <AccordionContent className='flex flex-col gap-3'>
+                                        {sitioOptions.map((option) => (
+                                            <div key={option.id} className="flex items-center gap-2">
+                                                <Checkbox
+                                                    id={option.id}
+                                                    checked={field.value.includes(option.id)}
+                                                    onCheckedChange={(checked) => {
+                                                        const newSelected = checked
+                                                            ? [...field.value, option.id]
+                                                            : field.value.filter((id) => id !== option.id);
+                                                        field.onChange(newSelected);
+                                                    }}
+                                                />
+                                                <Label htmlFor={option.id}>{option.label}</Label>
+                                            </div>
+                                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -100,21 +96,28 @@ function WasteColSched() {
                     render={({ field }) => (
                         <FormItem className="mt-4">
                             <Label>Collectors:</Label>
-                            <FilterAccordion
-                                title="Select Collectors"
-                                options={collectorsOptions.map((option) => ({
-                                    ...option,
-                                    checked: field.value?.includes(option.id) || false,
-                                }))}
-                                selectedCount={field.value?.length || 0}
-                                onChange={(id: string, checked: boolean) => {
-                                    const newSelected = checked
-                                        ? [...(field.value || []), id]
-                                        : (field.value || []).filter((category) => category !== id);
-                                    field.onChange(newSelected);
-                                }}
-                                onReset={handleResetCollectors}
-                            />
+                            <Accordion type="multiple" className="w-full">
+                                <AccordionItem value="collectors">
+                                    <AccordionTrigger>Select Collectors</AccordionTrigger>
+                                    <AccordionContent className='flex flex-col gap-3'>
+                                        {collectorsOptions.map((option) => (
+                                            <div key={option.id} className="flex items-center gap-2">
+                                                <Checkbox
+                                                    id={option.id}
+                                                    checked={field.value.includes(option.id)}
+                                                    onCheckedChange={(checked) => {
+                                                        const newSelected = checked
+                                                            ? [...field.value, option.id]
+                                                            : field.value.filter((id) => id !== option.id);
+                                                        field.onChange(newSelected);
+                                                    }}
+                                                />
+                                                <Label htmlFor={option.id}>{option.label}</Label>
+                                            </div>
+                                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -154,7 +157,7 @@ function WasteColSched() {
                             <FormItem>
                                 <Label>Date:</Label>
                                 <FormControl>
-                                    <Input type="date" {...field} className="w-full" />
+                                    <input type="date" {...field} className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -168,7 +171,7 @@ function WasteColSched() {
                             <FormItem>
                                 <Label>Time:</Label>
                                 <FormControl>
-                                    <Input type="time" {...field} className="w-full" />
+                                    <input type="time" {...field} className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -198,21 +201,28 @@ function WasteColSched() {
                     render={({ field }) => (
                         <FormItem className="mt-4">
                             <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <FilterAccordion
-                                title="Select Audience"
-                                options={announcementOptions.map((option) => ({
-                                    ...option,
-                                    checked: field.value?.includes(option.id) || false,
-                                }))}
-                                selectedCount={field.value?.length || 0}
-                                onChange={(id: string, checked: boolean) => {
-                                    const newSelected = checked
-                                        ? [...(field.value || []), id]
-                                        : (field.value || []).filter((category) => category !== id);
-                                    field.onChange(newSelected);
-                                }}
-                                onReset={handleResetAnnouncements}
-                            />
+                            <Accordion type="multiple" className="w-full">
+                                <AccordionItem value="announcements">
+                                    <AccordionTrigger>Select Audience</AccordionTrigger>
+                                    <AccordionContent className='flex flex-col gap-3'>
+                                        {announcementOptions.map((option) => (
+                                            <div key={option.id} className="flex items-center gap-2">
+                                                <Checkbox
+                                                    id={option.id}
+                                                    checked={field.value?.includes(option.id) || false}
+                                                    onCheckedChange={(checked) => {
+                                                        const newSelected = checked
+                                                        ? [...(field.value || []), option.id]
+                                                        : (field.value || []).filter((id) => id !== option.id);
+                                                        field.onChange(newSelected);
+                                                    }}
+                                                />
+                                                <Label htmlFor={option.id}>{option.label}</Label>
+                                            </div>
+                                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                             <FormMessage />
                         </FormItem>
                     )}

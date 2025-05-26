@@ -8,41 +8,45 @@ import {
 import { cn } from "@/lib/utils";
 
 interface Option {
-  id?: string;
+  id: string;
   name: React.ReactNode;
-  icons?: React.ReactNode;
+  icon?: React.ReactNode;
+  variant?: string
 }
 
 interface DropdownProps {
-  label: React.ReactNode;
+  trigger: React.ReactNode;
   className?: string;
   contentClassName?: string;
   options: Option[];
-  value?: string;
-  onChange?: (value: string) => void;
+  onSelect?: (value: string) => void;
 }
 
+export const variant: Record<string, string> = {
+  delete: "text-red-500 focus:text-red-500",
+  default: "focus:text-buttonBlue"
+};
+
 export default function DropdownLayout({ 
-  label, 
+  trigger, 
   className, 
   contentClassName, 
   options, 
-  value, 
-  onChange 
+  onSelect 
 }: DropdownProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={cn("border-white focus:outline-none", className)}>
-        {label}
+      <DropdownMenuTrigger asChild className={cn("border-white focus:outline-none", className)}>
+        {trigger}
       </DropdownMenuTrigger>
       <DropdownMenuContent className={cn("", contentClassName)}>
         {options.map((option, index) => (
           <DropdownMenuItem 
-            className="cursor-pointer flex items-center gap-x-2" 
+            className={cn("cursor-pointer flex items-center gap-x-2", variant[option.variant ?? ""])}
             key={option.id || index} 
-            onSelect={() => option.id && onChange && onChange(option.id)}
+            onSelect={() => option.id && onSelect && onSelect(option.id)}
           >
-            {option.icons}
+            {option.icon}
             {option.name}
           </DropdownMenuItem>
         ))}

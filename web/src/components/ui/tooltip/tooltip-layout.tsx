@@ -4,18 +4,20 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip"
+import { cn } from "@/lib/utils"
 
 interface TooltipProps{
     trigger: React.ReactNode,
-    content: String
+    content: React.ReactNode
+    contentClassName?: string
 }
 
 
-const TooltipLayout = ({trigger, content} : TooltipProps) => (
+const TooltipLayout = ({trigger, content, contentClassName} : TooltipProps) => (
     <TooltipProvider>
     <Tooltip>
-        <TooltipTrigger>{trigger}</TooltipTrigger>
-        <TooltipContent>
+        <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+        <TooltipContent className={cn("bg-darkGray", contentClassName)}>
         <p>{content}</p>
         </TooltipContent>
     </Tooltip>

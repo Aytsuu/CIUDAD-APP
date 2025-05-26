@@ -1,56 +1,102 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-// import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import type { z } from "zod"
+import ReferralFormSchema from "@/form-schema/animal-bite-schema"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button/button"
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import ReferralFormSchema from "@/form-schema/ReferralFormSchema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+  FormMessage
+} from "@/components/ui/form/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select/select"
+import { Link } from "react-router"
+import { Combobox } from "@/components/ui/combobox"
+import { api } from "@/api/api"
+import { toast } from "sonner"
+import { Label } from "@/components/ui/label"
+import { FormInput } from "@/components/ui/form/form-input"
+import { FormTextArea } from "@/components/ui/form/form-text-area"
+import { bitedetails, patient, referral } from "./db-request/postrequest"
 
+const SelectField = ({
+  name,
+  label,
+  options,
+  control
+}: {
+  name: string
+  label: string
+  options: string[]
+  control: any
+}) => (
+  <FormField
+    control={control}
+    name={name}
+    render={({ field }) => (
+      <FormItem>
+        <Label>{label}</Label>
+        <FormControl>
+          <Select onValueChange={field.onChange} value={field.value}>
+            <SelectTrigger>
+              <SelectValue placeholder={`Select ${label}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)
 
 type ReferralFormModalProps = {
-  onClose: () => void;
-  onAddPatient?: (patient: any) => void; // Add this line
-};
+  onClose: () => void
+  onAddPatient?: (patient: any) => void
+}
+
+interface PatientRecord {
+  personal_info: any
+  pat_id: string
+  per_fname: string
+  per_lname: string
+  per_mname: string
+  per_dob: string
+  per_age: string
+  per_sex: string
+  per_address: string
+}
+
+const calculateAge = (dobStr: string): number => {
+  const dob = new Date(dobStr)
+  const today = new Date()
+  const age = today.getFullYear() - dob.getFullYear()
+  const hasHadBirthday =
+    today.getMonth() > dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate())
+  return hasHadBirthday ? age : age - 1
+}
 
 export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFormModalProps) {
-  function onSubmit(values: z.infer<typeof ReferralFormSchema>) {
-    console.log("Form submitted:", values);
-
-    if (onAddPatient) {
-      const newPatient = {
-        id: Date.now(), // Generate a unique ID
-        lname: values.p_lname,
-        fname: values.p_fname,
-        age: values.p_age.toString(), // Convert to string (to match `Patient` type)
-        gender: values.p_gender,
-        date: values.date,
-        exposure: values.p_exposure,
-        siteOfExposure: values.p_siteofexposure,
-        bitingAnimal: values.p_bitinganimal,
-        actions: values.p_actions || "No actions recorded",
-      };
-
-      console.log("👨‍⚕️ Adding new patient:", newPatient);
-    onAddPatient(newPatient);
-    
-    onClose();
-  } else {
-    console.log("❌ onAddPatient function is missing!");
-  }
-}
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
-    // resolver: zodResolver(ReferralFormSchema),
+    resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
+      pat_id: "",
       receiver: "",
       sender: "",
       date: "",
@@ -61,275 +107,193 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_address: "",
       p_age: 0,
       p_gender: "",
-      p_exposure: "",
-      p_siteofexposure: "",
-      p_bitinganimal: "",
-      p_lab_exam: "",
+      exposure_type: "",
+      exposure_site: "",
+      biting_animal: "",
       p_actions: "",
-      p_referred: "",
-    },
-  });
-  console.log("❌ Validation errors:", form.formState.errors);
+      p_referred: ""
+    }
+  })
+
+  const [patients, setPatients] = useState<{ default: PatientRecord[]; formatted: { id: string; name: string }[] }>({
+    default: [],
+    formatted: []
+  })
+  const [selectedPatientId, setSelectedPatientId] = useState<string>("")
+  const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      setLoading(true)
+      try {
+        const response = await api.get("patientrecords/patient/")
+        const patientData = response.data
+
+        const formatted = patientData.map((patient: any) => ({
+          id: patient.pat_id.toString(),
+          name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
+        }))
+
+        setPatients({
+          default: patientData,
+          formatted
+        })
+      } catch (error) {
+        console.error("Error fetching patients:", error)
+        toast.error("Failed to load patient records")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPatients()
+  }, [])
+
+  const handlePatientSelection = (id: string) => {
+    setSelectedPatientId(id)
+    const selectedPatient = patients.default.find(p => p.pat_id.toString() === id)
+
+    if (selectedPatient) {
+      console.log("Selected Patient:", selectedPatient)
+      setSelectedPatientId(selectedPatient.pat_id.toString());
+      const personalInfo = selectedPatient.personal_info;
+      form.setValue("pat_id", String(selectedPatient.pat_id))
+      form.setValue("p_lname", personalInfo?.per_lname)
+      form.setValue("p_fname", personalInfo?.per_fname)
+      form.setValue("p_mname", personalInfo?.per_mname)
+      form.setValue("p_address", personalInfo?.per_address)
+      form.setValue("p_age", calculateAge(personalInfo?.per_dob))
+      form.setValue("p_gender", personalInfo?.per_sex)
+    }
+  }
+
+  const onSubmit = async () => {
+    console.log("Form values before submission:", form.getValues())
+    console.error("❌ Submission error:", form.formState.errors);
+    const isValid = await form.trigger()
+    if (!isValid) return
+    console.log("valid?: ",isValid)
+
+    const values = form.getValues()
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const patrec_id = await patient(values)
+      const referral_id = await referral({ ...values, patrec_id })
+      await bitedetails({ ...values, referral_id })
+      onAddPatient?.({ id: referral_id, ...values })
+      onClose()
+      form.reset()
+    } catch (err: any) {
+      console.error("❌ Submission error:", err)
+      setError(err?.message || "Something went wrong")
+      toast.error(err?.message || "Submission failed. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">
-        Animal Bites Referral Form
-      </h2>
+    <div className="p-3">
+      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">Animal Bites Referral Form</h2>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
+      )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-4">
-          {/* Receiver */}
-          <FormField
-            control={form.control}
-            name="receiver"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Receiver:</Label>
-                <FormControl>
-                  <Input placeholder="Enter recipient" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Sender */}
-          <FormField
-            control={form.control}
-            name="sender"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Sender:</Label>
-                <FormControl>
-                  <Input placeholder="Enter sender" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Date */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Date:</Label>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Transient Checkbox */}
-          <FormField
-            control={form.control}
-            name="transient"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
-                <FormControl>
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-                <Label>Transient</Label>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* 🔹 Patient Information */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-2">Patient Information</h3>
-
-            {/* Last Name */}
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit() }} className="p-4 space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <FormInput control={form.control} name="receiver" label="Receiver" />
+            <FormInput control={form.control} name="sender" label="Sender" />
+            <FormInput control={form.control} name="date" label="Date" type="date" />
             <FormField
               control={form.control}
-              name="p_lname"
+              name="transient"
               render={({ field }) => (
-                <FormItem>
-                  <Label>Last Name:</Label>
+                <FormItem className="flex items-center gap-2 mt-3">
                   <FormControl>
-                    <Input placeholder="Enter last name" {...field} />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* First Name */}
-            <FormField
-              control={form.control}
-              name="p_fname"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>First Name:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter first name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Middle Name */}
-            <FormField
-              control={form.control}
-              name="p_mname"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Middle Name:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter middle name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Address */}
-            <FormField
-              control={form.control}
-              name="p_address"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Address:</Label>
-                  <FormControl>
-                    <Textarea placeholder="Enter address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Age */}
-            <FormField
-              control={form.control}
-              name="p_age"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Age:</Label>
-                  <FormControl>
-                    <Input type="number" placeholder="Enter age" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="p_gender"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Gender:</Label>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
+                  <Label>Transient</Label>
                 </FormItem>
               )}
             />
           </div>
 
-          {/* 🔹 Animal Bite Details */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Animal Bite Details</h3>
-
-            {/* Exposure Type */}
-            <FormField
-              control={form.control}
-              name="p_exposure"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Type of Exposure:</Label>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">Bite</SelectItem>
-                        <SelectItem value="female">Non-bite</SelectItem>
-
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Site of Exposure */}
-            <FormField
-              control={form.control}
-              name="p_siteofexposure"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Site of Exposure:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter body part affected" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Biting Animal */}
-            <FormField
-              control={form.control}
-              name="p_bitinganimal"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>Biting Animal:</Label>
-                  <FormControl>
-                    <Input placeholder="Enter animal (e.g., Dog, Cat)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-semibold mb-4">Patient Information</h3>
+            <div className="flex flex-col sm:flex-row items-center mb-5 justify-between w-full">
+              <Combobox
+                options={patients.formatted}
+                value={selectedPatientId}
+                onChange={handlePatientSelection}
+                placeholder={loading ? "Loading patients..." : "Select a patient"}
+                triggerClassName="font-normal w-[30rem]"
+                emptyMessage={
+                  <div className="flex gap-2 justify-center items-center">
+                    <Label className="font-normal text-[13px]">
+                      {loading ? "Loading..." : "No patient found."}
+                    </Label>
+                    <Link to="/patient-records/new">
+                      <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                        Register New Patient
+                      </Label>
+                    </Link>
+                  </div>
+                }
+              />
+            </div>
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                { name: "p_lname", label: "Last Name" },
+                { name: "p_fname", label: "First Name" },
+                { name: "p_mname", label: "Middle Name" },
+                { name: "p_address", label: "Address" },
+                { name: "p_age", label: "Age", type: "number" },
+                { name: "p_gender", label: "Gender" }
+              ].map(({ name, label, type }) => (
+                <FormInput key={name} control={form.control} name={name} label={label} type={type} readOnly />
+              ))}
+            </div>
           </div>
 
-          {/* 🔹 Additional Actions */}
-          <FormField
-            control={form.control}
-            name="p_actions"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Actions Taken:</Label>
-                <FormControl>
-                  <Textarea placeholder="Describe the required actions..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-semibold mb-4">Animal Bite Details</h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              <SelectField control={form.control} name="exposure_type" label="Type of Exposure" options={["Bite", "Non-bite"]} />
+              <FormInput control={form.control} name="exposure_site" label="Site of Exposure" />
+              <FormInput control={form.control} name="biting_animal" label="Biting Animal" />
+              <FormTextArea control={form.control} name="p_actions" label="Actions Taken" />
+              <FormInput control={form.control} name="p_referred" label="Referred by" />
+            </div>
+          </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-2">
-            <Button type="button" className="bg-red-600 hover:bg-red-800 text-white" onClick={onClose}>
-              Cancel
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-4 mt-6 mb-6">
+            <Button type="submit" disabled={isSubmitting} className="w-full mb-4 sm:w-auto">
+              Submit
             </Button>
-            <Button type="submit" className="">
-              Add
-            </Button>
-    
+           
           </div>
         </form>
-   
       </Form>
     </div>
-  );
+  )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Button } from "@/components/ui/button";
+// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Button } from "@/components/ui/button/button";
 import ReferralFormModal from "@/pages/animalbites/referralform";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ type Patient = {
   age: string;
   gender: string;
   date: string;
+  transient: boolean;
   exposure: string;
   siteOfExposure: string;
   bitingAnimal: string;
@@ -34,6 +35,7 @@ const samplePatients: Patient[] = [
     gender: "Female",
     date: "2024-02-06",
     exposure: "Non-bite",
+    transient: true,
     siteOfExposure: "Feet",
     bitingAnimal: "Cat",
     actions: "Wound Cleaned",
@@ -46,6 +48,7 @@ const samplePatients: Patient[] = [
     gender: "Male",
     date: "2024-02-08",
     exposure: "Bite",
+    transient: false,
     siteOfExposure: "Hand",
     bitingAnimal: "Dog",
     actions: "Wound Cleaned, Medicine Given",
@@ -59,6 +62,7 @@ const samplePatients: Patient[] = [
     date: "2024-02-10",
     exposure: "Bite",
     siteOfExposure: "Leg",
+    transient: false,
     bitingAnimal: "Monkey",
     actions: "Antibiotic Given",
   },
@@ -84,6 +88,7 @@ function AnimalBites() {
     { accessorKey: "date", header: "Date" },
     { accessorKey: "exposure", header: "Exposure" },
     { accessorKey: "siteOfExposure", header: "Site of Exposure" },
+    { accessorKey: "transient", header: "Transient", cell:({row}) => (row.original.transient? "Yes":"No")},
     { accessorKey: "bitingAnimal", header: "Biting Animal" },
     { accessorKey: "actions", header: "Actions taken" },
     {
@@ -93,7 +98,7 @@ function AnimalBites() {
         <div className="flex justify-center">
           <Link to={`/Animalbite_individual/`}>
             <Button variant="outline" className="">
-              View details
+              View
             </Button>
           </Link>
         </div>
@@ -112,7 +117,7 @@ function AnimalBites() {
   };
 
   const filteredPatients = patients.filter((patient) => {
-    const searchString = `${patient.fname} ${patient.lname} ${patient.age} ${patient.gender} ${patient.date} ${patient.exposure} ${patient.siteOfExposure} ${patient.bitingAnimal}`.toLowerCase();
+    const searchString = `${patient.fname} ${patient.lname} ${patient.age} ${patient.gender} ${patient.date} ${patient.exposure} ${patient.siteOfExposure} ${patient.transient} ${patient.bitingAnimal}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
 
@@ -130,29 +135,33 @@ function AnimalBites() {
       <hr className="border-gray mb-5 sm:mb-8" />
 
       {/* Search, Filter & Button Section */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
-        <div className="flex flex-1 gap-4 w-full">
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input
-              placeholder="Search..."
-              className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
-          </div>
+      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+        {/* Search Input and Filter Dropdown */}
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+          <div className="flex gap-x-2">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                size={17}
+              />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-72 bg-white"
+                value={searchQuery}
+                onChangeCapture={handleSearchChange}
+              />
+            </div>
 
-          {/* Filter Dropdown */}
-          <div className="w-48">
+            {/* Filter Dropdown */}
             <SelectLayout
-              placeholder="Filter by Exposure"
+              placeholder="Filter by"
               label=""
-              className="bg-white border-gray-300 w-full"
+              className="w-full md:w-[200px] bg-white"
               options={[
                 { id: "All", name: "All" },
                 { id: "Bite", name: "Bite" },
-                { id: "Scratch", name: "Scratch" },
+                { id: "Non-bite", name: "Non-bite" },
               ]}
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
@@ -161,13 +170,19 @@ function AnimalBites() {
         </div>
 
         {/* New Record Button */}
-        <div className="flex justify-end w-full sm:w-auto">
+        <div className="flex justify-end">
           <DialogLayout
             trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
             className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"
-            mainContent={<ReferralFormModal
-              onAddPatient={handleAddPatient}
-              onClose={() => console.log("Closing modal")} />} title={""} description={""} />
+            mainContent={
+              <ReferralFormModal
+                onAddPatient={handleAddPatient}
+                onClose={() => console.log("Closing modal")}
+              />
+            }
+            title={""}
+            description={""}
+          />
         </div>
       </div>
 
@@ -193,12 +208,12 @@ function AnimalBites() {
 
           {/* Pagination */}
           <div className="w-full sm:w-auto flex justify-center">
-            <PaginationLayout className="" />
+            {/* <PaginationLayout className="" /> */}
           </div>
         </div>
       </div>
     </div>
-    
+
   );
 }
 

@@ -4,10 +4,11 @@ import {Input} from '@/components/ui/input.tsx';
 import {Label} from '@/components/ui/label.tsx';
 import { CardTitle } from '@/components/ui/card/card.tsx';
 import {DatePicker} from '@/components/ui/datepicker.tsx';
+import { SelectLayout } from "@/components/ui/select/select-layout";
 import {Textarea} from '@/components/ui/textarea.tsx';
-import {Button} from '@/components/ui/button.tsx';
+import {Button} from '@/components/ui/button/button';
 import { ChevronLeft } from "lucide-react";
-import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form";
+import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage,} from "@/components/ui/form/form";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -34,9 +35,11 @@ function UpdateOrdinance() {
         resolver: zodResolver(updateOrdinanceFormSchema),
         mode: 'onChange',
         defaultValues: {
-            ordTitle: "",        
+            ordTitle: "", 
+            ordTag: "",
+            ordDesc: "",        
             ordDate: "",
-            ordDescription: "",
+            ordDetails: "",
             ordAreaOfFocus: [],
         },
     });
@@ -73,7 +76,7 @@ function UpdateOrdinance() {
                     {/* Ordinance Description Field */}
                     <FormField
                         control={form.control}
-                        name="ordDescription"
+                        name="ordDetails"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel></FormLabel>
@@ -120,6 +123,52 @@ function UpdateOrdinance() {
                                                     </FormItem>
                                                 )}
                                             />
+
+                                            {/* Ordinance Ammend Field */}
+                                            <FormField
+                                                control={form.control}
+                                                name="ordTag"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                    <FormLabel>Amend</FormLabel>
+                                                    <FormControl>
+                                                        <SelectLayout
+                                                            className="w-full"
+                                                            label="Ordinances"
+                                                            placeholder="Select Ammended Ordinance"
+                                                            options={[
+                                                                {id: "001-1", name: "001-1"},
+                                                                {id: "002-2", name: "002-2"}                                                   
+                                                            ]}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />            
+
+                                            {/* Ordinance Description Field */}
+                                            <FormField
+                                                control={form.control}
+                                                name="ordDesc"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Ordinance Description</FormLabel>
+                                                        <FormControl>
+                                                            {/* <Input placeholder="Enter Event Title" {...field} /> */}
+                                                            <Textarea
+                                                                className="w-full p-2 shadow-sm h-20 mt-[12px] rounded-[5px] resize-none"
+                                                                placeholder="Description"
+                                                                {...field}>
+                                                            </Textarea>                                                            
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />    
+
 
                                             {/* Date Approved Field */}
                                             <FormField
