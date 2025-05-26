@@ -22,6 +22,7 @@ function WasteIllegalDumpingDetails({
   rep_date,
   rep_contact,
 }: WasteReportDetailsProps) {
+
   return (
     <div className="w-full h-full space-y-6">
       {/* Header */}

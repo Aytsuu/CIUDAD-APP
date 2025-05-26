@@ -7,6 +7,8 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
 import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueries";
@@ -16,7 +18,7 @@ import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueri
 
 function WasteIllegalDumping() {
 
-  const { data: fetchedData = [] } = useWasteReport();
+  const { data: fetchedData = [], isLoading } = useWasteReport();
 
   const columns: ColumnDef<WasteReport>[] = [
   {
@@ -99,10 +101,16 @@ function WasteIllegalDumping() {
     cell: () => (
       <TooltipLayout
         trigger={
-          <div className="w-[35px] h-[35px] bg-[#ff2c2c] text-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            <Trash size={16} />
-          </div>
-        }
+            <div className="flex items-center h-8">
+                <ConfirmationModal
+                    trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+                    title="Confirm Delete"
+                    description="Are you sure you want to delete this entry?"
+                    actionLabel="Confirm"
+                    // onClick={() => handleDelete(row.original.iet_num)} 
+                />                    
+            </div>                   
+        }  
         content="Delete"
       />
     ),
@@ -160,6 +168,18 @@ function WasteIllegalDumping() {
   const startIndex = (currentPage - 1) * 12;
   const endIndex = startIndex + 12;
   const currentRows = filteredData.slice(startIndex, endIndex);
+
+
+  if (isLoading) {
+    return (
+        <div className="w-full h-full">
+          <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+          <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+          <Skeleton className="h-10 w-full mb-4 opacity-30" />
+          <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+        </div>
+      );
+  }
 
   return (
     <div className="w-full h-full">
