@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Truck, User, Trash2, Plus, Edit, Trash } from "lucide-react";
+import { Shield, Truck, User, Trash2, Plus, Eye, Trash, Edit } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -10,15 +10,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 
 type PersonnelCategory = "Watchmen" | "Truck Drivers" | "Waste Collectors" | "Trucks";
 type TruckStatus = "Operational" | "Maintenance";
 
 interface TruckData {
-  id: string;
-  name: string;
-  status: TruckStatus;
-  lastService: string;
+  truck_id: string;
+  truck_plate_num: string;
+  truck_model: string;
+  truck_capacity: string;
+  truck_status: TruckStatus;
+  truck_last_maint: string;
 }
 
 interface PersonnelItem {
@@ -36,16 +45,37 @@ interface PersonnelData {
 const WastePersonnel = () => {
   const [activeTab, setActiveTab] = useState<PersonnelCategory>("Watchmen");
   const [trucks, setTrucks] = useState<TruckData[]>([
-    { id: "1", name: "Truck #101", status: "Operational", lastService: "2023-05-15" },
-    { id: "2", name: "Truck #102", status: "Maintenance", lastService: "2023-06-20" },
+    { 
+      truck_id: "1", 
+      truck_plate_num: "ABC123", 
+      truck_model: "Model X", 
+      truck_capacity: "5 tons", 
+      truck_status: "Operational", 
+      truck_last_maint: "2023-05-15" 
+    },
+    { 
+      truck_id: "2", 
+      truck_plate_num: "XYZ789", 
+      truck_model: "Model Y", 
+      truck_capacity: "3 tons", 
+      truck_status: "Maintenance", 
+      truck_last_maint: "2023-06-20" 
+    },
   ]);
-  const [newTruck, setNewTruck] = useState<Omit<TruckData, "id">>({
-    name: "",
-    status: "Operational",
-    lastService: new Date().toISOString().split("T")[0],
-  });
-  const [editingTruck, setEditingTruck] = useState<TruckData | null>(null);
+  const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(true); // Default to view mode
+
+  const form = useForm<z.infer<typeof TruckFormSchema>>({
+    resolver: zodResolver(TruckFormSchema),
+    defaultValues: {
+      truck_plate_num: "",
+      truck_model: "",
+      truck_capacity: "",
+      truck_status: "Operational",
+      truck_last_maint: new Date().toISOString().split("T")[0],
+    },
+  });
 
   // Sample personnel data
   const personnelData: PersonnelData = {
@@ -98,32 +128,48 @@ const WastePersonnel = () => {
     }
   };
 
-  // CRUD Operations for Trucks
-  const handleAddTruck = () => {
-    const newTruckWithId: TruckData = {
-      ...newTruck,
-      id: Date.now().toString(),
-    };
-    setTrucks([...trucks, newTruckWithId]);
-    setNewTruck({
-      name: "",
-      status: "Operational",
-      lastService: new Date().toISOString().split("T")[0],
-    });
+  // Handle form submission
+  const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
+    if (currentTruck) {
+      // Update existing truck
+      const updatedTrucks = trucks.map(truck => 
+        truck.truck_id === currentTruck.truck_id ? { ...values, truck_id: currentTruck.truck_id } : truck
+      );
+      setTrucks(updatedTrucks);
+    } else {
+      // Add new truck
+      const newTruck: TruckData = {
+        ...values,
+        truck_id: Date.now().toString(),
+      };
+      setTrucks([...trucks, newTruck]);
+    }
+    form.reset();
     setIsDialogOpen(false);
-  };
-
-  const handleUpdateTruck = () => {
-    if (!editingTruck) return;
-    setTrucks(trucks.map(truck => 
-      truck.id === editingTruck.id ? editingTruck : truck
-    ));
-    setEditingTruck(null);
-    setIsDialogOpen(false);
+    setCurrentTruck(null);
+    setIsReadOnly(true);
   };
 
   const handleDeleteTruck = (id: string) => {
-    setTrucks(trucks.filter(truck => truck.id !== id));
+    setTrucks(trucks.filter(truck => truck.truck_id !== id));
+  };
+
+  // Open dialog in view or edit mode
+  const openDialog = (truck: TruckData | null, readOnly: boolean) => {
+    setCurrentTruck(truck);
+    setIsReadOnly(readOnly);
+    if (truck) {
+      form.reset(truck);
+    } else {
+      form.reset({
+        truck_plate_num: "",
+        truck_model: "",
+        truck_capacity: "",
+        truck_status: "Operational",
+        truck_last_maint: new Date().toISOString().split("T")[0],
+      });
+    }
+    setIsDialogOpen(true);
   };
 
   return (
@@ -164,7 +210,7 @@ const WastePersonnel = () => {
                     }`}></span>
                     <span>
                       {category === "Trucks" 
-                        ? `Operational: ${trucks.filter(t => t.status === "Operational").length}` 
+                        ? `Operational: ${trucks.filter(t => t.truck_status === "Operational").length}` 
                         : "Active"}
                     </span>
                   </div>
@@ -209,100 +255,14 @@ const WastePersonnel = () => {
               {activeTab}
             </h3>
             {activeTab === "Trucks" && (
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    size="sm" 
-                    className="gap-1"
-                    onClick={() => {
-                      setEditingTruck(null);
-                      setNewTruck({
-                        name: "",
-                        status: "Operational",
-                        lastService: new Date().toISOString().split("T")[0],
-                      });
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Truck
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingTruck ? "Edit Truck" : "Add New Truck"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="name" className="text-right">
-                        Truck Name
-                      </label>
-                      <Input
-                        id="name"
-                        value={editingTruck ? editingTruck.name : newTruck.name}
-                        onChange={(e) => 
-                          editingTruck
-                            ? setEditingTruck({...editingTruck, name: e.target.value})
-                            : setNewTruck({...newTruck, name: e.target.value})
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="status" className="text-right">
-                        Status
-                      </label>
-                      <select
-                        id="status"
-                        value={editingTruck ? editingTruck.status : newTruck.status}
-                        onChange={(e) => {
-                          const value = e.target.value as TruckStatus;
-                          editingTruck
-                            ? setEditingTruck({...editingTruck, status: value})
-                            : setNewTruck({...newTruck, status: value});
-                        }}
-                        className="col-span-3 border rounded-md p-2"
-                      >
-                        <option value="Operational">Operational</option>
-                        <option value="Maintenance">Maintenance</option>
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="lastService" className="text-right">
-                        Last Service
-                      </label>
-                      <Input
-                        type="date"
-                        id="lastService"
-                        value={editingTruck 
-                          ? editingTruck.lastService 
-                          : newTruck.lastService}
-                        onChange={(e) => 
-                          editingTruck
-                            ? setEditingTruck({...editingTruck, lastService: e.target.value})
-                            : setNewTruck({...newTruck, lastService: e.target.value})
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setIsDialogOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={editingTruck ? handleUpdateTruck : handleAddTruck}
-                        disabled={!newTruck.name && !editingTruck}
-                      >
-                        {editingTruck ? "Update" : "Add"} Truck
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button 
+                size="sm" 
+                className="gap-1"
+                onClick={() => openDialog(null, false)}
+              >
+                <Plus className="h-4 w-4" />
+                Add Truck
+              </Button>
             )}
           </div>
           
@@ -311,42 +271,46 @@ const WastePersonnel = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="p-2 text-left">Truck Name</th>
+                    <th className="p-2 text-left">Truck ID</th>
+                    <th className="p-2 text-left">Plate Number</th>
                     <th className="p-2 text-left">Status</th>
-                    <th className="p-2 text-left">Last Service</th>
                     <th className="p-2 text-left">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {trucks.map((truck) => (
-                    <tr key={truck.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2">{truck.name}</td>
+                    <tr key={truck.truck_id} className="border-b hover:bg-gray-50">
+                      <td className="p-2">{truck.truck_id}</td>
+                      <td className="p-2">{truck.truck_plate_num}</td>
                       <td className="p-2">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          truck.status === "Operational"
+                          truck.truck_status === "Operational"
                             ? "bg-green-100 text-green-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {truck.status}
+                          {truck.truck_status}
                         </span>
                       </td>
-                      <td className="p-2">{truck.lastService}</td>
                       <td className="p-2">
                         <div className="flex gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setEditingTruck(truck);
-                              setIsDialogOpen(true);
-                            }}
+                            onClick={() => openDialog(truck, true)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openDialog(truck, false)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteTruck(truck.id)}
+                            onClick={() => handleDeleteTruck(truck.truck_id)}
                           >
                             <Trash className="h-4 w-4 text-red-500" />
                           </Button>
@@ -377,6 +341,133 @@ const WastePersonnel = () => {
           )}
         </div>
       </div>
+
+      {/* Truck Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)}>
+              <DialogHeader>
+                <DialogTitle>
+                  {isReadOnly ? "Truck Details" : currentTruck ? "Edit Truck" : "Add New Truck"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                {/* Plate Number */}
+                <FormField
+                  control={form.control}
+                  name="truck_plate_num"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <Label>Plate Number</Label>
+                      <FormControl>
+                        <Input {...field} readOnly={isReadOnly} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Model */}
+                <FormField
+                  control={form.control}
+                  name="truck_model"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <Label>Model</Label>
+                      <FormControl>
+                        <Input {...field} readOnly={isReadOnly} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Capacity */}
+                <FormField
+                  control={form.control}
+                  name="truck_capacity"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <Label>Capacity</Label>
+                      <FormControl>
+                        <Input {...field} readOnly={isReadOnly} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Status */}
+                <FormField
+                  control={form.control}
+                  name="truck_status"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <Label>Status</Label>
+                      <FormControl>
+                        {isReadOnly ? (
+                          <Input 
+                            value={field.value} 
+                            readOnly 
+                          />
+                        ) : (
+                          <SelectLayout
+                            className="w-full"
+                            label="Select Status"
+                            placeholder="Select Status"
+                            options={[
+                              { id: "Operational", name: "Operational" },
+                              { id: "Maintenance", name: "Maintenance" },
+                            ]}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Last Maintenance */}
+                <FormField
+                  control={form.control}
+                  name="truck_last_maint"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <Label>Last Maintenance</Label>
+                      <FormControl>
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          readOnly={isReadOnly} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {!isReadOnly && (
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button 
+                      variant="outline" 
+                      type="button"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      {currentTruck ? "Update" : "Add"} Truck
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
