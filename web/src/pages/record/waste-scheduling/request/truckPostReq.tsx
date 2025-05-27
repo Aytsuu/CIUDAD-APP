@@ -14,7 +14,7 @@ export const postWasteTruck = async (truckInfo: Record<string, any>) => {
 
     console.log("Posting new truck:", payload);
 
-    const res = await api.post("waste/waste-personnel/", payload);
+    const res = await api.post("waste/waste-trucks/", payload);
     return res.data.truck_id;
   } catch (err) {
     console.error("Error posting truck:", err);

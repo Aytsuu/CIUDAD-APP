@@ -14,7 +14,7 @@ export const putWasteTruck = async (truck_id: number, truckInfo: Record<string, 
 
     console.log(`Updating truck ${truck_id}:`, payload);
 
-    const res = await api.put(`waste/waste-personnel/${truck_id}/`, payload);
+    const res = await api.put(`waste/waste-trucks/${truck_id}/`, payload);
     return res.data;
   } catch (err) {
     console.error("Error updating truck:", err);

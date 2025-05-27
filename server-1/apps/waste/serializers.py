@@ -35,7 +35,9 @@ class WasteReportSerializer(serializers.ModelSerializer):
         model = WasteReport
         fields = '__all__'
 
-class WastePersonnelSerializer(generics.ListAPIView):
+class WastePersonnelSerializer(serializers.ModelSerializer):
+    staff_id = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = WastePersonnel
         fields = '__all__'
@@ -43,4 +45,4 @@ class WastePersonnelSerializer(generics.ListAPIView):
 class WasteTruckSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteTruck
-        fields = '__all__'
+        fields = '__all__' 
