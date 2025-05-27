@@ -22,7 +22,7 @@ import {
   FormControl,
   FormItem,
   FormMessage,
-  FormField
+  FormField,
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,16 +32,30 @@ import { useUpdateWasteTruck } from "./queries/truckUpdate";
 import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
 import { useDeleteWasteTruck } from "./queries/truckDelQueries";
 import { useAddWasteTruck } from "./queries/truckAddQueries";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 type PersonnelCategory =
-  | "Watchmen"
-  | "Truck Drivers"
-  | "Waste Collectors"
+  | "Watchman" // Changed from "Watchmen"
+  | "Waste Driver" // Changed from "Truck Drivers"
+  | "Waste Collector" // Changed from "Waste Collectors"
   | "Trucks";
+
+interface PersonnelItem {
+  id: string;
+  name: string;
+  position: string; // Add position field
+  contact?: string; // Add optional contact field
+}
+
+interface PersonnelData {
+  Watchman: PersonnelItem[];
+  "Waste Driver": PersonnelItem[];
+  "Waste Collector": PersonnelItem[];
+  Trucks: TruckData[];
+}
+
 type TruckStatus = "Operational" | "Maintenance";
 
 interface TruckData {
@@ -53,31 +67,19 @@ interface TruckData {
   truck_last_maint: string;
 }
 
-interface PersonnelItem {
-  id: string;
-  name: string;
-}
-
-interface PersonnelData {
-  Watchmen: PersonnelItem[];
-  "Truck Drivers": PersonnelItem[];
-  "Waste Collectors": PersonnelItem[];
-  Trucks: TruckData[];
-}
-
 const WastePersonnel = () => {
-  const [activeTab, setActiveTab] = useState<PersonnelCategory>("Watchmen");
+  const [activeTab, setActiveTab] = useState<PersonnelCategory>("Watchman");
   const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const {
     data: trucks = [],
     isLoading: isTrucksLoading,
     isError: isTrucksError,
   } = useGetTrucks();
-  
+
   const {
     data: personnel = [],
     isLoading: isPersonnelLoading,
@@ -93,7 +95,7 @@ const WastePersonnel = () => {
     defaultValues: {
       truck_plate_num: "",
       truck_model: "",
-      truck_capacity: '',
+      truck_capacity: "",
       truck_status: "Operational",
       truck_last_maint: new Date().toISOString().split("T")[0],
     },
@@ -101,29 +103,54 @@ const WastePersonnel = () => {
 
   const validTrucks = Array.isArray(trucks) ? trucks : [];
 
-  const personnelData: PersonnelData = {
-    Watchmen: personnel
-      .filter((p) => p.role === "Watchmen")
-      .map((p) => ({ id: p.wstp_id.toString(), name: p.name })),
-    "Truck Drivers": personnel
-      .filter((p) => p.role === "Truck Drivers")
-      .map((p) => ({ id: p.wstp_id.toString(), name: p.name })),
-    "Waste Collectors": personnel
-      .filter((p) => p.role === "Waste Collectors")
-      .map((p) => ({ id: p.wstp_id.toString(), name: p.name })),
-    Trucks: validTrucks.map((truck) => ({
-      truck_id: truck.truck_id.toString(),
-      truck_plate_num: truck.truck_plate_num,
-      truck_model: truck.truck_model,
-      truck_capacity: String(truck.truck_capacity),
-      truck_status: truck.truck_status as TruckStatus,
-      truck_last_maint: truck.truck_last_maint,
+  const normalizePosition = (title: string) => {
+  const lower = title.toLowerCase();
+  if (lower.includes("Watchman") || lower.includes("watchmen")) return "Watchman";
+  if (lower.includes("Waste Driver") || lower.includes("truck driver")) return "Waste Driver";
+  if (lower.includes("Waste Collector") || lower.includes("waste collectors")) return "Waste Collector";
+  return title;
+};
+
+const personnelData: PersonnelData = {
+  Watchman: personnel
+    .filter((p) => normalizePosition(p.staff.position?.title || "") === "Watchman")
+    .map((p) => ({
+      id: p.wstp_id.toString(),
+      name: `${p.staff.profile.personal?.fname || ""} ${p.staff.profile.personal?.mname || ""} ${p.staff.profile.personal?.lname || ""} ${p.staff.profile.personal?.suffix || ""}`,
+      position: "Watchman",
+      contact: p.staff.profile.personal?.contact || "N/A",
     })),
-  };
+  "Waste Driver": personnel
+    .filter((p) => normalizePosition(p.staff.position?.title || "") === "Waste Driver")
+    .map((p) => ({
+      id: p.wstp_id.toString(),
+      name: `${p.staff.profile.personal?.fname || ""} ${p.staff.profile.personal?.mname || ""} ${p.staff.profile.personal?.lname || ""} ${p.staff.profile.personal?.suffix || ""}`,
+      position: "Waste Driver",
+      contact: p.staff.profile.personal?.contact || "N/A",
+    })),
+  "Waste Collector": personnel
+    .filter((p) => normalizePosition(p.staff.position?.title || "") === "Waste Collector")
+    .map((p) => ({
+      id: p.wstp_id.toString(),
+      name: `${p.staff.profile.personal?.fname || ""} ${p.staff.profile.personal?.mname || ""} ${p.staff.profile.personal?.lname || ""} ${p.staff.profile.personal?.suffix || ""}`,
+      position: "Waste Collector",
+      contact: p.staff.profile.personal?.contact || "N/A",
+    })),
+  Trucks: validTrucks.map((truck) => ({
+    truck_id: truck.truck_id.toString(),
+    truck_plate_num: truck.truck_plate_num,
+    truck_model: truck.truck_model,
+    truck_capacity: String(truck.truck_capacity),
+    truck_status: truck.truck_status as TruckStatus,
+    truck_last_maint: truck.truck_last_maint,
+  })),
+};
+console.log('personnelData:', personnelData);
 
   // Filter data based on search query
   const filteredTrucks = personnelData.Trucks.filter((truck) => {
-    const searchString = `${truck.truck_id} ${truck.truck_plate_num} ${truck.truck_model} ${truck.truck_capacity} ${truck.truck_status}`.toLowerCase();
+    const searchString =
+      `${truck.truck_id} ${truck.truck_plate_num} ${truck.truck_model} ${truck.truck_capacity} ${truck.truck_status}`.toLowerCase();
     return searchString.includes(searchQuery.toLowerCase());
   });
 
@@ -144,16 +171,16 @@ const WastePersonnel = () => {
 
   const getCategoryIcon = (category: PersonnelCategory) => {
     switch (category) {
-      case "Watchmen":
+      case "Watchman":
         return <Shield className="h-5 w-5" />;
-      case "Truck Drivers":
+      case "Waste Driver":
         return (
           <div className="relative">
             <User className="h-5 w-5" />
             <Truck className="h-3 w-3 absolute -bottom-1 -right-1" />
           </div>
         );
-      case "Waste Collectors":
+      case "Waste Collector":
         return <Trash2 className="h-5 w-5" />;
       case "Trucks":
         return <Truck className="h-5 w-5" />;
@@ -162,45 +189,48 @@ const WastePersonnel = () => {
 
   const getCategoryColor = (category: PersonnelCategory) => {
     switch (category) {
-      case "Watchmen":
+      case "Watchman":
         return "bg-green-100 text-green-600";
-      case "Truck Drivers":
+      case "Waste Driver":
         return "bg-yellow-100 text-yellow-600";
-      case "Waste Collectors":
+      case "Waste Collector":
         return "bg-sky-100 text-sky-600";
       case "Trucks":
         return "bg-purple-100 text-purple-600";
     }
   };
 
- const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
-  const parsedValues = {
-    ...values,
-    truck_capacity: String(values.truck_capacity).replace(/,/g, ""),
+  const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
+    const parsedValues = {
+      ...values,
+      truck_capacity: String(values.truck_capacity).replace(/,/g, ""),
+    };
+
+    if (currentTruck) {
+      updateTruck.mutate(
+        {
+          truck_id: parseInt(currentTruck.truck_id),
+          truckData: parsedValues,
+        },
+        {
+          onSuccess: () => {
+            setIsReadOnly(true); // Switch back to view mode after update
+          },
+        }
+      );
+    } else {
+      addTruck.mutate(parsedValues, {
+        onSuccess: () => {
+          setIsDialogOpen(false); // Close the modal after successful add
+          setCurrentTruck(null); // Reset current truck
+        },
+      });
+    }
   };
 
-  if (currentTruck) {
-    updateTruck.mutate({
-      truck_id: parseInt(currentTruck.truck_id),
-      truckData: parsedValues,
-    }, {
-      onSuccess: () => {
-        setIsReadOnly(true); // Switch back to view mode after update
-      }
-    });
-  } else {
-    addTruck.mutate(parsedValues, {
-      onSuccess: () => {
-        setIsDialogOpen(false); // Close the modal after successful add
-        setCurrentTruck(null); // Reset current truck
-      }
-    });
-  }
-};
-
   const handleDeleteTruck = (id: string) => {
-  deleteTruck.mutate(parseInt(id));
-};
+    deleteTruck.mutate(parseInt(id));
+  };
 
   const openDialog = (truck: TruckData | null, readOnly: boolean) => {
     setCurrentTruck(truck);
@@ -208,7 +238,7 @@ const WastePersonnel = () => {
     if (truck) {
       form.reset({
         ...truck,
-        truck_capacity: String(truck.truck_capacity).replace(",", "")
+        truck_capacity: String(truck.truck_capacity).replace(",", ""),
       });
     } else {
       form.reset({
@@ -237,7 +267,14 @@ const WastePersonnel = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {(Object.keys(personnelData) as PersonnelCategory[]).map((category) => (
+        {(
+          [
+            "Watchman",
+            "Waste Driver",
+            "Waste Collector",
+            "Trucks",
+          ] as PersonnelCategory[]
+        ).map((category) => (
           <CardLayout
             key={category}
             content={
@@ -293,21 +330,26 @@ const WastePersonnel = () => {
         {/* Tab Navigation */}
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center justify-center bg-white rounded-full p-1 shadow-md">
-            {(Object.keys(personnelData) as PersonnelCategory[]).map(
-              (category) => (
-                <button
-                  key={category}
-                  onClick={() => setActiveTab(category)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeTab === category
-                      ? "bg-primary text-white shadow"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  {category}
-                </button>
-              )
-            )}
+            {(
+              [
+                "Watchman",
+                "Waste Driver",
+                "Waste Collector",
+                "Trucks",
+              ] as PersonnelCategory[]
+            ).map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveTab(category)}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  activeTab === category
+                    ? "bg-primary text-white shadow"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -366,9 +408,13 @@ const WastePersonnel = () => {
                       className="border-b hover:bg-gray-50"
                     >
                       <td className="p-2 text-center">{truck.truck_id}</td>
-                      <td className="p-2 text-center">{truck.truck_plate_num}</td>
+                      <td className="p-2 text-center">
+                        {truck.truck_plate_num}
+                      </td>
                       <td className="p-2 text-center">{truck.truck_model}</td>
-                      <td className="p-2 text-center">{truck.truck_capacity}</td>
+                      <td className="p-2 text-center">
+                        {truck.truck_capacity}
+                      </td>
                       <td className="p-2 text-center">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -414,7 +460,9 @@ const WastePersonnel = () => {
                                   title="Confirm Delete"
                                   description="Are you sure you want to delete this truck?"
                                   actionLabel="Confirm"
-                                  onClick={() => handleDeleteTruck(truck.truck_id)}
+                                  onClick={() =>
+                                    handleDeleteTruck(truck.truck_id)
+                                  }
                                 />
                               </div>
                             }
@@ -428,35 +476,48 @@ const WastePersonnel = () => {
               </table>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <div className="space-y-2">
               {personnelData[activeTab].map((person) => (
-                <li
+                <div
                   key={person.id}
-                  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded"
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg border"
                 >
-                  <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                      getCategoryColor(activeTab)
-                        .replace("text", "bg")
-                        .split(" ")[0]
-                    } ${
-                      getCategoryColor(activeTab).includes("text")
-                        ? getCategoryColor(activeTab).split(" ")[1]
-                        : ""
-                    }`}
-                  >
-                    <span className="text-sm font-bold text-white">
-                      {person.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                        getCategoryColor(activeTab)
+                          .replace("text", "bg")
+                          .split(" ")[0]
+                      } ${
+                        getCategoryColor(activeTab).includes("text")
+                          ? getCategoryColor(activeTab).split(" ")[1]
+                          : ""
+                      }`}
+                    >
+                      <span className="text-sm font-bold text-white">
+                        {person.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium">{person.name}</p>
+                      <p className="text-sm text-gray-500">{person.position}</p>
+                    </div>
                   </div>
-                  <span>{person.name}</span>
-                </li>
+                  {person.contact && (
+                    <a
+                      href={`tel:${person.contact}`}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {person.contact}
+                    </a>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
       </div>
@@ -569,14 +630,11 @@ const WastePersonnel = () => {
 
                 <div className="flex justify-end gap-2 mt-4">
                   {isReadOnly && currentTruck && (
-                    <Button
-                      type="button"
-                      onClick={() => setIsReadOnly(false)}
-                    >
+                    <Button type="button" onClick={() => setIsReadOnly(false)}>
                       Edit
                     </Button>
                   )}
-                  
+
                   {!isReadOnly && (
                     <>
                       <Button

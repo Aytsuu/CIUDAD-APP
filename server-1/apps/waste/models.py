@@ -98,19 +98,34 @@ class WastePersonnel(models.Model):
             return f"{self.staff_id.rp.per.first_name} {self.staff_id.rp.per.last_name}"
         return "Unknown"
 
+    
     def to_dict(self):
         return {
             "wstp_id": self.wstp_id,
             "staff": {
                 "staff_id": self.staff_id.staff_id,
-                "position": {
-                    "pos_title": self.get_staff_position(),
-                },
-                "resident_profile": {
-                    "personal": {
-                        "first_name": self.staff_id.rp.per.first_name if self.staff_id.rp else None,
-                        "last_name": self.staff_id.rp.per.last_name if self.staff_id.rp else None,
+                "staff_assign_date": self.staff_id.staff_assign_date.isoformat(),
+                "rp": {
+                    "rp_id": self.staff_id.rp.rp_id,
+                    "rp_date_registered": self.staff_id.rp.rp_date_registered.isoformat(),
+                    "per": {
+                        "per_id": self.staff_id.rp.per.per_id,
+                        "per_lname": self.staff_id.rp.per.per_lname,
+                        "per_fname": self.staff_id.rp.per.per_fname,
+                        "per_mname": self.staff_id.rp.per.per_mname,
+                        "per_suffix": self.staff_id.rp.per.per_suffix,
+                        "per_dob": self.staff_id.rp.per.per_dob.isoformat(),
+                        "per_sex": self.staff_id.rp.per.per_sex,
+                        "per_status": self.staff_id.rp.per.per_status,
+                        "per_edAttainment": self.staff_id.rp.per.per_edAttainment,
+                        "per_religion": self.staff_id.rp.per.per_religion,
+                        "per_contact": self.staff_id.rp.per.per_contact,
                     }
+                },
+                "pos": {
+                    "pos_id": self.staff_id.pos.pos_id,
+                    "pos_title": self.staff_id.pos.pos_title,
+                    "pos_max": self.staff_id.pos.pos_max,
                 }
             }
         }

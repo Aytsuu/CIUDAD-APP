@@ -4,7 +4,7 @@ from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, filters
 from .models import WasteTruck
 
 # Create your views here.
@@ -55,9 +55,81 @@ class DeleteWasteReportView(generics.DestroyAPIView):
         rep_id = self.kwargs.get('rep_id')
         return get_object_or_404(WasteReport, rep_id=rep_id) 
 
-class WastePersonnelView(generics.ListCreateAPIView):
+from rest_framework import generics
+
+class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
     serializer_class = WastePersonnelSerializer
     queryset = WastePersonnel.objects.all()
+    filter_backends = [filters.SearchFilter]  
+    filterset_fields = {
+        'staff_id__pos__pos_title': ['exact', 'icontains'],  
+        'staff_id__rp__per__per_lname': ['icontains'],  
+        'staff_id__rp__per__per_fname': ['icontains'],  
+    }
+    search_fields = [
+        'staff_id__rp__per__per_lname',
+        'staff_id__rp__per__per_fname',
+        'staff_id__pos__pos_title',
+    ]
+    
+    def get_queryset(self):
+        print("get_queryset called")
+        queryset = super().get_queryset()
+        queryset = queryset.select_related(
+            'staff_id__pos',
+            'staff_id__rp__per',
+            'staff_id__manager__rp__per'
+        )
+        position = self.request.query_params.get('staff_id__pos__pos_title')
+        if position:
+            print("Filtering by position:", position)
+            queryset = queryset.filter(staff_id__pos__pos_title=position)
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        minimal = request.query_params.get('minimal', '').lower() == 'true'
+        if minimal:
+            data = [{
+                'wstp_id': p.wstp_id,
+                'staff_id': p.staff_id.staff_id,
+                'name': f"{p.staff_id.rp.per.per_lname}, {p.staff_id.rp.per.per_fname}",
+                'position': p.staff_id.pos.pos_title
+            } for p in queryset]
+        else:
+            data = [{
+                'wstp_id': p.wstp_id,
+                'staff': {
+                    'staff_id': p.staff_id.staff_id,
+                    'assign_date': p.staff_id.staff_assign_date.isoformat(),
+                    'position': {
+                        'pos_id': p.staff_id.pos.pos_id,
+                        'title': p.staff_id.pos.pos_title,
+                        'max': p.staff_id.pos.pos_max
+                    },
+                    'profile': {
+                        'rp_id': p.staff_id.rp.rp_id,
+                        'personal': {
+                            'per_id': p.staff_id.rp.per.per_id,
+                            'lname': p.staff_id.rp.per.per_lname,
+                            'fname': p.staff_id.rp.per.per_fname,
+                            'mname': p.staff_id.rp.per.per_mname,
+                            'suffix': p.staff_id.rp.per.per_suffix,
+                            'dob': p.staff_id.rp.per.per_dob.isoformat(),
+                            'sex': p.staff_id.rp.per.per_sex,
+                            'status': p.staff_id.rp.per.per_status,
+                            'education': p.staff_id.rp.per.per_edAttainment,
+                            'religion': p.staff_id.rp.per.per_religion,
+                            'contact': p.staff_id.rp.per.per_contact
+                        }
+                    },
+                    'manager': {
+                        'staff_id': p.staff_id.manager.staff_id,
+                        'name': f"{p.staff_id.manager.rp.per.per_lname}, {p.staff_id.manager.rp.per.per_fname}"
+                    } if p.staff_id.manager else None
+                }
+            } for p in queryset]
+        return Response(data)
 
 class WasteTruckView(APIView):
     def get(self, request):
