@@ -6,7 +6,7 @@ export type Truck = {
   truck_id: number;
   truck_plate_num: string;
   truck_model: string;
-  truck_capacity: number;
+  truck_capacity: string;
   truck_status: string;
   truck_last_maint: string;
   // staff_id?: number;

@@ -9,24 +9,20 @@ import {
   Trash,
   Edit,
   Loader2,
+  Search,
 } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog/dialog";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   Form,
   FormControl,
-  FormField,
   FormItem,
   FormMessage,
+  FormField
 } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,6 +33,9 @@ import { useGetAllPersonnel, useGetTrucks } from "./queries/truckFetchQueries";
 import { useDeleteWasteTruck } from "./queries/truckDelQueries";
 import { useAddWasteTruck } from "./queries/truckAddQueries";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 type PersonnelCategory =
   | "Watchmen"
@@ -49,7 +48,7 @@ interface TruckData {
   truck_id: string;
   truck_plate_num: string;
   truck_model: string;
-  truck_capacity: number;
+  truck_capacity: string;
   truck_status: TruckStatus;
   truck_last_maint: string;
 }
@@ -71,11 +70,14 @@ const WastePersonnel = () => {
   const [currentTruck, setCurrentTruck] = useState<TruckData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const {
     data: trucks = [],
     isLoading: isTrucksLoading,
     isError: isTrucksError,
   } = useGetTrucks();
+  
   const {
     data: personnel = [],
     isLoading: isPersonnelLoading,
@@ -96,6 +98,7 @@ const WastePersonnel = () => {
       truck_last_maint: new Date().toISOString().split("T")[0],
     },
   });
+
   const validTrucks = Array.isArray(trucks) ? trucks : [];
 
   const personnelData: PersonnelData = {
@@ -112,24 +115,33 @@ const WastePersonnel = () => {
       truck_id: truck.truck_id.toString(),
       truck_plate_num: truck.truck_plate_num,
       truck_model: truck.truck_model,
-      truck_capacity: Number(String(truck.truck_capacity).replace(/,/g, "")),
+      truck_capacity: String(truck.truck_capacity),
       truck_status: truck.truck_status as TruckStatus,
       truck_last_maint: truck.truck_last_maint,
     })),
   };
 
+  // Filter data based on search query
+  const filteredTrucks = personnelData.Trucks.filter((truck) => {
+    const searchString = `${truck.truck_id} ${truck.truck_plate_num} ${truck.truck_model} ${truck.truck_capacity} ${truck.truck_status}`.toLowerCase();
+    return searchString.includes(searchQuery.toLowerCase());
+  });
+
   if (isTrucksLoading || isPersonnelLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="animate-spin" />
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+        <Skeleton className="h-10 w-full mb-4 opacity-30" />
+        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
       </div>
     );
   }
+
   if (isTrucksError || isPersonnelError) {
     return <div className="text-red-500 p-4">Error loading data</div>;
   }
 
-  // Get icon component for each category
   const getCategoryIcon = (category: PersonnelCategory) => {
     switch (category) {
       case "Watchmen":
@@ -148,7 +160,6 @@ const WastePersonnel = () => {
     }
   };
 
-  // Get background color for each category
   const getCategoryColor = (category: PersonnelCategory) => {
     switch (category) {
       case "Watchmen":
@@ -162,30 +173,35 @@ const WastePersonnel = () => {
     }
   };
 
-  // Handle form submission
-  const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
-    const parsedValues = {
-      ...values,
-      truck_capacity: Number(String(values.truck_capacity).replace(/,/g, "")),
-    };
-
-    if (currentTruck) {
-      updateTruck.mutate({
-        truck_id: parseInt(currentTruck.truck_id),
-        truckData: parsedValues,
-      });
-    } else {
-      addTruck.mutate(parsedValues);
-    }
-    setIsDialogOpen(false);
-    setCurrentTruck(null);
+ const handleSubmit = (values: z.infer<typeof TruckFormSchema>) => {
+  const parsedValues = {
+    ...values,
+    truck_capacity: String(values.truck_capacity).replace(/,/g, ""),
   };
+
+  if (currentTruck) {
+    updateTruck.mutate({
+      truck_id: parseInt(currentTruck.truck_id),
+      truckData: parsedValues,
+    }, {
+      onSuccess: () => {
+        setIsReadOnly(true); // Switch back to view mode after update
+      }
+    });
+  } else {
+    addTruck.mutate(parsedValues, {
+      onSuccess: () => {
+        setIsDialogOpen(false); // Close the modal after successful add
+        setCurrentTruck(null); // Reset current truck
+      }
+    });
+  }
+};
 
   const handleDeleteTruck = (id: string) => {
-    deleteTruck.mutate(parseInt(id));
-  };
+  deleteTruck.mutate(parseInt(id));
+};
 
-  // Open dialog in view or edit mode
   const openDialog = (truck: TruckData | null, readOnly: boolean) => {
     setCurrentTruck(truck);
     setIsReadOnly(readOnly);
@@ -295,56 +311,65 @@ const WastePersonnel = () => {
           </div>
         </div>
 
+        {/* Search and Add Section */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="relative w-full flex gap-2 mr-2">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input
+              placeholder="Search..."
+              className="pl-10 bg-white w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {activeTab === "Trucks" && (
+            <Button
+              size="sm"
+              className="gap-1"
+              onClick={() => openDialog(null, false)}
+              disabled={addTruck.isPending}
+            >
+              {addTruck.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Add Truck
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
         {/* Tab Content */}
         <div className="bg-white rounded-lg shadow-sm border p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium flex items-center gap-2">
-              <div
-                className={`p-1.5 rounded-md ${getCategoryColor(activeTab)}`}
-              >
-                {getCategoryIcon(activeTab)}
-              </div>
-              {activeTab}
-            </h3>
-            {activeTab === "Trucks" && (
-              <Button
-                size="sm"
-                className="gap-1"
-                onClick={() => openDialog(null, false)}
-                disabled={addTruck.isPending}
-              >
-                {addTruck.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4" />
-                    Add Truck
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-
           {activeTab === "Trucks" ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="p-2 text-left">Truck ID</th>
-                    <th className="p-2 text-left">Plate Number</th>
-                    <th className="p-2 text-left">Status</th>
-                    <th className="p-2 text-left">Actions</th>
+                    <th className="p-2 text-cente">Truck ID</th>
+                    <th className="p-2 text-center">Plate Number</th>
+                    <th className="p-2 text-center">Model</th>
+                    <th className="p-2 text-center">Capacity (tons)</th>
+                    <th className="p-2 text-center">Status</th>
+                    <th className="p-2 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {personnelData["Trucks"].map((truck) => (
+                  {filteredTrucks.map((truck) => (
                     <tr
                       key={truck.truck_id}
                       className="border-b hover:bg-gray-50"
                     >
-                      <td className="p-2">{truck.truck_id}</td>
-                      <td className="p-2">{truck.truck_plate_num}</td>
-                      <td className="p-2">
+                      <td className="p-2 text-center">{truck.truck_id}</td>
+                      <td className="p-2 text-center">{truck.truck_plate_num}</td>
+                      <td className="p-2 text-center">{truck.truck_model}</td>
+                      <td className="p-2 text-center">{truck.truck_capacity}</td>
+                      <td className="p-2 text-center">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             truck.truck_status === "Operational"
@@ -356,38 +381,45 @@ const WastePersonnel = () => {
                         </span>
                       </td>
                       <td className="p-2">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDialog(truck, true)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDialog(truck, false)}
-                            disabled={updateTruck.isPending}
-                          >
-                            {updateTruck.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Edit className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteTruck(truck.truck_id)}
-                            disabled={deleteTruck.isPending}
-                          >
-                            {deleteTruck.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash className="h-4 w-4 text-red-500" />
-                            )}
-                          </Button>
+                        <div className="flex justify-center items-center">
+                          <TooltipLayout
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDialog(truck, true)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            }
+                            content="View"
+                          />
+                          <TooltipLayout
+                            trigger={
+                              <div className="flex items-center h-8">
+                                <ConfirmationModal
+                                  trigger={
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      disabled={deleteTruck.isPending}
+                                    >
+                                      {deleteTruck.isPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash className="h-4 w-4 text-red-500" />
+                                      )}
+                                    </Button>
+                                  }
+                                  title="Confirm Delete"
+                                  description="Are you sure you want to delete this truck?"
+                                  actionLabel="Confirm"
+                                  onClick={() => handleDeleteTruck(truck.truck_id)}
+                                />
+                              </div>
+                            }
+                            content="Delete"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -430,19 +462,26 @@ const WastePersonnel = () => {
       </div>
 
       {/* Truck Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+      <DialogLayout
+        isOpen={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsDialogOpen(false);
+            setIsReadOnly(true); // Reset to view mode when closing dialog
+          }
+        }}
+        className="max-w-[55%]"
+        title={
+          isReadOnly
+            ? "Truck Details"
+            : currentTruck
+            ? "Edit Truck"
+            : "Add New Truck"
+        }
+        description=""
+        mainContent={
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
-              <DialogHeader>
-                <DialogTitle>
-                  {isReadOnly
-                    ? "Truck Details"
-                    : currentTruck
-                    ? "Edit Truck"
-                    : "Add New Truck"}
-                </DialogTitle>
-              </DialogHeader>
               <div className="grid gap-4 py-4">
                 <FormField
                   control={form.control}
@@ -528,37 +567,54 @@ const WastePersonnel = () => {
                   )}
                 />
 
-                {!isReadOnly && (
-                  <div className="flex justify-end gap-2 mt-4">
+                <div className="flex justify-end gap-2 mt-4">
+                  {isReadOnly && currentTruck && (
                     <Button
-                      variant="outline"
                       type="button"
-                      onClick={() => setIsDialogOpen(false)}
+                      onClick={() => setIsReadOnly(false)}
                     >
-                      Cancel
+                      Edit
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={
-                        currentTruck
+                  )}
+                  
+                  {!isReadOnly && (
+                    <>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => {
+                          if (currentTruck) {
+                            setIsReadOnly(true); // Switch back to view mode
+                          } else {
+                            setIsDialogOpen(false); // Close dialog if it's a new truck
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          currentTruck
+                            ? updateTruck.isPending
+                            : addTruck.isPending
+                        }
+                      >
+                        {currentTruck ? "Update" : "Add"} Truck
+                        {(currentTruck
                           ? updateTruck.isPending
-                          : addTruck.isPending
-                      }
-                    >
-                      {currentTruck ? "Update" : "Add"} Truck
-                      {(currentTruck
-                        ? updateTruck.isPending
-                        : addTruck.isPending) && (
-                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      )}
-                    </Button>
-                  </div>
-                )}
+                          : addTruck.isPending) && (
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </form>
           </Form>
-        </DialogContent>
-      </Dialog>
+        }
+      />
     </div>
   );
 };

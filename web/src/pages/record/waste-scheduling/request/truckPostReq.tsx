@@ -10,7 +10,6 @@ export const postWasteTruck = async (truckInfo: Record<string, any>) => {
       truck_capacity: parseInt(truckInfo.truck_capacity),
       truck_status: truckInfo.truck_status || "operational",
       truck_last_maint: formatDate(truckInfo.truck_last_maint || new Date()),
-      staff_id: truckInfo.staff_id,  // link personnel here if needed
     };
 
     console.log("Posting new truck:", payload);

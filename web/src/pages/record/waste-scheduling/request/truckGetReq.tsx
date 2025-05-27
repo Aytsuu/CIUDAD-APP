@@ -2,6 +2,19 @@ import axios from 'axios';
 import api from '@/api/api';
 import { Truck, WastePersonnel } from "../queries/truckFetchQueries";
 
+export interface Staff {
+  staff_id: string;
+  position: {
+    pos_title: string; // "Collector", "Watchmen", "Driver", etc.
+  };
+  resident_profile: {
+    personal: {
+      first_name: string;
+      last_name: string;
+    };
+  };
+}
+
 function isTruck(data: any): data is Truck {
   return data &&
     typeof data.truck_id === "number" &&
@@ -16,23 +29,43 @@ function isWastePersonnel(data: any): data is WastePersonnel {
     typeof data.name === "string";
 }
 
+function isStaff(data: any): data is Staff {
+  return data && typeof data.staff_id === "string";
+}
+
+
 /// Get all personnel from waste_personnel table
 export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
   try {
-    const response = await api.get("waste/waste-personnel");
-    console.log("Personnel API response:", response.data);
-
-    const personnelData = Array.isArray(response.data) ? response.data : response.data?.data;
-
+    const response = await api.get("waste/waste-personnel/?expand=staff.position,staff.resident_profile.personal");
+    const personnelData = response.data?.data || response.data;
+    
     if (!Array.isArray(personnelData)) {
-      console.error("Unexpected personnel format:", personnelData);
       throw new Error("Expected array of personnel");
     }
-
+    
     return personnelData.filter(isWastePersonnel);
   } catch (error) {
     console.error("Error fetching personnel:", error);
     throw new Error("Failed to fetch personnel");
+  }
+};
+
+export const getPersonnelByPosition = async (positionTitle: string): Promise<WastePersonnel[]> => {
+  try {
+    const response = await api.get(
+      `waste/waste-personnel/?position=${positionTitle}&expand=staff.position,staff.resident_profile.personal`
+    );
+    const personnelData = response.data?.data || response.data;
+    
+    if (!Array.isArray(personnelData)) {
+      throw new Error("Expected array of personnel");
+    }
+    
+    return personnelData.filter(isWastePersonnel);
+  } catch (error) {
+    console.error(`Error fetching ${positionTitle} personnel:`, error);
+    throw new Error(`Failed to fetch ${positionTitle} personnel`);
   }
 };
 

@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import { postWasteTruck } from "../request/truckPostReq";
-import { z } from "zod"; // Add this import
+import { z } from "zod";
 import TruckFormSchema from "@/form-schema/waste-truck-form-schema";
 
 // Type definitions
@@ -15,10 +15,9 @@ export type WastePersonnelInput = {
 export type WasteTruckInput = {
   truck_plate_num: string;
   truck_model: string;
-  truck_capacity: number;
+  truck_capacity: string;
   truck_status?: string;
   truck_last_maint: string;
-  // staff_id: number;
 };
 
 export const useAddWasteTruck = () => {
@@ -27,34 +26,20 @@ export const useAddWasteTruck = () => {
 
   return useMutation({
     mutationFn: async (truckData: z.infer<typeof TruckFormSchema>) => {
-      const payload = {
-        ...truckData,
-        truck_capacity: Number(truckData.truck_capacity),
-        truck_status: truckData.truck_status || "Operational",
-      };
-
-      const response = await fetch('/waste/waste-trucks/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add truck');
-      }
-      return response.json();
+      // You can just pass truckData directly if postWasteTruck handles formatting
+      return await postWasteTruck(truckData);
     },
     onSuccess: () => {
       toast.success("Waste truck added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
+        duration: 2000,
       });
-      queryClient.invalidateQueries({ queryKey: ["wasteTrucks"] });
-      navigate("/waste-personnel/");
+      queryClient.invalidateQueries({ queryKey: ["trucks"] });
     },
     onError: (error: Error) => {
-      toast.error("Failed to add waste truck", { description: error.message });
+      toast.error("Failed to add waste truck", {
+        description: error.message,
+      });
     },
   });
-}
+};

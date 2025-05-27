@@ -13,7 +13,7 @@ export type WasteTruck = {
   truck_id: number;
   truck_plate_num: string;
   truck_model: string;
-  truck_capacity: number;
+  truck_capacity: string;
   truck_status: string;
   truck_last_maint: string;
   // staff_id: number;
@@ -45,10 +45,10 @@ export const useDeleteWasteTruck = () => {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000,
       });
-      queryClient.invalidateQueries({ queryKey: ["wasteTrucks"] });
+      queryClient.invalidateQueries({ queryKey: ["trucks"] });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['wasteTrucks'] });
+      queryClient.invalidateQueries({ queryKey: ['trucks'] });
     }
   });
 };
