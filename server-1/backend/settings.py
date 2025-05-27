@@ -8,17 +8,6 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
-<<<<<<<< HEAD:backend/backend/settings.py
-"""
-
-from pathlib import Path
-import sys, os
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(os.path.join(BASE_DIR,'apps'))
-
-========
 
 """
 
@@ -32,13 +21,12 @@ from corsheaders.defaults import default_headers
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.join(BASE_DIR, 'apps'))
->>>>>>>> master:server-1/backend/settings.py
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g6q)2tk6uh_qw%obf0bo30(epu!u&+ljzmd_0qf++wn0b4f)r^'
+SECRET_KEY = 'django-insecure-=%vcnwvd#+_+fek7j3f#92-h!=6nln0k@@r_c(^s4y_xmpfv)_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -53,27 +41,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<<< HEAD:backend/backend/settings.py
-    'apps.council',
-    'corsheaders',
-    'rest_framework',
-========
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
-    'corsheaders',
     'apps.administration',
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
+    'corsheaders',
     'apps.account',
     'apps.file',
+    'apps.council',
     'apps.drr',
     'apps.donation',
-    # 'apps.useraccount',
-    # 'apps.blotter',
-    'apps.gad',
->>>>>>>> master:server-1/backend/settings.py
+    'apps.gad'
 ]
 
 MIDDLEWARE = [
@@ -81,11 +62,11 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -107,44 +88,25 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-<<<<<<<< HEAD:backend/backend/settings.py
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-========
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
->>>>>>>> master:server-1/backend/settings.py
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-<<<<<<<< HEAD:backend/backend/settings.py
-        'NAME':'CIUDAD-TEMP',
-        'USER':'postgres',
-        'PASSWORD':'123',
-        'HOST':'localhost',
-        'PORT':'5433'
-        
-========
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
->>>>>>>> master:server-1/backend/settings.py
     }
 }
 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-<<<<<<<< HEAD:backend/backend/settings.py
-========
 
->>>>>>>> master:server-1/backend/settings.py
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -180,18 +142,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-<<<<<<<< HEAD:backend/backend/settings.py
-
-
-
-CORS_ALLOW_ALL_ORIGINS= True
-CORS_ALLOW_CREDENTIALS= True
-========
 # Django REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':(
@@ -205,7 +160,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# # New User Model
+# New User Model
 AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
@@ -231,4 +186,3 @@ CORS_EXPOSE_HEADERS = ['Authorization']
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 CORS_ALLOW_HEADERS = ["*"]
->>>>>>>> master:server-1/backend/settings.py

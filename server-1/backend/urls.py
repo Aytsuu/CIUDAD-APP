@@ -39,4 +39,5 @@ urlpatterns = [
     path('drr/', include('apps.drr.urls')),
     path('donation/', include('apps.donation.urls')),
     path('gad/', include('apps.gad.urls')),
+    path('council/', include('apps.council.urls')),
 ]

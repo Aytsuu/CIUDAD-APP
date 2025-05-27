@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
@@ -7,7 +5,7 @@ import TableLayout from '@/components/ui/table/table-layout.tsx';
 import PaginationLayout from '@/components/ui/pagination/pagination-layout';
 import { Pencil, Trash, Eye, Plus, Stamp, Search } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
-import AddEvent from '@/pages/record/council/Calendar/AddEvent-Modal';
+import AddEvent from '@/pages/record/council/Calendar/SchedEventForm';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
