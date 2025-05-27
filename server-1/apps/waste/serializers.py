@@ -1,7 +1,9 @@
 #KANI 2ND
 
-from rest_framework import serializers
+from rest_framework import serializers, generics
 from .models import *
+from .models import WasteTruck
+
 
 class WasteEventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,4 +33,14 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
 class WasteReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteReport
+        fields = '__all__'
+
+class WastePersonnelSerializer(generics.ListAPIView):
+    class Meta:
+        model = WastePersonnel
+        fields = '__all__'
+
+class WasteTruckSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WasteTruck
         fields = '__all__'

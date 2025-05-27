@@ -25,4 +25,7 @@ urlpatterns = [
     path("waste-report/", WasteReportView.as_view(), name="waste-report-list"),
     path('update-waste-report/<int:rep_id>/', UpdateWasteReportView.as_view(), name='waste-report-update'),
     path('delete-waste-report/<int:rep_id>/', DeleteWasteReportView.as_view(), name = 'waste-report-delete'),
+
+    path('waste-personnel/', WasteTruckView.as_view(), name='waste-truck'),
+    path('waste-personnel/<int:pk>/', WasteTruckDetailView.as_view(), name='waste-truck-detail'),
 ]

@@ -85,19 +85,50 @@ class WasteReport(models.Model):
 
 class WastePersonnel(models.Model):
     wstp_id = models.BigAutoField(primary_key=True)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'waste_personnel'
+
+    def get_staff_position(self):
+        return self.staff_id.pos.pos_title if self.staff_id.pos else None
+
+    def get_staff_name(self):
+        if self.staff_id.rp and self.staff_id.rp.per:
+            return f"{self.staff_id.rp.per.first_name} {self.staff_id.rp.per.last_name}"
+        return "Unknown"
+
+    def to_dict(self):
+        return {
+            "wstp_id": self.wstp_id,
+            "staff": {
+                "staff_id": self.staff_id.staff_id,
+                "position": {
+                    "pos_title": self.get_staff_position(),
+                },
+                "resident_profile": {
+                    "personal": {
+                        "first_name": self.staff_id.rp.per.first_name if self.staff_id.rp else None,
+                        "last_name": self.staff_id.rp.per.last_name if self.staff_id.rp else None,
+                    }
+                }
+            }
+        }
 
 class WasteTruck(models.Model):
     truck_id = models.BigAutoField(primary_key=True)
     truck_plate_num = models.CharField(max_length=20)
     truck_model = models.CharField(max_length=50)
-    truck_capacity = models.IntegerField(max_length=500)
-    truck_status = models.CharField(max_length=50, default="operational")
+    truck_capacity = models.IntegerField()
+    truck_status = models.CharField(
+        max_length=50,
+        choices=[
+            ('Operational', 'Operational'),
+            ('Maintenance', 'Maintenance')
+        ],
+        default="Operational"
+    )
     truck_last_maint = models.DateField(default=date.today)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'truck'
