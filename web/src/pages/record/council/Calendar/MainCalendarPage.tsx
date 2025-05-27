@@ -2,6 +2,7 @@ import { useState } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Button } from "@/components/ui/button/button.tsx";
+import { Button } from "@/components/ui/button/button.tsx";
 import AddEvent from "./SchedEventForm.tsx";
 import { Plus } from "lucide-react";
 
@@ -21,7 +22,7 @@ function CalendarPage() {
           <div className="flex items-center">
             <DialogLayout
               trigger={
-                <Button aria-label="Add new event">
+                <Button>
                   <Plus size={20} /> Add Event
                 </Button>
               }
