@@ -20,11 +20,11 @@ function WasteIllegalDumping() {
 
   const { data: fetchedData = [], isLoading } = useWasteReport();
 
-  const { mutate: deleteWaste } = useDeleteWasteReport();
+  // const { mutate: deleteWaste } = useDeleteWasteReport();
 
-  const handleDelete = (rep_id: number) => {
-      deleteWaste(rep_id);
-  };  
+  // const handleDelete = (rep_id: number) => {
+  //     deleteWaste(rep_id);
+  // };  
 
   const columns: ColumnDef<WasteReport>[] = [
   {
@@ -72,56 +72,62 @@ function WasteIllegalDumping() {
   },
   {
     accessorKey: "rep_image",
-    header: "Image",
-    cell: ({row}) => (
-      <DialogLayout
-        trigger={
-          <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            View
-          </div>
-        }
-        className="max-w-[60%] max-h-[90%] overflow-auto p-7 verflow-y-auto"
-        title={`Report No. ${String(row.getValue("rep_id"))}`}
-        description=""
-        mainContent={
-          <div className="flex flex-col">
-            <WasteIllegalDumpingDetails
-              rep_id = {row.original.rep_id}
-              rep_image = {row.original.rep_image}
-              rep_matter = {row.original.rep_matter}
-              rep_location = {row.original.rep_location}
-              rep_add_details = {row.original.rep_add_details}
-              rep_violator = {row.original.rep_violator}
-              rep_contact = {row.original.rep_contact}
-              rep_status = {row.original.rep_status}
-              rep_date = {row.original.rep_date}
-              rep_date_resolved = {row.original.rep_date_resolved}                
-            />
-          </div>
-        }
-      />
-    ),
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
+    header: "Details",
     cell: ({row}) => (
       <TooltipLayout
         trigger={
-            <div className="flex items-center h-8">
-                <ConfirmationModal
-                    trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
-                    title="Confirm Delete"
-                    description="Are you sure you want to delete this report?"
-                    actionLabel="Confirm"
-                    onClick={() => handleDelete(row.original.rep_id)} 
-                />                    
-            </div>                   
-        }  
-        content="Delete"
+          <DialogLayout
+            trigger={
+              <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px] cursor-pointer">
+                View
+              </div>
+            }
+            className="max-w-[50%] max-h-[70%] overflow-auto p-7 verflow-y-auto"
+            title={`Report No. ${String(row.getValue("rep_id"))}`}
+            description=""
+            mainContent={
+              <div className="flex flex-col">
+                <WasteIllegalDumpingDetails
+                  rep_id = {row.original.rep_id}
+                  rep_image = {row.original.rep_image}
+                  rep_matter = {row.original.rep_matter}
+                  rep_location = {row.original.rep_location}
+                  rep_add_details = {row.original.rep_add_details}
+                  rep_violator = {row.original.rep_violator}
+                  rep_contact = {row.original.rep_contact}
+                  rep_status = {row.original.rep_status}
+                  rep_date = {row.original.rep_date}
+                  rep_date_resolved = {row.original.rep_date_resolved}   
+                  rep_resolved_img = {row.original.rep_resolved_img}             
+                />
+              </div>
+            }
+          />       
+        }
+        content="View Details"   
       />
     ),
   },
+  // {
+  //   accessorKey: "action",
+  //   header: "Action",
+  //   cell: ({row}) => (
+  //     <TooltipLayout
+  //       trigger={
+  //           <div className="flex items-center h-8">
+  //               <ConfirmationModal
+  //                   trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+  //                   title="Confirm Delete"
+  //                   description="Are you sure you want to delete this report?"
+  //                   actionLabel="Confirm"
+  //                   onClick={() => handleDelete(row.original.rep_id)} 
+  //               />                    
+  //           </div>                   
+  //       }  
+  //       content="Delete"
+  //     />
+  //   ),
+  // },
 ];
 
   const filterOptions = [

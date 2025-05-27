@@ -15,6 +15,7 @@ export type WasteReport = {
     rep_status: string;
     rep_date: string;
     rep_date_resolved: string;
+    rep_resolved_img: string;
 };
   
 // Retrieving income/expense data
