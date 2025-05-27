@@ -76,6 +76,8 @@ class WasteReport(models.Model):
     rep_status = models.CharField(max_length=100, default="pending")
     rep_date = models.DateField(default=date.today)
     rep_date_resolved = models.DateField(null=True)
+    rep_resolved_img = models.CharField(null=True)
+
     # ra_id = models.ForeignKey(ResidentAccount, on_delete=models.CASCADE)
     # sitio_id = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)

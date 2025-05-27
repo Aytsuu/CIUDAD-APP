@@ -24,7 +24,7 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
       toast.success('Waste Report Updated', {
         id: 'updateWasteReport',
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
+        duration: 5000
       });
       
       // Invalidate any related queries if needed
