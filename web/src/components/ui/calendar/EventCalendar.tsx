@@ -752,13 +752,13 @@ const EventCalendar = () => {
               </Button> */}
             </Box>
             <br />
-            <AddEventModal
+            {/* <AddEventModal
               open={openSlot}
               handleClose={handleClose}
               eventFormData={eventFormData}
               setEventFormData={setEventFormData}
               onAddEvent={onAddEvent}
-            />
+            /> */}
             <AddDatePickerEventModal
               open={openDatepickerModal}
               handleClose={handleDatePickerClose}
