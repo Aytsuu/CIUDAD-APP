@@ -7,6 +7,7 @@ import { updateWasteReport } from "../request/waste-ReportPutRequest";
 
 interface UpdateWasteReportData {
   rep_status: string;
+  rep_resolved_img?: string;
 }
 
 
@@ -23,7 +24,7 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
       toast.success('Waste Report Updated', {
         id: 'updateWasteReport',
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
+        duration: 5000
       });
       
       // Invalidate any related queries if needed
@@ -35,6 +36,6 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
       console.error("Error updating report:", err);
       toast.error("Failed to update report");
     }
-    // You might want to add onError handling here as well
+
   });
 };
