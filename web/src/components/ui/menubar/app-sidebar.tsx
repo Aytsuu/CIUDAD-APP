@@ -90,6 +90,7 @@ const items: MenuItem[] = [
       { title: "Ordinance", url: "/ord-page" },
       { title: "Resolution", url: "/res-page" },
       { title: "Minutes of Meeting", url: "/mom-page" },
+      { title: "Document Template", url: "/templates-main"}
     ],
   },
   {

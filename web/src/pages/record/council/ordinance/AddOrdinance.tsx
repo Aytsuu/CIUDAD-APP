@@ -23,10 +23,10 @@ import { z } from "zod";
 import ordinanceFormSchema from "@/form-schema/council/ordinanceFormSchema.ts";
 
 import Tiptap from "@/components/ui/tiptap/tiptap.tsx";
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-import { Cheerio } from 'cheerio';
-import { htmlToText } from 'html-to-text';
+// import pdfMake from "pdfmake/build/pdfmake";
+// import pdfFonts from "pdfmake/build/vfs_fonts";
+// import { Cheerio } from 'cheerio';
+// import { htmlToText } from 'html-to-text';
 
 function AddOrdinancePage() {
     const form = useForm<z.infer<typeof ordinanceFormSchema>>({
@@ -42,7 +42,7 @@ function AddOrdinancePage() {
 
     let ordAreaOfFocus = ["Council", "GAD", "Waste Committee", "Finance"];
 
-    pdfMake.vfs = pdfFonts.vfs;
+    // pdfMake.vfs = pdfFonts.vfs;
 
 
     // const exportToPDF = async (content: string) => {
@@ -143,55 +143,55 @@ function AddOrdinancePage() {
 
 
 
-    const exportToPDF = async (content: string) => {
-        const cheerio = await import('cheerio'); // Dynamic import
-        const $ = cheerio.load(content);
-        const pdfContent: any[] = [];
+    // const exportToPDF = async (content: string) => {
+    //     const cheerio = await import('cheerio'); // Dynamic import
+    //     const $ = cheerio.load(content);
+    //     const pdfContent: any[] = [];
     
-        // Iterate through paragraphs and breaks
-        $('p, h1, h2, h3, h4, h5, h6, br').each((index, element) => {
-            if ($(element).is('br')) {
-                // Add a space for each <br> tag
-                pdfContent.push({ text: '', margin: [0, 10] }); // Adjust margin as needed
-            } else {
-                const text = $(element).text();
-                const alignment = $(element).css('text-align') || 'left';
+    //     // Iterate through paragraphs and breaks
+    //     $('p, h1, h2, h3, h4, h5, h6, br').each((index: any, element: any) => {
+    //         if ($(element).is('br')) {
+    //             // Add a space for each <br> tag
+    //             pdfContent.push({ text: '', margin: [0, 10] }); // Adjust margin as needed
+    //         } else {
+    //             const text = $(element).text();
+    //             const alignment = $(element).css('text-align') || 'left';
     
-                const textItem: any = {
-                    text: text,
-                    alignment: alignment as 'left' | 'center' | 'right' | 'justify',
-                    margin: [0, 5], // Adjust margin for paragraphs
-                };
+    //             const textItem: any = {
+    //                 text: text,
+    //                 alignment: alignment as 'left' | 'center' | 'right' | 'justify',
+    //                 margin: [0, 5], // Adjust margin for paragraphs
+    //             };
     
-                pdfContent.push(textItem);
-            }
-        });
+    //             pdfContent.push(textItem);
+    //         }
+    //     });
     
-        const documentDefinition: any = {
-            pageMargins: [36, 34.5, 36, 34.5], // [left, top, right, bottom] in points  [72,69,72,69]-normal 
-            content: [
-                ...pdfContent, // Only include the content without the header
-            ],
-            styles: {
-                content: {
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                },
-            },
-            defaultStyle: {
-                font: "Roboto",
-            },
-        };
+    //     const documentDefinition: any = {
+    //         pageMargins: [36, 34.5, 36, 34.5], // [left, top, right, bottom] in points  [72,69,72,69]-normal 
+    //         content: [
+    //             ...pdfContent, // Only include the content without the header
+    //         ],
+    //         styles: {
+    //             content: {
+    //                 fontSize: 12,
+    //                 lineHeight: 1.5,
+    //             },
+    //         },
+    //         defaultStyle: {
+    //             font: "Roboto",
+    //         },
+    //     };
     
-        console.log("Document Definition:", documentDefinition); // Debug: Log the document definition
+    //     console.log("Document Definition:", documentDefinition); // Debug: Log the document definition
     
-        pdfMake.createPdf(documentDefinition).download("Ordinance_Description.pdf");
-    };
+    //     pdfMake.createPdf(documentDefinition).download("Ordinance_Description.pdf");
+    // };
 
 
     async function onSubmit(values: z.infer<typeof ordinanceFormSchema>) {
         console.log("Values", values);
-        await exportToPDF(values.ordDescription);
+        // await exportToPDF(values.ordDescription);
     }
 
     return (
