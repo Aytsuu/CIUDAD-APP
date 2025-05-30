@@ -14,6 +14,3 @@ class PersonalUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PersonalUpdateSerializer
     queryset = Personal.objects.all()
     lookup_field = 'per_id'
-
-    def update(self, request, *args, **kwargs):
-       return super().update(request, *args, **kwargs)
