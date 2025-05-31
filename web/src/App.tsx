@@ -6,6 +6,8 @@ import { settings_router } from "./routers/settings";
 import { AuthProvider } from "./context/AuthContext";
 import { user_account } from "./routers/profile-router";
 import { AnimatePresence } from "framer-motion";
+import { LoadingProvider } from "./context/LoadingContext";
+import { LinearLoader } from "./components/ui/linear-loader";
 
 const router = createBrowserRouter([
   ...main_router,
@@ -22,9 +24,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AnimatePresence mode="wait">
-          <RouterProvider router={router} />
-        </AnimatePresence>
+        <LoadingProvider>
+          <LinearLoader />
+          <AnimatePresence mode="wait">
+            <RouterProvider router={router} />
+          </AnimatePresence>
+        </LoadingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

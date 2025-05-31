@@ -7,7 +7,6 @@ import {
     SortingState,
     VisibilityState,
     getFilteredRowModel,
-    getPaginationRowModel,
     getSortedRowModel,
     useReactTable,
   } from "@tanstack/react-table"
@@ -20,14 +19,16 @@ import {
     TableHeader,
     TableRow,
   } from "./table"
+import { Loader2 } from "lucide-react"
    
   interface DataTableProps<TData, TValue> {
     header?: boolean
+    isLoading?: boolean
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
   }
    
-  export function DataTable<TData, TValue>({header=true, columns, data}: DataTableProps<TData, TValue>) {
+  export function DataTable<TData, TValue>({isLoading=false, header=true, columns, data}: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -40,7 +41,6 @@ import {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
@@ -75,7 +75,7 @@ import {
           </TableHeader>)
           }
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {!isLoading ? (table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -93,6 +93,14 @@ import {
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
+                </TableCell>
+              </TableRow>
+            )) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Loader2 className="animate-spin opacity-50"/>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

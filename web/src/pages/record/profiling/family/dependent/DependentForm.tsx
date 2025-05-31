@@ -40,21 +40,22 @@ export default function DependentForm({ form, residents, selectedParents, depend
   React.useEffect(() => {
 
     // Get values
-    const searchedResidentId = form.watch('dependentsInfo.new.id')
-    const searchedResident = residents.default?.find((value: any) => 
-      value.rp_id === form.watch('dependentsInfo.new.id')?.split(" ")[0]  
+    const selectedResident = form.watch('dependentsInfo.new.id')
+    const searchedResident = residents.default.find((value: any) => 
+      value.rp_id === selectedResident?.split(" ")[0]  
     );
+    const personalInfo = searchedResident?.personal_info;
 
     // Condition to populate the fields if true, otherwise empty
-    if (searchedResident && !selectedParents.includes(searchedResidentId.split(" ")[0])) {
+    if (personalInfo && !selectedParents.includes(selectedResident.split(" ")[0])) {
       form.setValue('dependentsInfo.new', {
-        id: searchedResidentId || '',
-        lastName: searchedResident.per.per_lname || '',
-        firstName: searchedResident.per.per_fname || '',
-        middleName: searchedResident.per.per_mname || '',
-        suffix: searchedResident.per.per_suffix || '',
-        dateOfBirth: searchedResident.per.per_dob || '',
-        sex: searchedResident.per.per_sex || '',
+        id: selectedResident || '',
+        lastName: personalInfo.per_lname || '',
+        firstName: personalInfo.per_fname || '',
+        middleName: personalInfo.per_mname || '',
+        suffix: personalInfo.per_suffix || '',
+        dateOfBirth: personalInfo.per_dob || '',
+        sex: personalInfo.per_sex || '',
       });
     } else {
       resetForm();
@@ -67,7 +68,13 @@ export default function DependentForm({ form, residents, selectedParents, depend
     const isDefault = Object.values(newDependent).every((value) => value === '')
     if (isDefault) {
       toast('Please select a resident to add as a dependent.', {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
       })
       return;
     }

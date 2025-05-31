@@ -24,6 +24,7 @@ import HealthInfoLayout from "./family-profling/healthInfo/HealthInfoLayout";
 import EnvironmentalFormLayout from "./family-profling/householdInfo/EnvironmentalFormLayout";
 import NoncomDiseaseFormLayout from "./family-profling/householdInfo/NonComDiseaseFormLayout";
 import TbSurveilanceInfoLayout from "./family-profling/householdInfo/TbSurveilanceInfoLayout";
+import SurveyIdentificationForm from "./family-profling/householdInfo/SurveyIdentificationForm";
 
 export default function HealthFamilyForm() {
   const location = useLocation();
@@ -49,11 +50,12 @@ export default function HealthFamilyForm() {
   }, [location.state]);
 
   const formattedResidents = React.useMemo(() => {
-    return formatResidents(params);
+    return formatResidents(params.residents ?? []);
+
   }, [params.residents]);
 
   const households = React.useMemo(() => {
-    return formatHouseholds(params);
+    return formatHouseholds(params.households ?? []);
   }, [params.households]);
 
   const nextStep = React.useCallback(() => {
@@ -190,14 +192,17 @@ export default function HealthFamilyForm() {
             </>
           )}
           {currentStep === 4 && (
-            <NoncomDiseaseFormLayout
-              form={form}
-              residents={{
-                default: params.residents,
-                formatted: formattedResidents,
+            <SurveyIdentificationForm
+              onSubmit={(data) => {
+                console.log("Form submitted:", data);
               }}
-              selectedResidentId={selectedResidentId}
-              setSelectedResidentId={setSelectedResidentId}
+              // form={form}
+              // residents={{
+              //   default: params.residents,
+              //   formatted: formattedResidents,
+              // }}
+              // selectedResidentId={selectedResidentId}
+              // setSelectedResidentId={setSelectedResidentId}
             />
           )}
           <div className="flex justify-end">

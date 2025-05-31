@@ -14,24 +14,19 @@ export default function HouseholdRecordView() {
     () => location.state?.params || {},
     [location.state]
   );
-  const residents = React.useMemo(() => params.residents, [params]);
-  const households = React.useMemo(() => params.households, [params]);
+  const families = React.useMemo(() => params.families || {}, [params]);
   const household = React.useMemo(() => params.household || {}, [params]);
-  const head = React.useMemo(() => household.rp || {}, [household]);
-  const personal = React.useMemo(() => head.per || {}, [head]);
-  const staff = React.useMemo(() => household.staff.rp.per || {}, [household]);
 
   // Format data for table
   const formatFamilyData = React.useCallback((): HouseholdFamRecord[] => {
-    const families = household.family;
     if (!families) return [];
 
-    return families?.map((family: any) => {
+    return families.map((family: any) => {
       return {
         data: family,
       };
     });
-  }, [household]);
+  }, [families]);
 
   return (
     <LayoutWithBack
@@ -48,37 +43,30 @@ export default function HouseholdRecordView() {
             </div>
             <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">NHTS Household</Label>
-              <Label className="text-[16px] text-black/70">{household.hh_nhts}</Label>
+              <Label className="text-[16px] text-black/70">{household.nhts}</Label>
             </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Household Head</Label>
               <Label className="text-[16px] text-black/70">
-                {`${personal.per_lname}, 
-                  ${personal.per_fname} 
-                  ${
-                    personal.per_mname
-                      ? personal.per_mname.slice(0, 1) + "."
-                      : ""
-                  }` || ""}
+                {household.head}
               </Label>
             </div>
             <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">Sitio</Label>
-              <Label className="text-[16px] text-black/70">{household.sitio.sitio_name}</Label>
+              <Label className="text-[16px] text-black/70">{household.sitio}</Label>
             </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Street</Label>
-              <Label className="text-[16px] text-black/70">{household.hh_street}</Label>
+              <Label className="text-[16px] text-black/70">{household.street}</Label>
             </div>
             <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">Date Registered</Label>
-              <Label className="text-[16px] text-black/70">{household.hh_date_registered}</Label>
+              <Label className="text-[16px] text-black/70">{household.date_registered}</Label>
             </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Registered By</Label>
               <Label className="text-[16px] text-black/70">
-                {`${staff.per_lname}, ${staff.per_fname}
-                ${staff.per_mname ? staff.per_mname[0] + "." : ""}`}
+                {household.registered_by}
               </Label>
             </div>
           </div>
@@ -98,7 +86,7 @@ export default function HouseholdRecordView() {
             <div className="w-full grid grid-cols-7 items-center justify-center">
               <Label className="text-black/50">Family No.</Label>
               <Label className="text-black/50">No. of Members</Label>
-              <Label className="text-yellow-500">Building</Label>
+              <Label className="text-black/50">Building</Label>
               <Label className="text-black/50">Indigenous</Label>
               <Label className="text-black/50">Date Registered</Label>
               <Label className="text-black/50">Registered By</Label>
@@ -106,7 +94,7 @@ export default function HouseholdRecordView() {
             <div className="w-[9%] flex justify-end items-center"></div>
           </div>
           <DataTable
-            columns={householdFamColumns(residents, households)}
+            columns={householdFamColumns}
             data={formatFamilyData()}
             header={false}
           />

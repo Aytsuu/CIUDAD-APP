@@ -4,7 +4,6 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { DataTable } from "@/components/ui/table/data-table";
 import { familyViewColumns } from "./FamilyColumns";
 import { useLocation } from "react-router";
-import { MemberRecord } from "../profilingTypes";
 import { Card } from "@/components/ui/card/card";
 import { Pen, UserRoundPlus } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
@@ -18,32 +17,22 @@ export default function FamilyRecordView() {
     () => location.state?.params || {},
     [location.state]
   );
+  const households = React.useMemo(() => params.households || [], [params]);
   const [isOpenAddDialog, setIsOpenAddDialog] = React.useState<boolean>(false);
   const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false);
-  const residents = React.useMemo(() => params.residents, [params]);
-  const [family, setFamily] = React.useState<
-    typeof params.family
-  >(params.family);
-  const [compositions, setComposition] = React.useState<
-    typeof family.family_compositions
-  >(family.family_compositions)
-  const households = React.useMemo(() => params.households, [params]);
-  const staff = React.useMemo(() => family.staff.rp.per, [family]);
+  const [family, setFamily] = React.useState(params?.family);
+  const [compositions, setCompositions] = React.useState(family.members.results);
 
+  const formattedData = React.useCallback(() => {
+    if(!compositions) return [];
 
-  const formatMemberData = React.useCallback((): MemberRecord[] => {
-    if (!compositions) return [];
-
-    return compositions.map((comp: any) => {
+    return compositions.map((member: any) => {
       return {
-        data: {
-          comp: comp,
-          members: compositions
-        },
-      };
-    });
+        data: member
+      }
+    })
   }, [compositions]);
-
+  
   return (
     <LayoutWithBack
       title="Family Details"
@@ -83,7 +72,7 @@ export default function FamilyRecordView() {
             </div>
             <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">Household No.</Label>
-              <Label className="text-[16px] text-black/70">{family.hh.hh_id}</Label>
+              <Label className="text-[16px] text-black/70">{family.household_no}</Label>
             </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Building</Label>
@@ -99,10 +88,7 @@ export default function FamilyRecordView() {
             </div>
             <div className="flex flex-col px-2 py-3">
               <Label className="text-black/40">Registered By</Label>
-              <Label className="text-[16px] text-black/70">
-                {`${staff.per_lname}, ${staff.per_fname}
-                ${staff.per_mname ? staff.per_mname[0] + "." : ""}`}
-              </Label>
+              <Label className="text-[16px] text-black/70">{family.registered_by}</Label>
             </div>
           </div>
         </div>
@@ -126,7 +112,7 @@ export default function FamilyRecordView() {
               <Label className="text-black/50">Age</Label>
               <Label className="text-black/50">Date of Birth</Label>
               <Label className="text-black/50">Status</Label>
-              <Label className="text-yellow-500">Role</Label>
+              <Label className="text-black/50">Role</Label>
             </div>
             <div className="w-[14.5%] flex justify-end items-center">
               <DialogLayout 
@@ -139,14 +125,9 @@ export default function FamilyRecordView() {
                 description="Select a registered resident from the database and assign their role within the family."
                 mainContent={
                   <AddMemberForm 
-                    residents={
-                      residents.filter((r: any) => (
-                        !(compositions.find((fc: any) => r.rp_id === fc.rp.rp_id))
-                      ))
-                    }
                     familyId={family.fam_id}
                     setIsOpenDialog={setIsOpenAddDialog}
-                    setComposition={setComposition}
+                    setCompositions={setCompositions}
                   />
                 }
                 isOpen={isOpenAddDialog}
@@ -155,8 +136,8 @@ export default function FamilyRecordView() {
             </div>
           </div>
           <DataTable
-            columns={familyViewColumns(residents, family, setComposition)}
-            data={formatMemberData()}
+            columns={familyViewColumns(family, setCompositions)}
+            data={formattedData()}
             header={false}
           />
         </div>

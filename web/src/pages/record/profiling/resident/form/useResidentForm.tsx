@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Origin } from "../../profilingEnums";
 
-export const useResidentForm = (defaultData?: any, origin?: string) => {
+export const useResidentForm = (defaultData?: any, origin?: any) => {
   const navigate = useNavigate();
   const defaultValues = generateDefaultValues(personalInfoSchema);
   const form = useForm<z.infer<typeof personalInfoSchema>>({
@@ -24,8 +24,7 @@ export const useResidentForm = (defaultData?: any, origin?: string) => {
   const populateFields = React.useCallback((values: Record<string, any>) => {
     const resident = values;
     const fields = [
-      {
-        key: "per_id",
+      { key: "per_id",
         value:
           origin === Origin.Administration
             ? String(form.watch("per_id"))
@@ -80,7 +79,7 @@ export const useResidentForm = (defaultData?: any, origin?: string) => {
     toast(message, {
       icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
     });
-    if (redirectPath) navigate(redirectPath, {state});
+    if (redirectPath) navigate(redirectPath, {state: state});
   };
 
   const handleSubmitError = (message: string) => {

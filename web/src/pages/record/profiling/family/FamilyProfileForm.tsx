@@ -4,7 +4,6 @@ import ParentsFormLayout from "./parent/ParentsFormLayout";
 import DependentsInfoLayout from "./dependent/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
-import { useLocation } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
@@ -13,12 +12,15 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { formatHouseholds, formatResidents } from "../profilingFormats";
 import { DependentRecord } from "../profilingTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { useHouseholdsList, useResidentsList } from "../queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function FamilyProfileForm() {
-  const location = useLocation();
+  const { showLoading, hideLoading } = useLoading();
+  const { data: householdsList, isLoading: isLoadingHouseholds } = useHouseholdsList();
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList(); 
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
-
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
   const [selectedFatherId, setSelectedFatherId] = React.useState<string>("");
   const [selectedGuardianId, setSelectedGuardianId] =
@@ -26,15 +28,20 @@ export default function FamilyProfileForm() {
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
-
   const form = useForm<z.infer<typeof familyFormSchema>>({
     resolver: zodResolver(familyFormSchema),
     defaultValues: defaultValues.current,
   });
+  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
+  const formattedHouseholds = React.useMemo(() => formatHouseholds(householdsList), [householdsList]);
 
-  const params = React.useMemo(() => location.state?.params || {}, [location.state]);
-  const formattedResidents = React.useMemo(() => formatResidents(params), [params.residents]);
-  const formattedHouseholds = React.useMemo(() => formatHouseholds(params), [params.households]);
+  React.useEffect(() => {
+      if(isLoadingHouseholds || isLoadingResidents) {
+        showLoading();
+      } else {
+        hideLoading();
+      }
+    }, [isLoadingHouseholds, isLoadingResidents])
   
   const nextStep = React.useCallback(() => {
     setCurrentStep((prev) => prev + 1);
@@ -79,7 +86,7 @@ export default function FamilyProfileForm() {
             <ParentsFormLayout
               form={form}
               residents={{
-                default: params.residents,
+                default: residentsList,
                 formatted: formattedResidents,
               }}
               selectedParents={{
@@ -99,7 +106,7 @@ export default function FamilyProfileForm() {
             <DependentsInfoLayout
               form={form}
               residents={{
-                default: params.residents,
+                default: residentsList,
                 formatted: formattedResidents,
               }}
               selectedParents={[

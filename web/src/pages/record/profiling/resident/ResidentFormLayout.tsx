@@ -25,7 +25,8 @@ import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
-import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
+import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
+import { useAddResidentAndPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
 export default function ResidentFormLayout() {
@@ -50,13 +51,13 @@ export default function ResidentFormLayout() {
   const formattedResidents = React.useMemo(() => {
     return formatResidents(params);
   }, [params.residents]);
-  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile();
-  const { mutateAsync: addPersonal } = useAddPersonal();
+  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
+  const { mutateAsync: addPersonal } = useAddResidentAndPersonal();
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {
-    setIsSubmitting(isSubmittingProfile || isUpdatingProfile);
-  }, [isSubmittingProfile, isUpdatingProfile]) 
+    setIsSubmitting(isSubmittingProfile || isUpdatingProfile || isSubmittingProfileHealth);
+  }, [isSubmittingProfile, isUpdatingProfile, isSubmittingProfileHealth]) 
 
   // Performs side effects when formType changes
   React.useEffect(() => {
@@ -180,8 +181,14 @@ export default function ResidentFormLayout() {
 
       const resident = await addResidentProfile({
         personalId: personalId, 
-        staffId: user?.staff.staff_id,
-        params: params // Ensure 'params' is passed as required
+        staffId: user?.staff.staff_id
+      });
+      
+      const healthPersonalId = await addPersonalHealth();
+
+      await addResidentProfileHealth({
+        personalId: healthPersonalId, 
+        staffId: "",
       });
 
       // Reset the values of all fields in the form

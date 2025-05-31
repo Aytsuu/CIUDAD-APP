@@ -40,7 +40,7 @@ const MARITAL_STATUS_OPTIONS = [
 ];
 
 // ==================== COMPONENT ====================
-export default function PersonalInfoForm({
+const PersonalInfoForm = ({
   formattedResidents,
   form,
   formType,
@@ -54,13 +54,15 @@ export default function PersonalInfoForm({
   submit,
   reject,
   onComboboxChange,
-}: PersonalInfoFormProps) {
+}: PersonalInfoFormProps) => {
   const { control, setValue, watch } = form;
+  // ============= INITIALIZING STATES =============
+
 
   // ==================== RENDER ====================
   return (
     <>
-      {origin === Origin.Administration && formattedResidents && (
+      {origin === Origin.Administration && (
         <Combobox
           options={formattedResidents}
           value={watch("per_id")}
@@ -179,3 +181,5 @@ export default function PersonalInfoForm({
     </>
   );
 } 
+
+export default PersonalInfoForm;

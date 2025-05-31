@@ -10,28 +10,31 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
-import { CircleCheck, Plus } from "lucide-react";
+import { CircleCheck, Loader2, Plus } from "lucide-react";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { formatResidents } from "../profilingFormats";
 import { useAddFamilyComposition } from "../queries/profilingAddQueries";
 import { toast } from "sonner";
+import { useResidentsWithFamExclusion } from "../queries/profilingFetchQueries";
 
-export default function AddMemberForm({
-  residents, 
+export default function AddMemberForm({ 
   familyId, 
   setIsOpenDialog,
-  setComposition
+  setCompositions
 } : {
-  residents: any[];
   familyId: string;
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>
-  setComposition: React.Dispatch<React.SetStateAction<any>>
+  setCompositions: React.Dispatch<React.SetStateAction<any>>
 }) {
   // Initializing states
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false);
   const { mutateAsync: addFamilyComposition, isPending: isAdding} = useAddFamilyComposition(); 
-  const formattedResidents = React.useMemo(() => formatResidents({residents: residents}), [residents]);
+  const { data: residentsWithFamExclusion, isLoading: isLoadingResidents } = useResidentsWithFamExclusion(familyId);
+
+  const formattedResidents = React.useMemo(() => 
+    formatResidents(residentsWithFamExclusion)
+  , [residentsWithFamExclusion]);
   const defaultValues = React.useRef(generateDefaultValues(newMemberFormSchema)).current;
   const form = useForm<z.infer<typeof newMemberFormSchema>>({
     resolver: zodResolver(newMemberFormSchema),
@@ -44,9 +47,10 @@ export default function AddMemberForm({
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
     const residentId = form.watch("id").split(" ")[0];
-    if(!formIsValid && !residentId) {
+
+    if(!formIsValid || !residentId) {
       setIsSubmitting(false);
-      setInvalidResident(true);
+      if(!residentId) setInvalidResident(true);
       return;
     }
 
@@ -55,22 +59,25 @@ export default function AddMemberForm({
       familyId: familyId,
       role: role,
       residentId: residentId
+    }, {
+      onSuccess: () => {
+        setIsOpenDialog(false);
+        setIsSubmitting(false);
+        toast("A members has been added successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+        });
+
+        setCompositions((prev: any) => [
+          ...prev,
+          newComposition
+        ])
+        }
     });
-
-    if(!isAdding) {
-      setIsOpenDialog(false);
-      setIsSubmitting(false);
-      toast("A members has been added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-      });
-
-      setComposition((prev: any) => [
-        ...prev,
-        newComposition
-      ])
-    }
-
   };
+
+  if(isLoadingResidents) {
+    return <Loader2 className="animate-spin" />
+  }
 
   return (
     <Form {...form}>

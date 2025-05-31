@@ -51,11 +51,11 @@ export const useAddStaff = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({personalId, positionId, staffId} : {
-      personalId: string;
+    mutationFn: ({residentId, positionId, staffId} : {
+      residentId: string;
       positionId: string;
       staffId: string;
-    }) => addStaff(personalId, positionId, staffId),
+    }) => addStaff(residentId, positionId, staffId),
     onSuccess: (newData) => {
 
       if(!newData) return;

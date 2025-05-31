@@ -12,12 +12,12 @@ import { CircleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { useAuth } from "@/context/AuthContext";
 import { useAddHousehold } from "../queries/profilingAddQueries";
-import { useLocation } from "react-router";
+import { useResidentsList, useSitioList } from "../queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function HouseholdFormLayout() {
-  const location = useLocation();
-  const params = React.useMemo(() => location.state?.params, [location.state])
   const { user } = useAuth();
+  const {showLoading, hideLoading} = useLoading();
   const [invalidHouseHead, setInvalidHouseHead] = React.useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const defaultValues = React.useRef(generateDefaultValues(householdFormSchema));
@@ -26,40 +26,49 @@ export default function HouseholdFormLayout() {
       defaultValues: defaultValues.current,
   });
   const { mutateAsync: addHousehold} = useAddHousehold();
-  const [formattedSitio, setSitio] = React.useState(() => formatSitio(params));
-  const [formattedResidents, setFormattedResidents] = React.useState(() =>
-    formatResidents(params)
-  );
+  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
 
-  React.useEffect(()=>{
-    setFormattedResidents(() =>
-      formatResidents(params)
-    );
-    
-    setSitio(() => formatSitio(params));
-  }, [params.residents, params.households, params.sitio])
+  const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList]);
+  const formattedResidents = React.useMemo(() => formatResidents(residentsList) || [], [residentsList])
+
+  React.useEffect(() => {
+    if(isLoadingSitio || isLoadingResidents) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoadingSitio, isLoadingResidents])
 
   const submit = async () => {
     setIsSubmitting(true);
     const formIsValid = await form.trigger();
-
-    if (!formIsValid || form.watch("householdHead") === '') {
-      setInvalidHouseHead(true)
+    const household = form.watch("householdHead")
+    if (!formIsValid || !household) {
+      !household && setInvalidHouseHead(true)
       setIsSubmitting(false);
       toast("Please fill out all required fields", {
         icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
       });
       return;
     }
 
     const householdInfo = form.getValues();
-    await addHousehold({
+    addHousehold({
       householdInfo: householdInfo, 
       staffId: user?.staff.staff_id
+    }, {
+      onSuccess: () => {
+        setIsSubmitting(false);
+        form.reset(defaultValues.current);
+      }
     });
-
-    setIsSubmitting(false);
-    form.reset(defaultValues.current);
   };
   
 

@@ -15,8 +15,8 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { useAuth } from "@/context/AuthContext";
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
-import { useAddPersonal } from "../profiling/queries/profilingAddQueries";
 import { useAddStaff } from "./queries/administrationAddQueries";
+import { useAddResidentAndPersonal } from "../profiling/queries/profilingAddQueries";
 
 export default function AssignPosition({
   personalInfoform,
@@ -28,8 +28,8 @@ export default function AssignPosition({
   // ============= STATE INITIALIZATION ===============
   const { user } = React.useRef(useAuth()).current;
   const {data: positions, isLoading: isLoadingPositions} = usePositions();
-  const {mutateAsync: addPersonal} = useAddPersonal();
-  const {mutateAsync: addStaff, isPending: isAdding} = useAddStaff();
+  const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
+  const {mutateAsync: addStaff} = useAddStaff();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const personalDefaults = React.useRef(
     generateDefaultValues(personalInfoSchema)
@@ -53,15 +53,19 @@ export default function AssignPosition({
       return;
     }
     
-    const personalId = personalInfoform.getValues().per_id.split(" ")[0];
+    const residentId = personalInfoform.getValues().per_id.split(" ")[0];
     const positionId = form.getValues().assignPosition;
 
     // If resident exists, assign
-    if (personalId) {
-      await addStaff({
-        personalId: personalId, 
+    if (residentId) {
+      addStaff({
+        residentId: residentId, 
         positionId: positionId,
         staffId: user?.staff.staff_id
+      }, {
+        onSuccess: () => {
+          deliverFeedback()
+        }
       });
 
     } else {
@@ -70,15 +74,22 @@ export default function AssignPosition({
 
       if(!personalInfo) return;
       
-      const perId = await addPersonal(personalInfo);
-      await addStaff({
-        personalId: perId, 
-        positionId: positionId,
+      addResidentAndPersonal({
+        personalInfo: personalInfo,
         staffId: user?.staff.staff_id
+      }, {
+        onSuccess: (resident) => {
+          addStaff({
+            residentId: resident.rp_id, 
+            positionId: positionId,
+            staffId: user?.staff.staff_id
+          }, {
+            onSuccess: () => deliverFeedback()
+          });
+        }
       });
     }
 
-    if (!isAdding) deliverFeedback();
   };
 
   const deliverFeedback = () => {

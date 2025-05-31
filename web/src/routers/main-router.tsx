@@ -27,6 +27,8 @@ import { announcement_route } from './Announcement-router';
 import { famplanning_route } from './FamilyPlanning-router';
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
+import { familyProfilingRoute } from './family-profiling-route';
+import { patientsRecordRouter } from './patients-record-router';
 
 
 
@@ -70,7 +72,10 @@ export const main_router: RouteObject[] = [
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
-            ...doctorRouting
+            ...doctorRouting,
+            ...familyProfilingRoute,
+            ...patientsRecordRouter,
+            
         ]
     }
 ]

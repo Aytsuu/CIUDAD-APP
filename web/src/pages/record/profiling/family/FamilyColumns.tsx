@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, CircleAlert, CircleCheck, CircleChevronRight, CircleMinus, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../profilingTypes";
@@ -8,17 +8,68 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useDeleteFamilyComposition } from "../queries/profilingDeleteQueries";
 import React from "react";
 import { toast } from "sonner";
+import { useLoading } from "@/context/LoadingContext";
+import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } from "../restful-api/profilingGetAPI";
+import { Badge } from "@/components/ui/badge";
+
+// Reusables
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+const CardContainer = ({ children }: { children: React.ReactNode }) => (
+  <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
+    {children}
+  </div>
+);
+
+const IdBadge = ({ id, className = '' }: { id: string; className?: string }) => (
+  <Label className={`w-[90%] py-1.5 text-black/70 bg-muted rounded-full ${className}`}>
+    {id}
+  </Label>
+);
+
+const RoleBadge = ({ role }: { role: string }) => (
+  <Label className="w-[90%] py-1.5 text-white rounded-full bg-green-500 cursor-pointer">
+    {role}
+  </Label>
+);
+
+const NameDisplay = ({ lname, fname, mname }: { lname: string; fname: string; mname?: string }) => (
+  <Label className="text-black/70">
+    {`${lname}, ${fname} ${mname ? mname[0] + "." : ""}`}
+  </Label>
+);
+
+const ViewButton = ({ onClick }: { onClick: () => void }) => (
+  <div 
+    className="group flex justify-center items-center gap-2 px-3 py-2
+              rounded-lg border-none shadow-none hover:bg-muted
+              transition-colors duration-200 ease-in-out cursor-pointer"
+    onClick={onClick}
+  >
+    <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
+            transition-colors duration-200 ease-in-out">
+      View
+    </Label> 
+    <CircleChevronRight
+      size={35}
+      className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
+          group-hover:stroke-white transition-all duration-200 ease-in-out"
+    />
+  </div>
+);
+
+const InfoCell = ({ value, className = '' }: { value: string | number | React.ReactNode; className?: string }) => (
+  <div className={`w-full flex flex-col items-start gap-1 ${className}`}>
+    <Label className="text-black/70">{value}</Label>
+  </div>
+);
 
 // Define the columns for family data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const familyColumns = (
-  residents: any[],
-  families: any[],
-  households: any[]
-): ColumnDef<FamilyRecord>[] => [
+export const familyColumns: ColumnDef<FamilyRecord>[] = [
   {
-    accessorKey: "id",
+    accessorKey: "fam_id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -30,7 +81,7 @@ export const familyColumns = (
     ),
   },
   {
-    accessorKey: "noOfMembers",
+    accessorKey: "members",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -42,19 +93,19 @@ export const familyColumns = (
     ),
   },
   {
-    accessorKey: "building",
+    accessorKey: "fam_building",
     header: "Building",
   },
   {
-    accessorKey: "indigenous",
+    accessorKey: "fam_indigenous",
     header: "Indigenous",
   },
   {
-    accessorKey: "dateRegistered",
+    accessorKey: "fam_date_registered",
     header: "Date Registered",
   },
   {
-    accessorKey: "registeredBy",
+    accessorKey: "registered_by",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -68,38 +119,56 @@ export const familyColumns = (
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <Link to="/family/view"
-        state={{
-          params: {
-            residents: residents,
-            family: families.find((family) => family.fam_id == row.original.id),
-            households: households
-          },
-        }}
-      >
-        <div className="group flex justify-center items-center gap-2 px-3 py-2
-                rounded-lg border-none shadow-none hover:bg-muted
-                transition-colors duration-200 ease-in-out">
-        <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                transition-colors duration-200 ease-in-out">
-          View
-        </Label> 
-        <CircleChevronRight
-          size={35}
-          className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-              group-hover:stroke-white transition-all duration-200 ease-in-out"
-        />
-      </div>
-      </Link>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { showLoading, hideLoading } = useLoading();
+
+      const handleViewClick = async () => {
+        showLoading();
+        try {
+          const familyData = await getFamilyData(row.original.fam_id);
+          const members = await getFamilyMembers(row.original.fam_id);
+          const households = await getHouseholdList();
+          navigate("/family/view", {
+            state: {
+              params: {
+                family: {
+                  ...familyData,
+                  members: members
+                },
+                households: households
+              }
+            }
+          })
+        } finally {
+          hideLoading();
+        }
+      }
+
+      return (
+          <div className="group flex justify-center items-center gap-2 px-3 py-2
+                  rounded-lg border-none shadow-none hover:bg-muted
+                  transition-colors duration-200 ease-in-out cursor-pointer"
+            onClick={handleViewClick}        
+          >
+            <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
+                    transition-colors duration-200 ease-in-out">
+              View
+            </Label> 
+            <CircleChevronRight
+              size={35}
+              className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
+                  group-hover:stroke-white transition-all duration-200 ease-in-out"
+            />
+          </div>
+      )
+    },
   },
 ];
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 export const familyViewColumns = (
-  residents: any[],
   family: Record<string, any>,
   setComposition: React.Dispatch<React.SetStateAction<any>>
 ): ColumnDef<MemberRecord>[] => [
@@ -107,72 +176,48 @@ export const familyViewColumns = (
     accessorKey: "data",
     header: "",
     cell: ({ row }) => {
+      const navigate = useNavigate();
       const data = row.getValue("data") as any;
-      const role = data.comp.fc_role;
-      const profile = data.comp.rp;
-      const personal = profile.per;
+      const { showLoading, hideLoading } = useLoading();
 
-      return (
-        <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
-          <div className="w-full grid grid-cols-9 items-center justify-center">
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="w-[90%] py-1.5 text-black/70 bg-muted rounded-full">
-                {profile.rp_id}
-              </Label>
-            </div>
-            <div className="w-full flex flex-col col-span-2 items-start gap-1">
-              <Label className="text-black/70">
-              {`${personal.per_lname}, ${personal.per_fname} 
-                ${personal.per_mname ? personal.per_mname[0] + "." : ""}`}
-              </Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{personal.per_sex}</Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1 opac">
-              <Label className="text-black/70">
-                {calculateAge(personal.per_dob)}
-              </Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{personal.per_dob}</Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{personal.per_status}</Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="w-[90%] py-1.5 text-white rounded-full bg-green-500 cursor-pointer">
-                {role}
-              </Label>
-            </div>
-          </div>
-          <div className="w-1/12 flex justify-end items-center">
-            <Link to="/resident/view"
-              state={{
+      const handleViewClick = async () => {
+        showLoading();
+        try {
+          const resident = await getPersonalInfo(data.rp_id);
+            navigate("/resident/view", {
+              state: {
                 params: {
                   type: 'viewing',
-                  title: 'Resident Details',
-                  description: 'Information is displayed in a clear, organized, and secure manner.',
-                  data: residents.find((resident) => resident.rp_id === profile.rp_id),
+                  data: resident,
                 }
-              }}
-            >
-              <div className="group flex justify-center items-center gap-2 px-3 py-2
-                        rounded-lg border-none shadow-none hover:bg-muted
-                        transition-colors duration-200 ease-in-out">
-                <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                        transition-colors duration-200 ease-in-out">
-                  View
-                </Label> 
-                <CircleChevronRight 
-                  size={35}
-                  className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                      group-hover:stroke-white transition-all duration-200 ease-in-out"
-                />
-              </div>
-            </Link>
+              }
+            });
+        } finally {
+          hideLoading();
+        }
+      }
+
+      return (
+        <CardContainer>
+          <div className="w-full grid grid-cols-9 items-center justify-center">
+            <InfoCell value={<Badge className="bg-black/10 text-black/80 hover:bg-black/10">{data.rp_id}</Badge>}/>
+            <InfoCell 
+              value={<NameDisplay lname={data.lname} fname={data.fname} mname={data.mname} />}  
+              className="col-span-2"
+            />
+            <InfoCell value={data.sex} />
+            <InfoCell value={calculateAge(data.dob)} className="opac" />
+            <InfoCell value={data.dob} /> 
+            <InfoCell value={data.status} />
+            <InfoCell value={
+              <Badge className="bg-green-500 hover:bg-green-500">{data.fc_role}</Badge>} 
+            />
           </div>
-        </div>
+          
+          <div className="w-1/12 flex justify-end items-center">
+            <ViewButton onClick={handleViewClick} />
+          </div>
+        </CardContainer>
       );
     },
   },
@@ -181,8 +226,8 @@ export const familyViewColumns = (
     header: "",
     cell: ({ row }) => {
       const data = row.getValue("data") as any;
-      const familyMembers = data.members;
-      const residentId = data.comp.rp.rp_id;
+      const familyMembers = data;
+      const residentId = data.rp_id;
       const [isRemoving, setIsRemoving] = React.useState<boolean>(false);
       const { mutateAsync: deleteFamilyComposition, isPending: isDeleting } = useDeleteFamilyComposition();
 
@@ -205,12 +250,12 @@ export const familyViewColumns = (
 
         if(!isDeleting) {
           setIsRemoving(false);
-          toast("A member has been deleted successfully", {
+          toast("A member has been removed successfully", {
             icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
           })
 
           setComposition((prev: any) => 
-            prev.filter((p: any) => p.rp.rp_id !== residentId)
+            prev.filter((p: any) => p.rp_id !== residentId)
           )
         }
 
