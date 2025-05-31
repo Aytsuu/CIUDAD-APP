@@ -9,6 +9,6 @@ export const template_router = [
     },
     {
         path: '/template-preview',
-        element: <TemplatePreview/>
+        element: <TemplatePreview headerImage={""} title={""} body={""} withSeal={false} withSignature={false} onClose={() => false}/>
     }
 ]
