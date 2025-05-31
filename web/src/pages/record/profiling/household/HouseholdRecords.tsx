@@ -14,12 +14,15 @@ export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const { data: householdTable, isLoading } = useHouseholdTable();
+  const { data: householdTable, isLoading } = useHouseholdTable(
+    currentPage, 
+    pageSize, 
+    searchQuery);
 
   const households = householdTable?.results || [];
   const totalCount = householdTable?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
-
+  
   return (
     <MainLayoutComponent
       title="Household Profiling"

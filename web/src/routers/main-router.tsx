@@ -30,9 +30,6 @@ import { doctorRouting } from './doctor-router';
 import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 
-
-
-
 export const main_router: RouteObject[] = [
     {
         path: "/",

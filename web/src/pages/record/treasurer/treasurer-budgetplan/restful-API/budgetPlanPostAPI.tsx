@@ -1,44 +1,44 @@
-import { api } from "@/api/api";
+import {api} from '@/api/api'
 import { parseFloatSafe } from '@/helpers/floatformatter';
 
 const budget_plan = async (budgetInfo: Record<string, any>) => {
     try {
         console.log({
             plan_year: new Date().getFullYear().toString(),
-            plan_actual_income: parseFloatSafe(budgetInfo.actualIncome), 
-            plan_rpt_income: parseFloatSafe(budgetInfo.actualRPT), 
-            plan_balance: parseFloatSafe(budgetInfo.balance), 
-            plan_tax_share: parseFloatSafe(budgetInfo.realtyTaxShare),
-            plan_tax_allotment: parseFloatSafe(budgetInfo.taxAllotment), 
-            plan_cert_fees: parseFloatSafe(budgetInfo.clearanceAndCertFees), 
-            plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
-            plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
-            plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
+            plan_actual_income: parseFloatSafe(budgetInfo.plan_actual_income), 
+            plan_rpt_income: parseFloatSafe(budgetInfo.plan_rpt_income), 
+            plan_balance: parseFloatSafe(budgetInfo.plan_balance), 
+            plan_tax_share: parseFloatSafe(budgetInfo.plan_tax_share),
+            plan_tax_allotment: parseFloatSafe(budgetInfo.plan_tax_allotment), 
+            plan_cert_fees: parseFloatSafe(budgetInfo.plan_cert_fees), 
+            plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
+            plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
+            plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
-            plan_personalService_limit: parseFloatSafe(budgetInfo.personalServicesLimit),
-            plan_miscExpense_limit: parseFloatSafe(budgetInfo.miscExpenseLimit),
-            plan_localDev_limit: parseFloatSafe(budgetInfo.localDevLimit),
-            plan_skFund_limit: parseFloatSafe(budgetInfo.skFundLimit),
-            plan_calamityFund_limit: parseFloatSafe(budgetInfo.calamityFundLimit),
+            plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
+            plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
+            plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
+            plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
+            plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
         });
 
         const res = await api.post('treasurer/budget-plan/', {
             plan_year: new Date().getFullYear().toString(),
-            plan_actual_income: parseFloatSafe(budgetInfo.actualIncome), 
-            plan_rpt_income: parseFloatSafe(budgetInfo.actualRPT), 
-            plan_balance: parseFloatSafe(budgetInfo.balance), 
-            plan_tax_share: parseFloatSafe(budgetInfo.realtyTaxShare),
-            plan_tax_allotment: parseFloatSafe(budgetInfo.taxAllotment), 
-            plan_cert_fees: parseFloatSafe(budgetInfo.clearanceAndCertFees), 
-            plan_other_income: parseFloatSafe(budgetInfo.otherSpecificIncome), 
-            plan_budgetaryObligations: parseFloatSafe(budgetInfo.totalBudgetObligations),
-            plan_balUnappropriated: parseFloatSafe(budgetInfo.balUnappropriated),
+            plan_actual_income: parseFloatSafe(budgetInfo.plan_actual_income), 
+            plan_rpt_income: parseFloatSafe(budgetInfo.plan_rpt_income), 
+            plan_balance: parseFloatSafe(budgetInfo.plan_balance), 
+            plan_tax_share: parseFloatSafe(budgetInfo.plan_tax_share),
+            plan_tax_allotment: parseFloatSafe(budgetInfo.plan_tax_allotment), 
+            plan_cert_fees: parseFloatSafe(budgetInfo.plan_cert_fees), 
+            plan_other_income: parseFloatSafe(budgetInfo.plan_other_income), 
+            plan_budgetaryObligations: parseFloatSafe(budgetInfo.plan_budgetaryObligations),
+            plan_balUnappropriated: parseFloatSafe(budgetInfo.plan_balUnappropriated),
             plan_issue_date: new Date().toISOString().split('T')[0], 
-            plan_personalService_limit: parseFloatSafe(budgetInfo.personalServicesLimit),
-            plan_miscExpense_limit: parseFloatSafe(budgetInfo.miscExpenseLimit),
-            plan_localDev_limit: parseFloatSafe(budgetInfo.localDevLimit),
-            plan_skFund_limit: parseFloatSafe(budgetInfo.skFundLimit),
-            plan_calamityFund_limit: parseFloatSafe(budgetInfo.calamityFundLimit),
+            plan_personalService_limit: parseFloatSafe(budgetInfo.plan_personalService_limit),
+            plan_miscExpense_limit: parseFloatSafe(budgetInfo.plan_miscExpense_limit),
+            plan_localDev_limit: parseFloatSafe(budgetInfo.plan_localDev_limit),
+            plan_skFund_limit: parseFloatSafe(budgetInfo.plan_skFund_limit),
+            plan_calamityFund_limit: parseFloatSafe(budgetInfo.plan_calamityFund_limit),
         });
 
         return res.data.plan_id;

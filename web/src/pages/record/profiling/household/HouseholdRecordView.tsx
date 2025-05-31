@@ -1,21 +1,67 @@
 import React from "react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/table/data-table";
 import { HouseholdFamRecord } from "../profilingTypes";
 import { householdFamColumns } from "./HouseholdColumns";
 import { Card } from "@/components/ui/card/card";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Button } from "@/components/ui/button/button";
+import { Pen } from "lucide-react";
+import EditGeneralDetails from "./EditGeneralDetails";
+import { useResidentsList } from "../queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { getFamilyID, getPersonalInfo } from "../restful-api/profilingGetAPI";
 
 export default function HouseholdRecordView() {
-  // Initialize states
+  // ================ STATE INITIALIZATION ================
   const location = useLocation();
+  const navigate = useNavigate();
   const params = React.useMemo(
-    () => location.state?.params || {},
+    () => location.state?.params || {}, 
     [location.state]
   );
+  const {showLoading, hideLoading} = useLoading();
+  const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false);
+  const [household, setHousehold] = React.useState<Record<string, any>>({});
+  const {data: residentsList, isLoading} = useResidentsList();
   const families = React.useMemo(() => params.families || {}, [params]);
-  const household = React.useMemo(() => params.household || {}, [params]);
+
+  // ================ SIDE EFFECTS ================
+  React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+  }, [isLoading])
+
+  React.useEffect(() => {
+    const householdData = params.household
+    if(householdData) {
+      setHousehold(householdData)
+    }
+  },[params])
+
+  // ================ HANDLERS ================
+  const handleViewHeadInfo = async () => {
+    showLoading();
+    const personalInfo = await getPersonalInfo(household.head_id);
+    const familyId = await getFamilyID(household.head_id)
+
+    navigate("/resident/view", {
+      state: {
+        params: {
+          type: 'viewing',
+          data: {
+            personalInfo: personalInfo,
+            residentId: household.head_id,
+            familyId: familyId[0]
+        }
+      }
+    }});
+  }
 
   // Format data for table
   const formatFamilyData = React.useCallback((): HouseholdFamRecord[] => {
@@ -28,6 +74,7 @@ export default function HouseholdRecordView() {
     });
   }, [families]);
 
+  // ================ RENDER ================
   return (
     <LayoutWithBack
       title="Household Details"
@@ -36,7 +83,31 @@ export default function HouseholdRecordView() {
       <Card className="flex">
         <div className="w-1/4 flex flex-col border-r">
           <div className="flex flex-col p-5">
-            <Label className="text-[17px] text-darkBlue1 mb-2">General</Label>
+            <div className="flex justify-between items-center mb-2">
+              <Label className="text-[17px] text-darkBlue1">General</Label>
+              <DialogLayout 
+                trigger= {
+                  <Button 
+                    variant={"outline"} 
+                    className="border-none shadow-none text-black/50"
+                  >
+                    <Pen/> Edit
+                  </Button>
+                }
+                title="General Details"
+                description="Edit form for household general details. "
+                mainContent={
+                  <EditGeneralDetails 
+                    residents={residentsList}
+                    household={household} 
+                    setHousehold={setHousehold}
+                    setIsOpenDialog={setIsOpenEditDialog}
+                  />
+                }
+                isOpen={isOpenEditDialog}
+                onOpenChange={setIsOpenEditDialog}
+              />
+            </div>
             <div className="flex flex-col px-2 py-3 bg-muted">
               <Label className="text-black/40">Household No.</Label>
               <Label className="text-[16px] text-black/70">{household.hh_id}</Label>
@@ -45,9 +116,11 @@ export default function HouseholdRecordView() {
               <Label className="text-black/40">NHTS Household</Label>
               <Label className="text-[16px] text-black/70">{household.nhts}</Label>
             </div>
-            <div className="flex flex-col px-2 py-3 bg-muted">
-              <Label className="text-black/40">Household Head</Label>
-              <Label className="text-[16px] text-black/70">
+            <div className="flex flex-col px-2 py-3 bg-muted cursor-pointer"
+              onClick={handleViewHeadInfo}
+            >
+              <Label className="text-black/40 cursor-pointer">Household Head</Label>
+              <Label className="text-[16px] text-black/70 cursor-pointer">
                 {household.head}
               </Label>
             </div>

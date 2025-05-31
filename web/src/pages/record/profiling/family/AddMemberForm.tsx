@@ -29,7 +29,7 @@ export default function AddMemberForm({
   // Initializing states
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [invalidResident, setInvalidResident] = React.useState<boolean>(false);
-  const { mutateAsync: addFamilyComposition, isPending: isAdding} = useAddFamilyComposition(); 
+  const { mutateAsync: addFamilyComposition} = useAddFamilyComposition(); 
   const { data: residentsWithFamExclusion, isLoading: isLoadingResidents } = useResidentsWithFamExclusion(familyId);
 
   const formattedResidents = React.useMemo(() => 
@@ -55,18 +55,14 @@ export default function AddMemberForm({
     }
 
     const role = form.getValues().role;
-    const newComposition = await addFamilyComposition({
-      familyId: familyId,
-      role: role,
-      residentId: residentId
-    }, {
+    const newComposition = await addFamilyComposition([{
+      "fam": familyId,
+      "fc_role": role,
+      "rp": residentId
+    }], {
       onSuccess: () => {
         setIsOpenDialog(false);
         setIsSubmitting(false);
-        toast("A members has been added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-        });
-
         setCompositions((prev: any) => [
           ...prev,
           newComposition

@@ -52,7 +52,7 @@ export default function ResidentFormLayout() {
     return formatResidents(params);
   }, [params.residents]);
   const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
-  const { mutateAsync: addPersonal } = useAddResidentAndPersonal();
+  const { mutateAsync: addPersonal } = useAddPersonal();
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {

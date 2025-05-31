@@ -1,6 +1,5 @@
 import * as z from "zod";
 
-// Define the schema with custom validation for householdNo
 export const demographicInfoSchema = z.object({
   id: z.string(), // For residents living independently
   building: z.string().min(1, "Building is required"),
@@ -28,10 +27,6 @@ export const personalInfoSchema = z.object({
   per_mname: z.string()
     .refine((val) => val === "" || val.length >= 2, "Middle Name must be at least 2 letters")
     .optional(),
-
-  per_address: z.string()
-    .min(1, "Address is required")
-    .min(2, "Address must be at least 2 letters"),
 
   per_edAttainment: z.string()
     .refine((val) => val === "" || val.length >= 2, {
@@ -86,12 +81,10 @@ export const familyFormSchema = z.object({
 });
 
 export const householdFormSchema = z.object({
+  householdHead: z.string(),
   nhts: z.string().min(1, "NHTS household is required"),
-  sitio: z.string().min(1, "Sitio is required"),
-  street: z.string()
-    .min(1, "Address is required")
-    .min(2, "Address must be at least 2 letters"),
-  householdHead: z.string()
+  add_id: z.string(),
+  address: z.string().min(1, "Address is required"),
 });
 
 export const businessFormSchema = z.object({

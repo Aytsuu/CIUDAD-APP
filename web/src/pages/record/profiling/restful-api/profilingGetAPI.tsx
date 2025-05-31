@@ -1,5 +1,15 @@
 import { api } from "@/api/api";
 
+//===================== FETCH ADDRESS ====================
+export const getPerAddressesList = async () => {
+  try {
+    const res = await api.get("profiling/per_address/list/");
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
 // ==================== FETCH RESIDENT ==================== (Status: Optimizing....)
 export const getResidentsList = async () => {
   try {
@@ -13,6 +23,15 @@ export const getResidentsList = async () => {
 export const getResidentsWithFamExclusion = async (familyId: string) => {
   try {
     const res = await api.get(`profiling/resident/exclude/fam/${familyId}/`);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export const getResidentsFamSpecificList = async (familyId: string) => {
+  try {
+    const res = await api.get(`profiling/resident/fam/${familyId}/list/`);
     return res.data;
   } catch (err) {
     throw err;
@@ -79,12 +98,23 @@ export const getFamilyData = async (familyId: string) => {
   }
 }
 
+export const getFamilyID = async (residentId: string) => {
+  try {
+    const res = await api.get(`profiling/family/id/${residentId}/`)
+    return res.data
+  } catch (err) {
+    throw err;
+  }
+}
+
 export const getFamilyMembers = async (familyId: string) => {
+  if(!familyId) return [];
+
   try { 
     const res = await api.get(`profiling/family/${familyId}/members/`)
     return res.data
   } catch (err) {
-
+    throw err;
   }
 }
 
@@ -97,7 +127,6 @@ export const getFamFilteredByHouse = async (householdId: string) => {
   }
 }
 
-// Fetch family composition
 export const getFamilyComposition = async () => {
   try {
     const res = await api.get("profiling/family-composition/");
@@ -108,9 +137,15 @@ export const getFamilyComposition = async () => {
 }
 
 // ==================== FETCH HOUSEHOLD ==================== (Status: Optimizing....)
-export const getHouseholdTable = async () => {
+export const getHouseholdTable = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/household/list/table/");
+    const res = await api.get("profiling/household/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
     return res.data
   } catch (err) {
     throw err;

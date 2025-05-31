@@ -7,32 +7,70 @@ import { Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
-import { useAddResidentAndPersonal } from "../../queries/profilingAddQueries";
-import { useResidentsList } from "../../queries/profilingFetchQueries";
-import { formatResidents } from "../../profilingFormats";
+import {
+  useAddAddress,
+  useAddPerAddress,
+  useAddResidentAndPersonal,
+} from "../../queries/profilingAddQueries";
+import {
+  useResidentsList,
+  useSitioList,
+} from "../../queries/profilingFetchQueries";
+import { formatResidents, formatSitio } from "../../profilingFormats";
 import { useLoading } from "@/context/LoadingContext";
 
 export default function ResidentCreateForm({ params }: { params: any }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  const {showLoading, hideLoading} = useLoading();
-  const { form, defaultValues, handleSubmitSuccess, handleSubmitError, populateFields, checkDefaultValues } = useResidentForm('', params.origin);
+  const { showLoading, hideLoading } = useLoading();
+  const {
+    form,
+    defaultValues,
+    handleSubmitSuccess,
+    handleSubmitError,
+    populateFields,
+    checkDefaultValues,
+  } = useResidentForm("", params.origin);
+  const [addresses, setAddresses] = React.useState<any[]>([
+    {
+      add_province: "",
+      add_city: "",
+      add_barangay: "",
+      sitio: "",
+      add_external_sitio: "",
+      add_street: "",
+    },
+  ]);
   const { mutateAsync: addResidentAndPersonal } = useAddResidentAndPersonal();
+  const { mutateAsync: addAddress } = useAddAddress();
+  const { mutateAsync: addPersonalAddress } = useAddPerAddress();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
+  const [isAssignmentOpen, setIsAssignmentOpen] =
+    React.useState<boolean>(false);
   const [isAllowSubmit, setIsAllowSubmit] = React.useState<boolean>(false);
-  const { data: residentsList, isLoading: isLoadingResidents } = useResidentsList();
-  const formattedResidents = React.useMemo(() => formatResidents(residentsList), [residentsList]);
-  
-    React.useEffect(() => {
-      if(isLoadingResidents) {
-        showLoading();
-      } else {
-        hideLoading();
-      }
-    }, [origin, isLoadingResidents])
+  const [validAddresses, setValidAddresses] = React.useState<boolean[]>([]);
+  const { data: residentsList, isLoading: isLoadingResidents } =
+    useResidentsList();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+
+  const formattedSitio = React.useMemo(
+    () => formatSitio(sitioList) || [],
+    [sitioList]
+  );
+  const formattedResidents = React.useMemo(
+    () => formatResidents(residentsList),
+    [residentsList]
+  );
 
   // ================== SIDE EFFECTS ==================
+  React.useEffect(() => {
+    if (isLoadingResidents || isLoadingSitio) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [origin, isLoadingResidents, isLoadingSitio]);
+
   React.useEffect(() => {
     const subscription = form.watch((value) => {
       setIsAllowSubmit(!checkDefaultValues(value, defaultValues));
@@ -41,7 +79,26 @@ export default function ResidentCreateForm({ params }: { params: any }) {
   }, []);
 
   // ==================== HANDLERS ====================
-  const handleComboboxChange = React.useCallback(() => { 
+  const validateAddresses = React.useCallback(
+    (addresses: any) => {
+      const validity = addresses.map(
+        (address: any) =>
+          address.add_province !== "" &&
+          address.add_city !== "" &&
+          address.add_barangay !== "" &&
+          (address.add_barangay === "San Roque"
+            ? address.sitio !== ""
+            : address.add_external_sitio !== "")
+      );
+
+      setValidAddresses(validity);
+      const isValidAll = validity.every((valid: any) => valid === true);
+      return isValidAll;
+    },
+    [addresses]
+  );
+
+  const handleComboboxChange = React.useCallback(() => {
     const data = residentsList.find(
       (resident: any) => resident.rp_id === form.watch("per_id").split(" ")[0]
     );
@@ -51,8 +108,14 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   const submit = async () => {
     setIsSubmitting(true);
-    const isValid = await form.trigger();
-    if (!isValid) {
+
+    if (!(await form.trigger())) {
+      setIsSubmitting(false);
+      handleSubmitError("Please fill out all required fields");
+      return;
+    }
+
+    if (!validateAddresses(addresses)) {
       setIsSubmitting(false);
       handleSubmitError("Please fill out all required fields");
       return;
@@ -60,21 +123,41 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
-      addResidentAndPersonal({
-        personalInfo: personalInfo,
-        staffId: user?.staff.staff_id,
-      }, {
-        onSuccess: (resident) => {
-          handleSubmitSuccess(
-            "New record created successfully",
-            `/account/create`,
-            {params: {residentId: resident.rp_id}}
-          );
-  
-          setIsSubmitting(false);
-          form.reset(defaultValues);
+      addResidentAndPersonal(
+        {
+          personalInfo: personalInfo,
+          staffId: user?.staff.staff_id,
+        },
+        {
+          onSuccess: (resident) => {
+            addAddress(addresses, {
+              onSuccess: (new_addresses) => {
+                const per_address = new_addresses?.map((address: any) => ({
+                  add: address.add_id,
+                  per: resident.per.per_id,
+                }));
+
+                addPersonalAddress(per_address, {
+                  onSuccess: () => {
+                    handleSubmitSuccess(
+                      "New record created successfully",
+                      `/resident/additional-registration`,
+                      {
+                        params: {
+                          residentId: resident.rp_id,
+                        },
+                      }
+                    );
+
+                    setIsSubmitting(false);
+                    form.reset(defaultValues);
+                  },
+                });
+              },
+            });
+          },
         }
-      });
+      );
     } catch (err) {
       throw err;
     }
@@ -82,14 +165,14 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
   return (
     // ==================== RENDER ====================
-    <LayoutWithBack title={params.title} description={params.description} >
+    <LayoutWithBack title={params.title} description={params.description}>
       <Card className="w-full p-10">
         <div className="pb-4">
           <h2 className="text-lg font-semibold">Personal Information</h2>
           <p className="text-xs text-black/50">Fill out all necessary fields</p>
         </div>
         <Form {...form}>
-        <form
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               submit();
@@ -97,14 +180,19 @@ export default function ResidentCreateForm({ params }: { params: any }) {
             className="flex flex-col gap-4"
           >
             <PersonalInfoForm
+              formattedSitio={formattedSitio}
               formattedResidents={formattedResidents}
+              addresses={addresses}
+              validAddresses={validAddresses}
               form={form}
               formType={Type.Create}
               isSubmitting={isSubmitting}
               submit={submit}
-              origin={params.origin ? params.origin : ''}
+              origin={params.origin ? params.origin : ""}
               isReadOnly={false}
               isAllowSubmit={isAllowSubmit}
+              setAddresses={setAddresses}
+              setValidAddresses={setValidAddresses}
               onComboboxChange={handleComboboxChange}
               isAssignmentOpen={isAssignmentOpen}
               setIsAssignmentOpen={setIsAssignmentOpen}

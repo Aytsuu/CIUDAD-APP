@@ -3,6 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from ..models import *
 from ..serializers.personal_serializers import *
+from ..serializers.address_serializers import *
 from datetime import datetime
 
 class ResidentProfileBaseSerializer(serializers.ModelSerializer):
@@ -17,27 +18,22 @@ class ResidentProfileBaseSerializer(serializers.ModelSerializer):
 class ResidentProfileTableSerializer(serializers.ModelSerializer):
     lname = serializers.CharField(source='per.per_lname')
     fname = serializers.CharField(source='per.per_fname')
-    mname = serializers.CharField(source='per.per_mname')
-    suffix = serializers.CharField(source='per.per_suffix')
+    mname = serializers.SerializerMethodField()
     household_no = serializers.SerializerMethodField()
-    sitio_name = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
-    registered_by = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
     
     class Meta:
         model = ResidentProfile
         fields = [ 'rp_id', 'rp_date_registered', 'lname', 'fname', 'mname', 
-                  'suffix', 'household_no', 'sitio_name', 'family_no', 'registered_by', 'has_account']
+                  'household_no', 'family_no', 'has_account']
+    
+    def get_mname(self, obj):
+        return obj.per.per_mname if obj.per.per_mname else '-'
     
     def get_household_no(self, obj):
         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
             return obj.family_compositions.first().fam.hh.hh_id
-        return ""
-    
-    def get_sitio_name(self, obj):
-        if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
-            return obj.family_compositions.first().fam.hh.sitio.sitio_name
         return ""
     
     def get_family_no(self, obj):
@@ -45,20 +41,13 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
             return obj.family_compositions.first().fam.fam_id
         return ""
     
-    def get_registered_by(self, obj):
-        if obj.staff and hasattr(obj.staff, 'rp'):
-            staff = obj.staff.rp.per
-            return f"{staff.per_lname}, {staff.per_fname}" + \
-                   (f" {staff.per_mname[0]}." if staff.per_mname else "")
-        return '-'
-    
     def get_has_account(self, obj):
         return hasattr(obj, 'account')
 
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()
-    staff = serializers.CharField() 
+    staff = serializers.CharField(allow_null=True, required=False) 
 
     class Meta:
         model = ResidentProfile
@@ -106,16 +95,21 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_sex = serializers.CharField(source="per.per_sex")
     per_dob = serializers.DateField(source="per.per_dob")
     per_status = serializers.CharField(source="per.per_status")
-    per_address = serializers.CharField(source="per.per_address")
     per_edAttainment = serializers.CharField(source="per.per_edAttainment")
     per_religion = serializers.CharField(source="per.per_religion")
     per_contact = serializers.CharField(source="per.per_contact")
+    per_addresses = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
         fields = ['per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
-                  'per_status', 'per_address', 'per_edAttainment', 'per_religion', 'per_contact']
+                  'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_addresses']
         read_only_fields = fields
+    
+    def get_per_addresses(self, obj):
+        per_addresses = PersonalAddress.objects.filter(per=obj.per)
+        addresses = [pa.add for pa in per_addresses.select_related('add')]
+        return AddressBaseSerializer(addresses, many=True).data
 
 class ResidentProfileListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()

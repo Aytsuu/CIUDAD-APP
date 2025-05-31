@@ -1,9 +1,28 @@
 import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { capitalize } from "@/helpers/capitalize";
-import { generateHouseholdNo } from "@/helpers/generateHouseholdNo";
 
 // API REQUESTS ---------------------------------------------------------------------------------------------------------
+
+// POST request for address
+export const addAddress =  async (data: Record<string, any>[]) => {
+  try {
+    const res = await api.post("profiling/address/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+// POST request for personal address
+export const addPersonalAddress = async (data: Record<string, any>[]) => {
+  try {
+    const res = await api.post("profiling/per_address/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
 // POST request for resident_profile model 
 export const addResidentProfile = async (personalId: string, staffId: string) => {
@@ -32,12 +51,11 @@ export const addResidentAndPersonal = async (personalInfo: Record<string, any>, 
         per_dob: formatDate(personalInfo.per_dob),
         per_sex: personalInfo.per_sex,
         per_status: personalInfo.per_status,
-        per_address: personalInfo.per_address,
         per_edAttainment: personalInfo.per_edAttainment || null,
         per_religion: personalInfo.per_religion,
         per_contact: personalInfo.per_contact,
       },
-      staff: staffId
+      staff: staffId || null
     })
     
     return res.data
@@ -80,12 +98,17 @@ export const addFamilyComposition = async (data: Record<string, any>[]) => {
 // POST request for household model 
 export const addHousehold = async (householdInfo: Record<string, string>, staffId: string) => {
   try {
+    console.log({
+      hh_nhts: capitalize(householdInfo.nhts),
+      add: +householdInfo.add_id,
+      rp: householdInfo.householdHead.split(" ")[0],
+      staff: staffId
+    })
     const res = await api.post("profiling/household/create/", {
       hh_nhts: capitalize(householdInfo.nhts),
-      hh_street: capitalize(householdInfo.street),
+      add: householdInfo.add_id,
       rp: householdInfo.householdHead.split(" ")[0],
-      sitio: householdInfo.sitio,
-      staff: staffId,
+      staff: staffId
     });
 
     return res.data;

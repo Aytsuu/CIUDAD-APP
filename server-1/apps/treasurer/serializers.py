@@ -5,6 +5,9 @@ class Budget_Plan_DetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Budget_Plan_Detail
         fields = '__all__'
+        extra_kwargs = {
+            'plan': {'required': False}  # Make plan optional for updates
+        }
 
 class  Budget_HeaderSerializer(serializers.ModelSerializer):
     details = serializers.SerializerMethodField()
@@ -28,6 +31,11 @@ class  Budget_HeaderSerializer(serializers.ModelSerializer):
 #         fields = '__all__'
 
 
+
+
+
+#INCOME & EXPENSE
+
 class Income_Expense_TrackingSerializers(serializers.ModelSerializer):
     dtl_budget_item = serializers.CharField(source='dtl_id.dtl_budget_item', read_only=True)
     
@@ -47,4 +55,10 @@ class Income_TrackingSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Income_Tracking
+        fields = '__all__'
+
+
+class Income_Expense_MainSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Income_Expense_Main
         fields = '__all__'

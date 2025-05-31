@@ -10,25 +10,48 @@ class FamilyBaseSerializer(serializers.ModelSerializer):
   
 class FamilyTableSerializer(serializers.ModelSerializer):
   members = serializers.SerializerMethodField()
-  registered_by = serializers.SerializerMethodField()
   household_no = serializers.CharField(source='hh.hh_id')
-  sitio = serializers.CharField(source='hh.sitio.sitio_name')
-  
+  sitio = serializers.CharField(source='hh.add.sitio.sitio_name')
+  father = serializers.SerializerMethodField()
+  mother = serializers.SerializerMethodField()
+  guardian = serializers.SerializerMethodField()
+  registered_by = serializers.SerializerMethodField()
   class Meta: 
     model = Family
-    fields = ['fam_id', 'household_no', 'sitio', 'fam_building', 'fam_indigenous', 
-              'fam_date_registered', 'registered_by', 'members']
+    fields = ['fam_id', 'household_no', 'sitio', 'fam_building', 'fam_indigenous', 'mother', 
+              'father', 'guardian', 'fam_date_registered', 'members', 'registered_by']
     
-  
   def get_members(self, obj):
     return FamilyComposition.objects.filter(fam=obj).count()
-  
-  def get_registered_by(self, obj):
-    if obj.staff and hasattr(obj.staff, 'rp'):
-      staff = obj.staff.rp.per
-      return f"{staff.per_lname}, {staff.per_fname}" + \
-        (f"{staff.per_mname[0]}." if staff.per_mname else "")
+
+  def get_father(self, obj):
+    father = FamilyComposition.objects.filter(fam=obj, fc_role='Father').first()
+    if father: 
+      info = father.rp.per
+      return f"{info.per_fname}"
+    
     return "-"
+  
+  def get_mother(self, obj):
+    mother = FamilyComposition.objects.filter(fam=obj, fc_role='Mother').first()
+    if mother: 
+      info = mother.rp.per
+      return f"{info.per_fname}"
+    
+    return "-"
+  
+  def get_guardian(self, obj):
+    guardian = FamilyComposition.objects.filter(fam=obj, fc_role='Guardian').first()
+    if guardian: 
+      info = guardian.rp.per
+      return f"{info.per_fname}"
+    
+    return "-"
+
+  def get_registered_by(self, obj):
+    info = obj.staff.rp.per
+    return f"{info.per_lname}, {info.per_fname}" + \
+          (f" {info.per_mname[0]}." if info.per_mname else "")
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 

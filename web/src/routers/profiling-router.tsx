@@ -11,7 +11,7 @@ import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 import HouseholdRecordView from "@/pages/record/profiling/household/HouseholdRecordView";
 import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLayout";
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
-import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
+import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
 
 export const profiling_router = [
   // Account
@@ -36,6 +36,10 @@ export const profiling_router = [
   {
     path: "resident/pending",
     element: <RegistrationRequests />,
+  },
+  {
+    path: "resident/additional-registration",
+    element: <AddRegOptions/>
   },
 
   // Family

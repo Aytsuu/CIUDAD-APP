@@ -1,6 +1,6 @@
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleAlert, CircleCheck, CircleChevronRight, CircleMinus, Loader2 } from "lucide-react";
+import { ArrowUpDown, CircleAlert, CircleCheck, CircleMinus, Loader2 } from "lucide-react";
 import { FamilyRecord, MemberRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
 import { calculateAge } from "@/helpers/ageCalculator";
@@ -11,6 +11,14 @@ import { toast } from "sonner";
 import { useLoading } from "@/context/LoadingContext";
 import { getFamilyData, getFamilyMembers, getHouseholdList, getPersonalInfo } from "../restful-api/profilingGetAPI";
 import { Badge } from "@/components/ui/badge";
+import { Combobox } from "@/components/ui/combobox";
+import { useResidentsFamSpecificList } from "../queries/profilingFetchQueries";
+import { formatResidents } from "../profilingFormats";
+import ViewButton from "@/components/ui/view-button";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { Button } from "@/components/ui/button/button";
+import { capitalize } from "@/helpers/capitalize";
+import { useUpdateFamily, useUpdateFamilyRole } from "../queries/profilingUpdateQueries";
 
 // Reusables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -18,43 +26,6 @@ import { Badge } from "@/components/ui/badge";
 const CardContainer = ({ children }: { children: React.ReactNode }) => (
   <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
     {children}
-  </div>
-);
-
-const IdBadge = ({ id, className = '' }: { id: string; className?: string }) => (
-  <Label className={`w-[90%] py-1.5 text-black/70 bg-muted rounded-full ${className}`}>
-    {id}
-  </Label>
-);
-
-const RoleBadge = ({ role }: { role: string }) => (
-  <Label className="w-[90%] py-1.5 text-white rounded-full bg-green-500 cursor-pointer">
-    {role}
-  </Label>
-);
-
-const NameDisplay = ({ lname, fname, mname }: { lname: string; fname: string; mname?: string }) => (
-  <Label className="text-black/70">
-    {`${lname}, ${fname} ${mname ? mname[0] + "." : ""}`}
-  </Label>
-);
-
-const ViewButton = ({ onClick }: { onClick: () => void }) => (
-  <div 
-    className="group flex justify-center items-center gap-2 px-3 py-2
-              rounded-lg border-none shadow-none hover:bg-muted
-              transition-colors duration-200 ease-in-out cursor-pointer"
-    onClick={onClick}
-  >
-    <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-            transition-colors duration-200 ease-in-out">
-      View
-    </Label> 
-    <CircleChevronRight
-      size={35}
-      className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-          group-hover:stroke-white transition-all duration-200 ease-in-out"
-    />
   </div>
 );
 
@@ -91,30 +62,52 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => {
+      const {showLoading, hideLoading} = useLoading();
+      const { data: residentsFamSpecificList, isLoading } = useResidentsFamSpecificList(row.getValue('fam_id'));
+      const formattedResidents = React.useMemo(() => 
+        formatResidents(residentsFamSpecificList)
+      , [residentsFamSpecificList])
+
+      React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading])
+
+      return (
+        <Combobox
+          options={formattedResidents}
+          value={row.getValue('members')}
+          placeholder="Search member"
+          emptyMessage="No resident found"
+          staticVal={true}
+          size={400}
+        />
+      )
+    }
   },
   {
     accessorKey: "fam_building",
     header: "Building",
   },
   {
-    accessorKey: "fam_indigenous",
-    header: "Indigenous",
+    accessorKey: "father",
+    header: "Father",
+  },
+  {
+    accessorKey: "mother",
+    header: "Mother",
+  },
+  {
+    accessorKey: "guardian",
+    header: "Guardian",
   },
   {
     accessorKey: "fam_date_registered",
     header: "Date Registered",
-  },
-  {
-    accessorKey: "registered_by",
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
   },
   {
     accessorKey: "action",
@@ -146,21 +139,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
       }
 
       return (
-          <div className="group flex justify-center items-center gap-2 px-3 py-2
-                  rounded-lg border-none shadow-none hover:bg-muted
-                  transition-colors duration-200 ease-in-out cursor-pointer"
-            onClick={handleViewClick}        
-          >
-            <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                    transition-colors duration-200 ease-in-out">
-              View
-            </Label> 
-            <CircleChevronRight
-              size={35}
-              className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                  group-hover:stroke-white transition-all duration-200 ease-in-out"
-            />
-          </div>
+        <ViewButton onClick={handleViewClick} />
       )
     },
   },
@@ -179,16 +158,22 @@ export const familyViewColumns = (
       const navigate = useNavigate();
       const data = row.getValue("data") as any;
       const { showLoading, hideLoading } = useLoading();
+      const { mutateAsync: updateFamilyRole } = useUpdateFamilyRole();
+      const [role, setRole] = React.useState<string | null>(data.fc_role);
 
       const handleViewClick = async () => {
         showLoading();
         try {
-          const resident = await getPersonalInfo(data.rp_id);
+          const personalInfo = await getPersonalInfo(data.rp_id);
             navigate("/resident/view", {
               state: {
                 params: {
                   type: 'viewing',
-                  data: resident,
+                  data: {
+                    personalInfo: personalInfo,
+                    residentId: data.rp_id,
+                    familyId: family.fam_id,
+                  },
                 }
               }
             });
@@ -197,20 +182,46 @@ export const familyViewColumns = (
         }
       }
 
+      const handleRoleChange = (value: string) => {
+        if(value !== role?.toLowerCase()) {
+          setRole(capitalize(value));
+          updateFamilyRole({
+            familyId: family.fam_id,
+            residentId: data.rp_id,
+            fc_role: capitalize(value)
+          }, {
+            onError: (status) => {
+              setRole(data.fc_role);
+              throw status;
+            }
+          })
+        }
+      }
+
       return (
         <CardContainer>
           <div className="w-full grid grid-cols-9 items-center justify-center">
             <InfoCell value={<Badge className="bg-black/10 text-black/80 hover:bg-black/10">{data.rp_id}</Badge>}/>
             <InfoCell 
-              value={<NameDisplay lname={data.lname} fname={data.fname} mname={data.mname} />}  
+              value={data.name}  
               className="col-span-2"
             />
             <InfoCell value={data.sex} />
-            <InfoCell value={calculateAge(data.dob)} className="opac" />
+            <InfoCell value={calculateAge(data.dob)}/>
             <InfoCell value={data.dob} /> 
             <InfoCell value={data.status} />
             <InfoCell value={
-              <Badge className="bg-green-500 hover:bg-green-500">{data.fc_role}</Badge>} 
+              <DropdownLayout
+                  trigger={<Button className="w-full h-6">{role} </Button>}
+                  options={[
+                    {id: "mother", name: "Mother"}, 
+                    {id: "father", name: "Father"},
+                    {id: "guardian", name: "Guardian"},
+                    {id: "dependent" , name: "Dependent"},
+                  ]}
+                  onSelect={handleRoleChange}
+                />
+            } 
             />
           </div>
           

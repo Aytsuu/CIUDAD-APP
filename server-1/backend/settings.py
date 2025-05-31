@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'apps.profiling',
     'apps.account',
     'apps.file',
-    'apps.drr'
+    'apps.drr',
+    'apps.donation',
 ]
 
 MIDDLEWARE = [
@@ -59,7 +60,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -155,14 +155,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework Settings
 REST_FRAMEWORK = {
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.FormParser',
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES':(
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',  
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny', 

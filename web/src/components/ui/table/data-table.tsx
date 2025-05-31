@@ -20,15 +20,17 @@ import {
     TableRow,
   } from "./table"
 import { Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
    
   interface DataTableProps<TData, TValue> {
     header?: boolean
+    headerClassName?: string
     isLoading?: boolean
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
   }
    
-  export function DataTable<TData, TValue>({isLoading=false, header=true, columns, data}: DataTableProps<TData, TValue>) {
+  export function DataTable<TData, TValue>({isLoading=false, headerClassName, header=true, columns, data}: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -57,7 +59,7 @@ import { Loader2 } from "lucide-react"
         <Table>
           {header && (<TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-none bg-lightBlue hover:bg-lightBlue h-12">
+              <TableRow key={headerGroup.id} className={cn("bg-lightBlue hover:bg-lightBlue h-12", headerClassName)}>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id} className="text-center">
@@ -74,7 +76,7 @@ import { Loader2 } from "lucide-react"
             ))}
           </TableHeader>)
           }
-          <TableBody>
+          <TableBody className="overflow-auto">
             {!isLoading ? (table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -108,3 +110,5 @@ import { Loader2 } from "lucide-react"
         </Table>
     )
   }
+
+

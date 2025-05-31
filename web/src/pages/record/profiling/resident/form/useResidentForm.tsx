@@ -37,7 +37,6 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       { key: "per_sex", value: resident?.per_sex || "" },
       { key: "per_dob", value: resident?.per_dob || "" },
       { key: "per_status", value: resident?.per_status || "" },
-      { key: "per_address", value: resident?.per_address || "" },
       { key: "per_religion", value: resident?.per_religion || "" },
       { key: "per_edAttainment", value: resident?.per_edAttainment || "" },
       { key: "per_contact", value: resident?.per_contact || "" },
@@ -65,13 +64,14 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
 
         return (
           (isParamEmpty && isValueEmpty) || // Both empty
-          String(initialValues[key]) === String(currentValues[key]) // Both non-empty and equal
+          String(initialValues[key]) == String(currentValues[key]) // Both non-empty and equal
         );
       } else {
-        return initialValues[key] === currentValues[key] ? true : false;
+        return String(initialValues[key]) == String(currentValues[key]) ? true : false;
       }
     });
 
+    console.log(isDefault)
     return isDefault;
   };
 

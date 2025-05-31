@@ -3,15 +3,30 @@ import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import {
+  addAddress,
   addBusiness,
   addBusinessFile,
   addFamily,
   addFamilyComposition,
   addFile,
   addHousehold,
+  addPersonalAddress,
   addResidentAndPersonal,
   addResidentProfile,
 } from "../restful-api/profiingPostAPI";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+
+export const useAddAddress = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>[]) => addAddress(data)
+  })
+}
+
+export const useAddPerAddress = () => {
+  return useMutation({
+    mutationFn: (data: Record<string, any>[]) => addPersonalAddress(data)
+  })
+}
 
 export const useAddResidentProfile = () => { // For registration request
   return useMutation({
@@ -25,7 +40,7 @@ export const useAddResidentProfile = () => { // For registration request
   });
 };
 
-export const useAddResidentAndPersonal = () => {
+export const useAddResidentAndPersonal = () => { // For registration from the web
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({personalInfo, staffId} : {
@@ -60,6 +75,7 @@ export const useAddFamily = () => {
 
 export const useAddFamilyComposition = () => {
   const queryClient = useQueryClient();
+    
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addFamilyComposition(data),
     onSuccess: (newData, variables) => {
@@ -111,16 +127,21 @@ export const useAddFamilyComposition = () => {
       //   })}
       // );
 
+      
       // Invalidate queries to ensure fresh data is fetched if needed
       queryClient.invalidateQueries({queryKey: ['familyCompositions']});
       queryClient.invalidateQueries({ queryKey: ["families"] });
       queryClient.invalidateQueries({queryKey: ['residents']});
-    }
+
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+
+      }
   });
 };
 
 export const useAddHousehold = () => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -141,8 +162,6 @@ export const useAddHousehold = () => {
       toast("Record added successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
       });
-      
-      navigate(-1)
     },
   });
 };

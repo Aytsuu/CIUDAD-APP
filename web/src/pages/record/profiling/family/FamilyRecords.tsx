@@ -9,7 +9,6 @@ import { familyColumns } from "./FamilyColumns";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import FamilyProfileOptions from "./FamilyProfileOptions";
 import { useFamiliesTable } from "../queries/profilingFetchQueries";
-import { Link } from "react-router-dom";
 
 export default function FamilyRecords() {
   // Initialize states
@@ -56,8 +55,8 @@ export default function FamilyRecords() {
         </div>
     
         {/* DialogLayout with state management */}
-        <Link
-          to="/family/family-profile-form"
+        {/* <Link
+          to="/health-family-form"
           state={{
             params: {
               residents: residents,
@@ -68,7 +67,7 @@ export default function FamilyRecords() {
           <Button>
             <Plus /> Register
           </Button>
-        </Link>
+        </Link> */}
         <DialogLayout
           trigger={
             <Button>

@@ -13,7 +13,6 @@ import { residentColumns } from "./ResidentColumns";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useResidentsTable } from "../queries/profilingFetchQueries";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Description } from "@radix-ui/react-dialog";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -109,13 +108,11 @@ export default function ResidentRecords() {
             ]}
           />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable
-            columns={residentColumns(residents)}
-            data={residents}
-            isLoading={isLoading}
-          />
-        </div>
+        <DataTable
+          columns={residentColumns}
+          data={residents}
+          isLoading={isLoading}
+        />
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
