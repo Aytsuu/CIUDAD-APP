@@ -16,7 +16,7 @@ class PositionView(generics.ListCreateAPIView):
     queryset = Position.objects.all()
     
 class PositionDeleteView(generics.DestroyAPIView):
-    serializer_class = FeatureSerializer
+    serializer_class = PositionSerializer
     queryset = Position.objects.all()
     lookup_field = 'pos_id'
 

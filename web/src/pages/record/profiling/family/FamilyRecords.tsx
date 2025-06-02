@@ -60,7 +60,7 @@ export default function FamilyRecords() {
           state={{
             params: {
               residents: residents,
-              households: households,
+              households: households, 
             },
           }}
         >
@@ -75,11 +75,7 @@ export default function FamilyRecords() {
             </Button>
           }
           mainContent={
-            <FamilyProfileOptions
-              familyCompositions={familyCompositions}
-              residents={residents}
-              households={households}
-            />
+            <FamilyProfileOptions/>
           }
         />
       </div>

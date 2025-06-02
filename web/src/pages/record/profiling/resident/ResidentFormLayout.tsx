@@ -26,7 +26,7 @@ import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
 import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
-import { useAddResidentAndPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
+import { useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
 export default function ResidentFormLayout() {

@@ -22,5 +22,9 @@ urlpatterns = [
     path('inventory/', include('apps.inventory.urls')),
     path('health-profiling/', include("apps.healthProfiling.urls")),
     path('vaccination/', include("apps.vaccination.urls")),
+    path('administration/', include("apps.administration.urls")),
+    path('user/', include('apps.account.urls')),
     
 ]
+
+

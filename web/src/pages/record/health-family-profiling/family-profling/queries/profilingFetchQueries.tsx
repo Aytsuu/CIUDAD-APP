@@ -1,13 +1,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  getBusinesses,
+  getFamFilteredByHouse,
   getFamiliesTable,
   getFamilyComposition,
   getFamilyData,
   getFamilyMembers,
   getHouseholdList,
   getHouseholdTable,
+  getPerAddressesList,
   getRequests,
   getResidentsFamSpecificList,
   getResidentsList,
@@ -18,7 +19,16 @@ import {
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
 
-export const useResidentsList = () => {
+// ================ ADDRESS =================
+export const usePerAddressesListHealth = () => {
+  return useQuery({
+    queryKey: ['perAddressesList'],
+    queryFn: () => getPerAddressesList(),
+    staleTime: 5000,
+  })
+}
+
+export const useResidentsListHealth = () => {
   return useQuery({
     queryKey: ['residentsList'],
     queryFn: getResidentsList,
@@ -26,7 +36,7 @@ export const useResidentsList = () => {
   })
 }
 
-export const useResidentsTable = (page: number, pageSize: number, searchQuery?: string) => {
+export const useResidentsTableHealth = (page: number, pageSize: number, searchQuery?: string) => {
   return useQuery({
     queryKey: ['residentsTableData', page, pageSize, searchQuery],
     queryFn: () => getResidentsTable(page, pageSize, searchQuery),
@@ -34,7 +44,7 @@ export const useResidentsTable = (page: number, pageSize: number, searchQuery?: 
   })
 }
 
-export const useResidentsWithFamExclusion = (familyId: string) => {
+export const useResidentsWithFamExclusionHealth = (familyId: string) => {
   return useQuery({
     queryKey: ['residentsWithFamExclusion', familyId],
     queryFn: () => getResidentsWithFamExclusion(familyId),
@@ -42,7 +52,7 @@ export const useResidentsWithFamExclusion = (familyId: string) => {
   })
 }
 
-export const useResidentsFamSpecificList = (familyId: string) => {
+export const useResidentsFamSpecificListHealth = (familyId: string) => {
   return useQuery({
     queryKey: ['residentsFamSpecificList', familyId],
     queryFn: () => getResidentsFamSpecificList(familyId),
@@ -50,7 +60,7 @@ export const useResidentsFamSpecificList = (familyId: string) => {
   })
 }
 
-export const useRequests = () => {
+export const useRequestsHealth = () => {
   return useQuery({
     queryKey: ["requests"],
     queryFn: getRequests,
@@ -58,7 +68,7 @@ export const useRequests = () => {
   });
 }
 
-export const useSitioList = () => {
+export const useSitioListHealth = () => {
   return useQuery({
     queryKey: ["sitioList"],
     queryFn: getSitioList,
@@ -68,7 +78,7 @@ export const useSitioList = () => {
 
 // ================ FAMILIES ================ (Status: Optmizing....)
 
-export const useFamiliesTable = (page: number, pageSize: number, searchQuery: string) => {
+export const useFamiliesTableHealth = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ["familiesTableData", page, pageSize, searchQuery],
     queryFn: () => getFamiliesTable(page, pageSize, searchQuery),
@@ -76,7 +86,7 @@ export const useFamiliesTable = (page: number, pageSize: number, searchQuery: st
   });
 }
 
-export const useFamilyData = (familyId: string) => {
+export const useFamilyDataHealth = (familyId: string) => {
   return useQuery({
     queryKey: ["familyData", familyId],
     queryFn: () => getFamilyData(familyId),
@@ -84,33 +94,31 @@ export const useFamilyData = (familyId: string) => {
   })
 }
 
-export const useFamilyMembers = (familyId: string) => {
+export const useFamilyMembersHealth = (familyId: string) => {
   return useQuery({
     queryKey: ["familyMembers", familyId],
     queryFn: () => getFamilyMembers(familyId),
     staleTime: 5000,
   })
 }
+export const useFamFilteredByHouseHealth = (householdId: string) => {
+  return useQuery({
+    queryKey: ["famFilteredByHouse", householdId],
+    queryFn: () => getFamFilteredByHouse(householdId),
+    staleTime: 5000,
+  })
+}
 
-export const useFamilyComposition = () => {
+export const useFamilyCompositionHealth = () => {
   return useQuery({
     queryKey: ["familyCompositions"],
     queryFn: getFamilyComposition,
     staleTime: 5000,
   })
 }
-
-export const useBusinesses = () => {
-  return useQuery({
-    queryKey: ["businesses"],
-    queryFn: getBusinesses,
-    staleTime: 5000,
-  })
-}
-
 // ================ HOUSEHOLDS ================ (Status: Optmizing....)
 
-export const useHouseholdsList = () => {
+export const useHouseholdsListHealth = () => {
   return useQuery({
     queryKey: ['householdsList'],
     queryFn: getHouseholdList,
@@ -118,7 +126,7 @@ export const useHouseholdsList = () => {
   })
 }
 
-export const useHouseholdTable = (page: number, pageSize: number, searchQuery: string) => {
+export const useHouseholdTableHealth = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
     queryKey: ['householdTable', page, pageSize, searchQuery],
     queryFn: () => getHouseholdTable(page, pageSize, searchQuery),

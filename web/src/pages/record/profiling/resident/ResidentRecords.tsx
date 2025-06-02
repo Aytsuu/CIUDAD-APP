@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Plus, ClockArrowUp, FileInput, Search } from "lucide-react";
 import { Link } from "react-router";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useResidentsTable } from "../queries/profilingFetchQueries";
+import { useResidentsTableHealth } from "../../health-family-profiling/family-profling/queries/profilingFetchQueries";
 import { useDebounce } from "@/hooks/use-debounce";
 
 export default function ResidentRecords() {
@@ -20,11 +18,20 @@ export default function ResidentRecords() {
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const debouncedSearchQuery = useDebounce(searchQuery, 100);
   const debouncedPageSize = useDebounce(pageSize, 100);
+  
   const {data: residentsTableData, isLoading } = useResidentsTable(
     currentPage, 
     debouncedPageSize,
     debouncedSearchQuery
   );
+  const {data: residentsTableHealthData, isLoading: isLoadingHealth } = useResidentsTableHealth(
+    currentPage, 
+    debouncedPageSize,
+    debouncedSearchQuery
+  );
+  
+  // Combined loading state
+  const isLoadingCombined = isLoading || isLoadingHealth;
   
   // Reset to page 1 when search changes
   React.useEffect(() => {
@@ -32,8 +39,15 @@ export default function ResidentRecords() {
   }, [debouncedSearchQuery]);
 
   const residents = residentsTableData?.results || [];
+  const residentsHealth = residentsTableHealthData?.results || [];
   const totalCount = residentsTableData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Combine residents with their health data
+  const combinedResidentsData = residents.map((resident: any) => ({
+    ...resident,
+    healthData: residentsHealth.find((health: any) => health.resident_id === resident.id)
+  }));
 
   return (
     <MainLayoutComponent
@@ -110,8 +124,8 @@ export default function ResidentRecords() {
         </div>
         <DataTable
           columns={residentColumns}
-          data={residents}
-          isLoading={isLoading}
+          data={combinedResidentsData}
+          isLoading={isLoadingCombined}
         />
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">

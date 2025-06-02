@@ -29,6 +29,7 @@ import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
 import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
+import { health_administration_router } from './administration-health-router';
 
 export const main_router: RouteObject[] = [
     {
@@ -72,6 +73,7 @@ export const main_router: RouteObject[] = [
             ...doctorRouting,
             ...familyProfilingRoute,
             ...patientsRecordRouter,
+            ...health_administration_router,
             
         ]
     }
