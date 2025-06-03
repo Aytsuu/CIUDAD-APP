@@ -33,7 +33,7 @@ function TemplateMainPage() {
                             <Plus size={20} /> Create Template
                         </Button>
                     }
-                    className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                    className="max-w-[52%] h-[90%] flex flex-col overflow-auto scrollbar-custom"
                     title="Create New Template"
                     description="Add new certification template."
                     mainContent={

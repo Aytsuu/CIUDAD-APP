@@ -879,6 +879,273 @@
 
 
 
+//LATEST WORKING BUT NOT ACCURATE TAB
+// import { useState, useEffect } from "react";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import { useForm } from "react-hook-form";
+// import { z } from "zod";
+// import { Textarea } from '@/components/ui/textarea';
+// import { TextareaTab } from "@/components/ui/textarea-tab";
+// import { FormInput } from "@/components/ui/form/form-input";
+// import { Checkbox } from "@/components/ui/checkbox";
+// import { FormTextArea } from "@/components/ui/form/form-text-area";
+// import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
+// import { FormSelect } from "@/components/ui/form/form-select";
+// import DialogLayout from "@/components/ui/dialog/dialog-layout";
+// import { Label } from '@/components/ui/label';
+// import { Button } from '@/components/ui/button/button';
+// import {
+//   Form,
+//   FormControl,
+//   FormField,
+//   FormItem,
+//   FormLabel,
+//   FormMessage,
+// } from "@/components/ui/form/form";
+// import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
+// import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
+// import TemplatePreview from "./template-preview";
+
+// function TemplateCreateForm() {
+//   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
+//   const [activeVideoId, setActiveVideoId] = useState<string>("");
+
+//   const form = useForm<z.infer<typeof documentTemplateFormSchema>>({
+//     resolver: zodResolver(documentTemplateFormSchema),
+//     defaultValues: {
+//       temp_header: "",
+//       temp_below_headerContent: "",
+//       temp_title: "",
+//       temp_paperSize: "",
+//       temp_w_sign: false,
+//       temp_w_seal: false,
+//       temp_body: "",
+//     },
+//   });
+
+//   const isSummonChecked = form.watch('temp_w_summon');
+
+//   useEffect(() => {
+//     if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+//       form.setValue('temp_header', mediaFiles[0].publicUrl);
+//     } else {
+//       form.setValue('temp_header', 'no-image-url-fetched');
+//     }
+//   }, [mediaFiles, form]);
+
+
+//   function onSubmit(values: z.infer<typeof documentTemplateFormSchema>) {
+//     console.log("Values", values);
+//   }
+
+
+//   return (
+//     <>
+//         <div className="flex flex-col p-2 min-h-0 h-auto rounded-lg overflow-auto">
+//             <Form {...form}>
+//             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+//                 {/* Header + Footer Container */}
+//                 <div className="flex flex-row gap-11 items-stretch">
+//                   {/* Document Header */}
+//                   <div className="flex flex-col gap-2 w-3/5">
+//                       <Label className="mb-1">Document Header</Label>
+//                       <MediaUpload
+//                         title=""
+//                         description=""
+//                         mediaFiles={mediaFiles}
+//                         activeVideoId={activeVideoId}
+//                         setMediaFiles={setMediaFiles}
+//                         setActiveVideoId={setActiveVideoId}
+//                       />
+//                   </div>
+
+//                   {/* Document Footer */}
+//                   <div className="flex flex-col gap-2 h-80%">
+//                       <Label className="mb-1">Document Footer</Label>
+//                       <div className="flex flex-col gap-5 p-4 border border-gray-300 rounded-md h-full justify-center">
+//                         <FormField
+//                             control={form.control}
+//                             name="temp_w_seal"
+//                             render={({ field }) => (
+//                             <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+//                                 <FormControl>
+//                                   <Checkbox
+//                                       id="w_seal"
+//                                       checked={!!field.value}
+//                                       onCheckedChange={(checked) => field.onChange(checked)}
+//                                       disabled={isSummonChecked}
+//                                   />
+//                                 </FormControl>
+//                                 <FormLabel htmlFor="w_seal" className="leading-none">
+//                                   With Seal
+//                                 </FormLabel>
+//                             </FormItem>
+//                             )}
+//                         />
+
+//                         <FormField
+//                             control={form.control}
+//                             name="temp_w_sign"
+//                             render={({ field }) => (
+//                             <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+//                                 <FormControl>
+//                                   <Checkbox
+//                                       id="w_sign"
+//                                       checked={!!field.value}
+//                                       onCheckedChange={(checked) => field.onChange(checked)}
+//                                       disabled={isSummonChecked}
+//                                   />
+//                                 </FormControl>
+//                                 <FormLabel htmlFor="w_sign" className="leading-none">
+//                                   With Applicant Signature
+//                                 </FormLabel>
+//                             </FormItem>
+//                             )}
+//                         />
+
+//                         <FormField
+//                             control={form.control}
+//                             name="temp_w_summon"
+//                             render={({ field }) => (
+//                             <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+//                                 <FormControl>
+//                                   <Checkbox
+//                                       id="w_summon"
+//                                       checked={!!field.value}
+//                                       onCheckedChange={(checked) => {
+//                                       field.onChange(checked);
+//                                       // If summon is checked, uncheck the other two
+//                                       if (checked) {
+//                                         form.setValue('temp_w_seal', false);
+//                                         form.setValue('temp_w_sign', false);
+//                                       }
+//                                     }}
+//                                   />
+//                                 </FormControl>
+//                                 <FormLabel htmlFor="w_summon" className="leading-none">
+//                                   With Summon details
+//                                 </FormLabel>
+//                             </FormItem>
+//                             )}
+//                         />
+                      
+//                       </div>
+//                   </div>
+//                 </div>
+
+
+//                 <FormField
+//                   control={form.control}
+//                   name="temp_below_headerContent"
+//                   render={({ field }) => (
+//                       <FormItem>
+//                       <FormLabel>Additional Details</FormLabel>
+//                       <FormControl>
+//                           <TextareaTab
+//                             className="w-full p-2 shadow-sm h-40 mt-[12px] rounded-[5px] resize-none"
+//                             placeholder="Enter additional details above the title"
+//                             {...field}
+//                           />
+//                       </FormControl>
+//                       <FormMessage />
+//                       </FormItem>
+//                   )}
+//                 />
+
+//                 {/* Title and Paper Size in same row */}
+//                 <div className="flex flex-row gap-2">
+//                   <div className="flex-1">
+//                     <FormInput
+//                       control={form.control}
+//                       name="temp_title"
+//                       label="Title"
+//                       placeholder="Enter Template Title"
+//                       readOnly={false}
+//                     />
+//                   </div>
+
+//                   <div className="flex-1">
+//                     <FormSelect
+//                       control={form.control}
+//                       name="temp_paperSize"
+//                       label="Paper Size"
+//                       options={[
+//                         { id: "a4", name: "A4" },
+//                         { id: "letter", name: "Letter" },
+//                         { id: "legal", name: "Legal" },
+//                       ]}
+//                       readOnly={false}
+//                     />
+//                   </div>
+//                 </div>
+
+//                 {/* Template Body */}
+//                 <FormField
+//                   control={form.control}
+//                   name="temp_body"
+//                   render={({ field }) => (
+//                       <FormItem>
+//                       <FormLabel>Template Body</FormLabel>
+//                       <FormControl>
+//                           <TextareaTab
+//                             className="w-full p-2 shadow-sm h-96 mt-[12px] rounded-[5px] resize-none"
+//                             placeholder="Enter Body"
+//                             {...field}
+//                           />
+//                       </FormControl>
+//                       <FormMessage />
+//                       </FormItem>
+//                   )}
+//                 />
+
+//                 {/* Buttons */}
+//                 <div className="flex justify-end pb-6 pt-6 gap-2">
+//                 {/* <Button 
+//                     variant="outline" 
+//                     className="flex items-center gap-2" 
+//                     onClick={handlePreview}
+//                     type="button"
+//                 >
+//                     Preview
+//                 </Button> */}
+//                 <DialogLayout
+//                   trigger={
+//                     <Button variant="outline" className="flex items-center gap-2">
+//                       Preview
+//                     </Button>
+//                   }
+//                   className="max-w-full h-full flex flex-col overflow-auto scrollbar-custom"
+//                   title=""
+//                   description=""
+//                   mainContent={
+//                     <div className="w-full h-full">
+//                       <TemplatePreview
+//                         headerImage={form.watch('temp_header')}
+//                         belowHeaderContent={form.watch('temp_below_headerContent')}
+//                         title={form.watch('temp_title')}
+//                         body={form.watch('temp_body')}
+//                         withSeal={form.watch('temp_w_seal')}
+//                         withSignature={form.watch('temp_w_sign')}
+//                         withSummon={form.watch('temp_w_summon')} 
+//                         paperSize={form.watch('temp_paperSize')} 
+//                       />
+//                     </div>
+//                   }
+//                 />
+//                 <Button className="flex items-center gap-2">Save</Button>
+//                 </div>
+//             </form>
+//             </Form>
+//         </div>
+//     </>
+//   );
+// }
+
+// export default TemplateCreateForm;
+
+
+
+
 
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -892,6 +1159,7 @@ import { FormTextArea } from "@/components/ui/form/form-text-area";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import { FormSelect } from "@/components/ui/form/form-select";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { getTextareaWidth } from "./width";
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button/button';
 import {
@@ -909,12 +1177,12 @@ import TemplatePreview from "./template-preview";
 function TemplateCreateForm() {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const form = useForm<z.infer<typeof documentTemplateFormSchema>>({
     resolver: zodResolver(documentTemplateFormSchema),
     defaultValues: {
       temp_header: "",
+      temp_below_headerContent: "",
       temp_title: "",
       temp_paperSize: "",
       temp_w_sign: false,
@@ -941,12 +1209,11 @@ function TemplateCreateForm() {
 
   return (
     <>
-
         <div className="flex flex-col p-2 min-h-0 h-auto rounded-lg overflow-auto">
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 {/* Header + Footer Container */}
-                <div className="flex flex-row gap-11 items-stretch">
+                <div className="flex flex-row gap-6 items-stretch">
                   {/* Document Header */}
                   <div className="flex flex-col gap-2 w-3/5">
                       <Label className="mb-1">Document Header</Label>
@@ -1034,6 +1301,42 @@ function TemplateCreateForm() {
                   </div>
                 </div>
 
+
+                <FormField
+                  control={form.control}
+                  name="temp_below_headerContent"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Additional Details</FormLabel>
+                      <FormControl>
+                        <TextareaTab
+                          className="p-2 shadow-sm h-44 mt-[12px] rounded-[5px] resize-none"
+                          style={{ 
+                            width: `${getTextareaWidth(form.watch('temp_paperSize'))}px`,
+                            fontFamily: 'Times New Roman',
+                            fontSize: '10pt' 
+                          }}
+                          placeholder="Enter additional content above the title"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Tab') {
+                              e.preventDefault();
+                              const start = e.currentTarget.selectionStart;
+                              const end = e.currentTarget.selectionEnd;
+                              const value = field.value;
+                              field.onChange(value.substring(0, start) + '    ' + value.substring(end));
+                              setTimeout(() => {
+                                e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 4;
+                              }, 0);
+                            }
+                          }}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                />
+
                 {/* Title and Paper Size in same row */}
                 <div className="flex flex-row gap-2">
                   <div className="flex-1">
@@ -1063,21 +1366,38 @@ function TemplateCreateForm() {
 
                 {/* Template Body */}
                 <FormField
-                control={form.control}
-                name="temp_body"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Template Body</FormLabel>
-                    <FormControl>
-                        <TextareaTab
-                          className="w-full p-2 shadow-sm h-96 mt-[12px] rounded-[5px] resize-none"
-                          placeholder="Enter Body"
-                          {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+                  control={form.control}
+                  name="temp_body"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Template Body</FormLabel>
+                      <FormControl>
+                          <TextareaTab
+                            className="p-2 shadow-sm h-96 mt-[12px] rounded-[5px] resize-none"
+                            style={{ 
+                              width: `${getTextareaWidth(form.watch('temp_paperSize'))}px`,
+                              fontFamily: 'Times New Roman',
+                              fontSize: '10pt' 
+                            }}
+                            placeholder="Enter body"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Tab') {
+                                e.preventDefault();
+                                const start = e.currentTarget.selectionStart;
+                                const end = e.currentTarget.selectionEnd;
+                                const value = field.value;
+                                field.onChange(value.substring(0, start) + '    ' + value.substring(end));
+                                setTimeout(() => {
+                                  e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 4;
+                                }, 0);
+                              }
+                            }}
+                            {...field}
+                          />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
                 />
 
                 {/* Buttons */}
@@ -1103,13 +1423,13 @@ function TemplateCreateForm() {
                     <div className="w-full h-full">
                       <TemplatePreview
                         headerImage={form.watch('temp_header')}
+                        belowHeaderContent={form.watch('temp_below_headerContent')}
                         title={form.watch('temp_title')}
                         body={form.watch('temp_body')}
                         withSeal={form.watch('temp_w_seal')}
                         withSignature={form.watch('temp_w_sign')}
                         withSummon={form.watch('temp_w_summon')} 
                         paperSize={form.watch('temp_paperSize')} 
-                        // onClose={() => setIsPreviewOpen(false)}
                       />
                     </div>
                   }
@@ -1124,8 +1444,3 @@ function TemplateCreateForm() {
 }
 
 export default TemplateCreateForm;
-
-
-
-
-
