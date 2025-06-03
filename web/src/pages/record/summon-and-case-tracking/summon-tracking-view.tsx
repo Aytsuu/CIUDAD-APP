@@ -2,11 +2,13 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Card } from "@/components/ui/card/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Check } from 'lucide-react'
+import { ChevronLeft, Check, AlertTriangle} from 'lucide-react'
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { FileInput } from "lucide-react";
 import { useNavigate } from "react-router";
+import { Link } from "react-router";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 type SummonRecord= {
     ca_id: string;
@@ -24,7 +26,7 @@ export const SampleData: SummonRecord[] = [
         ca_hearing_date: "June 5, 2023 10:00am",
         ca_reason: "First Hearing",
         ca_issuance_date: "June 1, 2024 1:00pm",
-        file_id: "None",
+        file_id: "View File",
         sr_id: "None"
     }
 ];
@@ -37,7 +39,18 @@ function SummonTrackingView(){
         { accessorKey: "ca_hearing_date", header: "Hearing Date & Time"},
         { accessorKey: "ca_issuance_date", header: "Date of Issuance"},
         { accessorKey: "ca_reason", header: "Reason"},
-        { accessorKey: "file_id", header: "File"}
+         { 
+            accessorKey: "file_id", 
+            header: "File",
+            cell: ({ row }) => (
+                <Link 
+                    to="/files/1005" // Replace with your actual file path
+                    className="text-primary hover:text-blue-800 hover:underline"
+                >
+                    {row.getValue("file_id")}
+                </Link>
+            )
+        }
     ]
     return(
         <div className='w-full h-full'>
@@ -94,11 +107,20 @@ function SummonTrackingView(){
                     </div>
 
                     {/* Action Button */}
-                    <div className="flex justify-end pt-4 border-t border-gray-100">
-                        <Button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 flex items-center gap-2">
-                            <Check className="w-4 h-4" />
-                            Mark as Resolved
-                        </Button>
+                    <div className="flex justify-end pt-4 border-t border-gray-100 gap-3">
+                        <ConfirmationModal
+                            trigger={ <Button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 flex items-center gap-2"><Check className="w-4 h-4" /> Mark as Resolved</Button>}
+                            title="Confirm Resolution"
+                            description="Are you sure you want to mark this case as resolved?"
+                            actionLabel="Confirm"
+                        />
+
+                        <ConfirmationModal
+                            trigger={<Button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Escalate</Button>}
+                            title="Confirm Escalation"
+                            description="Are you sure you want to escalate this case?"
+                            actionLabel="Confirm"
+                        />
                     </div>
                 </Card>
             </div>
