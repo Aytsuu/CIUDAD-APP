@@ -9,10 +9,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState } from "react";
 
-const styles={
+const styles = {
     cardContent: "font-semibold text-[14px]",
-}
+    cardInfoRow: "flex flex-grid items-center gap-5",
+    cardInfo: "font-sm text-[14px]",
+    statusOngoing: "text-[#5B72CF]",
+    statusResolved: "text-[#17AD00]",
+    statusEscalated: "text-[#FF0000]"
+};
 
+function getStatusColor(status: string) {
+    switch(status) {
+        case "Ongoing":
+            return styles.statusOngoing;
+        case "Resolved":
+            return styles.statusResolved;
+        case "Escalated":
+            return styles.statusEscalated;
+        default:
+            return "";
+    }
+}
 
 function SummonTrackingMain(){  
     const filter = [
@@ -23,12 +40,9 @@ function SummonTrackingMain(){
     ];
 
     const [selectedFilter, setSelectedFilter] = useState(filter[0].name);
-    // const filteredData = selectedFilter === "All" ? data 
-    // : data.filter((item) => item.paymentStat === selectedFilter);
 
     return(
         <div className="w-full h-full">
-
             {/* Header */}
             <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
@@ -67,24 +81,40 @@ function SummonTrackingMain(){
             <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">   
                 <CardLayout
                     title={
-                        <p className="text-primary flex items-center font-semibold text-xl">No. 0015</p>
-                    }
-                    content={
-                        <div className="m-3">
-                            <div>
-                                <p className={styles.cardContent}>Complainant : </p><p>Anna Reyes</p>
+                        <div className="flex flex-row">
+                            <div className="flex justify-between items-center w-full">
+                                <p className="text-primary flex items-center font-semibold text-xl mb-2">No. 0015</p>
                             </div>
-                            <p className={styles.cardContent}>Accused : </p><p>John Michael Cruz</p>
-                            <p className={styles.cardContent}>Incident Type : </p><p>Physical Assault</p>
-                            <p className={styles.cardContent}>Status: </p><p>Ongoing</p>
+                            <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
                         </div>
                     }
-                    description="Accused punched the complainant ..."   
+                    content={
+                        <div className="flex flex-col gap-2">
+                            <div className={styles.cardInfoRow}>
+                                <p className={styles.cardContent}>Complainant : </p><p className={styles.cardInfo}>Anna Reyes</p>
+                            </div>
+                            
+                            <div className={styles.cardInfoRow}>
+                                <p className={styles.cardContent}>Accused : </p><p className={styles.cardInfo}>John Michael Cruz</p>
+                            </div>
+
+                            <div className={styles.cardInfoRow}>
+                                <p className={styles.cardContent}>Incident Type : </p><p className={styles.cardInfo}>Physical Assault</p>
+                            </div>
+
+                            <div className={styles.cardInfoRow}>
+                                <p className={styles.cardContent}>Status: </p>
+                                <p className={`${styles.cardInfo} ${getStatusColor("Ongoing")}`}>Ongoing</p>
+                            </div>
+                        </div>
+                    }
+                    description={
+                        <div className="mb-5">
+                            <p>Accused punched the complainant ...</p>
+                        </div>
+                    }  
                 />
             </div>
- 
-        
-
         </div>
     )
 }
