@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
-import Layout from "./_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -43,7 +43,7 @@ export default function PersonalInformation() {
   }
 
   return (
-    <Layout
+    <_ScreenLayout
       header={"Personal Information"}
       description={"Please fill out all required fields."}
     >
@@ -134,6 +134,6 @@ export default function PersonalInformation() {
           </Button>
         </View>
       </View>
-    </Layout>
+    </_ScreenLayout>
   );
 }

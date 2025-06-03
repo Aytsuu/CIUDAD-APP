@@ -12,15 +12,15 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import React from "react";
 
 // Main component for displaying the DRR Resident Report
-export default function ReportRecords() {
+export default function IRRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
   return (
     <MainLayoutComponent
-      title="Resident Reports"
-      description="Manage and view reports"
+      title="Incident Reports"
+      description="Manage and view incident reports"
     >
       <div className="relative w-full lg:flex justify-between items-center mb-4">
         <div className="relative w-full flex">
@@ -35,6 +35,7 @@ export default function ReportRecords() {
             className="pl-10 w-full bg-white"
           />
         </div>
+        
       </div>
 
       <div className="bg-white rounded-md">

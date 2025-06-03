@@ -3,7 +3,7 @@ import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Report } from "./DRRTypes";
 import { Button } from "@/components/ui/button/button";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import DRRReportForm from "./resident-report/ReportFormLayout";
+import DRRReportForm from "./incident/IRFormLayout";
 
 // Define the columns for the data table
 export const ResidentReportColumns = (): ColumnDef<Report>[] => [

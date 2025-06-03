@@ -1,5 +1,5 @@
 import React from "react";
-import Layout from "./_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import "react-native-get-random-values";
 import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
@@ -30,7 +30,7 @@ export default function TakeAPhoto() {
           setPhoto={setPhoto}
         />
       ) : (
-        <Layout header={""} description={""}>
+        <_ScreenLayout header={""} description={""}>
           <View className="flex-1 justify-between gap-7">
             <View className="flex-1 items-center justify-center bg-lightBlue-2 rounded-md gap-3 p-4">
               <FaceDetectionCam
@@ -49,7 +49,7 @@ export default function TakeAPhoto() {
               )}
             </View>
           </View>
-        </Layout>
+        </_ScreenLayout>
       )}
     </>
   );

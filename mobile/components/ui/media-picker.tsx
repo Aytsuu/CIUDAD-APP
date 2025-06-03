@@ -5,8 +5,10 @@ import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function MediaPicker() {
-  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+export default function MediaPicker({selectedImage, setSelectedImage} : {
+  selectedImage: string | null;
+  setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>
+}) {
   const [galleryVisible, setGalleryVisible] = React.useState(false);
   const [cameraVisible, setCameraVisible] = React.useState(false);
   const [galleryAssets, setGalleryAssets] = React.useState<MediaLibrary.Asset[]>([]);
@@ -14,12 +16,17 @@ export default function MediaPicker() {
   const device = useCameraDevice('back');
 
   React.useEffect(() => {
-    const loadGalleryAssets = () => {
-      fetchGalleryAssets();
-    }
-
-    loadGalleryAssets();
-  }, [])
+    (async () => {
+      // Request media library permission
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access media library is required!');
+      }
+      // Request camera permission (for react-native-vision-camera)
+      await Camera.requestCameraPermission();
+    })();
+  }, []);
+  
 
   const fetchGalleryAssets = async () => {
     try {
@@ -34,7 +41,17 @@ export default function MediaPicker() {
     }
   };
 
-  const openGallery = () => {
+  // Fetch gallery assets only when gallery is opened and permission is granted
+  const openGallery = async () => {
+    const { status } = await MediaLibrary.getPermissionsAsync();
+    if (status !== 'granted') {
+      const { status: reqStatus } = await MediaLibrary.requestPermissionsAsync();
+      if (reqStatus !== 'granted') {
+        alert('Permission to access media library is required!');
+        return;
+      }
+    }
+    await fetchGalleryAssets();
     setGalleryVisible(true);
   };
 
@@ -75,7 +92,7 @@ export default function MediaPicker() {
     <View className="flex-1 justify-center items-center">
       {/* Main touchable that opens the gallery */}
       <TouchableOpacity 
-        className="w-[120px] h-[120px] rounded-[60px] bg-[#f0f2f5] justify-center items-center overflow-hidden"
+        className="w-full h-[300px]  bg-[#f0f2f5] justify-center items-center overflow-hidden"
         onPress={openGallery}
       >
         {selectedImage ? (

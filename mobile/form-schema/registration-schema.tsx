@@ -36,7 +36,7 @@ export const uploadIdSchema = z.object({
 export const photoSchema = z.object({
   imageURI: z.string()
 })
-
+  
 export const RegistrationFormSchema = z.object({
   verificationSchema,
   userAccountSchema,

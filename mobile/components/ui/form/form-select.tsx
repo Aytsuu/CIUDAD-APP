@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import SelectLayout from '../select/select-layout';
+import { cn } from '@/lib/utils';
 
 interface FormSelectProps<T extends FieldValues> {
     control: Control<T>;
@@ -35,7 +36,7 @@ interface FormSelectProps<T extends FieldValues> {
             )}
             
             <SelectLayout
-              className={className}
+              className={error ? cn('border border-red-500', contentClassName) : className}
               contentClassName={contentClassName}
               placeholder={placeholder}
               options={options}

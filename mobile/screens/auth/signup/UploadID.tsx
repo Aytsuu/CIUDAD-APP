@@ -4,12 +4,12 @@ import React from 'react';
 import { View, Text, TouchableWithoutFeedback, Image} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from "@/components/ui/button";
-import Layout from "./_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import * as ImagePicker from 'expo-image-picker';
 import { ImagePlus } from '@/lib/icons/ImagePlus';
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
-import MediaPicker from "./MediaPicker";
+import MediaPicker from "@/components/ui/media-picker";
 
 
 const idOptions: {label: string, value: string}[] = [
@@ -58,7 +58,7 @@ export default function UploadID() {
   } 
 
   return (
-    <Layout
+    <_ScreenLayout
         header={'Upload Valid ID'}
         description={'Choose from recommended IDs (Select other if not available)'}
     >
@@ -95,6 +95,6 @@ export default function UploadID() {
                 </Button>
             </View>
         </View>
-    </Layout>
+    </_ScreenLayout>
   );
 };

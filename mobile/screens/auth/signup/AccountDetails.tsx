@@ -4,7 +4,7 @@ import { View, Text, TouchableWithoutFeedback, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Layout from "./_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
 import { z } from "zod";
@@ -69,7 +69,7 @@ export default function AccountDetails() {
   // };
 
   return (
-    <Layout header={"Account Details"} description={"Please fill out all required fields."}>
+    <_ScreenLayout header={"Account Details"} description={"Please fill out all required fields."}>
       <View className="flex-1">
         <View className="flex-1 flex-col gap-3">
           {/* Username Input */}
@@ -157,6 +157,6 @@ export default function AccountDetails() {
           </Button>
         </View>
       </View>
-    </Layout>
+    </_ScreenLayout>
   );
 }

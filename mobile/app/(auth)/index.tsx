@@ -1,12 +1,6 @@
 import LoginScreen from "@/screens/auth/login";
-<<<<<<< HEAD
-=======
-import RegisterCompletion from "@/screens/auth/signup/UploadID";
-import Homepage from "@/screens/health/home";
-import Sample from "@/screens/sample";
->>>>>>> master
+import IncidentReport from "@/screens/report/incident"
 
 export default () => {
-    // return <LoginScreen />
-    return <Homepage/>
+    return <IncidentReport/>
 }

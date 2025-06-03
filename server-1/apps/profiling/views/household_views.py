@@ -49,9 +49,6 @@ class HouseholdTableView(generics.ListAPIView):
 
 class HouseholdCreateView(generics.CreateAPIView):
   serializer_class = HouseholdCreateSerializer
-  
-  def create(self, request, *args, **kwargs):
-    return super().create(request, *args, **kwargs)
 
 class HouseholdUpdateView(generics.UpdateAPIView):
   serializer_class = HouseholdBaseSerializer

@@ -67,7 +67,6 @@ const items: MenuItem[] = [
       { title: "Activity", url: "/incident/report" },
       { title: "Acknowledgement", url: "/drr/acknowledgement-report" },
       { title: "Weekly Acknowledgement", url: "/drr/monthly-report" },
-      { title: "Staff", url: "/drr/staff" },
     ],
   },
 

@@ -4,7 +4,7 @@ import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Layout from "./_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import { FormDataSchema, validateFormData } from "@/form-schema/registration-schema"; // Import the schema and validation function
 import { useForm } from "./FormContext"; // Import the useForm context
 import { z } from 'zod';
@@ -52,7 +52,7 @@ export default function DemographicData() {
   };
 
   return (
-    <Layout
+    <_ScreenLayout
       header={'Demographic Data'}
       description={'Please fill out all required fields.'}
     >
@@ -102,6 +102,6 @@ export default function DemographicData() {
           </Button>
         </View>
       </View>
-    </Layout>
+    </_ScreenLayout>
   );
 }
