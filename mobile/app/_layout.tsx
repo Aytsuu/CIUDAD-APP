@@ -39,16 +39,15 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={LIGHT_THEME}>
       <StatusBar backgroundColor="#ECF8FF" style="dark" />
-
-
-      <Stack initialRouteName='(auth)'>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(health)" options={{ headerShown: false }} />
-        <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
-        <Stack.Screen name="+not-found" />
-      </Stack>
-
+      <QueryClientProvider client={queryClient}>
+        <Stack initialRouteName='(auth)'>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(health)" options={{ headerShown: false }} />
+          <Stack.Screen name="animal-bites/[id]" options = {{headerShown: false}}/>
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </QueryClientProvider>
       <PortalHost />
     </ThemeProvider>
   );

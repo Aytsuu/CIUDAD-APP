@@ -17,8 +17,8 @@ class IRCreateSerializer(serializers.ModelSerializer):
     }
 
   def create(self, validated_data):
-    sitio = validated_data.get('sitio', None)
-    street = validated_data.get('street', None)
+    sitio = validated_data.pop('sitio', None)
+    street = validated_data.pop('street', None)
 
     if sitio and street:
       existing_add = Address.objects.filter(
@@ -26,20 +26,20 @@ class IRCreateSerializer(serializers.ModelSerializer):
       ).first()
 
       if existing_add:
-          validated_data['add'] = existing_add
+        validated_data['add'] = existing_add
       else:
-          new_address = {
-              'add_province': 'Cebu',
-              'add_city': 'Cebu City',
-              'add_barangay': 'San Roque',
-              'sitio': sitio,
-              'add_street': street
-          }
-          address_serializer = AddressBaseSerializer(data=new_address)
-          address_serializer.is_valid(raise_exception=True)
-          address = address_serializer.save()
-          validated_data['add'] = address
+        new_address = {
+            'add_province': 'Cebu',
+            'add_city': 'Cebu City',
+            'add_barangay': 'San Roque',
+            'sitio': sitio,
+            'add_street': street
+        }
+        address_serializer = AddressBaseSerializer(data=new_address)
+        address_serializer.is_valid(raise_exception=True)
+        address = address_serializer.save()
+        validated_data['add'] = address
 
-      incident_report = IncidentReport.objects.create(**validated_data)
-      return incident_report
+    incident_report = IncidentReport.objects.create(**validated_data)
+    return incident_report
     

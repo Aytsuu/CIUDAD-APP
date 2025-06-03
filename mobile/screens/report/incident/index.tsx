@@ -12,16 +12,21 @@ import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { FormTimeInput } from "@/components/ui/form/form-time-input"
 import { Button } from "@/components/ui/button"
 import MediaPicker from "@/components/ui/media-picker";
+import { useGetSitio } from "@/screens/_global_queries/Retrieve"
+import { formatSitio } from "@/helpers/formatSitio"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
 export default () => {
   const defaultValues = generateDefaultValues(IncidentReportSchema);
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
-  const { control, trigger } = useForm<IncidentReport>({
+  const { data: sitioList, isLoading } = useGetSitio();
+  const { control, trigger, getValues } = useForm<IncidentReport>({
     resolver: zodResolver(IncidentReportSchema),
     defaultValues
   });
+
+  const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
 
   const submit = async () => {
     const formIsValid = await trigger([
@@ -37,8 +42,16 @@ export default () => {
       return;
     }
 
+    try {
+      const values = getValues();
+      console.log(values)
+    } catch (err) {
+      throw err;
+    }
     console.log(formIsValid);
   }
+
+  if(isLoading) return;
 
   return (
     <_ScreenLayout
@@ -57,7 +70,7 @@ export default () => {
             keyboardShouldPersistTaps="handled"
           >
             <FormSelect label="Type" control={control} name="ir_type" options={[]} />
-            <FormSelect label="Sitio" control={control} name="sitio" options={[]} />
+            <FormSelect label="Sitio" control={control} name="sitio" options={formattedSitio} />
             <FormInput label="Street" control={control} name="ir_street" />
             <FormTimeInput label="Time " control={control} name='ir_time' mode="12h" />
             <FormTextArea 
