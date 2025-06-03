@@ -70,7 +70,7 @@ const items: MenuItem[] = [
     ],
   },
   {
-    title: "Summon and Case Tracker",
+    title: "Summon & Case Tracker",
     url: "/summon-and-case-tracking"
   },
   {
