@@ -9,6 +9,8 @@ import { FileInput } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Link } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import CreateNewSummon from "./summon-create";
 
 type SummonRecord= {
     ca_id: string;
@@ -147,7 +149,14 @@ function SummonTrackingView(){
                                             </DropdownMenuContent>
                                         </DropdownMenu>                    
                                     </div>
-                                    <Button>+ Create New Schedule</Button>
+                                    <DialogLayout
+                                        trigger={ <Button>+ Create New Schedule</Button>}
+                                        title="Create New Schedule"
+                                        description="Schedule a new summon."
+                                        mainContent={
+                                            <CreateNewSummon/>
+                                        }
+                                    />
                                 </div>
                 
                             <DataTable columns={columns} data={data} />
