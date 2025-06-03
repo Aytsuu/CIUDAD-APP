@@ -1,5 +1,4 @@
 import CardLayout from "@/components/ui/card/card-layout";
-import { Card } from "@/components/ui/card/card";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
@@ -78,42 +77,44 @@ function SummonTrackingMain(){
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">   
-                <CardLayout
-                    title={
-                        <div className="flex flex-row">
-                            <div className="flex justify-between items-center w-full">
-                                <p className="text-primary flex items-center font-semibold text-xl mb-2">No. 0015</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4"> 
+                <Link to='/summon-and-case-view' className="hover:shadow-lg transition-shadow" >
+                    <CardLayout
+                        title={
+                            <div className="flex flex-row">
+                                <div className="flex justify-between items-center w-full">
+                                    <p className="text-primary flex items-center font-semibold text-xl mb-2">No. 0015</p>
+                                </div>
+                                <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
                             </div>
-                            <X className="text-gray-500 hover:text-red-600 cursor-pointer" size={20} />
-                        </div>
-                    }
-                    content={
-                        <div className="flex flex-col gap-2">
-                            <div className={styles.cardInfoRow}>
-                                <p className={styles.cardContent}>Complainant : </p><p className={styles.cardInfo}>Anna Reyes</p>
-                            </div>
-                            
-                            <div className={styles.cardInfoRow}>
-                                <p className={styles.cardContent}>Accused : </p><p className={styles.cardInfo}>John Michael Cruz</p>
-                            </div>
+                        }
+                        content={
+                            <div className="flex flex-col gap-2">
+                                <div className={styles.cardInfoRow}>
+                                    <p className={styles.cardContent}>Complainant : </p><p className={styles.cardInfo}>Anna Reyes</p>
+                                </div>
+                                
+                                <div className={styles.cardInfoRow}>
+                                    <p className={styles.cardContent}>Accused : </p><p className={styles.cardInfo}>John Michael Cruz</p>
+                                </div>
 
-                            <div className={styles.cardInfoRow}>
-                                <p className={styles.cardContent}>Incident Type : </p><p className={styles.cardInfo}>Physical Assault</p>
-                            </div>
+                                <div className={styles.cardInfoRow}>
+                                    <p className={styles.cardContent}>Incident Type : </p><p className={styles.cardInfo}>Physical Assault</p>
+                                </div>
 
-                            <div className={styles.cardInfoRow}>
-                                <p className={styles.cardContent}>Status: </p>
-                                <p className={`${styles.cardInfo} ${getStatusColor("Ongoing")}`}>Ongoing</p>
+                                <div className={styles.cardInfoRow}>
+                                    <p className={styles.cardContent}>Status: </p>
+                                    <p className={`${styles.cardInfo} ${getStatusColor("Ongoing")}`}>Ongoing</p>
+                                </div>
                             </div>
-                        </div>
-                    }
-                    description={
-                        <div className="mb-5">
-                            <p>Accused punched the complainant ...</p>
-                        </div>
-                    }  
-                />
+                        }
+                        description={
+                            <div className="mb-5">
+                                <p>Accused punched the complainant ...</p>
+                            </div>
+                        }  
+                    />
+                </Link>  
             </div>
         </div>
     )
