@@ -1183,8 +1183,8 @@ function TemplateCreateForm() {
     defaultValues: {
       temp_header: "",
       temp_below_headerContent: "",
-      temp_title: "",
-      temp_paperSize: "",
+      temp_title: "CERTIFICATION",
+      temp_paperSize: "letter",
       temp_w_sign: false,
       temp_w_seal: false,
       temp_body: "",
@@ -1313,10 +1313,10 @@ function TemplateCreateForm() {
                           className="p-2 shadow-sm h-44 mt-[12px] rounded-[5px] resize-none"
                           style={{ 
                             width: `${getTextareaWidth(form.watch('temp_paperSize'))}px`,
-                            fontFamily: 'Times New Roman',
+                            fontFamily: form.watch('temp_w_summon') ? 'VeraMono' : 'Times New Roman',
                             fontSize: '10pt' 
                           }}
-                          placeholder="Enter additional content above the title"
+                          placeholder="Enter additional details above the title"
                           onKeyDown={(e) => {
                             if (e.key === 'Tab') {
                               e.preventDefault();
@@ -1376,7 +1376,7 @@ function TemplateCreateForm() {
                             className="p-2 shadow-sm h-96 mt-[12px] rounded-[5px] resize-none"
                             style={{ 
                               width: `${getTextareaWidth(form.watch('temp_paperSize'))}px`,
-                              fontFamily: 'Times New Roman',
+                              fontFamily: form.watch('temp_w_summon') ? 'VeraMono' : 'Times New Roman',
                               fontSize: '10pt' 
                             }}
                             placeholder="Enter body"

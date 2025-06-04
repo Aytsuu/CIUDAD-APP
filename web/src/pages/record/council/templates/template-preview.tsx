@@ -3264,14 +3264,24 @@ function TemplatePreview({
     const lineHeight = 14;
     const sectionGap = 20;
 
-    doc.setFont("times", "normal");
+    // Set initial font based on withSummon
+    const setCurrentFont = (style: 'normal' | 'bold' = 'normal') => {
+      if (withSummon) {
+        doc.setFont("VeraMono", style);
+      } else {
+        doc.setFont("times", style);
+      }
+    };
+
+    setCurrentFont('normal');
     doc.setFontSize(12);
 
     // Header image
     if (headerImage && headerImage !== "no-image-url-fetched") {
+      const imageHeight = 100;
       try {
-        doc.addImage(headerImage, "PNG", margin, yPos, pageWidth - margin * 2, 60);
-        yPos += 80;
+        doc.addImage(headerImage, "PNG", margin, yPos, pageWidth - margin * 2, imageHeight);
+        yPos += imageHeight + 30;
       } catch (e) {
         console.error("Error adding header image:", e);
       }
@@ -3283,6 +3293,7 @@ function TemplatePreview({
     if (belowHeaderContent) {
 
       doc.setFontSize(10);
+      setCurrentFont('normal');
       const belowHeaderLines = doc.splitTextToSize(belowHeaderContent, pageWidth - margin * 2);
       for (let i = 0; i < belowHeaderLines.length; i++) {
         if (yPos + lineHeight > pageHeight - margin) {
@@ -3295,19 +3306,15 @@ function TemplatePreview({
       yPos += sectionGap; // Add some space after the content
     }
 
+
     // Title
-    if(withSummon){
-      doc.setFont("times", "bold");
-    }
-    else{
-      doc.setFont('VeraMono', 'bold'); 
-    }
+    doc.setFont("times", "bold");
     doc.setFontSize(16);
     const titleWidth = doc.getTextWidth(title);
     doc.text(title, (pageWidth - titleWidth) / 2, yPos);
     // doc.setFont("times", "normal");
-    doc.setFont('VeraMono', 'normal'); 
-    doc.setFontSize(9); // body font size
+    setCurrentFont('normal');
+    doc.setFontSize(10); // body font size
     yPos += sectionGap + lineHeight;
 
     // Body
@@ -3321,9 +3328,12 @@ function TemplatePreview({
       yPos += lineHeight;
     }
 
+    yPos += 40;
+
+
     // Footer elements
-    doc.setFontSize(11);
-    const footerY = pageHeight - margin - 180;
+    doc.setFontSize(10);
+    const footerY = pageHeight - margin - 110;
     const signatureX = margin;
     const sealSize = 80;
     const sealX = pageWidth - margin - sealSize - 35;
@@ -3335,16 +3345,16 @@ function TemplatePreview({
       if (withSummon) {
         // Barangay captain info on the right side
         const captainX = pageWidth - margin - 170;
-        doc.setFont("times", "bold");
+        setCurrentFont('bold');
         doc.text("HON. VIRGINIA N. ABENOJA", captainX, currentY);
-        doc.setFont("times", "normal");
+        setCurrentFont('normal');;
         doc.text("Punong Barangay", captainX + 34, currentY + 20);
 
         //adds a space after the Punong Barangay na word
-        currentY += 90;
+        currentY += 73;
 
         // Summon signature fields - new format
-        doc.setFont("times", "normal");
+        setCurrentFont('normal');
         
         // Calculate positions
         const fieldSpacing = 30;
@@ -3359,16 +3369,16 @@ function TemplatePreview({
       } 
       else if (withSignature) {
         // Regular signature fields
-        doc.setFont("times", "normal");
+        setCurrentFont('normal');
         doc.text("Name and signature of Applicant", signatureX, currentY);
         doc.text("Certified true and correct:", signatureX, currentY + 20);
         currentY += 60;
 
         // Barangay captain info
-        doc.setFont("times", "bold");
+        setCurrentFont('bold');
         doc.text("HON. VIRGINIA N. ABENOJA", signatureX, currentY + 20);
-        doc.setFont("times", "normal");
-        doc.text("Punong Barangay, San Roque", signatureX, currentY + 40);
+        setCurrentFont('normal');
+        doc.text("Punong Barangay, San Roque Ciudad", signatureX, currentY + 40);
       }
 
       if (withSeal && sealBase64) {
@@ -3377,7 +3387,7 @@ function TemplatePreview({
 
         // Text below seal
         doc.setTextColor(255, 0, 0);
-        doc.setFont("times", "bold");
+        setCurrentFont('bold');
         doc.setFontSize(10);
         
         const textY = sealY + sealSize + textBelowSealOffset;
@@ -3393,7 +3403,7 @@ function TemplatePreview({
 
         // Reset styles
         doc.setTextColor(0, 0, 0);
-        doc.setFont("times", "normal");
+        setCurrentFont('normal');
         doc.setFontSize(12);
       }
 
