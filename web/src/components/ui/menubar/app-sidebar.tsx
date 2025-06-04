@@ -63,13 +63,16 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Resident Report", url: "/drr-resident-report" },
-      { title: "Acknowledgement Report", url: "/drr-acknowledgement-report" },
-      { title: "Monthly Report", url: "/drr-monthly-report" },
-      { title: "Staff", url: "/drr-staff" },
+      { title: "Resident Report", url: "/drr/resident-report" },
+      { title: "Acknowledgement Report", url: "/drr/acknowledgement-report" },
+      { title: "Monthly Report", url: "/drr/monthly-report" },
+      { title: "Staff", url: "/drr/staff" },
     ],
   },
-
+  {
+    title: "Summon & Case Tracker",
+    url: "/summon-and-case-tracking"
+  },
   {
     title: "GAD",
     subItems: true,
@@ -99,7 +102,7 @@ const items: MenuItem[] = [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
       {
         title: "Income & Expense Tracking",
-        url: "/treasurer-income-and-expense-tracking",
+        url: "/treasurer-income-expense-main",
       },
       {
         title: "Income & Disbursement",
@@ -120,7 +123,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Donation",
-    url: "/donation",
+    url: "/donation-record",
   },
   {
     title: "Illegal Dumping Reports",
@@ -152,6 +155,7 @@ const items: MenuItem[] = [
         anotherItems: [
           { title: "Inventory List", url: "/mainInventoryList" },
           { title: "Inventory Stocks", url: "/mainInventoryStocks" },
+          {title: "Transactions List", url: "/transactionMainInventoryList" },
         ],
       },
       {

@@ -1,178 +1,166 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form/form";
-import { Input } from "@/components/ui/input";
+import { Form, FormLabel } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
+import { FirstAidStocksRecord } from "../tables/FirstAidStocks";
+import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import {
-  FirstAidStockSchema,
-  FirstAidStockType,
-} from "@/form-schema/inventory/inventoryStocksSchema";
+  AddFirstAidSchema,
+  AddFirstAidStockType,
+} from "@/form-schema/inventory/addStocksSchema";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { handleEditFirstAidStock } from "../REQUEST/FirstAid/EditFirstAidSubmit";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
 
 interface EditFirstAidStockFormProps {
-  initialData: {
-    id: number;
-    itemName: string;
-    category: string;
-    qty: number;
-    expiryDate: string;
-    availQty: number;
-    usedItem: number;
-  };
+  initialData: FirstAidStocksRecord;
+  setIsDialog: (isOpen: boolean) => void;
 }
 
 export default function EditFirstAidStockForm({
   initialData,
-}: // onSave
-EditFirstAidStockFormProps) {
-  const itemOptions = [
-    { id: "Sterile Gauze Pads", name: "Sterile Gauze Pads" },
-    { id: "Adhesive Bandages", name: "Adhesive Bandages" },
-    { id: "Antiseptic Solution", name: "Antiseptic Solution" },
-  ];
-
-  const categoryOptions = [
-    { id: "Dressings", name: "Dressings" },
-    { id: "Wound Care", name: "Wound Care" },
-    { id: "Cleaning Supplies", name: "Cleaning Supplies" },
-  ];
-
-  const form = useForm<FirstAidStockType>({
-    resolver: zodResolver(FirstAidStockSchema),
+  setIsDialog,
+}: EditFirstAidStockFormProps) {
+  UseHideScrollbar();
+  const form = useForm<AddFirstAidStockType>({
+    resolver: zodResolver(AddFirstAidSchema),
     defaultValues: {
-      // id: initialData.id,
-      itemName: initialData.itemName,
-      category: initialData.category,
-      qty: initialData.qty,
-      expiryDate: initialData.expiryDate,
+      finv_qty: undefined,
+      finv_qty_unit: initialData.finv_qty_unit,
+      finv_pcs: initialData.qty.finv_pcs || 0,
     },
   });
 
-  useEffect(() => {
-    form.reset({
-      // id: initialData.id,
-      itemName: initialData.itemName,
-      category: initialData.category,
-      qty: initialData.qty,
-      expiryDate: initialData.expiryDate,
-    });
-  }, [initialData, form]);
+  const queryClient = useQueryClient();
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const [submissionData, setSubmissionData] =
+    useState<AddFirstAidStockType | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (data: FirstAidStockType) => {
-    console.log("submitted data:", data);
-    alert("First Aid stock updated successfully!");
+
+
+  const handleSubmit = async (data: AddFirstAidStockType) => {
+    setIsSubmitting(true);
+
+    try {
+      await handleEditFirstAidStock(data, initialData.finv_id, queryClient);
+
+      toast.success("First aid item updated successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 3000,
+        onAutoClose: () => {
+          setIsDialog(false);
+        },
+      });
+
+      // Wait for toast to complete before closing dialog
+      setTimeout(() => setIsDialog(false), 3000);
+    } catch (error: any) {
+      console.error("Error in handleSubmit:", error);
+      toast.error(error.message || "Failed to update first aid item", {
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+  
+
+  const onSubmit = (data: AddFirstAidStockType) => {
+    setSubmissionData(data);
+    setIsAddConfirmationOpen(true);
+  };
+
+  const confirmAdd = () => {
+    if (submissionData) {
+      setIsAddConfirmationOpen(false);
+      setIsSubmitting(true); // Set submitting state here
+      handleSubmit(submissionData);
+    }
+  };
+
+  const currentUnit = form.watch("finv_qty_unit");
+  const qty = form.watch("finv_qty") || 0;
+  const pcs = form.watch("finv_pcs") || 0;
+  const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
+
+  return ( 
+    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-6 p-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="itemName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Item Name</FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        label=""
-                        className="w-full"
-                        placeholder="Select Item"
-                        options={itemOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormInput
+              control={form.control}
+              name="finv_qty"
+              label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"}
+              type="number"
+              placeholder="Quantity"
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <SelectLayout
-                        label=""
-                        className="w-full"
-                        placeholder="Select Category"
-                        options={categoryOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            />
 
-              <FormField
-                control={form.control}
-                name="qty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quantity</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        placeholder="Enter quantity"
-                        value={field.value || ""} // Handle undefined and 0
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="expiryDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expiry Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        value={field.value ? field.value.split("T")[0] : ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormSelect
+              control={form.control}
+              name="finv_qty_unit"
+              label="Unit"
+              options={[
+                { id: "boxes", name: "Boxes" },
+                { id: "bottles", name: "Bottles" },
+                { id: "packs", name: "Packs" },
+              ]}
+              readOnly
+            />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]">
-              Save Changes
+          {currentUnit === "boxes" && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormInput
+                control={form.control}
+                name="finv_pcs"
+                label="Pieces per Box"
+                type="number"
+                placeholder="pcs"
+                readOnly
+              />
+
+              <div className="sm:col-span-2">
+                <FormLabel>Total Pieces</FormLabel>
+                <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  {totalPieces.toLocaleString()} pieces
+                  <span className="ml-2 text-muted-foreground text-xs">
+                    ({qty} boxes × {pcs} pieces/box)
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
+            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <span className="loader mr-2"></span> Saving...
+                </span>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </form>
       </Form>
+
+      <ConfirmationDialog
+        isOpen={isAddConfirmationOpen}
+        onOpenChange={setIsAddConfirmationOpen}
+        onConfirm={confirmAdd}
+        title="Confirm Update"
+        description="Are you sure you want to update this first aid stock? This action cannot be undone."
+      />
     </div>
   );
 }

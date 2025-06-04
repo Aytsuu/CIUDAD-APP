@@ -1,8 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Report } from "./DRRTypes";
-import DRRReportForm from "./DRRReportForm";
+import { Button } from "@/components/ui/button/button";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import DRRReportForm from "./resident-report/ReportFormLayout";
 
 // Define the columns for the data table
 export const ResidentReportColumns = (): ColumnDef<Report>[] => [
@@ -66,3 +67,33 @@ export const ResidentReportColumns = (): ColumnDef<Report>[] => [
       enableHiding: false, // Disable hiding
   },
 ]
+
+export const acknowledgeReportColumns: ColumnDef<Report>[] = [
+  {
+    accessorKey: "incidentActivity", // Key for incident/activity data
+    header: "Incident/Activity", // Column header
+  },
+  {
+    accessorKey: "location", // Key for location data
+    header: "Location", // Column header
+  },
+  {
+    accessorKey: "sitio", // Key for sitio data
+    header: "Sitio", // Column header
+  },
+  {
+    accessorKey: "date", // Key for date data
+    header: "Date", // Column header
+  },
+  {
+    accessorKey: "status", // Key for status data
+    header: "Status", // Column header
+  },
+  {
+    accessorKey: "action", // Key for action column (empty for now)
+    header: "Action",
+    cell: ({ row }) => (
+    <Button variant={"outline"}>View <MoveRight/></Button>
+    )
+  },
+];

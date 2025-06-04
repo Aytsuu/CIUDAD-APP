@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 
 // Fetch residents
 export const getResidents = async () => {
@@ -19,6 +19,16 @@ export const getFamilies = async () => {
     console.error(err);
   }
 };
+
+// Fetch family composition
+export const getFamilyComposition = async () => {
+  try {
+    const res = await api.get("profiling/family-composition/");
+    return res.data;
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 // Fetch households
 export const getHouseholds = async () => {

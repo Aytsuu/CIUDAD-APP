@@ -4,6 +4,7 @@ from apps.administration.models import Staff
 
 
 class Account(AbstractUser): 
+    email = models.EmailField(null=True, blank=True)
     profile_image = models.URLField(
         max_length=500,
         blank=True,

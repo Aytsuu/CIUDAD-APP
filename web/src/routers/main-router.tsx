@@ -27,8 +27,8 @@ import { announcement_route } from './Announcement-router';
 import { famplanning_route } from './FamilyPlanning-router';
 import { medicalConsultation } from './medConsultation';
 import { doctorRouting } from './doctor-router';
-
-
+import { reports_router } from './reports-router';
+import { summon_router } from './summon-router';
 
 
 export const main_router: RouteObject[] = [
@@ -65,12 +65,14 @@ export const main_router: RouteObject[] = [
             ...childHealthServices,
             ...gad_router,
             ...bites_route,
+            ...reports_router,
             ...announcement_route,
             ...famplanning_route,
             ...healthinventory,
             ...medicalConsultation,
             ...patientQueue,
-            ...doctorRouting
+            ...doctorRouting,
+            ...summon_router
         ]
     }
 ]
