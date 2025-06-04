@@ -64,13 +64,13 @@ INSTALLED_APPS = [
     'apps.profiling',
     'apps.account',
     'apps.file',
-    'apps.blotter',
+    'apps.complaint',
     'apps.drr',
     'apps.notification',
+    'apps.announcement',
     
     
     'backend.firebase.notifications',
-    'apps.announcement',
 ]
 
 MIDDLEWARE = [
