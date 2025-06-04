@@ -133,9 +133,9 @@ class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
 
 class WasteTruckView(APIView):
     def get(self, request):
-        trucks = WasteTruck.objects.all()
+        trucks =    WasteTruck.objects.all()
         serializer = WasteTruckSerializer(trucks, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data)    
     
     def post(self, request):
         serializer = WasteTruckSerializer(data=request.data)
@@ -174,3 +174,19 @@ class WasteTruckDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         truck.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+# get Driver for garbage Collection Form
+class DriverPersonnelAPIView(APIView):
+     def get(self, request, *args, **kwargs): 
+        allowed_positions = ["Waste Driver", "Truck Driver", "Driver"]  
+        
+        drivers = WastePersonnel.objects.filter(
+            staff_id__pos__pos_title__in=allowed_positions
+        ).select_related(  # Optimize query
+            'staff_id__pos',
+            'staff_id__rp__per'
+        )
+        
+        data = [driver.to_dict() for driver in drivers]
+        return Response(data)

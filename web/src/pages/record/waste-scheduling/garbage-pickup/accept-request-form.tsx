@@ -8,9 +8,25 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod"
 import { AcceptPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
+import { useGetDrivers, type Drivers } from "./queries/GarbageRequestFetchQueries";
+import { useGetTrucks } from "./queries/GarbageRequestFetchQueries";
 
 function AcceptPickupRequest(){
 
+    const { data: drivers = [] } = useGetDrivers();
+    const { data: trucks = [] } = useGetTrucks();
+
+    const driverOptions = drivers.map(driver => ({
+        id: driver.id,  
+        name: `${driver.firstname} ${driver.lastname}`  
+    }));
+
+    const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
+        id: truck.truck_id,
+        name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
+    }));
+    
+    console.log("Trucks:", truckOptions)
 
     const onSubmit = (values: z.infer<typeof AcceptPickupRequestSchema>) => {
         console.log(values)
@@ -35,10 +51,7 @@ function AcceptPickupRequest(){
                         control={form.control}
                         name="driver"
                         label="Driver"
-                        options={[
-                            {id: "Driver 1", name: "Driver 1"},
-                            {id: "Driver 2", name: "Driver 2"},
-                        ]}
+                        options={driverOptions}
                     />
 
 
@@ -56,10 +69,7 @@ function AcceptPickupRequest(){
                         control={form.control}
                         name="truck"
                         label="Truck"
-                        options={[
-                            {id: "Truck 1", name: "Truck 1"},
-                            {id: "Truck 2", name: "Truck 2"},
-                        ]}
+                        options={truckOptions}
                     />
 
                     <FormDateTimeInput
