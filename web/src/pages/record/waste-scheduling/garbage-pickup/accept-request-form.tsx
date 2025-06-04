@@ -1,4 +1,3 @@
-import { Checkbox } from "@/components/ui/checkbox";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Form } from "@/components/ui/form/form";
 import { Button } from "@/components/ui/button/button";
@@ -8,13 +7,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod"
 import { AcceptPickupRequestSchema } from "@/form-schema/garbage-pickup-schema";
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
-import { useGetDrivers, type Drivers } from "./queries/GarbageRequestFetchQueries";
+import { useGetDrivers } from "./queries/GarbageRequestFetchQueries";
 import { useGetTrucks } from "./queries/GarbageRequestFetchQueries";
+import { useGetCollectors } from "./queries/GarbageRequestFetchQueries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function AcceptPickupRequest(){
 
-    const { data: drivers = [] } = useGetDrivers();
-    const { data: trucks = [] } = useGetTrucks();
+    const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
+    const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();
+    const { data: collectors = [], isLoading: isLoadingCollectors } = useGetCollectors();
+
+    const isLoading = isLoadingDrivers || isLoadingTrucks || isLoadingCollectors;
 
     const driverOptions = drivers.map(driver => ({
         id: driver.id,  
@@ -25,8 +29,11 @@ function AcceptPickupRequest(){
         id: truck.truck_id,
         name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
     }));
-    
-    console.log("Trucks:", truckOptions)
+
+     const collectorOptions = collectors.map(collector => ({
+        id: collector.id,  
+        name: `${collector.firstname} ${collector.lastname}`  
+    }));
 
     const onSubmit = (values: z.infer<typeof AcceptPickupRequestSchema>) => {
         console.log(values)
@@ -42,6 +49,22 @@ function AcceptPickupRequest(){
             time: "",
         }
     })
+
+    
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <div className="flex justify-end">
+                    <Skeleton className="h-10 w-24" />
+                </div>
+            </div>
+        );
+    }
 
     return(
         <div>
@@ -59,10 +82,7 @@ function AcceptPickupRequest(){
                         control={form.control}
                         name="collectors"
                         label="Collector(s)"
-                        options={[
-                            {id: "Collector 1", name: "Collector 1"},
-                            {id: "Collector 2", name: "Collector 2"},
-                        ]}
+                        options={collectorOptions}
                     />
 
                     <FormSelect

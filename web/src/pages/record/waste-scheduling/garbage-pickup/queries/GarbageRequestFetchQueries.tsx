@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDrivers } from "../restful-API/GarbageRequestGetAPI";
 import { getTrucks } from "../restful-API/GarbageRequestGetAPI";
+import { getCollectors } from "../restful-API/GarbageRequestGetAPI";
 
 export type Drivers = {
     id: string;
@@ -26,7 +27,7 @@ export const useGetDrivers = () => {
                 lastname: driver.staff?.rp?.per?.per_lname || 'Unknown',
             }));
         },
-        staleTime: 1000 * 60 * 30, // 30 minutes cache
+        staleTime: 1000 * 60 * 30, 
     });
 };
 
@@ -44,3 +45,31 @@ export const useGetTrucks = () => {
         staleTime: 1000 * 60 * 30,
     });
 }
+
+export type Collectors = {
+    id: string;
+    firstname: string;
+    lastname: string;
+}
+
+export const useGetCollectors = () => {
+    return useQuery<Collectors[]>({
+        queryKey: ["collectors"],
+        queryFn: async () => {
+            const response = await getCollectors();
+            const items = Array.isArray(response) ? response : response?.data || [];
+            
+            if (!items.length) {
+                console.warn("No drivers found in response", response);
+                return [];
+            }
+
+            return items.map((collector: any) => ({
+                id: collector.wstp_id?.toString() || collector.staff?.staff_id?.toString() || '',
+                firstname: collector.staff?.rp?.per?.per_fname || 'Unknown',
+                lastname: collector.staff?.rp?.per?.per_lname || 'Unknown',
+            }));
+        },
+        staleTime: 1000 * 60 * 30, 
+    });
+};

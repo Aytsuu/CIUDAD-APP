@@ -19,3 +19,13 @@ export const getTrucks = async () => {
         throw err;
     }
 }
+
+export const getCollectors = async () => {
+    try{
+        const res = await api.get('waste/waste-collectors/');
+        return res.data
+    } catch(err){
+        console.error(err)
+        throw err;
+    }
+}
