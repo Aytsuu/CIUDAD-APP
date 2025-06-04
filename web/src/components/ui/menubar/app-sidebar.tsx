@@ -69,7 +69,10 @@ const items: MenuItem[] = [
       { title: "Staff", url: "/drr/staff" },
     ],
   },
-
+  {
+    title: "Summon & Case Tracker",
+    url: "/summon-and-case-tracking"
+  },
   {
     title: "GAD",
     subItems: true,
