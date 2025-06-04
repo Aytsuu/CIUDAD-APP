@@ -78,213 +78,159 @@ export const SampleData: RequestData[] = [
 ];
 
 function GarbagePickupRequestMain() {
-    const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
+  const [isLoading, setIsLoading] = useState(false);
 
-    // Filter functions for each status
-    const pendingData = SampleData.filter(item => 
-        item.garb_req_status === "pending" &&
-        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  const pendingData = SampleData.filter(item => item.garb_req_status === "pending");
+  const acceptedData = SampleData.filter(item => item.garb_req_status === "accepted");
+  const completedData = SampleData.filter(item => item.garb_req_status === "completed");
+  const rejectedData = SampleData.filter(item => item.garb_req_status === "rejected");
 
-    const acceptedData = SampleData.filter(item => 
-        item.garb_req_status === "accepted" &&
-        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
-    const completedData = SampleData.filter(item => 
-        item.garb_req_status === "completed" &&
-        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    const rejectedData = SampleData.filter(item => 
-        item.garb_req_status === "rejected" &&
-        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    if (isLoading) {
-        return (
-            <div className="w-full h-full">
-                <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-                <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-                <Skeleton className="h-10 w-full mb-4 opacity-30" />
-                <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-            </div>
-        );
-    }
-
+  if (isLoading) {
     return (
-        <div className="w-full h-full">
-            <div className="flex flex-col gap-3 mb-3">
-                <div className='flex flex-row gap-4'>
-                    <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                        Garbage Pickup Request
-                    </h1>
-                </div>
-                <p className="text-xs sm:text-sm text-darkGray">
-                    Manage garbage pickup requests.
-                </p>
-            </div>
-            <hr className="border-gray mb-7 sm:mb-8" />
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+        <Skeleton className="h-10 w-full mb-4 opacity-30" />
+        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+      </div>
+    );
+  }
 
-           {/* Status Tabs with improved design */}
-            <Tabs defaultValue="pending" className="mb-6">
-                <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
-                    <TabsTrigger 
-                        value="pending" 
-                        onClick={() => setActiveTab("pending")}
-                        className={`data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=active]:border-yellow-300
-                                hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-200
-                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
-                    >
-                        Pending ({pendingData.length})
-                    </TabsTrigger>
-                    <TabsTrigger 
-                        value="accepted" 
-                        onClick={() => setActiveTab("accepted")}
-                        className={`data-[state=active]:bg-[#5B72CF]/20 data-[state=active]:text-[#5B72CF] data-[state=active]:border-[#5B72CF]
-                                hover:bg-[#5B72CF]/10 hover:text-[#5B72CF] transition-colors duration-200
-                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
-                    >
-                        Accepted ({acceptedData.length})
-                    </TabsTrigger>
-                    <TabsTrigger 
-                        value="completed" 
-                        onClick={() => setActiveTab("completed")}
-                        className={`data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=active]:border-green-300
-                                hover:bg-green-50 hover:text-green-700 transition-colors duration-200
-                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
-                    >
-                        Completed ({completedData.length})
-                    </TabsTrigger>
-                    <TabsTrigger 
-                        value="rejected" 
-                        onClick={() => setActiveTab("rejected")}
-                        className={`data-[state=active]:bg-red-100 data-[state=active]:text-red-800 data-[state=active]:border-red-300
-                                hover:bg-red-50 hover:text-red-700 transition-colors duration-200
-                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
-                    >
-                        Rejected ({rejectedData.length})
-                    </TabsTrigger>
-                </TabsList>
-
-                {/* Search and Filter*/}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full mt-4">
-                    <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
-                        <Search
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                            size={17}
-                        />
-                        <Input 
-                            placeholder="Search by requester, location, or waste type..." 
-                            className="pl-10 w-full bg-white text-sm"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>     
-                </div>
-
-                <div className="bg-white rounded-lg shadow-sm mt-6">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
-                        <div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">
-                                        <FileInput className="mr-2" size={16} />
-                                        Export
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>                    
-                        </div>
-                    </div>
-                    {/* Separate DataTable for each status */}
-                    <TabsContent value="pending">
-                            <DataTable 
-                            columns={PendingColumns} 
-                            data={pendingData.map(item => ({
-                                garb_id: item.garb_id,
-                                garb_requester: item.garb_requester,
-                                garb_location: item.garb_location,
-                                garb_waste_type: item.garb_waste_type,
-                                garb_pref_date: item.garb_pref_date || "No date specified", // Provide fallback
-                                garb_pref_time: item.garb_pref_time || "No time specified", // Provide fallback
-                                garb_created_at: formatDate(item.garb_created_at),
-                                garb_additional_note: item.garb_additional_note || "No notes" // Provide fallback
-                            }))}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="accepted">
-                           <DataTable 
-                            columns={AcceptedColumns} 
-                            data={acceptedData.map(item => ({
-                                garb_id: item.garb_id,
-                                garb_location: item.garb_location,
-                                garb_requester: item.garb_requester,
-                                garb_waste_type: item.garb_waste_type,
-                                garb_created_at: formatDate(item.garb_created_at),
-                                dec_id: item.dec_id || "N/A", // Provide fallback if optional
-                                dec_date: item.dec_date ? formatDate(item.dec_date) : "Not available" // Never undefined
-                            }))}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="completed">
-                            <DataTable 
-                                columns={CompletedColumns} 
-                                data={completedData.map(item => ({
-                                    garb_id: item.garb_id || "N/A",
-                                    garb_requester: item.garb_requester || "Unknown",
-                                    garb_location: item.garb_location || "Unknown",
-                                    garb_waste_type: item.garb_waste_type || "Unknown",
-                                    garb_created_at: item.garb_created_at ? formatDate(item.garb_created_at) : "Unknown date",
-                                    dec_id: item.dec_id || "N/A",
-                                    dec_date: item.dec_date ? formatDate(item.dec_date) : "Unknown date"
-                                }))}
-                            />
-                    </TabsContent>
-
-                    <TabsContent value="rejected">
-                            <DataTable 
-                                columns={RejectedColumns} 
-                                data={rejectedData.map(item => ({
-                                    garb_id: item.garb_id || "ERROR-000",
-                                    garb_requester: item.garb_requester || "Unknown requester",
-                                    garb_location: item.garb_location || "Unknown location",
-                                    garb_waste_type: item.garb_waste_type || "Unspecified",
-                                    garb_created_at: item.garb_created_at ? formatDate(item.garb_created_at) : "Date missing",
-                                    dec_id: item.dec_id || "DEC-UNKNOWN",
-                                    dec_date: item.dec_date ? formatDate(item.dec_date) : "Not decided",
-                                    dec_reason: item.dec_reason || "No reason documented"
-                                }))}
-                            />
-                    </TabsContent>
-                </div>
-            </Tabs>
+  return (
+    <div className="w-full h-full">
+      <div className="flex flex-col gap-3 mb-3">
+        <div className='flex flex-row gap-4'>
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
+            Garbage Pickup Request
+          </h1>
         </div>
-    )
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage garbage pickup requests.
+        </p>
+      </div>
+      <hr className="border-gray mb-7 sm:mb-8" />
+
+      <Tabs defaultValue="pending" className="mb-6">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
+          <TabsTrigger value="pending" onClick={() => setActiveTab("pending")} className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=active]:border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center">
+            Pending ({pendingData.length})
+          </TabsTrigger>
+          <TabsTrigger value="accepted" onClick={() => setActiveTab("accepted")} className="data-[state=active]:bg-[#5B72CF]/20 data-[state=active]:text-[#5B72CF] data-[state=active]:border-[#5B72CF] hover:bg-[#5B72CF]/10 hover:text-[#5B72CF] transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center">
+            Accepted ({acceptedData.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed" onClick={() => setActiveTab("completed")} className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=active]:border-green-300 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center">
+            Completed ({completedData.length})
+          </TabsTrigger>
+          <TabsTrigger value="rejected" onClick={() => setActiveTab("rejected")} className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800 data-[state=active]:border-red-300 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center">
+            Rejected ({rejectedData.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Search UI only (non-functional) */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full mt-4">
+          <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Input 
+              placeholder="Search" 
+              className="pl-10 w-full bg-white text-sm"
+              readOnly
+            />
+          </div>     
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm mt-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileInput className="mr-2" size={16} />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>                    
+            </div>
+          </div>
+
+          <TabsContent value="pending">
+            <DataTable 
+              columns={PendingColumns} 
+              data={pendingData.map(item => ({
+                garb_id: item.garb_id,
+                garb_requester: item.garb_requester,
+                garb_location: item.garb_location,
+                garb_waste_type: item.garb_waste_type,
+                garb_pref_date: item.garb_pref_date || "No date specified",
+                garb_pref_time: item.garb_pref_time || "No time specified",
+                garb_created_at: formatDate(item.garb_created_at),
+                garb_additional_note: item.garb_additional_note || "No notes"
+              }))}
+            />
+          </TabsContent>
+
+          <TabsContent value="accepted">
+            <DataTable 
+              columns={AcceptedColumns} 
+              data={acceptedData.map(item => ({
+                garb_id: item.garb_id,
+                garb_location: item.garb_location,
+                garb_requester: item.garb_requester,
+                garb_waste_type: item.garb_waste_type,
+                garb_created_at: formatDate(item.garb_created_at),
+                dec_id: item.dec_id || "N/A",
+                dec_date: item.dec_date ? formatDate(item.dec_date) : "Not available"
+              }))}
+            />
+          </TabsContent>
+
+          <TabsContent value="completed">
+            <DataTable 
+              columns={CompletedColumns} 
+              data={completedData.map(item => ({
+                garb_id: item.garb_id || "N/A",
+                garb_requester: item.garb_requester || "Unknown",
+                garb_location: item.garb_location || "Unknown",
+                garb_waste_type: item.garb_waste_type || "Unknown",
+                garb_created_at: item.garb_created_at ? formatDate(item.garb_created_at) : "Unknown date",
+                dec_id: item.dec_id || "N/A",
+                dec_date: item.dec_date ? formatDate(item.dec_date) : "Unknown date"
+              }))}
+            />
+          </TabsContent>
+
+          <TabsContent value="rejected">
+            <DataTable 
+              columns={RejectedColumns} 
+              data={rejectedData.map(item => ({
+                garb_id: item.garb_id || "ERROR-000",
+                garb_requester: item.garb_requester || "Unknown requester",
+                garb_location: item.garb_location || "Unknown location",
+                garb_waste_type: item.garb_waste_type || "Unspecified",
+                garb_created_at: item.garb_created_at ? formatDate(item.garb_created_at) : "Date missing",
+                dec_id: item.dec_id || "DEC-UNKNOWN",
+                dec_date: item.dec_date ? formatDate(item.dec_date) : "Not decided",
+                dec_reason: item.dec_reason || "No reason documented"
+              }))}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
+  );
 }
 
-export default GarbagePickupRequestMain
+export default GarbagePickupRequestMain;
