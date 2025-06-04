@@ -1,36 +1,40 @@
 /* 
 
-  Note...
+  WARNING!!! WARNING!!! WARNING!!!
 
-  This form is being utilized for creating, viewing, and updating resident records
-  Additionally, it is being used for adminstrative position assignment or staff registration 
+  THIS FILE IS DEPRECATED AND WILL BE REMOVED IN THE FUTURE
+  PLEASE USE THE NEW FILES IN THE NEW DIRECTORY STRUCTURE
+  FOR THE NEW RESIDENT FORM LAYOUT
+
+  THIS FILE IS ONLY HERE FOR BACKWARDS COMPATIBILITY
 
 */
 import React from "react";
-import PersonalInfoForm from "./PersonalInfoForm";
+import PersonalInfoForm from "./form/PersonalInfoForm";
 import { z } from "zod";
 import { Type, Origin } from "../profilingEnums";
 import { Card } from "@/components/ui/card/card";
 import { toast } from "sonner";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { useForm } from "react-hook-form";
 import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
+import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { useAddPersonal, useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
 export default function ResidentFormLayout() {
-
   // Get user information from useContext
   const { user } = React.useRef(useAuth()).current;
 
   // Initializing states
+  const navigate = useNavigate();
   const location = useLocation();
   const defaultValues = React.useRef(generateDefaultValues(personalInfoSchema)).current;
   const form = useForm<z.infer<typeof personalInfoSchema>>({
@@ -40,24 +44,20 @@ export default function ResidentFormLayout() {
   const params = React.useMemo(() => {
     return location.state?.params || {};
   }, [location.state]);
-
   const [formType, setFormType] = React.useState<Type>(params.type);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isReadOnly, setIsReadOnly] = React.useState<boolean>(false);
-  const [isAssignmentOpen, setIsAssignmentOpen] =
-    React.useState<boolean>(false);
-
+  const [isAssignmentOpen, setIsAssignmentOpen] = React.useState<boolean>(false);
   const formattedResidents = React.useMemo(() => {
     return formatResidents(params);
   }, [params.residents]);
-
   const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
-  const { mutateAsync: addPersonal } = useAddPersonal(form.getValues());
-  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile(form.getValues(), setFormType);
+  const { mutateAsync: addPersonal } = useAddPersonal();
+  const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {
-    setIsSubmitting(isSubmittingProfile || isUpdatingProfile);
-  }, [isSubmittingProfile, isUpdatingProfile]) 
+    setIsSubmitting(isSubmittingProfile || isUpdatingProfile || isSubmittingProfileHealth);
+  }, [isSubmittingProfile, isUpdatingProfile, isSubmittingProfileHealth]) 
 
   // Performs side effects when formType changes
   React.useEffect(() => {
@@ -108,9 +108,9 @@ export default function ResidentFormLayout() {
       fields.map((f: any) => {
         form.setValue(f.key , f.value);
       });
-
+ 
       // Toggle read only
-      if (resident) setIsReadOnly(true); 
+      if (resident && formType !== Type.Request) setIsReadOnly(true); 
       else setIsReadOnly(false);
     },
     [params.data || params.resident]
@@ -143,10 +143,9 @@ export default function ResidentFormLayout() {
     return isDefault;
   };
 
-  // Handle form submission
+  // Handle form actions
   const submit = async () => {
     setIsSubmitting(true);
-
     const formIsValid = await form.trigger();
 
     if (!formIsValid) {
@@ -158,9 +157,8 @@ export default function ResidentFormLayout() {
     }
 
     // For editing resident personal info
-    const values = form.getValues();
-
     if (formType === Type.Editing) {
+      const values = form.getValues();
       setIsSubmitting(false);
       if (checkDefaultValues(values, params.data.per)) {
         toast("No changes made", {
@@ -170,26 +168,45 @@ export default function ResidentFormLayout() {
       }
 
       const personalId = params.data.per.per_id
-      await updateProfile({ personalId: personalId });
+      await updateProfile({ personalId: personalId, values: form.getValues()});
       params.data.per = values;
 
     } else {
-      // For registration request
-      const reqPersonalId = params.data?.per.per_id;
 
       // Check if form type is request
       const personalId =
         params.type === Type.Request
-          ? reqPersonalId
-          : await addPersonal();
+          ? params.data?.per.per_id
+          : await addPersonal(form.getValues());    
 
-      await addResidentProfile({
+      const resident = await addResidentProfile({
         personalId: personalId, 
         staffId: user?.staff.staff_id
+      });
+      
+      const healthPersonalId = await addPersonalHealth();
+
+      await addResidentProfileHealth({
+        personalId: healthPersonalId, 
+        staffId: "",
       });
 
       // Reset the values of all fields in the form
       form.reset(defaultValues.current);
+      toast("New record created successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        action: {
+          label: "View",
+          onClick: () => navigate(-1),
+        },
+      });
+      
+      navigate("/account/create", {
+        state: { params: {
+            residentId: resident.rp_id
+          }
+        }
+      });
     }
   };
 
@@ -219,7 +236,7 @@ export default function ResidentFormLayout() {
               setIsAssignmentOpen={setIsAssignmentOpen}
               setFormType={setFormType}
               submit={submit}
-              handleComboboxChange={handleComboboxChange}
+              onComboboxChange={handleComboboxChange}
             />
           </form>
         </Form>

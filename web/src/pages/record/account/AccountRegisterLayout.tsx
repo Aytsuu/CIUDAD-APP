@@ -11,11 +11,15 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import { useAddAccount } from "./queries/accountAddQueries";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation } from "react-router";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { accountCreated } from "@/redux/addRegSlice";
+import { useDispatch } from "react-redux";
 
 export default function AccountRegistrationLayout() {
-  const navigate = useNavigate();
+  const { safeNavigate } = useSafeNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const params = React.useMemo(()=> location.state?.params, [location.state])
   const residentId = React.useMemo(()=> params.residentId, [params]);
   const { mutateAsync: addAccount } = useAddAccount();
@@ -38,11 +42,14 @@ export default function AccountRegistrationLayout() {
     };
 
     const accountInfo = form.getValues();
-    await addAccount({ 
+    addAccount({ 
       accountInfo: accountInfo,
       residentId: residentId
     }, {
-      onSuccess: () => navigate(-1)
+      onSuccess: () => {
+        dispatch(accountCreated(true));
+        safeNavigate.back()
+      }
     });
     
   };

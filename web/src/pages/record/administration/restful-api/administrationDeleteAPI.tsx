@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 
 // Delete a position
 export const deletePosition = async (selectedPosition: string) => {

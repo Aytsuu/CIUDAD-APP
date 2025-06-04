@@ -1,7 +1,6 @@
 import LoginScreen from "@/screens/auth/login";
-import RegisterCompletion from "@/screens/auth/signup/UploadID";
-import Sample from "@/screens/sample";
+import IncidentReport from "@/screens/report/incident"
 
 export default () => {
-    return <LoginScreen />
+    return <IncidentReport/>
 }

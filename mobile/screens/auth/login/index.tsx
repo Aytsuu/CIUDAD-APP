@@ -1,5 +1,6 @@
 
 import "@/global.css";
+import { api } from "@/api/api";
 import React, { useState } from "react";
 import { View, Text, TouchableWithoutFeedback, Image, Alert, Keyboard, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,7 +22,9 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function LoginScreen() {
+export default () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, isInitializing } = useAuth();
   const router = useRouter();
@@ -32,7 +35,7 @@ export default function LoginScreen() {
 
   const handleLogin = async (data: LoginFormData) => {
     try {
-      const response = await axios.post("http://127.0.0.1:8000/user/login/", {
+      const response = await api.post("/user/login/", {
         email_or_username: data.usernameOrEmail,
         password: data.password,
       });

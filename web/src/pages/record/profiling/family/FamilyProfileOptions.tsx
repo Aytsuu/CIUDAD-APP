@@ -1,29 +1,11 @@
 import { Link } from "react-router-dom";
 
-export default function FamilyProfileOptions({
-  familyCompositions,
-  residents,
-  households,
-}: {
-  familyCompositions: any[];
-  residents: any[];
-  households: any[];
-}) {
+export default function FamilyProfileOptions() {
   return (
     <div className="w-full h-[14rem] sm:h-[18rem] md:h-[20rem] grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Registration Form */}
       <Link
         to="/family/form/solo"
-        state={{
-          params: {
-            residents: residents.filter((r: any) => (
-              !familyCompositions
-                .filter((fc: any) => fc.fc_role === "Independent")
-                .map((fc: any) => fc.rp.rp_id).includes(r.rp_id)
-            )),
-            households: households,
-          },
-        }}
         className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
       >
         {/* Text content */}
@@ -36,12 +18,6 @@ export default function FamilyProfileOptions({
       </Link>
       <Link
         to="/family/form"
-        state={{
-          params: {
-            residents: residents,
-            households: households,
-          },
-        }}
         className="relative inline-block overflow-hidden group border-2 h-full rounded-lg"
       >
         {/* Text content */}

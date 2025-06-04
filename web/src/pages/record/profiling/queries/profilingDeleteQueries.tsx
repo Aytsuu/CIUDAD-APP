@@ -3,9 +3,7 @@ import { deleteFamilyComposition, deleteRequest } from "../restful-api/profiling
 
 export const useDeleteRequest = () => {
   return useMutation({
-    mutationFn: ({requestId} : {
-      requestId: string
-    }) => deleteRequest(requestId)
+    mutationFn: (requestId: string) => deleteRequest(requestId)
   })
 }
 

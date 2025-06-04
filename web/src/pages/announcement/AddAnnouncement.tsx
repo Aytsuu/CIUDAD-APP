@@ -20,6 +20,8 @@ const options = {
 }
 
 export default function CreateAnnouncement() {
+  const navigate = useNavigate();
+
   const form = useForm({
     resolver: zodResolver(announcementFormSchema),
     defaultValues: { header: "", details: "", image: "", modes: [], recipients: [] },
@@ -30,38 +32,48 @@ export default function CreateAnnouncement() {
   const progress = (detailsLength / maxLength) * 100
 
   return (
-    <div className="max-w-[700px] mx-auto p-6">
-      <Card className="shadow-lg border-0">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-lg pb-4">
-          <CardTitle className="text-[#263D67] text-2xl font-bold flex items-center justify-center gap-2">
-            <Bell className="h-5 w-5" />
-            Create Announcement
-          </CardTitle>
-        </CardHeader>
+    
+    <div className="bg-white max-w-[600px] mx-auto p-10 mb-4">
+      <div >
+      <Button
+                    className="text-black p-2 self-start"
+                    variant={"outline"}
+                    onClick={() => navigate(-1)}
+                >
+                    <ChevronLeft />
+                </Button>
+      <h2 className="font-bold text-[#263D67] text-2xl mb-4 text-center">Create Announcement</h2>
 
-        <CardContent className="pt-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => console.log("Announcement Data:", data))} className="space-y-6">
-              {/* Header */}
-              <FormField
-                control={form.control}
-                name="header"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-[#263D67]">Announcement Header</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter announcement title"
-                        className="border border-gray-300 p-2 rounded-md w-full text-sm h-12 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
+      </div>
 
-              <Separator className="my-4" />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit((data) => console.log("Announcement Data:", data))} className="space-y-4 flex flex-col">
+       
+          {/* Date Field */}
+          <FormField control={form.control} name="date" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-bold text-sm">Announcement Date</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  type="date" 
+                  className="border-[#2e2e2e] p-2 rounded-md w-full text-sm h-12"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          {/* Header */}
+          <FormField control={form.control} name="header" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="font-bold text-sm">Announcement Header</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Header" className="border-[#2e2e2e] p-2 rounded-md w-full text-sm h-12" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
               {/* Details */}
               <FormField

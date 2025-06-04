@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPosition, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
+import { addPosition, addStaff, assignFeature, setPermission } from "../restful-api/administrationPostAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -17,9 +17,7 @@ export const useAddPosition = () => {
         newPosition,
       ]);
       toast("New record created successfully", {
-        icon: (
-          <CircleCheck size={24} className="fill-green-500 stroke-white" />
-        ),
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         action: {
           label: "View",
           onClick: () => navigate(-1),
@@ -47,4 +45,34 @@ export const useSetPermission = () => {
     mutationFn: ({assi_id} : {assi_id: string}) => setPermission(assi_id),
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
   })
+}
+
+export const useAddStaff = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({residentId, positionId, staffId} : {
+      residentId: string;
+      positionId: string;
+      staffId: string;
+    }) => addStaff(residentId, positionId, staffId),
+    onSuccess: (newData) => {
+
+      if(!newData) return;
+      
+      queryClient.setQueryData(["staffs"], (old: any[] = []) => [ 
+        ...old,
+        newData,
+      ]);
+
+      queryClient.invalidateQueries({queryKey: ['staffs']})
+
+      // Deliver feedback
+      toast("Record added successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      });
+
+      navigate(-1)
+    }
+  });
 }

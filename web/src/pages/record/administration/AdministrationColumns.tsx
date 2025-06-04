@@ -1,8 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, Ellipsis, Trash } from "lucide-react"
+import { ArrowUpDown, Ellipsis } from "lucide-react"
 import { AdministrationRecord } from "./administrationTypes"
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+import { Button } from "@/components/ui/button/button"
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     {
@@ -12,7 +13,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
                 className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
                 onClick={() => (column.toggleSorting(column.getIsSorted() === "asc"))}
             >
-                Staff (#)
+                Staff ID
                 <TooltipLayout
                     trigger={<ArrowUpDown size={15}/>}
                     content={"Sort"}
@@ -75,15 +76,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         )
     },
     {
-        accessorKey: 'suffix',
-        header: 'Suffix',
-        cell: ({ row }) => (
-            <div className="hidden lg:block max-w-xs truncate">
-                {row.getValue("suffix") ? row.getValue("suffix") : '-'}
-            </div>
-        )
-    },
-    {
         accessorKey: 'dateOfBirth',
         header: 'Date of Birth'
     },
@@ -102,8 +94,15 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     {
         accessorKey: 'action',
         header: 'Action',
-        cell: ({row}) => {
-            
-        }
+        cell: ({row}) => (
+            <DropdownLayout 
+                trigger={
+                    <Button variant={"outline"} className="border">
+                        <Ellipsis />
+                    </Button>
+                }
+                options={[]}
+            />
+        )
     }
 ]

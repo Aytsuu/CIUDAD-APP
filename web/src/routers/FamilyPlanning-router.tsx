@@ -1,23 +1,34 @@
-import FamilyPlanningForm from "@/pages/familyplanning/FP-page1";
-import FamilyPlanningForm2 from "@/pages/familyplanning/FP-page2";
-import FamPlanning_table from "@/pages/familyplanning/table";
-import FamilyPlanningView from "@/pages/familyplanning/view";
+import FamPlanning_table from "@/pages/record/health/familyplanning/OverallTable";
+import FamilyPlanningView from "@/pages/familyplanning/ViewPage1";
+import FamilyPlanningMain from "@/pages/familyplanning/main";
+import IndividualFamPlanningTable from "@/pages/record/health/familyplanning/Individual";
+import FamilyPlanningView2 from "@/pages/familyplanning/ViewPage2";
+
 
 export const famplanning_route = [
     {
+        path: '/FamPlanning_view2',
+        element: <FamilyPlanningView2/>
+    },
+  
+    {
         path: '/FamPlanning_view',
-        element: <FamilyPlanningView></FamilyPlanningView>
+        element: <FamilyPlanningView/>
     },
     {
-        path: '/FamPlanning_form',
-        element: <FamilyPlanningForm></FamilyPlanningForm>
+        path: '/FamPlanning_main',
+        element: <FamilyPlanningMain/>
     },
     {
         path: '/FamPlanning_table',
-        element: <FamPlanning_table></FamPlanning_table>
+        element: <FamPlanning_table/>
     },
+
     {
-        path: '/FamilyPlanning_form2',
-        element: <FamilyPlanningForm2></FamilyPlanningForm2>
+        path: '/FamPlanning_individual',
+        element: <IndividualFamPlanningTable/>
     }
+   
+   
+    
  ]

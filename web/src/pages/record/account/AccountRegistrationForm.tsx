@@ -1,17 +1,22 @@
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import { FormInput } from "@/components/ui/form/form-input"
-import { accountFormSchema } from "@/form-schema/account-schema"
-import { UseFormReturn } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/ui/button/button"
-import { Link } from "react-router"
-import { LoadButton } from "@/components/ui/button/load-button"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { FormInput } from "@/components/ui/form/form-input";
+import { accountFormSchema } from "@/form-schema/account-schema";
+import { UseFormReturn } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button/button";
+import { LoadButton } from "@/components/ui/button/load-button";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
+import { useDispatch } from "react-redux";
+import { accountCreated } from "@/redux/addRegSlice";
+
 
 export default function AccountRegistrationForm({form, isSubmitting, onSubmit} : {
   form: UseFormReturn<z.infer<typeof accountFormSchema>>
   isSubmitting: boolean
   onSubmit: () => void
 }) {
+  const { safeNavigate } = useSafeNavigate();
+  const dispatch = useDispatch();
   return (
     <>
       <div className="grid gap-4">
@@ -21,11 +26,17 @@ export default function AccountRegistrationForm({form, isSubmitting, onSubmit} :
         <FormInput control={form.control} name="confirmPassword" label="Confirm Password" placeholder="Re-enter password" type="password"/>
       </div>
       <div className="flex justify-between">
-        <Link to="/resident">
-          <Button variant={"outline"} className="border-none shadow-none font-normal">
-            Skip for now
-          </Button>
-        </Link>
+        <Button 
+          variant={"outline"} 
+          className="border-none shadow-none font-normal"
+          type="button"
+          onClick={() => {
+            dispatch(accountCreated(false))
+            safeNavigate.back()
+          }}
+        >
+          Skip for now
+        </Button>
         {!isSubmitting ? (<ConfirmationModal 
           trigger={<Button>Create</Button>}
           title="Confirm Account Registration"

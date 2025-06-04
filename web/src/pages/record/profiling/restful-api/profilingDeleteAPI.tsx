@@ -1,8 +1,9 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 
 // Request deletion on approve
 export const deleteRequest = async (requestId: string) => {
   try {
+    console.log({requestId})
     const res = await api.delete(`profiling/request/delete/${requestId}/`);
     return res;
   } catch (err) {
@@ -13,7 +14,7 @@ export const deleteRequest = async (requestId: string) => {
 // Delete family member
 export const deleteFamilyComposition = async (familyId: string, residentId: string) => {
   try {
-    const res = await api.delete(`profiling/family-composition/delete/${familyId}/${residentId}/`);
+    const res = await api.delete(`profiling/family/composition/delete/${familyId}/${residentId}/`);
     return res;
   } catch (err) {
     console.error(err);

@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
-import Layout from "./_layout";
+import _ScreenLayout from "@/screens/_ScreenLayout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import { FormSelect } from "@/components/ui/form/form-select";
@@ -21,7 +21,7 @@ const civilStatusOptions: { label: string; value: string }[] = [
 
 export default function PersonalInformation() {
   const router = useRouter();
-  const { control, trigger, getValues, formState: {errors} } = useRegistrationFormContext()
+  const { control, trigger} = useRegistrationFormContext()
 
   const handleSubmit = async () => {
     const formIsValid = await trigger(
@@ -35,17 +35,15 @@ export default function PersonalInformation() {
         "personalInfoSchema.per_edAttainment",
         "personalInfoSchema.per_religion",
         "personalInfoSchema.per_contact",
-        "personalInfoSchema.per_occupation"])
+        "personalInfoSchema.per_occupation"]);
 
     if(formIsValid) {
-      router.push('/(auth)/upload-id')
-    }
+      router.push('/(auth)/take-a-photo');
+    };
   }
 
-  // Handlers for input fields
-
   return (
-    <Layout
+    <_ScreenLayout
       header={"Personal Information"}
       description={"Please fill out all required fields."}
     >
@@ -56,21 +54,18 @@ export default function PersonalInformation() {
             label="Last Name" 
             name="personalInfoSchema.per_lname" 
             placeholder="Last Name" 
-            error={errors.personalInfoSchema?.per_lname}
           />
           <FormInput 
             control={control} 
             label="First Name" 
             name="personalInfoSchema.per_fname" 
             placeholder="First Name"
-            error={errors.personalInfoSchema?.per_fname}
           />
           <FormInput 
             control={control} 
             label="Middle Name" 
             name="personalInfoSchema.per_mname" 
             placeholder="Middle Name"
-            error={errors.personalInfoSchema?.per_mname}
           />
             
           <FormInput 
@@ -78,7 +73,6 @@ export default function PersonalInformation() {
             label="Suffix" 
             name="personalInfoSchema.per_suffix" 
             placeholder="Suffix (e.g., Jr, Sr)"
-            error={errors.personalInfoSchema?.per_suffix}
           />
           <FormSelect
             control={control}
@@ -101,35 +95,30 @@ export default function PersonalInformation() {
             label="Address" 
             name="personalInfoSchema.per_address" 
             placeholder="Address"
-            error={errors.personalInfoSchema?.per_address}
           />
           <FormInput 
             control={control} 
             label="Educational Attainment" 
             name="personalInfoSchema.per_edAttainment" 
             placeholder="Educational Attainment"
-            error={errors.personalInfoSchema?.per_edAttainment}
           />
           <FormInput 
             control={control} 
             label="Religion" 
             name="personalInfoSchema.per_religion" 
             placeholder="Religion"
-            error={errors.personalInfoSchema?.per_religion}
           />
           <FormInput 
             control={control} 
             label="Contact" 
             name="personalInfoSchema.per_contact" 
             placeholder="Contact"
-            error={errors.personalInfoSchema?.per_contact}
           />
           <FormInput 
             control={control} 
             label="Occupation" 
             name="personalInfoSchema.per_occupation" 
             placeholder="Occupation"
-            error={errors.personalInfoSchema?.per_occupation}
           />        
         </View>
 
@@ -145,6 +134,6 @@ export default function PersonalInformation() {
           </Button>
         </View>
       </View>
-    </Layout>
+    </_ScreenLayout>
   );
 }

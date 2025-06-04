@@ -1,69 +1,146 @@
+
 import { useQuery } from "@tanstack/react-query";
 import {
   getBusinesses,
-  getFamilies,
+  getFamFilteredByHouse,
+  getFamiliesTable,
   getFamilyComposition,
-  getHouseholds,
+  getFamilyData,
+  getFamilyMembers,
+  getHouseholdList,
+  getHouseholdTable,
+  getPerAddressesList,
   getRequests,
-  getResidents,
-  getSitio,
+  getResidentsFamSpecificList,
+  getResidentsList,
+  getResidentsTable,
+  getResidentsWithFamExclusion,
+  getSitioList,
 } from "../restful-api/profilingGetAPI";
 
-// Retrieving
-export const useResidents = () => {
+// ================ ADDRESS =================
+export const usePerAddressesList = () => {
   return useQuery({
-    queryKey: ["residents"],
-    queryFn: getResidents,
-    staleTime: 1000 * 60 * 30,
-  });
-};
+    queryKey: ['perAddressesList'],
+    queryFn: () => getPerAddressesList(),
+    staleTime: 5000,
+  })
+}
+
+// ================ RESIDENTS ================ (Status: Optmizing....)
+export const useResidentsList = () => {
+  return useQuery({
+    queryKey: ['residentsList'],
+    queryFn: getResidentsList,
+    staleTime: 5000,
+  })
+}
+
+export const useResidentsTable = (page: number, pageSize: number, searchQuery?: string) => {
+  return useQuery({
+    queryKey: ['residentsTableData', page, pageSize, searchQuery],
+    queryFn: () => getResidentsTable(page, pageSize, searchQuery),
+    staleTime: 5000,
+  })
+}
+
+export const useResidentsWithFamExclusion = (familyId: string) => {
+  return useQuery({
+    queryKey: ['residentsWithFamExclusion', familyId],
+    queryFn: () => getResidentsWithFamExclusion(familyId),
+    staleTime: 5000,
+  })
+}
+
+export const useResidentsFamSpecificList = (familyId: string) => {
+  return useQuery({
+    queryKey: ['residentsFamSpecificList', familyId],
+    queryFn: () => getResidentsFamSpecificList(familyId),
+    staleTime: 5000,
+  })
+}
 
 export const useRequests = () => {
   return useQuery({
     queryKey: ["requests"],
     queryFn: getRequests,
-    staleTime: 60 * 30,
+    staleTime: 5000,
   });
-};
+}
 
-export const useSitio = () => {
+export const useSitioList = () => {
   return useQuery({
-    queryKey: ["sitio"],
-    queryFn: getSitio,
-    staleTime: 1000 * 60 * 5,
+    queryKey: ["sitioList"],
+    queryFn: getSitioList,
+    staleTime: 5000,
   });
-};
+}
 
-export const useHouseholds = () => {
+// ================ FAMILIES ================ (Status: Optmizing....)
+export const useFamiliesTable = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ["households"],
-    queryFn: getHouseholds,
-    staleTime: 1000 * 60 * 30,
+    queryKey: ["familiesTableData", page, pageSize, searchQuery],
+    queryFn: () => getFamiliesTable(page, pageSize, searchQuery),
+    staleTime: 5000,
   });
-};
+}
 
-export const useFamilies = () => {
+export const useFamilyData = (familyId: string) => {
   return useQuery({
-    queryKey: ["families"],
-    queryFn: getFamilies,
-    staleTime: 1000 * 60 * 5,
-  });
-};
+    queryKey: ["familyData", familyId],
+    queryFn: () => getFamilyData(familyId),
+    staleTime: 5000,
+  })
+}
+
+export const useFamilyMembers = (familyId: string) => {
+  // if(!familyId) return [];
+  return useQuery({
+    queryKey: ["familyMembers", familyId],
+    queryFn: () => getFamilyMembers(familyId),
+    staleTime: 5000,
+  })
+}
+
+export const useFamFilteredByHouse = (householdId: string) => {
+  return useQuery({
+    queryKey: ["famFilteredByHouse", householdId],
+    queryFn: () => getFamFilteredByHouse(householdId),
+    staleTime: 5000,
+  })
+}
 
 export const useFamilyComposition = () => {
   return useQuery({
     queryKey: ["familyCompositions"],
     queryFn: getFamilyComposition,
-    staleTime: 1000 * 60 * 5
+    staleTime: 5000,
   })
 }
 
+
+// ================ BUSINESS ================
 export const useBusinesses = () => {
   return useQuery({
     queryKey: ["businesses"],
     queryFn: getBusinesses,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000,
   })
 }
 
+// ================ HOUSEHOLDS ================ (Status: Optmizing....)
+export const useHouseholdsList = () => {
+  return useQuery({
+    queryKey: ['householdsList'],
+    queryFn: getHouseholdList,
+    staleTime: 5000,
+  })
+}
 
+export const useHouseholdTable = (page: number, pageSize: number, searchQuery: string) => {
+  return useQuery({
+    queryKey: ['householdTable', page, pageSize, searchQuery],
+    queryFn: () => getHouseholdTable(page, pageSize, searchQuery),
+    staleTime: 5000,
+  })
+}
