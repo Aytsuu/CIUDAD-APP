@@ -32,3 +32,22 @@ class CouncilAttendance(models.Model):
 
     class Meta:
         db_table = 'attendance_sheet'
+
+
+class Template(models.Model):
+    temp_id = models.BigAutoField(primary_key=True)
+    temp_header = models.CharField(max_length=200)
+    temp_below_headerContent = models.CharField(max_length=999)
+    temp_title = models.CharField(max_length=200)
+    temp_subtitle = models.CharField(max_length=200, null=True)
+    temp_w_sign = models.BooleanField(default=False)
+    temp_w_seal = models.BooleanField(default=False)
+    temp_w_summon = models.BooleanField(default=False)
+    temp_paperSize = models.CharField(max_length=100)
+    temp_margin = models.CharField(max_length=100)
+    temp_filename = models.CharField(max_length=100)
+    temp_body = models.CharField(max_length=999)
+    temp_is_archive = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'template'
