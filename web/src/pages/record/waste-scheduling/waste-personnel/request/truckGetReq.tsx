@@ -135,7 +135,7 @@
 // };
 
 import axios from 'axios';
-import api from '@/api/api';
+import { api } from "@/api/api";
 
 export interface Personal {
   per_id: number;

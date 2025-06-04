@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 
 // Delete Waste Truck
 export const delWasteTruck = async (truck_id: number) => {
