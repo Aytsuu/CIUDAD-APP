@@ -1,27 +1,32 @@
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { SelectLayout } from "@/components/ui/select/select-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Search, FileInput, CheckCircle, AlertCircle, XCircle, Clock} from "lucide-react"
+import { Search, FileInput } from "lucide-react";
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import RejectPickupForm from "./reject-request-form";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { PendingColumns } from "./table-columns/pending-table-columns";
+import { AcceptedColumns } from "./table-columns/accepted-table-columns";
+import { RejectedColumns } from "./table-columns/rejected-request-columns";
+import { CompletedColumns } from "./table-columns/completed-request-columns";
+import { Skeleton } from "@/components/ui/skeleton";
 
-type PickupRequest = {
-    garb_id: string;
-    garb_location: string;
-    garb_requester: string;
-    garb_waste_type: string;
-    garb_pref_date: string;
-    garb_pref_time: string;
-    garb_req_status: string;
-}
+type RequestData = {
+  garb_id: string;
+  garb_requester: string;
+  garb_location: string;
+  garb_waste_type: string;
+  garb_pref_date?: string;
+  garb_pref_time?: string;
+  garb_created_at: string;
+  garb_additional_note?: string;
+  garb_req_status: "pending" | "accepted" | "completed" | "rejected";
+  dec_id?: string;
+  dec_date?: string;
+  dec_reason?: string;
+};
 
-export const SampleData: PickupRequest[] = [
+export const SampleData: RequestData[] = [
   {
     garb_id: "001",
     garb_requester: "Maria Mercedes",
@@ -29,7 +34,9 @@ export const SampleData: PickupRequest[] = [
     garb_waste_type: "Household Waste",
     garb_pref_date: "Jun 5, 2025",
     garb_pref_time: "8:00am",
-    garb_req_status: "Pending",
+    garb_created_at: "2025-06-01T09:00:00Z",
+    garb_additional_note: "",
+    garb_req_status: "pending",
   },
   {
     garb_id: "002",
@@ -38,7 +45,11 @@ export const SampleData: PickupRequest[] = [
     garb_waste_type: "Recyclable Waste",
     garb_pref_date: "Jun 6, 2025",
     garb_pref_time: "9:30am",
-    garb_req_status: "Accepted",
+    garb_created_at: "2025-06-02T10:00:00Z",
+    garb_additional_note: "",
+    garb_req_status: "accepted",
+    dec_id: "DEC001",
+    dec_date: "2025-06-04T10:00:00Z",
   },
   {
     garb_id: "003",
@@ -47,207 +58,231 @@ export const SampleData: PickupRequest[] = [
     garb_waste_type: "Household Waste",
     garb_pref_date: "Jun 7, 2025",
     garb_pref_time: "10:00am",
-    garb_req_status: "Completed",
+    garb_created_at: "2025-06-03T11:00:00Z",
+    garb_additional_note: "",
+    garb_req_status: "completed",
+    dec_id: "DEC002",
+    dec_date: "2025-06-05T14:00:00Z",
   },
   {
     garb_id: "004",
     garb_requester: "Carlos Mendoza",
     garb_location: "Sitio 2",
     garb_waste_type: "Hazardous Waste",
-    garb_pref_date: "Jun 8, 2025",
-    garb_pref_time: "8:00am",
-    garb_req_status: "Rejected",
+    garb_created_at: "2025-06-04T08:30:00Z",
+    garb_req_status: "rejected",
+    dec_id: "DEC003",
+    dec_date: "2025-06-06T11:30:00Z",
+    dec_reason: "We don't handle hazardous waste",
   },
-]
+];
 
-function GarbagePickupRequestMain(){
+function GarbagePickupRequestMain() {
+    const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const data = SampleData
-    const filter = [
-        { id: "All", name: "All" },
-        { id: "Pending", name: "Pending" },
-        { id: "Rejected", name: "Rejected" },
-        { id: "Completed", name: "Completed" },
-    ];
+    // Filter functions for each status
+    const pendingData = SampleData.filter(item => 
+        item.garb_req_status === "pending" &&
+        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
-    const [selectedFilter, setSelectedFilter] = useState(filter[0].name)
+    const acceptedData = SampleData.filter(item => 
+        item.garb_req_status === "accepted" &&
+        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
-    const statusCounts = {
-        pending: data.filter((item) => item.garb_req_status.toLowerCase() === "pending").length,
-        accepted: data.filter((item) => item.garb_req_status.toLowerCase() === "accepted").length,
-        completed: data.filter((item) => item.garb_req_status.toLowerCase() === "completed").length,
-        rejected: data.filter((item) => item.garb_req_status.toLowerCase() === "rejected").length,
+    const completedData = SampleData.filter(item => 
+        item.garb_req_status === "completed" &&
+        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    const rejectedData = SampleData.filter(item => 
+        item.garb_req_status === "rejected" &&
+        (item.garb_requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         item.garb_waste_type.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    if (isLoading) {
+        return (
+            <div className="w-full h-full">
+                <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+                <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+                <Skeleton className="h-10 w-full mb-4 opacity-30" />
+                <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+            </div>
+        );
     }
 
-    const columns: ColumnDef<PickupRequest>[]=[
-        { accessorKey: "garb_id", header: "No."},
-        { accessorKey: "garb_requester", header:"Requester"},
-        { accessorKey: "garb_location", header: "Location"},
-        { accessorKey: "garb_waste_type", header: "Waste Type"},
-        { accessorKey: "garb_pref_date", header: "Preferred Date"},
-        { accessorKey: "garb_pref_time", header: "Preferred Time"},
-        { accessorKey: "garb_req_status", header: "Status", cell: ({ row }) => {
-            const status = row.getValue("garb_req_status") as string;
-                
-                const getStatusVariant = (status: string) => {
-                switch (status.toLowerCase()) {
-                    case "pending":
-                    return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
-                    case "rejected":
-                    return "bg-red-100 text-red-800 hover:bg-red-100";
-                    case "completed":
-                    return "bg-green-100 text-green-800 hover:bg-green-100";
-                    case "accepted":
-                    return "bg-[#5B72CF]/40 text-blue-800 hover:bg-blue-100";
-                    default:
-                    return "bg-gray-100 text-gray-800 hover:bg-gray-100";
-                }
-            };
-
-                return (
-                    <div 
-                        className={` py-1 rounded-full text-[12px] font-medium ${getStatusVariant(status)} border-0`}
-                    >
-                        {status}
-                    </div>
-                );
-            }
-        },
-         { 
-            accessorKey: "actions", 
-            header: "Action", 
-            cell: ({row}) => (
-                <div className="flex justify-center gap-2">
-                    <TooltipLayout
-                        trigger={<div className="bg-[#17AD00] hover:bg-[#17AD00]/80 border text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"> <CheckCircle size={16} /></div> }  
-                        content="Accept"
-                    />
-                    <DialogLayout
-                        title="Confirm Rejection"
-                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <XCircle size={16} /></div>}
-                        description="Reject the selected garbage pickup request. A reason is required before confirming this action."
-                        mainContent={
-                            <RejectPickupForm/>
-                        }
-                    />
-                </div>
-            )
-        }
-    ]
-
-    return(
+    return (
         <div className="w-full h-full">
-             <div className="flex flex-col gap-3 mb-3">
+            <div className="flex flex-col gap-3 mb-3">
                 <div className='flex flex-row gap-4'>
                     <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
-                     Garbage Pickup Request
+                        Garbage Pickup Request
                     </h1>
                 </div>
                 <p className="text-xs sm:text-sm text-darkGray">
-                 Manage  garbage pickup requests.
+                    Manage garbage pickup requests.
                 </p>
             </div>
-            <hr className="border-gray mb-7 sm:mb-8" /> 
+            <hr className="border-gray mb-7 sm:mb-8" />
 
-             {/* Status Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {/* Pending Requests Card */}
-                <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-400">
-                    <div className="flex items-center justify-between">
+           {/* Status Tabs with improved design */}
+            <Tabs defaultValue="pending" className="mb-6">
+                <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
+                    <TabsTrigger 
+                        value="pending" 
+                        onClick={() => setActiveTab("pending")}
+                        className={`data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=active]:border-yellow-300
+                                hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-200
+                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
+                    >
+                        Pending ({pendingData.length})
+                    </TabsTrigger>
+                    <TabsTrigger 
+                        value="accepted" 
+                        onClick={() => setActiveTab("accepted")}
+                        className={`data-[state=active]:bg-[#5B72CF]/20 data-[state=active]:text-[#5B72CF] data-[state=active]:border-[#5B72CF]
+                                hover:bg-[#5B72CF]/10 hover:text-[#5B72CF] transition-colors duration-200
+                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
+                    >
+                        Accepted ({acceptedData.length})
+                    </TabsTrigger>
+                    <TabsTrigger 
+                        value="completed" 
+                        onClick={() => setActiveTab("completed")}
+                        className={`data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=active]:border-green-300
+                                hover:bg-green-50 hover:text-green-700 transition-colors duration-200
+                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
+                    >
+                        Completed ({completedData.length})
+                    </TabsTrigger>
+                    <TabsTrigger 
+                        value="rejected" 
+                        onClick={() => setActiveTab("rejected")}
+                        className={`data-[state=active]:bg-red-100 data-[state=active]:text-red-800 data-[state=active]:border-red-300
+                                hover:bg-red-50 hover:text-red-700 transition-colors duration-200
+                                py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center`}
+                    >
+                        Rejected ({rejectedData.length})
+                    </TabsTrigger>
+                </TabsList>
+
+                {/* Search and Filter*/}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full mt-4">
+                    <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
+                        <Search
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                            size={17}
+                        />
+                        <Input 
+                            placeholder="Search by requester, location, or waste type..." 
+                            className="pl-10 w-full bg-white text-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>     
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm mt-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
                         <div>
-                            <p className="text-sm text-gray-500 font-medium">Pending Requests</p>
-                            <p className="text-2xl font-bold mt-1">{statusCounts.pending}</p>
-                        </div>
-                        <div className="bg-yellow-100 p-3 rounded-full">
-                            <Clock className="h-6 w-6 text-yellow-600" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Accepted Requests Card */}
-                <div className="bg-white rounded-lg shadow p-4 border-l-4 border-[#5B72CF]/40">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Accepted Requests</p>
-                            <p className="text-2xl font-bold mt-1">{statusCounts.accepted}</p>
-                        </div>
-                        <div className="bg-[#5B72CF]/40 p-3 rounded-full">
-                            <AlertCircle className="h-6 w-6 text-[#5B72CF]" />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        <FileInput className="mr-2" size={16} />
+                                        Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>                    
                         </div>
                     </div>
+                    {/* Separate DataTable for each status */}
+                    <TabsContent value="pending">
+                            <DataTable 
+                            columns={PendingColumns} 
+                            data={pendingData.map(item => ({
+                                garb_id: item.garb_id,
+                                garb_requester: item.garb_requester,
+                                garb_location: item.garb_location,
+                                garb_waste_type: item.garb_waste_type,
+                                garb_pref_date: item.garb_pref_date || "No date specified", // Provide fallback
+                                garb_pref_time: item.garb_pref_time || "No time specified", // Provide fallback
+                                garb_created_at: formatDate(item.garb_created_at),
+                                garb_additional_note: item.garb_additional_note || "No notes" // Provide fallback
+                            }))}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="accepted">
+                           <DataTable 
+                            columns={AcceptedColumns} 
+                            data={acceptedData.map(item => ({
+                                garb_id: item.garb_id,
+                                garb_location: item.garb_location,
+                                garb_requester: item.garb_requester,
+                                garb_waste_type: item.garb_waste_type,
+                                garb_created_at: formatDate(item.garb_created_at),
+                                dec_id: item.dec_id || "N/A", // Provide fallback if optional
+                                dec_date: item.dec_date ? formatDate(item.dec_date) : "Not available" // Never undefined
+                            }))}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="completed">
+                            <DataTable 
+                                columns={CompletedColumns} 
+                                data={completedData.map(item => ({
+                                    garb_id: item.garb_id || "N/A",
+                                    garb_requester: item.garb_requester || "Unknown",
+                                    garb_location: item.garb_location || "Unknown",
+                                    garb_waste_type: item.garb_waste_type || "Unknown",
+                                    garb_created_at: item.garb_created_at ? formatDate(item.garb_created_at) : "Unknown date",
+                                    dec_id: item.dec_id || "N/A",
+                                    dec_date: item.dec_date ? formatDate(item.dec_date) : "Unknown date"
+                                }))}
+                            />
+                    </TabsContent>
+
+                    <TabsContent value="rejected">
+                            <DataTable 
+                                columns={RejectedColumns} 
+                                data={rejectedData.map(item => ({
+                                    garb_id: item.garb_id || "ERROR-000",
+                                    garb_requester: item.garb_requester || "Unknown requester",
+                                    garb_location: item.garb_location || "Unknown location",
+                                    garb_waste_type: item.garb_waste_type || "Unspecified",
+                                    garb_created_at: item.garb_created_at ? formatDate(item.garb_created_at) : "Date missing",
+                                    dec_id: item.dec_id || "DEC-UNKNOWN",
+                                    dec_date: item.dec_date ? formatDate(item.dec_date) : "Not decided",
+                                    dec_reason: item.dec_reason || "No reason documented"
+                                }))}
+                            />
+                    </TabsContent>
                 </div>
-
-                {/* Completed Requests Card */}
-                <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-400">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Completed Requests</p>
-                            <p className="text-2xl font-bold mt-1">{statusCounts.completed}</p>
-                        </div>
-                        <div className="bg-green-100 p-3 rounded-full">
-                            <CheckCircle className="h-6 w-6 text-green-600" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Rejected Requests Card */}
-                <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-400">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Rejected Requests</p>
-                            <p className="text-2xl font-bold mt-1">{statusCounts.rejected}</p>
-                        </div>
-                        <div className="bg-red-100 p-3 rounded-full">
-                            <XCircle className="h-6 w-6 text-red-600" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            {/* Search and Filter*/}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full">
-                {/* Search */}
-                <div className="relative w-full sm:w-auto sm:flex-1 max-w-2xl">
-                    <Search
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                        size={17}
-                    />
-                    <Input 
-                        placeholder="Search..." 
-                        className="pl-10 w-full bg-white text-sm" 
-                    />
-                </div>     
-
-                {/* Filter */}
-                <div className='flex flex-row items-center gap-4 w-full sm:w-auto'>
-                    <Label className="whitespace-nowrap">Filter: </Label>
-                    <SelectLayout className="bg-white w-full sm:w-[200px]" options={filter} placeholder="Filter" value={selectedFilter} label="Status" onChange={setSelectedFilter}/>
-                </div>
-            </div>
-
-            <div className="bg-white">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
-                    <div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                    <FileInput />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>                    
-                    </div>
-                </div>
-                <DataTable columns={columns} data={data}/>
-            </div>
-
-
+            </Tabs>
         </div>
     )
 }
