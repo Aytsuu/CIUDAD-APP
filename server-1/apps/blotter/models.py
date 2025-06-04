@@ -1,25 +1,35 @@
 from django.db import models
 
-class Blotter(models.Model):
-    bc_complainant = models.CharField(max_length=255)
-    bc_cmplnt_address = models.CharField(max_length=255)
-    bc_accused = models.CharField(max_length=255)
-    bc_accused_address = models.CharField(max_length=255)
-    bc_incident_type = models.CharField(max_length=100)
-    bc_datetime = models.CharField(max_length=100)
-    bc_allegation = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-                                                                                                         
+class Complaint(models.Model):
+    comp_id = models.BigAutoField(primary_key=True)
+    comp_incident_type = models.CharField(max_length=100)
+    comp_datetime = models.CharField(max_length=100)
+    comp_allegation = models.TextField()
+    comp_created_at = models.DateTimeField(auto_now_add=True)
+    comp_is_archive = models.BooleanField(default=False)
+    cpnt_id = models.ForeignKey(Complainant, related_name='Complainant', on_delete=models.CASCADE)
+    acsd_id = models.ForeignKey(Accused, related_name='Accused', on_delete=models.CASCADE)                                    
     class Meta:
         db_table = 'blotter'
-    
-class BlotterMedia(models.Model):
-    blotter = models.ForeignKey(Blotter, related_name='media', on_delete=models.CASCADE)
-    file_name = models.CharField(max_length=255)
-    storage_path = models.CharField(max_length=255)
-    url = models.URLField()
-    file_type = models.CharField(max_length=100)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+        
+class Complainant(models.Model):
+    cpnt_id = models.BigAutoField(primary_key=True)
+    cpnt_name = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'complainant'
+        
+class Accused(models.Model):
+    acsd_id = models.BigAutoField(primary_key=True)
+    acsd_name = models.CharField(max_length=100)
     
     class Meta:
-        db_table = 'blotter_media'
+        db_table = 'accused'
+    
+class Complaint_File(models.Model):
+    cf_id = models.BigAutoField(primary_key=True)
+    comp_id = models.ForeignKey(Complaint, related_name='media', on_delete=models.CASCADE)
+    file_id = models.ForeignKey('File', related_name='file', on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'complaint_file'

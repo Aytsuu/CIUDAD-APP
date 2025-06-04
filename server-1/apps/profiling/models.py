@@ -21,7 +21,6 @@ class Personal(models.Model):
     per_dob = models.DateField()
     per_sex = models.CharField(max_length=100)
     per_status = models.CharField(max_length=100)
-    per_address = models.CharField(max_length=100)
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=100)  

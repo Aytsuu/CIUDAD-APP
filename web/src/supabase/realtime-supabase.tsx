@@ -8,7 +8,9 @@ import { useEffect } from "react";
 /* Purpose: 
         ◉  Tracks all active WebSocket connections
         ◉  Prevents duplicate subscriptions for the same user
-        ◉  Enables centralized management    */
+        ◉  Enables centralized management    
+*/
+
 let activeChannels = new Map<string, RealtimeChannel>();
 
 export const manageNotificationChannel = (user_id: string) => {

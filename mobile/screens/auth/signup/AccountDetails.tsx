@@ -8,9 +8,8 @@ import Layout from "./_layout";
 import { Eye } from "@/lib/icons/Eye";
 import { EyeOff } from "@/lib/icons/EyeOff";
 import { z } from "zod";
-// import { FormDataSchema } from "@/form-schema/registration-schema";
-// import { UserAccount } from "@/form-schema/user-account-schema";
-// import axios from "axios";
+import { RegistrationFormSchema } from "@/form-schema/registration-schema";
+import axios from "axios";
 
 export default function AccountDetails() {
   const router = useRouter();
@@ -20,53 +19,53 @@ export default function AccountDetails() {
   const [rePass, setRePass] = useState("");
   const [errors, setErrors] = useState<z.ZodError | null>(null);
 
-  // const handleProceed = async () => {
-  //   // Validate user input
-  //   const validationResult = UserAccount.safeParse(formData);
+  const handleProceed = async () => {
+    // Validate user input
+    // const validationResult = RegistrationFormSchema.userAccount.safeParse(RegistrationFormSchema);
   
-  //   if (!formData.accountDetails.password || !rePass) {
-  //     setErrors(null);
-  //     alert("Please complete all required fields.");
-  //     return;
-  //   }
+    if (!RegistrationFormSchema.userAccount.password || !rePass) {
+      setErrors(null);
+      alert("Please complete all required fields.");
+      return;
+    }
   
-  //   if (formData.accountDetails.password !== rePass) {
-  //     alert("Passwords do not match.");
-  //     return;
-  //   }
+    if (RegistrationFormSchema.accountDetails.password !== rePass) {
+      alert("Passwords do not match.");
+      return;
+    }
   
-  //   if (validationResult.success) {
-  //     setErrors(null);
+    if (validationResult.success) {
+      setErrors(null);
   
-  //     try {
-  //       // Send data to the backend
-  //       const response = await axios.post("http://localhost:8000/api/signup/", {
-  //         username: formData.accountDetails.userName,
-  //         email: formData.accountDetails.email,
-  //         password: formData.accountDetails.password,
-  //         password2: formData.accountDetails.password 
-  //       });
+      try {
+        // Send data to the backend
+        const response = await axios.post("http://localhost:8000/api/signup/", {
+          username: RegistrationFormSchema.accountDetails.userName,
+          email: RegistrationFormSchema.accountDetails.email,
+          password: RegistrationFormSchema.accountDetails.password,
+          password2: RegistrationFormSchema.accountDetails.password 
+        });
   
-  //       if (response.status === 201) {
-  //         Alert.alert("Success", "Account created successfully!");
-  //         router.push("/personal-information");
-  //       } else {
-  //         Alert.alert("Error", "Failed to create account.");
-  //       }
-  //     } catch (error) {
-  //       if (axios.isAxiosError(error)) {
-  //         const errorMessage = error.response?.data?.message || "Something went wrong.";
-  //         Alert.alert("Error", errorMessage);
-  //       } else {
-  //         console.error("Error:", error);
-  //         Alert.alert("Error", "Something went wrong. Please try again.");
-  //       }
-  //     }
-  //   } else {
-  //     setErrors(validationResult.error);
-  //     alert("Please complete all required fields correctly.");
-  //   }
-  // };
+        if (response.status === 201) {
+          Alert.alert("Success", "Account created successfully!");
+          router.push("/personal-information");
+        } else {
+          Alert.alert("Error", "Failed to create account.");
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const errorMessage = error.response?.data?.message || "Something went wrong.";
+          Alert.alert("Error", errorMessage);
+        } else {
+          console.error("Error:", error);
+          Alert.alert("Error", "Something went wrong. Please try again.");
+        }
+      }
+    } else {
+      setErrors(validationResult.error);
+      alert("Please complete all required fields correctly.");
+    }
+  };
 
   return (
     <Layout header={"Account Details"} description={"Please fill out all required fields."}>
@@ -78,7 +77,7 @@ export default function AccountDetails() {
             <Input
               className="h-[57px] font-PoppinsRegular"
               placeholder="Username"
-              value={formData.accountDetails.userName}
+              value={RegistrationFormSchema.accountDetails.userName}
               onChangeText={()=>{}}
             />
           </View>
@@ -89,7 +88,7 @@ export default function AccountDetails() {
             <Input
               className="h-[57px] font-PoppinsRegular"
               placeholder="Email"
-              value={formData.accountDetails.email}
+              value={RegistrationFormSchema.accountDetails.email}
               onChangeText={()=>{}}
             />
           </View>
@@ -101,12 +100,12 @@ export default function AccountDetails() {
               <Input
                 className="h-[57px] font-PoppinsRegular"
                 placeholder="Password"
-                value={formData.accountDetails.password}
+                value={RegistrationFormSchema.accountDetails.password}
                 onChangeText={() => {}}
                 secureTextEntry={!showPassword}
               />
 
-              {formData.accountDetails.password.length >= 8 && (
+              {RegistrationFormSchema.accountDetails.password.length >= 8 && (
                 <TouchableWithoutFeedback onPress={() => setShowPassword(!showPassword)}>
                   <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
                     {showPassword ? <Eye className="text-gray-700" /> : <EyeOff className="text-gray-700" />}

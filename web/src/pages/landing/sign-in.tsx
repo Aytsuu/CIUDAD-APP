@@ -37,68 +37,69 @@ export default function SignIn() {
   const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
     setLoading(true);
     setErrorMessage("");
+    console.log("sheesh");
 
     try {
       const response = await axios.post("http://127.0.0.1:8000/user/login/", {
-        email_or_username: data.usernameOrEmail, // Send as one field
+        email_or_username: data.usernameOrEmail,
         password: data.password,
       });
-
+      console.log("Login response:", response.data);
       if (response.status === 200) {
         login({
-          id: response.data.id, 
+          id: response.data.id,
           username: response.data.username,
           email: response.data.email,
           profile_image: response.data.profile_image,
-          token: response.data.access,
-          refresh_token: response.data.refresh, 
           rp: response.data.rp,
           staff: response.data.staff,
+          accessToken: response.data.access,
+          refreshToken: response.data.refresh,
         });
         console.log(response.data.access);
 
         // supabase realtime
-        manageNotificationChannel(response.data.id);
+        // manageNotificationChannel(response.data.id);
 
-        // Generate Firebase Cloud Messaging (FCM) Token
-        generateToken().then((token) => {
-          // Send token to your backend
-          console.log("1: ", token);
-          axios.post(
-            "http://127.0.0.1:8000/notification/save-token/",
-            { token: token },
-            {
-              headers: {
-                Authorization: `Bearer ${response.data.token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+        // // Generate Firebase Cloud Messaging (FCM) Token
+        // generateToken().then((token) => {
+        //   // Send token to your backend
+        //   console.log("1: ", token);
+        //   axios.post(
+        //     "http://127.0.0.1:8000/notification/save-token/",
+        //     { token: token },
+        //     {
+        //       headers: {
+        //         Authorization: `Bearer ${response.data.access}`,
+        //         "Content-Type": "application/json",
+        //       },
+        //     }
+        //   );
 
-          axios.post(
-            "http://127.0.0.1:8000/notification/lists/",
-            {
-              notif_title: "Signed in",
-              notif_message: "You have successfully signed in!",
-              notif_type: "success",
-              notif_deliver_channel: "web",
-              notif_recipient: "user",
-              user_id: `${response.data.id}`,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${response.data.token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+        //   axios.post(
+        //     "http://127.0.0.1:8000/notification/lists/",
+        //     {
+        //       notif_title: "Signed in",
+        //       notif_message: "You have successfully signed in!",
+        //       notif_type: "success",
+        //       notif_deliver_channel: "web",
+        //       notif_recipient: "user",
+        //       user_id: `${response.data.id}`,
+        //     },
+        //     {
+        //       headers: {
+        //         Authorization: `Bearer ${response.data.token}`,
+        //         "Content-Type": "application/json",
+        //       },
+        //     }
+        //   );
 
-          // Set up message listener
-          onMessage(messaging, (payload) => {
-            console.log(payload);
-            // Add code to show notification in UI or update notification count
-          });
-        });
+        //   // Set up message listener
+        //   onMessage(messaging, (payload) => {
+        //     console.log(payload);
+        //     // Add code to show notification in UI or update notification count
+        //   });
+        // });
         navigate("/dashboard");
       }
     } catch (error) {

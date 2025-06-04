@@ -52,41 +52,52 @@ class LoginView(TokenObtainPairView):
             )
 
         try:
+            # Add debug print
+            print(f"Attempting login for: {email_or_username}")
+            
             user = Account.objects.get(
                 Q(email=email_or_username) | Q(username=email_or_username)
             )
+            print(f"User found: {user.username}")
             
             if not user.check_password(password):
+                print("Invalid password")
                 return Response(
                     {"error": "Invalid credentials"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
                 
-            # Generate JWT tokens
+            # Generate tokens
             refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-            print("access token: " + access_token + " refresh token: " + refresh_token)
-            # Fetch additional user data
-            rp_data = ResidentProfileFullSerializer(user.rp).data if hasattr(user, 'rp') and user.rp else None
+            print("Tokens generated successfully")
             
-            staff = None
+            # Debug print serialized data
+            rp_data = None
+            if hasattr(user, 'rp') and user.rp:
+                print(f"Serializing RP for user {user.pk}")
+                rp_data = ResidentProfileFullSerializer(user.rp).data
+                
+            staff_data = None
             if user.rp:
+                print(f"Checking staff for RP {user.rp.pk}")
                 staff = Staff.objects.filter(staff_id=str(user.rp.rp_id)).first()
-            staff_data = StaffFullSerializer(staff).data if staff else None
+                if staff:
+                    staff_data = StaffFullSerializer(staff).data
             
+            print("Returning successful response")
             return Response({
-                "refresh": refresh_token,
-                "access": access_token,
-                "token": access_token,
+                "id": user.id,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
                 "username": user.username,
                 "email": user.email,
-                "profile_image": user.profile_image if user.profile_image else None,
+                "profile_image": user.profile_image.url if user.profile_image else None,
                 "rp": rp_data,
                 "staff": staff_data,
             })
             
         except Account.DoesNotExist:
+            print("User not found")
             return Response(
                 {"error": "Invalid credentials"},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -94,10 +105,10 @@ class LoginView(TokenObtainPairView):
         except Exception as e:
             print(f"Login error: {str(e)}")
             return Response(
-                {"error": "An unexpected error occurred"},
+                {"error": "Internal server error", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-                        
+                                 
 class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Account.objects.all()
     serializer_class = UserAccountSerializer

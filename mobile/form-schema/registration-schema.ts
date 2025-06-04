@@ -38,9 +38,9 @@ export const photoSchema = z.object({
 })
 
 export const RegistrationFormSchema = z.object({
-  verificationSchema,
-  userAccountSchema,
-  personalInfoSchema,
-  uploadIdSchema,
-  photoSchema
-})
+  userAccount: userAccountSchema,
+  verification: verificationSchema,
+  personalInfo: personalInfoSchema,
+  uploadId: uploadIdSchema,
+  photo: photoSchema,
+});

@@ -28,7 +28,7 @@ export default function VerifyEmail() {
 
     console.log('Email:', email);
     console.log('Code:', code);
-    router.push('/forgetpassword'); // Navigate back if successful
+    router.push('/(auth)/forgotpassword'); // Navigate back if successful
   };
 
   return (

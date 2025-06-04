@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { FormProvider } from "@/contexts/RegistrationFormContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
 const defaultValues = generateDefaultValues(RegistrationFormSchema)
@@ -17,6 +18,7 @@ export default () => {
   })
 
   return (
+    <AuthProvider>
     <FormProvider methods={methods}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -25,10 +27,11 @@ export default () => {
         <Stack.Screen name="upload-id" options={{ headerShown: false }} />
         <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />
         <Stack.Screen name="account-details" options={{ headerShown: false }} />
-        <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }}  />
         <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
       </Stack>
     </FormProvider>
+    </AuthProvider>
 
   );
 };

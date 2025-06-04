@@ -14,7 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function MainLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = React.useRef(useAuth()).current;
-   
+
   return (
     <div className="fixed inset-0 flex flex-col bg-none">
       <div className="flex-shrink-0 relative z-10">

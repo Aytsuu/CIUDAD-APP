@@ -1,21 +1,21 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
-  id: string,
+  id: string;
   username: string;
   email: string;
   profile_image: string;
-  token: string;
   rp: any;
   staff: any;
-  refresh_token: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: User) => void;
+  accessToken: string | null;
+  login: (userData: User & { accessToken: string; refreshToken: string }) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
+  getAccessToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,55 +26,73 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("token")
-      ? {
-          id: localStorage.getItem("id") || "",
-          username: localStorage.getItem("username") || "",
-          email: localStorage.getItem("email") || "",
-          profile_image: localStorage.getItem("profile_image") || "",
-          token: localStorage.getItem("token") || "",
-          refresh_token: localStorage.getItem("token") || "",
-          rp: JSON.parse(localStorage.getItem("rp") || "null"),
-          staff: JSON.parse(localStorage.getItem("staff") || "null"),
-        }
+    // Only store non-sensitive user data in localStorage
+    const storedUser = localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user") || "null")
       : null;
 
-    setUser(storedUser);  
+    setUser(storedUser);
   }, []);
 
-  const login = (userData: User) => {
-    localStorage.setItem("id", userData.id);
-    localStorage.setItem("username", userData.username);
-    localStorage.setItem("email", userData.email);
-    localStorage.setItem("profile_image", userData.profile_image);
-    localStorage.setItem("token", userData.token);
-    setUser(userData);
-  };
+  const login = (userData: User & { accessToken: string; refreshToken: string }) => {
+    // Store user data (non-sensitive) in localStorage
+    localStorage.setItem("user", JSON.stringify({
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      profile_image: userData.profile_image,
+      rp: userData.rp,
+      staff: userData.staff
+    }));
 
-  const logout = () => {
-    localStorage.clear();
-    setUser(null);
-  };
-
-  const updateUser = (updates: Partial<User>) => { 
-    setUser(prev => {
-      if (!prev) return prev;
-
-      const updatedUser = { ...prev, ...updates }; 
-
-      Object.entries(updates).forEach(([key, value]) => {
-        localStorage.setItem(key, value || "");
-      });
-      
-      return updatedUser; 
+    // Store tokens in memory only
+    setAccessToken(userData.accessToken);
+    setRefreshToken(userData.refreshToken);
+    setUser({
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      profile_image: userData.profile_image,
+      rp: userData.rp,
+      staff: userData.staff
     });
   };
 
+  const logout = () => {
+    // Clear everything
+    localStorage.removeItem("user");
+    setAccessToken(null);
+    setRefreshToken(null);
+    setUser(null);
+  };
+
+  const updateUser = (updates: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      
+      const updatedUser = { ...prev, ...updates };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
+  const getAccessToken = () => {
+    return accessToken;
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      accessToken,
+      login, 
+      logout, 
+      updateUser,
+      getAccessToken
+    }}>
       {children}
     </AuthContext.Provider>
   );

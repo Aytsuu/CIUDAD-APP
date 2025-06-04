@@ -12,7 +12,10 @@ export interface MediaFile {
 export interface BlotterFormValues {
   id: string,
   bc_complainant: string;
-  bc_cmplnt_address: string;
+  bc_street: string;
+  bc_barangay: string;
+  bc_city: string;
+  bc_province: string;
   bc_accused: string;
   bc_accused_address: string;
   bc_incident_type: string;
@@ -29,3 +32,13 @@ export interface BlotterRecord extends Omit<BlotterFormValues, 'bc_evidence'> {
   media?: MediaFile[]; 
 }
 
+export type AccusedPerson = {
+  lastname: string;
+  firstname: string;
+  middlename: string;
+  suffix: string;
+  street: string;
+  barangay: string;
+  city: string;
+  province: string;
+};
