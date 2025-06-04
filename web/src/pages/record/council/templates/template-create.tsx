@@ -1184,7 +1184,10 @@ function TemplateCreateForm() {
       temp_header: "",
       temp_below_headerContent: "",
       temp_title: "CERTIFICATION",
+      temp_subtitle: "",
       temp_paperSize: "letter",
+      temp_margin: "normal",
+      temp_filename: "",
       temp_w_sign: false,
       temp_w_seal: false,
       temp_body: "",
@@ -1212,6 +1215,16 @@ function TemplateCreateForm() {
         <div className="flex flex-col p-2 min-h-0 h-auto rounded-lg overflow-auto">
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+
+                 {/* Filename field*/}               
+                <FormInput
+                  control={form.control}
+                  name="temp_filename"
+                  label="Filename"
+                  placeholder="Enter Filename"
+                  readOnly={false}
+                />                
+                            
                 {/* Header + Footer Container */}
                 <div className="flex flex-row gap-6 items-stretch">
                   {/* Document Header */}
@@ -1312,7 +1325,7 @@ function TemplateCreateForm() {
                         <TextareaTab
                           className="p-2 shadow-sm h-44 mt-[12px] rounded-[5px] resize-none"
                           style={{ 
-                            width: `${getTextareaWidth(form.watch('temp_paperSize'))}px`,
+                            width: `${getTextareaWidth(form.watch('temp_paperSize'), form.watch('temp_margin'))}px`,
                             fontFamily: form.watch('temp_w_summon') ? 'VeraMono' : 'Times New Roman',
                             fontSize: '10pt' 
                           }}
@@ -1338,31 +1351,59 @@ function TemplateCreateForm() {
                 />
 
                 {/* Title and Paper Size in same row */}
-                <div className="flex flex-row gap-2">
-                  <div className="flex-1">
-                    <FormInput
-                      control={form.control}
-                      name="temp_title"
-                      label="Title"
-                      placeholder="Enter Template Title"
-                      readOnly={false}
-                    />
-                  </div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-row gap-2">
+                    <div className="flex-1">
+                      <FormInput
+                        control={form.control}
+                        name="temp_title"
+                        label="Title"
+                        placeholder="Enter Template Title"
+                        readOnly={false}
+                      />
+                    </div>
 
-                  <div className="flex-1">
-                    <FormSelect
-                      control={form.control}
-                      name="temp_paperSize"
-                      label="Paper Size"
-                      options={[
-                        { id: "a4", name: "A4" },
-                        { id: "letter", name: "Letter" },
-                        { id: "legal", name: "Legal" },
-                      ]}
-                      readOnly={false}
-                    />
+                    <div className="flex-1">
+                      <FormSelect
+                        control={form.control}
+                        name="temp_paperSize"
+                        label="Paper Size"
+                        options={[
+                          { id: "a4", name: "A4" },
+                          { id: "letter", name: "Letter" },
+                          { id: "legal", name: "Legal" },
+                        ]}
+                        readOnly={false}
+                      />
+                    </div>
+                  </div>
+                  
+
+                  <div className="flex flex-row gap-2">
+                    <div className="flex-1">
+                      <FormInput
+                        control={form.control}
+                        name="temp_subtitle"
+                        label="Subtitle"
+                        placeholder="Enter Subtitle (optional)"
+                        readOnly={false}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <FormSelect
+                        control={form.control}
+                        name="temp_margin"
+                        label="Margin"
+                        options={[
+                          { id: "normal", name: "Normal" },
+                          { id: "narrow", name: "Narrow" },
+                        ]}
+                        readOnly={false}
+                      />
+                    </div>
                   </div>
                 </div>
+
 
                 {/* Template Body */}
                 <FormField
@@ -1375,7 +1416,7 @@ function TemplateCreateForm() {
                           <TextareaTab
                             className="p-2 shadow-sm h-96 mt-[12px] rounded-[5px] resize-none"
                             style={{ 
-                              width: `${getTextareaWidth(form.watch('temp_paperSize'))}px`,
+                              width: `${getTextareaWidth(form.watch('temp_paperSize'), form.watch('temp_margin'))}px`,
                               fontFamily: form.watch('temp_w_summon') ? 'VeraMono' : 'Times New Roman',
                               fontSize: '10pt' 
                             }}
@@ -1425,11 +1466,13 @@ function TemplateCreateForm() {
                         headerImage={form.watch('temp_header')}
                         belowHeaderContent={form.watch('temp_below_headerContent')}
                         title={form.watch('temp_title')}
+                        subtitle={form.watch('temp_subtitle')}
                         body={form.watch('temp_body')}
                         withSeal={form.watch('temp_w_seal')}
                         withSignature={form.watch('temp_w_sign')}
                         withSummon={form.watch('temp_w_summon')} 
                         paperSize={form.watch('temp_paperSize')} 
+                        margin={form.watch('temp_margin')}
                       />
                     </div>
                   }

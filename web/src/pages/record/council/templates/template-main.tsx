@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Plus } from "lucide-react";
 import CardLayout from "@/components/ui/card/card-layout";
@@ -17,6 +18,7 @@ export const templateRecord: Template[] = [
 ];
 
 function TemplateMainPage() {
+
     return (
         <div className="w-full h-full">
             <div className="flex flex-col mb-4">
@@ -33,7 +35,7 @@ function TemplateMainPage() {
                             <Plus size={20} /> Create Template
                         </Button>
                     }
-                    className="max-w-[52%] h-[90%] flex flex-col overflow-auto scrollbar-custom"
+                    className="max-w-[60%] h-[90%] flex flex-col overflow-auto scrollbar-custom"
                     title="Create New Template"
                     description="Add new certification template."
                     mainContent={
