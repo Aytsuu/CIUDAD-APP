@@ -195,23 +195,9 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
 
                 <FormComboCheckbox
                   control={form.control}
-                  name="barangayCouncil"
-                  label="BARANGAY COUNCIL"
+                  name="staffAttendees"
+                  label="BARANGAY STAFF"
                   options={CouncilCategory}
-                />
-
-                <FormComboCheckbox
-                  control={form.control}
-                  name="gadCommittee"
-                  label="GAD COMMITTEE"
-                  options={GADCategory}
-                />
-
-                <FormComboCheckbox
-                  control={form.control}
-                  name="wasteCommittee"
-                  label="WASTE COMMITTEE"
-                  options={WasteCategory}
                 />
               </>
             )}
