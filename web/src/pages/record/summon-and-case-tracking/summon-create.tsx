@@ -19,12 +19,12 @@ function CreateNewSummon(){
     
     const form = useForm<z.infer<typeof SummonSchema>>({
             resolver: zodResolver(SummonSchema),
-                defaultValues: {
-                    reason: "",
-                    hearingDate: "",
-                    hearingTime: "",
-                },
-            });
+            defaultValues: {
+                reason: "",
+                hearingDate: "",
+                hearingTime: "",
+            },
+     });
     return(
         <div>
             <Form {...form}>

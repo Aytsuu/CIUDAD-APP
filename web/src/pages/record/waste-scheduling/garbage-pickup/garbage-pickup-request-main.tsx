@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import RejectPickupForm from "./reject-request-form";
 
 type PickupRequest = {
     garb_id: string;
@@ -121,9 +122,13 @@ function GarbagePickupRequestMain(){
                         trigger={<div className="bg-[#17AD00] hover:bg-[#17AD00]/80 border text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"> <CheckCircle size={16} /></div> }  
                         content="Accept"
                     />
-                    <TooltipLayout 
-                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <XCircle size={16} /></div>                 }  
-                        content="Reject"
+                    <DialogLayout
+                        title="Confirm Rejection"
+                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <XCircle size={16} /></div>}
+                        description="Reject the selected garbage pickup request. A reason is required before confirming this action."
+                        mainContent={
+                            <RejectPickupForm/>
+                        }
                     />
                 </div>
             )
