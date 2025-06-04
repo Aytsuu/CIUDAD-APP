@@ -148,6 +148,30 @@ function WasteColSched() {
                     )}
                 />
 
+                <FormField
+                    control={form.control}
+                    name="driver"
+                    render={({ field }) => (
+                        <FormItem className="mt-4">
+                            <Label>Collection Truck:</Label>
+                            <FormControl>
+                                <SelectLayout
+                                    className="w-full"
+                                    label="Select Truck"
+                                    placeholder="Select Truck"
+                                    options={[
+                                        { id: 'Truck 1', name: 'Truck 1' },
+                                        { id: 'Truck 2', name: 'Truck 2' }
+                                    ]}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 {/* Date and Time */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <FormField

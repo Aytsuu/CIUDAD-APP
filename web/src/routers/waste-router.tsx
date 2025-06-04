@@ -1,6 +1,6 @@
 import WasteIllegalDumping from "@/pages/report/waste/waste-illegal-dumping";
 import WasteMainScheduling from "@/pages/record/waste-scheduling/waste-main-sched-page";
-import GarbagePickupRequestMain from "@/pages/record/waste-scheduling/garbage-pickup/garbage-pickup-request-main";
+import WastePersonnel from "@/pages/record/waste-scheduling/waste-personnel/waste-personnel-truck";
 
 // Creating routes
 export const waste_router = [
@@ -12,8 +12,8 @@ export const waste_router = [
       path: '/waste-illegaldumping-report',
       element: <WasteIllegalDumping/>
     },
-    {
-      path: '/garbage-pickup-request',
-      element: <GarbagePickupRequestMain/>
-    }
+        {
+      path: '/waste-personnel',
+      element: <WastePersonnel/>
+    },
   ]

@@ -7,22 +7,28 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import WasteIllegalDumpingDetails from "./waste-illegal-dumping-view-details";
+import { useWasteReport, type WasteReport } from "./queries/waste-ReportGetQueries";
+import { useDeleteWasteReport } from "./queries/waste-ReportDeleteQueries";
 
-type Report = {
-  reportNo: string;
-  reportMatter: string;
-  location: string;
-  reportDetails: string;
-  violator: string;
-  reportedBy: string;
-  contactNo: string;
-  dateTime: string;
-};
 
-const columns: ColumnDef<Report>[] = [
+
+function WasteIllegalDumping() {
+
+  const { data: fetchedData = [], isLoading } = useWasteReport();
+
+  // const { mutate: deleteWaste } = useDeleteWasteReport();
+
+  // const handleDelete = (rep_id: number) => {
+  //     deleteWaste(rep_id);
+  // };  
+
+  const columns: ColumnDef<WasteReport>[] = [
   {
-    accessorKey: "reportNo",
+    accessorKey: "rep_id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -33,103 +39,97 @@ const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("reportNo")}</div>
+      <div className="capitalize">{row.getValue("rep_id")}</div>
     ),
   },
   {
-    accessorKey: "reportMatter",
+    accessorKey: "rep_status",
+    header: "Report Status",
+  },
+  {
+    accessorKey: "rep_matter",
     header: "Report Matter",
   },
   {
-    accessorKey: "location",
+    accessorKey: "rep_location",
     header: "Location",
   },
   {
-    accessorKey: "reportDetails",
+    accessorKey: "rep_add_details",
     header: "Report Details",
   },
   {
-    accessorKey: "violator",
+    accessorKey: "rep_violator",
     header: "Violator",
   },
   {
-    accessorKey: "reportedBy",
-    header: "Reported By",
+    accessorKey: "rep_complainant",
+    header: "Complainant",
   },
   {
-    accessorKey: "contactNo",
+    accessorKey: "rep_contact",
     header: "Contact No.",
   },
   {
-    accessorKey: "dateTime",
-    header: "Date and Time",
-  },
-  {
-    accessorKey: "image",
-    header: "Image",
-    cell: ({ row }) => (
-      <DialogLayout
-        trigger={
-          <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            View
-          </div>
-        }
-        className="max-w-[50%] h-2/3 flex flex-col"
-        title="Image Details"
-        description="Here is the image related to the report."
-        mainContent={
-          <img
-            src="path_to_your_image.jpg"
-            alt="Report Image"
-            className="w-full h-auto"
-          />
-        }
-      />
-    ),
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    cell: ({ row }) => (
+    accessorKey: "rep_image",
+    header: "Details",
+    cell: ({row}) => (
       <TooltipLayout
         trigger={
-          <div className="w-[35px] h-[35px] bg-[#ff2c2c] text-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px]">
-            <Trash size={16} />
-          </div>
+          <DialogLayout
+            trigger={
+              <div className="px-2.5 py-1.5 border border-gray flex justify-center items-center rounded-[5px] shadow-sm text-[13px] cursor-pointer">
+                View
+              </div>
+            }
+            className="max-w-[50%] max-h-[70%] overflow-auto p-7 verflow-y-auto"
+            title={`Report No. ${String(row.getValue("rep_id"))}`}
+            description=""
+            mainContent={
+              <div className="flex flex-col">
+                <WasteIllegalDumpingDetails
+                  rep_id = {row.original.rep_id}
+                  rep_image = {row.original.rep_image}
+                  rep_matter = {row.original.rep_matter}
+                  rep_location = {row.original.rep_location}
+                  rep_add_details = {row.original.rep_add_details}
+                  rep_violator = {row.original.rep_violator}
+                  rep_contact = {row.original.rep_contact}
+                  rep_status = {row.original.rep_status}
+                  rep_date = {row.original.rep_date}
+                  rep_date_resolved = {row.original.rep_date_resolved}   
+                  rep_resolved_img = {row.original.rep_resolved_img}             
+                />
+              </div>
+            }
+          />       
         }
-        content="Delete"
+        content="View Details"   
       />
     ),
   },
+  // {
+  //   accessorKey: "action",
+  //   header: "Action",
+  //   cell: ({row}) => (
+  //     <TooltipLayout
+  //       trigger={
+  //           <div className="flex items-center h-8">
+  //               <ConfirmationModal
+  //                   trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center" > <Trash size={16} /></div>}
+  //                   title="Confirm Delete"
+  //                   description="Are you sure you want to delete this report?"
+  //                   actionLabel="Confirm"
+  //                   onClick={() => handleDelete(row.original.rep_id)} 
+  //               />                    
+  //           </div>                   
+  //       }  
+  //       content="Delete"
+  //     />
+  //   ),
+  // },
 ];
 
-const bodyData: Report[] = [
-  {
-    reportNo: "0001",
-    reportMatter: "Littering, Illegal dumping, Illegal disposal of garbage",
-    location: "Sitio 1",
-    reportDetails:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    violator: "Unknown",
-    reportedBy: "Anonymous",
-    contactNo: "09xxxxxxxx",
-    dateTime: "01/11/25 05:00PM",
-  },
-  {
-    reportNo: "0002",
-    reportMatter: "Urinating, defecating, spitting in a public place",
-    location: "Sitio 1",
-    reportDetails:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    violator: "Unknown",
-    reportedBy: "Anonymous",
-    contactNo: "09xxxxxxxx",
-    dateTime: "01/11/25 05:00PM",
-  },
-];
-
-function WasteIllegalDumping() {
-  const data = bodyData;
   const filterOptions = [
     { id: "0", name: "All Report Matter" }, // Added "All Report Category" option
     {
@@ -164,17 +164,13 @@ function WasteIllegalDumping() {
   ];
 
   const [selectedFilterId, setSelectedFilterId] = useState("0");
-  const selectedFilterName =
-    filterOptions.find((option) => option.id === selectedFilterId)?.name || "";
+  const selectedFilterName = filterOptions.find((option) => option.id === selectedFilterId)?.name || "";
 
-  const filteredData =
-    selectedFilterId === "0"
-      ? data
-      : data.filter(
-          (item) =>
-            item.reportMatter.trim().toLowerCase() ===
-            selectedFilterName.trim().toLowerCase()
-        );
+  const filteredData = selectedFilterId === "0"
+    ? fetchedData
+    : fetchedData.filter(item => 
+        item.rep_matter.trim().toLowerCase() === selectedFilterName.trim().toLowerCase()
+      );
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(filteredData.length / 12);
@@ -185,6 +181,18 @@ function WasteIllegalDumping() {
   const startIndex = (currentPage - 1) * 12;
   const endIndex = startIndex + 12;
   const currentRows = filteredData.slice(startIndex, endIndex);
+
+
+  if (isLoading) {
+    return (
+        <div className="w-full h-full">
+          <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+          <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+          <Skeleton className="h-10 w-full mb-4 opacity-30" />
+          <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+        </div>
+      );
+  }
 
   return (
     <div className="w-full h-full">

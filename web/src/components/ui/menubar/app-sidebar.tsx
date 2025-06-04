@@ -134,6 +134,10 @@ const items: MenuItem[] = [
     url: "/garbage-pickup-request"
   },
   {
+    title: "Waste Personnel & Collection Vehicle",
+    url: "/waste-personnel"
+  },
+  {
     title: "Announcement",
     url: "/announcement",
   },
