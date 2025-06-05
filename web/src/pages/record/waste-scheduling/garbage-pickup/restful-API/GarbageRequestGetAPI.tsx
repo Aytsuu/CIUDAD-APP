@@ -48,7 +48,8 @@ export const getGarbagePendingRequest = async () => {
             garb_pref_time: item.garb_pref_time,
             garb_created_at: item.garb_created_at,
             garb_additional_notes: item.garb_additional_notes,
-            file_id: item.file?.url || '',
+            file_id: item.file?.file_url || '',
+
         }));
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);

@@ -58,3 +58,9 @@ class GarbagePickupRequestSerializer(serializers.ModelSerializer):
         if obj.rp and obj.rp.per:
             return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
         return "Unknown"
+    
+    
+class PickupRequestDecisionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pickup_Request_Decision
+        fields = '__all__' 

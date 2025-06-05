@@ -2,6 +2,7 @@ import z from 'zod'
 
 export const RejectPickupRequestSchema = z.object({
   reason: z.string().min(1, { message: "Reason is required." }),
+  garb_id: z.string().default('')
 });
 
 export const AcceptPickupRequestSchema = z.object({

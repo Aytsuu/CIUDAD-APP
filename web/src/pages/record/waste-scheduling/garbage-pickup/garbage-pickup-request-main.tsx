@@ -5,7 +5,7 @@ import { Search, FileInput } from "lucide-react";
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { PendingColumns } from "./table-columns/pending-table-columns";
+import { getPendingColumns } from "./table-columns/pending-table-columns";
 import { AcceptedColumns } from "./table-columns/accepted-table-columns";
 import { RejectedColumns } from "./table-columns/rejected-request-columns";
 import { CompletedColumns } from "./table-columns/completed-request-columns";
@@ -79,9 +79,12 @@ export const SampleData: RequestData[] = [
 ];
 
 function GarbagePickupRequestMain() {
+  const [editingRowId, setEditingRowId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
-  const [isLoading, setIsLoading] = useState(false);
-  const {data: pendingReqData = []}= useGetGarbagePendingRequest();
+  const {data: pendingReqData = [], isLoading}= useGetGarbagePendingRequest(); 
+  const pendingColumns = getPendingColumns({ editingRowId, setEditingRowId });
+  
+
 
   console.log("Pending Data:", pendingReqData)
 
@@ -171,7 +174,7 @@ function GarbagePickupRequestMain() {
 
           <TabsContent value="pending">
             <DataTable 
-              columns={PendingColumns} 
+              columns={pendingColumns} 
               data={pendingReqData}
             />
           </TabsContent>

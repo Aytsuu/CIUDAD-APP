@@ -186,16 +186,20 @@ class Garbage_Pickup_Request(models.Model):
     
 class Pickup_Request_Decision(models.Model):
     dec_id = models.BigAutoField(primary_key=True)
-    dce_rejection_reason = models.TextField()
-    dec_date = models.DateField(default=datetime.now)
-    garb_id = models.ForeignKey(Garbage_Pickup_Request, on_delete=models.CASCADE)
-    staff_id = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
+    dec_rejection_reason = models.TextField()
+    dec_date = models.DateTimeField(default=datetime.now)
+    garb_id = models.ForeignKey(
+        Garbage_Pickup_Request,
+        on_delete=models.CASCADE,
+        db_column='garb_id' 
     )
+    # staff_id = models.ForeignKey(
+    #     'administration.Staff',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     db_column='staff_id'
+    # )
 
     class Meta:
         db_table = 'pickup_request_decision'

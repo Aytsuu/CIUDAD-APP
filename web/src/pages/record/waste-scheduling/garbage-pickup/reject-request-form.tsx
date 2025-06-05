@@ -5,11 +5,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import {z} from "zod"
+import { useAddDecision } from "./queries/GarbageRequestInsertQueries";
 
-function RejectPickupForm(){
+
+function RejectPickupForm({garb_id, onSuccess}:{
+    garb_id: string;
+    onSuccess?: () => void;
+}){
+
+    const{mutate: createDecision} = useAddDecision(onSuccess)
 
     const onSubmit = (value: z.infer<typeof RejectPickupRequestSchema>) => {
         console.log("Data: ", value);
+        createDecision({
+            ...value,
+            garb_id: garb_id,
+        })
     };
 
     const form = useForm<z.infer<typeof RejectPickupRequestSchema>>({
