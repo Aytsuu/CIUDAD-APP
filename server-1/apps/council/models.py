@@ -67,9 +67,9 @@ class CouncilAttendance(models.Model):
 class Template(models.Model):
     temp_id = models.BigAutoField(primary_key=True)
     temp_header = models.CharField(max_length=200)
-    temp_below_headerContent = models.CharField(max_length=999)
+    temp_below_headerContent = models.CharField(max_length=999, null=True, blank=True)
     temp_title = models.CharField(max_length=200)
-    temp_subtitle = models.CharField(max_length=200, null=True)
+    temp_subtitle = models.CharField(max_length=200, null=True, blank=True)
     temp_w_sign = models.BooleanField(default=False)
     temp_w_seal = models.BooleanField(default=False)
     temp_w_summon = models.BooleanField(default=False)
