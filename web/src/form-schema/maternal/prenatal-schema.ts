@@ -39,6 +39,7 @@ export const PrenatalFormSchema = z.object({
         motherWt: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
         motherHt: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
         motherBMI: positiveNumberSchema.refine(val => val >= 1, { message: "Value must be at least 1" }),
+        motherBMICategory: z.string()
     }),
 
     // obstretic history
@@ -54,6 +55,7 @@ export const PrenatalFormSchema = z.object({
     // medical history
     medicalHistory: z.object({
         prevIllness: z.string().optional(),
+        prevIllnessYr: positiveNumberSchema.optional(),
         prevHospitalization: z.string().optional(),
         prevHospitalizationYr: positiveNumberSchema.optional(),
     }),
@@ -90,20 +92,13 @@ export const PrenatalFormSchema = z.object({
     }),
 
     // laboratory results
-    labResults: z.object({
-        urinalysisDate: z.string().date().optional(),
-        cbcDate: z.string().date().optional(),
-        sgotSgptDate: z.string().date().optional(),
-        creatinineDate: z.string().date().optional(),
-        buaBunDate: z.string().date().optional(),
-        syphillisDate: z.string().date().optional(),
-        hivTestDate: z.string().date().optional(),
-        hepaBDate: z.string().date().optional(),
-        bloodTypingDate: z.string().date().optional(),
-        ogct50Date: z.string().date().optional(),
-        ogct100Date: z.string().date().optional(),
-        laboratoryRemarks: z.string().optional(),
-    }),
+    labResults: z.array(z.object({
+        lab_type: z.enum(['urinalysis', 'cbc', 'sgot_sgpt', 'creatinine_serum', 'bua_bun', 'syphilis','hiv_test', 'hepa_b', 'blood_typing', 'ogct_50gms', 'ogct_100gms']),
+        resultDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD."),
+        documentPath: z.string(),
+        labRemarks: z.string().optional(),
+    })),
+
 
     // follow-up schedule
     followUpSchedule: z.object({

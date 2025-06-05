@@ -11,6 +11,7 @@ export const PostPartumSchema = z.object({
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
         husbandMName: z.string().optional(),
+        address: z.string().optional()
     }),
 
     postpartumInfo: z.object({

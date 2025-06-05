@@ -12,9 +12,6 @@ import PrenatalFormSecPg from "./prenatal-form-page2"
 import PrenatalFormThirdPg from "./prenatal-form-page3"
 import PrenatalFormFourthPq from "./prenatal-form-page4"
 
-import { Card } from "@/components/ui/card/card"
-
-// import { Button } from "@/components/ui/button"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 
 
@@ -29,14 +26,9 @@ export default function PrenatalForm(){
     })
 
     // set to next page
-    const nextPage = () => {
-        setCurrentPage((prev) => prev + 1);
-        // window.scrollTo(0, 0);
-    }
-
-    const prevPage = () => {
-        setCurrentPage((prev) => prev -1);
-    }
+    const nextPage = () => { setCurrentPage((prev) => prev + 1); }
+    // set to prev page
+    const prevPage = () => { setCurrentPage((prev) => prev -1); }
 
 
     return(
@@ -44,7 +36,6 @@ export default function PrenatalForm(){
             <FormProvider {...form}>
                 {currentPage === 1 && (
                     <PrenatalFormFirstPg 
-                        form={form}
                         onSubmit={()=>nextPage()}
                     />
                 )}

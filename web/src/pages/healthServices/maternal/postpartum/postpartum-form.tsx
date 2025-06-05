@@ -1,58 +1,48 @@
-import { UseFormReturn } from "react-hook-form"
+"use client"
 import { z } from "zod"
 
-import { Form } from "@/components/ui/form/form"
-import { FormInput } from "@/components/ui/form/form-input"
+import { generateDefaultValues } from "@/helpers/generateDefaultValues"
+import { FormProvider, useForm } from "react-hook-form";
 
 import { PostPartumSchema } from "@/form-schema/maternal/postpartum-schema"
+import PostpartumFormFirstPg from "./postpartum-form-page1"
+import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
+import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export default function PostpartumForm(
-    {form, onSubmit}: {
-        form: UseFormReturn<z.infer<typeof PostPartumSchema>>,
-        onSubmit: () => void,
+export default function PostpartumForm(){
+    const defaultValues = generateDefaultValues(PostPartumSchema);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const form = useForm<z.infer<typeof PostPartumSchema>>({
+        resolver: zodResolver(PrenatalFormSchema),
+        defaultValues   
+    })
+
+    const nextPage = () => {
+        setCurrentPage((prev) => prev + 1);
     }
-){
 
-    const submit = () => {
-        form.trigger(['mothersPersonalInfo', 'postpartumInfo']).then((isValid) => {
-            if(isValid) {
-                onSubmit();
-            }
-        })
+    const prevPage = () => {
+        setCurrentPage((prev) => prev - 1);
     }
 
     return (
-        <div className="flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
-            <div className="pb-4">
-                <h2 className="text-3xl font-bold text-center">POSTPARTUM RECORD</h2>
-            </div>
-            {/* forms */}
-            <Form {...form}>
-                <form onSubmit={(e) => {
-                    e.preventDefault();
-                    submit();
-                }}
-                >
-                    <div>
-                        <FormInput control={form.control} label="Last Name" name="mothersPersonalInfo.motherLName" placeholder="Last Name"/>
-                        <FormInput control={form.control} label="First Name" name="mothersPersonalInfo.motherFName" placeholder="First Name"/>
-                        <FormInput
-                            control={form.control}
-                            label="Middle Name"
-                            name="mothersPersonalInfo.motherLName"
-                            placeholder="Last Name"
-                        />
-                        <FormInput
-                            control={form.control}
-                            label="Last Name"
-                            name="mothersPersonalInfo.motherLName"
-                            placeholder="Last Name"
-                        />
-                    </div>
-                </form>
-                
-            </Form>
-            
+        <div>
+            <FormProvider {...form}>
+                {currentPage === 1 && (
+                    <PostpartumFormFirstPg 
+                        form={form}
+                        onSubmit={()=>nextPage()}
+                    />
+                )}
+                {/* {currentPage === 2 && (
+                    <PostpartumFormFirstPg 
+                        form={form}
+                        onSubmit={()=>nextPage()}
+                    />
+                )} */}
+            </FormProvider>
         </div>
     )
 }
