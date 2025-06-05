@@ -40,6 +40,6 @@ urlpatterns = [
     # path('treasurer/', include('apps.treasurer.urls')),
     # path('donation/', include('apps.donation.urls')),
     # path('gad/', include('apps.gad.urls')),   
+    # path('medical-consultation/', include("apps.medicalConsultation.urls")),
 ]
-    path('medical-consultation/', include("apps.medicalConsultation.urls")),
-]
+

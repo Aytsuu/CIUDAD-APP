@@ -1,21 +1,32 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { ArrowLeft } from 'lucide-react-native';
+import { router } from 'expo-router';
 
 export default function FamilyPlanning() {
   return (
     <ScrollView className="bg-white">
       <View >
-        <Image 
-          source={require('@/assets/images/Health/Home/family.jpg')}  
-          resizeMode='center'
+        <Image
+          source={require('@/assets/images/Health/Home/family.jpg')}
+          resizeMode="cover"
+          style={{ width: '100%', height: 250, justifyContent: 'flex-end' }}
         />
         <View className="absolute inset-0 bg-black opacity-50" />
+
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute top-12 left-4 bg-white/20 p-2 rounded-full z-10"
+        >
+          <ArrowLeft size={24} color="#fff" />
+        </TouchableOpacity>
+
         <View className="absolute bottom-0 left-0 right-0 p-6">
           <Text className="text-white text-2xl font-bold italic">
             Your Family, Your Future
           </Text>
-          <Text className="text-white text-xl italic">
+          <Text className="text-white text-l italic">
             Plan It Right
           </Text>
         </View>
@@ -77,8 +88,8 @@ export default function FamilyPlanning() {
 
       {/* Free Supplies Section */}
       <View className="mx-6 mb-6">
-        <View className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-xl p-4">
-          <Text className="text-lg font-bold text-white">Available Free Supplies</Text>
+        <View className="bg-blue-500 rounded-t-xl p-4">
+          <Text className="text-lg font-bold text-white">Available free supplies</Text>
         </View>
         <View className="bg-blue-50 p-4 rounded-b-xl shadow-sm">
           <View className="flex-row items-center mb-2">
@@ -102,13 +113,13 @@ export default function FamilyPlanning() {
 
       {/* Visit Us Section */}
       <View className="mx-6 mb-8">
-        <TouchableOpacity className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-xl shadow-md">
-          <Text className="text-white font-bold text-center text-lg">VISIT US TODAY</Text>
-        </TouchableOpacity>
-        
-        <View className="mt-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+        <View className="bg-green-500 rounded-t-xl p-4 flex-row items-center">
+          <Text className="text-lg font-bold text-white ">VISIT US TODAY!</Text>
+        </View>
+
+        <View className="bg-green-50 p-4 rounded-b-xl shadow-sm">
           <Text className="text-gray-700 text-center">
-            Services and consultations are available every day at the barangay hall — visit us for guidance and support!
+            Services and consultations are available <Text className="font-bold">every day</Text> at the barangay hall — visit us for guidance and support!
           </Text>
         </View>
       </View>

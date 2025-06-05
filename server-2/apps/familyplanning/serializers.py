@@ -12,10 +12,7 @@ class FP_TypeSerializer(serializers.ModelSerializer):
         model = FP_type
         fields = '__all__'
         
-class Illness_Serializer(serializers.ModelSerializer):
-    class Meta:
-        model = Illness
-        fields = '__all__'
+
 
 class MedicalHistorySerializer(serializers.ModelSerializer):
     class Meta:

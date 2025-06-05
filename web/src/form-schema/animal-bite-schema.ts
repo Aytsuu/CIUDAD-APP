@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 const ReferralFormSchema = z.object({
-  pat_id: z.string(),
+  pat_id: z.string().min(1, "Patient selection is required"),
   receiver: z.string().nonempty("Receiver is required"),
   sender: z.string().nonempty("Sender is required"),
   date: z.string().nonempty("Date is required"),
@@ -21,7 +21,7 @@ const ReferralFormSchema = z.object({
   biting_animal: z.string().nonempty("Biting animal is required"),
  
   p_actions: z.string().nonempty("Actions needed"),
-  p_referred: z.string().nonempty("Referred required")
+  p_referred: z.string().nonempty("Referred by required")
 })
 
 export default ReferralFormSchema

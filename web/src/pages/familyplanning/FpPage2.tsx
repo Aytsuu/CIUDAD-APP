@@ -64,6 +64,7 @@ export default function FamilyPlanningForm2({ onPrevious1, onNext3, updateFormDa
       <div className="rounded-lg w-full p-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <h5 className="text-lg text-right font-semibold mb-2 ">Page 2</h5>
             <div className="grid grid-cols-2 gap-6">
               {/* Medical History Section */}
               <div className="p-1">

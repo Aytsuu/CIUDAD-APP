@@ -264,7 +264,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
           <ChevronLeft />
         </Button>
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 p-4 text-center">Family Planning (FP) Form 1</h2>
-
+        <h5 className="text-lg text-right font-semibold mb-2 ">Page 1</h5>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-6">
             <div className="bg-gray-50 p-4 rounded-md">
@@ -632,7 +632,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData }
                     />
                   )}
 
-                  {/* {(() => {
+                  {(() => {
                     const methodUsed = form.watch("methodCurrentlyUsed")
                     return (
                       (methodUsed === "Others" || methodUsed === "Source") && (

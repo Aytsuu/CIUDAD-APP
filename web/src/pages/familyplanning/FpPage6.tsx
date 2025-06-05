@@ -107,6 +107,7 @@ export default function FamilyPlanningForm6({ onPrevious5, onSubmitFinal, update
   return (
     <Card>
       <CardHeader>
+        <h5 className="text-lg text-right font-semibold mb-2 ">Page 6</h5>
         <CardTitle className="mb-8">Service Provision Record</CardTitle>
       </CardHeader>
 

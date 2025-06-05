@@ -1,23 +1,30 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TouchableWithoutFeedback, Image, ImageBackground } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 
 export default function AnimalBites() {
   return (
     <ScrollView className="bg-white">
-      <View>
-        <TouchableWithoutFeedback onPress={() => router.back()}>
-          <Text className="text-black text-[25px]">Back</Text>
-        </TouchableWithoutFeedback>
+      <View style={{ position: 'relative' }}>
         <Image
           source={require('@/assets/images/Health/Home/animalbites.jpg')}
           resizeMode="cover"
+          style={{ width: '100%', height: 250 }}
         />
-        <View className="absolute inset-0 bg-black opacity-80" />
+        <View className="absolute inset-0 bg-black opacity-50" />
+
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="absolute top-12 left-4 bg-white/20 p-2 rounded-full z-10"
+        >
+          <ArrowLeft size={24} color="#fff" />
+        </TouchableOpacity>
+
         <View className="absolute bottom-0 left-0 right-0 p-6">
-          <Text className="text-white text-2xl font-bold">
+          <Text className="text-white text-2xl font-bold italic">
             Animal Bites: First Aid & Prevention
           </Text>
         </View>
@@ -25,14 +32,14 @@ export default function AnimalBites() {
 
       {/* Information Section */}
       <View className="p-6">
-        <Text className="text-gray-700 text-base leading-6">
+        <Text className="text-gray-700 text-justify leading-6">
           Rabies is a deadly virus spread to people from the saliva of infected animals. The rabies virus is usually transmitted through a bite. Once a person begins showing signs and symptoms of rabies, the disease nearly always causes death.
         </Text>
       </View>
 
       {/* Rabies Information Card */}
       <View className="mx-6 mb-6">
-        <View className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-xl p-4 flex-row items-center">
+        <View className="bg-blue-500 rounded-t-xl p-4 flex-row items-center">
           <FontAwesome name="exclamation-triangle" size={20} color="white" />
           <Text className="text-lg font-bold text-white ml-2">DID YOU KNOW?</Text>
         </View>
@@ -43,12 +50,17 @@ export default function AnimalBites() {
           </View>
           <View className="flex-row items-start mb-3">
             <View className="w-2 h-2 rounded-full bg-blue-600 mr-2 mt-2" />
-            <Text className="text-gray-700 flex-1">The Philippines has 200-300 rabies deaths yearly.</Text>
+            <Text className="text-gray-700 flex-1">The Philippines has 200–300 rabies deaths yearly.</Text>
           </View>
-          <View className="flex-row items-start">
+          <View className="flex-row items-start mb-4">
             <View className="w-2 h-2 rounded-full bg-blue-600 mr-2 mt-2" />
-            <Text className="text-gray-700 flex-1">99% of cases come from dog bites.</Text>
+            <Text className="text-gray-700 flex-1">99% of human rabies cases are caused by dog bites.</Text>
           </View>
+
+          {/* Source */}
+          <Text className="text-xs text-blue-700 italic">
+            Source: https://www.who.int/news-room/fact-sheets/detail/rabies
+          </Text>
         </View>
       </View>
 

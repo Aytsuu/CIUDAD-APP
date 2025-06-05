@@ -1,7 +1,7 @@
 from django.db import models
 from .models import *
 from apps.healthProfiling.models import HealthRelatedDetails
-from apps.patientrecords.models import PatientRecord
+from apps.patientrecords.models import PatientRecord, Illness
 
 class FP_Record(models.Model):
     fprecord_id = models.BigAutoField(primary_key=True)
@@ -17,7 +17,6 @@ class FP_Record(models.Model):
     # For philhealth id
     hrd_id = models.ForeignKey(HealthRelatedDetails, on_delete=models.CASCADE, null=True, blank=True)
    
-    # philhealth_id = models.CharField(max_length=14)
     # serv_id = models.ForeignKey(ServicesRecords,on_delete=models.CASCADE)
     # fprecord_id = models.AutoField(primary_key=True)
     # personal = models.ForeignKey(Personal, on_delete=models.CASCADE, null=True)
@@ -40,12 +39,12 @@ class FP_type(models.Model):
     class Meta:
         db_table = "fp_type"
         
-class Illness(models.Model):
-    ill_id = models.AutoField(primary_key=True),
-    ill_name = models.CharField(max_length=50,unique=True)
+# class Illness(models.Model):
+#     ill_id = models.AutoField(primary_key=True),
+#     ill_name = models.CharField(max_length=50,unique=True)
 
-    class Meta:
-        db_table = "illness"
+#     class Meta:
+#         db_table = "illness"
         
 class FP_Medical_history(models.Model):
     medic_id = models.AutoField(primary_key=True)

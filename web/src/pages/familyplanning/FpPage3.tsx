@@ -81,6 +81,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
+            <h5 className="text-lg text-right font-semibold mb-2 ">Page 3</h5>
             <div className="grid md:grid-cols-2 gap-8">
               {/* RISKS FOR STI */}
               <div className="space-y-6 border-r-0 md:border-r pr-0 md:pr-8">
