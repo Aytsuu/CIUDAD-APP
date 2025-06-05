@@ -10,4 +10,7 @@ urlpatterns=[
     path("attendance-sheet/", AttendanceView.as_view(), name="council-attendance-sheet"),
     path("attendance-sheet/<int:att_id>/", AttendanceDetailView.as_view(), name="council-attendance-sheet-detail"),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
+
+    path("template/", TemplateView.as_view(), name="document-template"),
+    path("update-template/<int:temp_id>/", UpdateTemplateView.as_view(), name="update-document-template"),
 ]

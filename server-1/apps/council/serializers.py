@@ -20,6 +20,11 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
         model = CouncilAttendance
         fields = '__all__'
 
+class TemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Template
+        fields = '__all__'
+
 Staff = apps.get_model('administration', 'Staff')
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()

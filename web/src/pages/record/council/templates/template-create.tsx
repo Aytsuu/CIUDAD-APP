@@ -1173,8 +1173,11 @@ import {
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import documentTemplateFormSchema from "@/form-schema/council/documentTemlateSchema";
 import TemplatePreview from "./template-preview";
+import { useTemplateRecord } from "./queries/template-AddQueries";
 
-function TemplateCreateForm() {
+
+
+function TemplateCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const [mediaFiles, setMediaFiles] = useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
 
@@ -1190,9 +1193,12 @@ function TemplateCreateForm() {
       temp_filename: "",
       temp_w_sign: false,
       temp_w_seal: false,
+      temp_w_summon: false,
       temp_body: "",
     },
   });
+
+  const { mutate: createTemplate } = useTemplateRecord(onSuccess);
 
   const isSummonChecked = form.watch('temp_w_summon');
 
@@ -1206,7 +1212,7 @@ function TemplateCreateForm() {
 
 
   function onSubmit(values: z.infer<typeof documentTemplateFormSchema>) {
-    console.log("Values", values);
+    createTemplate (values);
   }
 
 
@@ -1477,7 +1483,7 @@ function TemplateCreateForm() {
                     </div>
                   }
                 />
-                <Button className="flex items-center gap-2">Save</Button>
+                <Button className="flex items-center gap-2">Submit</Button>
                 </div>
             </form>
             </Form>
