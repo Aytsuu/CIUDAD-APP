@@ -206,8 +206,14 @@ class CollectorPersonnelAPIView(APIView):
      
 class GarbagePickupRequestView(generics.ListAPIView):
     serializer_class = GarbagePickupRequestSerializer
-    queryset = Garbage_Pickup_Request.objects.all()
-
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset
 
 class PickupRequestDecisionView(generics.ListCreateAPIView):
     serializer_class = PickupRequestDecisionSerializer

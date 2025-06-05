@@ -14,7 +14,7 @@ export const useAddDecision = (onSuccess?: () => void) => {
                 reason: values.reason
             }),
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: ['rejectGarbageRequest'] });
+                queryClient.invalidateQueries({ queryKey: ['garbageRequest'] });
 
                 toast.loading('Submitting....', {id: "rejectGarbageRequest"});
         
