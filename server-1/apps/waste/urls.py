@@ -33,4 +33,6 @@ urlpatterns = [
     path('waste-drivers/', DriverPersonnelAPIView.as_view(), name='waste-drivers'),
     path('waste-collectors/', CollectorPersonnelAPIView.as_view(), name='waste-collectors'),
 
+    path('garbage-pickup-request/', GarbagePickupRequestView.as_view(), name='garbage-pickup-request')
+
 ]  

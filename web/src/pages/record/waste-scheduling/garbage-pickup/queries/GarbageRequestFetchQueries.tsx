@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { getDrivers } from "../restful-API/GarbageRequestGetAPI";
 import { getTrucks } from "../restful-API/GarbageRequestGetAPI";
 import { getCollectors } from "../restful-API/GarbageRequestGetAPI";
+import { getGarbagePendingRequest } from "../restful-API/GarbageRequestGetAPI";
 
+// Retrieve Drivers
 export type Drivers = {
     id: string;
     firstname: string;
@@ -31,6 +33,8 @@ export const useGetDrivers = () => {
     });
 };
 
+
+// Retrieve Trucks with status Operational
 export type Trucks = {
     truck_id: string;
     truck_plate_num: string;
@@ -46,6 +50,8 @@ export const useGetTrucks = () => {
     });
 }
 
+
+// Retrieve Collectors
 export type Collectors = {
     id: string;
     firstname: string;
@@ -73,3 +79,24 @@ export const useGetCollectors = () => {
         staleTime: 1000 * 60 * 30, 
     });
 };
+
+// Retrieve Garbage Pickup Requests
+export type GarbageRequest = {
+    garb_id: string;
+    garb_requester: string;
+    garb_location: string;
+    garb_waste_type: string;
+    garb_pref_date: string;
+    garb_pref_time: string;
+    garb_created_at: string;
+    garb_additional_notes: string; 
+    file_id: string;
+}  
+
+export const useGetGarbagePendingRequest = () => {
+    return useQuery<GarbageRequest[]>({
+        queryKey: ["garbagePendingRequest"],
+        queryFn: getGarbagePendingRequest,
+        staleTime: 1000 * 60 * 30, // 30 minutes
+    });
+}

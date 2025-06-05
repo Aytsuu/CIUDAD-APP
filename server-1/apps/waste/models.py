@@ -160,15 +160,14 @@ class Garbage_Pickup_Request(models.Model):
     garb_waste_type = models.CharField(max_length=20, null=False)
     garb_pref_date = models.DateField(default=date.today)
     garb_pref_time = models.TimeField(default=current_time)
-    garv_req_status = models.CharField(max_length=20, null=False)
+    garb_req_status = models.CharField(max_length=20, null=False)
     garb_additional_notes = models.TextField()
     garb_created_at = models.DateTimeField(default=datetime.now)
-    rp_id = models.ForeignKey(
+    rp = models.ForeignKey(
         'profiling.ResidentProfile' , 
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='rp_id'
     )
     
     file = models.ForeignKey(

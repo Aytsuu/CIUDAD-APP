@@ -10,6 +10,7 @@ import { AcceptedColumns } from "./table-columns/accepted-table-columns";
 import { RejectedColumns } from "./table-columns/rejected-request-columns";
 import { CompletedColumns } from "./table-columns/completed-request-columns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useGetGarbagePendingRequest } from "./queries/GarbageRequestFetchQueries";
 
 type RequestData = {
   garb_id: string;
@@ -80,8 +81,10 @@ export const SampleData: RequestData[] = [
 function GarbagePickupRequestMain() {
   const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
   const [isLoading, setIsLoading] = useState(false);
+  const {data: pendingReqData = []}= useGetGarbagePendingRequest();
 
-  const pendingData = SampleData.filter(item => item.garb_req_status === "pending");
+  console.log("Pending Data:", pendingReqData)
+
   const acceptedData = SampleData.filter(item => item.garb_req_status === "accepted");
   const completedData = SampleData.filter(item => item.garb_req_status === "completed");
   const rejectedData = SampleData.filter(item => item.garb_req_status === "rejected");
@@ -122,7 +125,7 @@ function GarbagePickupRequestMain() {
       <Tabs defaultValue="pending" className="mb-6">
         <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
           <TabsTrigger value="pending" onClick={() => setActiveTab("pending")} className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=active]:border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center">
-            Pending ({pendingData.length})
+            Pending ({pendingReqData.length})
           </TabsTrigger>
           <TabsTrigger value="accepted" onClick={() => setActiveTab("accepted")} className="data-[state=active]:bg-[#5B72CF]/20 data-[state=active]:text-[#5B72CF] data-[state=active]:border-[#5B72CF] hover:bg-[#5B72CF]/10 hover:text-[#5B72CF] transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center">
             Accepted ({acceptedData.length})
@@ -169,16 +172,7 @@ function GarbagePickupRequestMain() {
           <TabsContent value="pending">
             <DataTable 
               columns={PendingColumns} 
-              data={pendingData.map(item => ({
-                garb_id: item.garb_id,
-                garb_requester: item.garb_requester,
-                garb_location: item.garb_location,
-                garb_waste_type: item.garb_waste_type,
-                garb_pref_date: item.garb_pref_date || "No date specified",
-                garb_pref_time: item.garb_pref_time || "No time specified",
-                garb_created_at: formatDate(item.garb_created_at),
-                garb_additional_note: item.garb_additional_note || "No notes"
-              }))}
+              data={pendingReqData}
             />
           </TabsContent>
 

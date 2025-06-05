@@ -4,27 +4,17 @@ import AcceptPickupRequest from "../accept-request-form"
 import RejectPickupForm from "../reject-request-form"
 import {CheckCircle, XCircle, Image} from "lucide-react"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
+import type { GarbageRequest } from "../queries/GarbageRequestFetchQueries"
 
 
-export type PendingPickupRequest = {
-    garb_id: string;
-    garb_location: string;
-    garb_requester: string;
-    garb_waste_type: string;
-    garb_pref_date: string;
-    garb_pref_time: string;
-    garb_created_at: string;
-    garb_additional_note: string;
-}
-
-export const PendingColumns: ColumnDef<PendingPickupRequest>[]=[
+export const PendingColumns: ColumnDef<GarbageRequest>[]=[
         { accessorKey: "garb_requester", header:"Requester"},
         { accessorKey: "garb_location", header: "Location"},
         { accessorKey: "garb_waste_type", header: "Waste Type"},
         { accessorKey: "garb_pref_date", header: "Preferred Date"},
         { accessorKey: "garb_pref_time", header: "Preferred Time"},
         { accessorKey: "garb_created_at", header: "Request Date"},
-        { accessorKey: "garb_additional_note", header: "Additional Notes"},
+        { accessorKey: "garb_additional_notes", header: "Additional Notes"},
         { 
             accessorKey: "actions", 
             header: "Action", 

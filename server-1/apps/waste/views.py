@@ -55,8 +55,6 @@ class DeleteWasteReportView(generics.DestroyAPIView):
         rep_id = self.kwargs.get('rep_id')
         return get_object_or_404(WasteReport, rep_id=rep_id) 
 
-from rest_framework import generics
-
 class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
     serializer_class = WastePersonnelSerializer
     queryset = WastePersonnel.objects.all()
@@ -193,7 +191,7 @@ class DriverPersonnelAPIView(APIView):
      
 #get Collectors for garbage collection Form
 class CollectorPersonnelAPIView(APIView):
-     def get(self, request, *args, **kwargs): 
+    def get(self, request, *args, **kwargs): 
         allowed_positions = ["Waste Collector", "Colector"]  
         
         collectors = WastePersonnel.objects.filter(
@@ -205,3 +203,7 @@ class CollectorPersonnelAPIView(APIView):
         
         data = [collector.to_dict() for collector in collectors]
         return Response(data)
+     
+class GarbagePickupRequestView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestSerializer
+    queryset = Garbage_Pickup_Request.objects.all()

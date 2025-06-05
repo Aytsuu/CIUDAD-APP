@@ -46,3 +46,15 @@ class WasteTruckSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteTruck
         fields = '__all__' 
+
+class GarbagePickupRequestSerializer(serializers.ModelSerializer):
+    garb_requester = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Garbage_Pickup_Request
+        fields = '__all__'  
+
+    def get_garb_requester(self, obj):
+        if obj.rp and obj.rp.per:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
+        return "Unknown"
