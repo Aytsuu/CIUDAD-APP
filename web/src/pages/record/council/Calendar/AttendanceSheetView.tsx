@@ -6,13 +6,15 @@ import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 // import html2pdf from 'html2pdf.js';
 
 interface AttendanceSheetViewProps {
-    selectedAttendees: string[]; // Assuming selectedAttendees is an array of strings
-    activity: string;
-    date: string;
-    time: string;
-    place: string;
-    category: string;
-    description: string
+  ce_id: number | null;
+  selectedAttendees: string[];
+  activity: string;
+  date: string;
+  time: string;
+  place: string;
+  category: "meeting" | "activity";
+  description: string;
+  onConfirm: () => void;
 }
 
 

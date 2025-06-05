@@ -91,7 +91,7 @@ class DonationView(generics.ListCreateAPIView):
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
 
-class DonationDetailView(generics.RetrieveUpdateDestroyAPIView):  # Handles DELETE
+class DonationDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Donation.objects.all()
     serializer_class = DonationSerializer
-    lookup_field = 'don_num'  # Use don_num instead of default 'pk'
+    lookup_field = 'don_num' 
