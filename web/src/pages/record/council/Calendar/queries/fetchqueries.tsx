@@ -1,24 +1,107 @@
 import { useQuery } from "@tanstack/react-query";
-import { getEvent_meetingreq } from "../api/getreq";
+import { getCouncilEvents, getAttendees, getAttendanceSheets, getStaffList } from "../api/getreq";
 
-export type CouncilEventInfo = {
-    ce_id: number,
-    ce_title: string,
-    ce_date: string,
-    ce_place: string,
-    ce_type: string,
-    ce_time: string,
-    ce_description: string,
-    staff: string,
-}
+export type CouncilEvent = {
+  ce_id: number;
+  ce_title: string;
+  ce_place: string;
+  ce_date: string;
+  ce_time: string;
+  ce_type: string;
+  ce_description: string;
+  ce_is_archive: boolean;
+  staff_id: number | null;
+};
 
-export const useFetchCouncilEvent = () => {
-  return useQuery<CouncilEventInfo[], Error>({
-    queryKey: ["councilEvent"],
-    queryFn: () => getEvent_meetingreq().catch((error) => {
-        console.error("Error fetching schedule entry:", error);
-        throw error; // Re-throw to let React Query handle the error
-      }),
+export type CouncilEventInput = {
+  ce_title: string;
+  ce_place: string;
+  ce_date: string;
+  ce_time: string;
+  ce_type: string;
+  ce_description: string;
+  ce_is_archive?: boolean;
+  staff_id?: number | null;
+};
+
+export type Attendee = {
+  atn_id: number;
+  atn_name: string;
+  atn_present_or_absent: string;
+  ce_id: number;
+  staff_id: number | null;
+};
+
+export type AttendeeInput = {
+  atn_name: string;
+  atn_present_or_absent: string;
+  ce_id: number;
+  staff_id?: number | null;
+};
+
+export type AttendanceSheet = {
+  att_id: number;
+  ce_id: number;
+  file_id: number | null;
+  staff_id: number | null;
+};
+
+export type AttendanceSheetInput = {
+  ce_id: number;
+  file_id?: number | null;
+  staff_id?: number | null;
+};
+
+export type Staff = {
+  staff_id: number;
+  full_name: string;
+};
+
+export const useGetCouncilEvents = () => {
+  return useQuery<CouncilEvent[], Error>({
+    queryKey: ["councilEvents"],
+    queryFn: () => getCouncilEvents().catch((error) => {
+      console.error("Error fetching council events:", error);
+      throw error;
+    }),
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useGetAttendees = () => {
+  return useQuery<Attendee[], Error>({
+    queryKey: ["attendees"],
+    queryFn: () => getAttendees().catch((error) => {
+      console.error("Error fetching attendees:", error);
+      throw error;
+    }),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useGetAttendanceSheets = () => {
+  return useQuery<AttendanceSheet[], Error>({
+    queryKey: ["attendanceSheets"],
+    queryFn: () => getAttendanceSheets().catch((error) => {
+      console.error("Error fetching attendance sheets:", error);
+      throw error;
+    }),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useGetStaffList = (options = {}) => {
+  return useQuery<Staff[], Error>({
+    queryKey: ["staffList"],
+    queryFn: async () => {
+      try {
+        const data = await getStaffList();
+        return data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    ...options,
   });
 };

@@ -1,3 +1,4 @@
+// pages/record/council/Calendar/SchedEventForm.tsx
 import { useState, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -12,15 +13,20 @@ import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { useAddCouncilEvent } from "./queries/addqueries.tsx";
+import { useAddCouncilEvent, useAddAttendee } from "./queries/addqueries";
+import { useGetStaffList } from "./queries/fetchqueries";
 import { format } from 'date-fns';
+import { formatDate } from '@/helpers/dateFormatter';
 
-function AddEvent() {
+function SchedEventForm() {
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
+  const [ceId, setCeId] = useState<number | null>(null);
 
   const { mutate: addEvent } = useAddCouncilEvent();
+  const { mutate: addAttendee } = useAddAttendee();
+  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -28,54 +34,54 @@ function AddEvent() {
       eventTitle: "",
       eventDate: "",
       roomPlace: "",
-      eventCategory: "",
+      eventCategory: undefined, // Fix: Use undefined instead of ""
       eventTime: "",
       eventDescription: "",
-      barangayCouncil: [],
-      gadCommittee: [],
-      wasteCommittee: [],
+      staffAttendees: [],
     },
   });
 
   const eventCategory = form.watch("eventCategory");
 
-  const CouncilCategory = [
-    { id: "HON. HANNAH SHEEN OBEJERO", name: "HON. HANNAH SHEEN OBEJERO" },
-    { id: "HON. SARAH MAE DUTS", name: "HON. SARAH MAE DUTS" },
-    { id: "HON. JARLENE S. GARCIA", name: "HON. JARLENE S. GARCIA" },
-    { id: "HON. WATIS L. LOVE", name: "HON. WATIS L. LOVE" },
-    { id: "HON. HOWLAN H. HOUSING", name: "HON. HOWLAN H. HOUSING" },
-  ];
+  const staffOptions = useMemo(() => {
+    return staffList.map((staff) => ({
+      id: staff.full_name,
+      name: staff.full_name,
+    }));
+  }, [staffList]);
 
-  const GADCategory = [
-    { id: "GAD SECRETARY BABEL", name: "GAD SECRETARY BABEL" },
-    { id: "GAD TREASURER MABLE", name: "GAD TREASURER MABLE" },
-    { id: "GAD LOREM IPSUM", name: "GAD LOREM IPSUM" },
-    { id: "HON. PAYN I. SGAIN", name: "HON. PAYN I. SGAIN" },
-    { id: "HON. COME J. HOUQUINE", name: "HON. COME J. HOUQUINE" },
-    { id: "ESCUHAS LAS PALABRAS", name: "ESCUHAS LAS PALABRAS" },
-  ];
+  function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
+    const [hour, minute] = values.eventTime.split(":");
+    const formattedTime = `${hour}:${minute}:00`;
 
-  const WasteCategory = [
-    { id: "WASTE SECRETARY BABEL", name: "WASTE SECRETARY BABEL" },
-    { id: "WASTE TREASURER MABLE", name: "WASTE TREASURER MABLE" },
-    { id: "WASTE LOREM IPSUM", name: "WASTE LOREM IPSUM" },
-    { id: "INDA MIDDLE OFTHE", name: "INDA MIDDLE OFTHE" },
-  ];
+    const eventData = {
+      ce_title: values.eventTitle,
+      ce_place: values.roomPlace,
+      ce_date: formatDate(values.eventDate),
+      ce_time: formattedTime,
+      ce_type: values.eventCategory,
+      ce_description: values.eventDescription,
+      ce_is_archive: false,
+      staff_id: null,
+    };
 
-function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
-  // Convert "HH:mm" string to a full "HH:mm:ss"
-  const [hour, minute] = values.eventTime.split(":");
-  const formattedTime = `${hour}:${minute}:00`;
-
-  const formattedValues = {
-    ...values,
-    eventTime: formattedTime,
-  };
-
-  addEvent(formattedValues);
-  form.reset();
-}
+    addEvent(eventData, {
+      onSuccess: (ce_id) => {
+        setCeId(ce_id);
+        if (eventCategory === "meeting" && values.staffAttendees.length > 0) {
+          values.staffAttendees.forEach((atn_name) => {
+            addAttendee({
+              atn_name,
+              atn_present_or_absent: "Present",
+              ce_id: ce_id,
+              staff_id: null,
+            });
+          });
+        }
+        form.reset();
+      },
+    });
+  }
 
   const handleNextClick = async () => {
     const isValid = await form.trigger();
@@ -90,6 +96,7 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
   const handleModalOpenChange = (open: boolean) => {
     if (!open) {
       setIsModalOpen(false);
+      form.reset();
     } else if (allowModalOpen) {
       setIsModalOpen(true);
     }
@@ -97,27 +104,17 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
 
   const allAttendees = useMemo(() => {
     const attendees = new Map<string, string>();
-    [...CouncilCategory, ...GADCategory, ...WasteCategory].forEach((option) => {
+    staffOptions.forEach((option) => {
       attendees.set(option.id, option.name);
     });
     return attendees;
-  }, []);
+  }, [staffOptions]);
 
-  const barangayCouncil = form.watch("barangayCouncil");
-  const gadCommittee = form.watch("gadCommittee");
-  const wasteCommittee = form.watch("wasteCommittee");
+  const staffAttendees = form.watch("staffAttendees");
 
   useEffect(() => {
-    const selectedIds = [
-      ...(barangayCouncil || []),
-      ...(gadCommittee || []),
-      ...(wasteCommittee || []),
-    ];
-    const selectedNames = selectedIds
-      .map((id) => allAttendees.get(id))
-      .filter(Boolean) as string[];
-    setSelectedAttendees(selectedNames);
-  }, [barangayCouncil, gadCommittee, wasteCommittee, allAttendees]);
+    setSelectedAttendees(staffAttendees);
+  }, [staffAttendees]);
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">
@@ -188,7 +185,7 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
             />
 
             {eventCategory === "meeting" && (
-              <>
+              <div>
                 <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
                   ATTENDEES
                 </h1>
@@ -197,9 +194,9 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
                   control={form.control}
                   name="staffAttendees"
                   label="BARANGAY STAFF"
-                  options={CouncilCategory}
+                  options={staffOptions}
                 />
-              </>
+              </div>
             )}
           </div>
 
@@ -224,6 +221,7 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
                 description="Please review upon submitting."
                 mainContent={
                   <AttendanceSheetView
+                    ce_id={ceId}
                     selectedAttendees={selectedAttendees}
                     activity={form.watch("eventTitle")}
                     date={form.watch("eventDate")}
@@ -231,6 +229,7 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
                     place={form.watch("roomPlace")}
                     category={form.watch("eventCategory")}
                     description={form.watch("eventDescription")}
+                    onConfirm={() => setIsModalOpen(false)}
                   />
                 }
                 isOpen={isModalOpen}
@@ -244,4 +243,4 @@ function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
   );
 }
 
-export default AddEvent;
+export default SchedEventForm;

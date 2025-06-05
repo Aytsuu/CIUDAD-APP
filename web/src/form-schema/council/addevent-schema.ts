@@ -1,20 +1,11 @@
-import { z } from "zod"
-
-// Shaping the complain form schema
-
+import { z } from "zod";
 const AddEventFormSchema = z.object({
-    
-    eventTitle: z.string().min(1, 'Event title is required'),
-    eventDate: z.string().date(),
-    roomPlace: z.string().min(1, 'Room / Place is required'),
-    eventCategory: z.string().min(1, 'Event category address is required'),
-    eventTime: z.string().min(1, 'Event time is required'),
-    eventDescription: z.string().min(1, 'Event Description is required'),
-    barangayCouncil: z.array(z.string()).optional(),
-    gadCommittee: z.array(z.string()).optional(),
-    wasteCommittee: z.array(z.string()).optional(),
-
-
+  eventTitle: z.string().min(1, "Event title is required"),
+  eventDate: z.string().min(1, "Event date is required"),
+  roomPlace: z.string().min(1, "Room/Place is required"),
+  eventCategory: z.enum(["meeting", "activity"]),
+  eventTime: z.string().min(1, "Event time is required"),
+  eventDescription: z.string().min(1, "Event description is required"),
+  staffAttendees: z.array(z.string()),
 });
-
 export default AddEventFormSchema;

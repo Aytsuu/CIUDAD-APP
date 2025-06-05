@@ -1,66 +1,125 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { putEvent_meetingreq } from "../api/putreq";
-import { CouncilEventInfo } from "./addqueries";
-
-export type EventInfo = {
-    ce_id: number,
-    ce_title: string,
-    ce_date: string,
-    ce_place: string,
-    ce_type: string,
-    ce_time: string,
-    ce_description: string,
-    staff: string[],
-}
+import { putCouncilEvent, putAttendee, putAttendanceSheet } from "../api/putreq";
+import { CouncilEvent, CouncilEventInput, Attendee, AttendeeInput, AttendanceSheet, AttendanceSheetInput } from "./fetchqueries";
 
 export const useUpdateCouncilEvent = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: ({
-      ce_id,
-      eventData,
-    }: {
-      ce_id: number;
-      eventData: Partial<CouncilEventInfo>;
-    }) => putEvent_meetingreq(ce_id, eventData),
-    onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: ["councilEvent"] });
-      const previousEntry = queryClient.getQueryData<CouncilEventInfo[]>([
-        "councilEvent",
-      ]);
-
-      queryClient.setQueryData<EventInfo[]>(["councilEvent"], (old = []) =>
-        old.map((t: EventInfo) =>
-          t.ce_id === variables.ce_id
-            ? { ...t, ...variables.eventData }
-            : t
+    mutationFn: ({ ce_id, eventInfo }: { ce_id: number; eventInfo: Partial<CouncilEventInput> }) => 
+      putCouncilEvent(ce_id, eventInfo),
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["councilEvents"], (old: CouncilEvent[] = []) => 
+        old.map(event => 
+          event.ce_id === variables.ce_id ? { ...event, ...updatedData } : event
         )
       );
-
-      return { previousEntry };
-    },
-
-    onError: (error: Error, variables, context) => {
-      if (context?.previousEntry) {
-        queryClient.setQueryData(["councilEvent"], context.previousEntry);
-      }
-      toast.error("Failed to update schedule", {
-        description: error.message,
-        duration: 2000,
-      });
-    },
-    onSuccess: (updatedData, variables) => {
-      toast.success("Schedule updated successfully", {
+      queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
+      toast.success("Council event updated successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
+        duration: 2000
       });
-      queryClient.invalidateQueries({ queryKey: ["councilEvent"] });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update council event", {
+        description: error.message,
+        duration: 2000
+      });
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ['councilEvents'] });
+      const previousEvents = queryClient.getQueryData(['councilEvents']);
+      queryClient.setQueryData(['councilEvents'], (old: CouncilEvent[] = []) => 
+        old.map(event => 
+          event.ce_id === variables.ce_id ? { ...event, ...variables.eventInfo } : event
+        )
+      );
+      return { previousEvents };
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["councilEvent"] });
+      queryClient.invalidateQueries({ queryKey: ['councilEvents'] });
+    }
+  });
+};
+
+export const useUpdateAttendee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: Partial<AttendeeInput> }) => 
+      putAttendee(atn_id, attendeeInfo),
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) => 
+        old.map(attendee => 
+          attendee.atn_id === variables.atn_id ? { ...attendee, ...updatedData } : attendee
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+      toast.success("Attendee updated successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
     },
+    onError: (error: Error) => {
+      toast.error("Failed to update attendee", {
+        description: error.message,
+        duration: 2000
+      });
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ['attendees'] });
+      const previousAttendees = queryClient.getQueryData(['attendees']);
+      queryClient.setQueryData(['attendees'], (old: Attendee[] = []) => 
+        old.map(attendee => 
+          attendee.atn_id === variables.atn_id ? { ...attendee, ...variables.attendeeInfo } : attendee
+        )
+      );
+      return { previousAttendees };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendees'] });
+    }
+  });
+};
+
+export const useUpdateAttendanceSheet = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ att_id, attendanceInfo }: { att_id: number; attendanceInfo: Partial<AttendanceSheetInput> }) => 
+      putAttendanceSheet(att_id, attendanceInfo),
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["attendanceSheets"], (old: AttendanceSheet[] = []) => 
+        old.map(sheet => 
+          sheet.att_id === variables.att_id ? { ...sheet, ...updatedData } : sheet
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
+      toast.success("Attendance sheet updated successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update attendance sheet", {
+        description: error.message,
+        duration: 2000
+      });
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });
+      const previousSheets = queryClient.getQueryData(['attendanceSheets']);
+      queryClient.setQueryData(['attendanceSheets'], (old: AttendanceSheet[] = []) => 
+        old.map(sheet => 
+          sheet.att_id === variables.att_id ? { ...sheet, ...variables.attendanceInfo } : sheet
+        )
+      );
+      return { previousSheets };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendanceSheets'] });
+    }
   });
 };
