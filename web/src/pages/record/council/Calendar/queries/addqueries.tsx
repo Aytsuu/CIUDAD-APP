@@ -17,7 +17,7 @@ export const useAddCouncilEvent = () => {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000
       });
-      navigate("/event-meeting");
+      navigate("gad/event-meeting");
     },
     onError: (error: Error) => {
       toast.error("Failed to add council event", {

@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { formatDate } from '@/helpers/dateFormatter';
 
 function SchedEventForm() {
-  const [selectedAttendees, setSelectedAttendees] = useState<string[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string }[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
   const [ceId, setCeId] = useState<number | null>(null);
@@ -34,7 +34,7 @@ function SchedEventForm() {
       eventTitle: "",
       eventDate: "",
       roomPlace: "",
-      eventCategory: undefined, // Fix: Use undefined instead of ""
+      eventCategory: undefined,
       eventTime: "",
       eventDescription: "",
       staffAttendees: [],
@@ -45,10 +45,30 @@ function SchedEventForm() {
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
-      id: staff.full_name,
+      id: staff.staff_id,
       name: staff.full_name,
     }));
   }, [staffList]);
+
+  const staffAttendees = form.watch("staffAttendees");
+  console.log('staffAttendees:', staffAttendees);
+  console.log('staffList:', staffList);
+
+  const selectedAttendeeDetails = useMemo(() => {
+    const details = staffAttendees.map(staffId => {
+      const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase()); // Case-insensitive comparison
+      return {
+        name: staff ? staff.full_name : `Unknown (ID: ${staffId})`,
+        designation: staff ? staff.position_title || "No Designation" : "No Designation",
+      };
+    });
+    console.log('selectedAttendeeDetails:', details);
+    return details;
+  }, [staffAttendees, staffList]);
+
+  useEffect(() => {
+    setSelectedAttendees(selectedAttendeeDetails);
+  }, [selectedAttendeeDetails]);
 
   function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
     const [hour, minute] = values.eventTime.split(":");
@@ -69,12 +89,14 @@ function SchedEventForm() {
       onSuccess: (ce_id) => {
         setCeId(ce_id);
         if (eventCategory === "meeting" && values.staffAttendees.length > 0) {
-          values.staffAttendees.forEach((atn_name) => {
+          values.staffAttendees.forEach((staffId) => {
+            const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase());
             addAttendee({
-              atn_name,
+              staff_id: staff ? staff.staff_id : null,
               atn_present_or_absent: "Present",
               ce_id: ce_id,
-              staff_id: null,
+              atn_name: staff ? staff.full_name : "Unknown",
+              atn_designation: staff ? staff.position_title || "No Designation" : "No Designation",
             });
           });
         }
@@ -86,9 +108,11 @@ function SchedEventForm() {
   const handleNextClick = async () => {
     const isValid = await form.trigger();
     if (isValid) {
+      console.log('Form is valid, values:', form.getValues());
       setAllowModalOpen(true);
       setIsModalOpen(true);
     } else {
+      console.log('Form is invalid, errors:', form.formState.errors);
       setAllowModalOpen(false);
     }
   };
@@ -109,12 +133,6 @@ function SchedEventForm() {
     });
     return attendees;
   }, [staffOptions]);
-
-  const staffAttendees = form.watch("staffAttendees");
-
-  useEffect(() => {
-    setSelectedAttendees(staffAttendees);
-  }, [staffAttendees]);
 
   return (
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-5 rounded-lg overflow-auto">

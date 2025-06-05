@@ -18,6 +18,12 @@ class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CouncilScheduling.objects.all()
     lookup_field = 'ce_id'
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.ce_is_archive = True
+        instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class AttendeesView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
@@ -38,10 +44,11 @@ class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
-    queryset = Staff.objects.select_related('rp__per').only(
+    queryset = Staff.objects.select_related('pos', 'rp__per').only(
         'staff_id',
         'rp__per__per_fname',
-        'rp__per__per_lname'
+        'rp__per__per_lname',
+        'pos__pos_title'
     )
     serializer_class = StaffSerializer
 

@@ -41,6 +41,8 @@ export const postAttendee = async (attendeeInfo: Record<string, any>) => {
         });
 
         const res = await api.post('council/attendees/', {
+            atn_name: attendeeInfo.atn_name,
+            atn_designation: attendeeInfo.atn_designation,
             atn_present_or_absent: attendeeInfo.atn_present_or_absent,
             ce_id: attendeeInfo.ce_id,
             staff_id: attendeeInfo.staff_id,

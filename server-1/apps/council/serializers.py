@@ -13,7 +13,7 @@ class CouncilAttendeesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CouncilAttendees
-        fields = ['atn_id', 'atn_name', 'atn_present_or_absent', 'ce_id', 'staff_id']
+        fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,10 +28,11 @@ class TemplateSerializer(serializers.ModelSerializer):
 Staff = apps.get_model('administration', 'Staff')
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)  # Add position title
 
     class Meta:
         model = Staff
-        fields = ['staff_id', 'full_name']
+        fields = ['staff_id', 'full_name', 'position_title']
 
     def get_full_name(self, obj):
         try:

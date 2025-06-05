@@ -1,8 +1,11 @@
 import api from "@/pages/api/api";
+import { Staff } from "../queries/fetchqueries";
 
 export const getCouncilEvents = async () => {
     try {
-        const res = await api.get('council/event-meeting/');
+        const res = await api.get('council/event-meeting/', {
+            params: { is_archive: false }  // Filter non-archived
+        });
         const data = res.data?.data ?? res.data ?? [];
         return Array.isArray(data) ? data : [];
     } catch (err) {
@@ -13,7 +16,9 @@ export const getCouncilEvents = async () => {
 
 export const getAttendees = async () => {
     try {
-        const res = await api.get('council/attendees/');
+        const res = await api.get('council/attendees/',{
+            params: { is_archive: false }  // Filter non-archived
+        });
         const data = res.data?.data ?? res.data ?? [];
         return Array.isArray(data) ? data : [];
     } catch (err) {
@@ -24,7 +29,9 @@ export const getAttendees = async () => {
 
 export const getAttendanceSheets = async () => {
     try {
-        const res = await api.get('council/attendance-sheet/');
+        const res = await api.get('council/attendance-sheet/',{
+            params: { is_archive: false }  // Filter non-archived
+        });
         const data = res.data?.data ?? res.data ?? [];
         return Array.isArray(data) ? data : [];
     } catch (err) {
@@ -33,18 +40,17 @@ export const getAttendanceSheets = async () => {
     }
 };
 
-export const getStaffList = async (): Promise<{ staff_id: number; full_name: string }[]> => {
+export const getStaffList = async () => {
   try {
-    console.log('getStaffList - Fetching staff list');
-    const res = await api.get('gad/api/staff/');
-    console.log('getStaffList - Response data:', res.data);
-    const data = res.data?.data ?? res.data ?? [];
-    return data.map((staff: any) => ({
-      staff_id: staff.staff_id,
-      full_name: staff.full_name,
-    }));
+    const res = await api.get('council/api/staff'); // Use an endpoint that fetches all staff
+    // Ensure staff_id is returned as a string
+    return res.data.map((item: any) => ({
+      staff_id: String(item.staff_id), // Force string conversion
+      full_name: item.full_name || `Unknown (ID: ${item.staff_id})`,
+      position_title: item.position_title || "No Designation",
+    })) as Staff[];
   } catch (err) {
-    console.error('getStaffList - Error fetching staff list:', err);
+    console.error('Error fetching staff list:', err);
     return [];
   }
 };

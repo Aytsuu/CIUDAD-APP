@@ -24,7 +24,8 @@ class CouncilScheduling(models.Model):
 
 class CouncilAttendees(models.Model):
     atn_id = models.BigAutoField(primary_key=True)
-    atn_name = models.CharField(max_length=200)
+    atn_name = models.CharField(max_length=200, default='')
+    atn_designation = models.CharField(max_length=200, default='')
     atn_present_or_absent = models.CharField(max_length=100)
     ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
     
@@ -35,29 +36,6 @@ class CouncilAttendees(models.Model):
         blank=True,
         db_column='staff_id'
     )
-
-    # def get_staff_info(self):
-    #     if not self.staff:
-    #         return None
-            
-    #     staff = self.staff
-    #     return {
-    #         "staff_id": staff.staff_id,
-    #         "staff_assign_date": staff.staff_assign_date.isoformat() if staff.staff_assign_date else None,
-    #         "position": staff.pos.pos_title if hasattr(staff, 'pos') else None,
-    #         "full_name": self.get_staff_name(),
-    #         "rp_id": staff.rp.rp_id if hasattr(staff, 'rp') else None,
-    #         "per_fname": staff.rp.per.per_fname if hasattr(staff, 'rp') and hasattr(staff.rp, 'per') else None,
-    #         "per_lname": staff.rp.per.per_lname if hasattr(staff, 'rp') and hasattr(staff.rp, 'per') else None,
-    #     }
-
-    # def get_staff_name(self):
-    #     try:
-    #         if self.staff.rp.per:
-    #             return f"{self.staff.rp.per.per_fname} {self.staff.rp.per.per_lname}"
-    #     except AttributeError:
-    #         pass
-    #     return "Unknown"
 
     class Meta:
         db_table = 'attendees'

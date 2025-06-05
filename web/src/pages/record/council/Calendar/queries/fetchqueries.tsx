@@ -10,7 +10,7 @@ export type CouncilEvent = {
   ce_type: string;
   ce_description: string;
   ce_is_archive: boolean;
-  staff_id: number | null;
+  staff_id: string | null;
 };
 
 export type CouncilEventInput = {
@@ -21,7 +21,7 @@ export type CouncilEventInput = {
   ce_type: string;
   ce_description: string;
   ce_is_archive?: boolean;
-  staff_id?: number | null;
+  staff_id?: string | null;
 };
 
 export type Attendee = {
@@ -29,32 +29,34 @@ export type Attendee = {
   atn_name: string;
   atn_present_or_absent: string;
   ce_id: number;
-  staff_id: number | null;
+  staff_id: string | null;
 };
 
 export type AttendeeInput = {
   atn_name: string;
+  atn_designation: string;
   atn_present_or_absent: string;
   ce_id: number;
-  staff_id?: number | null;
+  staff_id?: string | null;
 };
 
 export type AttendanceSheet = {
   att_id: number;
   ce_id: number;
   file_id: number | null;
-  staff_id: number | null;
+  staff_id: string | null;
 };
 
 export type AttendanceSheetInput = {
   ce_id: number;
   file_id?: number | null;
-  staff_id?: number | null;
+  staff_id?: string | null;
 };
 
 export type Staff = {
-  staff_id: number;
+  staff_id: string;
   full_name: string;
+  position_title: string | null;
 };
 
 export const useGetCouncilEvents = () => {
@@ -90,18 +92,8 @@ export const useGetAttendanceSheets = () => {
   });
 };
 
-export const useGetStaffList = (options = {}) => {
-  return useQuery<Staff[], Error>({
+export const useGetStaffList = () =>
+  useQuery<Staff[], Error>({
     queryKey: ["staffList"],
-    queryFn: async () => {
-      try {
-        const data = await getStaffList();
-        return data;
-      } catch (error) {
-        throw error;
-      }
-    },
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-    ...options,
+    queryFn: getStaffList,
   });
-};
