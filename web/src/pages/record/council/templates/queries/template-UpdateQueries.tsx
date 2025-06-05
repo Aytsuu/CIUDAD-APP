@@ -24,10 +24,10 @@ export const useUpdateTemplate = (
     onSuccess: () => {
       toast.loading("Updating template..", { id: "updateTemplate" });
 
-      toast.success('Template entry updated', {
+      toast.success('Template updated', {
         id: 'updateTemplate',
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
+        duration: 5000
       });
       
       // Invalidate any related queries if needed

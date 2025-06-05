@@ -57,6 +57,7 @@ class TemplateView(generics.ListCreateAPIView):
     serializer_class = TemplateSerializer
     queryset = Template.objects.filter(temp_is_archive=False) 
 
+#Use as updating the values as well as archiving 
 class UpdateTemplateView(generics.RetrieveUpdateAPIView):
     serializer_class = TemplateSerializer
     queryset = Template.objects.filter(temp_is_archive=False) 
