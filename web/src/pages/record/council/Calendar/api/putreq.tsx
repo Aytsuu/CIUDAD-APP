@@ -11,12 +11,18 @@ export const putCouncilEvent = async (ce_id: number, eventInfo: Record<string, a
             ce_type: eventInfo.ce_type,
             ce_description: eventInfo.ce_description,
             ce_is_archive: eventInfo.ce_is_archive || false,
-            staff_id: eventInfo.staff_id,
+            ...(eventInfo.staff_id !== undefined && { staff_id: eventInfo.staff_id }),
         });
 
+        console.log("PUT request successful, response:", res.data); // Log success
         return res.data;
-    } catch (err) {
+    } catch (err: any) {
         console.error("Error updating council event:", err);
+        console.log("Server response details:", {
+            status: err.response?.status,
+            data: err.response?.data || "No error data returned",
+            headers: err.response?.headers,
+        }); // Ensure detailed error log
         throw err;
     }
 };

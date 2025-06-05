@@ -6,6 +6,7 @@ import AddEvent from "./SchedEventForm.tsx";
 import { Plus } from "lucide-react";
 import { useGetCouncilEvents } from "./queries/fetchqueries";
 import { format } from "date-fns";
+import EditEventForm from "./EditEvent.tsx";
 
 function CalendarPage() {
   const { data: councilEvents = [], isLoading } = useGetCouncilEvents();
@@ -101,11 +102,11 @@ function CalendarPage() {
                 onOpenChange={handleDialogClose} // Close dialog and reset selected event
                 trigger={<div />}
                 className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
-                title={selectedEvent.ce_title}
+                title='Edit Event'
                 description="Edit or view event details"
                 mainContent={
                   <div className="w-full h-full">
-                    <AddEvent
+                    <EditEventForm
                       initialValues={selectedEvent} // Pass initial values to pre-fill the form
                       onClose={handleDialogClose} // Optional callback to close after submission
                     />
