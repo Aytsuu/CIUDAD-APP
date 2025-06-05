@@ -18,10 +18,10 @@
         // Invalidate and refetch
         queryClient.invalidateQueries({ queryKey: ['templateRec'] });
 
-        toast.loading("Creating document.....", { id: "createTemplate" });
+        toast.loading("Creating template...", { id: "createTemplate" });
         
         // Show success toast
-        toast.success('template created successfully', {
+        toast.success('Template created successfully', {
           id: "createTemplate",
           icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
           duration: 5000

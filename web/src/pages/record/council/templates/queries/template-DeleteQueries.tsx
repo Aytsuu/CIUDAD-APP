@@ -55,7 +55,7 @@ export const useDeleteTemplate = (onSuccess?: () => void) => {
       return deleteTemplateRec(data.temp_id, data)
     },
     onSuccess: () => {
-      toast.loading("Updating template...", { id: "deleteTemplate" });
+      toast.loading("Deleting template...", { id: "deleteTemplate" });
       toast.success('Template deleted', {
         id: 'deleteTemplate',
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
