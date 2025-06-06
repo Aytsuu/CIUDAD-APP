@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import WasteEventSched from "@/pages/record/waste-scheduling/waste-event-sched";
-import WasteColSched from "@/pages/record/waste-scheduling/waste-col-sched";
+import WasteColSched from "@/pages/record/waste-scheduling/waste-colllection/waste-col-sched";
 import WasteHotSched from "@/pages/record/waste-scheduling/waste-hotspot-sched";
 import { Plus } from "lucide-react";
 import EventCalendar from "@/components/ui/calendar/EventCalendar";

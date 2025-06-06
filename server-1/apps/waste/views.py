@@ -174,3 +174,34 @@ class WasteTruckDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         truck.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+# get Driver for garbage Collection Form
+class DriverPersonnelAPIView(APIView):
+    def get(self, request, *args, **kwargs): 
+        allowed_positions = ["Waste Driver", "Truck Driver", "Driver"]  
+        
+        drivers = WastePersonnel.objects.filter(
+            staff_id__pos__pos_title__in=allowed_positions
+        ).select_related(  # Optimize query
+            'staff_id__pos',
+            'staff_id__rp__per'
+        )
+        
+        data = [driver.to_dict() for driver in drivers]
+        return Response(data)
+     
+#get Collectors for garbage collection Form
+class CollectorPersonnelAPIView(APIView):
+    def get(self, request, *args, **kwargs): 
+        allowed_positions = ["Waste Collector", "Colector"]  
+        
+        collectors = WastePersonnel.objects.filter(
+            staff_id__pos__pos_title__in=allowed_positions
+        ).select_related(  # Optimize query
+            'staff_id__pos',
+            'staff_id__rp__per'
+        )
+        
+        data = [collector.to_dict() for collector in collectors]
+        return Response(data)

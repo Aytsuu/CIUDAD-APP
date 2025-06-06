@@ -30,4 +30,6 @@ urlpatterns = [
     path('waste-trucks/', WasteTruckView.as_view(), name='waste-truck'),
     path('waste-trucks/<int:pk>/', WasteTruckDetailView.as_view(), name='waste-truck-detail'),
 
+    path('waste-drivers/', DriverPersonnelAPIView.as_view(), name='waste-drivers'),
+    path('waste-collectors/', CollectorPersonnelAPIView.as_view(), name='waste-collectors'),
 ]
