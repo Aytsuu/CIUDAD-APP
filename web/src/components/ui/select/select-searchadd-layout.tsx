@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,32 +14,33 @@ import { cn } from "@/lib/utils";
 interface Option {
   id: string;
   name: string;
-} 
+}
 
 interface SelectProps {
-  placeholder: string;
+  placeholder?: string;
   label: string;
   className?: string;
   options: Option[];
   value: string;
+  displayValue?: string;
   onChange: (value: string) => void;
-  onAdd?: (newValue: string) => void; // Updated to match confirmation flow
+  onAdd?: (newValue: string) => void;
   onDelete?: (id: string) => void;
 }
 
 export function SelectLayoutWithAdd({
-  placeholder,
+  placeholder = "Select", // Default placeholder
   label,
   className,
   options,
   value,
+  displayValue,
   onChange,
   onAdd,
   onDelete,
 }: SelectProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter options based on search term
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -46,30 +48,25 @@ export function SelectLayoutWithAdd({
   const handleSelect = (selectedValue: string) => {
     if (!selectedValue.trim()) return;
 
-    // Check if the selected value already exists in the options
     const existingOption = options.find((opt) => opt.id === selectedValue);
-    if (!existingOption) {
-      // If it doesn't exist, trigger the onAdd function (which will open the confirmation dialog)
-      if (onAdd) {
-        onAdd(selectedValue); // Pass the new category name to the parent for confirmation
-      }
+    if (!existingOption && onAdd) {
+      onAdd(selectedValue);
     } else {
-      // If it exists, simply call onChange
       onChange(selectedValue);
     }
     setSearchTerm("");
   };
 
   const handleDelete = (id: string) => {
-    if (onDelete) {
-      onDelete(id);
-    }
+    if (onDelete) onDelete(id);
   };
 
   return (
-    <Select value={value || undefined} onValueChange={handleSelect}>
-      <SelectTrigger className={cn("w-[180px]", className)}>
-        <SelectValue placeholder={placeholder} />
+    <Select value={value} onValueChange={handleSelect}>
+      <SelectTrigger className={cn("w-full", className)}>
+        <SelectValue placeholder={placeholder}>
+          {value ? displayValue : undefined}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <div className="p-2">
@@ -93,14 +90,15 @@ export function SelectLayoutWithAdd({
                   onClick={() => handleDelete(option.id)}
                   className="ml-2 text-red-500 hover:text-red-700"
                 >
-                  ❌
+                  <Trash2 size={16} />
                 </button>
               )}
             </div>
           ))}
           {searchTerm.trim() &&
             !filteredOptions.some(
-              (option) => option.name.toLowerCase() === searchTerm.toLowerCase()
+              (option) =>
+                option.name.toLowerCase() === searchTerm.toLowerCase()
             ) && (
               <SelectItem
                 value={searchTerm.trim()}

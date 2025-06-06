@@ -6,7 +6,11 @@ from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSeria
 from apps.healthProfiling.models import FamilyComposition,Household
 # from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 # serializers.py
-
+from apps.healthProfiling.serializers.minimal import (
+    ResidentProfileMinimalSerializer,
+    FCWithProfileDataSerializer,
+    HouseholdMinimalSerializer
+)
 
 class PartialUpdateMixin:  
     def to_internal_value(self, data):
@@ -16,26 +20,26 @@ class PartialUpdateMixin:
                     self.fields[field].required = False
         return super().to_internal_value(data)
 class PatientSerializer(serializers.ModelSerializer):
-    personal_info = PersonalSerializer(source='per_id', read_only=True)
-    resident_profile = ResidentProfileMinimalSerializer(source='per_id.personal_information', many=True, read_only=True)
+    personal_info = serializers.SerializerMethodField()
+    resident_profile = ResidentProfileMinimalSerializer(source='rp_id', read_only=True)
     family_compositions = serializers.SerializerMethodField()
-    households = serializers.SerializerMethodField()  # 🔥 Add this line
-
+    households = serializers.SerializerMethodField()
 
     class Meta:
         model = Patient
         fields = '__all__'
 
+    def get_personal_info(self, obj):
+        personal = obj.rp_id.per  # ✅ Get the full Personal instance
+        return PersonalSerializer(personal, context=self.context).data
+
     def get_family_compositions(self, obj):
-        from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
-        resident_profiles = obj.per_id.personal_information.all()
+        resident_profiles = obj.rp_id.per.personal_information.all()
         compositions = FamilyComposition.objects.filter(rp__in=resident_profiles)
         return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
-    
+
     def get_households(self, obj):
-        # 🔎 Find all ResidentProfiles related to this personal info
-        resident_profiles = obj.per_id.personal_information.all()
-        # 🏠 Get all households connected to those ResidentProfiles
+        resident_profiles = obj.rp_id.per.personal_information.all()
         households = Household.objects.filter(rp__in=resident_profiles)
         return HouseholdMinimalSerializer(households, many=True, context=self.context).data
 

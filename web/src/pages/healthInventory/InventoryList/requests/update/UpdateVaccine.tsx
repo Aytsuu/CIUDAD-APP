@@ -1,85 +1,85 @@
 
   // API Service functions (in separate file like vaccineApiService.ts)
-  import api from "@/pages/api/api";
-  import { toTitleCase } from "../case";
+  import {api} from "@/pages/api/api";
+  import { toTitleCase } from "@/helpers/ToTitleCase";
 
 
-  export const updateVaccine = async (vaccineId: number, data: {
-    vac_type_choices: string;
-    vac_name: string;
-    no_of_doses: number;
-    age_group: string;
-    specify_age: string;
-  }) => {
-    try {
-      const response = await api.put(`inventory/vaccines/${vaccineId}/`, {
-        ...data,
-        updated_at: new Date().toISOString()
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error updating vaccine:', error);
-      throw error;
-    }
-  };
+  // export const updateVaccine = async (vaccineId: number, data: {
+  //   vac_type_choices: string;
+  //   vac_name: string;
+  //   no_of_doses: number;
+  //   age_group: string;
+  //   specify_age: string;
+  // }) => {
+  //   try {
+  //     const response = await api.put(`inventory/vac_list/${vaccineId}/`, {
+  //       ...data,
+  //       updated_at: new Date().toISOString()
+  //     });
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error updating vaccine:', error);
+  //     throw error;
+  //   }
+  // };
   
-  export const updateVaccineIntervals = async (vaccineId: number, intervals: Array<{
-    dose_number: number;
-    interval: number;
-    time_unit: string;
-  }>) => {
-    try {
-      // First delete existing intervals
-      await api.delete(`inventory/vaccines/${vaccineId}/`);
+  // export const updateVaccineIntervals = async (vaccineId: number, intervals: Array<{
+  //   dose_number: number;
+  //   interval: number;
+  //   time_unit: string;
+  // }>) => {
+  //   try {
+  //     // First delete existing intervals
+  //     await api.delete(`inventory/vac_list/${vaccineId}/`);
       
-      // Then create new ones
-      const responses = await Promise.all(
-        intervals.map(interval => 
-          api.post(`/vaccines/${vaccineId}/intervals/`, interval)
-        )
-      );
-      return responses.map(r => r.data);
-    } catch (error) {
-      console.error('Error updating intervals:', error);
-      throw error;
-    }
-  };
+  //     // Then create new ones
+  //     const responses = await Promise.all(
+  //       intervals.map(interval => 
+  //         api.post(`inventory/vac_intervals/${vaccineId}/`, interval)
+  //       )
+  //     );
+  //     return responses.map(r => r.data);
+  //   } catch (error) {
+  //     console.error('Error updating intervals:', error);
+  //     throw error;
+  //   }
+  // };
   
-  export const updateVaccineRoutineFrequency = async (vaccineId: number, data: {
-    interval: number;
-    time_unit: string;
-  }) => {
-    try {
-      const response = await api.put(`inventory/vaccines/${vaccineId}/`, {
-        dose_number: 1,
-        ...data
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error updating vaccine routine frequency:', error);
-      throw error;
-    }
-  };
+  // export const updateVaccineRoutineFrequency = async (vaccineId: number, data: {
+  //   interval: number;
+  //   time_unit: string;
+  // }) => {
+  //   try {
+  //     const response = await api.put(`inventory/routine_freq/${vaccineId}/`, {
+  //       dose_number: 1,
+  //       ...data
+  //     });
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error('Error updating vaccine routine frequency:', error);
+  //     throw error;
+  //   }
+  // };
   
   
   
-  export const updateImmunizationSupply = async (imz_id: number, data: {
-    supply_name: string;
-    quantity: number;
-    expiry_date?: string;
-  }) => {
-    try {
-      const res = await api.put(`inventory/imz_supplies/${imz_id}/`, {
-        ...data,
-        supply_name: toTitleCase(data.supply_name),
-        updated_at: new Date().toISOString(),
-      });
-      return res.data;
-    } catch (err) {
-      console.log(err);
-      throw err;
-    }
-  };
+  // export const updateImmunizationSupply = async (imz_id: number, data: {
+  //   supply_name: string;
+  //   quantity: number;
+  //   expiry_date?: string;
+  // }) => {
+  //   try {
+  //     const res = await api.put(`inventory/imz_supplies/${imz_id}/`, {
+  //       ...data,
+  //       supply_name: toTitleCase(data.supply_name),
+  //       updated_at: new Date().toISOString(),
+  //     });
+  //     return res.data;
+  //   } catch (err) {
+  //     console.log(err);
+  //     throw err;
+  //   }
+  // };
   
   
   export const updateVaccineDetails = async (vac_id: number, data: {

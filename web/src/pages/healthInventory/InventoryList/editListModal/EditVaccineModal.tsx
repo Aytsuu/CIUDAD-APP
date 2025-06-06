@@ -1,3 +1,4 @@
+// src/components/EditVaccineModal.tsx
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,11 +9,13 @@ import { Button } from "@/components/ui/button/button";
 import {
   VaccineSchema,
   VaccineType,
-} from "@/form-schema/inventory/inventoryListSchema";
-import api from "@/pages/api/api";
-import { toTitleCase } from "../requests/case";
-import { useQueryClient } from "@tanstack/react-query";
+} from "@/form-schema/inventory/lists/inventoryListSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { useLocation } from "react-router";
+import { useUpdateVaccine } from "../queries/Antigen/VaccinePutQueries";
+import { toast } from "sonner";
+import { useNavigate, Link } from "react-router";
+import { CircleCheck } from "lucide-react";
 
 const timeUnits = [
   { id: "years", name: "Years" },
@@ -34,64 +37,63 @@ const vaccineTypes = [
   { id: "primary", name: "Primary Series" },
 ];
 
-interface EditVaccineModalProps {
-  vaccineData: {
-    id: number;
-    vaccineName: string;
-    vaccineType: string;
-    ageGroup: string;
-    doses: number | string;
-    specifyAge: string;
-    noOfDoses?: number | string;
-    doseDetails: Array<{
-      id?: number;
-      doseNumber: number;
-      interval?: number;
-      unit?: string;
-      vacInt_id?: number;
-      routineF_id?: number;
-    }>;
-    category: string;
-  };
-  setIsDialog: (isOpen: boolean) => void;
+interface DoseDetail {
+  id?: number;
+  doseNumber: number;
+  interval?: number;
+  unit?: string;
+  vacInt_id?: number;
+  routineF_id?: number;
 }
 
-export default function EditVaccineModal({
-  vaccineData,
-  setIsDialog,
-}: EditVaccineModalProps) {
+export interface VaccineData {
+  id: number;
+  vaccineName: string;
+  vaccineType: string;
+  ageGroup: string;
+  doses: number | string;
+  specifyAge: string;
+  noOfDoses?: number | string;
+  doseDetails: DoseDetail[];
+  category: string;
+}
+
+export default function EditVaccineModal() {
+  const location = useLocation();
+  const vaccineData = location.state?.initialData as VaccineData;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [formData, setFormData] = useState<VaccineType | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
+  const { updateVaccine, isUpdating } = useUpdateVaccine();
+  const navigate = useNavigate();
+
+  // Initialize formData with default values
+  const defaultFormData: VaccineType = {
+    vaccineName: vaccineData.vaccineName,
+    noOfDoses: vaccineData.noOfDoses === "N/A" ? 1 : Number(vaccineData.noOfDoses),
+    ageGroup: vaccineData.ageGroup === "N/A" ? "" : vaccineData.ageGroup,
+    specifyAge: vaccineData.specifyAge === "N/A" ? "" : vaccineData.specifyAge,
+    type: vaccineData.vaccineType === "Routine" ? "routine" : "primary",
+    intervals: vaccineData.doseDetails
+      .filter((dose) => dose.doseNumber > 1)
+      .map((dose) => dose.interval || 0),
+    timeUnits: vaccineData.doseDetails
+      .filter((dose) => dose.doseNumber > 1)
+      .map((dose) => dose.unit || "months"),
+    routineFrequency: {
+      interval:
+        (vaccineData.vaccineType === "Routine" &&
+          vaccineData.doseDetails[0]?.interval) ||
+        1,
+      unit:
+        (vaccineData.vaccineType === "Routine" &&
+          vaccineData.doseDetails[0]?.unit) ||
+        "years",
+    },
+  };
 
   const form = useForm<VaccineType>({
     resolver: zodResolver(VaccineSchema),
-    defaultValues: {
-      vaccineName: vaccineData.vaccineName,
-      noOfDoses:
-        vaccineData.noOfDoses === "N/A" ? 1 : Number(vaccineData.noOfDoses),
-      ageGroup: vaccineData.ageGroup === "N/A" ? "" : vaccineData.ageGroup,
-      specifyAge:
-        vaccineData.specifyAge === "N/A" ? "" : vaccineData.specifyAge,
-      type: vaccineData.vaccineType === "Routine" ? "routine" : "primary",
-      intervals: vaccineData.doseDetails
-        .filter((dose) => dose.doseNumber > 1)
-        .map((dose) => dose.interval || 0),
-      timeUnits: vaccineData.doseDetails
-        .filter((dose) => dose.doseNumber > 1)
-        .map((dose) => dose.unit || "months"),
-      routineFrequency: {
-        interval:
-          (vaccineData.vaccineType === "Routine" &&
-            vaccineData.doseDetails[0]?.interval) ||
-          1,
-        unit:
-          (vaccineData.vaccineType === "Routine" &&
-            vaccineData.doseDetails[0]?.unit) ||
-          "years",
-      },
-    },
+    defaultValues: defaultFormData,
+    mode: "onChange", // Validate on change to show errors immediately
   });
 
   const {
@@ -99,8 +101,9 @@ export default function EditVaccineModal({
     setValue,
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = form;
+
   const [type, ageGroup, noOfDoses, specifyAge] = watch([
     "type",
     "ageGroup",
@@ -109,175 +112,58 @@ export default function EditVaccineModal({
   ]);
 
   useEffect(() => {
-    if (type === "routine") {
+    const currentNoOfDoses = watch("noOfDoses");
+    const currentType = watch("type");
+    const currentIntervals = watch("intervals");
+    const currentTimeUnits = watch("timeUnits");
+
+    if (currentType === "routine") {
       setValue("noOfDoses", 1);
       setValue("intervals", []);
       setValue("timeUnits", []);
     } else {
-      const currentIntervals = watch("intervals") || [];
-      const currentTimeUnits = watch("timeUnits") || [];
-
-      if (currentIntervals.length > noOfDoses - 1) {
-        setValue("intervals", currentIntervals.slice(0, noOfDoses - 1));
-        setValue("timeUnits", currentTimeUnits.slice(0, noOfDoses - 1));
+      // When reducing doses, trim the intervals and timeUnits arrays
+      if (currentIntervals.length > currentNoOfDoses - 1) {
+        setValue("intervals", currentIntervals.slice(0, currentNoOfDoses - 1));
+        setValue("timeUnits", currentTimeUnits.slice(0, currentNoOfDoses - 1));
       }
     }
   }, [noOfDoses, type, setValue, watch]);
 
   const handleFormSubmit = (data: VaccineType) => {
-    setFormData(data);
+    console.log("Form submitted with data:", data);
     setIsConfirmOpen(true);
   };
 
   const confirmUpdate = async () => {
-    if (!formData) return;
-    setIsSubmitting(true);
     setIsConfirmOpen(false);
-    
+    const currentValues = form.getValues();
+
     try {
-      const hasTypeChanged =
-        formData.type !== vaccineData.vaccineType.toLowerCase();
-      const hasDosesChanged =
-        Number(formData.noOfDoses) !==
-        Number(vaccineData.noOfDoses === "N/A" ? 1 : vaccineData.noOfDoses);
-      const hasSpecifyAgeChanged = formData.specifyAge !== vaccineData.specifyAge;
-      const hasRoutineIntervalChanged =
-        formData.type === "routine" &&
-        (Number(formData.routineFrequency?.interval) !==
-          vaccineData.doseDetails[0]?.interval ||
-          formData.routineFrequency?.unit !== vaccineData.doseDetails[0]?.unit);
-
-      const shouldUpdateIntervals =
-        hasTypeChanged ||
-        hasDosesChanged ||
-        hasSpecifyAgeChanged ||
-        hasRoutineIntervalChanged;
-
-      // Update main vaccine details
-      const updatePayload = {
-        vac_name: toTitleCase(formData.vaccineName),
-        vac_type_choices: formData.type,
-        no_of_doses: Number(formData.noOfDoses),
-        age_group: formData.ageGroup,
-        specify_age:
-          formData.ageGroup === "0-5" ? String(formData.specifyAge) : formData.ageGroup,
-        vaccat_id: 1,
-        updated_at: new Date().toISOString(),
-      };
-
-      await api.put(`inventory/vac_list/${vaccineData.id}/`, updatePayload);
-
-      if (shouldUpdateIntervals) {
-        if (hasTypeChanged) {
-          if (vaccineData.vaccineType.toLowerCase() === "routine") {
-            const routines = await api.get(`inventory/routine_freq/`, {
-              params: { vac_id: vaccineData.id },
-            });
-            await Promise.all(
-              routines.data.map((routine: { routineF_id: number }) =>
-                api.delete(`inventory/routine_freq/${routine.routineF_id}/`)
-              )
-            );
-          } else {
-            const intervals = await api.get(`inventory/vac_intervals/`, {
-              params: { vac_id: vaccineData.id },
-            });
-            await Promise.all(
-              intervals.data.map((interval: { vacInt_id: number }) =>
-                api.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
-              )
-            );
-          }
+      await updateVaccine({
+        formData: currentValues,
+        vaccineData: {
+          id: vaccineData.id,
+          vaccineName: vaccineData.vaccineName,
+          vaccineType: vaccineData.vaccineType,
+          ageGroup: vaccineData.ageGroup,
+          doses: vaccineData.doses,
+          specifyAge: vaccineData.specifyAge,
+          doseDetails: vaccineData.doseDetails,
+          category: vaccineData.category
         }
-
-        if (formData.type === "routine") {
-          const routineResponse = await api.get(`inventory/routine_freq/`, {
-            params: { vac_id: vaccineData.id },
-          });
-
-          const routineData = {
-            interval: Number(formData.routineFrequency?.interval) || 1,
-            dose_number: 1,
-            time_unit: formData.routineFrequency?.unit || "years",
-            vac_id: vaccineData.id,
-            updated_at: new Date().toISOString(),
-          };
-
-          if (routineResponse.data.length > 0) {
-            await api.put(
-              `inventory/routine_freq/${routineResponse.data[0].routineF_id}/`,
-              routineData
-            );
-          } else {
-            await api.post("inventory/routine_freq/", routineData);
-          }
-        } else {
-          const totalDoses = Number(formData.noOfDoses) || 1;
-          const intervals = Array.isArray(formData.intervals) ? formData.intervals : [];
-          const timeUnits = Array.isArray(formData.timeUnits) ? formData.timeUnits : [];
-
-          const existingIntervals = await api.get(`inventory/vac_intervals/`, {
-            params: { vac_id: vaccineData.id },
-          });
-
-          if (existingIntervals.data[0]) {
-            await api.put(
-              `inventory/vac_intervals/${existingIntervals.data[0].vacInt_id}/`,
-              {
-                interval:
-                  formData.ageGroup === "0-5" ? Number(formData.specifyAge) || 0 : 0,
-                time_unit: formData.ageGroup === "0-5" ? "months" : "NA",
-                dose_number: 1,
-                vac_id: vaccineData.id,
-                updated_at: new Date().toISOString(),
-              }
-            );
-          } else {
-            await api.post("inventory/vac_intervals/", {
-              interval:
-                formData.ageGroup === "0-5" ? Number(formData.specifyAge) || 0 : 0,
-              time_unit: formData.ageGroup === "0-5" ? "months" : "NA",
-              dose_number: 1,
-              vac_id: vaccineData.id,
-              updated_at: new Date().toISOString(),
-            });
-          }
-
-          for (let i = 1; i < totalDoses; i++) {
-            const existingDose = existingIntervals.data.find(
-              (d: any) => d.dose_number === i + 1
-            );
-            if (existingDose) {
-              await api.put(
-                `inventory/vac_intervals/${existingDose.vacInt_id}/`,
-                {
-                  interval: Number(intervals[i - 1]) || 0,
-                  time_unit: timeUnits[i - 1] || "months",
-                  dose_number: i + 1,
-                  vac_id: vaccineData.id,
-                  updated_at: new Date().toISOString(),
-                }
-              );
-            } else {
-              await api.post("inventory/vac_intervals/", {
-                interval: Number(intervals[i - 1]) || 0,
-                time_unit: timeUnits[i - 1] || "months",
-                dose_number: i + 1,
-                vac_id: vaccineData.id,
-                updated_at: new Date().toISOString(),
-              });
-            }
-          }
-        }
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["vaccines"] });
-      setIsDialog(false);
+      });
+      navigate("/mainInventoryList");
+      toast.success("Updated successfully", {
+        icon: (
+          <CircleCheck size={18} className="fill-green-500 stroke-white" />
+        ),
+        duration: 2000,
+      });
     } catch (error: any) {
-      console.error("Update error:", error);
-      alert(`Failed to update vaccine: ${error.message || "Unknown error"}`);
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Failed to update vaccine", {
+        description: error.message || "An unknown error occurred",
+      });
     }
   };
 
@@ -315,7 +201,7 @@ export default function EditVaccineModal({
       const getDoseLabel = () => {
         if (isFirstDose) {
           return ageGroup === "0-5"
-            ? `First dose at ${specifyAge || "specified"} `
+            ? `First dose at ${specifyAge || "specified"} months`
             : `First dose for ${ageGroup}`;
         }
 
@@ -392,6 +278,7 @@ export default function EditVaccineModal({
                 control={control}
                 name="specifyAge"
                 label="Specify Age (months)"
+                type="number"
               />
             )}
           </div>
@@ -403,13 +290,37 @@ export default function EditVaccineModal({
             {renderDoseFields()}
           </div>
 
+          {/* Debug information */}
+          {Object.keys(errors).length > 0 && (
+            <div className="text-red-500 text-sm p-2 border border-red-200 rounded">
+              <h4 className="font-bold">Form Errors:</h4>
+              <ul className="list-disc pl-5">
+                {Object.entries(errors).map(([field, error]) => (
+                  <li key={field}>
+                    {field}: {error.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              type="button"
+              asChild
+            >
+              <Link to="/mainInventoryList">Cancel</Link>
+            </Button>
+           
             <Button
               type="submit"
-              className="w-[120px]"
-              disabled={isSubmitting || Object.keys(errors).length > 0}
+              className="w-full sm:w-auto"
+              disabled={isUpdating || !isValid}
+              title={!isValid ? "Please fix all form errors" : ""}
             >
-              {isSubmitting ? "Updating..." : "Update"}
+              {isUpdating ? "Updating..." : "Submit"}
             </Button>
           </div>
         </form>
@@ -420,7 +331,7 @@ export default function EditVaccineModal({
         onOpenChange={setIsConfirmOpen}
         onConfirm={confirmUpdate}
         title="Update Vaccine"
-        description={`Are you sure you want to update the vaccine "${formData?.vaccineName}"?`}
+        description={`Are you sure you want to update the vaccine "${watch("vaccineName")}"?`}
       />
     </div>
   );

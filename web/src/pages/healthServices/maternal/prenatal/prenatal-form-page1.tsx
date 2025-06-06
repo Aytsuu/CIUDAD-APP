@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router";
 
 import { z } from "zod";
-import api from "@/pages/api/api";
+import {api} from "@/pages/api/api";
 
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { Checkbox } from "@/components/ui/checkbox";

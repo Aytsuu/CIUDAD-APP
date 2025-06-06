@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import WastedDoseForm from "../addstocksModal/WastedDoseModal";
@@ -20,184 +19,49 @@ import VaccineStockForm from "../addstocksModal/VacStockModal";
 import ImmunizationSupplies from "../addstocksModal/ImmunizationSupplies";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import EditImmunizationForm from "../editModal/EditImzSupply";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import { archiveInventory } from "../REQUEST/archive";
+import { archiveInventory } from "../REQUEST/Archive/ArchivePutAPI";
 import { getStockColumns } from "./columns/AntigenCol";
+import { Link, useNavigate } from "react-router";
+import { StockRecords } from "./type";
+import { getCombinedStock } from "../REQUEST/Antigen/restful-api/AntigenGetAPI";
+import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
 
-export const getCombinedStock = async () => {
-  try {
-    const [vaccineStocks, supplyStocks, vaccines, supplies, inventory] =
-      await Promise.all([
-        api.get("inventory/vaccine_stocks/"),
-        api.get("inventory/immunization_stock/"),
-        api.get("inventory/vac_list/"),
-        api.get("inventory/imz_supplies/"),
-        api.get("inventory/inventorylist/"),
-      ]);
-
-    const vaccineData = vaccineStocks.data.map((stock: any) => {
-      const vaccine = vaccines.data.find((v: any) => v.vac_id === stock.vac_id);
-      const inventoryData = inventory.data.find(
-        (i: any) => i.inv_id === stock.inv_id
-      );
-
-      const dosesPerVial = stock.dose_ml;
-      const totalDoses = dosesPerVial * stock.qty;
-
-      if (stock.solvent === "diluent") {
-        return {
-          type: "vaccine" as const,
-          id: stock.vacStck_id,
-          batchNumber: stock.batch_number,
-          category: "vaccine",
-          item: {
-            antigen: vaccine?.vac_name || "Unknown Vaccine",
-            dosage: stock.volume,
-            unit: "container",
-          },
-          qty: `${stock.qty} containers`,
-          administered: `${stock.vacStck_used} containers`,
-          wastedDose: stock.wasted_doses?.toString() || "0",
-          availableStock: stock.vacStck_qty_avail,
-          expiryDate: inventoryData?.expiry_date,
-          inv_id: stock.inv_id,
-          solvent: stock.solvent,
-          volume: stock.volume,
-          vacStck_id: stock.vacStck_id,
-          vac_id: stock.vac_id,
-        };
-      }
-
-      return {
-        type: "vaccine" as const,
-        id: stock.vacStck_id,
-        batchNumber: stock.batch_number,
-        category: "Vaccine",
-        item: {
-          antigen: vaccine?.vac_name || "Unknown Vaccine",
-          dosage: stock.dose_ml,
-          unit: "ml",
-        },
-        qty: `${stock.qty} vials (${totalDoses} doses)`,
-        administered: `${stock.vacStck_used} doses`,
-        wastedDose: stock.wasted_doses?.toString() || "0",
-        availableStock: stock.vacStck_qty_avail,
-        expiryDate: inventoryData?.expiry_date,
-        solvent: stock.solvent,
-        inv_id: stock.inv_id,
-        dose_ml: stock.dose_ml,
-        vacStck_id: stock.vacStck_id,
-        dosesPerVial: dosesPerVial,
-        vac_id: stock.vac_id,
-      };
-    });
-
-    const supplyData = supplyStocks.data.map((stock: any) => {
-      const supply = supplies.data.find((s: any) => s.imz_id === stock.imz_id);
-      const inventoryData = inventory.data.find(
-        (i: any) => i.inv_id === stock.inv_id 
-      );
-
-      const pcsPerBox = stock.imzStck_per_pcs || 1;
-      const totalPcs = stock.imzStck_pcs || stock.imzStck_qty * pcsPerBox;
-
-      let qtyDisplay;
-      if (stock.imzStck_unit === "pcs") {
-        qtyDisplay = `${totalPcs} pcs`;
-      } else {
-        qtyDisplay = `${stock.imzStck_qty} ${stock.imzStck_unit} (${totalPcs} pcs)`;
-      }
-
-      return {
-        type: "supply" as const,
-        id: stock.imzStck_id,
-        batchNumber: stock.batch_number || "N/A",
-        category: "Immunization Supplies",
-        item: {
-          antigen: supply?.imz_name || "Unknown Supply",
-          dosage: 1,
-          unit: stock.imzStck_unit,
-        },
-        qty: qtyDisplay,
-        administered: `${stock.imzStck_used} pcs`,
-        wastedDose: stock.wasted_items?.toString() || "0",
-        availableStock: stock.imzStck_avail,
-        expiryDate: inventoryData?.expiry_date || "N/A",
-        inv_id: stock.inv_id,
-        imz_id: stock.imz_id,
-        imzStck_id: stock.imzStck_id,
-        imzStck_unit: stock.imzStck_unit,
-        imzStck_per_pcs: pcsPerBox,
-      };
-    });
-console.log("Vaccine Data:", vaccineData);
-    console.log("Supply Data:", supplyData);
-  
-    return [...vaccineData, ...supplyData].sort((a, b) => b.id - a.id);
-  } catch (err) {
-    console.error("Error fetching combined stock data:", err);
-    throw err;
-  }
-};
-
-    
-
-export type StockRecords = {
-  id: number;
-  batchNumber: string;
-  category: string;
-  item: {
-    antigen: string;
-    dosage: number;
-    unit: string;
-  };
-  qty: string;
-  administered: string;
-  wastedDose: string;
-  availableStock: number;
-  expiryDate: string;
-  type: "vaccine" | "supply";
-  inv_id: number;
-  vac_id: number;
-  imz_id: number;
-  vacStck_id: number;
-  solvent: string;
-  volume: number;
-  dose_ml: number;
-  imzStck_id: number;
-  imzStck_unit: string;
-  imzStck_per_pcs: number;
-};
-
-export function isVaccine(record: StockRecords): record is StockRecords & { type: 'vaccine' } {
-  return record.type === 'vaccine';
+export function isVaccine(
+  record: StockRecords
+): record is StockRecords & { type: "vaccine" } {
+  return record.type === "vaccine";
 }
 
-export function isSupply(record: StockRecords): record is StockRecords & { type: 'supply' } {
-  return record.type === 'supply';
+export function isSupply(
+  record: StockRecords
+): record is StockRecords & { type: "supply" } {
+  return record.type === "supply";
 }
 
 export default function CombinedStockTable() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isDialog, setIsDialog] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<"vaccine" | "supply">("vaccine");
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [inventoryToArchive, setInventoryToArchive] = useState<number | null>(null);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+    useState(false);
+  const [inventoryToArchive, setInventoryToArchive] = useState<number | null>(
+    null
+  );
   const queryClient = useQueryClient();
 
-  const {
-    data: stockData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["combinedStocks"],
-    queryFn: getCombinedStock,
-    refetchOnMount: true,
-  });
+  const { data: stockData, isLoading, error } = useAntigenCombineStocks();
+
+  //   const { data: stockData, isLoading, error,} = useQuery({
+  //     queryKey: ["combinedStocks"],
+  //     queryFn: getCombinedStock,
+  //     refetchOnMount: true,
+  //  });
 
   const filteredStocks = React.useMemo(() => {
     if (!stockData) return [];
@@ -224,10 +88,15 @@ export default function CombinedStockTable() {
       try {
         await archiveInventory(inventoryToArchive);
         queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
-        alert("Inventory item archived successfully");
+        toast.success(` archived successfully`, {
+          icon: <CircleCheck size={20} className="text-green-500" />,
+          duration: 2000,
+        });
       } catch (error) {
         console.error("Failed to archive inventory:", error);
-        alert("Failed to archive inventory item");
+        toast.error(`Failed to archive`, {
+          duration: 5000,
+        });
       } finally {
         setIsArchiveConfirmationOpen(false);
         setInventoryToArchive(null);
@@ -235,8 +104,7 @@ export default function CombinedStockTable() {
     }
   };
 
-  
-  const columns = getStockColumns(handleArchiveInventory, setIsDialog);
+  const columns = getStockColumns(handleArchiveInventory);
 
   if (isLoading) {
     return (
@@ -291,52 +159,25 @@ export default function CombinedStockTable() {
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-buttonBlue text-white hover:bg-buttonBlue/90 group">
-                <Plus size={15} /> New Vaccine
+              <Button className=" hover:bg-buttonBlue/90 group">
+                <Plus size={15} /> New
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="min-w-[200px]"
-              onMouseEnter={(e: React.MouseEvent) => e.preventDefault()}
-            >
+            <DropdownMenuContent className="min-w-[200px]" align="end">
               <DropdownMenuItem
-                onClick={() => {
-                  setSelectedOption("vaccine");
-                  setIsDialog(true);
-                }}
+                onSelect={() => navigate("/addVaccineStock")}
                 className="cursor-pointer hover:bg-gray-100 px-4 py-2"
               >
                 Vaccine
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => {
-                  setSelectedOption("supply");
-                  setIsDialog(true);
-                }}
+                onSelect={() => navigate("/addImzSupplyStock")}
                 className="cursor-pointer hover:bg-gray-100 px-4 py-2"
               >
                 Immunization Supplies
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <DialogLayout
-            isOpen={isDialog}
-            onOpenChange={setIsDialog}
-            title={
-              selectedOption === "vaccine"
-                ? "Add New Vaccine"
-                : "Add Immunization Supplies"
-            }
-            mainContent={
-              selectedOption === "vaccine" ? (
-                <VaccineStockForm />
-              ) : (
-                <ImmunizationSupplies setIsDialog={setIsDialog} />
-              )
-            }
-            trigger={undefined}
-          />
         </div>
       </div>
 

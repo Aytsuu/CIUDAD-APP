@@ -26,7 +26,6 @@ class Personal(models.Model):
     per_dob = models.DateField()
     per_sex = models.CharField(max_length=100)
     per_status = models.CharField(max_length=100)
-    per_address = models.CharField(max_length=100)
     per_edAttainment = models.CharField(max_length=100, null=True)
     per_religion = models.CharField(max_length=100)
     per_contact = models.CharField(max_length=100)  
@@ -58,13 +57,13 @@ class ResidentProfile(models.Model):
 class Household(models.Model):
     hh_id = models.CharField(max_length=50, primary_key=True)
     hh_nhts = models.CharField(max_length=50)
-    hh_province = models.CharField(max_length=50)
-    hh_city = models.CharField(max_length=50)       
-    hh_barangay = models.CharField(max_length=50)
-    hh_street = models.CharField(max_length=50)
+    # hh_province = models.CharField(max_length=50)
+    # hh_city = models.CharField(max_length=50)       
+    # hh_barangay = models.CharField(max_length=50)
+    # hh_street = models.CharField(max_length=50)
     hh_date_registered = models.DateField(default=date.today)
     rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE)
-    sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
+    # sitio = models.ForeignKey(Sitio, on_delete=models.CASCADE)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, related_name="households")
 
     class Meta:
@@ -117,7 +116,7 @@ class HealthRelatedDetails(models.Model):
     hrd_philhealth_id = models.CharField(max_length=50)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
     
-
+ 
 #     class Meta:
 #         db_table = 'health_related_details'
  

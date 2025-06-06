@@ -50,7 +50,7 @@ export interface VaccinationRecord {
     vaccinelist: {
       vac_id: number;
       vaccat_details: {
-        vaccat_id: number;
+        category: string;
         vaccat_type: string;
       };
       intervals: {
@@ -68,7 +68,7 @@ export interface VaccinationRecord {
       specify_age: string;
       created_at: string;
       updated_at: string;
-      vaccat_id: number;
+      category: string;
     };
 
     inv_id: number;

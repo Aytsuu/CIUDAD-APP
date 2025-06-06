@@ -211,14 +211,14 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
 
 
 
-class VaccineCategorySerializer(serializers.ModelSerializer):
+# class VaccineCategorySerializer(serializers.ModelSerializer):
      
-    class Meta:
-        model = VaccineCategory
-        fields = '__all__'
+#     class Meta:
+#         model = VaccineCategory
+#         fields = '__all__'
 
 class ImmunizationSuppliesSerializer(serializers.ModelSerializer):
-    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
+    # vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
 
     class Meta:
         model = ImmunizationSupplies
@@ -235,7 +235,7 @@ class RoutineFrequencySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VacccinationListSerializer(serializers.ModelSerializer):
-    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
+    # vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     
     # All intervals for this vaccine (using the related_name)
     intervals = VaccineIntervalSerializer(many=True, read_only=True)
@@ -248,7 +248,7 @@ class VacccinationListSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class VaccineStockSerializer(serializers.ModelSerializer):
-    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
+    # vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     vaccinelist = VacccinationListSerializer(source='vac_id', read_only = True)
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())

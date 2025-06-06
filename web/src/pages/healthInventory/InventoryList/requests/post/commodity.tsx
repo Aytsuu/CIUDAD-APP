@@ -1,5 +1,5 @@
-import api from "@/pages/api/api";
-import { toTitleCase } from "../case";
+import {api} from "@/pages/api/api";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const addCommodity = async (commodityName: string) => {
     try {

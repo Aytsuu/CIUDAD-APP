@@ -7,9 +7,12 @@ from .serializers import *
 from datetime import datetime
 from django.db.models import Count
  
-class PatientView(generics.ListAPIView):
+class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     queryset = Patient.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer

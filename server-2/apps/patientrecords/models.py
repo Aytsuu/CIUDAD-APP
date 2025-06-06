@@ -1,21 +1,50 @@
 from django.db import models
-from apps.healthProfiling.models import Personal
+from apps.healthProfiling.models import Personal, ResidentProfile
 
 # Create your models here.
 
-
-
+# class Patient(models.Model):
+#     pat_id = models.BigAutoField(primary_key=True)
+#     pat_type = models.CharField(max_length=100, default="Resident")
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     pat_status = models.CharField(max_length=100, default="Active")
+#     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='patients', db_column='rp_id', null=True)
+#     class Meta:
+#         db_table = 'patient'
+#         ordering = ['-created_at']
 class Patient(models.Model):
-    pat_id = models.BigAutoField(primary_key=True)
+    pat_id = models.CharField(
+        max_length=15,
+        primary_key=True,
+        editable=False,
+        unique=True
+    )
     pat_type = models.CharField(max_length=100, default="Resident")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     pat_status = models.CharField(max_length=100, default="Active")
-    per_id = models.ForeignKey(Personal,on_delete=models.CASCADE,related_name='patients',db_column='per_id')
-    
+    rp_id = models.ForeignKey(
+       ResidentProfile,
+        on_delete=models.CASCADE,
+        related_name='patients',
+        db_column='rp_id',
+        null=True
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.pat_id and self.rp_id and hasattr(self.rp_id, 'per') and self.rp_id.per.per_dob:
+            year = self.rp_id.per.per_dob.year
+            type_code = 'R' if self.pat_type.lower() == 'resident' else 'T'
+            prefix = f'P{type_code}{year}'
+            count = Patient.objects.filter(pat_id__startswith=prefix).count() + 1
+            self.pat_id = f'{prefix}{str(count).zfill(4)}'
+        super().save(*args, **kwargs)
+
     class Meta:
         db_table = 'patient'
         ordering = ['-created_at']
+
  
 class PatientRecord(models.Model):
     patrec_id = models.BigAutoField(primary_key=True)
@@ -26,9 +55,6 @@ class PatientRecord(models.Model):
         db_table = 'patient_record'
         ordering = ['-patrec_id']
         
-        
-        
-
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
     vital_bp_systolic = models.CharField(max_length=100)

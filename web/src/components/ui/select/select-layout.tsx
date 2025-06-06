@@ -27,7 +27,7 @@ export function SelectLayout({ placeholder, label, className, options, value, on
 
   return (
       <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className={cn("w-[180px]", className)}>
+          <SelectTrigger className={cn("w-full", className)}>
               <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
