@@ -515,7 +515,6 @@ function AnimalBites() {
           </div>
         </div>
 
-        {/* New Record Button - FIXED THIS PART */}
         <DialogLayout
           trigger={<Button className="font-medium py-2 px-4 rounded-md shadow-sm">New Record</Button>}
           className="max-w-full sm:max-w-[50%] h-full sm:h-2/3 flex flex-col overflow-auto"

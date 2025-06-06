@@ -11,7 +11,7 @@ const ReferralFormSchema = z.object({
   p_lname: z.string().nonempty("Last name is required"),
   p_fname: z.string().nonempty("First name is required"),
   p_mname: z.string().optional(),
-  p_address: z.string().nonempty("Address is required"),
+  // p_address: z.string().nonempty("Address is required"),
   p_age: z.coerce.number().min(1, "Age must be a positive number"),
   p_gender: z.string().nonempty("Gender is required"),
 

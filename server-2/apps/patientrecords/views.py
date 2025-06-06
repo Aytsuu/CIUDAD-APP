@@ -32,7 +32,7 @@ class DeleteUpdatePatientRecordView(generics.RetrieveUpdateDestroyAPIView):
 
 class VitalSignsView(generics.ListCreateAPIView):
     serializer_class = VitalSignsSerializer
-    queryset  =VitalSigns.objects.all()
+    queryset  = VitalSigns.objects.all()
    
 class  DeleteUpdateVitalSignsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VitalSignsSerializer

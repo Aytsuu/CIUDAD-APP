@@ -1,4 +1,4 @@
-import { api } from "@/api/api"
+import { api2 } from "@/api/api"
 
 // Helper function for consistent error handling
 const handleApiError = (err: any, operation: string) => {
@@ -13,7 +13,7 @@ const handleApiError = (err: any, operation: string) => {
 // Fetch all animal bite patients
 export const getAnimalbitePatients = async () => {
   try {
-    const res = await api.get("patientrecords/patient-record")
+    const res = await api2.get("patientrecords/patient-record")
     const allPatients = res.data
 
     // Filter only Animal Bite records
@@ -30,7 +30,7 @@ export const getAnimalbitePatients = async () => {
 export const getAllPatients = async () => {
   try {
     console.log("🔍 Fetching all patients...")
-    const res = await api.get("patientrecords/patient/")
+    const res = await api2.get("patientrecords/patient/")
     console.log("✅ Patients fetched successfully:", res.data)
     return res.data
   } catch (error) {
@@ -42,7 +42,7 @@ export const getAllPatients = async () => {
 // Fetch all animal bite referrals
 export const getAnimalbiteReferrals = async () => {
   try {
-    const res = await api.get("animalbites/referral/")
+    const res = await api2.get("animalbites/referral/")
     return res.data
   } catch (error) {
     console.error("Error fetching referrals:", error)
@@ -53,7 +53,7 @@ export const getAnimalbiteReferrals = async () => {
 // Fetch all animal bite details
 export const getAnimalbiteDetails = async () => {
   try {
-    const res = await api.get("animalbites/details/")
+    const res = await api2.get("animalbites/details/")
     return res.data
   } catch (error) {
     console.error("Error fetching bite details:", error)
@@ -65,7 +65,7 @@ export const getAnimalbiteDetails = async () => {
 export const getBitingAnimals = async () => {
   try {
     console.log("🔍 Fetching biting animals...")
-    const res = await api.get("animalbites/bite_animal/")
+    const res = await api2.get("animalbites/bite_animal/")
     console.log("✅ Biting animals fetched:", res.data)
     return res.data
   } catch (error) {
@@ -78,7 +78,7 @@ export const getBitingAnimals = async () => {
 export const getExposureSites = async () => {
   try {
     console.log("🔍 Fetching exposure sites...")
-    const res = await api.get("animalbites/exposure_site/")
+    const res = await api2.get("animalbites/exposure_site/")
     console.log("✅ Exposure sites fetched:", res.data)
     return res.data
   } catch (error) {
@@ -91,7 +91,7 @@ export const getExposureSites = async () => {
 export const getStaffMembers = async () => {
   try {
     console.log("🔍 Fetching staff members...")
-    const res = await api.get("administration/staff/")
+    const res = await api2.get("administration/staff/")
     console.log("✅ Staff members fetched:", res.data)
     return res.data
   } catch (error) {
@@ -104,7 +104,7 @@ export const getStaffMembers = async () => {
 export const addBitingAnimal = async (animalName: string) => {
   try {
     console.log("📦 Adding new biting animal:", animalName)
-    const res = await api.post("animalbites/bite_animal/", { animal_name: animalName })
+    const res = await api2.post("animalbites/bite_animal/", { animal_name: animalName })
     console.log("✅ Biting animal added successfully:", res.data)
     return res.data
   } catch (error) {
@@ -117,7 +117,7 @@ export const addBitingAnimal = async (animalName: string) => {
 export const addExposureSite = async (siteName: string) => {
   try {
     console.log("📦 Adding new exposure site:", siteName)
-    const res = await api.post("animalbites/exposure_site/", { exposure_site: siteName })
+    const res = await api2.post("animalbites/exposure_site/", { exposure_site: siteName })
     console.log("✅ Exposure site added successfully:", res.data)
     return res.data
   } catch (error) {

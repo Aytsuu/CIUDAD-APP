@@ -1,3 +1,4 @@
+"use client"
 
 import type React from "react"
 
@@ -8,12 +9,24 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Input } from "@/components/ui/input"
-import { Search,UserRound,MapPin,Calendar,ArrowLeft,FileText,AlertTriangle,Clipboard,Activity } from "lucide-react"
+import {
+  Search,
+  UserRound,
+  MapPin,
+  Calendar,
+  ArrowLeft,
+  FileText,
+  AlertTriangle,
+  Clipboard,
+  Activity,
+  RefreshCw,
+} from "lucide-react"
 import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getPatientRecordsByPatId } from "./api/animal-bite-service"
+import { getPatientRecordsByPatId } from "./api/get-api"
 import ReferralFormModal from "./referralform"
+import { toast } from "sonner"
 
 // Define Record Type for this patient's records
 type PatientRecord = {
@@ -23,8 +36,8 @@ type PatientRecord = {
   receiver: string
   sender: string
   exposure: string
-  siteOfExposure: string
-  bitingAnimal: string
+  siteOfExposure: string | number
+  bitingAnimal: string | number
   actions: string
   referredBy?: string
   lab_exam?: string
@@ -38,20 +51,67 @@ export default function IndividualAnimalBites() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState<PatientRecord | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   // Fetch patient data by pat_id
-  const { data: patientData, isLoading } = useQuery({
+  const {
+    data: patientData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["patientRecordsByPatId", patientId],
     queryFn: () => getPatientRecordsByPatId(patientId!),
     enabled: !!patientId,
   })
 
+  // Function to refresh data
+  const refreshData = async () => {
+    setIsRefreshing(true)
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["patientRecordsByPatId", patientId] })
+      toast.success("Data refreshed successfully")
+    } catch (error) {
+      console.error("Error refreshing data:", error)
+      toast.error("Failed to refresh data")
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   // Function to view record details
   const viewRecordDetails = (record: PatientRecord) => {
     setSelectedRecord(record)
     setShowDetailModal(true)
+  }
+
+  // Process records to handle different data formats
+  const processRecords = (records: any[] = []): PatientRecord[] => {
+    return records.map((record) => {
+      // Get the biting animal and exposure site names
+      let bitingAnimalName = "N/A"
+      let exposureSiteName = "N/A"
+
+      // Check if these are objects with a name property or just IDs
+      if (typeof record.bitingAnimal === "object" && record.bitingAnimal?.animal_name) {
+        bitingAnimalName = record.bitingAnimal.animal_name
+      } else if (record.bitingAnimal) {
+        bitingAnimalName = `ID: ${record.bitingAnimal}`
+      }
+
+      if (typeof record.siteOfExposure === "object" && record.siteOfExposure?.exposure_site) {
+        exposureSiteName = record.siteOfExposure.exposure_site
+      } else if (record.siteOfExposure) {
+        exposureSiteName = `ID: ${record.siteOfExposure}`
+      }
+
+      return {
+        ...record,
+        siteOfExposure: exposureSiteName,
+        bitingAnimal: bitingAnimalName,
+      }
+    })
   }
 
   // Define columns for the records table
@@ -64,8 +124,11 @@ export default function IndividualAnimalBites() {
       accessorKey: "date",
       header: "Date",
       cell: ({ row }) => {
-        // Format date if needed
-        return new Date(row.original.date).toLocaleDateString()
+        try {
+          return new Date(row.original.date).toLocaleDateString()
+        } catch (error) {
+          return row.original.date || "N/A"
+        }
       },
     },
     {
@@ -121,22 +184,24 @@ export default function IndividualAnimalBites() {
     queryClient.invalidateQueries({ queryKey: ["patientRecordsByPatId", patientId] })
     queryClient.invalidateQueries({ queryKey: ["unique-animalbite-patients"] })
     setIsModalOpen(false)
+    toast.success("New record added successfully!")
   }
 
   // Filtering logic
-  const filteredRecords =
-    patientData?.records?.filter((record: any) => {
-      const searchString =
-        `${record.exposure} ${record.siteOfExposure} ${record.bitingAnimal} ${record.actions}`.toLowerCase()
-      const matchesSearch = searchString.includes(searchQuery.toLowerCase())
+  const filteredRecords = patientData?.records
+    ? processRecords(patientData.records).filter((record: any) => {
+        const searchString =
+          `${record.exposure} ${record.siteOfExposure} ${record.bitingAnimal} ${record.actions}`.toLowerCase()
+        const matchesSearch = searchString.includes(searchQuery.toLowerCase())
 
-      const matchesFilter =
-        filterValue === "All" ||
-        (filterValue === "Bite" && record.exposure === "Bite") ||
-        (filterValue === "Non-bite" && record.exposure === "Non-bite")
+        const matchesFilter =
+          filterValue === "All" ||
+          (filterValue === "Bite" && record.exposure === "Bite") ||
+          (filterValue === "Non-bite" && record.exposure === "Non-bite")
 
-      return matchesSearch && matchesFilter
-    }) || []
+        return matchesSearch && matchesFilter
+      })
+    : []
 
   // Extract patient info for display
   const patient = patientData?.patientInfo || {}
@@ -145,6 +210,19 @@ export default function IndividualAnimalBites() {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <p>Loading patient data...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center">
+        <p className="text-red-500">Error loading patient data</p>
+        <Link to="/animalbites">
+          <Button className="mt-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to All Records
+          </Button>
+        </Link>
       </div>
     )
   }
@@ -253,6 +331,11 @@ export default function IndividualAnimalBites() {
               value={filterValue}
               onChange={(value) => setFilterValue(value)}
             />
+
+            <Button variant="outline" className="flex items-center gap-2" onClick={refreshData} disabled={isRefreshing}>
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+              {isRefreshing ? "Refreshing..." : "Refresh"}
+            </Button>
           </div>
         </div>
 
@@ -309,7 +392,9 @@ export default function IndividualAnimalBites() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-500">Date</p>
-                      <p className="font-medium">{new Date(selectedRecord.date).toLocaleDateString()}</p>
+                      <p className="font-medium">
+                        {selectedRecord.date ? new Date(selectedRecord.date).toLocaleDateString() : "N/A"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Receiver</p>

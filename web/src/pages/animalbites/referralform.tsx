@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -85,6 +83,7 @@ const ComboboxWithAdd = ({
       setNewOptionName("")
       toast.success(`${label} added successfully!`)
     } catch (error) {
+      console.error(`Error adding ${label}:`, error)
       toast.error(`Failed to add ${label.toLowerCase()}`)
     } finally {
       setIsAdding(false)
@@ -187,21 +186,21 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_lname: "",
       p_fname: "",
       p_mname: "",
-      p_address: "",
+      // p_address: "",
       p_age: 0,
       p_gender: "",
       exposure_type: "",
       exposure_site: "",
       biting_animal: "",
       p_actions: "",
-      p_referred: "",
+      p_referred: "Midwife",
     },
   })
 
   const [patients, setPatients] = useState<{ id: string; name: string }[]>([])
   const [bitingAnimals, setBitingAnimals] = useState<{ id: string; name: string }[]>([])
   const [exposureSites, setExposureSites] = useState<{ id: string; name: string }[]>([])
-  const [staffMembers, setStaffMembers] = useState<{ id: string; name: string }[]>([])
+  // const [staffMembers, setStaffMembers] = useState<{ id: string; name: string }[]>([])
   const [patientsData, setPatientsData] = useState<PatientRecord[]>([])
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [loading, setLoading] = useState(false)
@@ -273,10 +272,10 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             name: `${member.staff_fname || member.first_name || ""} ${member.staff_lname || member.last_name || ""}`.trim(),
           }))
           console.log("👥 Formatted staff:", formattedStaff)
-          setStaffMembers(formattedStaff)
+          // setStaffMembers(formattedStaff)
         } else {
           console.warn("⚠️ No staff members found")
-          setStaffMembers([])
+          // setStaffMembers([])
         }
 
         console.log("✅ All form data fetched successfully!")
@@ -303,7 +302,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       form.setValue("p_lname", personalInfo?.per_lname || "")
       form.setValue("p_fname", personalInfo?.per_fname || "")
       form.setValue("p_mname", personalInfo?.per_mname || "")
-      form.setValue("p_address", personalInfo?.per_address || "")
+      // form.setValue("p_address", personalInfo?.per_address || "")
       form.setValue("p_age", personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : 0)
       form.setValue("p_gender", personalInfo?.per_sex || "")
     } else {
@@ -335,18 +334,44 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
   const onSubmit = async () => {
     console.log("🚀 Form submission started...")
+
+    // Trigger form validation
     const isValid = await form.trigger()
     if (!isValid) {
       console.error("❌ Form validation failed:", form.formState.errors)
+      toast.error("Please fill in all required fields correctly")
       return
     }
 
     const values = form.getValues()
     console.log("📝 Form values before submission:", values)
+
+    // Additional validation
+    if (!values.pat_id) {
+      toast.error("Please select a patient")
+      return
+    }
+
+    if (!values.exposure_site) {
+      toast.error("Please select a site of exposure")
+      return
+    }
+
+    if (!values.biting_animal) {
+      toast.error("Please select a biting animal")
+      return
+    }
+
+    if (!values.p_referred) {
+      toast.error("Please select who referred the patient")
+      return
+    }
+
     setIsSubmitting(true)
     setError(null)
 
     try {
+      console.log("📤 Submitting form data...")
       const result = await submitAnimalBiteReferral(values)
       console.log("✅ Submission successful:", result)
 
@@ -367,7 +392,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     <div className="p-3">
       <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">Animal Bites Referral Form</h2>
 
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       <Form {...form}>
         <form
@@ -419,7 +448,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             <h3 className="text-lg font-semibold mb-4">Patient Information</h3>
             <div className="flex flex-col sm:flex-row items-center mb-5 justify-between w-full">
               <div className="w-full max-w-md">
-                <Label className="text-sm font-medium mb-2 block">Select Patient</Label>
+                <Label className="text-sm font-medium mb-2 block">Select Patient *</Label>
                 <Combobox
                   options={patients}
                   value={selectedPatientId}
@@ -490,9 +519,9 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                 name="p_referred"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>Referred by</Label>
+                    <Label>Referred by *</Label>
                     <FormControl>
-                      <Combobox
+                      {/* <Combobox
                         options={staffMembers}
                         value={field.value?.toString()}
                         onChange={field.onChange}
@@ -505,7 +534,8 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                             </Label>
                           </div>
                         }
-                      />
+                      /> */}
+                      <FormInput {...field} control={form.control} name="p_referred" label="" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -515,8 +545,8 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           </div>
 
           <div className="flex flex-col sm:flex-row sm:justify-end gap-4 mt-6 mb-6">
-
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          
+            <Button type="submit" disabled={isSubmitting || loading} className="w-full sm:w-auto">
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>

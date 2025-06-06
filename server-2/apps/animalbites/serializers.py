@@ -8,7 +8,6 @@ class PersonalSerializer(serializers.ModelSerializer):
         model = Personal
         fields = '__all__'
         
-#Patient Serializer (to access personal info)
 class PatientSerializer(serializers.ModelSerializer):
     per_id = PersonalSerializer()
 
@@ -38,7 +37,6 @@ class AnimalBiteReferralSerializer(serializers.ModelSerializer):
 
 class AnimalBiteDetailsSerializer(serializers.ModelSerializer):
     referral = serializers.PrimaryKeyRelatedField(queryset=AnimalBite_Referral.objects.all())
-
     class Meta:
         model = AnimalBite_Details
         fields = '__all__'

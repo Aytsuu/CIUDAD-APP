@@ -39,7 +39,8 @@ class AnimalBite_Details(models.Model):
     exposure_type = models.CharField(max_length=50)
     actions_taken = models.CharField(max_length=255)
 
-    referredby = models.ForeignKey(Staff, on_delete=models.SET_NULL,null=True)
+    referredby = models.CharField(max_length=100)
+    # referredby = models.ForeignKey(Staff, on_delete=models.SET_NULL,null=True)
     referral = models.ForeignKey(AnimalBite_Referral, on_delete=models.CASCADE, related_name="bite_details")
     biting_animal = models.ForeignKey(BitingAnimal, on_delete=models.SET_NULL, null=True, blank=True)
     exposure_site = models.ForeignKey(ExposureSite, on_delete=models.SET_NULL, null=True, blank=True)

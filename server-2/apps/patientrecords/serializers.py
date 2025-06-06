@@ -24,10 +24,10 @@ class PatientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = '_all_'
+        fields = '__all__'
 
     def get_personal_info(self, obj):
-        personal = obj.rp_id.per  # ✅ Get the full Personal instance
+        personal = obj.rp_id.per 
         return PersonalSerializer(personal, context=self.context).data
 
     def get_family_compositions(self, obj):

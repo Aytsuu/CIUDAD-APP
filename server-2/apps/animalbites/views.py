@@ -10,7 +10,6 @@ class AnimalbiteRecordsView(generics.ListAPIView):
     serializer_class = AnimalBiteRecordSerializer
     queryset = AnimalBite_Referral.objects.all()
     
-    
 class AnimalbiteDetailsView(generics.ListCreateAPIView):
     serializer_class = AnimalBiteDetailsSerializer
     queryset = AnimalBite_Details.objects.all()
