@@ -9,7 +9,7 @@ export interface MediaFile {
   description: string;
 }
 
-export interface BlotterFormValues {
+export interface ComplaintFormValues {
   id: string,
   bc_complainant: string;
   bc_street: string;
@@ -24,15 +24,26 @@ export interface BlotterFormValues {
   bc_evidence: FileList | null;
 }
 
-export interface BlotterRecord extends Omit<BlotterFormValues, 'bc_evidence'> {
+export interface ComplaintRecord extends Omit<ComplaintFormValues, 'bc_evidence'> {
   id: string;
   created_at?: string;
   updated_at?: string;
-  bc_status?: 'Pending' | 'Resolved' | 'In Progress';
+  comp_status?: 'Pending' | 'Resolved' | 'In Progress';
   media?: MediaFile[]; 
 }
 
-export type AccusedPerson = {
+export type Accused = {
+  lastname: string;
+  firstname: string;
+  middlename: string;
+  suffix: string;
+  street: string;
+  barangay: string;
+  city: string;
+  province: string;
+};
+
+export type Complainant = {
   lastname: string;
   firstname: string;
   middlename: string;

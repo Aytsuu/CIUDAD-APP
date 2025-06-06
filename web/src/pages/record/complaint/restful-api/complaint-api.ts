@@ -1,15 +1,15 @@
-import api from "@/api/api";
+import { api } from "@/api/api";
 
 export const postBlotter = (formData: FormData) => {
-  return api.post('/blotter/create/', formData, {
+  return api.post('/complaint/create/', formData, {
     headers: { "Content-Type": "multipart/form-data"},
   })
 }
 
 export const getBlotters = () => {
-  return api.get("/blotter/list/");
+  return api.get("/complaint/list/");
 };
 
 export const getBlotterById = (id: string) => {
-  return api.get(`/blotter/${id}/`);
+  return api.get(`/complaint/${id}/`);
 };

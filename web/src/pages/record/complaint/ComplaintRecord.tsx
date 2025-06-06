@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { useGetBlotter } from "./blotter-hooks";
-import { blotterColumns } from "./BlotterColumn";
+import { useGetComplaint } from "./complaint-hooks";
+import { blotterColumns } from "./ComplaintColumn";
 import { useMemo } from "react";
 import { BlotterRecordSkeleton } from "./skeleton/blotter-rec-skeleton";
 
@@ -17,7 +17,7 @@ export default function BlotterRecord() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageSizeInput, setPageSizeInput] = useState(DEFAULT_PAGE_SIZE.toString());
   const [currentPage, setCurrentPage] = useState(1);
-  const { data: blotters = [], isLoading, error } = useGetBlotter();
+  const { data: blotters = [], isLoading, error } = useGetComplaint();
 
   const columns = useMemo(() => blotterColumns(blotters), [blotters]);
 

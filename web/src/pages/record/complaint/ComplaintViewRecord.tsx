@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button/button";
 import { BsChevronLeft } from "react-icons/bs";
 import { Link, useLocation } from "react-router-dom";
-import { BlotterRecord } from "./blotter-type";
+import { ComplaintRecord } from "./complaint-type";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 
-export function BlotterViewRecord() {
+export function ComplaintViewRecord() {
   const { state } = useLocation();
-  const blotterData = state?.blotter as BlotterRecord;
+  const blotterData = state?.blotter as ComplaintRecord;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

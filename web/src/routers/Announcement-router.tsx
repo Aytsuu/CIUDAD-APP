@@ -1,13 +1,13 @@
-import CreateAnnouncement from "@/pages/announcement/AddAnnouncement";
+// import CreateAnnouncement from "@/pages/announcement/AddAnnouncement";
 import AnnouncementDashboard from "@/pages/announcement/AnnouncementList";
 
 export const announcement_route = [
     {
         path: '/viewAnnouncement',
-        element: <AnnouncementDashboard></AnnouncementDashboard>
+        element: <AnnouncementDashboard/>
     },
     {
         path: '/createAnnouncement',
-        element: <CreateAnnouncement></CreateAnnouncement>
+        element: "/"
     }
 ]

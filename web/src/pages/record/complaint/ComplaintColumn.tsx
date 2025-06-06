@@ -2,9 +2,9 @@ import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
-import { BlotterFormValues } from "./blotter-type";
+import { ComplaintFormValues } from "./complaint-type";
 
-export const blotterColumns = (blotter: any[]): ColumnDef<BlotterFormValues>[] => [
+export const blotterColumns = (complaint: any[]): ColumnDef<ComplaintFormValues>[] => [
   {
     accessorKey: 'id',
     header: ({ column }) => (

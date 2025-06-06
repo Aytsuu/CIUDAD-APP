@@ -33,7 +33,7 @@ urlpatterns = [
     path('complaint/', include("apps.complaint.urls")),
     path('treasurer/', include('apps.treasurer.urls')),
     path('report/', include('apps.report.urls')),
-    path('donation/', include('apps.donation.urls')),,
+    path('donation/', include('apps.donation.urls')),
     path('notification/', include('apps.notification.urls')),
     path('announcement/', include('apps.announcement.urls')),
 ]

@@ -13,20 +13,20 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { postBlotter } from "./restful-api/blotter-api";
+import { postBlotter } from "./restful-api/complaint-api";
 import { toast } from "sonner";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { BlotterFormValues, MediaFile, AccusedPerson } from "./blotter-type";
+import { ComplaintFormValues, MediaFile, Accused } from "./complaint-type";
 import { useMutation } from "@tanstack/react-query";
 import supabase from "@/supabase/supabase";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Plus, Trash2, Users, User, X } from "lucide-react";
 import { formatDate } from "@/helpers/dateFormatter";
 
-export function BlotterReport() {
+export function ComplaintReport() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [activeVideoId, setActiveVideoId] = useState<string>("");
-  const [accusedPersons, setAccusedPersons] = useState<AccusedPerson[]>([
+  const [accusedPersons, setAccusedPersons] = useState<Accused[]>([
     { lastname: "", firstname: "", middlename: "", suffix: "", street: "", barangay: "", city: "", province: ""},
   ]);
   const [activeAccusedTab, setActiveAccusedTab] = useState(0);
@@ -64,9 +64,9 @@ export function BlotterReport() {
     }
   };
 
-  const form = useForm<BlotterFormValues>();
+  const form = useForm<ComplaintFormValues>();
 
-  const onSubmit = async (data: BlotterFormValues) => {
+  const onSubmit = async (data: ComplaintFormValues) => {
     try {
       const mediaUrls = await Promise.all(
         mediaFiles.map(async (file) => {
@@ -286,7 +286,7 @@ export function BlotterReport() {
                             name={`bc_accused_lastname_${activeAccusedTab}`}
                             placeholder="Dela Cruz"
                             value={accusedPersons[activeAccusedTab].lastname}
-                            onChange={(e) => {
+                            onChange={(e: any) => {
                               const updated = [...accusedPersons];
                               updated[activeAccusedTab].lastname =
                                 e.target.value;
@@ -306,7 +306,7 @@ export function BlotterReport() {
                             name={`bc_accused_firstname_${activeAccusedTab}`}
                             placeholder="Juan"
                             value={accusedPersons[activeAccusedTab].firstname}
-                            onChange={(e) => {
+                            onChange={(e: any) => {
                               const updated = [...accusedPersons];
                               updated[activeAccusedTab].firstname =
                                 e.target.value;
@@ -326,7 +326,7 @@ export function BlotterReport() {
                             name={`bc_accused_middlename_${activeAccusedTab}`}
                             placeholder="Santos"
                             value={accusedPersons[activeAccusedTab].middlename}
-                            onChange={(e) => {
+                            onChange={(e: any) => {
                               const updated = [...accusedPersons];
                               updated[activeAccusedTab].middlename =
                                 e.target.value;
@@ -346,7 +346,7 @@ export function BlotterReport() {
                             name={`bc_accused_suffix_${activeAccusedTab}`}
                             placeholder="Jr."
                             value={accusedPersons[activeAccusedTab].suffix}
-                            onChange={(e) => {
+                            onChange={(e: any) => {
                               const updated = [...accusedPersons];
                               updated[activeAccusedTab].suffix = e.target.value;
                               setAccusedPersons(updated);
@@ -367,7 +367,7 @@ export function BlotterReport() {
                             name={`bc_accused_address_${activeAccusedTab}`}
                             placeholder="Sitio/Barangay/Municipality/City"
                             value={accusedPersons[activeAccusedTab].address}
-                            onChange={(e) => {
+                            onChange={(e: any) => {
                               const updated = [...accusedPersons];
                               updated[activeAccusedTab].address =
                                 e.target.value;

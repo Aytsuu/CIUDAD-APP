@@ -66,10 +66,9 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.complaint',
     'apps.report',
-    'apps.donation',,
+    'apps.donation',
     'apps.notification',
     'apps.announcement',
-    
     
     'backend.firebase.notifications',
 ]
