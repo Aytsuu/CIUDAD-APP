@@ -1,4 +1,3 @@
-// pages/record/council/Calendar/SchedEventForm.tsx
 import { useState, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,11 +17,15 @@ import { useGetStaffList } from "./queries/fetchqueries";
 import { format } from 'date-fns';
 import { formatDate } from '@/helpers/dateFormatter';
 
-function SchedEventForm() {
+interface SchedEventFormProps {
+  onSuccess?: () => void;
+}
+
+function SchedEventForm({ onSuccess }: SchedEventFormProps) {
   const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string }[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [ceId, setCeId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { mutate: addEvent } = useAddCouncilEvent();
   const { mutate: addAttendee } = useAddAttendee();
@@ -54,13 +57,12 @@ function SchedEventForm() {
 
   const selectedAttendeeDetails = useMemo(() => {
     const details = staffAttendees.map(staffId => {
-      const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase()); // Case-insensitive comparison
+      const staff = staffList.find(s => s.staff_id.toLowerCase() === staffId.toLowerCase());
       return {
         name: staff ? staff.full_name : `Unknown (ID: ${staffId})`,
         designation: staff ? staff.position_title || "No Designation" : "No Designation",
       };
     });
-
     return details;
   }, [staffAttendees, staffList]);
 
@@ -68,7 +70,8 @@ function SchedEventForm() {
     setSelectedAttendees(selectedAttendeeDetails);
   }, [selectedAttendeeDetails]);
 
-  function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
+  const handleSubmitEvent = async (values: z.infer<typeof AddEventFormSchema>) => {
+    setIsSubmitting(true);
     const [hour, minute] = values.eventTime.split(":");
     const formattedTime = `${hour}:${minute}:00`;
 
@@ -99,29 +102,32 @@ function SchedEventForm() {
           });
         }
         form.reset();
+        setIsSubmitting(false);
+        if (onSuccess) onSuccess();
       },
+      onError: () => {
+        setIsSubmitting(false);
+      }
     });
-  }
+  };
 
-  const handleNextClick = async () => {
+  const handlePreview = async () => {
     const isValid = await form.trigger();
     if (isValid) {
-      console.log('Form is valid, values:', form.getValues());
-      setAllowModalOpen(true);
-      setIsModalOpen(true);
-    } else {
-      console.log('Form is invalid, errors:', form.formState.errors);
-      setAllowModalOpen(false);
+      setIsPreviewOpen(true);
     }
   };
 
-  const handleModalOpenChange = (open: boolean) => {
-    if (!open) {
-      setIsModalOpen(false);
-      form.reset();
-    } else if (allowModalOpen) {
-      setIsModalOpen(true);
+  const handleSave = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      form.handleSubmit(handleSubmitEvent)();
     }
+  };
+
+  const handleConfirmPreview = () => {
+    setIsPreviewOpen(false);
+    handleSave();
   };
 
   const allAttendees = useMemo(() => {
@@ -140,10 +146,7 @@ function SchedEventForm() {
       </div>
 
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
-        >
+        <form className="flex flex-col gap-4">
           <div className="grid gap-4">
             <FormInput
               control={form.control}
@@ -218,39 +221,54 @@ function SchedEventForm() {
 
           <div className="mt-4 flex justify-end gap-3">
             {eventCategory === "activity" ? (
-              <Button type="submit" className="bg-blue hover:bg-blue/90">
-                Schedule
+              <Button 
+                type="button" 
+                className="bg-blue hover:bg-blue/90"
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving..." : "Save"}
               </Button>
             ) : (
-              <DialogLayout
-                trigger={
-                  <Button
-                    type="button"
-                    className="bg-blue hover:bg-blue/90"
-                    onClick={handleNextClick}
-                  >
-                    Next
-                  </Button>
-                }
-                className="max-w-[1000px] max-h-full flex flex-col overflow-auto scrollbar-custom"
-                title="Attendance Details"
-                description="Please review upon submitting."
-                mainContent={
-                  <AttendanceSheetView
-                    ce_id={ceId}
-                    selectedAttendees={selectedAttendees}
-                    activity={form.watch("eventTitle")}
-                    date={form.watch("eventDate")}
-                    time={form.watch("eventTime")}
-                    place={form.watch("roomPlace")}
-                    category={form.watch("eventCategory")}
-                    description={form.watch("eventDescription")}
-                    onConfirm={() => setIsModalOpen(false)}
-                  />
-                }
-                isOpen={isModalOpen}
-                onOpenChange={handleModalOpenChange}
-              />
+              <>
+                <DialogLayout
+                  trigger={
+                    <Button
+                      type="button"
+                      className="bg-gray-500 text-black hover:bg-gray-600"
+                      onClick={handlePreview}
+                    >
+                      Preview
+                    </Button>
+                  }
+                  className="max-w-[1000px] max-h-full flex flex-col overflow-auto scrollbar-custom"
+                  title="Attendance Sheet Preview"
+                  description="Review the attendance sheet before saving"
+                  mainContent={
+                    <AttendanceSheetView
+                      ce_id={ceId}
+                      selectedAttendees={selectedAttendees}
+                      activity={form.watch("eventTitle")}
+                      date={form.watch("eventDate")}
+                      time={form.watch("eventTime")}
+                      place={form.watch("roomPlace")}
+                      category={form.watch("eventCategory")}
+                      description={form.watch("eventDescription")}
+                      onConfirm={handleConfirmPreview}
+                    />
+                  }
+                  isOpen={isPreviewOpen}
+                  onOpenChange={setIsPreviewOpen}
+                />
+                <Button 
+                  type="button" 
+                  className="bg-blue hover:bg-blue/90"
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Saving..." : "Save"}
+                </Button>
+              </>
             )}
           </div>
         </form>

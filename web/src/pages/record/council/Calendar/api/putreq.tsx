@@ -28,20 +28,24 @@ export const putCouncilEvent = async (ce_id: number, eventInfo: Record<string, a
 };
 
 export const putAttendee = async (atn_id: number, attendeeInfo: Record<string, any>) => {
-    try {
-        const res = await api.put(`council/attendees/${atn_id}/`, {
-            atn_present_or_absent: attendeeInfo.atn_present_or_absent,
-            ce_id: attendeeInfo.ce_id,
-            staff_id: attendeeInfo.staff_id,
-        });
-
-        return res.data;
-    } catch (err) {
-        console.error("Error updating attendee:", err);
-        throw err;
+  try {
+    const res = await api.patch(`council/attendees/${atn_id}/`, { // Explicitly use PATCH
+      atn_present_or_absent: attendeeInfo.atn_present_or_absent,
+    });
+    console.log("PATCH request successful, response:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error("Error updating attendee:", err);
+    if (err.response) {
+      console.log("Server response details:", {
+        status: err.response.status,
+        data: err.response.data || "No error data returned",
+        headers: err.response.headers,
+      });
     }
+    throw err;
+  }
 };
-
 export const putAttendanceSheet = async (att_id: number, attendanceInfo: Record<string, any>) => {
     try {
         const res = await api.put(`council/attendance-sheet/${att_id}/`, {

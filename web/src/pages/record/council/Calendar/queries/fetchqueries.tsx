@@ -25,7 +25,7 @@ export type CouncilEventInput = {
 };
 
 export type Attendance = {
-  ceId: number; // Added to store ce_id for matching
+  ceId: number; 
   attMettingTitle: string;
   attMeetingDate: string;
   attMeetingDescription: string;
@@ -36,6 +36,7 @@ export type Attendance = {
 export type Attendee = {
   atn_id: number;
   atn_name: string;
+  atn_designation: string;
   atn_present_or_absent: string;
   ce_id: number;
   staff_id: string | null;
@@ -81,16 +82,31 @@ export const useGetCouncilEvents = () => {
   });
 };
 
-export const useGetAttendees = () => {
-  return useQuery<Attendee[], Error>({
-    queryKey: ["attendees"],
-    queryFn: () => getAttendees().catch((error) => {
-      console.error("Error fetching attendees:", error);
-      throw error;
-    }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
+// export const useGetAttendees = () => {
+//   return useQuery<Attendee[], Error>({
+//     queryKey: ["attendees"],
+//     queryFn: () => getAttendees().catch((error) => {
+//       console.error("Error fetching attendees:", error);
+//       throw error;
+//     }),
+//     staleTime: 1000 * 60 * 5, // 5 minutes
+//   });
+// };
+
+  export const useGetAttendees = (ceId?: number) => {
+    return useQuery<Attendee[], Error>({
+      queryKey: ["attendees", ceId], // Cache per ceId
+      queryFn: () => {
+        if (!ceId) throw new Error("ceId is required to fetch attendees");
+        return getAttendees(ceId).catch((error) => {
+          console.error("Error fetching attendees:", error);
+          throw error;
+        });
+      },
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      enabled: !!ceId, // Only fetch if ceId is defined
+    });
+  };
 
 export const useGetAttendanceSheets = () => {
   return useQuery<AttendanceSheet[], Error>({

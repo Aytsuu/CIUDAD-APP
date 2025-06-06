@@ -11,7 +11,11 @@ import { useDeleteAttendanceSheet } from "../Calendar/queries/delqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import Attendees from "./Attendees";
-import { useGetCouncilEvents, useGetAttendanceSheets, Attendance } from "../Calendar/queries/fetchqueries";
+import {
+  useGetCouncilEvents,
+  useGetAttendanceSheets,
+  Attendance,
+} from "../Calendar/queries/fetchqueries";
 
 export const columns: ColumnDef<Attendance>[] = [
   {
@@ -29,10 +33,9 @@ export const columns: ColumnDef<Attendance>[] = [
     header: "Meeting Title",
     cell: ({ row }) => {
       const title = row.getValue("attMettingTitle") as string;
-      const lines = title.split('\n');
-      const displayText = lines.length > 3 
-        ? `${lines.slice(0, 3).join('\n')}\n...` 
-        : title;
+      const lines = title.split("\n");
+      const displayText =
+        lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : title;
       return (
         <div className="line-clamp-3 overflow-hidden text-ellipsis">
           {displayText}
@@ -46,10 +49,9 @@ export const columns: ColumnDef<Attendance>[] = [
     header: "Meeting Description",
     cell: ({ row }) => {
       const desc = row.getValue("attMeetingDescription") as string;
-      const lines = desc.split('\n');
-      const displayText = lines.length > 3 
-        ? `${lines.slice(0, 3).join('\n')}\n...` 
-        : desc;
+      const lines = desc.split("\n");
+      const displayText =
+        lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : desc;
       return (
         <div className="line-clamp-3 overflow-hidden text-ellipsis">
           {displayText}
@@ -64,12 +66,24 @@ export const columns: ColumnDef<Attendance>[] = [
     cell: ({ row }) => {
       const ceId = row.original.ceId;
       const { data: attendanceSheet } = useGetAttendanceSheets();
-      const sheets = attendanceSheet?.filter(
-        sheet => sheet.ce_id === ceId && !sheet.att_is_archive
-      ) || [];
+      const sheets =
+        attendanceSheet?.filter(
+          (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
+        ) || [];
       const deleteAttendanceSheet = useDeleteAttendanceSheet();
+      const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
+      const [isEditMode, setIsEditMode] = useState(false);
 
- return (
+      const handleDialogClose = () => {
+      setIsAttendeesDialogOpen(false);
+      setIsEditMode(false); 
+    };
+
+    const handleSaveSuccess = () => {
+      setIsEditMode(false); 
+    };
+
+      return (
         <div className="flex justify-center gap-1">
           <TooltipLayout
             trigger={
@@ -99,16 +113,18 @@ export const columns: ColumnDef<Attendance>[] = [
                                   trigger={
                                     <ConfirmationModal
                                       trigger={
-                                        <div
-                                          className="absolute top-2 right-2 w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors"
-                                        >
+                                        <div className="absolute top-2 right-2 w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors">
                                           <Trash2 size={16} />
                                         </div>
                                       }
                                       title="Confirm Deletion"
                                       description="Are you sure you want to delete this attendance sheet? This action cannot be undone."
                                       actionLabel="Delete"
-                                      onClick={() => deleteAttendanceSheet.mutate(sheet.att_id)}
+                                      onClick={() =>
+                                        deleteAttendanceSheet.mutate(
+                                          sheet.att_id
+                                        )
+                                      }
                                     />
                                   }
                                   content="Delete this attendance sheet"
@@ -117,13 +133,17 @@ export const columns: ColumnDef<Attendance>[] = [
                             </div>
                           ) : (
                             <div className="text-sm text-gray-500">
-                              No file uploaded for Attendance Sheet #{index + 1}.
+                              No file uploaded for Attendance Sheet #{index + 1}
+                              .
                             </div>
                           )}
                         </div>
                       ))
                     ) : (
-                      <div>No attendance sheets have been uploaded for this meeting yet.</div>
+                      <div>
+                        No attendance sheets have been uploaded for this meeting
+                        yet.
+                      </div>
                     )}
                   </div>
                 }
@@ -140,12 +160,30 @@ export const columns: ColumnDef<Attendance>[] = [
                   </div>
                 }
                 className="max-w-[700px] h-[400px] flex flex-col overflow-auto"
-                title="Mark Attendance"
-                description="Confirm participants attendance."
-                mainContent={<Attendees />}
+                title={isEditMode ? "Edit" : "View"}
+                description={
+                isEditMode
+                  ? "Edit participants attendance."
+                  : "View participants attendance."
+              }
+                isOpen={isAttendeesDialogOpen}
+                onOpenChange={(open) => {
+                setIsAttendeesDialogOpen(open);
+                if (!open) {
+                  setIsEditMode(false); // Reset edit mode when dialog closes
+                }
+              }}
+                mainContent={
+                  <Attendees
+                    ceId={ceId}
+                    isEditMode={isEditMode}
+                    onEditToggle={setIsEditMode}
+                    onSave={handleSaveSuccess}
+                  />
+                }
               />
             }
-            content="Mark"
+            content={isEditMode ? "Save" : "Mark"}
           />
         </div>
       );
@@ -162,42 +200,48 @@ function AttendancePage() {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const data: Attendance[] = councilEvents
-    ?.filter(event => event.ce_type === "meeting")
-    .map(event => ({
-      ceId: event.ce_id,
-      attMettingTitle: event.ce_title,
-      attMeetingDate: event.ce_date,
-      attMeetingDescription: event.ce_description,
-      attAreaOfFocus: [event.ce_type],
-      isArchived: event.ce_is_archive,
-    }))
-    .filter(event => !event.isArchived) || [];
+  const data: Attendance[] =
+    councilEvents
+      ?.filter((event) => event.ce_type === "meeting")
+      .map((event) => ({
+        ceId: event.ce_id,
+        attMettingTitle: event.ce_title,
+        attMeetingDate: event.ce_date,
+        attMeetingDescription: event.ce_description,
+        attAreaOfFocus: [event.ce_type],
+        isArchived: event.ce_is_archive,
+      }))
+      .filter((event) => !event.isArchived) || [];
 
-  const years = [...new Set(
-    data.map(record => new Date(record.attMeetingDate).getFullYear().toString())
-  )].sort((a, b) => parseInt(b) - parseInt(a));
+  const years = [
+    ...new Set(
+      data.map((record) =>
+        new Date(record.attMeetingDate).getFullYear().toString()
+      )
+    ),
+  ].sort((a, b) => parseInt(b) - parseInt(a));
   const filterOptions = [
     { id: "all", name: "All" },
-    ...years.map(year => ({ id: year, name: year })),
+    ...years.map((year) => ({ id: year, name: year })),
   ];
 
   const [filter, setFilter] = useState<string>("all");
 
-  const filteredData = data
-    .filter(record => {
-      const matchesSearch = searchTerm === ""
+  const filteredData = data.filter((record) => {
+    const matchesSearch =
+      searchTerm === ""
         ? true
         : [
             record.attMeetingDate.toLowerCase(),
             record.attMettingTitle.toLowerCase(),
             record.attMeetingDescription.toLowerCase(),
-          ].some(field => field.includes(searchTerm.toLowerCase()));
-      const matchesYear = filter === "all"
+          ].some((field) => field.includes(searchTerm.toLowerCase()));
+    const matchesYear =
+      filter === "all"
         ? true
         : new Date(record.attMeetingDate).getFullYear().toString() === filter;
-      return matchesSearch && matchesYear;
-    });
+    return matchesSearch && matchesYear;
+  });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -219,7 +263,7 @@ function AttendancePage() {
           <Skeleton className="h-4 w-1/3 opacity-30" />
         </div>
         <Skeleton className="h-[1px] w-full mb-6 sm:mb-10 opacity-30" />
-        
+
         <div className="w-full mb-4">
           <div className="flex flex-col md:flex-row justify-start gap-3">
             <Skeleton className="h-10 w-full md:w-[400px] opacity-30" />
@@ -233,7 +277,7 @@ function AttendancePage() {
             <Skeleton className="h-8 w-14 opacity-30" />
             <Skeleton className="h-4 w-16 opacity-30" />
           </div>
-          
+
           <div className="space-y-2 p-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex gap-4">

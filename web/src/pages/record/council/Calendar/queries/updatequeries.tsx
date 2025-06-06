@@ -44,43 +44,47 @@ export const useUpdateCouncilEvent = () => {
   });
 };
 
+// In updatequeries.ts
 export const useUpdateAttendee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: Partial<AttendeeInput> }) => 
+    mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: { atn_present_or_absent: string } }) =>
       putAttendee(atn_id, attendeeInfo),
     onSuccess: (updatedData, variables) => {
-      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) => 
-        old.map(attendee => 
+      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
+        old.map((attendee) =>
           attendee.atn_id === variables.atn_id ? { ...attendee, ...updatedData } : attendee
         )
       );
       queryClient.invalidateQueries({ queryKey: ["attendees"] });
       toast.success("Attendee updated successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
+        duration: 2000,
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
       toast.error("Failed to update attendee", {
-        description: error.message,
-        duration: 2000
+        description: errorMessage,
+        duration: 2000,
       });
     },
     onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: ['attendees'] });
-      const previousAttendees = queryClient.getQueryData(['attendees']);
-      queryClient.setQueryData(['attendees'], (old: Attendee[] = []) => 
-        old.map(attendee => 
-          attendee.atn_id === variables.atn_id ? { ...attendee, ...variables.attendeeInfo } : attendee
+      await queryClient.cancelQueries({ queryKey: ["attendees"] });
+      const previousAttendees = queryClient.getQueryData(["attendees"]);
+      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
+        old.map((attendee) =>
+          attendee.atn_id === variables.atn_id
+            ? { ...attendee, atn_present_or_absent: variables.attendeeInfo.atn_present_or_absent }
+            : attendee
         )
       );
       return { previousAttendees };
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendees'] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    },
   });
 };
 
