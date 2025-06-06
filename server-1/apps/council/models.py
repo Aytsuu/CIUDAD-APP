@@ -43,6 +43,7 @@ class CouncilAttendees(models.Model):
 class CouncilAttendance(models.Model):
     att_id = models.BigAutoField(primary_key=True)
     ce_id = models.ForeignKey('CouncilScheduling', on_delete=models.CASCADE)
+    att_is_archive = models.BooleanField(default=False)
     
     file = models.ForeignKey(
         'file.File',

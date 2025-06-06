@@ -16,6 +16,8 @@ class CouncilAttendeesSerializer(serializers.ModelSerializer):
         fields = ['atn_id', 'atn_name','atn_designation', 'atn_present_or_absent', 'ce_id', 'staff_id']
 
 class CouncilAttendanceSerializer(serializers.ModelSerializer):
+    file_url = serializers.CharField(source='file.file_url', read_only=True)
+    staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
     class Meta:
         model = CouncilAttendance
         fields = '__all__'

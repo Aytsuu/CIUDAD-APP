@@ -42,6 +42,12 @@ class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.att_is_archive = True
+        instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):
     queryset = Staff.objects.select_related('pos', 'rp__per').only(

@@ -24,6 +24,15 @@ export type CouncilEventInput = {
   staff_id?: string | null;
 };
 
+export type Attendance = {
+  ceId: number; // Added to store ce_id for matching
+  attMettingTitle: string;
+  attMeetingDate: string;
+  attMeetingDescription: string;
+  attAreaOfFocus?: string[];
+  isArchived?: boolean;
+};
+
 export type Attendee = {
   atn_id: number;
   atn_name: string;
@@ -45,6 +54,8 @@ export type AttendanceSheet = {
   ce_id: number;
   file_id: number | null;
   staff_id: string | null;
+  file_url: string | null;
+  att_is_archive: boolean;
 };
 
 export type AttendanceSheetInput = {
