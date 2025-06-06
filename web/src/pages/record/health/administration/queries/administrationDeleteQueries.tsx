@@ -1,0 +1,26 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteAssignedFeatureHealth, deletePositionHealth } from "../restful-api/administrationDeleteAPI";
+
+// Deleting
+export const useDeletePosition = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePositionHealth,
+    onSuccess: (_, positionId) => {
+      queryClient.setQueryData(["positions"], (old: any[] = []) =>
+        old.filter((position) => position.pos_id !== positionId)
+      );
+    },
+  });
+};
+
+export const useDeleteAssignedFeature = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({positionId, featureId} : {
+      positionId: string,
+      featureId: string
+    }) => deleteAssignedFeatureHealth(positionId, featureId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allAssignedFeatures']})
+  })
+}

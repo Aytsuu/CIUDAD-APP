@@ -6,87 +6,23 @@ import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { householdColumns } from "./HouseholdColumns";
-import { HouseholdRecord } from "../profilingTypes";
-import { Skeleton } from "@/components/ui/skeleton";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Link } from "react-router";
-import { useHouseholds, useResidents, useSitio } from "../queries/profilingFetchQueries";
+import { useHouseholdTable } from "../queries/profilingFetchQueries";
 
 export default function HouseholdRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
-  const { data: households, isLoading: isLoadingHouseholds } = useHouseholds();
+  const { data: householdTable, isLoading } = useHouseholdTable(
+    currentPage, 
+    pageSize, 
+    searchQuery);
 
-  // Format households to populate data table
-  const formatHouseholdData = React.useCallback((): HouseholdRecord[] => {
-    if (!households) return [];
-
-    return households.map((house: any) => {
-      const sitio = house.sitio;
-      const personal = house.rp?.per;
-      const staff = house.staff?.rp?.per;
-
-      return {
-        id: house.hh_id || "-",
-        families: house.family.length ||  "-",
-        streetAddress: house.hh_street || "-",
-        sitio: sitio?.sitio_name || "-",
-        nhts: house.hh_nhts || "-",
-        headNo: house.rp.rp_id,
-        head:
-          (`${personal.per_lname},
-           ${personal.per_fname} 
-           ${personal.per_mname ? 
-            personal.per_mname[0] + '.' : ''
-          }` || "-"),
-        dateRegistered: house.hh_date_registered || "-",
-        registeredBy: 
-          (staff ? `${staff.per_lname}, 
-          ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
-      };
-    });
-  }, [households]);
-
-  const filteredHouseholds = React.useMemo(() => {
-    let formattedData = formatHouseholdData();
-
-    return formattedData.filter((record: any) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-
-  }, [searchQuery, households]);
-
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredHouseholds.length / pageSize);
-
-  // Slice the data for the current page
-  const paginatedHouseholds = filteredHouseholds.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  if (
-    isLoadingHouseholds ||
-    isLoadingSitio ||
-    isLoadingResidents
-  ) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
-
+  const households = householdTable?.results || [];
+  const totalCount = householdTable?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  
   return (
     <MainLayoutComponent
       title="Household Profiling"
@@ -107,16 +43,7 @@ export default function HouseholdRecords() {
             />
           </div>
         </div>
-        <Link
-          to="/household/form"
-          state={{
-            params: {
-              sitio: sitio,
-              residents: residents,
-              households: households,
-            },
-          }}
-        >
+        <Link to="/household/form">
           <Button>
             <Plus size={15} /> Register
           </Button>
@@ -158,17 +85,18 @@ export default function HouseholdRecords() {
         </div>
         <div className="overflow-x-auto">
           <DataTable
-            columns={householdColumns(residents, households)}
-            data={paginatedHouseholds}
+            columns={householdColumns}
+            data={households}
+            isLoading={isLoading}
           />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredHouseholds.length)} of{" "}
-            {filteredHouseholds.length} rows
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} rows
           </p>
-          {paginatedHouseholds.length > 0 && (
+          {totalPages > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}

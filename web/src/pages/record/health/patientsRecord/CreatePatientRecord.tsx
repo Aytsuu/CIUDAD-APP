@@ -183,7 +183,7 @@ export default function CreatePatientRecord() {
               </Form>
             </div>
           </div>
-        {/* }
+        }
         cardClassName="border-none pb-2 p-3 rounded-lg"
         headerClassName="pb-2 bt-2 text-xl"
         contentClassName="pt-0"
@@ -191,3 +191,4 @@ export default function CreatePatientRecord() {
     </div>
   );
 }
+        

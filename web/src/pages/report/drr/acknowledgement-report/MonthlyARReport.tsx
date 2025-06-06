@@ -97,7 +97,7 @@ export default function MonthlyARReport() {
                 {/* Right Section: Displays recent records */}
                 <ScrollArea className="sm:w-[50%] sm:h-full bg-white border border-gray flex flex-col rounded-[5px] p-3 sm:p-5 gap-3 overflow-auto">
                     {/* List of recent records */}
-                    <h4 className="mb-4 text-sm font-medium leading-none">Tags</h4>
+                    <h4 className="mb-4 text-sm font-medium leading-none">Recent</h4>
                     {months.map((_, index) => (
                         <React.Fragment key={index}>
                             <RecentRecord

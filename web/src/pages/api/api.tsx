@@ -1,7 +1,11 @@
-import axios from 'axios';
+import React from 'react'
 
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL
-});
+function api() {
+  return (
+    <div>
+      
+    </div>
+  )
+}
 
-export default api;
+export default api

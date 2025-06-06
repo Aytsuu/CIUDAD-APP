@@ -32,23 +32,24 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
 
   React.useEffect(() => {
 
-    const searchedResidentId = form.watch(`${prefix}.id`);
-    const searchResident = residents.default?.find((value: any) =>
-      value.rp_id === searchedResidentId?.split(" ")[0]
+    const selectedResident = form.watch(`${prefix}.id`);
+    const searchedResident = residents.default.find((value: any) =>
+      value.rp_id === selectedResident?.split(" ")[0]
     );
+    const personalInfo = searchedResident?.personal_info
 
-    if (searchResident) {
+    if (personalInfo) {
       form.setValue(`${prefix}`, {
-        id: searchedResidentId || '',
-        lastName: searchResident.per.per_lname || '',
-        firstName: searchResident.per.per_fname || '',
-        middleName: searchResident.per.per_mname || '',
-        suffix: searchResident.per.per_suffix || '',
-        dateOfBirth: searchResident.per.per_dob || '',
-        status: searchResident.per.per_status || '',
-        religion: searchResident.per.per_religion || '',
-        edAttainment: searchResident.per.per_edAttainment || '',
-        contact: searchResident.per.per_contact || ''
+        id: selectedResident || '',
+        lastName: personalInfo.per_lname || '',
+        firstName: personalInfo.per_fname || '',
+        middleName: personalInfo.per_mname || '',
+        suffix: personalInfo.per_suffix || '',
+        dateOfBirth: personalInfo.per_dob || '',
+        status: personalInfo.per_status || '',
+        religion: personalInfo.per_religion || '',
+        edAttainment: personalInfo.per_edAttainment || '',
+        contact: personalInfo.per_contact || ''
       });
     } else {
       form.setValue(`${prefix}`, {
@@ -65,7 +66,7 @@ export default function ParentsForm({ residents, form, dependentsList, selectedP
       });
     }
 
-    onSelect(searchedResidentId?.split(' ')[0])
+    onSelect(selectedResident?.split(' ')[0])
 
   }, [form.watch(`${prefix}.id`)]);
 

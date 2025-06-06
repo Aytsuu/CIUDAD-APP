@@ -1,5 +1,5 @@
 import ResidentRecords from "@/pages/record/profiling/resident/ResidentRecords";
-import ResidentFormLayout from "@/pages/record/profiling/resident/ResidentFormLayout";
+import ResidentFormLayout from "@/pages/record/profiling/resident/form/ResidentFormLayout";
 import RegistrationRequests from "@/pages/record/profiling/resident/RegistrationRequests";
 import HouseholdRecords from "@/pages/record/profiling/household/HouseholdRecords";
 import BusinessRecords from "@/pages/record/profiling/business/BusinessRecords";
@@ -11,6 +11,8 @@ import FamilyRecordView from "@/pages/record/profiling/family/FamilyRecordView";
 import HouseholdRecordView from "@/pages/record/profiling/household/HouseholdRecordView";
 import BusinessFormLayout from "@/pages/record/profiling/business/BusinessFormLayout";
 import AccountRegistrationLayout from "@/pages/record/account/AccountRegisterLayout";
+import AddRegOptions from "@/pages/record/profiling/resident/AddRegOptions";
+import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm";
 
 export const profiling_router = [
   // Account
@@ -36,6 +38,10 @@ export const profiling_router = [
     path: "resident/pending",
     element: <RegistrationRequests />,
   },
+  {
+    path: "resident/additional-registration",
+    element: <AddRegOptions/>
+  },
 
   // Family
   {
@@ -45,6 +51,10 @@ export const profiling_router = [
   {
     path: "family/form",
     element: <FamilyProfileForm />,
+  },
+  {
+    path: "family/family-profile-form",
+    element: <HealthFamilyForm />,
   },
   {
     path: "family/form/solo",

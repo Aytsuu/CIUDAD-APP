@@ -53,9 +53,6 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.drr',
     'apps.donation',
-    # 'apps.useraccount',
-    # 'apps.blotter',
-    'apps.gad',
 ]
 
 MIDDLEWARE = [
@@ -100,6 +97,14 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
+    },
+    'healthDB': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('SERVER2_DB_NAME'),
+        'USER': config('SERVER2_DB_USER'),
+        'PASSWORD': config('SERVER2_DB_PASSWORD'),
+        'HOST': config('SERVER2_DB_HOST'),
+        'PORT': config('SERVER2_DB_PORT'),
     }
 }
 
@@ -140,6 +145,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+DATABASE_ROUTERS = ['routers.db_routers.HealthDBRouter']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -149,16 +155,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework Settings
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':(
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',  
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny', 
         # 'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+
 
 # # New User Model
 AUTH_USER_MODEL = 'account.Account'

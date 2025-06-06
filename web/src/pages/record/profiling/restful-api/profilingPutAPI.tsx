@@ -1,14 +1,12 @@
 import { api } from "@/api/api";
-import { capitalizeAllFields, capitalize } from "@/helpers/capitalize";
 
 export const updateProfile = async (
   perId: string,
-  data: Record<string, string>
+  data: Record<string, any>
 ) => {
   try {
     const res = await api.put(
-      `profiling/personal/${perId}/`,
-      capitalizeAllFields(data)
+      `profiling/personal/update/${perId}/`, data
     );
     return res.data;
   } catch (err) {
@@ -16,20 +14,38 @@ export const updateProfile = async (
   }
 };
 
-
 export const updateFamily = async (
-  demographicInfo: Record<string, any>,
+  data: Record<string, any>,
   familyId: string
 ) => {
   try {
-    const res = await api.put(`profiling/family/update/${familyId}/`, {
-      hh_id: demographicInfo.householdNo,
-      fam_building: capitalize(demographicInfo.building),
-      fam_indigenous: capitalize(demographicInfo.indigenous)
-    })
-
+    const res = await api.put(`profiling/family/update/${familyId}/`, data)
     return res.data;
   } catch (err) {
     console.error(err);
+  }
+}
+
+export const updateFamilyRole = async (familyId: string, residentId: string, fc_role: string | null) => {
+  try {
+    const res = await api.put(`profiling/family/role/update/${familyId}/${residentId}/`, {
+      fc_role
+    })
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export const updateHousehold = async (householdInfo: Record<string, any>) => {
+  try {
+    const res = await api.put(`profiling/household/update/${householdInfo.hh_id}/`, {
+      rp: householdInfo.householdHead.split(" ")[0],
+      hh_nhts: householdInfo.nhts,
+    })
+    
+    return res.data
+  } catch (err) {
+    throw err;
   }
 }
