@@ -23,6 +23,15 @@ class CouncilAttendanceSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TemplateSerializer(serializers.ModelSerializer):
+
+    temp_below_headerContent = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        trim_whitespace=False
+    )
+    
+    temp_body = serializers.CharField(trim_whitespace=False)
+
     class Meta:
         model = Template
         fields = '__all__'
