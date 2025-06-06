@@ -204,8 +204,19 @@ class CollectorPersonnelAPIView(APIView):
         data = [collector.to_dict() for collector in collectors]
         return Response(data)
      
-class GarbagePickupRequestView(generics.ListAPIView):
-    serializer_class = GarbagePickupRequestSerializer
+class GarbagePickupRequestPendingView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestPendingSerializer
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset
+    
+class GarbagePickupRequestRejectedView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestRejectedSerializer
     def get_queryset(self):
         queryset = Garbage_Pickup_Request.objects.all()
         status = self.request.query_params.get('status', None)
@@ -215,12 +226,8 @@ class GarbagePickupRequestView(generics.ListAPIView):
         
         return queryset
 
-class PickupRequestDecisionView(generics.ListCreateAPIView):
-    serializer_class = PickupRequestDecisionSerializer
-    queryset = Pickup_Request_Decision.objects.all()
-
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
-    serializer_class = GarbagePickupRequestSerializer
+    serializer_class = GarbagePickupRequestPendingSerializer
     queryset = Garbage_Pickup_Request.objects.all()
     lookup_field = 'garb_id'
 
@@ -231,3 +238,7 @@ class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class PickupRequestDecisionView(generics.ListCreateAPIView):
+    serializer_class = PickupRequestDecisionSerializer
+    queryset = Pickup_Request_Decision.objects.all()

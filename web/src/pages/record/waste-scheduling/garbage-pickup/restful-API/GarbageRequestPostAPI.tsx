@@ -10,7 +10,7 @@ export const addDecision = async (garb_id: string, decisionInfo: {reason: string
         })
 
         await api.put(`/waste/update-garbage-pickup-request/${garb_id}/`, {
-            garb_req_status: "Rejected"
+            garb_req_status: "rejected"
         });
 
         const res = await api.post('/waste/pickup-request-decision/', {

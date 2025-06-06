@@ -47,7 +47,7 @@ class WasteTruckSerializer(serializers.ModelSerializer):
         model = WasteTruck
         fields = '__all__' 
 
-class GarbagePickupRequestSerializer(serializers.ModelSerializer):
+class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
 
     class Meta:
@@ -58,6 +58,53 @@ class GarbagePickupRequestSerializer(serializers.ModelSerializer):
         if obj.rp and obj.rp.per:
             return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
         return "Unknown"
+    
+class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
+    garb_requester = serializers.SerializerMethodField()
+    dec_id = serializers.SerializerMethodField()
+    dec_date = serializers.SerializerMethodField()
+    dec_reason = serializers.SerializerMethodField()
+    file_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Garbage_Pickup_Request
+        fields = [
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_created_at',
+            'garb_requester',
+            'dec_id',
+            'dec_date',
+            'dec_reason',
+            'file_id'
+        ]
+
+    def get_garb_requester(self, obj):
+        if obj.rp and obj.rp.per:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
+        return "Unknown"
+
+    def get_decision(self, obj):
+        try:
+            return Pickup_Request_Decision.objects.get(garb_id=obj)
+        except Pickup_Request_Decision.DoesNotExist:
+            return None
+
+    def get_dec_id(self, obj):
+        decision = self.get_decision(obj)
+        return decision.dec_id if decision else None
+
+    def get_dec_date(self, obj):
+        decision = self.get_decision(obj)
+        return decision.dec_date if decision else None
+
+    def get_dec_reason(self, obj):
+        decision = self.get_decision(obj)
+        return decision.dec_rejection_reason if decision else ""
+
+    def get_file_id(self, obj):
+        return obj.file.file_url if obj.file else ""
     
     
 class PickupRequestDecisionSerializer(serializers.ModelSerializer):

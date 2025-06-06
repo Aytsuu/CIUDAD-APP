@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDrivers } from "../restful-API/GarbageRequestGetAPI";
 import { getTrucks } from "../restful-API/GarbageRequestGetAPI";
 import { getCollectors } from "../restful-API/GarbageRequestGetAPI";
-import { getGarbagePendingRequest } from "../restful-API/GarbageRequestGetAPI";
+import { getGarbagePendingRequest, getGarbageRejectedRequest } from "../restful-API/GarbageRequestGetAPI";
 
 // Retrieve Drivers
 export type Drivers = {
@@ -80,8 +80,8 @@ export const useGetCollectors = () => {
     });
 };
 
-// Retrieve Garbage Pickup Requests
-export type GarbageRequest = {
+// Retrieve Garbage Pickup Pending Requests
+export type GarbageRequestPending = {
     garb_id: string;
     garb_requester: string;
     garb_location: string;
@@ -94,9 +94,30 @@ export type GarbageRequest = {
 }  
 
 export const useGetGarbagePendingRequest = () => {
-    return useQuery<GarbageRequest[]>({
+    return useQuery<GarbageRequestPending[]>({
         queryKey: ["garbageRequest"],
         queryFn: getGarbagePendingRequest,
-        staleTime: 1000 * 60 * 30, // 30 minutes
+        staleTime: 1000 * 60 * 30, 
+    });
+}
+
+// Retrieve Garbage Pickup Reject Requests
+export type GarbageRequestReject = {
+    garb_id: string;
+    garb_requester: string;
+    garb_location: string;
+    garb_waste_type: string;
+    garb_created_at: string;
+    dec_id?: string | null;  
+    dec_date?: string | null;
+    dec_reason: string;
+};
+
+
+export const useGetGarbageRejectRequest = () => {
+    return useQuery<GarbageRequestReject[]>({
+        queryKey: ["garbageRejectedRequest"], 
+        queryFn: getGarbageRejectedRequest,
+        staleTime: 1000 * 60 * 30,
     });
 }
