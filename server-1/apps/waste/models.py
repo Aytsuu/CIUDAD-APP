@@ -29,28 +29,6 @@ class WasteCollectionStaff(models.Model):
         db_table = 'waste_collection_staff'
 
 
-class WasteCollectionAssignment(models.Model):
-    was_id = models.BigAutoField(primary_key=True)
-    wstf_id = models.ForeignKey(WasteCollectionStaff, on_delete=models.CASCADE)
-    # sitio_id = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'waste_collection_assignment'
-
-
-class WasteCollectionSched(models.Model):
-    wc_num = models.BigAutoField(primary_key=True)
-    wc_date = models.DateField(null=True)
-    wc_time = models.TimeField(null=True)
-    wc_add_info = models.CharField(max_length=200, null=True)
-    was_id = models.ForeignKey(WasteCollectionAssignment, on_delete=models.CASCADE)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'waste_collection_sched'
-
-
 class WasteHotspot(models.Model):
     wh_num = models.BigAutoField(primary_key=True)
     wh_date = models.DateField(null=True)
@@ -149,3 +127,28 @@ class WasteTruck(models.Model):
 
     class Meta:
         db_table = 'truck'
+
+
+class WasteCollectionSched(models.Model):
+    wc_num = models.BigAutoField(primary_key=True)
+    wc_date = models.DateField(null=True)
+    wc_time = models.TimeField(null=True)
+    wc_add_info = models.CharField(max_length=200, null=True)
+    wc_is_archive = models.BooleanField(default=False)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
+    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'waste_collection_sched'
+
+class WasteCollectionAssignment(models.Model):
+    was_id = models.BigAutoField(primary_key=True)
+    sitio = models.ForeignKey('profiling.Sitio', on_delete=models.CASCADE, null=True, blank=True)
+    wstp = models.ForeignKey(WastePersonnel, on_delete=models.CASCADE, null=True, blank=True)
+    wc_num = models.ForeignKey(WasteCollectionSched, on_delete=models.CASCADE, null=True, blank=True)
+    truck = models.ForeignKey(WasteTruck, on_delete=models.CASCADE, null=True, blank=True)
+    staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        db_table = 'waste_collection_assignment'
+

@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, filters
 from .models import WasteTruck
+from apps.profiling.models import Sitio
 
 # Create your views here.
 #KANI 3RD
@@ -205,3 +206,8 @@ class CollectorPersonnelAPIView(APIView):
         
         data = [collector.to_dict() for collector in collectors]
         return Response(data)
+    
+#get Sitio 
+class SitioListView(generics.ListCreateAPIView):
+    queryset = Sitio.objects.all()
+    serializer_class = SitioSerializer

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getWasteCollectors } from "../request/wasteColGetRequest";
 import { getWasteDrivers } from "../request/wasteColGetRequest";
 import { getWasteTrucks } from "../request/wasteColGetRequest";
+import { getSitio } from "../request/wasteColGetRequest";
 
 
 // Retrieve Waste Collectors
@@ -79,6 +80,22 @@ export const useGetWasteTrucks = () => {
     return useQuery<Trucks[]>({
         queryKey: ["trucks"], 
         queryFn: getWasteTrucks,
+        staleTime: 1000 * 60 * 30,
+    });
+}
+
+
+
+// Retrieve Sitio
+export type Sitio = {
+    sitio_id: string;
+    sitio_name: string;
+}
+
+export const useGetWasteSitio = () => {
+    return useQuery<Sitio[]>({
+        queryKey: ["sitio"], 
+        queryFn: getSitio,
         staleTime: 1000 * 60 * 30,
     });
 }

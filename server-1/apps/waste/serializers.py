@@ -3,6 +3,7 @@
 from rest_framework import serializers, generics
 from .models import *
 from .models import WasteTruck
+from apps.profiling.models import Sitio
 
 
 class WasteEventSerializer(serializers.ModelSerializer):
@@ -46,3 +47,8 @@ class WasteTruckSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteTruck
         fields = '__all__' 
+
+class SitioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sitio
+        fields = ['sitio_id', 'sitio_name']
