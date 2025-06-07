@@ -1,135 +1,96 @@
-import { api } from "@/api/api";
+import { api } from "@/pages/api/api";
 
-
-export const getVaccineStock = async () => {
-  try {
-    const res = await api.get("inventory/vaccine_stocks/");
-    if (res.data.error) {
-      throw new Error(res.data.error);
-    }
-    return res.data;
-  } catch (err) {
-    console.error("Error fetching vaccine stock:", err);
-    throw err;
-  }
+export const fetchVaccineStockById = async (vacStck_id: number) => {
+  const response = await api.get(`inventory/vaccine_stocks/${vacStck_id}/`);
+  return response.data;
 };
 
-export const updateVaccineStock = async (
+
+export const fetchImzSupplyStockById = async (imzStck_id: number) => {
+  const response = await api.get(`inventory/immunization_stock/${imzStck_id}/`);
+  return response.data;
+};
+
+export const updateVaccineStockQuantity = async (
   vacStck_id: number,
   wasted_dose: number,
   vacStck_qty_avail: number,
-  vacStck_used: number
+  // vacStck_used: number
 ) => {
-  try {
-    if (!vacStck_id) {
-      throw new Error("Vaccine stock ID is required.");
-    }
+  const payload = {
+    wasted_dose,
+    vacStck_qty_avail,
+    // vacStck_used,
+    updated_at: new Date().toISOString()
+  };
 
-    const res = await api.put(`inventory/vaccine_stocks/${vacStck_id}/`, {
-      wasted_dose,
-      vacStck_qty_avail,
-      vacStck_used,
-    });
-
-    if (res.data.error) {
-      throw new Error(res.data.error);
-    }
-
-    return res.data;
-  } catch (err) {
-    console.error("Error updating vaccine stock:", err);
-    throw err;
-  }
+  const response = await api.put(
+    `inventory/vaccine_stocks/${vacStck_id}/`,
+    payload
+  );
+  return response.data;
 };
 
-export const addVaccineTransaction = async (
-  antt_qty: string,
-  staffId: number,
-  vacStck_id: number
+export const createVaccineWasteTransaction = async (
+  vacStck_id: number,
+  wastedAmount: number,
+  unit: 'doses' | 'containers'
 ) => {
-  try {
-    if (!vacStck_id) {
-      throw new Error("Vaccine stock ID is required.");
-    }
+  const payload = {
+    antt_qty: `${wastedAmount} ${unit}`,
+    antt_action: "Wasted",
+    staff: 0, // Assuming staff ID 0 for system-generated transactions
+    vacStck_id,
+    created_at: new Date().toISOString()
+  };
 
-    const res = await api.post("inventory/antigens_stocks/", {
-      antt_qty,
-      antt_action: "Wasted",
-      staff: staffId,
-      vacStck_id,
-    });
-
-    if (res.data.error) {
-      throw new Error(res.data.error);
-    }
-
-    return res.data;
-  } catch (err) {
-    console.error("Error creating vaccine transaction:", err);
-    throw err;
-  }
+  const response = await api.post("inventory/antigens_stocks/", payload);
+  return response.data;
 };
 
 
 
 
-export const updateSupplyStock = async (
+
+
+
+export const updateImmunizationStockQuantity = async (
   imzStck_id: number,
   wasted_items: number,
   imzStck_avail: number,
-  imzStck_pcs?: number
 ) => {
-  try {
-    if (!imzStck_id) {
-      throw new Error("Supply stock ID is required.");
-    }
+  const payload: {
+    wasted_items: number;
+    imzStck_avail: number;
+    updated_at: string;
+  } = {
+    wasted_items,
+    imzStck_avail,
+    updated_at: new Date().toISOString()
+  };
 
-    const payload: any = {
-      wasted_items,
-      imzStck_avail,
-    };
+  
 
-    if (imzStck_pcs !== undefined) {
-      payload.imzStck_pcs = imzStck_pcs;
-    }
-
-    const res = await api.put(`inventory/immunization_stock/${imzStck_id}/`, payload);
-
-    if (res.data.error) {
-      throw new Error(res.data.error);
-    }
-
-    return res.data;
-  } catch (err) {
-    console.error("Error updating supply stock:", err);
-    throw err;
-  }
+  const response = await api.put(
+    `inventory/immunization_stock/${imzStck_id}/`,
+    payload
+  );
+  return response.data;
 };
 
-export const addSupplyTransaction = async (
-  imzt_qty: string,
-  staffId: number,
-  imzStck_id: number
+export const createImmunizationWasteTransaction = async (
+  imzStck_id: number,
+  wastedAmount: number,
+  unit: 'pcs' | 'boxes'
 ) => {
-  try {
-    if (!imzStck_id) {
-      throw new Error("Supply stock ID is required.");
-    }
+  const payload = {
+    imzt_qty: `${wastedAmount} ${unit}`,
+    imzt_action: "Wasted",
+    staff: 0, // Assuming staff ID 0 for system-generated transactions
+    imzStck_id,
+    created_at: new Date().toISOString()
+  };
 
-    const res = await api.post("inventory/imz_transaction/", {
-      imzt_qty,
-      imzt_action: "Wasted",
-      staff: staffId,
-      imzStck_id,
-    });
-
-    if (res.data.error) {
-      throw new Error(res.data.error);
-    }
-
-    return res.data;
-  } catch (err) {
-    console.error("Error creating supply transaction:", err);
-    throw err;
-  }
+  const response = await api.post("inventory/imz_transaction/", payload);
+  return response.data;
 };

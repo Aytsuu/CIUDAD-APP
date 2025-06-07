@@ -43,13 +43,9 @@ export default function EditImzSupplyStock() {
             ? Number(supply.qty)
             : 0
           : 0,
-      pcsCount:
-        supply.imzStck_unit === "pcs"
-          ? supply.imzStck_per_pcs
-            ? Number(supply.imzStck_per_pcs)
-            : 0
-          : 0,
-      pcsPerBox: supply.imzStck_per_pcs ? Number(supply.imzStck_per_pcs) : 0,
+      pcsCount:0,
+       
+      pcsPerBox: supply.imzStck_pcs ? Number(supply.imzStck_pcs) : 0,
       imzStck_unit:
         supply.imzStck_unit === "pcs" || supply.imzStck_unit === "boxes"
           ? supply.imzStck_unit
@@ -142,7 +138,7 @@ export default function EditImzSupplyStock() {
                 {supply.imzStck_unit === "pcs"
                   ? `${supply.availableStock} pieces`
                   : `${Math.floor(
-                      supply.availableStock / supply.imzStck_per_pcs
+                      supply.availableStock / supply.imzStck_pcs
                     )} boxes / ${supply.availableStock}
                         pieces`}
               </div>
@@ -160,15 +156,7 @@ export default function EditImzSupplyStock() {
               <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
               Add Stocks
             </Label>
-            <FormSelect
-              control={form.control}
-              name="imzStck_unit"
-              label="Unit"
-              options={[
-                { id: "boxes", name: "Boxes" },
-                { id: "pcs", name: "Pieces" },
-              ]}
-            />
+            
 
             {currentUnit === "boxes" ? (
               <>
@@ -186,7 +174,7 @@ export default function EditImzSupplyStock() {
                     label="Pieces per Box"
                     type="number"
                     placeholder="Pieces per Box"
-                    readOnly={originalUnit === "boxes"}
+                    readOnly
                   />
                 </div>
                 <div className="space-y-2">
@@ -212,15 +200,7 @@ export default function EditImzSupplyStock() {
                   placeholder="Total Pieces"
                 />
 
-                {pcsPerBox &&
-                  pcsPerBox > 0 &&
-                  supply.imzStck_unit !== "pcs" && (
-                    <div className="text-sm text-gray-500">
-                      {Math.floor((form.watch("pcsCount") || 0) / pcsPerBox)}{" "}
-                      full boxes and {(form.watch("pcsCount") || 0) % pcsPerBox}{" "}
-                      pieces
-                    </div>
-                  )}
+               
               </>
             )}
 

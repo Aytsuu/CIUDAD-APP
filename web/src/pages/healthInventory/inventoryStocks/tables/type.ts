@@ -81,5 +81,8 @@ export type StockRecords = {
   dose_ml: number;
   imzStck_id: number;
   imzStck_unit: string;
-  imzStck_per_pcs: number;
+  imzStck_pcs: number;
+  imzStck_used: number;
+  // wasted_items: number;
+
 };

@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
+import {
+  Search,
+  Trash,
+  Plus,
+  FileInput,
+  Minus,
+  Edit,
+  CircleCheck,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +37,6 @@ import { StockRecords } from "./type";
 import { getCombinedStock } from "../REQUEST/Antigen/restful-api/AntigenGetAPI";
 import { useAntigenCombineStocks } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
 import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 
 export function isVaccine(
   record: StockRecords
@@ -43,11 +50,19 @@ export function isSupply(
   return record.type === "supply";
 }
 
+type StockFilter =
+  | "all"
+  | "low_stock"
+  | "out_of_stock"
+  | "near_expiry"
+  | "expired";
+
 export default function CombinedStockTable() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
   const [inventoryToArchive, setInventoryToArchive] = useState<number | null>(
@@ -57,21 +72,80 @@ export default function CombinedStockTable() {
 
   const { data: stockData, isLoading, error } = useAntigenCombineStocks();
 
-  //   const { data: stockData, isLoading, error,} = useQuery({
-  //     queryKey: ["combinedStocks"],
-  //     queryFn: getCombinedStock,
-  //     refetchOnMount: true,
-  //  });
+  const isLowStock = (
+    availableQty: number,
+    threshold: number = 10
+  ): boolean => {
+    return availableQty <= threshold;
+  };
 
-  const filteredStocks = React.useMemo(() => {
+  const isNearExpiry = (
+    expiryDate: string | null,
+    days: number = 30
+  ): boolean => {
+    if (!expiryDate) return false;
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays > 0 && diffDays <= days;
+  };
+
+  const isExpired = (expiryDate: string | null): boolean => {
+    if (!expiryDate) return false;
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    return expiry < today;
+  };
+  const filteredStocks = useMemo(() => {
     if (!stockData) return [];
-    return stockData.filter((record: StockRecords) => {
+
+    // First filter by search query
+    const searchFiltered = stockData.filter((record: StockRecords) => {
       const searchText =
         `${record.batchNumber} ${record.item.antigen}`.toLowerCase();
       return searchText.includes(searchQuery.toLowerCase());
     });
-  }, [searchQuery, stockData]);
 
+    // Then apply stock status filter if not 'all'
+    if (stockFilter === "all") return searchFiltered;
+
+    return searchFiltered.filter((record: StockRecords) => {
+      // Common properties for both vaccines and supplies
+      const availableStock = record.availableStock;
+      const expiryDate = record.expiryDate;
+
+      if (isSupply(record)) {
+        // Apply all filters to supplies
+        switch (stockFilter) {
+          case "low_stock":
+            return isLowStock(availableStock);
+          case "out_of_stock":
+            return availableStock <= 0;
+          case "near_expiry":
+            return expiryDate && isNearExpiry(expiryDate);
+          case "expired":
+            return expiryDate && isExpired(expiryDate);
+          default:
+            return true;
+        }
+      } else {
+        // Apply all filters to vaccines
+        switch (stockFilter) {
+          case "low_stock":
+            return isLowStock(availableStock);
+          case "out_of_stock":
+            return availableStock <= 0;
+          case "near_expiry":
+            return expiryDate && isNearExpiry(expiryDate);
+          case "expired":
+            return expiryDate && isExpired(expiryDate);
+          default:
+            return true;
+        }
+      }
+    });
+  }, [searchQuery, stockData, stockFilter]);
   const totalPages = Math.ceil(filteredStocks.length / pageSize);
   const paginatedStocks = filteredStocks.slice(
     (currentPage - 1) * pageSize,
@@ -128,34 +202,35 @@ export default function CombinedStockTable() {
   return (
     <>
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
-                size={17}
-              />
-              <Input
-                placeholder="Search inventory..."
-                className="pl-10 w-72 bg-white"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <SelectLayout
-              placeholder="Filter items"
-              label=""
-              className="bg-white"
-              options={[
-                { id: "all", name: "All Items" },
-                { id: "vaccine", name: "Vaccines" },
-                { id: "medsupplies", name: "Medical Supplies" },
-              ]}
-              value=""
-              onChange={() => {}}
+        <div className="w-full flex gap-2 mr-2">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+              size={17}
+            />
+            <Input
+              placeholder="Search inventory..."
+              className="pl-10 bg-white w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <SelectLayout
+            placeholder="Filter by stock status"
+            label=""
+            className="bg-white w-48"
+            options={[
+              { id: "all", name: "All Items" },
+              { id: "low_stock", name: "Low Stock" },
+              { id: "out_of_stock", name: "Out of Stock" },
+              { id: "near_expiry", name: "Near Expiry" },
+              { id: "expired", name: "Expired" },
+            ]}
+            value={stockFilter}
+            onChange={(value) => setStockFilter(value as StockFilter)}
+          />
         </div>
+
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -189,7 +189,9 @@ export const getColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
-          <Button variant="outline" disabled={expired}>
+          <Button variant="outline"   className={`${
+              expired || parseInt(row.original.availQty) <= 0 ? " bg-red-100  border border-red-300 pointer-events-none opacity-50" : "bg-red-100 border border-red-300 hover:bg-red-200"
+            }`}>
             <Link
               to="/usedFirstAidStock"
               state={{
@@ -202,7 +204,7 @@ export const getColumns = (
             </Link>
           </Button>
 
-          <Button variant="outline" disabled={expired}>
+          <Button variant="outline" disabled={expired}  className="bg-green-50 border border-green-200">
             <Link
               to="/editFirstAidStock"
               state={{

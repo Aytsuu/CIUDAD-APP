@@ -1,14 +1,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { StockRecords } from "../type";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Minus, Edit } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import WastedDoseForm from "../../addstocksModal/WastedDoseModal";
 import { Button } from "@/components/ui/button/button";
 import { Trash } from "lucide-react";
-import EditVacStockForm from "../../editModal/EditVacStockModal";
-import EditImmunizationForm from "../../editModal/EditImzSupply";
-import { isVaccine, isSupply } from "../VaccineStocks";
 import { Link, useNavigate } from "react-router";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert"; // Import the alert functions
 
@@ -65,40 +60,7 @@ export const getStockColumns = (
       );
     },
   },
-  {
-    accessorKey: "administered",
-    header: "Units Used",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div
-          className={`text-center ${
-            expired ? "text-red-600 line-through" : "text-red-600"
-          }`}
-        >
-          {row.original.administered}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "wastedDose",
-    header: "Wasted Units",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div className="flex items-center justify-center gap-2">
-          <span
-            className={`text-sm ${
-              expired ? "text-red-600 line-through" : "text-gray-600"
-            }`}
-          >
-            {row.original.wastedDose || 0}
-          </span>
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: "availableStock",
     header: "Available Stock",
@@ -110,7 +72,7 @@ export const getStockColumns = (
         isLowStock(
           record.availableStock,
           record.type === "vaccine" ? "vials" : record.imzStck_unit,
-          record.dose_ml || record.imzStck_per_pcs
+          record.dose_ml || record.imzStck_pcs
         );
 
       if (record.type === "vaccine") {
@@ -122,7 +84,7 @@ export const getStockColumns = (
                   ? "text-red-600 line-through"
                   : isLow
                   ? "text-yellow-600"
-                  : "text-green-600"
+                  : "text-black"
               }`}
             >
               {record.availableStock} containers
@@ -149,7 +111,7 @@ export const getStockColumns = (
                   ? "line-through"
                   : isLow
                   ? "text-yellow-600"
-                  : "text-green-600"
+                  : "text-black"
               }
             >
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
@@ -168,7 +130,7 @@ export const getStockColumns = (
         const isOutOfStock = availablePcs <= 0;
 
         if (record.imzStck_unit === "boxes") {
-          const pcsPerBox = record.imzStck_per_pcs || 1;
+          const pcsPerBox = record.imzStck_pcs;
           const fullBoxes = Math.floor(availablePcs / pcsPerBox);
           const remainingPcs = availablePcs % pcsPerBox;
 
@@ -186,7 +148,7 @@ export const getStockColumns = (
                     ? "text-red-600 font-bold"
                     : isLow
                     ? "text-yellow-600"
-                    : "text-green-600"
+                    : "text-black"
                 }
               >
                 {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box/es
@@ -238,6 +200,42 @@ export const getStockColumns = (
       );
     },
   },
+
+  {
+    accessorKey: "administered",
+    header: "Units Used",
+    cell: ({ row }) => {
+      const expired = isExpired(row.original.expiryDate);
+      return (
+        <div
+          className={`text-center ${
+            expired ? "text-red-600 line-through" : "text-red-600"
+          }`}
+        >
+          {row.original.administered}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "wastedDose",
+    header: "Wasted Units",
+    cell: ({ row }) => {
+      const expired = isExpired(row.original.expiryDate);
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <span
+            className={`text-sm ${
+              expired ? "text-red-600 line-through" : "text-gray-600"
+            }`}
+          >
+            {row.original.wastedDose || 0}
+          </span>
+        </div>
+      );
+    },
+  },
+
   {
     accessorKey: "expiryDate",
     header: "Expiry Date",
@@ -279,41 +277,27 @@ export const getStockColumns = (
 
       return (
         <div className="flex gap-2">
-          {/*        
-              <DialogLayout
-                trigger={
-                  <button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
-                    <Minus size={15} />
-                  </button>
-                }
-                title={
-                  row.original.category === "medsupplies"
-                    ? "Wasted Items"
-                    : "Wasted Dose"
-                }
-                mainContent={
-                  <WastedDoseForm
-                    wasted={row.original.id}
-                    record={row.original}
-                  />
-                }
-              /> */}
-
-          <Button className="flex items-center justify-center w-7 h-5 text-red-700 bg-red-200 rounded-md hover:bg-red-300 transition-colors">
+            <Button
+            variant="outline"
+            className={`${
+              expired || row.original.availableStock <= 0 ? " bg-red-100  border border-red-300 pointer-events-none opacity-50" : "bg-red-100 border border-red-300 hover:bg-red-200"
+            }`}
+            asChild
+            >
             <Link
               to="/wastedAntigen"
               state={{ wasted: row.original.id, record: row.original }}
             >
               <Minus size={15} />
             </Link>
-          </Button>
+            </Button>
 
-          <Button variant="outline" disabled={expired} asChild>
+          <Button variant="outline" disabled={expired}  className="bg-green-50 border border-green-200" asChild>
             <Link
               to={isVaccine ? "/editVaccineStock" : "/editImzSupplyStock"}
               state={{ initialData: vaccine }}
             >
-              <Edit size={16} />
+              <Plus size={16} />
             </Link>
           </Button>
 

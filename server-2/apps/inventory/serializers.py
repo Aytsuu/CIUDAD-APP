@@ -109,9 +109,7 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     med_id = serializers.PrimaryKeyRelatedField(
         queryset=Medicinelist.objects.all(), write_only=True, required=False
     )
-    # cat_id = serializers.PrimaryKeyRelatedField(
-    #     queryset=Category.objects.all(), write_only=True, required=False
-    # )
+   
 
     class Meta:
         model = MedicineTransactions
@@ -147,7 +145,6 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)
     cinv_detail = CommodityInventorySerializer(source='cinv_id', read_only=True)
     com_detail = CommodityListSerializers(source='com_id', read_only=True)
-    # cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
 
     com_name = serializers.CharField(source='cinv_id.com_id.com_name', read_only=True)
@@ -159,17 +156,11 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
     com_id = serializers.PrimaryKeyRelatedField(
         queryset=Medicinelist.objects.all(), write_only=True, required=False
     )
-    # cat_id = serializers.PrimaryKeyRelatedField(
-    #     queryset=Category.objects.all(), write_only=True, required=False
-    # )
-
-
     class Meta:
         model = CommodityTransaction
         fields = '__all__'
         
-       
-
+    
 class FirstAidInventorySerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)  
@@ -229,7 +220,6 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
 #         fields = '__all__'
 
 class ImmunizationSuppliesSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ImmunizationSupplies
         fields = '__all__'
@@ -279,11 +269,19 @@ class VaccineStockSerializer(serializers.ModelSerializer):
         
 
 class AntigenTransactionSerializer(serializers.ModelSerializer):
+    vaccine_detail = VaccineStockSerializer(source='imzStck_id', read_only=True)
+
+    vacStck_id = VaccineStockSerializer(read_only=True)
     class Meta:
         model = AntigenTransaction
         fields = '__all__' 
         
 class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
+    inv_details = InventorySerializers(source='inv_id', read_only=True)
+    immunization_supplies = ImmunizationSuppliesSerializer(source='imz_id', read_only=True)
+    
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    imz_id = serializers.PrimaryKeyRelatedField(queryset=ImmunizationSupplies.objects.all())
     class Meta:
         model = ImmunizationStock
         fields = '__all__'
@@ -299,6 +297,9 @@ class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
         
         
 class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
+    imzstock_detail = ImmnunizationStockSuppliesSerializer(source='imzStck_id', read_only=True)
+    imzStck_id = serializers.PrimaryKeyRelatedField(queryset=ImmunizationStock.objects.all())
+
     class Meta:
         model = ImmunizationTransaction
         fields = '__all__'

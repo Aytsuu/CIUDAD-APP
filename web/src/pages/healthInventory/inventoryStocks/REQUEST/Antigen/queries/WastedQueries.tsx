@@ -1,258 +1,223 @@
-// src/api/vaccineMutations.ts
-import { useMutation,useQueryClient } from "@tanstack/react-query";
-import { 
-  getVaccineStock, 
-  updateVaccineStock, 
-  addVaccineTransaction 
+import { useMutation } from "@tanstack/react-query";
+import {
+  fetchVaccineStockById,
+  updateVaccineStockQuantity,
+  createVaccineWasteTransaction,
+  updateImmunizationStockQuantity,
+  createImmunizationWasteTransaction,
+  fetchImzSupplyStockById,
 } from "../restful-api/WastedAPI";
 
-import { StockRecords } from "../type";
-
-
-
-
-// src/api/supplyMutations.ts
-import { 
-  updateSupplyStock, 
-  addSupplyTransaction 
-} from "../restful-api/WastedAPI";
-
-export const useUpdateSupplyStock = () => {
+// Vaccine Stock Mutations
+export const useFetchVaccineStockById = () => {
   return useMutation({
-    mutationFn: ({
-      imzStck_id,
-      wasted_items,
-      imzStck_avail,
-      imzStck_pcs,
-    }: {
-      imzStck_id: number;
-      wasted_items: number;
-      imzStck_avail: number;
-      imzStck_pcs?: number;
-    }) => updateSupplyStock(imzStck_id, wasted_items, imzStck_avail, imzStck_pcs),
-    onError: (error: Error) => {
-      console.error("Error updating supply stock:", error.message);
-    },
-  });
-};
-
-export const useAddSupplyTransaction = () => {
-  return useMutation({
-    mutationFn: ({
-      imzt_qty,
-      staffId,
-      imzStck_id,
-    }: {
-      imzt_qty: string;
-      staffId: number;
-      imzStck_id: number;
-    }) => addSupplyTransaction(imzt_qty, staffId, imzStck_id),
-    onError: (error: Error) => {
-      console.error("Error adding supply transaction:", error.message);
-    },
-  });
-};
-
-
-
-
-
-export const useSubmitSupplyWaste = () => {
-  const queryClient = useQueryClient();
-  const { mutateAsync: updateStock } = useUpdateSupplyStock();
-  const { mutateAsync: addTransaction } = useAddSupplyTransaction();
-
-  return useMutation({
-    mutationFn: async ({
-      record,
-      wastedAmount,
-      staffId = 0, // Default to 0 if not provided
-    }: {
-      record: StockRecords;
-      wastedAmount: number;
-      staffId?: number;
-    }) => {
-      if (!isSupply(record)) {
-        throw new Error("Invalid supply record");
-      }
-
-      // 1. Determine units and calculate values
-      const transactionUnit = record.imzStck_unit === "boxes" ? "pcs" : "pcs";
-      let piecesToDeduct = wastedAmount;
-      let imzStck_pcs: number | undefined;
-
-      // 2. Handle box conversion if needed
-      if (record.imzStck_unit === "boxes") {
-        const pcsPerBox = record.imzStck_per_pcs || 1;
-        piecesToDeduct = wastedAmount * pcsPerBox;
-        if ("imzStck_pcs" in record) {
-          imzStck_pcs = (Number(record.imzStck_pcs) || 0) - piecesToDeduct;
-        }
-      }
-
-      // 3. Update supply stock
-      await updateStock({
-        imzStck_id: record.imzStck_id,
-        wasted_items: (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
-        imzStck_avail: record.availableStock - wastedAmount,
-        imzStck_pcs
-      });
-
-      // 4. Add transaction
-      await addTransaction({
-        imzt_qty: `${wastedAmount} ${transactionUnit}`,
-        staffId,
-        imzStck_id: record.imzStck_id
-      });
-
-      return { success: true };
-    },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["supplyStocks"] });
-      queryClient.invalidateQueries({ queryKey: ["supplyTransactions"] });
-    },
-    onError: (error: Error) => {
-      console.error("Supply waste error:", error.message);
-    },
-  });
-};
-
-function isSupply(record: StockRecords): boolean {
-    return (
-        "imzStck_id" in record &&
-        "imzStck_unit" in record &&
-        "availableStock" in record &&
-        typeof record.imzStck_id === "number" &&
-        typeof record.imzStck_unit === "string" &&
-        typeof record.availableStock === "number"
-    );
-}
-
-
-
-export const useGetVaccineStock = () => {
-  return useMutation({
-    mutationFn: getVaccineStock,
+    mutationFn: (vacStck_id: number) => fetchVaccineStockById(vacStck_id),
     onError: (error: Error) => {
       console.error("Error fetching vaccine stock:", error.message);
     },
   });
 };
 
-export const useUpdateVaccineStock = () => {
+export const useFetchImzSupplyById = () => {
+  return useMutation({
+    mutationFn: (imzStck_id: number) => fetchImzSupplyStockById(imzStck_id),
+    onError: (error: Error) => {
+      console.error("Error fetching vaccine stock:", error.message);
+    },
+  });
+};
+
+export const useUpdateVaccineStockQuantity = () => {
   return useMutation({
     mutationFn: ({
       vacStck_id,
       wasted_dose,
       vacStck_qty_avail,
-      vacStck_used,
-    }: {
+    }: // vacStck_used,
+    {
       vacStck_id: number;
       wasted_dose: number;
       vacStck_qty_avail: number;
-      vacStck_used: number;
-    }) => updateVaccineStock(vacStck_id, wasted_dose, vacStck_qty_avail, vacStck_used),
+      // vacStck_used: number;
+    }) =>
+      updateVaccineStockQuantity(vacStck_id, wasted_dose, vacStck_qty_avail),
     onError: (error: Error) => {
-      console.error("Error updating vaccine stock:", error.message);
+      console.error("Error updating vaccine stock quantity:", error.message);
     },
   });
 };
 
-export const useAddVaccineTransaction = () => {
+export const useCreateVaccineWasteTransaction = () => {
   return useMutation({
     mutationFn: ({
-      antt_qty,
-      staffId,
       vacStck_id,
+      wastedAmount,
+      unit,
     }: {
-      antt_qty: string;
-      staffId: number;
       vacStck_id: number;
-    }) => addVaccineTransaction(antt_qty, staffId, vacStck_id),
+      wastedAmount: number;
+      unit: "doses" | "containers";
+    }) => createVaccineWasteTransaction(vacStck_id, wastedAmount, unit),
     onError: (error: Error) => {
-      console.error("Error adding vaccine transaction:", error.message);
+      console.error("Error creating vaccine waste transaction:", error.message);
     },
   });
 };
 
-export const useSubmitVaccineWaste = () => {
-    const queryClient = useQueryClient();
-    const { mutateAsync: fetchVaccineStock } = useGetVaccineStock();
-    const { mutateAsync: updateStock } = useUpdateVaccineStock();
-    const { mutateAsync: addTransaction } = useAddVaccineTransaction();
+// Immunization Stock Mutations
+export const useUpdateImmunizationStockQuantity = () => {
+  return useMutation({
+    mutationFn: ({
+      imzStck_id,
+      wasted_items,
+      imzStck_avail,
+    }: {
+      imzStck_id: number;
+      wasted_items: number;
+      imzStck_avail: number;
+    }) =>
+      updateImmunizationStockQuantity(
+        imzStck_id,
+        wasted_items,
+        imzStck_avail,
+      ),
+    onError: (error: Error) => {
+      console.error(
+        "Error updating immunization stock quantity:",
+        error.message
+      );
+    },
+  });
+};
 
-    return useMutation({
-        mutationFn: async ({
-            record,
-            wastedAmount,
-            staffId = 0,
-        }: {
-            record: StockRecords;
-            wastedAmount: number;
-            staffId?: number;
-        }) => {
-            if (!isVaccine(record)) {
-                throw new Error("Invalid vaccine record");
-            }
+export const useCreateImmunizationWasteTransaction = () => {
+  return useMutation({
+    mutationFn: ({
+      imzStck_id,
+      wastedAmount,
+      unit,
+    }: {
+      imzStck_id: number;
+      wastedAmount: number;
+      unit: "pcs" | "boxes";
+    }) => createImmunizationWasteTransaction(imzStck_id, wastedAmount, unit),
+    onError: (error: Error) => {
+      console.error(
+        "Error creating immunization waste transaction:",
+        error.message
+      );
+    },
+  });
+};
 
-            const inventoryList = await fetchVaccineStock();
-            const existingItem = inventoryList.data.find(
-                (item: any) => item.vacStck_id === record.vacStck_id
-            );
-            
-            if (!existingItem) {
-                throw new Error("Vaccine item not found. Please check the ID.");
-            }
+import { StockRecords } from "../../../tables/type";
+import { isVaccine, isSupply } from "../../../tables/VaccineStocks";
 
-            const currentQtyAvail = existingItem.vacStck_qty_avail;
-            const existingUsedItem = existingItem.vacStck_used;
+export const useHandleWaste = () => {
+  const { mutateAsync: fetchVaccineStock } = useFetchVaccineStockById();
+  const { mutateAsync: updateVaccineStock } = useUpdateVaccineStockQuantity();
+  const { mutateAsync: createVaccineWaste } =
+    useCreateVaccineWasteTransaction();
+  const { mutateAsync: updateImmunizationStock } =
+    useUpdateImmunizationStockQuantity();
+  const { mutateAsync: createImmunizationWaste } =
+    useCreateImmunizationWasteTransaction();
 
-            if (currentQtyAvail === 0) {
-                throw new Error("Current quantity available is 0.");
-            }
-            if (wastedAmount > currentQtyAvail) {
-                throw new Error("Cannot waste more items than available.");
-            }
+  const handleVaccineWaste = async (
+    record: StockRecords,
+    wastedAmount: number
+  ) => {
+    if (!isVaccine(record)) return;
 
-            const newQty = currentQtyAvail - wastedAmount;
-            const newUsedItem = existingUsedItem + wastedAmount;
-            const unit = record.solvent === "diluent" ? "containers" : "doses";
+    const existingItem = await fetchVaccineStock(record.vacStck_id);
+    if (!existingItem) {
+      throw new Error("Vaccine item not found. Please check the ID.");
+    }
 
-            await updateStock({
-                vacStck_id: record.vacStck_id,
-                wasted_dose: (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
-                vacStck_qty_avail: newQty,
-                vacStck_used: newUsedItem
-            });
+    const currentQtyAvail = existingItem.vacStck_qty_avail;
+    const existingUsedItem = existingItem.vacStck_used;
 
-            await addTransaction({
-                antt_qty: `${wastedAmount} ${unit}`,
-                staffId,
-                vacStck_id: record.vacStck_id
-            });
+    if (currentQtyAvail === 0) {
+      throw new Error("Current quantity available is 0.");
+    }
+    if (wastedAmount > currentQtyAvail) {
+      throw new Error("Cannot use more items than available.");
+    }
 
-            return { success: true };
-        },
-        onSuccess: () => {  
-            queryClient.invalidateQueries({ queryKey: ["vaccineStocks"] });
-            queryClient.invalidateQueries({ queryKey: ["vaccineTransactions"] });
-        }
-        ,
-        onError: (error: Error) => {
-            console.error("Vaccine waste error:", error.message);
-        },
-});
-}
+    const newQty = currentQtyAvail - wastedAmount;
+    const newUsedItem = existingUsedItem + wastedAmount;
+    const unit = record.solvent === "diluent" ? "containers" : "doses";
 
-function isVaccine(record: StockRecords): boolean {
-    return (
-        "vacStck_id" in record &&
-        "vacStck_qty_avail" in record &&
-        "vacStck_used" in record &&
-        typeof record.vacStck_id === "number" &&
-        typeof record.vacStck_qty_avail === "number" &&
-        typeof record.vacStck_used === "number"
+    await updateVaccineStock({
+      vacStck_id: record.vacStck_id,
+      wasted_dose:
+        (record.wastedDose ? parseInt(record.wastedDose) : 0) + wastedAmount,
+      vacStck_qty_avail: newQty,
+      // vacStck_used: newUsedItem
+    });
+
+    await createVaccineWaste({
+      vacStck_id: record.vacStck_id,
+      wastedAmount,
+      unit,
+    });
+  };
+
+  const handleSupplyWaste = async (
+    record: StockRecords,
+    wastedAmount: number
+  ) => {
+    if (!isSupply(record)) return;
+
+    const existingItem = await fetchImzSupplyStockById(record.imzStck_id);
+    if (!existingItem) {
+      throw new Error("Immunization item not found. Please check the ID.");
+    }
+    const currentQtyAvail = existingItem.imzStck_avail;
+    const existingWastedItems = existingItem.wasted_items;
+
+    if (currentQtyAvail === 0) {
+      throw new Error("Current quantity available is 0.");
+    }
+    if (wastedAmount > currentQtyAvail) {
+      throw new Error("Cannot waste more items than available.");
+    }
+
+    const transactionUnit = record.imzStck_unit === "boxes" ? "pcs" : "pcs";
+    let piecesToDeduct = wastedAmount;
+
+    // Calculate new values
+    const newWastedItems = existingWastedItems + wastedAmount;
+    const newAvailableStock = currentQtyAvail - wastedAmount;
+
+    const updatePayload: {
+      wasted_items: number;
+      imzStck_avail: number;
+    } = {
+      wasted_items: newWastedItems, // Updated wasted items (existing + new)
+      imzStck_avail: newAvailableStock,
+    };
+
+    if (record.imzStck_unit === "boxes") {
+      const pcsPerBox = record.imzStck_pcs || 0;
+      piecesToDeduct = wastedAmount * pcsPerBox;
+
+    }
+
+    // Update the stock
+    await updateImmunizationStockQuantity(
+      record.imzStck_id,
+      updatePayload.wasted_items,
+      updatePayload.imzStck_avail,
     );
-}
 
+    // Create waste record
+    await createImmunizationWaste({
+      imzStck_id: record.imzStck_id,
+      wastedAmount,
+      unit: transactionUnit,
+    });
+  };
+
+  return { handleVaccineWaste, handleSupplyWaste };
+};

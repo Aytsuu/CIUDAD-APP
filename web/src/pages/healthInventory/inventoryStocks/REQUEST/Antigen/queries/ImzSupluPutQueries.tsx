@@ -11,27 +11,21 @@ export const useUpdateImmunizationStock = () => {
             imzStck_id,
             inv_id,
             imzStck_qty,
-            imzStck_per_pcs,
             imzStck_pcs,
             imzStck_avail,
-            imzStck_unit,
         }: {
             imzStck_id: number;
             inv_id: number;
             imzStck_qty: number;
-            imzStck_per_pcs: number;
             imzStck_pcs: number;
             imzStck_avail: number;
-            imzStck_unit: string;
         }) =>
             updateImmunizationStock(
                 imzStck_id,
                 inv_id,
                 imzStck_qty,
-                imzStck_per_pcs,
                 imzStck_pcs,
                 imzStck_avail,
-                imzStck_unit
             ),
         onError: (error: Error) => {
             console.error("Error updating immunization stock:", error.message);
@@ -90,25 +84,24 @@ export const useSubmitUpdateImmunizationStock = () => {
       }
 
       // Determine the unit to store
-      let unitToStore = originalUnit;
+      let imzStck_unit = originalUnit;
       if (
         originalUnit === "pcs" &&
         (currentUnit === "boxes" || fullBoxesToAdd > 0)
       ) {
-        unitToStore = "boxes";
+        imzStck_unit = "boxes";
       }
 
       const payload = {
         imzStck_id: supply.id,
         inv_id: supply.inv_id,
         imzStck_qty:
-          unitToStore === "boxes"
+          imzStck_unit === "boxes"
             ? (existingSupply.imzStck_qty || 0) + fullBoxesToAdd
             : existingSupply.imzStck_qty || 0,
         imzStck_per_pcs: pcsPerBoxValue,
         imzStck_pcs: (existingSupply.imzStck_pcs || 0) + totalPcsToAdd,
         imzStck_avail: (existingSupply.imzStck_avail || 0) + totalPcsToAdd,
-        imzStck_unit: unitToStore,
       };
 
       // Update immunization stock
@@ -116,17 +109,15 @@ export const useSubmitUpdateImmunizationStock = () => {
         imzStck_id: payload.imzStck_id,
         inv_id: payload.inv_id,
         imzStck_qty: payload.imzStck_qty,
-        imzStck_per_pcs: payload.imzStck_per_pcs,
         imzStck_pcs: payload.imzStck_pcs,
         imzStck_avail: payload.imzStck_avail,
-        imzStck_unit: payload.imzStck_unit,
       });
 
       // Step 3: Add Transaction
       const string_qty =
-        payload.imzStck_unit === "boxes"
+        imzStck_unit === "boxes"
           ? `${payload.imzStck_qty} boxes (${payload.imzStck_pcs} pcs per box)`
-          : `${payload.imzStck_qty} ${payload.imzStck_unit}`;
+          : `${payload.imzStck_qty} ${imzStck_unit}`;
       const staffId = 1;
       const imzStck_id = payload.imzStck_id;
 

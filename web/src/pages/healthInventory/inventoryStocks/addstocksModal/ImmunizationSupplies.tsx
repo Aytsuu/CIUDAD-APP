@@ -6,6 +6,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
+// import { getSupplies } from "../REQUEST/Antigen/restful-api/ImzGetAPI";
 import { getSupplies } from "../REQUEST/Get";
 import {
   ImmunizationSuppliesSchema,
@@ -20,7 +21,6 @@ import { Label } from "@/components/ui/label";
 import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/ImzFetchAPI";
-
 
 export default function AddImzSupplyStock() {
   const form = useForm<ImmunizationSuppliesType>({
@@ -45,8 +45,13 @@ export default function AddImzSupplyStock() {
   const currentUnit = form.watch("imzStck_unit");
   const qty = form.watch("imzStck_qty");
   const pcs = form.watch("imzStck_pcs");
-  const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
-
+  // In your AddImzSupplyStock component, update the totalPieces calculation:
+  const totalPieces =
+    currentUnit === "boxes"
+      ? qty * (pcs || 0)
+      : currentUnit === "pcs"
+      ? qty
+      : 0;
   const navigate = useNavigate();
   const { mutate: submit, isPending } = useSubmitImmunizationStock();
   const batchNumbers = useBatchNumbers();
@@ -65,20 +70,17 @@ export default function AddImzSupplyStock() {
     fetchSupplies();
   }, []);
 
-
-
   const isDuplicateBatchNumber = (
     stocks: { batchNumber: string }[],
     newBatchNumber: string
   ) => {
     return stocks.some(
       (stock) =>
-        stock.batchNumber.trim().toLowerCase() === newBatchNumber.trim().toLowerCase()
+        stock.batchNumber.trim().toLowerCase() ===
+        newBatchNumber.trim().toLowerCase()
     );
   };
-  
 
-  
   const onSubmit = (data: ImmunizationSuppliesType) => {
     setFormData(data);
     if (isDuplicateBatchNumber(batchNumbers, data.batch_number)) {
@@ -141,13 +143,16 @@ export default function AddImzSupplyStock() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
                 <FormInput
                   control={form.control}
                   name="imzStck_qty"
                   label={
                     currentUnit === "boxes"
                       ? "Number of Boxes"
-                      : "Quantity (pieces)"
+                      : currentUnit === "pcs"
+                      ? "Quantity (pieces)"
+                      : "Quantity"
                   }
                   type="number"
                   placeholder="Quantity"
