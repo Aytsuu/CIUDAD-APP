@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDrivers } from "../restful-API/GarbageRequestGetAPI";
 import { getTrucks } from "../restful-API/GarbageRequestGetAPI";
 import { getCollectors } from "../restful-API/GarbageRequestGetAPI";
-import { getGarbagePendingRequest, getGarbageRejectedRequest } from "../restful-API/GarbageRequestGetAPI";
+import { getGarbagePendingRequest, getGarbageRejectedRequest, getGarbageAcceptedRequest} from "../restful-API/GarbageRequestGetAPI";
 
 // Retrieve Drivers
 export type Drivers = {
@@ -118,6 +118,24 @@ export const useGetGarbageRejectRequest = () => {
     return useQuery<GarbageRequestReject[]>({
         queryKey: ["garbageRejectedRequest"], 
         queryFn: getGarbageRejectedRequest,
+        staleTime: 1000 * 60 * 30,
+    });
+}
+
+export type GarbageRequestAccept = {
+  garb_id: string
+  garb_location: string
+  garb_requester: string
+  garb_waste_type: string
+  garb_created_at: string
+  dec_id: string
+  dec_date: string
+}
+
+export const useGetGarbageAcceptRequest = () => {
+    return useQuery<GarbageRequestAccept[]>({
+        queryKey: ["garbageAcceptedRequest"], 
+        queryFn: getGarbageAcceptedRequest,
         staleTime: 1000 * 60 * 30,
     });
 }

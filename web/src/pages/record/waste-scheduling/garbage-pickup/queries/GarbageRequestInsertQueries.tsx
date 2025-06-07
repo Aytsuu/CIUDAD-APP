@@ -15,7 +15,7 @@ export const useAddDecision = (onSuccess?: () => void) => {
                 reason: values.reason
             }),
             onSuccess: () => {
-                    Promise.all([
+                Promise.all([
                     queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
                     queryClient.invalidateQueries({ queryKey: ['garbageRejectedRequest'] })
                 ]);
@@ -55,7 +55,10 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
             toast.loading('Creating pickup assignment...', { id: "createPickupAssignment" });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
+            Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
+                    queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] })
+            ]);
             toast.success('Pickup assignment created successfully!', {
                 id: "createPickupAssignment",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,

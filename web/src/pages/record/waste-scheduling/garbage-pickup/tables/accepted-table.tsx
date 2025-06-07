@@ -1,4 +1,3 @@
-import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { ColumnDef } from "@tanstack/react-table"
 import { Check, Eye, Image, FileInput } from "lucide-react"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
@@ -6,24 +5,26 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import { DataTable } from "@/components/ui/table/data-table"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
 import { Button } from "@/components/ui/button/button"
-
-export type AcceptedRequest = {
-  garb_id: string
-  garb_location: string
-  garb_requester: string
-  garb_waste_type: string
-  garb_created_at: string
-  dec_id: string
-  dec_date: string
-}
+import { useGetGarbageAcceptRequest, type GarbageRequestAccept } from "../queries/GarbageRequestFetchQueries"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatTimestamp } from "@/helpers/timestampformatter"
 
 export default function AcceptedTable() {
-  const columns: ColumnDef<AcceptedRequest>[] = [
+  const { data: acceptedReqData = [], isLoading} = useGetGarbageAcceptRequest(); 
+
+  const columns: ColumnDef<GarbageRequestAccept>[] = [
     { accessorKey: "garb_requester", header: "Requester" },
     { accessorKey: "garb_location", header: "Location" },
     { accessorKey: "garb_waste_type", header: "Waste Type" },
     { accessorKey: "garb_created_at", header: "Request Date" },
-    { accessorKey: "dec_date", header: "Decision Date" },
+    { 
+          accessorKey: "dec_date", 
+          header: "Decision Date",
+          cell: ({ row }) => {
+              const date = row.original.dec_date;
+              return formatTimestamp(date);
+          }
+    },
     {
       accessorKey: "actions",
       header: "Action",
@@ -67,44 +68,16 @@ export default function AcceptedTable() {
     },
   ]
 
-  const sampleData: AcceptedRequest[] = [
-    {
-      garb_id: "002",
-      garb_requester: "John Santos",
-      garb_location: "Sitio 1",
-      garb_waste_type: "Recyclable Waste",
-      garb_created_at: "2025-06-02T10:00:00Z",
-      dec_id: "DEC001",
-      dec_date: "2025-06-04T10:00:00Z",
-    },
-    {
-      garb_id: "005",
-      garb_requester: "Elena Cruz",
-      garb_location: "Barangay West",
-      garb_waste_type: "Biodegradable Waste",
-      garb_created_at: "2025-06-03T08:30:00Z",
-      dec_id: "DEC005",
-      dec_date: "2025-06-04T13:15:00Z",
-    },
-    {
-      garb_id: "006",
-      garb_requester: "Mark Rivera",
-      garb_location: "Zone 4, Sitio Luna",
-      garb_waste_type: "Non-Biodegradable",
-      garb_created_at: "2025-06-04T12:45:00Z",
-      dec_id: "DEC006",
-      dec_date: "2025-06-05T09:00:00Z",
-    },
-    {
-      garb_id: "007",
-      garb_requester: "Lea Salonga",
-      garb_location: "Purok 7, Barangay Central",
-      garb_waste_type: "Recyclable",
-      garb_created_at: "2025-06-05T07:10:00Z",
-      dec_id: "DEC007",
-      dec_date: "2025-06-06T10:30:00Z",
-    },
-  ]
+  if (isLoading) {
+      return (
+          <div className="w-full h-full">
+              <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+              <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+              <Skeleton className="h-10 w-full mb-4 opacity-30" />
+              <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+          </div>
+      );
+  }
 
   return (
        <div className="bg-white rounded-lg shadow-sm mt-6">
@@ -112,7 +85,7 @@ export default function AcceptedTable() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
           {/* Left side - Title and Count */}
           <div className="flex items-center space-x-2">
-            <h2 className="text-lg font-medium text-gray-800">Accepted Requests ({sampleData.length})</h2>
+            <h2 className="text-lg font-medium text-gray-800">Accepted Requests ({acceptedReqData.length})</h2>
           </div>
 
           {/* Right side - Export Button */}
@@ -135,7 +108,7 @@ export default function AcceptedTable() {
 
         {/* Data Table */}
         <div>
-          <DataTable columns={columns} data={sampleData} />
+          <DataTable columns={columns} data={acceptedReqData} />
         </div>
       </div>
     );

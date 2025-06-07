@@ -106,7 +106,60 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
     def get_file_id(self, obj):
         return obj.file.file_url if obj.file else ""
     
-# class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
+class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
+    garb_requester = serializers.SerializerMethodField()
+    dec_id = serializers.SerializerMethodField()
+    dec_date = serializers.SerializerMethodField()
+    assignment_info = serializers.SerializerMethodField()  #
+
+    class Meta:
+        model = Garbage_Pickup_Request
+        fields = [
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_created_at',
+            'garb_requester',
+            'dec_id',
+            'dec_date',
+            'assignment_info'  
+        ]
+
+    def get_garb_requester(self, obj):
+        if obj.rp and obj.rp.per:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
+        return "Unknown"
+
+    def get_decision(self, obj):
+        try:
+            return Pickup_Request_Decision.objects.get(garb_id=obj)
+        except Pickup_Request_Decision.DoesNotExist:
+            return None
+
+    def get_dec_id(self, obj):
+        decision = self.get_decision(obj)
+        return decision.dec_id if decision else None
+
+    def get_dec_date(self, obj):
+        decision = self.get_decision(obj)
+        return decision.dec_date if decision else None
+
+    def get_assignment_info(self, obj):
+        try:
+            assignment = Pickup_Assignment.objects.get(garb_id=obj)
+            return {
+                'pick_date': assignment.pick_date,
+                'pick_time': assignment.pick_time,
+                'driver': assignment.wstp.wstp_name if assignment.wstp else None,
+                'truck': assignment.truck.truck_number if assignment.truck else None,
+                'collectors': [
+                    collector.wstp.wstp_name 
+                    for collector in assignment.assignment_collectors.all()
+                    if collector.wstp
+                ]
+            }
+        except Pickup_Assignment.DoesNotExist:
+            return None
 
 class PickupRequestDecisionSerializer(serializers.ModelSerializer):
     class Meta:

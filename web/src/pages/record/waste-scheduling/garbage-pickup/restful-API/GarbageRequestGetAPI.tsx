@@ -97,7 +97,6 @@ export const getGarbageAcceptedRequest = async () => {
             garb_created_at: item.garb_created_at || '',
             dec_id: item.dec_id || null, 
             dec_date: item.dec_date || null,
-            dec_reason: item.dec_reason || '',
         }));
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
