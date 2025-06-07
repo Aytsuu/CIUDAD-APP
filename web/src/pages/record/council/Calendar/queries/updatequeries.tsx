@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useCallback, useRef } from 'react';
 import { CircleCheck } from "lucide-react";
-import { putCouncilEvent, putAttendee, putAttendanceSheet } from "../api/putreq";
+import { putCouncilEvent, putAttendee, putAttendanceSheet, updateAttendees } from "../api/putreq";
 import { CouncilEvent, CouncilEventInput, Attendee, AttendeeInput, AttendanceSheet, AttendanceSheetInput } from "./fetchqueries";
 
 export const useUpdateCouncilEvent = () => {
@@ -44,49 +45,49 @@ export const useUpdateCouncilEvent = () => {
   });
 };
 
-// In updatequeries.ts
-export const useUpdateAttendee = () => {
-  const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: { atn_present_or_absent: string } }) =>
-      putAttendee(atn_id, attendeeInfo),
-    onSuccess: (updatedData, variables) => {
-      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
-        old.map((attendee) =>
-          attendee.atn_id === variables.atn_id ? { ...attendee, ...updatedData } : attendee
-        )
-      );
-      queryClient.invalidateQueries({ queryKey: ["attendees"] });
-      toast.success("Attendee updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
-    },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
-      toast.error("Failed to update attendee", {
-        description: errorMessage,
-        duration: 2000,
-      });
-    },
-    onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: ["attendees"] });
-      const previousAttendees = queryClient.getQueryData(["attendees"]);
-      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
-        old.map((attendee) =>
-          attendee.atn_id === variables.atn_id
-            ? { ...attendee, atn_present_or_absent: variables.attendeeInfo.atn_present_or_absent }
-            : attendee
-        )
-      );
-      return { previousAttendees };
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["attendees"] });
-    },
-  });
-};
+// export const useUpdateAttendee = () => {
+//   const queryClient = useQueryClient();
+
+//   return useMutation({
+//     mutationFn: ({ atn_id, attendeeInfo }: { atn_id: number; attendeeInfo: { atn_present_or_absent: string } }) =>
+//       putAttendee(atn_id, attendeeInfo),
+//     onSuccess: (updatedData, variables) => {
+//       queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
+//         old.map((attendee) =>
+//           attendee.atn_id === variables.atn_id ? { ...attendee, ...updatedData } : attendee
+//         )
+//       );
+//       queryClient.invalidateQueries({ queryKey: ["attendees"] });
+//       toast.success("Attendee updated successfully", {
+//         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+//         duration: 2000,
+//       });
+//     },
+//     onError: (error: any) => {
+//       const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
+//       toast.error("Failed to update attendee", {
+//         description: errorMessage,
+//         duration: 2000,
+//       });
+//     },
+//     onMutate: async (variables) => {
+//       await queryClient.cancelQueries({ queryKey: ["attendees"] });
+//       const previousAttendees = queryClient.getQueryData(["attendees"]);
+//       queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
+//         old.map((attendee) =>
+//           attendee.atn_id === variables.atn_id
+//             ? { ...attendee, atn_present_or_absent: variables.attendeeInfo.atn_present_or_absent }
+//             : attendee
+//         )
+//       );
+//       return { previousAttendees };
+//     },
+//     onSettled: () => {
+//       queryClient.invalidateQueries({ queryKey: ["attendees"] });
+//     },
+//   });
+// };
 
 export const useUpdateAttendanceSheet = () => {
   const queryClient = useQueryClient();
@@ -125,5 +126,112 @@ export const useUpdateAttendanceSheet = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['attendanceSheets'] });
     }
+  });
+};
+
+export const useUpdateAttendees = () => { // New mutation
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ ce_id, attendees }: { ce_id: number; attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[] }) =>
+      updateAttendees(ce_id, attendees),
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) => 
+        variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendees", variables.ce_id] });
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
+
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["attendees", variables.ce_id] });
+      const previousAttendees = queryClient.getQueryData(["attendees", variables.ce_id]);
+      queryClient.setQueryData(["attendees", variables.ce_id], (old: Attendee[] = []) => 
+        variables.attendees.map((a, index) => ({ atn_id: old[index]?.atn_id || index + 1, ...a, ce_id: variables.ce_id, staff_id: null }))
+      );
+      return { previousAttendees };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    },
+  });
+};
+
+
+const useToastManager = () => {
+  const toastShownRef = useRef(false);
+  const pendingUpdatesRef = useRef(0);
+
+  const showSuccessToast = useCallback((count: number) => {
+    if (!toastShownRef.current) {
+      toastShownRef.current = true;
+      toast.success(`${count} attendees updated successfully`, {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+
+      // Reset after toast disappears
+      setTimeout(() => {
+        toastShownRef.current = false;
+        pendingUpdatesRef.current = 0;
+      }, 2000);
+    }
+  }, []);
+
+  return {
+    incrementPending: () => {
+      pendingUpdatesRef.current += 1;
+    },
+    showSuccess: () => {
+      showSuccessToast(pendingUpdatesRef.current);
+    },
+    showError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || "Unknown error";
+      toast.error("Failed to update attendee", {
+        description: errorMessage,
+        duration: 2000,
+      });
+    }
+  };
+};
+
+export const useUpdateAttendee = () => {
+  const queryClient = useQueryClient();
+  const toastManager = useToastManager();
+
+  return useMutation({
+    mutationFn: ({ atn_id, attendeeInfo }: { 
+      atn_id: number; 
+      attendeeInfo: { atn_present_or_absent: string } 
+    }) => {
+      toastManager.incrementPending();
+      return putAttendee(atn_id, attendeeInfo);
+    },
+    onSuccess: (updatedData, variables) => {
+      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
+        old.map((attendee) =>
+          attendee.atn_id === variables.atn_id ? { ...attendee, ...updatedData } : attendee
+        )
+      );
+      toastManager.showSuccess();
+    },
+    onError: toastManager.showError,
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["attendees"] });
+      const previousAttendees = queryClient.getQueryData(["attendees"]);
+      queryClient.setQueryData(["attendees"], (old: Attendee[] = []) =>
+        old.map((attendee) =>
+          attendee.atn_id === variables.atn_id
+            ? { ...attendee, atn_present_or_absent: variables.attendeeInfo.atn_present_or_absent }
+            : attendee
+        )
+      );
+      return { previousAttendees };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["attendees"] });
+    },
   });
 };

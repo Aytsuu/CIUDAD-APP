@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
@@ -11,11 +11,9 @@ import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
 import AddEventFormSchema from "@/form-schema/council/addevent-schema";
 import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { useUpdateCouncilEvent } from "./queries/updatequeries";
+import { useUpdateCouncilEvent, useUpdateAttendees } from "./queries/updatequeries";
 import { useDeleteCouncilEvent } from "./queries/delqueries";
-import { useGetStaffList } from "./queries/fetchqueries";
-import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { useGetStaffList, useGetAttendees, Staff } from "./queries/fetchqueries";
 import { formatDate } from "@/helpers/dateFormatter";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Loader2 } from "lucide-react";
@@ -31,6 +29,7 @@ interface EditEventFormProps {
     ce_description: string;
     ce_is_archive?: boolean;
     staff_id?: string | null;
+    attendees?: { name: string; designation: string; present_or_absent?: string }[];
   };
   onClose: () => void;
 }
@@ -39,15 +38,18 @@ type EventCategory = "meeting" | "activity" | undefined;
 
 function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedAttendees, setSelectedAttendees] = useState<{ name: string; designation: string }[]>([]);
+  const [selectedAttendees, setSelectedAttendees] = useState<
+    { name: string; designation: string; present_or_absent?: string }[]
+  >(initialValues.attendees || []);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
   const [ceId] = useState<number>(initialValues.ce_id);
 
   const { mutate: updateEvent, isPending: isUpdating } = useUpdateCouncilEvent();
+  const { mutate: updateAttendees } = useUpdateAttendees();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteCouncilEvent();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-  const queryClient = useQueryClient();
+  const { data: attendees = [] } = useGetAttendees(ceId);
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -55,7 +57,9 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       eventTitle: initialValues.ce_title || "",
       eventDate: initialValues.ce_date || "",
       roomPlace: initialValues.ce_place || "",
-      eventCategory: (["meeting", "activity"].includes(initialValues.ce_type) ? initialValues.ce_type : undefined) as EventCategory,
+      eventCategory: (["meeting", "activity"].includes(initialValues.ce_type)
+        ? initialValues.ce_type
+        : undefined) as EventCategory,
       eventTime: initialValues.ce_time || "",
       eventDescription: initialValues.ce_description || "",
       staffAttendees: initialValues.staff_id ? [initialValues.staff_id] : [],
@@ -64,30 +68,52 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
 
   const eventCategory = form.watch("eventCategory");
 
-  const staffOptions = useMemo(() => {
-    return staffList.map((staff) => ({
-      id: staff.staff_id,
-      name: staff.full_name,
-    }));
-  }, [staffList]);
+const staffOptions = useMemo(() => {
+  return staffList.map((staff) => ({
+    id: staff.staff_id, // Already normalized to uppercase
+    name: `${staff.full_name} (${staff.position_title})`,
+    original: staff
+  }));
+}, [staffList]);
 
-  const staffAttendees = form.watch("staffAttendees");
+  const staffAttendees = useWatch({ control: form.control, name: "staffAttendees" });
 
   const selectedAttendeeDetails = useMemo(() => {
-    const details = staffAttendees.map((staffId) => {
-      const staff = staffList.find((s) => s.staff_id.toLowerCase() === staffId.toLowerCase());
-      return {
-        name: staff ? staff.full_name : `Unknown (ID: ${staffId})`,
-        designation: staff ? staff.position_title || "No Designation" : "No Designation",
-      };
-    });
+    return attendees.map((attendee) => ({
+      name: attendee.atn_name,
+      designation: attendee.atn_designation,
+      present_or_absent: attendee.atn_present_or_absent,
+    }));
+  }, [attendees]);
 
-    return details;
-  }, [staffAttendees, staffList]);
+  const getStaffById = (id: string): Staff | undefined => {
+  // Normalize the input ID to uppercase for comparison
+  const normalizedId = String(id).toUpperCase().trim();
+  return staffList.find(s => s.staff_id === normalizedId);
+};
 
-  useEffect(() => {
+useEffect(() => {
+  if (isEditMode) {
+    const newAttendees = staffAttendees
+      .map((id: string) => {
+        const staff = getStaffById(id);
+        if (!staff) {
+          console.warn(`Staff with ID ${id} not found`);
+          return null;
+        }
+        return {
+          name: staff.full_name,
+          designation: staff.position_title || "No Designation",
+          present_or_absent: "Present"
+        };
+      })
+      .filter(Boolean);
+    
+    setSelectedAttendees(newAttendees.length ? newAttendees : selectedAttendeeDetails);
+  } else {
     setSelectedAttendees(selectedAttendeeDetails);
-  }, [selectedAttendeeDetails]);
+  }
+}, [staffAttendees, staffList, isEditMode, selectedAttendeeDetails]);
 
   function onSubmit(values: z.infer<typeof AddEventFormSchema>) {
     console.log("Form submitted");
@@ -110,6 +136,17 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
       { ce_id: ceId, eventInfo },
       {
         onSuccess: () => {
+          if (selectedAttendees.length) {
+            updateAttendees({
+              ce_id: ceId,
+              attendees: selectedAttendees.map((a) => ({
+                atn_name: a.name,
+                atn_designation: a.designation,
+                atn_present_or_absent: a.present_or_absent || "Present",
+                ce_id: ceId,
+              })),
+            });
+          }
           setIsEditMode(false);
           if (onClose) onClose();
         },
@@ -146,12 +183,25 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
     }
   };
 
+  const handleSave = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      form.handleSubmit(onSubmit)();
+    }
+  };
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+  const handleConfirmPreview = () => {
+    setIsPreviewOpen(false);
+    handleSave();
+  };
+
   const displayedEventCategory =
     eventCategory?.charAt(0).toUpperCase() + (eventCategory?.slice(1) || "");
 
   const handleEditClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent any default form action
-    e.stopPropagation(); // Stop event from bubbling up
+    e.preventDefault();
+    e.stopPropagation();
     console.log("Edit button clicked");
     setIsEditMode(true);
   };
@@ -219,20 +269,43 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                 <h1 className="flex justify-center font-bold text-[20px] text-[#394360] py-4">
                   ATTENDEES
                 </h1>
-                <FormComboCheckbox
-                  control={form.control}
-                  name="staffAttendees"
-                  label="BARANGAY STAFF"
-                  options={staffOptions}
-                  readOnly={!isEditMode}
-                />
+                {isEditMode ? (
+                  <FormComboCheckbox
+                    control={form.control}
+                    name="staffAttendees"
+                    label="BARANGAY STAFF"
+                    options={staffOptions}
+                    readOnly={!isEditMode}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Barangay Staff
+                    </label>
+                    <div className="text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-gray-50 dark:bg-gray-700">
+                      {selectedAttendees.length > 0 ? (
+                        <ul className="list-disc pl-5">
+                          {selectedAttendees.map((attendee, index) => (
+                            <li key={index}>{attendee.name} ({attendee.designation})</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        "No attendees selected"
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           <div className="mt-4 flex justify-end gap-3">
             {isEditMode ? (
-              <Button type="submit" className="bg-blue hover:bg-blue/90" disabled={isUpdating}>
+              <Button
+                type="submit"
+                className=""
+                disabled={isUpdating}
+              >
                 {isUpdating ? (
                   <>
                     Saving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -244,7 +317,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
             ) : (
               <Button
                 type="button"
-                className="bg-blue hover:bg-blue/90"
+                className=""
                 onClick={handleEditClick}
               >
                 Edit
@@ -276,15 +349,15 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                 trigger={
                   <Button
                     type="button"
-                    className="bg-blue hover:bg-blue/90"
+                    className="bg-gray-500 text-black hover:bg-gray-600"
                     onClick={handleNextClick}
                   >
-                    Next
+                    Preview
                   </Button>
                 }
                 className="max-w-[1000px] max-h-full flex flex-col overflow-auto scrollbar-custom"
-                title="Attendance Details"
-                description="Please review upon submitting."
+                title="Attendance Sheet Preview"
+                description="Review the attendance sheet before saving"
                 mainContent={
                   <AttendanceSheetView
                     ce_id={ceId}
@@ -295,7 +368,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
                     place={form.watch("roomPlace")}
                     category={form.watch("eventCategory")}
                     description={form.watch("eventDescription")}
-                    onConfirm={() => setIsModalOpen(false)}
+                    onConfirm={handleConfirmPreview}
                   />
                 }
                 isOpen={isModalOpen}

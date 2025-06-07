@@ -8,6 +8,9 @@ from rest_framework import status
 from django.db.models import Q
 from datetime import datetime
 from rest_framework.permissions import AllowAny
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CouncilSchedulingView(generics.ListCreateAPIView):
     serializer_class = CouncilSchedulingSerializer
@@ -36,6 +39,34 @@ class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
 class AttendanceView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
+
+class AttendeesBulkView(generics.GenericAPIView):
+    serializer_class = CouncilAttendeesSerializer
+    queryset = CouncilAttendees.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        ce_id = request.data.get('ce_id')
+        logger.debug(f"Received data: {request.data}")
+        if not ce_id:
+            return Response({"detail": "ce_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Fetch the CouncilScheduling instance
+        council_scheduling = get_object_or_404(CouncilScheduling, pk=ce_id)
+        
+        # Delete existing attendees for this ce_id
+        CouncilAttendees.objects.filter(ce_id=council_scheduling).delete()
+        
+        # Create new attendees
+        attendees_data = request.data.get('attendees', [])
+        if not attendees_data:
+            return Response({"detail": "attendees array is required and cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data=attendees_data, many=True)
+        if serializer.is_valid():
+            serializer.save(ce_id=council_scheduling)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error(f"Serializer errors: {serializer.errors}")
+        return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
 
 class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer

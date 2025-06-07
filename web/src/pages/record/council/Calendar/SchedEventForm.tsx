@@ -223,7 +223,7 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
             {eventCategory === "activity" ? (
               <Button 
                 type="button" 
-                className="bg-blue hover:bg-blue/90"
+                className=""
                 onClick={handleSave}
                 disabled={isSubmitting}
               >
@@ -262,7 +262,7 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
                 />
                 <Button 
                   type="button" 
-                  className="bg-blue hover:bg-blue/90"
+                  className=""
                   onClick={handleSave}
                   disabled={isSubmitting}
                 >

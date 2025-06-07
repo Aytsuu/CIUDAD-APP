@@ -30,16 +30,16 @@ export const useAddAttendee = () => {
   return useMutation({
     mutationFn: (attendeeData: AttendeeInput) => postAttendee(attendeeData),
     onSuccess: (atn_id) => {
-      toast.success("Attendee added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      // toast.success("Attendee added successfully", {
+      //   icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+      //   duration: 2000
+      // });
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
     },
     onError: (error: Error) => {
-      toast.error("Failed to add attendee", {
-        description: error.message,
-      });
+      // toast.error("Failed to add attendee", {
+      //   description: error.message,
+      // });
     },
   });
 };

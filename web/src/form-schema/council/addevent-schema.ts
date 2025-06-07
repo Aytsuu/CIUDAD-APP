@@ -9,6 +9,10 @@ const AddEventFormSchema = z.object({
   eventTime: z.string().min(1, "Event time is required"),
   eventDescription: z.string().min(1, "Event description is required"),
   staffAttendees: z.array(z.string()),
+  customAttendees: z.array(z.object({
+    name: z.string().min(1, "Name is required"),
+    designation: z.string().min(1, "Designation is required")
+  })).optional(),
 });
 
 export default AddEventFormSchema;

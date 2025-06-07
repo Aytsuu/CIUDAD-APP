@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { useGetCouncilEvents } from "./queries/fetchqueries";
 import { format } from "date-fns";
 import EditEventForm from "./EditEvent.tsx";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function CalendarPage() {
   const { data: councilEvents = [], isLoading } = useGetCouncilEvents();
@@ -14,13 +15,45 @@ function CalendarPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const currentDateTime = new Date("2025-06-05T15:22:00");
   const upcomingEvents = councilEvents.filter((event) => {
-  const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
+    const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
     return eventDateTime >= currentDateTime && !event.ce_is_archive;
   });
 
   const handleDialogClose = () => {
     setSelectedEvent(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+        <div className="p-4 sm:p-6 md:p-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
+            <Skeleton className="h-8 w-32 opacity-30" />
+            <Skeleton className="h-10 w-32 opacity-30" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <Skeleton className="h-[500px] w-full opacity-30" />
+            </div>
+            
+            <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hidden lg:block">
+              <Skeleton className="h-6 w-40 mb-4 opacity-30" />
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm">
+                    <Skeleton className="h-5 w-3/4 mb-2 opacity-30" />
+                    <Skeleton className="h-4 w-1/2 opacity-30" />
+                    <Skeleton className="h-4 w-2/3 mt-1 opacity-30" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900">
@@ -73,7 +106,7 @@ function CalendarPage() {
                       {event.ce_title}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {format(new Date(event.ce_date), "MMM d, yyyy")} at {event.ce_time}
+                       {format(new Date(event.ce_date), "MMM d, yyyy")} at {event.ce_time}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       {event.ce_place}

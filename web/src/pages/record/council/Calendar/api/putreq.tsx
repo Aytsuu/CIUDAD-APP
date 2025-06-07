@@ -60,3 +60,32 @@ export const putAttendanceSheet = async (att_id: number, attendanceInfo: Record<
         throw err;
     }
 };
+
+export const updateAttendees = async (ce_id: number, attendees: { atn_name: string; atn_designation: string; atn_present_or_absent: string }[]) => {
+  try {
+    if (!attendees.length) {
+      throw new Error("Attendees array cannot be empty");
+    }
+    const res = await api.post('council/attendees/bulk/', {
+      ce_id: ce_id,  // Keep at root level for reference
+      attendees: attendees.map(a => ({
+        atn_name: a.atn_name,
+        atn_designation: a.atn_designation,
+        atn_present_or_absent: a.atn_present_or_absent,
+        ce_id: ce_id,  // Add ce_id to each attendee object
+      })),
+    });
+    console.log("Bulk update successful, response:", res.data);
+    return res.data;
+  } catch (err: any) {
+    console.error("Error updating attendees:", err);
+    if (err.response) {
+      console.log("Server response details:", {
+        status: err.response.status,
+        data: err.response.data || "No error data returned",
+        headers: err.response.headers,
+      });
+    }
+    throw err;
+  }
+};

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCouncilEvents, getAttendees, getAttendanceSheets, getStaffList } from "../api/getreq";
+import axios from "axios";
 
 export type CouncilEvent = {
   ce_id: number;
@@ -37,7 +38,7 @@ export type Attendee = {
   atn_id: number;
   atn_name: string;
   atn_designation: string;
-  atn_present_or_absent: string;
+  atn_present_or_absent?: string;
   ce_id: number;
   staff_id: string | null;
 };
@@ -68,7 +69,7 @@ export type AttendanceSheetInput = {
 export type Staff = {
   staff_id: string;
   full_name: string;
-  position_title: string | null;
+  position_title: string;
 };
 
 export const useGetCouncilEvents = () => {
@@ -98,10 +99,7 @@ export const useGetCouncilEvents = () => {
       queryKey: ["attendees", ceId], // Cache per ceId
       queryFn: () => {
         if (!ceId) throw new Error("ceId is required to fetch attendees");
-        return getAttendees(ceId).catch((error) => {
-          console.error("Error fetching attendees:", error);
-          throw error;
-        });
+        return getAttendees(ceId).then((data) => data.filter((a) => a.ce_id === ceId));
       },
       staleTime: 1000 * 60 * 5, // 5 minutes
       enabled: !!ceId, // Only fetch if ceId is defined
