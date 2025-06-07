@@ -1,11 +1,16 @@
-import React from 'react'
+import axios from 'axios';
 
-function api() {
-  return (
-    <div>
-      
-    </div>
-  )
-}
+export const api = axios.create({
+    baseURL: "http://localhost:8000",
+    headers: {
+        'Content-Type': 'application/json', // Ensure JSON is used for requests
+    },
+});
 
-export default api
+export const api2 = axios.create({
+    baseURL: "http://localhost:8001",
+    headers: {
+        'Content-Type': 'application/json', // Ensure JSON is used for requests
+    },
+});
+

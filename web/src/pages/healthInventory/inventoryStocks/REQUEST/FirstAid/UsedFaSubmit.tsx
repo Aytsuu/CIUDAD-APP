@@ -1,5 +1,5 @@
 // src/services/inventory/firstAidStockService.ts
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import axios from "axios";
 import { FirstAidStocksRecord } from "../../tables/FirstAidStocks";
 import {getFirstAidInventoryList} from "./restful-api/FirstAidGet";

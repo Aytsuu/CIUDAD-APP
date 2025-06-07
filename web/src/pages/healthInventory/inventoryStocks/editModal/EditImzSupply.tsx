@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { ImmunizationStockTransaction } from "../REQUEST/Payload";

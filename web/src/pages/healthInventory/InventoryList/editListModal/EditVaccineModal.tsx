@@ -9,7 +9,7 @@ import {
   VaccineSchema,
   VaccineType,
 } from "@/form-schema/inventory/inventoryListSchema";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import { toTitleCase } from "../requests/case";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";

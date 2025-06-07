@@ -4,13 +4,18 @@ from datetime import datetime
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 from apps.patientrecords.models import PatientRecord
+# from apps.healthProfiling.models import Staff
 
 # Create your models here.
 class Prenatal_Form(models.Model):
     pf_id = models.BigAutoField(primary_key=True)
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id')
+    # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id')
+
     class Meta:
         db_table = 'prenatal_form'
 
@@ -51,31 +56,31 @@ class TT_Status(models.Model):
     class Meta:
         db_table = 'pf_tt_status'
 
-class Lab_Result_Dates(models.Model):
-    pflr_id = models.BigAutoField(primary_key=True)
-    pflr_urinalysis = models.DateField()
-    pflr_cbc = models.DateField()
-    pflr_sgot_sgpt = models.DateField()
-    pflr_creatinine_serum = models.DateField()
-    pflr_bua_bun = models.DateField()
-    pflr_syphillis = models.DateField()
-    pflr_hiv_test = models.DateField()
-    pflr_hepa_b = models.DateField()
-    pflr_ogct_50 = models.DateField()
-    pflr_ogct_100 = models.DateField()
-    pflr_lab_remarks = models.CharField(max_length=250)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,  related_name='pf_lab_result_dates', db_column='pf_id')
+# class Lab_Result_Dates(models.Model):
+#     pflr_id = models.BigAutoField(primary_key=True)
+#     pflr_urinalysis = models.DateField()
+#     pflr_cbc = models.DateField()   
+#     pflr_sgot_sgpt = models.DateField()
+#     pflr_creatinine_serum = models.DateField()
+#     pflr_bua_bun = models.DateField()
+#     pflr_syphillis = models.DateField()
+#     pflr_hiv_test = models.DateField()
+#     pflr_hepa_b = models.DateField()
+#     pflr_ogct_50 = models.DateField()
+#     pflr_ogct_100 = models.DateField()
+#     pflr_lab_remarks = models.CharField(max_length=250)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE,  related_name='pf_lab_result_dates', db_column='pf_id')
 
-    class Meta:
-        db_table = 'pf_lab_result_dates'
-
-# next: lab result docs
+#     class Meta:
+#         db_table = 'pf_lab_result_dates'
 
 class Guide4ANCVisit(models.Model):
     pfav_id = models.BigAutoField(primary_key=True)
     pfav_1st_tri = models.DateField()
     pfav_2nd_tri = models.DateField()
-    pfav_3rd_tri = models.DateField()
+    pfav_3rd_tri_one = models.DateField()
+    pfav_3rd_tri_two = models.DateField()
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_anc_visit', db_column='pf_id')
 
     class Meta:

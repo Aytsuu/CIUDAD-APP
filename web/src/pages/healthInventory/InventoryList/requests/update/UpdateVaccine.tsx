@@ -1,6 +1,6 @@
 
   // API Service functions (in separate file like vaccineApiService.ts)
-  import api from "@/pages/api/api";
+  import { api } from "@/pages/api/api";
   import { toTitleCase } from "../case";
 
 

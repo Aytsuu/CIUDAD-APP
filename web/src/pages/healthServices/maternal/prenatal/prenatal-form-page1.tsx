@@ -32,38 +32,48 @@ import { usePatients } from "../queries/prenatalFetchQueries";
 
 
 interface PatientRecord{
-    personal_info: any
     pat_id: any
-    patrec_id: number
-    spouse_id: number
-    per_fname: string
-    per_lname: string
-    per_mname: string
-    per_dob: string
-    per_age: string
+    pat_type: string
+    pat_status:string
+    // patrec_id: number
+    // spouse_id: number
+
+    personal_info: {
+        per_fname: string
+        per_lname: string
+        per_mname: string
+        per_dob: string
+    };
+
+    address: {
+        add_street: string
+        add_barangay: string
+        add_city: string
+        add_province: string
+        sitio?: string
+    } | null;
+
+    spouse?: {
+        spouse_id: number
+        spouse_lname: string
+        spouse_fname: string
+        spouse_mname: string
+        spouse_occupation: string
+    } | null;
+    
 }
 
-// interface SpouseRecord{
-//     spouse: any
-//     pat_id: any
-//     spouse_id: number
-//     // spouse_type: string
-//     spouse_lname: string
-//     spouse_fname: string
-//     spouse_mname: string
-//     spouse_occupation: string
-//     // spouse_dob: string
-// }
+// age calculation for dob
+const calculateAge = (dob: string): number => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
 
-
-const calculateAge = (dobStr: string): number => {
-    const dob = new Date(dobStr)
-    const today = new Date()
-    const age = today.getFullYear() - dob.getFullYear()
-    const hasHadBirthday =
-        today.getMonth() > dob.getMonth() ||
-        (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate())
-    return hasHadBirthday ? age : age - 1
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
 }
 
 interface PrenatalFirstFormProps {
@@ -71,7 +81,7 @@ interface PrenatalFirstFormProps {
 }
 
 export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
-    const { control, trigger, setValue, getValues, watch, formState: { errors }, handleSubmit } = useFormContext<z.infer<typeof PrenatalFormSchema>>(); // useFormContext to access the form methods
+    const { control, trigger, setValue, getValues, watch, formState: { errors } } = useFormContext<z.infer<typeof PrenatalFormSchema>>(); // useFormContext to access the form methods
 
     const submit = () => {
         window.scroll({
@@ -88,14 +98,9 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
         })
     }
 
+    // patient data fetching
     const [selectedPatientId, setSelectedPatientId] = useState<string>("")
     const { data: patientData, isLoading: patientLoading } = usePatients();
-
-    // const [selectedSpouseId, setSelectedSpouseId] = useState<number | null>(null);
-    // const { data: spouseData } = useSpouse(selectedSpouseId);
-    // const {data: spouseData, isLoading} = useSpouse();
-    // const [isSubmitting, setIsSubmitting] = useState(false)
-    // const [error, setError] = useState<string | null>(null)
 
     const patients = {
         default: patientData || [],
@@ -110,44 +115,32 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
         setSelectedPatientId(id)
         const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
 
-        if (selectedPatient) {
+        if (selectedPatient && selectedPatient.personal_info) {
           console.log("Selected Patient:", selectedPatient)
           setSelectedPatientId(selectedPatient.pat_id.toString());
+
           const personalInfo = selectedPatient.personal_info;
+          const address = selectedPatient.address
+
             setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
             setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname) 
             setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
             setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
             setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
             setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
-          //   form.setValue("p_address", personalInfo?.per_address)
-          //   form.setValue("p_gender", personalInfo?.per_sex)
 
-        //   let spouseId = (selectedPatient as any).spouse_id;
-        //   if(!spouseId && (selectedPatient as any).spouse_id){
-        //     spouseId = (selectedPatient as any).spouse.spouse_id;
-        //   }
-        //   setSelectedSpouseId(selectedPatient.spouse_id ?? null);
+            if(address){
+                setValue("motherPersonalInfo.address.street", address.add_street)
+                setValue("motherPersonalInfo.address.sitio", address.sitio || "")
+                setValue("motherPersonalInfo.address.barangay", address.add_barangay)
+                setValue("motherPersonalInfo.address.city", address.add_city)
+                setValue("motherPersonalInfo.address.province", address.add_province)
+            }
         }
     }
 
-    // useEffect(() => {
-    //     if(spouseData &&  spouseData.length > 0){
-    //         const spouse = spouseData[0]
-    //         console.log("Spouse data: ", spouseData)
-    //         // const personal_info = spouse.personal_info
 
-    //         form.setValue("motherPersonalInfo.husbandLName", spouse?.spouse_lname)
-    //         form.setValue("motherPersonalInfo.husbandFName", spouse?.spouse_fname)
-    //         form.setValue("motherPersonalInfo.husbandMName", spouse?.spouse_mname)
-    //         form.setValue("motherPersonalInfo.occupation", spouse?.spouse_occupation)
-    //     }
-    // },[spouseData, form])
-    // if(isError){
-    //     return <div>Error fetching patients: {error.message}</div>;
-    // }
-
-
+    // previous illness and previous hospitalization data 
     type previousIllness= {
         prevIllness: string;
         prevIllnessYr?: number; 
@@ -444,22 +437,22 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 label="Middle Name"
                                 placeholder="Enter Middle Name"
                             />
+                            <FormDateTimeInput
+                                control={control}
+                                name="motherPersonalInfo.motherDOB"
+                                label="Date of Birth"
+                                type="date"
+                            />
+                        </div>
+
+                        {/* dob, husband's name, occupation */}
+                        <div className="grid grid-cols-4 gap-4 mt-2">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.motherAge"
                                 label="Age"
                                 placeholder="Enter Age"
                                 type="number"
-                            />
-                        </div>
-
-                        {/* dob, husband's name, occupation */}
-                        <div className="grid grid-cols-4 gap-4 mt-2">
-                            <FormDateTimeInput
-                                control={control}
-                                name="motherPersonalInfo.motherDOB"
-                                label="Date of Birth"
-                                type="date"
                             />
                             <FormInput
                                 control={control}
@@ -488,12 +481,18 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                         </div>
 
                         {/* address */}
-                        <div className="grid grid-cols-4 gap-4 mt-2">
+                        <div className="grid grid-cols-5 gap-4 mt-2">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.address.street"
                                 label="Street"
                                 placeholder="Enter Street"
+                            />
+                            <FormInput
+                                control={control}
+                                name="motherPersonalInfo.address.sitio"
+                                label="Sitio"
+                                placeholder="Enter Sitio"
                             />
                             <FormInput
                                 control={control}

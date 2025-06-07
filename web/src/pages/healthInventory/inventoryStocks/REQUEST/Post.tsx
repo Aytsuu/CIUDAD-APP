@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import {MedicineStockType, InventoryType,MedicineTransactionType, VaccineStockType, AntigenTransactionType } from "../REQUEST/type";
 
 import { log } from "console";

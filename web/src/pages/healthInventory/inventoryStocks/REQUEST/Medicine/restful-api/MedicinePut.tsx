@@ -1,4 +1,4 @@
-import api  from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 
 
 export const updateMedicineStocks = async (id: number, payload: any) => {

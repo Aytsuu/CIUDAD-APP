@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 interface Option { 
   id: string;

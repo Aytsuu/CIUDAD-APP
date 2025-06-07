@@ -6,15 +6,6 @@ export const usePatients = () => {
         queryKey: ["patientsData"],
         queryFn: getPatients,
         staleTime: 60 * 30,
+        retry: 2
     })
 }
-
-
-// export const useSpouse = (spouse_id: number | string | null) => {
-//     return useQuery({
-//         queryKey: ["spouseData", spouse_id],
-//         queryFn: () => getSpouse(spouse_id!),
-//         enabled: !!spouse_id,
-//         staleTime: 1000 * 60 * 30,
-//     })
-// }

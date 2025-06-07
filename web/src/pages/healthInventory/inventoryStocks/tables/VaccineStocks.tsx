@@ -20,7 +20,7 @@ import VaccineStockForm from "../addstocksModal/VacStockModal";
 import ImmunizationSupplies from "../addstocksModal/ImmunizationSupplies";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-// import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import EditImmunizationForm from "../editModal/EditImzSupply";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { archiveInventory } from "../REQUEST/archive";

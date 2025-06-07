@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { addInventory } from "../REQUEST/Inventory";
 import { getSupplies } from "../REQUEST/Get";
 import { InventoryAntigenPayload } from "../REQUEST/Payload";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import {
   ImmunizationSuppliesSchema,
   ImmunizationSuppliesType,

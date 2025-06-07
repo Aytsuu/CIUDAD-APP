@@ -24,7 +24,7 @@
 // };
 
 import { useQuery } from "@tanstack/react-query";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 
 export type GADBudgetEntry = {
   gbud_num?: number;

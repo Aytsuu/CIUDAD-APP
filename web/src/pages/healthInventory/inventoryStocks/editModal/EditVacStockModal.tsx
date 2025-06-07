@@ -9,7 +9,7 @@ import {
 } from "@/form-schema/inventory/EditStockSchema";
 import { useEffect, useState } from "react"; // Added useState
 import UseHideScrollbar from "@/components/ui/HideScrollbar";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import { VaccineTransactionPayload } from "../REQUEST/Payload";
 import { AntigenTransaction } from "../REQUEST/Post";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"; // Added import

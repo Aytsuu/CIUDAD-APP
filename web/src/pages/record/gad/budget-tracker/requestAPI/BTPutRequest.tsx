@@ -1,4 +1,4 @@
-import api from '@/pages/api/api';
+import { api } from '@/pages/api/api';
 import { formatDate } from '@/helpers/dateFormatter';
 
 // export const putbudgettrackreq = async (gbud_num: number, budgetTrackInfo: Record<string, any>) => {

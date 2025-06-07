@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { useState } from "react";
 import { StockRecords, isVaccine, isSupply } from "../tables/VaccineStocks";

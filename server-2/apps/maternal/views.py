@@ -8,12 +8,25 @@ from datetime import datetime
 # Create your views here.
 
 # **Prenatal Record**
-class PrenatalFormView(generics.ListCreateAPIView):
-    serializer_class = PrenatalFormSerializer
-    queryset = Prenatal_Form.objects.all()
+# class PrenatalFormView(generics.ListCreateAPIView):
+#     serializer_class = PrenatalFormSerializer
+#     queryset = Prenatal_Form.objects.all()
 
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)
+class PrenatalRecordCreateView(generics.CreateAPIView):
+    serializer_class = PrenatalFormSerializer
+    
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        prenatal_record = serializer.save()
+        
+        return Response({
+            'pf_id': prenatal_record.pf_id,
+            'message': 'Prenatal record created successfully'
+        }, status=status.HTTP_201_CREATED)
     
 # **Previous Hospitalization
 class PreviousHospitalizationView(generics.ListCreateAPIView):
@@ -40,12 +53,12 @@ class TTStatusView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
 # **Lab Result Dates**
-class LabResultDatesView(generics.ListCreateAPIView):
-    serializer_class = LabResultDatesSerializer
-    queryset = Lab_Result_Dates.objects.all()
+# class LabResultDatesView(generics.ListCreateAPIView):
+#     serializer_class = LabResultDatesSerializer
+#     queryset = Lab_Result_Dates.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)
     
 class Guide4ANCVisitView(generics.ListCreateAPIView):
     serializer_class = Guide4ANCVisitSerializer

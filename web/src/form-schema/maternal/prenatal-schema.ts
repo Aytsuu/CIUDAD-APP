@@ -32,6 +32,7 @@ export const PrenatalFormSchema = z.object({
         occupation: z.string().min(1, 'Occupation is required'),
         address: z.object({
             street: z.string().min(1, 'Street is required'),
+            sitio: z.string().min(1, 'Sitio is required'),
             barangay: z.string().min(1, 'Barangay is required'),
             city: z.string().min(1, 'City is required'),
             province: z.string().min(1, 'Province is required'),
