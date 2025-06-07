@@ -111,3 +111,14 @@ class PickupRequestDecisionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pickup_Request_Decision
         fields = '__all__' 
+
+    
+class PickupAssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pickup_Assignment
+        fields = '__all__' 
+
+class AssignmentCollectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assignment_Collector
+        fields = '__all__' 

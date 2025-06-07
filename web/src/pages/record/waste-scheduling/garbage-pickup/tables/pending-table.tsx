@@ -14,7 +14,8 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuConten
 import { Button } from "@/components/ui/button/button"
 
 export default function PendingTable(){
-    const [editingRowId, setEditingRowId] = useState<number | null>(null);
+    const [acceptedRowId, setAcceptedRowId] = useState<number | null>(null);
+    const [rejectedRowId, setRejectedRowId] = useState<number | null>(null);
     const { data: pendingReqData = [], isLoading} = useGetGarbagePendingRequest(); 
 
     const columns: ColumnDef<GarbageRequestPending>[] = [
@@ -55,7 +56,13 @@ export default function PendingTable(){
                                 }
                                 title="Schedule & Assign for Pickup"
                                 description="Set date, time, team and vehicle for garbage pickup."  
-                                mainContent={<AcceptPickupRequest />}
+                                mainContent={
+                                    <AcceptPickupRequest 
+                                    garb_id={row.original.garb_id}
+                                    onSuccess={()=> setAcceptedRowId(null)}/>
+                                }
+                                isOpen={acceptedRowId === Number(row.original.garb_id)}
+                                onOpenChange={(open) => setAcceptedRowId(open ? Number(row.original.garb_id) : null)}
                             />
                         }
                         content="Accept"
@@ -73,11 +80,11 @@ export default function PendingTable(){
                                 mainContent={
                                     <RejectPickupForm 
                                         garb_id={row.original.garb_id}
-                                        onSuccess={() => setEditingRowId(null)}
+                                        onSuccess={() => setRejectedRowId(null)}
                                     />
                                 }
-                                isOpen={editingRowId === Number(row.original.garb_id)}
-                                onOpenChange={(open) => setEditingRowId(open ? Number(row.original.garb_id) : null)}
+                                isOpen={rejectedRowId === Number(row.original.garb_id)}
+                                onOpenChange={(open) => setRejectedRowId(open ? Number(row.original.garb_id) : null)}
                             />
                         }
                         content="Reject"

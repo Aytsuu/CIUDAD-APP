@@ -209,24 +209,44 @@ class Pickup_Assignment(models.Model):
     pick_id = models.BigAutoField(primary_key=True)
     pick_date = models.DateField(default=date.today)
     pick_time = models.TimeField(default=current_time)
-    truck_id  = models.ForeignKey(WasteTruck, on_delete=models.CASCADE)
-    wstp_id = models.ForeignKey(WastePersonnel, on_delete=models.CASCADE)
-    staff_id = models.ForeignKey(
-        'administration.Staff',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='staff_id'
+    truck_id  = models.ForeignKey(
+        WasteTruck, 
+        on_delete=models.CASCADE,
+        db_column='truck_id' 
     )
-    garb_id = models.ForeignKey(Garbage_Pickup_Request, on_delete=models.CASCADE)
+    wstp_id = models.ForeignKey(
+        WastePersonnel,
+        on_delete=models.CASCADE,
+        db_column='wstp_id' 
+    )
+    # staff_id = models.ForeignKey(
+    #     'administration.Staff',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     db_column='staff_id'
+    # )
+    garb_id = models.ForeignKey(
+        Garbage_Pickup_Request,
+        on_delete=models.CASCADE,
+        db_column='garb_id' 
+    )
 
     class Meta:
         db_table = 'pickup_assignment'
 
 class Assignment_Collector(models.Model):
     acl_id = models.BigAutoField(primary_key=True)
-    wstp_id = models.ForeignKey(WastePersonnel, on_delete=models.CASCADE)
-    pick_id = models.ForeignKey(Pickup_Assignment, on_delete=models.CASCADE)
+    wstp_id = models.ForeignKey(
+        WastePersonnel, 
+        on_delete=models.CASCADE,
+        db_column='wstp_id' 
+    )
+    pick_id = models.ForeignKey(
+        Pickup_Assignment, 
+        on_delete=models.CASCADE,
+        db_column='pick_id' 
+    )
 
     class Meta:
         db_table = 'assignment_collector'
@@ -237,7 +257,11 @@ class Pickup_Confirmation(models.Model):
     conf_resident_conf = models.BooleanField(default=False)
     conf_staff_conf = models.BooleanField(default=False)
     conf_confirm_date = models.DateTimeField(default=datetime.now)
-    garb_id = models.ForeignKey(Garbage_Pickup_Request, on_delete=models.CASCADE)
+    garb_id = models.ForeignKey(
+        Garbage_Pickup_Request,
+        on_delete=models.CASCADE,
+        db_column='garb_id' 
+    )
 
     class Meta: 
         db_table="pickup_confirmation"

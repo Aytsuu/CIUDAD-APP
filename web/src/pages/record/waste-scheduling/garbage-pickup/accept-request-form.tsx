@@ -11,9 +11,13 @@ import { useGetDrivers } from "./queries/GarbageRequestFetchQueries";
 import { useGetTrucks } from "./queries/GarbageRequestFetchQueries";
 import { useGetCollectors } from "./queries/GarbageRequestFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAddPickupAssignmentandCollectors } from "./queries/GarbageRequestInsertQueries";
 
-function AcceptPickupRequest(){
-
+function AcceptPickupRequest({garb_id, onSuccess}: {
+    garb_id: string;
+    onSuccess?: () => void;
+}){
+    const { mutate: addAssignmentAndCollectors} = useAddPickupAssignmentandCollectors(onSuccess)
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetTrucks();
     const { data: collectors = [], isLoading: isLoadingCollectors } = useGetCollectors();
@@ -26,7 +30,7 @@ function AcceptPickupRequest(){
     }));
 
     const truckOptions = trucks.filter(truck => truck.truck_status == "Operational").map(truck => ({
-        id: truck.truck_id,
+        id: String(truck.truck_id),
         name: `Model: ${truck.truck_model}, Plate Number: ${truck.truck_plate_num}`,
     }));
 
@@ -36,7 +40,10 @@ function AcceptPickupRequest(){
     }));
 
     const onSubmit = (values: z.infer<typeof AcceptPickupRequestSchema>) => {
-        console.log(values)
+        addAssignmentAndCollectors({
+            ...values,
+            garb_id: garb_id,
+        })
     }
 
     const form = useForm<z.infer<typeof AcceptPickupRequestSchema>>({

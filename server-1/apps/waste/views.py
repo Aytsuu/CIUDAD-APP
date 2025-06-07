@@ -242,3 +242,12 @@ class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
 class PickupRequestDecisionView(generics.ListCreateAPIView):
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
+
+
+class PickupAssignmentView(generics.ListCreateAPIView):
+    serializer_class = PickupAssignmentSerializer
+    queryset = Pickup_Assignment.objects.all()
+
+class AssignmentCollectorView(generics.ListCreateAPIView):
+    serializer_class = AssignmentCollectorSerializer
+    queryset = Assignment_Collector.objects.all()

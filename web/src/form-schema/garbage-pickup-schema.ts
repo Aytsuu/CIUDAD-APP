@@ -13,5 +13,6 @@ export const AcceptPickupRequestSchema = z.object({
     truck: z.string().min(1, { message: "Truck is required." }),
     date: z.string().min(1, { message: "Date is required." }),
     time: z.string().min(1, { message: "Time is required." }),
+    garb_id: z.string().default('')
 })
 
