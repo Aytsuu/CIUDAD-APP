@@ -80,3 +80,27 @@ export const getGarbageRejectedRequest = async () => {
         return [];
     }
 }
+
+export const getGarbageAcceptedRequest = async () => {
+    try {
+        const { data } = await api.get('waste/garbage-pickup-request-accepted/', {
+            params: {
+                status: "accepted"
+            }
+        });
+
+        return data.map((item: any) => ({
+            garb_id: item.garb_id || '', 
+            garb_requester: item.garb_requester || '',
+            garb_location: item.garb_location || '',
+            garb_waste_type: item.garb_waste_type || '',
+            garb_created_at: item.garb_created_at || '',
+            dec_id: item.dec_id || null, 
+            dec_date: item.dec_date || null,
+            dec_reason: item.dec_reason || '',
+        }));
+    } catch (err) {
+        console.error('Failed to fetch garbage requests:', err);
+        return [];
+    }
+}

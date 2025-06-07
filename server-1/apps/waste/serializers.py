@@ -106,13 +106,13 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
     def get_file_id(self, obj):
         return obj.file.file_url if obj.file else ""
     
-    
+# class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
+
 class PickupRequestDecisionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pickup_Request_Decision
         fields = '__all__' 
 
-    
 class PickupAssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pickup_Assignment

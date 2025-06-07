@@ -186,7 +186,7 @@ class Garbage_Pickup_Request(models.Model):
     
 class Pickup_Request_Decision(models.Model):
     dec_id = models.BigAutoField(primary_key=True)
-    dec_rejection_reason = models.TextField()
+    dec_rejection_reason = models.TextField(null=True, blank=True)
     dec_date = models.DateTimeField(default=datetime.now)
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
