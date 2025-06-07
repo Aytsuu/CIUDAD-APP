@@ -1,152 +1,15 @@
-// import axios from 'axios';
-// import api from '@/api/api';
-// import { Truck, WastePersonnel } from "../queries/truckFetchQueries";
-
-// export interface Staff {
-//   staff_id: string;
-//   position: {
-//     pos_title: string; // "Collector", "Watchmen", "Driver", etc.
-//   };
-//   resident_profile: {
-//     personal: {
-//       first_name: string;
-//       last_name: string;
-//     };
-//   };
-// }
-
-// function isTruck(data: any): data is Truck {
-//   return data &&
-//     typeof data.truck_id === "number" &&
-//     typeof data.truck_plate_num === "string" &&
-//     typeof data.truck_model === "string" &&
-//     typeof data.truck_capacity === "number";
-// }
-
-// function isWastePersonnel(data: any): data is WastePersonnel {
-//   return data &&
-//     typeof data.wstp_id === "number" &&
-//     typeof data.name === "string";
-// }
-
-// function isStaff(data: any): data is Staff {
-//   return data && typeof data.staff_id === "string";
-// }
-
-
-// /// Get all personnel from waste_personnel table
-// export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
-//   try {
-//     const response = await api.get("waste/waste-personnel/?expand=staff.position,staff.resident_profile.personal");
-//     const personnelData = response.data?.data || response.data;
-    
-//     if (!Array.isArray(personnelData)) {
-//       throw new Error("Expected array of personnel");
-//     }
-    
-//     return personnelData.filter(isWastePersonnel);
-//   } catch (error) {
-//     console.error("Error fetching personnel:", error);
-//     throw new Error("Failed to fetch personnel");
-//   }
-// };
-
-// export const getPersonnelByPosition = async (positionTitle: string): Promise<WastePersonnel[]> => {
-//   try {
-//     const response = await api.get(
-//       `waste/waste-personnel/?position=${positionTitle}&expand=staff.position,staff.resident_profile.personal`
-//     );
-//     const personnelData = response.data?.data || response.data;
-    
-//     if (!Array.isArray(personnelData)) {
-//       throw new Error("Expected array of personnel");
-//     }
-    
-//     return personnelData.filter(isWastePersonnel);
-//   } catch (error) {
-//     console.error(`Error fetching ${positionTitle} personnel:`, error);
-//     throw new Error(`Failed to fetch ${positionTitle} personnel`);
-//   }
-// };
-
-// export const getPersonnelById = async (wstp_id: number): Promise<WastePersonnel> => {
-//   try {
-//     const response = await api.get(`waste/waste-personnel/${wstp_id}`);
-//     console.log(`Personnel ${wstp_id} API response:`, response.data);
-
-//     if (!isWastePersonnel(response.data)) {
-//       throw new Error("Invalid personnel data format");
-//     }
-
-//     return response.data;
-//   } catch (error) {
-//     if (axios.isAxiosError(error)) {
-//       console.error(`API Error for personnel ${wstp_id}:`, error.response?.data || error.message);
-//       throw new Error(error.response?.data?.message || `Failed to fetch personnel ${wstp_id}`);
-//     }
-//     console.error("Unexpected error:", error);
-//     throw new Error("An unexpected error occurred");
-//   }
-// };
-
-// // ----- Truck functions -----
-
-// export const getAllTrucks = async (): Promise<Truck[]> => {
-//   try {
-//     const response = await api.get("waste/waste-personnel/");
-//     console.log("Trucks API response:", response.data);
-
-//     const trucksData = Array.isArray(response.data) ? response.data : response.data?.data;
-
-//     if (!Array.isArray(trucksData)) {
-//       console.error("Unexpected trucks format:", trucksData);
-//       throw new Error("Expected array of trucks");
-//     }
-
-//     return trucksData.filter(isTruck);
-//   } catch (error) {
-//     if (axios.isAxiosError(error)) {
-//       console.error("API Error:", error.response?.data || error.message);
-//       throw new Error(error.response?.data?.message || "Failed to fetch trucks");
-//     }
-//     console.error("Unexpected error:", error);
-//     throw new Error("An unexpected error occurred");
-//   }
-// };
-
-// export const getTruckById = async (truck_id: number): Promise<Truck> => {
-//   try {
-//     const response = await api.get(`waste/waste-personnel/${truck_id}/`);
-//     console.log(`Truck ${truck_id} API response:`, response.data);
-
-//     if (!isTruck(response.data)) {
-//       throw new Error("Invalid truck data format");
-//     }
-
-//     return response.data;
-//   } catch (error) {
-//     if (axios.isAxiosError(error)) {
-//       console.error(`API Error for truck ${truck_id}:`, error.response?.data || error.message);
-//       throw new Error(error.response?.data?.message || `Failed to fetch truck ${truck_id}`);
-//     }
-//     console.error("Unexpected error:", error);
-//     throw new Error("An unexpected error occurred");
-//   }
-// };
-
-import axios from 'axios';
 import { api } from "@/api/api";
 
 export interface Personal {
   per_id: number;
-  lname: string; // API returns lname, not per_lname
+  lname: string; 
   fname: string;
   mname: string | null;
   suffix: string | null;
-  dob: string; // API returns dob, not per_dob
+  dob: string; 
   sex: string;
   status: string;
-  address: string; // Added per_address
+  address: string; 
   education: string | null;
   religion: string;
   contact: string;
@@ -154,27 +17,27 @@ export interface Personal {
 
 export interface Position {
   pos_id: number;
-  title: string; // API returns title, not pos_title
+  title: string;
   max: number;
 }
 
 export interface ResidentProfile {
   rp_id: string;
-  rp_date_registered: string; // API returns string
-  personal: Personal; // API returns personal, not per
+  rp_date_registered: string; 
+  personal: Personal; 
 }
 
 export interface Staff {
   staff_id: string;
-  assign_date: string; // API returns assign_date, not staff_assign_date
-  profile: ResidentProfile; // API returns profile, not rp
-  position: Position; // API returns position, not pos
+  assign_date: string; 
+  profile: ResidentProfile; 
+  position: Position; 
   manager?: Staff | null;
 }
 
 export interface WastePersonnel {
   wstp_id: number;
-  staff: Staff; // Expanded from staff_id foreign key
+  staff: Staff; 
 }
 
 export interface Truck {
@@ -184,6 +47,7 @@ export interface Truck {
   truck_capacity: string;
   truck_status: string;
   truck_last_maint: string;
+  truck_is_archive?: boolean;
 }
 
 function isPersonal(data: any): data is Personal {
@@ -260,36 +124,6 @@ function isTruck(data: any): data is Truck {
   return isValid;
 }
 
-// export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
-//   try {
-//     const response = await api.get("waste/waste-personnel/?expand=staff.rp.per,staff.pos,staff.manager.rp.per/");
-//     console.log('Raw personnel response:', response); // Add this
-//     const personnelData = response.data?.data || response.data;
-//     console.log('Processed personnel data:', personnelData); // Add this
-//     if (!Array.isArray(personnelData)) {
-//       throw new Error("Expected array of personnel");
-//     }
-//     return personnelData
-//       .filter(isWastePersonnel)
-//       .map(person => ({
-//         ...person,
-//         staff: {
-//           ...person.staff,
-//           rp: {
-//             ...person.staff.rp,
-//             per: {
-//               ...person.staff.rp.per,
-//               per_dob: formatDate(person.staff.rp.per.per_dob)
-//             }
-//           }
-//         }
-//       }));
-//   } catch (error) {
-//     handleApiError(error, "Error fetching personnel");
-//     throw new Error("Failed to fetch personnel");
-//   }
-// };
-
 export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
   try {
     const response = await api.get(
@@ -320,7 +154,6 @@ export const getAllPersonnel = async (): Promise<WastePersonnel[]> => {
     }));
   } catch (error) {
     console.error('Error fetching personnel:', error);
-    handleApiError(error, "Error fetching personnel");
     throw error;
   }
 };
@@ -352,7 +185,6 @@ export const getPersonnelByPosition = async (positionTitle: string): Promise<Was
       }
     }));
   } catch (error) {
-    handleApiError(error, `Error fetching ${positionTitle} personnel`);
     throw new Error(`Failed to fetch ${positionTitle} personnel`);
   }
 };
@@ -381,14 +213,15 @@ export const getPersonnelById = async (wstp_id: number): Promise<WastePersonnel>
       }
     };
   } catch (error) {
-    handleApiError(error, `Error fetching personnel ${wstp_id}`);
     throw new Error(`Failed to fetch personnel ${wstp_id}`);
   }
 };
 
 export const getAllTrucks = async (): Promise<Truck[]> => {
   try {
-    const response = await api.get("waste/waste-trucks/");
+    const response = await api.get("waste/waste-trucks/", {
+            params: { truck_is_archive: false }  // Filter non-archived
+        });
     const trucksData = response.data?.data || response.data;
     console.log('Raw personnel response:', response); // Add this
     console.log('Processed personnel data:', trucksData); // Add this
@@ -404,14 +237,15 @@ export const getAllTrucks = async (): Promise<Truck[]> => {
         truck_last_maint: formatDate(truck.truck_last_maint)
       }));
   } catch (error) {
-    handleApiError(error, "Error fetching trucks");
     throw new Error("Failed to fetch trucks");
   }
 };
 
 export const getTruckById = async (truck_id: number): Promise<Truck> => {
   try {
-    const response = await api.get(`waste/waste-trucks/${truck_id}/`);
+    const response = await api.get(`waste/waste-trucks/${truck_id}/`, {
+            params: { is_archive: false }  // Filter non-archived
+        });
 
     if (!isTruck(response.data)) {
       throw new Error("Invalid truck data format");
@@ -422,7 +256,6 @@ export const getTruckById = async (truck_id: number): Promise<Truck> => {
       truck_last_maint: formatDate(response.data.truck_last_maint)
     };
   } catch (error) {
-    handleApiError(error, `Error fetching truck ${truck_id}`);
     throw new Error(`Failed to fetch truck ${truck_id}`);
   }
 };
@@ -430,15 +263,4 @@ export const getTruckById = async (truck_id: number): Promise<Truck> => {
 // Helper Functions
 function formatDate(dateString: string): string {
   return new Date(dateString).toISOString().split('T')[0];
-}
-
-function handleApiError(error: unknown, context: string): void {
-  console.error(context + ":", error);
-  if (axios.isAxiosError(error)) {
-    console.error("API Error Details:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
-  }
 }

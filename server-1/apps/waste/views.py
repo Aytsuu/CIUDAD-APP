@@ -133,8 +133,20 @@ class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
         return Response(data)
 
 class WasteTruckView(APIView):
+    serializer_class = WasteTruckSerializer
+
+    # def get(self, request):
+    #     trucks = WasteTruck.objects.all()
+    #     serializer = WasteTruckSerializer(trucks, many=True)
+    #     return Response(serializer.data)
+
     def get(self, request):
-        trucks = WasteTruck.objects.all()
+        # Get is_archive parameter from query params (default to False)
+        is_archive = request.query_params.get('is_archive', 'false').lower() == 'true'
+        
+        # Filter trucks based on archive status
+        trucks = WasteTruck.objects.filter(truck_is_archive=is_archive)
+        
         serializer = WasteTruckSerializer(trucks, many=True)
         return Response(serializer.data)
     
@@ -145,7 +157,11 @@ class WasteTruckView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class WasteTruckDetailView(APIView):
+class WasteTruckDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = WasteTruckSerializer
+    queryset = WasteTruck.objects.all()
+    lookup_field = 'truck_id'
+
     def get_object(self, pk):
         try:
             return WasteTruck.objects.get(pk=pk)
@@ -169,11 +185,17 @@ class WasteTruckDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, pk):
-        truck = self.get_object(pk)
-        if not truck:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        truck.delete()
+    # def delete(self, request, pk):
+    #     truck = self.get_object(pk)
+    #     if not truck:
+    #         return Response(status=status.HTTP_404_NOT_FOUND)
+    #     truck.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def destroy(self, request, pk):
+        instance = self.get_object(pk)
+        instance.truck_is_archive = True
+        instance.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 

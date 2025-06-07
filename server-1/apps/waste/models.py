@@ -124,6 +124,7 @@ class WasteTruck(models.Model):
         default="Operational"
     )
     truck_last_maint = models.DateField(default=date.today)
+    truck_is_archive = models.BooleanField(default=False) 
 
     class Meta:
         db_table = 'truck'
