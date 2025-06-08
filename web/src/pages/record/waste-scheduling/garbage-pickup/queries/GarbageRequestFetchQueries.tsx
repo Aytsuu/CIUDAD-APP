@@ -128,16 +128,21 @@ export type GarbageRequestAccept = {
   garb_requester: string;
   garb_waste_type: string;
   garb_created_at: string;
-  dec_id: string;
   dec_date: string;
+  truck_id: string | null;
+  driver_id: string | null;
+  collector_ids?: string[];
+  pickup_assignment_id?: string | null;
+  assignment_collector_ids?: string[];
   assignment_info?: {
     driver?: string;
     collectors?: string[];
-    pick_time?: string;       
-    pick_date?: string;      
+    pick_time?: string;
+    pick_date?: string;
     truck?: string;
   } | null;
-}
+};
+
 
 export const useGetGarbageAcceptRequest = () => {
     return useQuery<GarbageRequestAccept[]>({

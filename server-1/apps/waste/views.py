@@ -262,6 +262,19 @@ class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+class UpdatePickupAssignmentView(generics.UpdateAPIView):
+    serializer_class = PickupAssignmentSerializer
+    queryset = Pickup_Assignment.objects.all()
+    lookup_field = 'pick_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class PickupRequestDecisionView(generics.ListCreateAPIView):
     serializer_class = PickupRequestDecisionSerializer
     queryset = Pickup_Request_Decision.objects.all()
@@ -278,3 +291,12 @@ class AssignmentCollectorView(generics.ListCreateAPIView):
 class PickupConfirmationView(generics.ListCreateAPIView):
     serializer_class = PickupConfirmationSerializer
     queryset = Pickup_Confirmation.objects.all()
+
+class AssignmentCollectorDeleteView(generics.DestroyAPIView):
+    serializer_class = AssignmentCollectorSerializer
+    queryset = Assignment_Collector.objects.all()
+    lookup_field = 'acl_id'  # Or the primary key field name for Assignment_Collector
+
+    def get_object(self):
+        acl_id = self.kwargs.get('acl_id')
+        return get_object_or_404(Assignment_Collector, acl_id=acl_id)

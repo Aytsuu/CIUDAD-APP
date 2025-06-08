@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { Check, Eye, Image, FileInput } from "lucide-react"
+import { Check, Eye, Image, FileInput, Pen } from "lucide-react"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -13,6 +13,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { formatTime } from "@/helpers/timeFormatter"
+import EditAcceptPickupRequest from "../assignment-edit-form"
 
 export default function AcceptedTable() {
   const { data: acceptedReqData = [], isLoading} = useGetGarbageAcceptRequest(); 
@@ -158,6 +159,34 @@ export default function AcceptedTable() {
                   <p className="font-md mt-2">No collectors assigned</p>
                 )}
               </div>
+
+
+                  <DialogLayout
+                    title="Edit Pickup Assignment and Schedule Details"
+                    description=""
+                    trigger={
+                      <div className="mt-6 flex justify-end">
+                        <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"><Pen size={16} />Edit Assignment</Button>
+                      </div>}
+                    mainContent={
+                      <EditAcceptPickupRequest
+                          pick_id={selectedAssignment.pickup_assignment_id ?? ''}
+                          acl_id={selectedAssignment.assignment_collector_ids ?? []}
+                          onSuccess={() => {
+                              // Handle success
+                              setSelectedAssignment(null);
+                          }}
+                          assignment={{
+                            driver: selectedAssignment.driver_id ?? undefined,
+                            truck: selectedAssignment.truck_id ?? undefined,
+                            pick_date: selectedAssignment.assignment_info?.pick_date,
+                            pick_time: selectedAssignment.assignment_info?.pick_time,
+                            collectors: selectedAssignment.collector_ids,
+                          }}
+                      />
+                    }
+                  />
+              
             </div>
           }
         />

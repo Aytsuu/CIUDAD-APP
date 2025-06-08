@@ -90,13 +90,17 @@ export const getGarbageAcceptedRequest = async () => {
         });
 
         return data.map((item: any) => ({
-            garb_id: item.garb_id || '', 
+            garb_id: item.garb_id || '',
             garb_requester: item.garb_requester || '',
             garb_location: item.garb_location || '',
             garb_waste_type: item.garb_waste_type || '',
             garb_created_at: item.garb_created_at || '',
-            dec_id: item.dec_id || null, 
             dec_date: item.dec_date || null,
+            truck_id: item.truck_id || null,
+            driver_id: item.driver_id || null,
+            collector_ids: item.collector_ids || [],
+            pickup_assignment_id: item.pickup_assignment_id || null,
+            assignment_collector_ids: item.assignment_collector_ids || [],
             assignment_info: item.assignment_info ? {
                 driver: item.assignment_info.driver || '',
                 pick_time: item.assignment_info.pick_time || '',
@@ -111,6 +115,8 @@ export const getGarbageAcceptedRequest = async () => {
         return [];
     }
 }
+
+
 
 export const getGarbageCompletedRequest = async () => {
     try {

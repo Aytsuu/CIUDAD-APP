@@ -4,10 +4,8 @@ import PendingTable from "./tables/pending-table";
 import AcceptedTable from "./tables/accepted-table";
 import CompletedTable from "./tables/completed-table";
 import RejectedTable from "./tables/rejected-table";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileInput } from "lucide-react";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
+import { Search } from "lucide-react";
 
 function GarbagePickupRequestMain() {
   const [activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");

@@ -106,11 +106,17 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
     def get_file_id(self, obj):
         return obj.file.file_url if obj.file else ""
     
+
 class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
-    dec_id = serializers.SerializerMethodField()
     dec_date = serializers.SerializerMethodField()
     assignment_info = serializers.SerializerMethodField()
+    truck_id = serializers.SerializerMethodField()
+    driver_id = serializers.SerializerMethodField()
+    collector_ids = serializers.SerializerMethodField()
+    pickup_assignment_id = serializers.SerializerMethodField()
+    assignment_collector_ids = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -120,10 +126,15 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             'garb_waste_type',
             'garb_created_at',
             'garb_requester',
-            'dec_id',
+            'truck_id',
+            'driver_id',
+            'collector_ids',
             'dec_date',
-            'assignment_info'
+            'assignment_info',
+            'pickup_assignment_id',         
+            'assignment_collector_ids',    
         ]
+
 
     def get_garb_requester(self, obj):
         if obj.rp and obj.rp.per:
@@ -135,10 +146,6 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             return Pickup_Request_Decision.objects.get(garb_id=obj)
         except Pickup_Request_Decision.DoesNotExist:
             return None
-
-    def get_dec_id(self, obj):
-        decision = self.get_decision(obj)
-        return decision.dec_id if decision else None
 
     def get_dec_date(self, obj):
         decision = self.get_decision(obj)
@@ -160,9 +167,38 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             print(f"Error getting assignment info: {str(e)}")
             return None
 
+    def get_truck_id(self, obj):
+        try:
+            assignment = Pickup_Assignment.objects.get(garb_id=obj)
+            if assignment.truck_id:
+                return assignment.truck_id.truck_id
+            return None
+        except Pickup_Assignment.DoesNotExist:
+            return None
+
+    def get_driver_id(self, obj):
+        try:
+            assignment = Pickup_Assignment.objects.get(garb_id=obj)
+            if assignment.wstp_id:
+                return assignment.wstp_id.wstp_id
+            return None
+        except Pickup_Assignment.DoesNotExist:
+            return None
+
+    def get_collector_ids(self, obj):
+        try:
+            assignment = Pickup_Assignment.objects.get(garb_id=obj)
+            collectors = Assignment_Collector.objects.filter(pick_id=assignment)
+            return [collector.wstp_id.wstp_id for collector in collectors if collector.wstp_id]
+        except Pickup_Assignment.DoesNotExist:
+            return []
+        except Exception as e:
+            print(f"Error getting collector IDs: {str(e)}")
+            return []
+
     def _get_collector_names(self, assignment):
         try:
-            collectors = assignment.assignment_collector_set.all()  # ← use default reverse name
+            collectors = Assignment_Collector.objects.filter(pick_id=assignment)
             return [
                 collector.wstp_id.get_staff_name()
                 for collector in collectors
@@ -172,9 +208,7 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             print(f"Error getting collectors: {str(e)}")
             return []
 
-
     def _get_truck_info(self, truck):
-        """Helper method to get truck plate number and model"""
         try:
             plate = getattr(truck, 'truck_plate_num', None)
             model = getattr(truck, 'truck_model', None)
@@ -187,6 +221,26 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             return "Truck info unavailable"
         except Exception:
             return "Truck info unavailable"
+        
+    def get_pickup_assignment_id(self, obj):
+        try:
+            assignment = Pickup_Assignment.objects.get(garb_id=obj)
+            return assignment.pick_id  # or assignment.pk
+        except Pickup_Assignment.DoesNotExist:
+            return None
+
+    def get_assignment_collector_ids(self, obj):
+        try:
+            assignment = Pickup_Assignment.objects.get(garb_id=obj)
+            collectors = Assignment_Collector.objects.filter(pick_id=assignment)
+            return [collector.acl_id for collector in collectors]
+        except Pickup_Assignment.DoesNotExist:
+            return []
+        except Exception as e:
+            print(f"Error getting acl_ids: {str(e)}")
+            return []
+
+
 
 
 class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
