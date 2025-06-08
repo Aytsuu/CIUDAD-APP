@@ -227,7 +227,7 @@ class GarbagePickupRequestRejectedView(generics.ListAPIView):
         return queryset
     
 class GarbagePickupRequestAcceptedView(generics.ListAPIView):
-    serializer_class = GarbagePickupRequestRejectedSerializer
+    serializer_class = GarbagePickupRequestAcceptedSerializer
     def get_queryset(self):
         queryset = Garbage_Pickup_Request.objects.all()
         status = self.request.query_params.get('status', None)
@@ -236,6 +236,18 @@ class GarbagePickupRequestAcceptedView(generics.ListAPIView):
             queryset = queryset.filter(garb_req_status__iexact=status.lower())
         
         return queryset
+    
+class GarbagePickupRequestCompletedView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestCompletedSerializer
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset 
+
 
 class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
     serializer_class = GarbagePickupRequestPendingSerializer
@@ -262,3 +274,7 @@ class PickupAssignmentView(generics.ListCreateAPIView):
 class AssignmentCollectorView(generics.ListCreateAPIView):
     serializer_class = AssignmentCollectorSerializer
     queryset = Assignment_Collector.objects.all()
+
+class PickupConfirmationView(generics.ListCreateAPIView):
+    serializer_class = PickupConfirmationSerializer
+    queryset = Pickup_Confirmation.objects.all()

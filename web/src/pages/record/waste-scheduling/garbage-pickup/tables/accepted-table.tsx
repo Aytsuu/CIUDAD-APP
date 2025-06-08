@@ -8,9 +8,15 @@ import { Button } from "@/components/ui/button/button"
 import { useGetGarbageAcceptRequest, type GarbageRequestAccept } from "../queries/GarbageRequestFetchQueries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatTimestamp } from "@/helpers/timestampformatter"
+import { useUpdateGarbageRequestStatus } from "../queries/GarbageRequestUpdateQueries"
 
 export default function AcceptedTable() {
   const { data: acceptedReqData = [], isLoading} = useGetGarbageAcceptRequest(); 
+  const { mutate: confirmRequest} = useUpdateGarbageRequestStatus();
+
+  const handleConfirm = (garb_id: string) => {
+    confirmRequest(garb_id);
+  }
 
   const columns: ColumnDef<GarbageRequestAccept>[] = [
     { accessorKey: "garb_requester", header: "Requester" },
@@ -58,6 +64,7 @@ export default function AcceptedTable() {
                   title="Confirmation"
                   description="Would you like to confirm that the pickup has been done?"
                   actionLabel="Confirm"
+                  onClick={() => handleConfirm(row.original.garb_id)} 
                 />
               </div>
             }

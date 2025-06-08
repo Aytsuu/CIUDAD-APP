@@ -20,9 +20,9 @@ export const useAddDecision = (onSuccess?: () => void) => {
                     queryClient.invalidateQueries({ queryKey: ['garbageRejectedRequest'] })
                 ]);
 
-                toast.loading('Submitting....', {id: "rejectGarbageRequest"});
+                toast.loading('Rejecting Request....', {id: "rejectGarbageRequest"});
         
-                toast.success('Record Submitted!', {
+                toast.success('Request rejected!', {
                     id: "rejectGarbageRequest",
                     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                     duration: 2000
@@ -59,7 +59,7 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
                     queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
                     queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] })
             ]);
-            toast.success('Pickup assignment created successfully!', {
+            toast.success('Request Accepted!', {
                 id: "createPickupAssignment",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 duration: 2000

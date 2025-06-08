@@ -254,9 +254,10 @@ class Assignment_Collector(models.Model):
 
 class Pickup_Confirmation(models.Model):
     conf_id = models.BigAutoField(primary_key=True)
-    conf_resident_conf = models.BooleanField(default=False)
-    conf_staff_conf = models.BooleanField(default=False)
-    conf_confirm_date = models.DateTimeField(default=datetime.now)
+    conf_resident_conf = models.BooleanField(blank=True)
+    conf_staff_conf = models.BooleanField(blank=True)
+    conf_staff_conf_date = models.DateTimeField(default=datetime.now)
+    conf_resident_conf_date = models.DateTimeField(null=True, blank=True)
     garb_id = models.ForeignKey(
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,

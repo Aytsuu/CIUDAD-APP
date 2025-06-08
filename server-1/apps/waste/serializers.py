@@ -161,6 +161,45 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
         except Pickup_Assignment.DoesNotExist:
             return None
 
+
+class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
+    garb_requester = serializers.SerializerMethodField()
+    confirmation_info = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Garbage_Pickup_Request
+        fields = [
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_created_at',
+            'garb_requester',
+            'confirmation_info',
+        ]
+
+    def get_garb_requester(self, obj):
+        if obj.rp and obj.rp.per:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
+        return "Unknown"
+
+    def get_confirmation_info(self, obj):
+        try:
+            confirmation = Pickup_Confirmation.objects.get(garb_id=obj)
+            return {
+                'conf_resident_conf_date': confirmation.conf_resident_conf_date,
+                'conf_staff_conf_date': confirmation.conf_staff_conf_date,
+                'conf_resident_conf': confirmation.conf_resident_conf,
+                'conf_staff_conf': confirmation.conf_staff_conf,
+            }
+        except Pickup_Confirmation.DoesNotExist:
+            return {
+                'conf_resident_conf_date': None,
+                'conf_staff_conf_date': None,
+                'conf_resident_conf': None,
+                'conf_staff_conf': None,
+            }
+    
+
 class PickupRequestDecisionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pickup_Request_Decision
@@ -174,4 +213,9 @@ class PickupAssignmentSerializer(serializers.ModelSerializer):
 class AssignmentCollectorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment_Collector
+        fields = '__all__' 
+
+class PickupConfirmationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pickup_Confirmation
         fields = '__all__' 
