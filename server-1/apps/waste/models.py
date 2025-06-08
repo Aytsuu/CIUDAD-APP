@@ -98,10 +98,6 @@ class WastePersonnel(models.Model):
     def get_staff_position(self):
         return self.staff_id.pos.pos_title if self.staff_id.pos else None
 
-    # def get_staff_name(self):
-    #     if self.staff_id.rp and self.staff_id.rp.per:
-    #         return f"{self.staff_id.rp.per.first_name} {self.staff_id.rp.per.last_name}"
-    #     return "Unknown"
     def get_staff_name(self):
         if self.staff_id.rp and self.staff_id.rp.per:
             return f"{self.staff_id.rp.per.per_fname} {self.staff_id.rp.per.per_lname}"

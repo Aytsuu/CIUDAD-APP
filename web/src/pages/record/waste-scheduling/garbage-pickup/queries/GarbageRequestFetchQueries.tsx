@@ -130,6 +130,13 @@ export type GarbageRequestAccept = {
   garb_created_at: string;
   dec_id: string;
   dec_date: string;
+  assignment_info?: {
+    driver?: string;
+    collectors?: string[];
+    pick_time?: string;       
+    pick_date?: string;      
+    truck?: string;
+  } | null;
 }
 
 export const useGetGarbageAcceptRequest = () => {
@@ -150,6 +157,13 @@ export type GarbageRequestComplete = {
   conf_resident_conf: boolean | null;     
   conf_staff_conf_date: string | null;    
   conf_staff_conf: boolean | null; 
+  assignment_info?: {
+    driver?: string;
+    collectors?: string[];
+    pick_time?: string;       
+    pick_date?: string;      
+    truck?: string;
+  } | null;
 }
 
 export const useGetGarbageCompleteRequest = () => {

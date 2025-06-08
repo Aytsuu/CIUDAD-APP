@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { ItemIndicator } from "@radix-ui/react-dropdown-menu";
 
 
 export const getDrivers = async () => {
@@ -98,7 +97,15 @@ export const getGarbageAcceptedRequest = async () => {
             garb_created_at: item.garb_created_at || '',
             dec_id: item.dec_id || null, 
             dec_date: item.dec_date || null,
+            assignment_info: item.assignment_info ? {
+                driver: item.assignment_info.driver || '',
+                pick_time: item.assignment_info.pick_time || '',
+                pick_date: item.assignment_info.pick_date || '',
+                collectors: item.assignment_info.collectors || [],
+                truck: item.assignment_info.truck || '',
+            } : null
         }));
+
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
         return [];
@@ -114,15 +121,6 @@ export const getGarbageCompletedRequest = async () => {
         });
 
         return data.map((item: any) => ({
-            // garb_id: item.garb_id || '', 
-            // garb_requester: item.garb_requester || '',
-            // garb_location: item.garb_location || '',
-            // garb_waste_type: item.garb_waste_type || '',
-            // garb_created_at: item.garb_created_at || '',
-            // conf_resident_conf_date: item.conf_resident_conf_date || '',
-            // conf_staff_conf_date: item.conf_staff_conf_date || '',
-            // conf_resident_conf: item.conf_resident_conf || '',
-            // conf_staff_conf: item.conf_staff_conf || '',
             garb_id: item.garb_id ?? 0,
             garb_requester: item.garb_requester ?? 'Unknown',
             garb_location: item.garb_location ?? '',
@@ -132,6 +130,13 @@ export const getGarbageCompletedRequest = async () => {
             conf_staff_conf_date: item.confirmation_info?.conf_staff_conf_date ?? null,
             conf_resident_conf: item.confirmation_info?.conf_resident_conf ?? null,
             conf_staff_conf: item.confirmation_info?.conf_staff_conf ?? null,
+            assignment_info: item.assignment_info ? {
+                driver: item.assignment_info.driver || '',
+                pick_time: item.assignment_info.pick_time || '',
+                pick_date: item.assignment_info.pick_date || '',
+                collectors: item.assignment_info.collectors || [],
+                truck: item.assignment_info.truck || '',
+            } : null
         }));
     } catch (err) {
         console.error('Failed to fetch garbage requests:', err);
