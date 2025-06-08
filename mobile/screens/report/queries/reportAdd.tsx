@@ -1,8 +1,16 @@
 import { useMutation } from "@tanstack/react-query";
-import { addIncidentReport } from "../rest_api/reportPOST";
+import { api } from "@/api/api";
 
 export const useAddIncidentReport = () => {
   return useMutation({
-    mutationFn: (data: Record<string, any>) => addIncidentReport(data)
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        console.log(data);
+        const res = await api.post('report/ir/create/', data);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
   })
 }

@@ -4,6 +4,9 @@ import { View, Text, TouchableOpacity, Image, FlatList, Modal, StyleSheet} from 
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { supabase } from "@/lib/supabase";
+import { v4 as uuid4 } from 'uuid';
 
 export default function MediaPicker({selectedImage, setSelectedImage} : {
   selectedImage: string | null;
@@ -55,18 +58,60 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
     setGalleryVisible(true);
   };
 
+  const handleSelectedImage = async (imageUri: string) => {
+    setSelectedImage(imageUri);
+    const compressedImage = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 1080, height: 1200 } }],
+      {
+        compress: 0.8, // 70% compression (0.7)
+        format: ImageManipulator.SaveFormat.JPEG,
+        base64: true,
+      }
+    );
+
+    if (!compressedImage.base64) {
+      throw new Error("Compressed image base64 data is undefined");
+    }
+
+    const arrayBuffer = Uint8Array.from(atob(compressedImage.base64), (c) =>
+      c.charCodeAt(0)
+    );
+
+    const fileName = `${uuid4()}.jpg`;
+    const filePath = `uploads/${fileName}`;
+    const { error } = await supabase.storage
+      .from("image-bucket")
+      .upload(filePath, arrayBuffer as Uint8Array, {
+        contentType: "image/jpeg",
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("image-bucket").getPublicUrl(filePath);
+
+    console.log("Upload successful!", publicUrl);
+
+    setSelectedImage(publicUrl);
+  }
+
+  // If Camera is selected
   const takePhoto = async () => {
     setGalleryVisible(false);
     setCameraVisible(true);
   };
-
+  
   const capturePhoto = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePhoto({
           flash: 'off',
         });
-        setSelectedImage(`file://${photo.path}`);
+        handleSelectedImage(`file://${photo.path}`);
         setCameraVisible(false);
         setTimeout(fetchGalleryAssets, 1000);
       } catch (error) {
@@ -128,7 +173,7 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
               <TouchableOpacity 
                 className="flex-1 m-1 aspect-square"
                 onPress={() => {
-                  setSelectedImage(item.uri);
+                  handleSelectedImage(item.uri);
                   setGalleryVisible(false);
                 }}
               >

@@ -6,7 +6,7 @@ import { RouteObject } from 'react-router';
 import { Navigate } from 'react-router';
 import { administration_router } from './administration-router';
 import { profiling_router } from './profiling-router';
-import { report_router } from "../pages/record/report/acknowledgement/report-router";
+import { report_router } from "./report-router";
 import { blotter_router } from './blotter-router';
 import { ord_router } from './ordinancePage-router';
 import { res_router } from './resolutionPage-router';

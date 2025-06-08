@@ -20,6 +20,7 @@ type IncidentReport = z.infer<typeof IncidentReportSchema>
 export default () => {
   const defaultValues = generateDefaultValues(IncidentReportSchema);
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+  const [showMediaError, setShowMediaError] = React.useState<boolean>(false);
   const { data: sitioList, isLoading } = useGetSitio();
   const { control, trigger, getValues } = useForm<IncidentReport>({
     resolver: zodResolver(IncidentReportSchema),
@@ -36,6 +37,11 @@ export default () => {
       'ir_type',
       'sitio',
     ]);
+
+    if (!selectedImage) {
+      setShowMediaError(true);
+      return;
+    }
 
     if (!formIsValid) {
       console.log(formIsValid);
@@ -78,7 +84,7 @@ export default () => {
               control={control} 
               name="ir_add_details" 
             />
-            <View className="mt-8 border border-dashed border-gray-300 p-5 rounded-lg bg-white flex-1 gap-7">
+            <View className={`mt-8 border border-dashed ${showMediaError ? 'border-red-500' : 'border-gray-300'} p-5 rounded-lg bg-white flex-1 gap-7`}>
               <Text>Please provide an image to support your report</Text>
               <MediaPicker 
                 selectedImage={selectedImage}

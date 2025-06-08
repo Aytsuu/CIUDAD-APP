@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
 // Reusable Form Select Component with Checkbox support
-export const FormComboCheckbox = React.memo(
+export const FormComboCheckbox   = React.memo(
   ({
     control,
     name,

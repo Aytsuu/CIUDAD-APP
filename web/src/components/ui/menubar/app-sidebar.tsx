@@ -63,8 +63,8 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Incident", url: "/incident/report" },
-      { title: "Activity", url: "/incident/report" },
+      { title: "Incident", url: "/report/incident" },
+      { title: "Activity", url: "/report/activity" },
       { title: "Acknowledgement", url: "/drr/acknowledgement-report" },
       { title: "Weekly Acknowledgement", url: "/drr/monthly-report" },
     ],
