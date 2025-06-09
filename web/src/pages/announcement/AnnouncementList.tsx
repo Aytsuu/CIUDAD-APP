@@ -1,181 +1,249 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import DialogLayout from '@/components/ui/dialog/dialog-layout';
-import DeleteConfirmationModal from '@/pages/announcement/deletemodal';
-import { SelectLayout } from '@/components/ui/select/select-layout';
-import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Trash, Plus, Search, Eye } from "lucide-react";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import AnnouncementCreateForm from "./announcementcreate";
+import AnnouncementView from "./announcementview";
+import { DataTable } from "@/components/ui/table/data-table";
+import { ArrowUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { type Announcement, useDeleteAnnouncement } from "./queries/announcementDeleteQueries";
+import { useGetAnnouncement } from "./queries/announcementFetchQueries";
 
-interface Announcement {
-    id: string;
-    title: string;
-    description: string;
-    dateCreated: string;
-    time: string;
+
+function AnnouncementTracker() {
+  const [data] = useState<Announcement[]>([]);
+  // const [loading, setLoading] = useState(true);
+  const [error] = useState<string | null>(null); 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { 
+    data: announcements = [], 
+    isLoading, 
+    refetch 
+  } = useGetAnnouncement();
+
+  const { mutate: deleteEntry} = useDeleteAnnouncement();
+
+  const handleDelete = async (ann_id: number) => {
+    deleteEntry(ann_id);
+  };
+
+  // Filter data based on search query
+  const filteredData = announcements.filter((announcement) => {
+    const searchString = `${announcement.ann_id} ${announcement.ann_title} ${announcement.ann_details} ${announcement.ann_start_at} ${announcement.ann_end_at} ${announcement.ann_type}`.toLowerCase();
+    return searchString.includes(searchQuery.toLowerCase());
+  });
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const columns: ColumnDef<Announcement>[] = [
+    {
+      accessorKey: "ann_id",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Reference No.
+          <ArrowUpDown size={15} />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("ann_id")}</div>
+      ),
+    },
+    {
+      accessorKey: "ann_title",
+      header: "Announcement Title",
+    },
+    {
+      accessorKey: "ann_details", 
+      header: "Announcement Details",
+    },
+      {
+      accessorKey: "ann_created_at", 
+      header: "Created At",
+    },
+   
+    {
+      accessorKey: "ann_start_at", 
+      header: "Start Date",
+    },
+    {
+      accessorKey: "ann_end_at", 
+      header: "End Date",
+    },
+    {
+      accessorKey: "ann_type", 
+      header: "Type",
+    },
+  
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <TooltipLayout
+            trigger={
+              <DialogLayout
+                trigger={
+                  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8.5">
+                    <Eye size={16} />
+                  </div>
+                }
+                className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+                title=""
+                description=""
+                mainContent={
+                  <div className="w-full h-full">
+                    <AnnouncementView
+                       ann_id={row.original.ann_id}
+                       onSaveSuccess={refetch}
+                    />
+                  </div>
+                }
+              />
+            }
+            content="View"
+          />
+          <TooltipLayout
+            trigger={
+              <div className="flex items-center h-8">
+                <ConfirmationModal
+                  trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] border-none text-white px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Trash size={16} /></div>}
+                  title="Confirm Delete"
+                  description="Are you sure you want to delete this entry?"
+                  actionLabel="Confirm"
+                  onClick={() => handleDelete(row.original.ann_id)} 
+                />                    
+              </div>   
+            }
+            content="Delete"
+          />
+        </div>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
+        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
+        <Skeleton className="h-10 w-full mb-4 opacity-30" />
+        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
+  return (
+    <div className="w-full h-full">
+      <div className="flex-col items-center mb-4">
+        <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+          Donation Records
+        </h1>
+        <p className="text-xs sm:text-sm text-darkGray">
+          Manage and view donation records
+        </p>
+      </div>
+      <hr className="border-gray mb-6 sm:mb-8" />
+
+      {/* Search and Create Section */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="relative w-full flex gap-2 mr-2">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+            size={17}
+          />
+          <Input
+            placeholder="Search..."
+            className="pl-10 bg-white w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <DialogLayout
+          trigger={
+            <div className="flex items-center bg-blue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-blue/90">
+              <Plus size={15} /> Create
+            </div>
+          }
+          className="max-w-[55%] h-[540px] flex flex-col overflow-auto scrollbar-custom"
+          title=""
+          description=""
+          mainContent={
+            <div className="w-full h-full">
+              <AnnouncementCreateForm onSuccess={() => {
+                setIsDialogOpen(false);
+                refetch();
+              }}/>
+            </div>
+          }
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-md">
+        <div className="flex justify-between p-3">
+          <div className="flex items-center gap-2">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input
+              type="number"
+              className="w-14 h-6"
+              value={pageSize}
+              onChange={(e) => {
+                const value = +e.target.value;
+                setPageSize(value >= 1 ? value : 1);
+                setCurrentPage(1); // Reset to first page when changing page size
+              }}
+            />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <DataTable columns={columns} data={paginatedData} />
+        </div>
+
+        {/* Pagination Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
+          <p className="text-xs sm:text-sm text-darkGray">
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+            {filteredData.length} rows
+          </p>
+          {filteredData.length > 0 && (
+            <PaginationLayout
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default function AnnouncementList(){
-    const [announcements, setAnnouncements] = useState<Announcement[]>([
-        {
-            id: '1',
-            title: 'Feeding Program',
-            description: 'Providing meals to underprivileged children.',
-            dateCreated: '2025-01-20',
-            time: '08:00 AM'
-        },
-        {
-            id: '2',
-            title: 'Community Clean-up',
-            description: 'Join us for a community clean-up event.',
-            dateCreated: '2025-01-22',
-            time: '09:00 AM'
-        },
-        {
-            id: '3',
-            title: 'Health Awareness Camp',
-            description: 'Free health check-ups and awareness sessions.',
-            dateCreated: '2025-01-25',
-            time: '10:00 AM'
-        },
-        {
-            id: '4',
-            title: 'Blood Donation Drive',
-            description: 'Donate blood and save lives.',
-            dateCreated: '2025-01-28',
-            time: '11:00 AM'
-        }
-    ]);
-
-    const [selectedFilter, setSelectedFilter] = useState<string>("all");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
-
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(event.target.value);
-    };
-
-    const openDeleteModal = (announcement: Announcement) => {
-        setAnnouncementToDelete(announcement);
-        setIsDeleteModalOpen(true);
-    };
-
-    const closeDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-        setAnnouncementToDelete(null);
-    };
-
-    const handleDelete = () => {
-        if (announcementToDelete) {
-            setAnnouncements((prev) => prev.filter((a) => a.id !== announcementToDelete.id));
-            console.log('Deleted announcement:', announcementToDelete.id);
-            closeDeleteModal();
-        }
-    };
-
-    // Filter announcements based on searchQuery
-    const filteredAnnouncements = announcements.filter(announcement =>
-        announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        announcement.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-        <div className="w-full h-full flex flex-col gap-4">
-            {/* Filters & Actions - Now Responsive */}
-            <div className="flex flex-row gap-4">
-                <SelectLayout
-                    placeholder="Filter by"
-                    label=""
-                    className="bg-white"
-                    options={[
-                        { id: "all", name: "All" },
-                        { id: "today", name: "Today" },
-                        { id: "thisweek", name: "This Week" },
-                        { id: "thismonth", name: "This Month" }
-                    ]}
-                    value={selectedFilter}
-                    onChange={(selected) => setSelectedFilter(selected)}
-                />
-
-                {/* Search Bar */}
-                <div className="relative flex-1">
-                    <Input
-                        type="text"
-                        placeholder="Search Announcements"
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        className="pr-10"
-                    />
-                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                </div>
-
-                <Link to={`/createAnnouncement`}>
-                    <Button className="w-full sm:w-auto mt-1 p-2 text-sm shadow-sm">
-                        <Label>Add Announcement</Label>
-                    </Button>
-                </Link>
-            </div>
-
-            <div className="space-y-4">
-                {filteredAnnouncements.length > 0 ? (
-                    filteredAnnouncements.map((announcement) => (
-                        <div key={announcement.id} className="border rounded-lg w-full p-4 sm:p-6 bg-white shadow-sm">
-                            <div className="grid grid-cols-1 w-full sm:grid-cols-[1fr_4fr_auto] items-center gap-4">
-                                {/* Announcement Info */}
-                                <div className='mr-5'>
-                                    <p className='text-sm font-semibold'>Date created:</p>
-                                    <p className="text-darkGray">{announcement.dateCreated}</p>
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-semibold">{announcement.title}</h3>
-                                    <p className="text-gray-600">{announcement.description}</p>
-                                </div>
-
-                                {/* Buttons - Now Stack in Mobile */}
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                                    {/* Edit button */}
-                                    <Button
-                                        variant="secondary"
-                                        className="border border-gray-400 text-gray-700 hover:bg-gray-200"
-                                        onClick={() => console.log("Edit announcement:", announcement.id)}
-                                    >
-                                        Edit
-                                    </Button>
-
-                                    {/* Delete Button & Modal */}
-                                    <Button
-                                        variant="destructive"
-                                        className="bg-red-600 hover:bg-red-700"
-                                        onClick={() => openDeleteModal(announcement)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center text-gray-600 text-lg font-semibold py-6">
-                        No announcements
-                    </div>
-                )}
-            </div>
-
-            {/* Delete Confirmation Modal */}
-            {isDeleteModalOpen && announcementToDelete && (
-                <DialogLayout
-                    isOpen={isDeleteModalOpen}
-                    onOpenChange={setIsDeleteModalOpen}
-                    className="sm:max-w-[50%]"
-                    title="Confirm Deletion"
-                    description=""
-                    mainContent={<DeleteConfirmationModal
-                        announcement={announcementToDelete}
-                        onCancel={closeDeleteModal}
-                        onConfirm={handleDelete} />} trigger={undefined}                />
-            )}
-        </div>
-    );
-};
+export default AnnouncementTracker;

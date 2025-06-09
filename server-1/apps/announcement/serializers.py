@@ -1,11 +1,6 @@
 from rest_framework import serializers
 from .models import Announcement, AnnouncementFile, AnnouncementRecipient
 
-class AnnouncementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Announcement
-        fields = '__all__'
-
 class AnnouncementFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementFile
@@ -14,4 +9,9 @@ class AnnouncementFileSerializer(serializers.ModelSerializer):
 class AnnouncementRecipientSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementRecipient
+        fields = '__all__'
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Announcement
         fields = '__all__'
