@@ -49,19 +49,24 @@ function EditAcceptPickupRequest({pick_id, acl_id, onSuccess,assignment
         name: `${collector.firstname} ${collector.lastname}`  
     }));
 
-    const onSubmit = (values: z.infer<typeof EditAcceptPickupRequestSchema>) => {
+     const onSubmit = (values: z.infer<typeof EditAcceptPickupRequestSchema>) => {
         updateAssignmentAndSchedule({
-        pick_id,
-        acl_ids: acl_id,
-        values: {
-            driver: values.driver,  
-            truck: values.truck,
-            date: values.date,
-            time: values.time,
-            collectors: values.collectors
-        }
+            pick_id,
+            acl_ids: acl_id,
+            values: {
+                driver: values.driver,  
+                truck: values.truck,
+                date: values.date,
+                time: values.time,
+                collectors: values.collectors
+            }
+        }, {
+            onSuccess: () => {
+                if (onSuccess) onSuccess();
+            }
         });
     };
+
 
    const form = useForm<z.infer<typeof EditAcceptPickupRequestSchema>>({
         resolver: zodResolver(EditAcceptPickupRequestSchema),

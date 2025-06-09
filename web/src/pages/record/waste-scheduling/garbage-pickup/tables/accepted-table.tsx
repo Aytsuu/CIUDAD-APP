@@ -19,6 +19,7 @@ export default function AcceptedTable() {
   const { data: acceptedReqData = [], isLoading} = useGetGarbageAcceptRequest(); 
   const { mutate: confirmRequest} = useUpdateGarbageRequestStatus();
   const [selectedAssignment, setSelectedAssignment] = useState<GarbageRequestAccept | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleConfirm = (garb_id: string) => {
     confirmRequest(garb_id);
@@ -26,9 +27,14 @@ export default function AcceptedTable() {
 
   const handleViewAssignment = (assignment: GarbageRequestAccept) => {
     setSelectedAssignment(assignment);
-      console.log('Assignment Info:', assignment.assignment_info);
+    setIsEditing(false);
+    console.log('Assignment Info:', assignment.assignment_info);
   };
 
+  const handleEditSuccess = () => {
+    setIsEditing(false);
+    setSelectedAssignment(null);
+  };
 
   const columns: ColumnDef<GarbageRequestAccept>[] = [
     { accessorKey: "garb_requester", header: "Requester" },
@@ -43,12 +49,12 @@ export default function AcceptedTable() {
       }
     },
     { 
-          accessorKey: "dec_date", 
-          header: "Decision Date",
-          cell: ({ row }) => {
-              const date = row.original.dec_date;
-              return formatTimestamp(date);
-          }
+      accessorKey: "dec_date", 
+      header: "Decision Date",
+      cell: ({ row }) => {
+          const date = row.original.dec_date;
+          return formatTimestamp(date);
+      }
     },
     {
       accessorKey: "actions",
@@ -58,9 +64,7 @@ export default function AcceptedTable() {
           <TooltipLayout
             trigger={
               <div 
-                className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-3 rounded cursor-pointer"
-                onClick={() => handleViewAssignment(row.original)}
-              >
+                className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-3 rounded cursor-pointer"onClick={() => handleViewAssignment(row.original)}>
                 <Eye size={16} />
               </div>
             }
@@ -114,80 +118,81 @@ export default function AcceptedTable() {
         <DialogLayout
           isOpen={!!selectedAssignment}
           onOpenChange={(open) => {
-            if (!open) setSelectedAssignment(null);
+            if (!open) {
+              setSelectedAssignment(null);
+              setIsEditing(false);
+            }
           }}
-          title="Pickup Assignment and Schedule Details"
-          description="Detailed information about the garbage pickup assignment"
+          title={isEditing ? "Edit Pickup Assignment" : "Pickup Assignment and Schedule Details"}
+          description={isEditing ? "" : "Detailed information about the garbage pickup assignment"}
           mainContent={
-            <div className="flex flex-col gap-4 p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Driver</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.driver || "Not assigned"}
-                  </p>
+            isEditing ? (
+              <EditAcceptPickupRequest
+                pick_id={selectedAssignment.pickup_assignment_id ?? ''}
+                acl_id={selectedAssignment.assignment_collector_ids ?? []}
+                onSuccess={handleEditSuccess}
+                assignment={{
+                  driver: selectedAssignment.driver_id ?? undefined,
+                  truck: selectedAssignment.truck_id ?? undefined,
+                  pick_date: selectedAssignment.assignment_info?.pick_date,
+                  pick_time: selectedAssignment.assignment_info?.pick_time,
+                  collectors: selectedAssignment.collector_ids,
+                }}
+              />
+            ) : (
+             <div className="flex flex-col gap-4 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Driver</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.driver || "Not assigned"}
+                    </p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Truck</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.truck || "Not assigned"}
+                    </p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Scheduled Date</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.pick_date || "Not scheduled"}
+                    </p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Scheduled Time</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.pick_time ? formatTime(selectedAssignment.assignment_info.pick_time) : "Not scheduled"}
+                    </p>
+                  </div>
                 </div>
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Truck</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.truck || "Not assigned"}
-                  </p>
+
+                <div className="mt-4">
+                  <Label className="text-sm font-medium text-gray-500">Collectors</Label>
+                  <div className="mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                    {selectedAssignment.assignment_info?.collectors?.length ? (
+                      <ul className="list-disc pl-5 space-y-1">
+                        {selectedAssignment.assignment_info.collectors.map((collector, index) => (
+                          <li key={index} className="font-sm py-1">{collector}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="font-sm text-center py-2">No collectors assigned</p>
+                    )}
+                  </div>
                 </div>
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Scheduled Date</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.pick_date || "Not scheduled"}
-                  </p>
-                </div>
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Scheduled Time</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.pick_time ? formatTime(selectedAssignment.assignment_info.pick_time) : "Not scheduled"}
-                  </p>
+
+                <div className="mt-6 flex justify-end">
+                  <Button 
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Pen size={16} />Edit Assignment
+                  </Button>
                 </div>
               </div>
-
-              <div className="mt-4">
-                <Label className="text-md font-medium text-gray-500">Collectors</Label>
-                {selectedAssignment.assignment_info?.collectors?.length ? (
-                  <ul className="list-disc pl-5 mt-2 space-y-1">
-                    {selectedAssignment.assignment_info.collectors.map((collector, index) => (
-                      <li key={index} className="font-sm">{collector}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="font-md mt-2">No collectors assigned</p>
-                )}
-              </div>
-
-
-                  <DialogLayout
-                    title="Edit Pickup Assignment and Schedule Details"
-                    description=""
-                    trigger={
-                      <div className="mt-6 flex justify-end">
-                        <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"><Pen size={16} />Edit Assignment</Button>
-                      </div>}
-                    mainContent={
-                      <EditAcceptPickupRequest
-                          pick_id={selectedAssignment.pickup_assignment_id ?? ''}
-                          acl_id={selectedAssignment.assignment_collector_ids ?? []}
-                          onSuccess={() => {
-                              // Handle success
-                              setSelectedAssignment(null);
-                          }}
-                          assignment={{
-                            driver: selectedAssignment.driver_id ?? undefined,
-                            truck: selectedAssignment.truck_id ?? undefined,
-                            pick_date: selectedAssignment.assignment_info?.pick_date,
-                            pick_time: selectedAssignment.assignment_info?.pick_time,
-                            collectors: selectedAssignment.collector_ids,
-                          }}
-                      />
-                    }
-                  />
-              
-            </div>
+            )
           }
         />
       )}
@@ -220,7 +225,5 @@ export default function AcceptedTable() {
         <DataTable columns={columns} data={acceptedReqData} />
       </div>
     </div>
-);
-
+  );
 }
-

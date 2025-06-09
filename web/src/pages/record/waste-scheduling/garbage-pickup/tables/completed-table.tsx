@@ -301,47 +301,47 @@ export default function CompletedTable() {
           title="Pickup Assignment and Schedule Details"
           description="Detailed information about the garbage pickup assignment"
           mainContent={
-            <div className="flex flex-col gap-4 p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Driver</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.driver || "Not assigned"}
-                  </p>
+           <div className="flex flex-col gap-4 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Driver</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.driver || "Not assigned"}
+                    </p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Truck</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.truck || "Not assigned"}
+                    </p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Scheduled Date</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.pick_date || "Not scheduled"}
+                    </p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <Label className="text-sm font-medium text-gray-500">Scheduled Time</Label>
+                    <p className="font-sm">
+                      {selectedAssignment.assignment_info?.pick_time ? formatTime(selectedAssignment.assignment_info.pick_time) : "Not scheduled"}
+                    </p>
+                  </div>
                 </div>
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Truck</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.truck || "Not assigned"}
-                  </p>
-                </div>
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Scheduled Date</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.pick_date || "Not scheduled"}
-                  </p>
-                </div>
-                <div className="border-b pb-2">
-                  <Label className="text-sm font-medium text-gray-500">Scheduled Time</Label>
-                  <p className="font-md">
-                    {selectedAssignment.assignment_info?.pick_time 
-                      ? formatTime(selectedAssignment.assignment_info.pick_time) 
-                      : "Not scheduled"}
-                  </p>
-                </div>
-              </div>
 
-              <div className="mt-4">
-                <Label className="text-md font-medium text-gray-500">Collectors</Label>
-                {selectedAssignment.assignment_info?.collectors?.length ? (
-                  <ul className="list-disc pl-5 mt-2 space-y-1">
-                    {selectedAssignment.assignment_info.collectors.map((collector, index) => (
-                      <li key={index} className="font-sm">{collector}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="font-md mt-2">No collectors assigned</p>
-                )}
+                <div className="mt-4">
+                  <Label className="text-sm font-medium text-gray-500">Collectors</Label>
+                  <div className="mt-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                    {selectedAssignment.assignment_info?.collectors?.length ? (
+                      <ul className="list-disc pl-5 space-y-1">
+                        {selectedAssignment.assignment_info.collectors.map((collector, index) => (
+                          <li key={index} className="font-sm py-1">{collector}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="font-sm text-center py-2">No collectors assigned</p>
+                    )}
+                </div>
               </div>
             </div>
           }
