@@ -60,11 +60,7 @@ export const useUpdateAssignmentCollectorsAndSchedule = (onSuccess?: () => void)
     
     onSuccess: () => {
       // Invalidate relevant queries to refresh the data
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] }),
-        // queryClient.invalidateQueries({ queryKey: ['assignmentDetails'] }),
-
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] }),
 
       toast.success('Assignment updated successfully', {
         id: "updateAssignment",
