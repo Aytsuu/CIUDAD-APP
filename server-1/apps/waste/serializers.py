@@ -52,3 +52,8 @@ class SitioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sitio
         fields = ['sitio_id', 'sitio_name']
+
+class WasteCollectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WasteCollector
+        fields = '__all__' 

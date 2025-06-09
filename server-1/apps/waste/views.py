@@ -233,3 +233,7 @@ class CollectorPersonnelAPIView(APIView):
 class SitioListView(generics.ListCreateAPIView):
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
+
+class WasteCollectorView(generics.ListCreateAPIView):
+    serializer_class = WasteCollectorSerializer
+    queryset = WasteCollector.objects.all()

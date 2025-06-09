@@ -35,15 +35,15 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
             sitio_id: assInfo.sitio_id,
             wstp_id: assInfo.wstp_id,
             wc_num: assInfo.wc_num,
-            truck_id: assInfo.truck_id,
+            truck_id: parseInt(assInfo.truck_id),
             staff_id: assInfo.staff_id  
         });
 
         const res = await api.post('waste/waste-collection-assignment/', {
             wc_num: assInfo.wc_num,
-            sitio_id: assInfo.sitio_id,
-            wstp_id: assInfo.wstp_id,
-            truck_id: assInfo.collectionTruck,
+            sitio: assInfo.sitio_id,
+            wstp: assInfo.wstp_id,
+            truck: parseInt(assInfo.truck_id),
             staff_id: assInfo.staff_id
         });
 
@@ -53,3 +53,26 @@ export const wasteAssData = async (assInfo: Record<string, any>) => {
         throw err;
     }
 };
+
+
+
+
+//Assign Collectors
+export const addAssCollector = async (assCollInfo: Record<string, any>) => {
+    try {
+        console.log({
+            was: assCollInfo.was_id,
+            wstp: assCollInfo.wstp_id  
+        });
+
+        const res = await api.post('waste/waste-ass-collectors/', {
+            was: assCollInfo.was_id,
+            wstp: assCollInfo.wstp_id
+        });
+
+        return res.data.wasc_id;
+    } catch (err) {
+        console.error("Error creating waste collection assignment:", err);
+        throw err;
+    }
+}

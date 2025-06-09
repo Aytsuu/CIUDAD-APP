@@ -145,11 +145,18 @@ class WasteCollectionSched(models.Model):
 class WasteCollectionAssignment(models.Model):
     was_id = models.BigAutoField(primary_key=True)
     sitio = models.ForeignKey('profiling.Sitio', on_delete=models.CASCADE, null=True, blank=True)
-    wstp = models.ForeignKey(WastePersonnel, on_delete=models.CASCADE, null=True, blank=True)
     wc_num = models.ForeignKey(WasteCollectionSched, on_delete=models.CASCADE, null=True, blank=True)
+    wstp = models.ForeignKey(WastePersonnel, on_delete=models.CASCADE, null=True, blank=True)
     truck = models.ForeignKey(WasteTruck, on_delete=models.CASCADE, null=True, blank=True)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         db_table = 'waste_collection_assignment'
 
+class WasteCollector(models.Model):
+    wasc_id = models.BigAutoField(primary_key=True)
+    was = models.ForeignKey(WasteCollectionAssignment, on_delete=models.CASCADE)
+    wstp = models.ForeignKey(WastePersonnel, on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        db_table = 'waste_collector'

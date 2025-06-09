@@ -538,20 +538,31 @@ function WasteColSched() {
     //ADD QUERY MUTATIONS
     const { mutate: createAssignment } = useCreateWasteAssignment();
 
-    const { mutate: createSchedule } = useCreateWasteSchedule(async (wc_num) => {
-            // Combine collectors and driver
-        const combinedPersonnel = [
-            ...form.getValues("selectedCollectors"),
-            form.getValues("driver")
-        ];
+    // const { mutate: createSchedule } = useCreateWasteSchedule(async (wc_num) => {
+    //         // Combine collectors and driver
+    //     const combinedPersonnel = [
+    //         ...form.getValues("selectedCollectors"),
+    //         form.getValues("driver")
+    //     ];
 
-        // Send second request
+    //     // Send second request
+    //     createAssignment({
+    //         wc_num: wc_num,
+    //         sitio_id: form.getValues("selectedSitios"),
+    //         wstp_id: combinedPersonnel,
+    //         truck_id: form.getValues("collectionTruck"),
+    //         staff_id: null 
+    //     });
+    // });
+
+    const { mutate: createSchedule } = useCreateWasteSchedule(async (wc_num) => {
         createAssignment({
-            wc_num: wc_num,
+            wc_num: wc_num, // FK to assignment
             sitio_id: form.getValues("selectedSitios"),
-            wstp_id: combinedPersonnel,
+            wstp_id: form.getValues("driver"), // DRIVER goes here → wstp_id in assignment
             truck_id: form.getValues("collectionTruck"),
-            staff_id: null 
+            staff_id: null,
+            selectedCollectors: form.getValues("selectedCollectors") // pass collectors → used for waste-ass-collectors
         });
     });
 

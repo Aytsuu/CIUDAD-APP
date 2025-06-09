@@ -32,6 +32,7 @@ urlpatterns = [
 
     path('waste-drivers/', DriverPersonnelAPIView.as_view(), name='waste-drivers'),
     path('waste-collectors/', CollectorPersonnelAPIView.as_view(), name='waste-collectors'),
+    path('waste-ass-collectors/', WasteCollectorView.as_view(), name='waste-ass-collectors'),   
 
     # Sitio URL
     path("sitio/", SitioListView.as_view(), name="sitio-list")
