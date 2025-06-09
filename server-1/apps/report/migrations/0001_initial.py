@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('administration', '0004_alter_position_pos_id'),
         ('profiling', '0006_alter_address_add_external_sitio'),
     ]
 

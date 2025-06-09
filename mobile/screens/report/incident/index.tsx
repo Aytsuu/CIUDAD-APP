@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import MediaPicker from "@/components/ui/media-picker";
 import { useGetSitio } from "@/screens/_global_queries/Retrieve"
 import { formatSitio } from "@/helpers/formatSitio"
+import { Input } from "@/components/ui/input"
+import { useAddIncidentReport } from "../queries/reportAdd"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
@@ -21,13 +23,27 @@ export default () => {
   const defaultValues = generateDefaultValues(IncidentReportSchema);
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
   const [showMediaError, setShowMediaError] = React.useState<boolean>(false);
+  const [addReportType, setAddReportType] = React.useState<string>('');
+  const [isOtherType, setIsOtherType] = React.useState<boolean>(false);
+  const { mutateAsync: addIncidentReport } = useAddIncidentReport();
   const { data: sitioList, isLoading } = useGetSitio();
-  const { control, trigger, getValues } = useForm<IncidentReport>({
+  const { control, trigger, getValues, watch } = useForm<IncidentReport>({
     resolver: zodResolver(IncidentReportSchema),
     defaultValues
   });
 
   const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
+  
+  React.useEffect(() => {
+    const type = watch('ir_type');
+    if(type) {
+      if(type === 'other') setIsOtherType(true);
+      else setIsOtherType(false);
+    } else {
+      setIsOtherType(false);
+    }
+
+  }, [watch('ir_type')])
 
   const submit = async () => {
     const formIsValid = await trigger([
@@ -50,7 +66,14 @@ export default () => {
 
     try {
       const values = getValues();
-      console.log(values)
+      addIncidentReport({
+        ...values,
+        'ir_other_type': addReportType
+      }, {
+        onSuccess: () => {
+          
+        }
+      })
     } catch (err) {
       throw err;
     }
@@ -75,7 +98,12 @@ export default () => {
             contentContainerStyle={{ paddingBottom: 120 }}
             keyboardShouldPersistTaps="handled"
           >
-            <FormSelect label="Type" control={control} name="ir_type" options={[]} />
+            <FormSelect label="Type" control={control} name="ir_type" options={[{label: 'Other', value: 'other'}]} />
+            {isOtherType && 
+              <View>
+                <Input value={addReportType} onChangeText={(text) => setAddReportType(text)} />
+              </View>
+            }
             <FormSelect label="Sitio" control={control} name="sitio" options={formattedSitio} />
             <FormInput label="Street" control={control} name="ir_street" />
             <FormTimeInput label="Time " control={control} name='ir_time' mode="12h" />
@@ -86,7 +114,7 @@ export default () => {
             />
             <View className={`mt-8 border border-dashed ${showMediaError ? 'border-red-500' : 'border-gray-300'} p-5 rounded-lg bg-white flex-1 gap-7`}>
               <Text>Please provide an image to support your report</Text>
-              <MediaPicker 
+              <MediaPicker
                 selectedImage={selectedImage}
                 setSelectedImage={setSelectedImage}
               />
