@@ -13,7 +13,7 @@ export const useValidatePosition = () => {
 };
 
 export const positionAssignmentSchema = z.object({
-  assignPosition: z.string().min(1),
+  assignPosition: z.string().min(1, "Position is required."),
 });
 
 export const positionFormSchema = (isUnique: (val: string) => boolean, formType: string) =>

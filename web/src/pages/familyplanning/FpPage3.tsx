@@ -1,18 +1,18 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
-import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form"
+import { Form, FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
 import { useRiskStiData } from "./queries/fpFetchQuery"
 
-// Extract only the fields needed for this page
-const page3Schema = FamilyPlanningSchema.pick({
-  sexuallyTransmittedInfections: true,
-  violenceAgainstWomen: true,
-})
+// // Extract only the fields needed for this page
+// const page3Schema = FamilyPlanningSchema.pick({
+//   sexuallyTransmittedInfections: true,
+//   violenceAgainstWomen: true,
+// })
 
 type Page3Props = {
   onPrevious2: () => void
@@ -35,7 +35,7 @@ const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }:
     values: formData,
   })
 
-  const patientId = formData?.pat_id // Assuming you stored it earlier
+  const patientId = formData?.pat_id
   const { data: riskStiData } = useRiskStiData(patientId)
 
   useEffect(() => {

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "date-fns": "^2.30.0"
+    "@reduxjs/toolkit": "^2.8.2",
+    "react-redux": "^9.2.0"
   }
 }

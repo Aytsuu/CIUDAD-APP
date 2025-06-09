@@ -6,141 +6,16 @@ import ReferralFormSchema from "@/form-schema/animal-bite-schema"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Link } from "react-router"
+import { SelectLayout } from "@/components/ui/select/select-layout"
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout"
 import { Combobox } from "@/components/ui/combobox"
 import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
-import { submitAnimalBiteReferral, addBitingAnimal, addExposureSite } from "./db-request/postrequest"
-import { getAllPatients, getBitingAnimals, getExposureSites, getStaffMembers } from "./api/get-api"
-
-const SelectField = ({
-  name,
-  label,
-  options,
-  control,
-}: {
-  name: string
-  label: string
-  options: string[]
-  control: any
-}) => (
-  <FormField
-    control={control}
-    name={name}
-    render={({ field }) => (
-      <FormItem>
-        <Label>{label}</Label>
-        <FormControl>
-          <Select onValueChange={field.onChange} value={field.value}>
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${label}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-)
-
-// Custom Combobox with Add functionality
-const ComboboxWithAdd = ({
-  name,
-  label,
-  options,
-  control,
-  onAdd,
-  placeholder,
-  loading = false,
-}: {
-  name: string
-  label: string
-  options: { id: string; name: string }[]
-  control: any
-  onAdd: (name: string) => Promise<void>
-  placeholder: string
-  loading?: boolean
-}) => {
-  const [isAdding, setIsAdding] = useState(false)
-  const [newOptionName, setNewOptionName] = useState("")
-
-  const handleAdd = async () => {
-    if (!newOptionName.trim()) return
-
-    setIsAdding(true)
-    try {
-      await onAdd(newOptionName.trim())
-      setNewOptionName("")
-      toast.success(`${label} added successfully!`)
-    } catch (error) {
-      console.error(`Error adding ${label}:`, error)
-      toast.error(`Failed to add ${label.toLowerCase()}`)
-    } finally {
-      setIsAdding(false)
-    }
-  }
-
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <Label>{label}</Label>
-          <FormControl>
-            <div className="space-y-2">
-              <Combobox
-                options={options}
-                value={field.value?.toString()}
-                onChange={field.onChange}
-                placeholder={loading ? "Loading..." : placeholder}
-                triggerClassName="font-normal"
-                emptyMessage={
-                  <div className="flex gap-2 justify-center items-center">
-                    <Label className="font-normal text-[13px]">
-                      {loading ? "Loading..." : `No ${label.toLowerCase()} found.`}
-                    </Label>
-                  </div>
-                }
-              />
-
-              {/* Add new option */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder={`Add new ${label.toLowerCase()}`}
-                  value={newOptionName}
-                  onChange={(e) => setNewOptionName(e.target.value)}
-                  className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleAdd}
-                  disabled={isAdding || !newOptionName.trim()}
-                  className="h-8 px-3"
-                >
-                  {isAdding ? "Adding..." : "Add"}
-                </Button>
-              </div>
-            </div>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  )
-}
+import { submitAnimalBiteReferral } from "./db-request/postrequest"
+import { getAllPatients } from "./api/get-api"
+import { Link } from "react-router"
 
 type ReferralFormModalProps = {
   onClose: () => void
@@ -159,7 +34,12 @@ interface PatientRecord {
   per_address: string
 }
 
-const getTodayDate = () => {
+interface SelectOption {
+  id: string
+  name: string
+}
+
+const getTodayDate = (): string => {
   const today = new Date()
   return today.toISOString().split("T")[0]
 }
@@ -169,12 +49,14 @@ const calculateAge = (dobStr: string): number => {
   const today = new Date()
   const age = today.getFullYear() - dob.getFullYear()
   const hasHadBirthday =
-    today.getMonth() > dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate())
+    today.getMonth() > dob.getMonth() || 
+    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate())
   return hasHadBirthday ? age : age - 1
 }
 
 export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFormModalProps) {
   const todayDate = getTodayDate()
+  
   const form = useForm<z.infer<typeof ReferralFormSchema>>({
     resolver: zodResolver(ReferralFormSchema),
     defaultValues: {
@@ -186,7 +68,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       p_lname: "",
       p_fname: "",
       p_mname: "",
-      // p_address: "",
       p_age: 0,
       p_gender: "",
       exposure_type: "",
@@ -197,34 +78,61 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     },
   })
 
-  const [patients, setPatients] = useState<{ id: string; name: string }[]>([])
-  const [bitingAnimals, setBitingAnimals] = useState<{ id: string; name: string }[]>([])
-  const [exposureSites, setExposureSites] = useState<{ id: string; name: string }[]>([])
-  // const [staffMembers, setStaffMembers] = useState<{ id: string; name: string }[]>([])
+  // State management
+  const [patients, setPatients] = useState<SelectOption[]>([])
   const [patientsData, setPatientsData] = useState<PatientRecord[]>([])
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Static options
+  const exposureTypeOptions: SelectOption[] = [
+    { id: "bite", name: "Bite" },
+    { id: "non-bite", name: "Non-bite" }
+  ]
+
+  // Initialize state with static options - these will be the dynamic arrays
+  const [exposureSites, setExposureSites] = useState<SelectOption[]>([
+    { id: "head", name: "Head" },
+    { id: "neck", name: "Neck" },
+    { id: "hand", name: "Hand" },
+    { id: "foot", name: "Foot" },
+    { id: "trunk", name: "Trunk" },
+  ])
+
+  const [bitingAnimals, setBitingAnimals] = useState<SelectOption[]>([
+    { id: "dog", name: "Dog" },
+    { id: "cat", name: "Cat" },
+    { id: "rodent", name: "Rodent" },
+
+  ])
+
+  // Keep track of default options for deletion prevention
+  const defaultExposureSiteIds = new Set([
+    "head", "neck", "foot", "hand", "trunk"
+  ])
+  
+  const defaultBitingAnimalIds = new Set([
+    "dog", "cat", "rodent"
+  ])
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
+      setError(null)
+      
       try {
         console.log("🔄 Starting to fetch all form data...")
 
         // Fetch patients
-        console.log("📋 Fetching patients...")
         const patientData = await getAllPatients()
-        console.log("📋 Raw patient data:", patientData)
-
+        console.log("📥 Fetched patients:", patientData)
         if (patientData && patientData.length > 0) {
-          const formattedPatients = patientData.map((patient: any) => ({
+          const formattedPatients: SelectOption[] = patientData.map((patient: any) => ({
             id: patient.pat_id.toString(),
             name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
           }))
-
-          console.log("📋 Formatted patients:", formattedPatients)
           setPatients(formattedPatients)
           setPatientsData(patientData)
         } else {
@@ -233,54 +141,10 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           setPatientsData([])
         }
 
-        // Fetch biting animals
-        console.log("🐕 Fetching biting animals...")
-        const animals = await getBitingAnimals()
-        if (animals && animals.length > 0) {
-          const formattedAnimals = animals.map((animal: any) => ({
-            id: animal.animal_id.toString(),
-            name: animal.animal_name,
-          }))
-          console.log("🐕 Formatted animals:", formattedAnimals)
-          setBitingAnimals(formattedAnimals)
-        } else {
-          console.warn("⚠️ No biting animals found")
-          setBitingAnimals([])
-        }
-
-        // Fetch exposure sites
-        console.log("📍 Fetching exposure sites...")
-        const sites = await getExposureSites()
-        if (sites && sites.length > 0) {
-          const formattedSites = sites.map((site: any) => ({
-            id: site.exposure_site_id.toString(),
-            name: site.exposure_site,
-          }))
-          console.log("📍 Formatted sites:", formattedSites)
-          setExposureSites(formattedSites)
-        } else {
-          console.warn("⚠️ No exposure sites found")
-          setExposureSites([])
-        }
-
-        // Fetch staff members
-        console.log("👥 Fetching staff members...")
-        const staff = await getStaffMembers()
-        if (staff && staff.length > 0) {
-          const formattedStaff = staff.map((member: any) => ({
-            id: member.staff_id?.toString() || member.id?.toString(),
-            name: `${member.staff_fname || member.first_name || ""} ${member.staff_lname || member.last_name || ""}`.trim(),
-          }))
-          console.log("👥 Formatted staff:", formattedStaff)
-          // setStaffMembers(formattedStaff)
-        } else {
-          console.warn("⚠️ No staff members found")
-          // setStaffMembers([])
-        }
-
         console.log("✅ All form data fetched successfully!")
       } catch (error) {
         console.error("❌ Error fetching form data:", error)
+        setError("Failed to load form data. Please refresh and try again.")
         toast.error("Failed to load form data")
       } finally {
         setLoading(false)
@@ -291,18 +155,15 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
   }, [])
 
   const handlePatientSelection = (id: string) => {
-    console.log("👤 Patient selected with ID:", id)
     setSelectedPatientId(id)
     const selectedPatient = patientsData.find((p) => p.pat_id.toString() === id)
 
     if (selectedPatient) {
-      console.log("👤 Selected patient data:", selectedPatient)
       const personalInfo = selectedPatient.personal_info
       form.setValue("pat_id", String(selectedPatient.pat_id))
       form.setValue("p_lname", personalInfo?.per_lname || "")
       form.setValue("p_fname", personalInfo?.per_fname || "")
       form.setValue("p_mname", personalInfo?.per_mname || "")
-      // form.setValue("p_address", personalInfo?.per_address || "")
       form.setValue("p_age", personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : 0)
       form.setValue("p_gender", personalInfo?.per_sex || "")
     } else {
@@ -310,32 +171,69 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     }
   }
 
-  const handleAddBitingAnimal = async (animalName: string) => {
-    console.log("🐕 Adding new biting animal:", animalName)
-    const newAnimal = await addBitingAnimal(animalName)
-    const formattedAnimal = {
-      id: newAnimal.animal_id.toString(),
-      name: newAnimal.animal_name,
+  // Handle adding new exposure site
+  const handleAddExposureSite = (newSite: string, callback?: (newId: string) => void) => {
+    const newId = `custom-site-${Date.now()}`
+    const newOption: SelectOption = { id: newId, name: newSite }
+    
+    setExposureSites(prev => [...prev, newOption])
+    toast.success(`Added new exposure site: ${newSite}`)
+    
+    if (callback) {
+      callback(newId)
     }
-    setBitingAnimals((prev) => [...prev, formattedAnimal])
-    console.log("🐕 New animal added:", formattedAnimal)
   }
 
-  const handleAddExposureSite = async (siteName: string) => {
-    console.log("📍 Adding new exposure site:", siteName)
-    const newSite = await addExposureSite(siteName)
-    const formattedSite = {
-      id: newSite.exposure_site_id.toString(),
-      name: newSite.exposure_site,
+  // Handle adding new biting animal
+  const handleAddBitingAnimal = (newAnimal: string, callback?: (newId: string) => void) => {
+    const newId = `custom-animal-${Date.now()}`
+    const newOption: SelectOption = { id: newId, name: newAnimal }
+    
+    setBitingAnimals(prev => [...prev, newOption])
+    toast.success(`Added new biting animal: ${newAnimal}`)
+    
+    if (callback) {
+      callback(newId)
     }
-    setExposureSites((prev) => [...prev, formattedSite])
-    console.log("📍 New site added:", formattedSite)
+  }
+
+  // Handle deleting exposure site
+  const handleDeleteExposureSite = (id: string) => {
+    // Don't allow deleting default options
+    if (defaultExposureSiteIds.has(id)) {
+      toast.error("Cannot delete default exposure sites")
+      return
+    }
+
+    setExposureSites(prev => prev.filter(site => site.id !== id))
+    
+    // If the deleted item was selected, clear the form field
+    if (form.getValues("exposure_site") === id) {
+      form.setValue("exposure_site", "")
+    }
+    
+    toast.success("Exposure site deleted")
+  }
+
+  // Handle deleting biting animal
+  const handleDeleteBitingAnimal = (id: string) => {
+    // Don't allow deleting default options
+    if (defaultBitingAnimalIds.has(id)) {
+      toast.error("Cannot delete default biting animals")
+      return
+    }
+
+    setBitingAnimals(prev => prev.filter(animal => animal.id !== id))
+    
+    // If the deleted item was selected, clear the form field
+    if (form.getValues("biting_animal") === id) {
+      form.setValue("biting_animal", "")
+    }
+    
+    toast.success("Biting animal deleted")
   }
 
   const onSubmit = async () => {
-    console.log("🚀 Form submission started...")
-
-    // Trigger form validation
     const isValid = await form.trigger()
     if (!isValid) {
       console.error("❌ Form validation failed:", form.formState.errors)
@@ -344,26 +242,8 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     }
 
     const values = form.getValues()
-    console.log("📝 Form values before submission:", values)
-
-    // Additional validation
-    if (!values.pat_id) {
-      toast.error("Please select a patient")
-      return
-    }
-
-    if (!values.exposure_site) {
-      toast.error("Please select a site of exposure")
-      return
-    }
-
-    if (!values.biting_animal) {
-      toast.error("Please select a biting animal")
-      return
-    }
-
-    if (!values.p_referred) {
-      toast.error("Please select who referred the patient")
+    if (!values.pat_id || !values.exposure_site || !values.biting_animal || !values.p_referred) {
+      toast.error("Please fill in all required fields")
       return
     }
 
@@ -371,26 +251,43 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     setError(null)
 
     try {
-      console.log("📤 Submitting form data...")
       const result = await submitAnimalBiteReferral(values)
-      console.log("✅ Submission successful:", result)
-
       toast.success("Animal bite referral submitted successfully!")
       onAddPatient?.(result)
       onClose()
       form.reset()
     } catch (err: any) {
       console.error("❌ Submission error:", err)
-      setError(err?.message || "Something went wrong")
-      toast.error(err?.message || "Submission failed. Please try again.")
+      const errorMessage = err?.message || "Submission failed. Please try again."
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const handleClose = () => {
+    form.reset()
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p>Loading form data...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-3">
-      <h2 className="text-xl font-bold mb-4 border-l-4 border-green-600 pl-2">Animal Bites Referral Form</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold border-l-4 border-green-600 pl-2">
+          Animal Bites Referral Form
+        </h2>
+      </div>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -404,11 +301,13 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             e.preventDefault()
             onSubmit()
           }}
-          className="p-4 space-y-4"
+          className="p-4 space-y-6"
         >
+          {/* Header Information */}
           <div className="grid md:grid-cols-2 gap-4">
             <FormInput control={form.control} name="receiver" label="Receiver" readOnly />
             <FormInput control={form.control} name="sender" label="Sender" readOnly />
+            
             <FormField
               control={form.control}
               name="date"
@@ -416,14 +315,12 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                 <FormItem>
                   <Label>Date</Label>
                   <FormControl>
-                    <div className="flex items-center">
-                      <input
-                        type="date"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={field.value}
-                        readOnly
-                      />
-                    </div>
+                    <input
+                      type="date"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={field.value}
+                      readOnly
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -434,7 +331,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               control={form.control}
               name="transient"
               render={({ field }) => (
-                <FormItem className="flex items-center gap-2 mt-3">
+                <FormItem className="flex items-center gap-2 mt-8">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -444,20 +341,22 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
             />
           </div>
 
-          <div className="border-t pt-4 mt-4">
+          {/* Patient Information */}
+          <div className="border-t pt-4">
             <h3 className="text-lg font-semibold mb-4">Patient Information</h3>
-            <div className="flex flex-col sm:flex-row items-center mb-5 justify-between w-full">
-              <div className="w-full max-w-md">
-                <Label className="text-sm font-medium mb-2 block">Select Patient *</Label>
+            
+            <div className="mb-6">
+              <Label className="text-sm font-medium mb-2 block">Select Patient</Label>
+              <div className="max-w-md">
                 <Combobox
                   options={patients}
                   value={selectedPatientId}
                   onChange={handlePatientSelection}
-                  placeholder={loading ? "Loading patients..." : "Select a patient"}
+                  placeholder="Select a patient"
                   triggerClassName="font-normal w-full"
                   emptyMessage={
                     <div className="flex gap-2 justify-center items-center">
-                      <Label className="font-normal text-[13px]">{loading ? "Loading..." : "No patient found."}</Label>
+                      <Label className="font-normal text-[13px]">No patient found.</Label>
                       <Link to="/patient-records/new">
                         <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
                           Register New Patient
@@ -468,86 +367,125 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                 />
               </div>
             </div>
+
             <div className="grid md:grid-cols-3 gap-4">
-              {[
-                { name: "p_lname", label: "Last Name" },
-                { name: "p_fname", label: "First Name" },
-                { name: "p_mname", label: "Middle Name" },
-                { name: "p_address", label: "Address" },
-                { name: "p_age", label: "Age", type: "number" },
-                { name: "p_gender", label: "Gender" },
-              ].map(({ name, label, type }) => (
-                <FormInput key={name} control={form.control} name={name} label={label} type={type} readOnly />
-              ))}
+              <FormInput control={form.control} name="p_lname" label="Last Name" readOnly />
+              <FormInput control={form.control} name="p_fname" label="First Name" readOnly />
+              <FormInput control={form.control} name="p_mname" label="Middle Name" readOnly />
+              <FormInput control={form.control} name="p_address" label="Address" readOnly />
+              <FormInput control={form.control} name="p_age" label="Age" type="number" readOnly />
+              <FormInput control={form.control} name="p_gender" label="Gender" readOnly />
             </div>
           </div>
 
-          <div className="border-t pt-4 mt-4">
+          {/* Animal Bite Details */}
+          <div className="border-t pt-4">
             <h3 className="text-lg font-semibold mb-4">Animal Bite Details</h3>
             <div className="grid md:grid-cols-3 gap-4">
-              <SelectField
-                control={form.control}
-                name="exposure_type"
-                label="Type of Exposure"
-                options={["Bite", "Non-bite"]}
-              />
-
-              <ComboboxWithAdd
-                control={form.control}
-                name="exposure_site"
-                label="Site of Exposure"
-                options={exposureSites}
-                onAdd={handleAddExposureSite}
-                placeholder="Select site of exposure"
-                loading={loading}
-              />
-
-              <ComboboxWithAdd
-                control={form.control}
-                name="biting_animal"
-                label="Biting Animal"
-                options={bitingAnimals}
-                onAdd={handleAddBitingAnimal}
-                placeholder="Select biting animal"
-                loading={loading}
-              />
-
-              <FormTextArea control={form.control} name="p_actions" label="Actions Taken" className="md:col-span-2" />
-
               <FormField
                 control={form.control}
-                name="p_referred"
+                name="exposure_type"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>Referred by *</Label>
+                    <Label>Type of Exposure</Label>
                     <FormControl>
-                      {/* <Combobox
-                        options={staffMembers}
-                        value={field.value?.toString()}
+                      <SelectLayout
+                        options={exposureTypeOptions}
+                        value={field.value}
                         onChange={field.onChange}
-                        placeholder={loading ? "Loading staff..." : "Select staff member"}
-                        triggerClassName="font-normal"
-                        emptyMessage={
-                          <div className="flex gap-2 justify-center items-center">
-                            <Label className="font-normal text-[13px]">
-                              {loading ? "Loading..." : "No staff found."}
-                            </Label>
-                          </div>
-                        }
-                      /> */}
-                      <FormInput {...field} control={form.control} name="p_referred" label="" />
+                        placeholder="Select exposure type"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="exposure_site"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Site of Exposure</Label>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        placeholder="Select exposure site"
+                        label=""
+                        options={exposureSites}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                        onAdd={(newSite) => {
+                          handleAddExposureSite(newSite, (newId) => {
+                            field.onChange(newId)
+                          })
+                        }}
+                        onDelete={(id) => handleDeleteExposureSite(id)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="biting_animal"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Biting Animal</Label>
+                    <FormControl>
+                      <SelectLayoutWithAdd
+                        placeholder="Select biting animal"
+                        label=""
+                        options={bitingAnimals}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                        onAdd={(newAnimal) => {
+                          handleAddBitingAnimal(newAnimal, (newId) => {
+                            field.onChange(newId)
+                          })
+                        }}
+                        onDelete={(id) => handleDeleteBitingAnimal(id)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="md:col-span-2">
+                <FormTextArea 
+                  control={form.control} 
+                  name="p_actions" 
+                  label="Actions Taken" 
+                />
+              </div>
+
+              <FormInput 
+                control={form.control} 
+                name="p_referred" 
+                label="Referred by" 
+              />
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:justify-end gap-4 mt-6 mb-6">
-          
-            <Button type="submit" disabled={isSubmitting || loading} className="w-full sm:w-auto">
-              {isSubmitting ? "Submitting..." : "Submit"}
+          {/* Submit Button */}
+          <div className="flex flex-col sm:flex-row sm:justify-end gap-4 pt-6 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !selectedPatientId} 
+              className="w-full sm:w-auto"
+            >
+              {isSubmitting ? "Submitting..." : "Submit Referral"}
             </Button>
           </div>
         </form>
@@ -555,3 +493,4 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     </div>
   )
 }
+

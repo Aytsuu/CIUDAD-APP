@@ -1,7 +1,6 @@
 import React from "react";
 import { Header } from "@/components/ui/menubar/Header";
 import {
-  Sidebar,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/menubar/sidebar";

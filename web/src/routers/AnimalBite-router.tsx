@@ -7,7 +7,7 @@ export const bites_route = [
         element: <AnimalBites></AnimalBites>
     },
     {
-        path: '/Animalbite_individual',
+        path: '/Animalbite_individual/:id',
         element: <IndividualAnimalBites />
     }
 ]

@@ -8,7 +8,9 @@ interface FormInputProps {
   label?: string;
   placeholder?: string;
   secureTextEntry?: boolean;
-  error?: FieldError;
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
+  submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
 }
 
 export const FormInput = ({
@@ -17,7 +19,9 @@ export const FormInput = ({
   label,
   placeholder,
   secureTextEntry,
-  error,
+  keyboardType='default',
+  returnKeyType='next',
+  submitBehavior='newline',
 }: FormInputProps) => {
   return (
     <Controller
@@ -35,6 +39,9 @@ export const FormInput = ({
             onChangeText={onChange}
             onBlur={onBlur}
             secureTextEntry={secureTextEntry}
+            keyboardType={keyboardType}
+            returnKeyType={returnKeyType}
+            submitBehavior={submitBehavior}
           />
           {error && (
             <Text className="text-red-500 text-sm mt-1">{error.message}</Text>

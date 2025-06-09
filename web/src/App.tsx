@@ -46,6 +46,8 @@ import { main_router } from "./routers/main-router";
 import { landing_router } from "./routers/landing-router";
 import { settings_router } from "./routers/settings";
 import { user_account } from "./routers/profile-router";
+import { LoadingProvider } from "./context/LoadingContext";
+import { LinearLoader } from "./components/ui/linear-loader";
 
 // Simple not found component
 function NotFound() {
@@ -66,9 +68,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AnimatePresence mode="wait">
-          <RouterProvider router={router} />
-        </AnimatePresence>
+        <LoadingProvider>
+          <LinearLoader />
+          <AnimatePresence mode="wait">
+            <RouterProvider router={router} />
+          </AnimatePresence>
+        </LoadingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

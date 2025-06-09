@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'apps.familyplanning',
     'apps.animalbites',
     'apps.patientrecords',
+    'apps.account',
 
 ]
 
@@ -112,7 +113,7 @@ DATABASES = {
 
     },
     'brgyDB': {
-
+        
     }
    
 }
@@ -161,6 +162,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  

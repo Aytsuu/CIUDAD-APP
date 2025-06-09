@@ -1,17 +1,26 @@
 
-// Define the type for the Report object
 export type ResidentRecord = {
-  id: string;
-  householdNo: string;
-  familyNo: string;
-  sitio: string;
+  rp_id: string;
+  household_noe: string;
+  family_no: string;
+  sitio_name: string;
   lname: string;
   fname: string;
   mname: string;
   suffix: string;
-  dateRegistered: string;
-  registeredBy: string;
+  rp_date_registered: string;
+  registered_by: string;
+  has_account: boolean;
 };
+
+export type ResidentAdditionalRecord = {
+  rp_id: string;
+  fc_role: string;
+  name: string;
+  sex: string;
+  dob: string;
+  status: string;
+}
 
 export type DependentRecord = {
   id: string;
@@ -25,12 +34,13 @@ export type DependentRecord = {
 }
 
 export type FamilyRecord = {
-  id: string;
-  noOfMembers: string;
-  building: string;
-  indigenous: string;
-  dateRegistered: string;
-  registeredBy: string;
+  fam_id: string;
+  members: string;
+  fam_building: string;
+  mother: string;
+  father: string;
+  guardian: string;
+  fam_date_registered: string;
 }
 
 export type MemberRecord = {
@@ -38,15 +48,15 @@ export type MemberRecord = {
 }
 
 export type HouseholdRecord = {
-  id: string;
-  families: string;
-  streetAddress: string;
+  hh_id: string;
+  total_families: string;
+  street: string;
   sitio: string;
   nhts: string;
-  headNo: string;
   head: string;
-  dateRegistered: string;
-  registeredBy: string;
+  head_id: string;
+  date_registered: string;
+  registered_by: string;
 }
 
 export type HouseholdFamRecord = {
@@ -76,5 +86,5 @@ export type BusinessRecord = {
   respondent: string;
   dateRegistered: string;
   registeredBy: string;
-
 }
+

@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { BusinessRecord } from "../profilingTypes";
 import { Button } from "@/components/ui/button/button";
-import { CircleChevronRight, MoveRight } from "lucide-react";
+import { CircleChevronRight } from "lucide-react";
 import { Link } from "react-router";
 import { Label } from "@/components/ui/label";
 

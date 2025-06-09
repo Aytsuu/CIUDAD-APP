@@ -26,7 +26,7 @@ export default function BusinessFormLayout() {
     [location.state]
   );
   const { user } = useAuth();
-  const sitio = React.useRef(formatSitio(params));
+  const sitio = React.useRef(formatSitio(params.sitio));
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);

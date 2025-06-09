@@ -1,18 +1,42 @@
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CircleChevronRight } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { HouseholdFamRecord, HouseholdRecord } from "../profilingTypes";
 import { Label } from "@/components/ui/label";
+import { useLoading } from "@/context/LoadingContext";
+import { getFamFilteredByHouse, getFamilyData, getFamilyMembers, getHouseholdList } from "../restful-api/profilingGetAPI";
+import { Badge } from "@/components/ui/badge";
+import ViewButton from "@/components/ui/view-button";
+import { Combobox } from "@/components/ui/combobox";
+import React from "react";
+import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
+import { formatFamiles } from "../profilingFormats";
+import { Button } from "@/components/ui/button/button";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
+import { capitalize } from "@/helpers/capitalize";
+import { useUpdateFamily } from "../queries/profilingUpdateQueries";
+
+// Reusables
+// -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+const CardContainer = ({ children }: { children: React.ReactNode }) => (
+  <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
+    {children}
+  </div>
+);
+
+const InfoCell = ({ value, className = '' }: { value: string | number | React.ReactNode; className?: string }) => (
+  <div className={`w-full flex flex-col items-start gap-1 ${className}`}>
+    <Label className="text-black/70">{value}</Label>
+  </div>
+);
 
 // Define the columns for household the data tables
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const householdColumns = (
-  residents: any[],
-  households: any[]
-): ColumnDef<HouseholdRecord>[] => [
+export const householdColumns: ColumnDef<HouseholdRecord>[] = [
   {
-    accessorKey: 'id',
+    accessorKey: 'hh_id',
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -24,7 +48,7 @@ export const householdColumns = (
     ),
   },
   {
-    accessorKey: 'families',
+    accessorKey: 'total_families',
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -34,6 +58,30 @@ export const householdColumns = (
         <ArrowUpDown size={14} />
       </div>
     ),
+    cell: ({ row }) => {
+      const { showLoading, hideLoading } = useLoading();
+      const { data: famFilteredByHouse, isLoading } = useFamFilteredByHouse(row.getValue('hh_id'));
+      const formattedFamilies = React.useMemo(() => formatFamiles(famFilteredByHouse), [famFilteredByHouse]);
+
+      React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading])
+
+      return (
+        <Combobox 
+          options={formattedFamilies}
+          value={row.getValue('total_families')}
+          placeholder="Search member"
+          emptyMessage="No resident found"
+          staticVal={true}
+          size={300}
+        />
+      )
+    }
   },
   {
     accessorKey: 'sitio',
@@ -48,7 +96,7 @@ export const householdColumns = (
     ),
   },  
   {
-    accessorKey: 'streetAddress',
+    accessorKey: 'street',
     header: 'Street Address',
   },
   {
@@ -73,122 +121,134 @@ export const householdColumns = (
     )
   },
   {
-    accessorKey: 'dateRegistered',
+    accessorKey: 'date_registered',
     header: 'Date Registered'
-  },
-  {
-    accessorKey: 'registeredBy',
-    header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Registered By
-        <ArrowUpDown size={14} />
-      </div>
-    ),
   },
   {
     accessorKey: 'action',
     header: 'Action',
-    cell: ({ row }) => (
-        <Link to="/household/view" 
-          state={{
-            params: {
-              residents: residents,
-              households: households,
-              household: households.find((household) => household.hh_id == row.original.id)
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const {showLoading, hideLoading} = useLoading();
+      const household = {
+        hh_id: row.original.hh_id,
+        nhts: row.original.nhts,
+        head: row.original.head,
+        head_id: row.original.head_id,
+        sitio: row.original.sitio,
+        street: row.original.street,
+        date_registered: row.original.date_registered,
+        registered_by: row.original.registered_by
+      }
+
+      const handleViewClick = async () => {
+        showLoading();
+        try {
+          const families = await getFamFilteredByHouse(row.original.hh_id);
+          navigate("/household/view", {
+            state: {
+              params: {
+                families: families,
+                household: household
+              }
             }
-          }}
-        >
-          <div className="group flex justify-center items-center gap-2 px-3 py-2
-                    rounded-lg border-none shadow-none hover:bg-muted
-                    transition-colors duration-200 ease-in-out">
-            <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                    transition-colors duration-200 ease-in-out">
-              View
-            </Label> 
-            <CircleChevronRight
-              size={35}
-              className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                  group-hover:stroke-white transition-all duration-200 ease-in-out"
-            />
-          </div>
-        </Link>
-    )
+          })
+        } finally {
+          hideLoading();
+        }
+      }
+      return (
+        <ViewButton onClick={handleViewClick} />
+      ) 
+    }
   },
 ]
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-export const householdFamColumns = (
-  residents: any[],
-  households: any[]
-): ColumnDef<HouseholdFamRecord>[] => [
+export const householdFamColumns: ColumnDef<HouseholdFamRecord>[] = [
   {
     accessorKey: 'data',
     header: '',
     cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { showLoading, hideLoading } = useLoading();
+      const { mutateAsync: updateFamily } = useUpdateFamily();
       const family = row.getValue('data') as any;
-      const totalMembers = family.family_compositions.length;
-      const staff = family.staff.rp.per;
+      const [building, setBuilding] = React.useState<string | null>(family.fam_building);
+      
+      const handleViewClick = async () => {
+        showLoading();
+        try {
+          const [familyData, members, households] = await Promise.all([
+            getFamilyData(family.fam_id),
+            getFamilyMembers(family.fam_id),
+            getHouseholdList()
+          ]);
+          
+          navigate("/family/view", {
+            state: {
+              params: {
+                family: {
+                  ...familyData,
+                  members: members
+                },
+                households: households
+              }
+            }
+          });
+        } finally {
+          hideLoading();
+        }
+      };
+
+      const handleBuildingChange = (value: string) => {
+        if(value !== building?.toLowerCase()){
+          setBuilding(capitalize(value));
+
+          const data = {
+            fam_building: capitalize(value),
+          }
+          updateFamily({
+            data: data,
+            familyId: family.fam_id,
+            oldHouseholdId: ""
+          }, {
+            onError: () => {
+              setBuilding(family.fam_building);
+            }
+          })
+        }
+      };
 
       return (
-        <div className="w-full border shadow-md flex px-4 py-2 rounded-lg">
+        <CardContainer>
           <div className="w-full grid grid-cols-7 items-center justify-center">
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="w-[80%] py-1.5 text-black/70 bg-muted rounded-full">
-                {family.fam_id}
-              </Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{totalMembers}</Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="w-[50%] py-1.5 text-white bg-green-500 rounded-full">
-                {family.fam_building}
-              </Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{family.fam_indigenous}</Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">{family.fam_date_registered}</Label>
-            </div>
-            <div className="w-full flex flex-col items-start gap-1">
-              <Label className="text-black/70">
-              {`${staff.per_lname}, ${staff.per_fname} 
-              ${staff.per_mname ? staff.per_mname[0] + '.' : ''}`}
-              </Label>
-            </div>
+            <InfoCell value={<Badge>{family.fam_id}</Badge>}/>
+            <InfoCell value={
+              <Badge className="bg-black/10 text-black/70 hover:bg-black/10">{family.total_members}</Badge>
+            }/>
+            <InfoCell value={
+              <DropdownLayout
+                trigger={<Button className="w-full h-6">{building} </Button>}
+                options={[
+                  {id: "owner", name: "Owner"}, 
+                  {id: "renter", name: "Renter"},
+                  {id: "other", name: "Other"}
+                ]}
+                onSelect={handleBuildingChange}
+              />
+            }/>      
+            <InfoCell value={family.fam_indigenous} />
+            <InfoCell value={family.fam_date_registered} />
+            <InfoCell value={family.registered_by} />
           </div>
+          
           <div className="w-1/12 flex justify-end items-center">
-            <Link to="/family/view"
-              state={{
-                params: {
-                  residents: residents,
-                  family: family,
-                  households: households
-                }
-              }}
-            >
-              <div className="group flex justify-center items-center gap-2 px-3 py-2
-                        rounded-lg border-none shadow-none hover:bg-muted
-                        transition-colors duration-200 ease-in-out">
-                <Label className="text-black/40 cursor-pointer group-hover:text-buttonBlue
-                        transition-colors duration-200 ease-in-out">
-                  View
-                </Label> 
-                <CircleChevronRight
-                  size={35}
-                  className="stroke-1 text-black/40 group-hover:fill-buttonBlue 
-                      group-hover:stroke-white transition-all duration-200 ease-in-out"
-                />
-              </div>
-            </Link>
+            <ViewButton onClick={handleViewClick} />
           </div>
-        </div>
+        </CardContainer>
       );
     }
   },
-]
+];

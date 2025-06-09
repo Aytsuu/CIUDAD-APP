@@ -6,7 +6,7 @@ class Position(models.Model):
     pos_id = models.BigAutoField(primary_key=True)
     pos_title = models.CharField(max_length=100)
     pos_max = models.IntegerField(default=1)
-    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions')
+    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
 
     class Meta:
         db_table = 'position'
@@ -51,4 +51,3 @@ class Staff(models.Model):
     
     class Meta: 
         db_table = 'staff'
-

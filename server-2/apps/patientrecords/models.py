@@ -22,8 +22,6 @@ class PatientRecord(models.Model):
         ordering = ['-patrec_id']
         
         
-        
-
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
     vital_bp_systolic = models.CharField(max_length=100)

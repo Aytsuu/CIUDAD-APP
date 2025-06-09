@@ -66,7 +66,7 @@ class PersonalAddress(models.Model):
         db_table = 'personal_address'
 
 class ResidentProfile(models.Model):
-    rp_id = models.CharField(max_length=50, primary_key=True)
+    rp_id = models.BigAutoField(primary_key=True)
     rp_date_registered = models.DateField(default=date.today)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_information')
     staff = models.ForeignKey("administration.Staff", on_delete=models.CASCADE, null=True, related_name="resident_profiles")
@@ -138,7 +138,7 @@ class HealthRelatedDetails(models.Model):
 
 #     class Meta:
 #         db_table = 'health_related_details'
-
+ 
 class Dependents_Over_Five(models.Model):
     dep_ov_five_id = models.CharField(max_length=50, primary_key=True)
     # dep = models.ForeignKey(Dependent, on_delete=models.CASCADE)
@@ -198,8 +198,8 @@ class Solid_Waste_Mgmt(models.Model):
 #         db_table = 'solid_waste_mgmt'
 
 
-class Patient(models.Model):
-    pat_id = models.CharField(max_length=50, primary_key=True)
+# class Patient(models.Model):
+#     pat_id = models.CharField(max_length=50, primary_key=True)
     # per = models.ForeignKey(Personal, on_depete=models.CASCADE)
 
 #     class Meta:

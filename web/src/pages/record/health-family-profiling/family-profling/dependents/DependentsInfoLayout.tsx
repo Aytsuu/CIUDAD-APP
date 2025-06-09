@@ -16,23 +16,24 @@ import { useAuth } from "@/context/AuthContext";
 import { useAddFamily, useAddFamilyComposition } from "@/pages/record/profiling/queries/profilingAddQueries"; 
 import { LoadButton } from "@/components/ui/button/load-button";
 
-// export default function DependentsInfoLayout({
-//   form,
-//   residents,
-//   selectedParents,
-//   dependentsList,
-//   setDependentsList,
-//   defaultValues,
-
-}: {
+// type for props
+type DependentsInfoLayoutProps = {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
   selectedParents: string[];
   dependentsList: DependentRecord[];
-  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
+  setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>;
   defaultValues: Record<string, any>;
+};
 
-}) {
+export default function DependentsInfoLayout({
+  form,
+  residents,
+  selectedParents,
+  dependentsList,
+  setDependentsList,
+  defaultValues,
+}: DependentsInfoLayoutProps) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const navigate = useNavigate();
@@ -61,33 +62,33 @@ import { LoadButton } from "@/components/ui/button/load-button";
 //     }
 //   }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
 
-//   const dependentColumns: ColumnDef<DependentRecord>[] = [
-//     { accessorKey: "id", header: "#" },
-//     { accessorKey: "lname", header: "Last Name" },
-//     { accessorKey: "fname", header: "First Name" },
-//     { accessorKey: "mname", header: "Middle Name" },
-//     { accessorKey: "suffix", header: "Suffix" },
-//     { accessorKey: "sex", header: "Sex" },
-//     { accessorKey: "dateOfBirth", header: "Birthday" },
-//     {
-//       accessorKey: "action",
-//       header: "",
-//       cell: ({ row }) => (
-//         <TooltipLayout
-//           trigger={
-//             <Trash
-//               size={17}
-//               className="fill-red-500 stroke-red-500 cursor-pointer"
-//               onClick={() => {
-//                 handleDelete(row.original.id);
-//               }}
-//             />
-//           }
-//           content={"Remove"}
-//         />
-//       ),
-//     },
-//   ];
+const dependentColumns: ColumnDef<DependentRecord>[] = [
+  { accessorKey: "id", header: "#" },
+  { accessorKey: "lname", header: "Last Name" },
+  { accessorKey: "fname", header: "First Name" },
+  { accessorKey: "mname", header: "Middle Name" },
+  { accessorKey: "suffix", header: "Suffix" },
+  { accessorKey: "sex", header: "Sex" },
+  { accessorKey: "dateOfBirth", header: "Birthday" },
+  {
+    accessorKey: "action",
+    header: "",
+    cell: ({ row }) => (
+      <TooltipLayout
+        trigger={
+          <Trash
+            size={17}
+            className="fill-red-500 stroke-red-500 cursor-pointer"
+            onClick={() => {
+              handleDelete(row.original.id);
+            }}
+          />
+        }
+        content={"Remove"}
+      />
+    ),
+  },
+];
 
 //   const handleDelete = (id: string) => {
 //     setDependentsList((prevData) => {
@@ -160,19 +161,23 @@ import { LoadButton } from "@/components/ui/button/load-button";
   //   form.reset(defaultValues);
   // }
 
-  return (
-    <div className="flex flex-col min-h-0 h-auto gap-10 md:p-10 rounded-lg overflow-auto">
-      <div className="mt-8 flex flex-col justify-end gap-2 sm:gap-3">
-        <DependentForm
-          title="Dependents Information"
-          form={form}
-          residents={residents}
-          selectedParents={selectedParents}
-          dependents={dependentsList}
-        />
-        <DataTable data={dependentsList} columns={dependentColumns} />
+    return (
+      <div className="flex flex-col min-h-0 h-auto gap-10 md:p-10 rounded-lg overflow-auto">
+        <div className="mt-8 flex flex-col justify-end gap-2 sm:gap-3">
+          <DependentForm
+            title="Dependents Information"
+            form={form}
+            residents={residents}
+            selectedParents={selectedParents}
+            dependents={dependentsList}
+          />
+          <DataTable data={dependentsList} columns={dependentColumns} />
+        </div>
+        
       </div>
-      
-    </div>
-  );
+    );
+  }
+function handleDelete(id: string) {
+  throw new Error("Function not implemented.");
 }
+
