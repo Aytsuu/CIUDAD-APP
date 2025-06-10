@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useArchiveHotspot, useDeleteHotspot } from "./queries/hotspotDeleteQueries";
+import { useArchiveHotspot, useDeleteHotspot, useRestoreHotspot } from "./queries/hotspotDeleteQueries";
 import { formatTime } from "@/helpers/timeFormatter";
 
 function WasteHotspotMain() {
@@ -22,6 +22,7 @@ function WasteHotspotMain() {
     const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
     const { mutate : archiveHotspot} = useArchiveHotspot()
     const { mutate: deleteHotspot} = useDeleteHotspot()
+    const { mutate: restoreHotspot} = useRestoreHotspot()
 
     const handleConfirm = (wh_num: string) => {
         archiveHotspot(wh_num);
@@ -29,6 +30,10 @@ function WasteHotspotMain() {
 
     const handleDelete = (wh_num: string) => {
         deleteHotspot(wh_num)
+    }
+
+    const handleRestore = (wh_num: string) => {
+        restoreHotspot(wh_num)
     }
 
      const commonColumns: ColumnDef<Hotspot>[] = [
@@ -98,7 +103,17 @@ function WasteHotspotMain() {
                 return (
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
-                            trigger={<div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={ <div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
+                                        title="Restore Archived Schedule"
+                                        description="Would you like to restore this schedule from the archive and make it active again?"
+                                        actionLabel="confirm"
+                                        onClick={() => handleRestore(row.original.wh_num)}
+                                    />
+                                </div>
+                            }
                             content="Restore"
                         />
                         <TooltipLayout

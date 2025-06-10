@@ -18,3 +18,13 @@ export const deleteHotspot = async (wh_num: string) => {
         console.error(err)
     }
 }
+
+export const restoreHotspot = async (wh_num: string) => {
+    try{
+        const res = await api.put(`waste/update-waste-hotspot/${wh_num}/`, {
+            wh_is_archive: false
+        })
+    } catch (err){
+        console.error(err)
+    }
+}

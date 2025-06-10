@@ -1,8 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import z from "zod"
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { archiveHotspot, deleteHotspot } from "../restful-API/hotspotDeleteAPI";
+import { archiveHotspot, deleteHotspot, restoreHotspot } from "../restful-API/hotspotDeleteAPI";
 
 export const useArchiveHotspot = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -14,7 +13,7 @@ export const useArchiveHotspot = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['hotspots'] })
-            toast.success('Request marked as completed', {
+            toast.success('Schedule is archived successfully', {
                 id: "archiveHotspot",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 duration: 2000
@@ -23,9 +22,9 @@ export const useArchiveHotspot = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error updating request status:", err);
-            toast.error("Failed to update request status", {
-            id: "updateGarbageStatus",
+            console.error("Error archiving schedule:", err);
+            toast.error("Failed to archive schedule", {
+            id: "archiveHotspot",
             duration: 2000
             });
         }
@@ -38,7 +37,7 @@ export const useDeleteHotspot = (onSuccess?: () => void) => {
     return useMutation({
       mutationFn: (wh_num: string) => deleteHotspot(wh_num),
       onSuccess: () => {
-            toast.loading("Deleting record...", { id: "deleteHotspot" });
+            toast.loading("Deleting schedule...", { id: "deleteHotspot" });
 
             toast.success('Schedule deleted successfully', {
             id: 'deleteHotspot',
@@ -51,8 +50,40 @@ export const useDeleteHotspot = (onSuccess?: () => void) => {
         if (onSuccess) onSuccess();
     },
         onError: (err) => {
-        console.error("Error archiving entry:", err);
-        toast.error("Failed to archive entry");
+            console.error("Error archiving schedule:", err);
+            toast.error("Failed to archive schedule", {
+                id: "archiveHotspot",
+                duration: 2000
+            });
         }
     })
 }
+
+export const useRestoreHotspot = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (wh_num: string) => restoreHotspot(wh_num),
+        onMutate: () =>{
+            toast.loading("Restoring schedule ...", { id: "restoreHotspot" });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['hotspots'] })
+            toast.success('Schedule is restored successfully', {
+                id: "restoreHotspot",
+                icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+                duration: 2000
+            });
+            
+            onSuccess?.();
+        },
+        onError: (err) => {
+            console.error("Error restoring schedule:", err);
+            toast.error("Failed to restore schedule", {
+                id: "restoreHotspot",
+                duration: 2000
+            });
+        }
+    })
+}
+
