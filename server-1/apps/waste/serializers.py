@@ -16,15 +16,20 @@ class WasteCollectionStaffSerializer(serializers.ModelSerializer):
         model = WasteCollectionStaff
         fields = '__all__'
 
+class WasteCollectionSchedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WasteCollectionSched
+        fields = '__all__'
+
 class WasteCollectionAssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteCollectionAssignment
         fields = '__all__'
 
-class WasteCollectionSchedSerializer(serializers.ModelSerializer):
+class WasteCollectorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = WasteCollectionSched
-        fields = '__all__'
+        model = WasteCollector
+        fields = '__all__' 
 
 class WasteHotspotSerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,8 +57,3 @@ class SitioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sitio
         fields = ['sitio_id', 'sitio_name']
-
-class WasteCollectorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WasteCollector
-        fields = '__all__' 

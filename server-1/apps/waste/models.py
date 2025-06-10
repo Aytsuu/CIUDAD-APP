@@ -137,7 +137,6 @@ class WasteCollectionSched(models.Model):
     wc_add_info = models.CharField(max_length=200, null=True)
     wc_is_archive = models.BooleanField(default=False)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'waste_collection_sched'

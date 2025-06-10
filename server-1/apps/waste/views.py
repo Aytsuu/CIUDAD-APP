@@ -19,13 +19,17 @@ class WasteCollectionStaffView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionStaffSerializer
     queryset = WasteCollectionStaff.objects.all()
 
+class WasteCollectionSchedView(generics.ListCreateAPIView):
+    serializer_class = WasteCollectionSchedSerializer
+    queryset = WasteCollectionSched.objects.all()
+
 class WasteCollectionAssignmentView(generics.ListCreateAPIView):
     serializer_class = WasteCollectionAssignmentSerializer
     queryset = WasteCollectionAssignment.objects.all()
 
-class WasteCollectionSchedView(generics.ListCreateAPIView):
-    serializer_class = WasteCollectionSchedSerializer
-    queryset = WasteCollectionSched.objects.all()
+class WasteCollectorView(generics.ListCreateAPIView):
+    serializer_class = WasteCollectorSerializer
+    queryset = WasteCollector.objects.all()
 
 class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
@@ -233,7 +237,3 @@ class CollectorPersonnelAPIView(APIView):
 class SitioListView(generics.ListCreateAPIView):
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
-
-class WasteCollectorView(generics.ListCreateAPIView):
-    serializer_class = WasteCollectorSerializer
-    queryset = WasteCollector.objects.all()
