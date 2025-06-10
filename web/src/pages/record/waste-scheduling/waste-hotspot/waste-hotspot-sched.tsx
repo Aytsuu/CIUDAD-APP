@@ -13,6 +13,7 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { useGetWatchman } from './queries/hotspotFetchQueries';
 import { useGetSitio } from './queries/hotspotFetchQueries';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAddHotspot} from './queries/HotspotInsertQueries';
 
 const announcementOptions = [
     { id: "all", label: "All" },
@@ -25,15 +26,16 @@ const announcementOptions = [
 ];
 
 
-
-function WasteHotSched() {
+function WasteHotSched({onSuccess}: {
+    onSuccess?: () => void;
+}) {
+    const {mutate: addHotspotAssignment} = useAddHotspot(onSuccess);
     const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
     const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
     const watchmanOptions = fetchedWatchman.map(watchman => ({
         id: watchman.id,  
         name: `${watchman.firstname} ${watchman.lastname}`  
     }));
-
     const sitioOptions = fetchedSitio.map(sitio => ({
         id: sitio.sitio_id,  
         name: sitio.sitio_name 
@@ -53,8 +55,8 @@ function WasteHotSched() {
     });
 
     const onSubmit = (values: z.infer<typeof WasteHotspotSchema>) => {
-        console.log(values);
-        // Handle form submission
+        console.log('Values:', values)
+        addHotspotAssignment(values)    
     };
 
     const handleResetAnnouncements = () => {
