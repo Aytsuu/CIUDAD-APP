@@ -29,6 +29,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 // import { toast } from "sonner";
 import { usePatients } from "../queries/prenatalFetchQueries";
+import { set } from "date-fns";
 
 
 interface PatientRecord{
@@ -58,6 +59,7 @@ interface PatientRecord{
         spouse_lname: string
         spouse_fname: string
         spouse_mname: string
+        spouse_dob: string
         spouse_occupation: string
     } | null;
     
@@ -121,6 +123,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
 
           const personalInfo = selectedPatient.personal_info;
           const address = selectedPatient.address
+          const spouse = selectedPatient.spouse;
 
             setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
             setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname) 
@@ -135,6 +138,14 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                 setValue("motherPersonalInfo.address.barangay", address.add_barangay)
                 setValue("motherPersonalInfo.address.city", address.add_city)
                 setValue("motherPersonalInfo.address.province", address.add_province)
+            }
+
+            if(spouse){
+                setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
+                setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
+                setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
+                setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
+                setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
             }
         }
     }
@@ -189,8 +200,8 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                             content="Delete"
                             trigger={
                                 <DialogLayout
-                                    isOpen={isDialogOpen} // Pass row-specific state
-                                    onOpenChange={(open) => setOpenRowId(open ? row.original.prevIllness : null)} // Toggle dialog for this row
+                                    isOpen={isDialogOpen} 
+                                    onOpenChange={(open) => setOpenRowId(open ? row.original.prevIllness : null)} 
                                     trigger={
                                         <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer">
                                             <Trash className="w-4 h-4" />
@@ -361,8 +372,8 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
     return (
         <>
             <LayoutWithBack
-                title="Maternal Health Record"
-                description="New record"
+                title="Prenatal Record"
+                description="Fill out the prenatal record with the mother's personal information."
             >
                 <div> 
                     <Combobox
@@ -418,7 +429,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 )}
                             />
                         </div>
-                        <div className="grid grid-cols-4 gap-4 mt-2">
+                        <div className="grid grid-cols-5 gap-4 mt-2">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.motherLName"
@@ -443,10 +454,6 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 label="Date of Birth"
                                 type="date"
                             />
-                        </div>
-
-                        {/* dob, husband's name, occupation */}
-                        <div className="grid grid-cols-4 gap-4 mt-2">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.motherAge"
@@ -454,6 +461,10 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 placeholder="Enter Age"
                                 type="number"
                             />
+                        </div>
+
+                        {/* dob, husband's name, occupation */}
+                        <div className="grid grid-cols-5 gap-4 mt-2">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.husbandLName"
@@ -471,6 +482,12 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 name="motherPersonalInfo.husbandMName"
                                 label="Husband's Middle Name"
                                 placeholder="Enter Middle Name"
+                            />
+                            <FormDateTimeInput
+                                control={control}
+                                name="motherPersonalInfo.husbandDob"
+                                label="Husband's Date of Birth"
+                                type="date"
                             />
                             <FormInput
                                 control={control}

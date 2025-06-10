@@ -14,7 +14,6 @@ class PatientView(generics.ListAPIView):
 
     def get_queryset(self):
         return Patient.objects.select_related(
-            'rp_id',
             'rp_id__per',
         ).prefetch_related(
             Prefetch(
@@ -33,7 +32,6 @@ class PatientDetailView(generics.RetrieveAPIView):
         ).prefetch_related(
             'rp_id__per__personaladdress_set__add__sitio'
         )
-
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer

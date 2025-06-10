@@ -29,7 +29,8 @@ export const PrenatalFormSchema = z.object({
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
         husbandMName: z.string().optional(),
-        occupation: z.string().min(1, 'Occupation is required'),
+        husbandDob: dateSchema.optional(),
+        occupation: z.string().optional(),
         address: z.object({
             street: z.string().min(1, 'Street is required'),
             sitio: z.string().min(1, 'Sitio is required'),

@@ -24,10 +24,10 @@ export const maternal_router = [
         path: "/prenatalviewing",
         element: <PrenatalViewingOne />,
     },
-    // {
-    //     path: "/postpartumform",
-    //     element: <PostpartumForm />
-    // },
+    {
+        path: "/postpartumform",
+        element: <PostpartumForm />
+    },
     {
         path: "/prenatalindividualhistory",
         element: <PrenatalIndivHistory />

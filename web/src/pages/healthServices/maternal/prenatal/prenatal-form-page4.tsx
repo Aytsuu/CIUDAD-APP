@@ -29,8 +29,7 @@ export default function PrenatalFormFourthPg(
 
     const { setValue, getValues }  = useFormContext();
 
-    // date today
-    const today = new Date().toLocaleDateString('en-CA');
+    
 
 
     type prenatalCareTypes = {
@@ -56,7 +55,6 @@ export default function PrenatalFormFourthPg(
     }
 
     const [ prenatalCareData, setPrenatalCareData ] = useState<prenatalCareTypes[]>([]);
-
 
     const prenatalCareColumn: ColumnDef<prenatalCareTypes>[] = [
         {
@@ -122,35 +120,14 @@ export default function PrenatalFormFourthPg(
         }
     ]
 
+
+    // date today
+    const today = new Date().toLocaleDateString('en-CA');
     const currentDate = new Date().toLocaleDateString("en-CA", {
         year: "numeric",
         month: "long",
         day: "2-digit"
     });
-
-    // const sampleData: prenatalCareTypes[] = [
-    //     {
-    //         date: currentDate,
-    //         aog: {
-    //             aogWeeks: 10,
-    //             aogDays: 5
-    //         },
-    //         wt: 50,
-    //         bp: {
-    //             systolic: 120,
-    //             diastolic: 80
-    //         },
-    //         leopoldsFindings: {
-    //             fundalHeight: "20 cm",
-    //             fetalHeartRate: "140 bpm",
-    //             fetalPosition: "Cephalic"
-    //         },
-    //         notes: {
-    //             complaints: "Nausea",
-    //             advises: "Take rest"
-    //         }
-    //     }
-    // ]
 
     useEffect(() => {
         setValue("prenatalCare.date", today);
@@ -158,7 +135,7 @@ export default function PrenatalFormFourthPg(
 
     const addPrenatalCare = () => {
         
-        const date = getValues("prenatalCare.date");
+        const date = getValues("prenatalCare.date"); 
         const weight = parseFloat(getValues("prenatalCare.wt")); 
         const aogWks = parseInt(getValues("prenatalCare.aog.aogWeeks"), 10); 
         const aogDays = parseInt(getValues("prenatalCare.aog.aogDays"), 10); 
@@ -176,7 +153,7 @@ export default function PrenatalFormFourthPg(
             setPrenatalCareData((prev) => [
                 ...prev,
                 {
-                    date,
+                    date: currentDate,
                     wt: weight,
                     aog: { aogWeeks: aogWks, aogDays: aogDays },
                     bp: { systolic, diastolic },
@@ -184,6 +161,19 @@ export default function PrenatalFormFourthPg(
                     notes: { complaints, advises },
                 },
             ]);
+
+            setValue("prenatalCare.date", today);
+            setValue("prenatalCare.wt", "");
+            setValue("prenatalCare.aog.aogWeeks", "");
+            setValue("prenatalCare.aog.aogDays", "");
+            setValue("prenatalCare.bp.systolic", "");
+            setValue("prenatalCare.bp.diastolic", "");
+            setValue("prenatalCare.leopoldsFindings.fundalHeight", "");
+            setValue("prenatalCare.leopoldsFindings.fetalHeartRate", "");
+            setValue("prenatalCare.leopoldsFindings.fetalPosition", "");
+            setValue("prenatalCare.notes.complaints", "");
+            setValue("prenatalCare.notes.advises", "");
+            console.log("Prenatal care data added successfully.");
         } else {
             console.error("Please fill in all required fields.");
         }        

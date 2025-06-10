@@ -6,7 +6,7 @@ from django.core.validators import MinValueValidator
 from apps.patientrecords.models import PatientRecord
 # from apps.healthProfiling.models import Staff
 
-# Create your models here.
+# ************** prenatal **************
 class Prenatal_Form(models.Model):
     pf_id = models.BigAutoField(primary_key=True)
     pf_lmp = models.DateField()
@@ -113,4 +113,53 @@ class Checklist(models.Model):
 
 #     class Meta:
 #         db_table = 'pf_birth_plan'
+
+
+# ************** postpartum **************
+class PostpartumRecord(models.Model):
+    ppr_id = models.BigAutoField(primary_key=True)
+    ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
+    ppr_tor = models.CharField(max_length=100, default="Not Applicable")
+    ppr_lochial_discharges = models.CharField(max_length=100)
+    ppr_vit_a_date_given = models.DateField()
+    ppr_num_of_pads = models.PositiveIntegerField()
+    ppr_mebendazole_date_given = models.DateField()
+    ppr_date_of_bf = models.DateField()
+    ppr_time_of_bf = models.TimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pf_id')
+    # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
+
+    # def save(self, *args, **kwargs):
+    #     if not 
+
+    class Meta:
+        db_table = 'postpartum_record'  
+
+
+class PostpartumDeliveryRecord(models.Model):
+    ppdr_id = models.BigAutoField(primary_key=True) 
+    ppdr_date_of_delivery = models.DateField()
+    ppdr_time_of_delivery = models.TimeField()
+    ppdr_place_of_delivery = models.CharField(max_length=50)
+    ppdr_attended_by = models.CharField(max_length=50)
+    ppdr_outcome = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'postpartum_delivery_record'
+
+
+class PostpartumAssessment(models.Model):
+    ppa_id = models.BigAutoField(primary_key=True)
+    ppa_date_of_visit = models.DateField()
+    ppa_systolic = models.PositiveIntegerField()
+    ppa_diastolic = models.PositiveIntegerField()
+    ppa_feeding = models.CharField(max_length=50)
+    ppa_findings = models.TextField()
+    ppa_nurses_notes = models.TextField()
+    ppr_id = models.ForeignKey(PostpartumRecord, on_delete=models.CASCADE, related_name='postpartum_assessment', db_column='ppr_id')
+
+    class Meta: 
+        db_table = 'postpartum_assessment'
 

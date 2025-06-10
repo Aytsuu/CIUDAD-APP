@@ -11,7 +11,13 @@ export const PostPartumSchema = z.object({
         husbandLName: z.string().optional(),
         husbandFName: z.string().optional(),
         husbandMName: z.string().optional(),
-        address: z.string().optional()
+        address: z.object({
+            street: z.string().min(1, 'Street is required'),
+            sitio: z.string().min(1, 'Sitio is required'),
+            barangay: z.string().min(1, 'Barangay is required'),
+            city: z.string().min(1, 'City is required'),
+            province: z.string().min(1, 'Province is required'),
+        }),
     }),
 
     postpartumInfo: z.object({

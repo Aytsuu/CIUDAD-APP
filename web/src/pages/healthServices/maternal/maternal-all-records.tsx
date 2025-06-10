@@ -251,7 +251,7 @@ export default function MaternalAllRecords() {
               </div>
               <SelectLayout
                 className="w-full md:w-[200px] bg-white"
-                label=""
+                label="Filter"
                 placeholder="Select"
                 options={filter}
                 value={selectedFilter}
@@ -270,7 +270,7 @@ export default function MaternalAllRecords() {
                   <Link to="/prenatalform">Prenatal</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="">Postpartum</Link>
+                  <Link to="/postpartumform">Postpartum</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

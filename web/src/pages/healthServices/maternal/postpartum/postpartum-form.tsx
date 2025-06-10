@@ -36,12 +36,6 @@ export default function PostpartumForm(){
                         onSubmit={()=>nextPage()}
                     />
                 )}
-                {/* {currentPage === 2 && (
-                    <PostpartumFormFirstPg 
-                        form={form}
-                        onSubmit={()=>nextPage()}
-                    />
-                )} */}
             </FormProvider>
         </div>
     )
