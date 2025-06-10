@@ -1,4 +1,4 @@
-import api  from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 
 export const addMedicineInventory = async (
   data: any,  // Consider replacing 'any' with a proper type interface

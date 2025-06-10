@@ -29,7 +29,7 @@ interface FormSelectProps<T extends FieldValues> {
         render={({ field: { onChange, value }, fieldState: { error } }) => (
           <View className="mb-4">
             {label && (
-              <Text className="text-[16px] font-PoppinsRegular mb-2">
+              <Text className="text-[ 16px] font-PoppinsRegular mb-2">
                 {label}
               </Text>
             )}

@@ -12,10 +12,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='staff',
-            name='rp',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignments', to='healthProfiling.residentprofile'),
-            preserve_default=False,
-        ),
+        # migrations.AddField(
+        #     model_name='staff',
+        #     name='rp',
+        #     field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignments', to='healthProfiling.residentprofile'),
+        #     preserve_default=False,
+        # ),
     ]

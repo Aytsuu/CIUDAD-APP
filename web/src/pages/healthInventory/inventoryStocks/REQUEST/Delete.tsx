@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 
 export const handleDeleteMedicineStocks = async (
     minv_id: number,

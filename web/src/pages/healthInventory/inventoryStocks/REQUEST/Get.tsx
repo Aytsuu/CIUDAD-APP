@@ -1,5 +1,5 @@
 
-import {api} from "@/pages/api/api"
+import { api } from "@/pages/api/api"
 
 export const  getMedicineStocks = async()=>{
     try{
@@ -16,19 +16,19 @@ export const  getMedicineStocks = async()=>{
   }
 
 
-  // export const  getCommodityStocks = async()=>{
-  //   try{
-  //     const res= await api.get("inventory/commodityinventorylist/")
-  //     if(res.status==200){
-  //       return res.data;
-  //     }
-  //     console.error(res.status)
-  //     return[]
-  //   }catch(err){
-  //     console.log(err)
-  //     return[]
-  //   }
-  // }
+  export const  getCommodityStocks = async()=>{
+    try{
+      const res= await api.get("inventory/commodityinventorylist/")
+      if(res.status==200){
+        return res.data;
+      }
+      console.error(res.status)
+      return[]
+    }catch(err){
+      console.log(err)
+      return[]
+    }
+  }
   
   export const  getFirstAidStocks = async()=>{
     try{
@@ -79,7 +79,7 @@ export const  getMedicineStocks = async()=>{
           name: supplies.imz_name,
           // Include other fields you might need
           type: supplies.vac_type_choices,
-          categoryId: supplies.category
+          categoryId: supplies.vaccat_id
         }));
       }
       console.error(res.status);

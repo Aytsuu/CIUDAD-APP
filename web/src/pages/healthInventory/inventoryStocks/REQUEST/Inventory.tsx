@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 
 // export const addInventory = async (inventoryData: any) => {
 //   try {

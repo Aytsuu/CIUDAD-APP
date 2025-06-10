@@ -1,28 +1,27 @@
-# from django.shortcuts import render
-# from rest_framework import generics,status
-# from django.shortcuts import get_object_or_404
-# from rest_framework.response import Response
-# from .serializers import *
+from django.shortcuts import render
+from rest_framework import generics,status
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from .serializers import *
 
-# # Create your views here.
-# class PatientsView(generics.ListCreateAPIView):
-#     serializer_class = PatientsSerializer 
-#     queryset = Patient.objects.all()
+# class AnimalbiteRecordsView(generics.ListCreateAPIView):
+#     serializer_class = AnimalBiteRecordSerializer
+#     queryset = AnimalBite_Record.objects.all()
     
 #     def create(self, request, *args, **kwargs):
 #         return super().create(request, *args, **kwargs)
     
-# class ReferralView(generics.ListCreateAPIView):
-#     serializer_class = ReferralSerializer 
-#     queryset = Referral.objects.all()
+class AnimalbiteReferralView(generics.ListCreateAPIView):
+    serializer_class = AnimalBiteReferralSerializer
+    queryset = AnimalBite_Referral.objects.all()
     
-#     def create(self, request, *args, **kwargs):
-#         return super().create(request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
     
-# class BiteDetailsView(generics.ListCreateAPIView):
-#     serializer_class = BiteDetailsSerializer 
-#     queryset = BiteDetails.objects.all()
+class AnimalbiteDetailsView(generics.ListCreateAPIView):
+    serializer_class = AnimalBiteDetailsSerializer
+    queryset = AnimalBite_Details.objects.all()
     
-#     def create(self, request, *args, **kwargs):
-#         return super().create(request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
     

@@ -14,7 +14,7 @@ import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { useUpdateFamily } from "../queries/profilingUpdateQueries";
 import { formatHouseholds } from "../profilingFormats";
 import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { capitalize } from "@/helpers/capitalize";
 
 export default function EditGeneralDetails({
@@ -37,14 +37,14 @@ export default function EditGeneralDetails({
   });
   const [invalidHousehold, setInvalidHousehold] = React.useState<boolean>(false);
   const [isSaving, setIsSaving] = React.useState<boolean>(false);
-  const { mutateAsync: updateFamily, isPending: isUpdating } = useUpdateFamily(); 
+  const { mutateAsync: updateFamily } = useUpdateFamily(); 
   const formattedHouseholds = React.useMemo(() => 
-    formatHouseholds({households: households}), [households]
-  )
+    formatHouseholds(households), [households]
+  );
 
   React.useEffect(() => {
     if(familyData) {
-      form.setValue("householdNo", familyData.hh.hh_id)
+      form.setValue("householdNo", familyData.household_no)
       form.setValue("building", familyData.fam_building)
       form.setValue("indigenous", familyData.fam_indigenous)
     }
@@ -53,7 +53,7 @@ export default function EditGeneralDetails({
   // Check if values are not changed when saving
   const checkDefaultValues = (values: any) => {
     const isDefault = 
-      values.householdNo === familyData.hh.hh_id &&
+      values.householdNo === familyData.household_no &&
       values.building === familyData.fam_building &&
       values.indigenous === familyData.fam_indigenous
 
@@ -81,27 +81,34 @@ export default function EditGeneralDetails({
       return;
     }
 
-    await updateFamily({
-      demographicInfo: values,
-      familyId: familyData.fam_id,
-      oldHouseholdId: familyData.hh.hh_id
-    })
-
-    if(!isUpdating) {
-      setIsSaving(false);
-      setIsOpenDialog(false);
-
-      setFamily((prev: any) => ({
-        ...prev,
-        fam_building: capitalize(values.building),
-        fam_indigenous: capitalize(values.indigenous),
-        hh: {
-          ...prev.hh,
-          hh_id: values.householdNo
-        }
-      }))
+    // Formatting data
+    const data = {
+      hh: values.householdNo,
+      fam_building: capitalize(values.building),
+      fam_indigenous: capitalize(values.indigenous)
     }
 
+    updateFamily({
+      data: data,
+      familyId: familyData.fam_id,
+      oldHouseholdId: familyData.household_no
+    }, {
+      onSuccess: () => {
+        setIsSaving(false);
+        setIsOpenDialog(false);
+
+        setFamily((prev: any) => ({
+          ...prev,
+          fam_building: capitalize(values.building),
+          fam_indigenous: capitalize(values.indigenous),
+          household_no: values.householdNo
+        }));
+        
+        toast("Record updated successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+        });
+      }
+    });
   }
 
   return (

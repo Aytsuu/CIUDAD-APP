@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import { api } from "@/api/api";
 
 export const addAccount = async (accountInfo: Record<string, string>, residentId: string) => {
   try { 

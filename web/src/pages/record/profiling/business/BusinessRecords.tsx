@@ -9,7 +9,7 @@ import { businessColumns } from "./BusinessColumns";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
-import { useBusinesses, useSitio } from "../queries/profilingFetchQueries";
+import { useBusinesses, useSitioList } from "../queries/profilingFetchQueries";
 
 export default function BusinessRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -17,7 +17,7 @@ export default function BusinessRecords() {
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
   const { data: businesses, isLoading: isLoadingBusinesses } = useBusinesses();
-  const { data: sitio, isLoading: isLoadingSitio } = useSitio();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
 
   // Formatting business data (for table)
   const formatBusinessData = React.useCallback(() => {
@@ -109,7 +109,7 @@ export default function BusinessRecords() {
             params: {
                
               type: "registration",
-              sitio: sitio
+              sitio: sitioList
             },
           }}
         >
@@ -152,7 +152,7 @@ export default function BusinessRecords() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={businessColumns(businesses, sitio)} data={paginatedBusinesses} />
+          <DataTable columns={businessColumns(businesses, sitioList)} data={paginatedBusinesses} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">

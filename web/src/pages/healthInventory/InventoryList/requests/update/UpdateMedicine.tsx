@@ -1,20 +1,18 @@
-// import {api} from "@/pages/api/api";
-// import { toTitleCase } from "@/helpers/ToTitleCase";
-// import { ca } from "date-fns/locale";
+import { api } from "@/pages/api/api";
+import { toTitleCase } from "../case";
 
 
-// export const updateMedicine = async (med_id: number, medicineName: string,cat_id:string) => {
+export const updateMedicine = async (med_id: number, medicineName: string) => {
 
-//     try {
-//       const res = await api.put(`inventory/update_medicinelist/${med_id}/`, {
-//         med_name: toTitleCase(medicineName),
-//         updated_at: new Date().toISOString(),
-//         cat: cat_id ? parseInt(cat_id, 10) : null,
-//       });
+    try {
+      const res = await api.put(`inventory/update_medicinelist/${med_id}/`, {
+        med_name: toTitleCase(medicineName),
+        updated_at: new Date().toISOString(),
+      });
   
-//       return res.data;
-//     } catch (err) {
-//       console.log(err);
-//       throw err; // Re-throw the error to handle it in the calling function
-//     }
-//   };
+      return res.data;
+    } catch (err) {
+      console.log(err);
+      throw err; // Re-throw the error to handle it in the calling function
+    }
+  };

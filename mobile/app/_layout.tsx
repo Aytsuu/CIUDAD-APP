@@ -19,6 +19,8 @@ const LIGHT_THEME: Theme = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const queryClient = new QueryClient();
+
   const [loaded] = useFonts({
     PoppinsRegular: require('../assets/fonts/Poppins-Regular.ttf'),
     PoppinsMedium: require('../assets/fonts/Poppins-Medium.ttf'),
@@ -36,6 +38,19 @@ export default function RootLayout() {
   }
 
   return (
+<<<<<<< HEAD
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={LIGHT_THEME}>
+        <StatusBar backgroundColor="#FFF" style="dark" />
+        <Stack initialRouteName='(auth)'>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <PortalHost />
+      </ThemeProvider>
+    </QueryClientProvider>
+=======
     <ThemeProvider value={LIGHT_THEME}>
       <StatusBar backgroundColor="#ECF8FF" style="dark" />
 
@@ -49,5 +64,6 @@ export default function RootLayout() {
 
       <PortalHost />
     </ThemeProvider>
+>>>>>>> master
   );
 }

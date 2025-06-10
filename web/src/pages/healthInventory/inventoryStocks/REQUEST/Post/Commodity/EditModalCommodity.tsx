@@ -1,5 +1,5 @@
 // updateCommodityStock.ts
-import api from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 import { CommodityStocksRecord } from "../../../tables/CommodityStocks";
 import { CommodityTransactionPayload } from "./AddCommodityPost";
 import { addCommodityTransaction } from  "./AddCommodityPost";

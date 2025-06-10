@@ -1,6 +1,8 @@
 from ..models import *
 from .base import *
 from apps.administration.models import Staff
+from apps.file.models import File
+from apps.file.serializers.base import FileSerializer
 
 class ResidentProfileMinimalSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
@@ -28,10 +30,19 @@ class FamilyMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Family
         fields = '__all__'
-    
+
+class RequestFileMinimalSerializer(serializers.ModelSerializer):
+    file = FileSerializer(read_only=True)
+    file_id = serializers.PrimaryKeyRelatedField(queryset=File.objects.all(), write_only=True, source='file')
+
+    class Meta:
+        model = RequestFile
+        fields = '__all__'
+
 class RequestRegistrationSerializer(serializers.ModelSerializer):
     per = PersonalSerializer(read_only=True)
     per_id = serializers.PrimaryKeyRelatedField(queryset=Personal.objects.all(), write_only=True, source='per')
+    files = RequestFileMinimalSerializer(many=True, read_only=True)
 
     class Meta:
         model = RequestRegistration

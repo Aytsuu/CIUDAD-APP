@@ -53,13 +53,17 @@ INSTALLED_APPS = [
     'apps.healthProfiling',
     'apps.inventory',
     'apps.maternal',
-    # 'apps.profiling',
-    # 'apps.administration'
     'apps.vaccination',
+    # 'apps.profiling',
     'apps.administration',
+    # 'apps.account',
+    # 'apps.waste',
+    # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
     'apps.patientrecords',
+    # 'apps.gad'
+    'apps.account',
     'apps.medicalConsultation',
 
 ]
@@ -111,7 +115,7 @@ DATABASES = {
 
     },
     'brgyDB': {
-
+        
     }
    
 }
@@ -160,6 +164,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'account.Account'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  

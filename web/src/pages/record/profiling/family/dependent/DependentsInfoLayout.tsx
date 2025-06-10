@@ -8,13 +8,13 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { DependentRecord } from "../../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { CircleAlert, CircleCheck, Trash } from "lucide-react";
+import { CircleAlert, Trash } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
 import { useAddFamily, useAddFamilyComposition } from "../../queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export default function DependentsInfoLayout({
   form,
@@ -22,7 +22,6 @@ export default function DependentsInfoLayout({
   selectedParents,
   dependentsList,
   setDependentsList,
-  defaultValues,
   back,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
@@ -35,8 +34,8 @@ export default function DependentsInfoLayout({
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
-  const navigate = useNavigate();
-  const { user } = React.useRef(useAuth()).current;
+  const { user } = useAuth();
+  const { safeNavigate } = useSafeNavigate(); 
   const { mutateAsync: addFamily } = useAddFamily();
   const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -117,9 +116,16 @@ export default function DependentsInfoLayout({
     setIsSubmitting(true);
 
     if(dependentsList.length === 0){
+      setIsSubmitting(false);
       toast('Family Registration', {
         description: "Must have atleast one dependent.",
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
       });
       return;
     }
@@ -134,32 +140,39 @@ export default function DependentsInfoLayout({
       staffId: user?.staff.staff_id
     });
 
-    await Promise.all(selectedParents.map( async (parentId, index) => {
-      if(parentId) {
-        await addFamilyComposition({
-          familyId: family.fam_id,
-          role: PARENT_ROLES[index],
-          residentId: parentId
-        })
-      }
-    }))
+    let bulk_composition: {
+      fam: string, 
+      fc_role: string, 
+      rp: string}[] = [];
 
-    await Promise.all(dependentsInfo.map( async (dependent) => {
-      await addFamilyComposition({
-        familyId: family.fam_id,
-        role: "Dependent",
-        residentId: dependent.id.split(" ")[0]
-      })
-    }))
-
-    // Provide feedback to the user
-    toast("Record added successfully", {
-      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+    selectedParents.map((parentId, index) => {
+      if(!parentId) return;
+      bulk_composition = [
+        ...bulk_composition,
+        {
+          fam: family.fam_id,
+          fc_role: PARENT_ROLES[index],
+          rp: parentId
+        }
+      ]
     });
 
-    navigate(-1);
-    setIsSubmitting(false);
-    form.reset(defaultValues);
+    dependentsInfo.map((dependent) => {
+      bulk_composition = [
+        ...bulk_composition,
+        {
+          fam: family.fam_id,
+          fc_role: 'Dependent',
+          rp: dependent.id.split(" ")[0]
+        }
+      ]
+    })
+
+    addFamilyComposition(bulk_composition,{
+      onSuccess: () => {
+        safeNavigate.back();
+      }
+    });
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useQuery} from "@tanstack/react-query";
-import { getResidents } from "../../profiling/restful-api/profilingGetAPI";
+import { getResidentsList } from "../../profiling/restful-api/profilingGetAPI";
 import {
   getFeatures,
   getPositions,
@@ -11,7 +11,7 @@ import {
 export const useResidents = () => {
   return useQuery({
     queryKey: ["residents"],
-    queryFn: getResidents,
+    queryFn: getResidentsList,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
