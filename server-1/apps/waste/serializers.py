@@ -27,10 +27,20 @@ class WasteCollectionSchedSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class WasteHotspotSerializer(serializers.ModelSerializer):
+    watchman = serializers.SerializerMethodField()
+    sitio = serializers.SerializerMethodField()
+
     class Meta:
         model = WasteHotspot
         fields = '__all__'
 
+    def get_watchman(self, obj):
+        return str(obj.wstp_id.staff_id.rp.per) if obj.wstp_id and obj.wstp_id.staff_id else ""
+
+    def get_sitio(self, obj):
+        return str(obj.sitio_id) if obj.sitio_id else ""
+
+        
 class WasteReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteReport

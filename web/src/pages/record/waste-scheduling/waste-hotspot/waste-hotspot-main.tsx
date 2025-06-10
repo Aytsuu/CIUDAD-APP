@@ -1,76 +1,26 @@
-    import { DataTable } from "@/components/ui/table/data-table";
-    import DialogLayout from "@/components/ui/dialog/dialog-layout";
-    import { Label } from "@/components/ui/label";
-    import { ColumnDef } from "@tanstack/react-table";
-    import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
-    import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-    import { FileInput, Search, Plus, Trash, Pen} from "lucide-react";
-    import { Button } from "@/components/ui/button/button";
-    import { Input } from "@/components/ui/input";
-    import WasteHotSched from "./waste-hotspot-sched";
-    import { useState } from "react";
-
-    type WasteHotspot = {
-        wh_num: string;
-        wh_date: string;
-        wh_time: string;
-        wh_location: string;
-        wh_watchman: string;
-        wh_additional_info: string;
-    }
+import { DataTable } from "@/components/ui/table/data-table";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { ColumnDef } from "@tanstack/react-table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { FileInput, Search, Plus, Trash, Pen} from "lucide-react";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import WasteHotSched from "./waste-hotspot-sched";
+import { useState } from "react";
+import { useGetHotspotRecords, type Hotspot } from "./queries/hotspotFetchQueries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function WasteHotspotMain() {
     const [ isDialogOpen, setIsDialogOpen] = useState(false);
-    // Sample data
-    const sampleData: WasteHotspot[] = [
-        {
-            wh_num: "1",
-            wh_date: "2023-05-15",
-            wh_time: "08:30",
-            wh_location: "Sitio A",
-            wh_watchman: "John Doe",
-            wh_additional_info: "Near the marketplace"
-        },
-        {
-            wh_num: "2",
-            wh_date: "2023-05-16",
-            wh_time: "09:15",
-            wh_location: "Sitio B",
-            wh_watchman: "Jane Smith",
-            wh_additional_info: "Behind the school building"
-        },
-        {
-            wh_num: "3",
-            wh_date: "2023-05-17",
-            wh_time: "10:00",
-            wh_location: "Sitio C",
-            wh_watchman: "Robert Johnson",
-            wh_additional_info: "Main road intersection"
-        },
-        {
-            wh_num: "4",
-            wh_date: "2023-05-18",
-            wh_time: "14:30",
-            wh_location: "Sitio D",
-            wh_watchman: "Maria Garcia",
-            wh_additional_info: "Near the basketball court"
-        },
-        {
-            wh_num: "5",
-            wh_date: "2023-05-19",
-            wh_time: "15:45",
-            wh_location: "Sitio E",
-            wh_watchman: "Michael Brown",
-            wh_additional_info: "Close to the riverbank"
-        }
-    ];
+    const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
 
-    const columns: ColumnDef<WasteHotspot>[] = [
-        { accessorKey: "wh_watchman", header: "Watchman" },
+    const columns: ColumnDef<Hotspot>[] = [
+        { accessorKey: "watchman", header: "Watchman" },
         { accessorKey: "wh_date", header: "Assignment Date" },
         { accessorKey: "wh_time", header: "Assignment Time" },
-        { accessorKey: "wh_location", header: "Sitio" },
-        { accessorKey: "wh_additional_info", header: "Additional Info" },
+        { accessorKey: "sitio", header: "Sitio" },
+        { accessorKey: "wh_add_info", header: "Additional Info" },
         {
             accessorKey: "action", 
             header: "Action",
@@ -90,6 +40,21 @@ function WasteHotspotMain() {
             }
         }
     ];
+
+    if (isLoading){
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <div className="flex justify-end">
+                <Skeleton className="h-10 w-24" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className='w-full h-full'>
@@ -149,7 +114,7 @@ function WasteHotspotMain() {
                     </div>
 
                     <div className="border overflow-auto max-h-[400px]">
-                        <DataTable columns={columns} data={sampleData}></DataTable>
+                        <DataTable columns={columns} data={fetchedData}></DataTable>
                     </div>
                 </div>
             </div>

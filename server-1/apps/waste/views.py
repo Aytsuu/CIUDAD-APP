@@ -29,7 +29,13 @@ class WasteCollectionSchedView(generics.ListCreateAPIView):
 
 class WasteHotspotView(generics.ListCreateAPIView):
     serializer_class = WasteHotspotSerializer
-    queryset = WasteHotspot.objects.all()
+
+    def get_queryset(self):
+        return WasteHotspot.objects.select_related(
+            'wstp_id__staff_id__rp__per', 
+            'sitio_id'                   
+        ).all()
+
 
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer

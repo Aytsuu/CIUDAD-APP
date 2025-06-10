@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getWatchman } from "../restful-API/hotspotGetAPI";
-import { getSitio } from "../restful-API/hotspotGetAPI";
+import { getWatchman, getSitio, getHotspotRecords } from "../restful-API/hotspotGetAPI";
+
 
 export type Watchman = {
     id: string;
@@ -46,4 +46,21 @@ export const useGetSitio = () => {
     });
 };
 
+export type Hotspot = {
+    wh_num: string;
+    wh_date: string;
+    wh_time: string;
+    wh_add_info: string;
+    wh_is_archive: boolean;
+    sitio: string;
+    watchman: string;
+}
+
+export const useGetHotspotRecords = () => {
+    return useQuery<Hotspot[]>({
+        queryKey: ['hotspots'],
+        queryFn: getHotspotRecords,
+        staleTime: 1000 * 60 * 30, 
+    })
+}
 

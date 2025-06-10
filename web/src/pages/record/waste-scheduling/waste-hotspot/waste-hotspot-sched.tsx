@@ -13,7 +13,7 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { useGetWatchman } from './queries/hotspotFetchQueries';
 import { useGetSitio } from './queries/hotspotFetchQueries';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAddHotspot} from './queries/HotspotInsertQueries';
+import { useAddHotspot } from './queries/hotspotInsertQueries';
 
 const announcementOptions = [
     { id: "all", label: "All" },
