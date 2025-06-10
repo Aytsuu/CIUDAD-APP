@@ -300,7 +300,7 @@ export const getPatientById = async (patientId: string) => {
 export const createPatient = async (patientData: any) => {
   try {
     console.log("📝 Creating new patient:", patientData)
-    const res = await api.post("patientrecords/patient/", patientData)
+    const res = await api2.post("patientrecords/patient/", patientData)
     console.log("✅ Patient created successfully:", res.data)
     return res.data
   } catch (error) {
@@ -313,7 +313,7 @@ export const createPatient = async (patientData: any) => {
 export const updatePatient = async (patientId: string, patientData: any) => {
   try {
     console.log(`📝 Updating patient with ID: ${patientId}`, patientData)
-    const res = await api.put(`patientrecords/patient/${patientId}/`, patientData)
+    const res = await api2.put(`patientrecords/patient/${patientId}/`, patientData)
     console.log("✅ Patient updated successfully:", res.data)
     return res.data
   } catch (error) {
@@ -326,7 +326,7 @@ export const updatePatient = async (patientId: string, patientData: any) => {
 export const deletePatient = async (patientId: string) => {
   try {
     console.log(`🗑️ Deleting patient with ID: ${patientId}`)
-    await api.delete(`patientrecords/patient/${patientId}/`)
+    await api2.delete(`patientrecords/patient/${patientId}/`)
     console.log("✅ Patient deleted successfully")
     return true
   } catch (error) {
@@ -339,7 +339,7 @@ export const deletePatient = async (patientId: string) => {
 export const createPatientRecord = async (recordData: any) => {
   try {
     console.log("📝 Creating new patient record:", recordData)
-    const res = await api.post("patientrecords/patient-record/", recordData)
+    const res = await api2.post("patientrecords/patient-record/", recordData)
     console.log("✅ Patient record created successfully:", res.data)
     return res.data
   } catch (error) {

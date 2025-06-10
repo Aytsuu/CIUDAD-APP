@@ -520,7 +520,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowLeft, Trash, RefreshCw } from 'lucide-react'
 import { useQueryClient } from "@tanstack/react-query"
 import { usePatientRecordsByPatId, usePatientRecordsByReferralId } from "./db-request/get-query"
-import { deleteAnimalBiteRecord } from "./db-request/postrequest"
+// import { deleteAnimalBiteRecord } from "./db-request/postrequest"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 

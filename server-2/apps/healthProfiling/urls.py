@@ -17,8 +17,8 @@ urlpatterns = [
     path("address/create/", AddressBulkCreateView.as_view(), name="create-address"),
     path("per_address/create/", PerAddressBulkCreateView.as_view(), name="create-per-address"),
     path("per_address/list/", PerAddressListView.as_view(), name="per-address-list"),
-
-    # Personal Urls
+    
+    # Personal Urls 
     # path("personal/", PersonalView.as_view(), name="personal-details-list"),
     path("personal/update/<int:per_id>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),

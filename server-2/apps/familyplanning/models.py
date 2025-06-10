@@ -14,32 +14,10 @@ class FP_Record(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE)
-
+    spouse_id = models.ForeignKey(Spouse,on_delete=models.CASCADE)
     class Meta:
         db_table = "famplan_record"
 
-# class FP_Record(models.Model):
-#     fprecord_id = models.BigAutoField(primary_key=True)
-#     client_id = models.CharField(max_length=100, default="")
-#     nhts = models.BooleanField(default=False)
-#     four_ps = models.BooleanField(default=False)
-#     plan_more_children = models.BooleanField(default=False)
-#     avg_monthly_income = models.CharField(max_length=100, default="0")
-    
-#     # Add the relationship to PatientRecord
-#     patrec_id = models.ForeignKey(
-#         PatientRecord, 
-#         on_delete=models.CASCADE, 
-#         related_name='famplan_records',
-#         db_column='patrec_id'
-#     )
-    
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-    
-#     class Meta:
-#         db_table = 'famplan_record'
-#         ordering = ['-created_at']
         
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)

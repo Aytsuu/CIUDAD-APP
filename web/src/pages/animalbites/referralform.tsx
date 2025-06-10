@@ -24,6 +24,7 @@ type ReferralFormModalProps = {
 
 interface PatientRecord {
   personal_info: any
+  address: any
   pat_id: string
   per_fname: string
   per_lname: string
@@ -157,8 +158,9 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
   const handlePatientSelection = (id: string) => {
     setSelectedPatientId(id)
     const selectedPatient = patientsData.find((p) => p.pat_id.toString() === id)
+    const selectedAddress = patientsData.find((p) => p.pat_id.toString() === id)
 
-    if (selectedPatient) {
+    if (selectedPatient && selectedAddress) {
       const personalInfo = selectedPatient.personal_info
       form.setValue("pat_id", String(selectedPatient.pat_id))
       form.setValue("p_lname", personalInfo?.per_lname || "")
@@ -166,6 +168,22 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       form.setValue("p_mname", personalInfo?.per_mname || "")
       form.setValue("p_age", personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : 0)
       form.setValue("p_gender", personalInfo?.per_sex || "")
+      
+      const address = selectedPatient.address
+      if (address) {
+        const fullAddress = [
+          address.sitio,
+          address.add_street,
+          address.add_barangay,
+          address.add_city,
+          address.add_province,
+        ].filter(Boolean).join(", ")
+
+        form.setValue("p_address", fullAddress)
+      } else {
+        form.setValue("p_address", "")
+      }
+
     } else {
       console.warn("⚠️ Selected patient not found in data")
     }

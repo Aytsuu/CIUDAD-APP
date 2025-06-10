@@ -1,8 +1,6 @@
-
 import { api2 } from "@/api/api"
-import { formatDate } from "@/helpers/dateFormatter"
 import axios from "axios"
-import { createPatient, getAllPatients } from "../api/get-api"
+import { getAllPatients } from "../api/get-api"
 
 // Helper function for consistent error handling
 const handleApiError = (err: any, operation: string) => {
@@ -62,174 +60,6 @@ const handleApiError = (err: any, operation: string) => {
   }
 }
 
-// Create a patient record
-const patient = async (data: Record<string, any>) => {
-  try {
-    // Check if we need to create a new patient or use an existing one
-    let patientId = data.pat_id
-    
-    if (!patientId && data.createNewPatient) {
-      // Create a new patient first
-      const newPatientData = {
-        personal_info: {
-          per_fname: data.p_fname,
-          per_lname: data.p_lname,
-          per_mname: data.p_mname || "",
-          per_sex: data.p_gender,
-          per_dob: data.p_dob || formatDate(new Date()),
-          per_address: data.p_address || "",
-          per_contact: data.p_contact || "",
-        }
-      }
-      
-      console.log("📝 Creating new patient:", newPatientData)
-      const newPatient = await createPatient(newPatientData)
-      
-      if (!newPatient || !newPatient.pat_id) {
-        throw new Error("Failed to create new patient")
-      }
-      
-      patientId = newPatient.pat_id
-      console.log("✅ New patient created with ID:", patientId)
-    }
-    
-    // Now create the patient record
-    const payload = {
-      pat_id: Number(patientId),
-      patrec_type: "Animal Bites",
-      created_at: new Date().toISOString(),
-    }
-    console.log("📦 Patient Record Payload:", payload)
-
-    const res = await api2.post("patientrecords/patient-record/", payload)
-    console.log("✅ Patient record created successfully:", res.data)
-
-    if (!res.data.patrec_id) {
-      console.warn("⚠️ Patient record created but no patrec_id returned. Full response:", res.data)
-      throw new Error("Patient record created but no patrec_id returned")
-    }
-
-    return res.data.patrec_id
-  } catch (err: any) {
-    console.error("❌ Patient record creation failed - Raw error:", err)
-    handleApiError(err, "Patient Record Creation")
-  }
-}
-
-const referral = async (data: Record<string, any>) => {
-  try {
-    // Validate required data
-    if (!data.patrec_id) {
-      throw new Error("Patient record ID is required for referral")
-    }
-
-    const payload = {
-      receiver: data.receiver,
-      sender: data.sender,
-      date: formatDate(data.date),
-      transient: data.transient,
-      patrec: data.patrec_id,
-    }
-
-    console.log("📦 Referral Payload:", payload)
-    console.log("🔗 Making request to: animalbites/referral/")
-
-    const res = await api2.post("animalbites/referral/", payload)
-    console.log("✅ Referral created successfully:", res.data)
-
-    if (!res.data.referral_id) {
-      console.warn("⚠️ Referral created but no referral_id returned. Full response:", res.data)
-      throw new Error("Referral created but no referral_id returned")
-    }
-
-    return res.data.referral_id
-  } catch (err: any) {
-    console.error("❌ Referral creation failed - Raw error:", err)
-    handleApiError(err, "Referral Creation")
-  }
-}
-
-const bitedetails = async (data: Record<string, any>) => {
-  try {
-    // Validate required data
-    if (!data.referral_id) {
-      throw new Error("Referral ID is required for bite details")
-    }
-
-    // Safely parse numeric values or use null for foreign keys
-    const exposureSiteId = data.exposure_site
-      ? typeof data.exposure_site === "object"
-        ? data.exposure_site.id
-        : Number(data.exposure_site)
-      : null
-
-    const bitingAnimalId = data.biting_animal
-      ? typeof data.biting_animal === "object"
-        ? data.biting_animal.id
-        : Number(data.biting_animal)
-      : null
-
-    // Use the referrer_name field directly
-    const payload = {
-      exposure_type: data.exposure_type,
-      exposure_site: exposureSiteId,
-      biting_animal: bitingAnimalId,
-      actions_taken: data.p_actions || "No actions recorded",
-      referrer_name: data.p_referred, // Use the string value directly
-      referredby: null, // Set to null since we're using referrer_name
-      referral: data.referral_id,
-    }
-
-    console.log("📦 Bite Details Payload:", payload)
-    console.log("🔗 Making request to: animalbites/details/")
-
-    const res = await api2.post("animalbites/details/", payload)
-    console.log("✅ Bite details created successfully:", res.data)
-    return res.data
-  } catch (err: any) {
-    console.error("❌ Bite details creation failed - Raw error:", err)
-    handleApiError(err, "Bite Details Creation")
-  }
-}
-
-// Add new biting animal
-const addBitingAnimal = async (animalName: string) => {
-  try {
-    if (!animalName || animalName.trim() === "") {
-      throw new Error("Animal name is required")
-    }
-
-    const payload = { animal_name: animalName.trim() }
-    console.log("📦 Adding Biting Animal:", payload)
-
-    const res = await api2.post("animalbites/bite_animal/", payload)
-    console.log("✅ Biting animal added successfully:", res.data)
-    return res.data
-  } catch (err: any) {
-    console.error("❌ Adding biting animal failed - Raw error:", err)
-    handleApiError(err, "Add Biting Animal")
-  }
-}
-
-// Add new exposure site
-const addExposureSite = async (siteName: string) => {
-  try {
-    if (!siteName || siteName.trim() === "") {
-      throw new Error("Site name is required")
-    }
-
-    const payload = { exposure_site: siteName.trim() }
-    console.log("📦 Adding Exposure Site:", payload)
-
-    const res = await api2.post("animalbites/exposure_site/", payload)
-    console.log("✅ Exposure site added successfully:", res.data)
-    return res.data
-  } catch (err: any) {
-    console.error("❌ Adding exposure site failed - Raw error:", err)
-    handleApiError(err, "Add Exposure Site")
-  }
-}
-
 // Test API connectivity
 const testApiConnection = async () => {
   try {
@@ -252,52 +82,35 @@ const testApiConnection = async () => {
   }
 }
 
-// Delete a bite record
-const deleteAnimalBiteRecord = async (referralId: number) => {
-  try {
-    console.log(`🗑️ Deleting animal bite record with referral ID: ${referralId}`)
-    
-    // First, get the bite details to know what to clean up
-    const biteDetailsRes = await api2.get(`animalbites/details/?referral=${referralId}`)
-    const biteDetails = biteDetailsRes.data
-    
-    // Delete the bite details first (if they exist)
-    if (biteDetails && biteDetails.length > 0) {
-      for (const detail of biteDetails) {
-        await api2.delete(`animalbites/details/${detail.bite_id}/`)
-        console.log(`✅ Deleted bite detail with ID: ${detail.bite_id}`)
-      }
-    }
-    
-    // Then delete the referral
-    await api2.delete(`animalbites/referral/${referralId}/`)
-    console.log(`✅ Deleted referral with ID: ${referralId}`)
-    
-    return true
-  } catch (err: any) {
-    console.error(`❌ Failed to delete animal bite record: ${err}`)
-    handleApiError(err, "Delete Animal Bite Record")
-    return false
+// Helper function to get the name from option ID
+const getOptionName = (optionId: string, optionType: "exposure_site" | "biting_animal"): string => {
+  // Map IDs to names for exposure sites
+  const exposureSiteMap: Record<string, string> = {
+    head: "Head",
+    neck: "Neck",
+    hand: "Hand",
+    foot: "Foot",
+    trunk: "Trunk",
   }
-}
-const testFetchPatients = async () => {
-  try {
-    console.log("🧪 Testing patient fetching...")
-    const patients = await getAllPatients()
-    console.log(`✅ Successfully fetched ${patients.length} patients`)
-    console.log("📊 Sample patient data:", patients.slice(0, 2))
-    return patients
-  } catch (error) {
-    console.error("❌ Failed to fetch patients:", error)
-    return []
+
+  // Map IDs to names for biting animals
+  const bitingAnimalMap: Record<string, string> = {
+    dog: "Dog",
+    cat: "Cat",
+    rodent: "Rodent",
   }
+
+  if (optionType === "exposure_site") {
+    return exposureSiteMap[optionId] || optionId
+  } else if (optionType === "biting_animal") {
+    return bitingAnimalMap[optionId] || optionId
+  }
+
+  return optionId
 }
 
-// Main submission function with improved transaction handling
+// Main submission function
 const submitAnimalBiteReferral = async (data: Record<string, any>) => {
-  let createdPatrecId: number | null = null
-  let createdReferralId: number | null = null
-
   try {
     console.log("🚀 Starting animal bite referral submission...")
     console.log("📝 Complete form data received:", data)
@@ -317,6 +130,7 @@ const submitAnimalBiteReferral = async (data: Record<string, any>) => {
       "biting_animal",
       "p_actions",
       "p_referred",
+      "p_address"
     ]
 
     const missingFields = requiredFields.filter((field) => !data[field])
@@ -326,47 +140,145 @@ const submitAnimalBiteReferral = async (data: Record<string, any>) => {
 
     console.log("✅ All required fields present")
 
-    // Step 1: Create patient record
-    console.log("🏥 Step 1: Creating patient record...")
-    createdPatrecId = await patient(data)
-    console.log("🏥 Patient record created with ID:", createdPatrecId)
+    // Convert option IDs to readable names
+    const exposureSiteName = getOptionName(data.exposure_site, "exposure_site")
+    const bitingAnimalName = getOptionName(data.biting_animal, "biting_animal")
 
-    // Step 2: Create referral with patient record ID
-    console.log("📝 Step 2: Creating referral...")
-    const referralData = { ...data, patrec_id: createdPatrecId }
-    console.log("📦 Referral Data:", referralData)
-    createdReferralId = await referral(referralData)
-    console.log("📝 Referral created with ID:", createdReferralId)
+    console.log(`📦 Exposure site: ${data.exposure_site} -> ${exposureSiteName}`)
+    console.log(`📦 Biting animal: ${data.biting_animal} -> ${bitingAnimalName}`)
 
-    // Step 3: Create bite details with referral ID
-    console.log("🦷 Step 3: Creating bite details...")
-    const biteDetailsData = { ...data, referral_id: createdReferralId }
-    const biteDetailsResult = await bitedetails(biteDetailsData)
-    console.log("🦷 Bite details created:", biteDetailsResult)
+    // Prepare payload for the backend
+    const payload = {
+      pat_id: String(data.pat_id),
+      receiver: data.receiver,
+      sender: data.sender,
+      date: data.date,
+      // per_address: data.p_address,
+      transient: data.transient || false,
+      exposure_type: data.exposure_type,
+      exposure_site: exposureSiteName, // Send the readable name
+      biting_animal: bitingAnimalName, // Send the readable name
+      actions_taken: data.p_actions || "",
+      referredby: data.p_referred || "",
+    }
+
+    console.log("📦 Prepared Payload:", payload)
+    console.log("📦 pat_id type:", typeof payload.pat_id, "value:", payload.pat_id)
+
+    // Try the main endpoint first
+    let res
+    try {
+      console.log("🔄 Attempting to create record with main endpoint...")
+      res = await api2.post("animalbites/create-record/", payload)
+      console.log("✅ Animal bite record created successfully with main endpoint:", res.data)
+    } catch (mainError: any) {
+      console.warn("⚠️ Main endpoint failed, trying alternative endpoint...")
+      console.log("🔄 Attempting to create record with alternative endpoint...")
+
+      try {
+        res = await api2.post("animalbites/create-record-alt/", payload)
+        console.log("✅ Animal bite record created successfully with alternative endpoint:", res.data)
+      } catch (altError: any) {
+        console.error("❌ Both endpoints failed")
+        throw mainError // Throw the original error
+      }
+    }
 
     console.log("✅ Animal bite referral submission completed successfully!")
 
-    // Return all IDs for reference
+    // Return the response data
     return {
-      patrec_id: createdPatrecId,
-      referral_id: createdReferralId,
-      bite_details: biteDetailsResult,
+      patrec_id: res.data.patrec_id,
+      referral_id: res.data.referral_id,
+      bite_id: res.data.bite_id,
+      message: res.data.message,
       formData: data,
     }
   } catch (err: any) {
     console.error("❌ Animal bite referral submission failed:", err)
-
-    // Log what was created for manual cleanup if needed
-    if (createdReferralId) {
-      console.warn("⚠️ Referral was created but bite details failed. Referral ID:", createdReferralId)
-    }
-    if (createdPatrecId && !createdReferralId) {
-      console.warn("⚠️ Patient record was created but referral failed. Patient Record ID:", createdPatrecId)
-    }
-
-    // Re-throw the error with more context
-    throw new Error(`Submission failed: ${err.message}`)
+    handleApiError(err, "Animal Bite Referral Submission")
   }
 }
 
-export { patient, referral, bitedetails, addBitingAnimal, addExposureSite, submitAnimalBiteReferral, testApiConnection,deleteAnimalBiteRecord  }
+// Update animal bite record
+const updateAnimalBiteRecord = async (biteId: number, data: Record<string, any>) => {
+  try {
+    console.log(`🔄 Updating animal bite record ${biteId}...`)
+    console.log("📝 Update data:", data)
+
+    // Convert option IDs to readable names if they exist
+    const updatePayload = { ...data }
+
+    if (data.exposure_site) {
+      updatePayload.exposure_site = getOptionName(data.exposure_site, "exposure_site")
+    }
+
+    if (data.biting_animal) {
+      updatePayload.biting_animal = getOptionName(data.biting_animal, "biting_animal")
+    }
+
+    console.log("📦 Update Payload:", updatePayload)
+
+    const res = await api2.put(`animalbites/update-record/${biteId}/`, updatePayload)
+    console.log("✅ Animal bite record updated successfully:", res.data)
+
+    return res.data
+  } catch (err: any) {
+    console.error("❌ Animal bite record update failed:", err)
+    handleApiError(err, "Animal Bite Record Update")
+  }
+}
+
+// Delete animal bite record by bite_id
+const deleteAnimalBiteRecord = async (biteId: number) => {
+  try {
+    console.log(`🗑️ Deleting animal bite record with bite ID: ${biteId}`)
+
+    const res = await api2.delete(`animalbites/record/${biteId}/delete/`)
+    console.log("✅ Animal bite record deleted successfully:", res.data)
+
+    return res.data
+  } catch (err: any) {
+    console.error("❌ Failed to delete animal bite record:", err)
+    handleApiError(err, "Delete Animal Bite Record")
+  }
+}
+
+// Delete all animal bite records for a patient
+const deleteAnimalBitePatient = async (patientId: string) => {
+  try {
+    console.log(`🗑️ Deleting all animal bite records for patient ID: ${patientId}`)
+
+    const res = await api2.delete(`animalbites/patient/${patientId}/delete/`)
+    console.log("✅ All animal bite records deleted successfully:", res.data)
+
+    return res.data
+  } catch (err: any) {
+    console.error("❌ Failed to delete patient animal bite records:", err)
+    handleApiError(err, "Delete Patient Animal Bite Records")
+  }
+}
+
+// Test function to fetch patients
+const testFetchPatients = async () => {
+  try {
+    console.log("🧪 Testing patient fetching...")
+    const patients = await getAllPatients()
+    console.log(`✅ Successfully fetched ${patients.length} patients`)
+    console.log("📊 Sample patient data:", patients.slice(0, 2))
+    return patients
+  } catch (error) {
+    console.error("❌ Failed to fetch patients:", error)
+    return []
+  }
+}
+
+export {
+  submitAnimalBiteReferral,
+  updateAnimalBiteRecord,
+  deleteAnimalBiteRecord,
+  deleteAnimalBitePatient,
+  testApiConnection,
+  testFetchPatients,
+  getOptionName,
+}

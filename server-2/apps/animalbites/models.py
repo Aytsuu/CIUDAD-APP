@@ -8,7 +8,7 @@ class AnimalBite_Referral(models.Model):
     date = models.DateField(auto_now=True)
     transient = models.BooleanField(default=False)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name="referrals")
-
+    
     class Meta:
         db_table = "animalbite_referral"
         

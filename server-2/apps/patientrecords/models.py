@@ -1,16 +1,57 @@
 from django.db import models
+from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
 
+# Create your models here.
+
+# class Patient(models.Model):
+#     pat_id = models.BigAutoField(primary_key=True)
+#     pat_type = models.CharField(max_length=100, default="Resident")
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     pat_status = models.CharField(max_length=100, default="Active")
+#     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='patients', db_column='rp_id', null=True)
+#     class Meta:
+#         db_table = 'patient'
+#         ordering = ['-created_at']
 class Patient(models.Model):
-    pat_id = models.BigAutoField(primary_key=True)
+    pat_id = models.CharField(
+        max_length=15,
+        primary_key=True,
+        editable=False,
+        unique=True
+    )
+    pat_id = models.CharField(
+        max_length=15,
+        primary_key=True,
+        editable=False,
+        unique=True
+    )
     pat_type = models.CharField(max_length=100, default="Resident")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     pat_status = models.CharField(max_length=100, default="Active")
-    rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='patients', db_column='rp_id', null=True)
+    rp_id = models.ForeignKey(
+       ResidentProfile,
+        on_delete=models.CASCADE,
+        related_name='patients',
+        db_column='rp_id',
+        null=True
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.pat_id and self.rp_id and hasattr(self.rp_id, 'per') and self.rp_id.per.per_dob:
+            year = self.rp_id.per.per_dob.year
+            type_code = 'R' if self.pat_type.lower() == 'resident' else 'T'
+            prefix = f'P{type_code}{year}'
+            count = Patient.objects.filter(pat_id__startswith=prefix).count() + 1
+            self.pat_id = f'{prefix}{str(count).zfill(4)}'
+        super().save(*args, **kwargs)
+
     class Meta:
         db_table = 'patient'
         ordering = ['-created_at']
+
  
 class PatientRecord(models.Model):
     patrec_id = models.BigAutoField(primary_key=True)
@@ -20,7 +61,6 @@ class PatientRecord(models.Model):
     class Meta:
         db_table = 'patient_record'
         ordering = ['-patrec_id']
-        
         
 class VitalSigns(models.Model):
     vital_id = models.BigAutoField(primary_key=True)
@@ -73,7 +113,7 @@ class Spouse(models.Model):
     spouse_mnane = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouses' ,null=True)
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouse', db_column='pat_id')
 
     class Meta:
         db_table = 'spouse'
@@ -87,7 +127,7 @@ class BodyMeasurement(models.Model):
     bmi_category = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='body_measurements')
+    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='body_measurements', null=True)
     
     class Meta:
         db_table = 'body_measurement'
@@ -127,8 +167,7 @@ class PhysicalExamination(models.Model):
     
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='physical_examinations', null=True)
     pel = models.ForeignKey(PhysicalExamList, on_delete=models.CASCADE, related_name='physical_examinations',null=True)
-    
-    
+
     class Meta:
         db_table = 'physical_examination'
     
