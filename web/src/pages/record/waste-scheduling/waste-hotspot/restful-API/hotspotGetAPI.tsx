@@ -18,3 +18,12 @@ export const getSitio = async () => {
         console.error(err)
     }
 }
+
+export const getHotspotRecords = async () => {
+    try{
+        const res = await api.get('waste/waste-hotspot/');
+        return res.data
+    } catch (err){
+        console.error(err)
+    }
+}
