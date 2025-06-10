@@ -269,7 +269,7 @@ export default function VaccinationForm() {
           "vaccination/vaccination-record/",
           {
             patrec_id: patrec_id,
-            vacrec_status: "pending",
+            vacrec_status: "partially vaccinated",
             varec_total_doses: maxDoses,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -287,6 +287,8 @@ export default function VaccinationForm() {
         vital_temp: data.temp?.toString() || "",
         vital_RR: "N/A",
         vital_o2: data.o2?.toString() || "",
+        vital_pulse: data.pr?.toString() || "",
+
         created_at: new Date().toISOString(),
       });
       vital_id = vitalSignsResponse.data.vital_id;

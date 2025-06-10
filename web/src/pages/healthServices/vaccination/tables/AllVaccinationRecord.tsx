@@ -10,7 +10,7 @@ import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import {
-  DropdownMenu,
+  DropdownMenu, 
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
@@ -139,17 +139,7 @@ export default function AllVaccinationRecords() {
   
 
   const columns: ColumnDef<VaccinationRecord>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.original.pat_id}
-          </div>
-        </div>
-      ),
-    },
+   
     {
       accessorKey: "patient",
       header: ({ column }) => (
@@ -223,8 +213,7 @@ export default function AllVaccinationRecords() {
       header: "Action",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <TooltipLayout
-            trigger={
+        
               <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
                <Link 
               to="/invVaccinationRecord"
@@ -234,26 +223,11 @@ export default function AllVaccinationRecords() {
                 }
               }}
             >
-              <Eye size={15} />
-            </Link> 
+View            </Link> 
               </div>
-            }
-            content="View"
-          />
-          <TooltipLayout
-            trigger={
-              <div
-                className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"
-                onClick={() => {
-                  setRecordToArchive(row.original.pat_id);
-                  setIsArchiveConfirmationOpen(true);
-                }}
-              >
-                <Trash size={16} />
-              </div>
-            }
-            content="Archive"
-          />
+      
+           
+        
         </div>
       ),
     },

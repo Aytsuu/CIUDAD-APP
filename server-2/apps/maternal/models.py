@@ -16,6 +16,9 @@ class Prenatal_Form(models.Model):
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id')
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id')
 
+    patrec_id = models.OneToOneField(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id',        null=True  # TEMPORARY to handle existing records
+)
+    
     class Meta:
         db_table = 'prenatal_form'
 

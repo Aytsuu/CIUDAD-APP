@@ -1,35 +1,29 @@
-// VaccineStockForm.tsx
 import { Button } from "@/components/ui/button/button";
-
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import {
   VaccineStockType,
   VaccineStocksSchema,
-} from "@/form-schema/inventory/inventoryStocksSchema";
-import UseHideScrollbar from "@/components/ui/HideScrollbar";
+} from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { useEffect, useState } from "react";
 import { getVaccine } from "../REQUEST/Get";
-import { addVaccineStock } from "../REQUEST/Post";
-import { VaccineTransactionPayload } from "../REQUEST/Payload";
-import { AntigenTransaction } from "../REQUEST/Post";
-import { InventoryAntigenPayload } from "../REQUEST/Payload";
-import { addInventory } from "../REQUEST/Inventory";
-import {FormDateTimeInput} from "@/components/ui/form/form-date-time-input";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { Link, useNavigate } from "react-router";
+import { Pill, CircleCheck,Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQueries";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI";
 
-export default function VaccineStockForm() {
-  UseHideScrollbar();
-  const [vaccineOptions, setVaccineOptions] = useState<
-    { id: string; name: string }[]
-  >([]);
 
+export default function AddVaccineStock() {
+  const [vaccineOptions, setVaccineOptions] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<VaccineStockType>({
     resolver: zodResolver(VaccineStocksSchema),
@@ -37,11 +31,13 @@ export default function VaccineStockForm() {
       vac_id: "",
       batchNumber: "",
       volume: undefined,
-      qty: undefined, // Now as number
+      qty: undefined,
       expiryDate: "",
       solvent: "doses",
     },
   });
+
+  const { mutate: submit, isPending } = useSubmitVaccineStock();
 
   useEffect(() => {
     const fetchVaccines = async () => {
@@ -54,106 +50,175 @@ export default function VaccineStockForm() {
         setLoading(false);
       }
     };
-
     fetchVaccines();
   }, []);
 
-  // Watch form values
   const solvent = form.watch("solvent");
   const vialBoxCount = form.watch("qty") || 0;
   const dosesPcsCount = form.watch("volume") || 0;
-
-  const onSubmit = async (data: VaccineStockType) => {
-    console.log("Submitting:", data);
-    try {
-      setIsSubmitting(true);
-      const validatedData = VaccineStocksSchema.parse(data);
-
-      // First create inventory record
-      const inv_type = "Antigen";
-      const inventoryResponse = await addInventory(data, inv_type);
-
-      if (!inventoryResponse?.inv_id) {
-        throw new Error("Failed to generate inventory ID.");
-      }
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
+  const totalDoses = solvent === "doses" ? vialBoxCount * dosesPcsCount : null;
+  const [isAddConfirmationOpen, setIsAddConfirmationOpen] = useState(false);
+  const batchNumbers = useBatchNumbers();
 
 
-      // Convert vac_id to number
-      const vac_id = Number(validatedData.vac_id);
-      if (isNaN(vac_id)) {
-        alert("Invalid vaccine selection");
-        return;
-      }
 
-      // Then add the stock using the inventory ID we just created
-      const addedStock = await addVaccineStock(validatedData, vac_id, inv_id);
+    const [formData, setFormData] = useState<VaccineStockType | null>(null);
+  
 
-      if (!addedStock || !addedStock.vacStck_id) {
-        throw new Error("Failed to get the new stock ID");
-      }
-
-      // Then create the transaction record using the new stock's ID
-      const transactionData = VaccineTransactionPayload(
-        addedStock.vacStck_id, // Use the newly created stock's ID
-        validatedData.qty.toString(),
-        "Added",
-        validatedData.solvent,
-        validatedData.volume
+    const isDuplicateBatchNumber = (
+      stocks: { batchNumber: string }[],
+      newBatchNumber: string
+    ) => {
+      return stocks.some(
+        (stock) =>
+          stock.batchNumber.trim().toLowerCase() === newBatchNumber.trim().toLowerCase()
       );
+    };
+    
 
-      await AntigenTransaction(transactionData);
+    const onSubmit = (data: VaccineStockType) => {
+        setFormData(data);
+        if (isDuplicateBatchNumber(batchNumbers, data.batchNumber)) {
+          form.setError("batchNumber", {
+            type: "manual",
+            message: "Batch number already exists for this immunization supply",
+          });
+          return;
+        }
+        setIsAddConfirmationOpen(true);
+      };
 
-      form.reset();
-      alert("Vaccine stock added successfully!");
-    } catch (error) {
-      console.error("Full error:", error);
-      const errorMessage =
-        (error as any)?.response?.data?.error ||
-        (error as any)?.response?.data?.details ||
-        "Failed to add vaccine stock";
-      alert(`Error: ${errorMessage}`);
-    } finally {
-      setIsSubmitting(false);
-    }
+
+  const confirmAdd =async () => {
+
+    if (!formData) return;
+    setIsAddConfirmationOpen(false);
+
+    submit(formData, {
+      onSuccess: () => {
+        toast.success("Commodity item added successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000,
+        });
+        form.reset();
+        navigate("/mainInventoryStocks");
+      },
+      onError: (error: Error) => {
+        console.error("Error in handleSubmit:", error);
+        toast.error("Failed to add commodity item");
+      },
+    });
   };
 
- 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1 hide-scrollbar">
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-6 p-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect control={form.control} name="vac_id" label="Vaccine Name" options={vaccineOptions}/>
-            <FormInput control={form.control} name="batchNumber" label="Batch Number" placeholder="Batch number"/>
-          </div>
+    <div className="w-full flex items-center justify-center p-4 sm:p-4">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5"
+        >
+          <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+            <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+            Add Vaccine Stocks
+          </Label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormSelect control={form.control} name="solvent" label="Solvent Type" options={[{ id: "diluent", name: "Diluent" },{ id: "doses", name: "Doses" },]}/> 
-            {solvent === "diluent" && (
-              <FormInput control={form.control} name="volume" label="Dosage (ml)" type="number" />
-            )}
-          </div> 
+          <div className="space-y-6 p-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormSelect
+                control={form.control}
+                name="vac_id"
+                label="Vaccine Name"
+                options={vaccineOptions}
+                isLoading={loading}
+              />
+              <FormInput
+                control={form.control}
+                name="batchNumber"
+                label="Batch Number"
+                placeholder="Batch number"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput control={form.control} name="qty" label={solvent === "doses" ? "Number of Vials" : "Number of Containers"} type="number"/>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormDateTimeInput
+                control={form.control}
+                name="expiryDate"
+                label="Expiry Date"
+                type="date"
+              />
+              <FormSelect
+                control={form.control}
+                name="solvent"
+                label="Solvent Type"
+                options={[
+                  { id: "diluent", name: "Diluent" },
+                  { id: "doses", name: "Doses" },
+                ]}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormInput
+                control={form.control}
+                name="qty"
+                label={solvent === "doses" ? "Number of Vials" : "Number of Containers"}
+                type="number"
+              />
+              {solvent === "diluent" ? (
+                <FormInput
+                  control={form.control}
+                  name="volume"
+                  label="Dosage (ml)"
+                  type="number"
+                />
+              ) : (
+                <FormInput
+                  control={form.control}
+                  name="volume"
+                  label="Doses per Vial"
+                  type="number"
+                />
+              )}
+            </div>
+
             {solvent === "doses" && (
-              <FormInput control={form.control} name="volume" label="Doses per Vial" type="number"/>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <Label className="text-darkGray mb-2">Total Doses</Label>
+                  <div className="border rounded px-3 py-2 bg-gray-100">
+                    {totalDoses?.toString() || "0"}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormDateTimeInput control={form.control} name="expiryDate" label="Expiry Date" type="date"/>
-          </div>
-        </div>
 
-        <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-          <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save Stock"}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  </div>
+          <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
+            <Button variant="outline" className="w-full">
+              <Link to="/mainInventoryStocks">Cancel</Link>
+            </Button>
+            <Button type="submit" className="w-full" disabled={isPending}>
+
+            {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}            </Button>
+          </div>
+        </form>
+      </Form>
+
+
+      <ConfirmationDialog
+              isOpen={isAddConfirmationOpen}
+              onOpenChange={setIsAddConfirmationOpen}
+              onConfirm={confirmAdd}
+              title="Add Vaccine Stock"
+              description={`Are you sure you want to add new Stock for Vaccine?`}
+            />
+    </div>
   );
 }

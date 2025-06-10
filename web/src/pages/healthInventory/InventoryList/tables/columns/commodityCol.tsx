@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button/button";
 import { Edit, Trash } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import EditCommodityModal from "../../editListModal/EditCommodityModal";
-
+import { Link
+  
+ } from "react-router";
 export type CommodityRecords = {
-  id: number;
-  commodityName: string;
+  id: string;
+  com_name: string;
+  cat_id: string;
+  cat_name: string; // Add this
 };
 
 export const CommodityColumns = (
-  setIsDialog: (isOpen: boolean) => void,
-  setComToDelete: (id: number) => void,
+  setComToDelete: (id: string) => void,
   setIsDeleteConfirmationOpen: (isOpen: boolean) => void
 ): ColumnDef<CommodityRecords>[] => [
   {
@@ -27,27 +30,31 @@ export const CommodityColumns = (
     ),
   },
   {
-    accessorKey: "commodityName",
+    accessorKey: "com_name",
     header: "Commodity Name",
+  },
+  {
+    accessorKey: "cat_name",
+    header: "Category",
   },
   {
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
       <div className="flex justify-center gap-2">
-        <DialogLayout
-          trigger={
-            <Button variant="outline">
-              <Edit size={16} />
-            </Button>
-          }
-          mainContent={
-            <EditCommodityModal
-              initialData={row.original}
-              setIsDialog={setIsDialog}
-            />
-          }
-        />
+       <Button variant="outline">
+          <Link
+            to="/editCommodityList"
+            state={{
+              params: {
+                initialData: row.original, // Pass entire row data
+              },
+            }}
+          >
+     
+            <Edit size={16} />
+          </Link>
+        </Button>
         <Button
           variant="destructive"
           size="sm"

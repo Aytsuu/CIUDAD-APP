@@ -1,10 +1,8 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Pill, Syringe, Package, LigatureIcon as Bandage } from "lucide-react"
-import VaccinationList from "./TransactionVaccineList"
+import VaccinationList from "./TransactionAntigen"
 import FirstAidList from "./TransactionFirstAidList"
 import MedicineList from "./TransactionMedicineList"
 import CommodityList from "./TransactionCommodityList"
@@ -32,8 +30,8 @@ export default function TransactionMainInventoryList() {
     switch (selectedView) {
       case "medicine":
         return "Medicine Transaction"
-      case "vaccine":
-        return "Vaccine Transaction"
+      case "antigen":
+        return "Antigen Transaction"
       case "commodity":
         return "Commodity Transaction"
       case "firstaid":
@@ -72,11 +70,11 @@ export default function TransactionMainInventoryList() {
                   <span>Medicine</span>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="vaccine"
+                  value="antigen"
                   className="flex items-center gap-2 py-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
                 >
                   <Syringe className="h-4 w-4" />
-                  <span>Vaccine</span>
+                  <span>Antigen</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="commodity"
@@ -99,7 +97,7 @@ export default function TransactionMainInventoryList() {
               <TabsContent value="medicine" className="mt-0">
                 <MedicineList />
               </TabsContent>
-              <TabsContent value="vaccine" className="mt-0">
+              <TabsContent value="antigen" className="mt-0">
                 <VaccinationList />
               </TabsContent>
               <TabsContent value="commodity" className="mt-0">

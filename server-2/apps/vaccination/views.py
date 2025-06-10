@@ -25,6 +25,7 @@ class VitalSignsView(generics.ListCreateAPIView):
 class VaccinationHistoryView(generics.ListCreateAPIView):
     serializer_class = VaccinationHistorySerializer
     queryset  =VaccinationHistory.objects.all()
+    
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     
@@ -59,7 +60,7 @@ class VaccinationHistorRecordView(generics.ListAPIView):
         ).exclude(
             vacrec__vacrec_status='forwarded'
         ).order_by('-created_at')  # Optional: latest first
-    
+     
     
 # class VaccinationRecordByPatientView(generics.ListAPIView):
 #     serializer_class = VaccinationRecordSerializer

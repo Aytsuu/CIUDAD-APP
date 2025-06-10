@@ -11,7 +11,7 @@ import {
   type VaccineSchemaType,
 } from "@/form-schema/vaccineSchema";
 import {
-  VitalSignsSchema,
+  VitalSignsSchema, 
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -80,7 +80,7 @@ export default function PatNewVacRecForm() {
       form.setValue("mname", personalInfo?.per_mname || "");
       form.setValue("sex", personalInfo?.per_sex || "");
       form.setValue("dob", personalInfo?.per_dob || "");
-      form.setValue("age", `${calculateAge(personalInfo?.per_dob)} old`);
+      form.setValue("age", `${calculateAge(personalInfo?.per_dob)} `);
       form.setValue("patientType", selectedPatient.pat_type || "Resident");
 
       // Set address information if available
@@ -364,6 +364,8 @@ export default function PatNewVacRecForm() {
         vital_temp: data.temp?.toString() || "",
         vital_RR: "N/A",
         vital_o2: data.o2?.toString() || "",
+        vital_pulse: data.pr?.toString() || "",
+
         created_at: new Date().toISOString(),
       });
       vital_id = vitalSignsResponse.data.vital_id;
@@ -371,7 +373,7 @@ export default function PatNewVacRecForm() {
       // Step 4: Deduct vaccine from stock
       await deductVaccineStock(vacStck_id);
 
-      let vac_type_choices = vaccineData.vaccinelist.vac_type;
+      let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
 
       if (vac_type_choices === "routine") {
         let interval = vaccineData.vaccinelist.routine_frequency.interval;
@@ -396,6 +398,7 @@ export default function PatNewVacRecForm() {
           }
         );
         followv_id = followUpVisitResponse.data.followv_id;
+
       } else {
         if (vaccineData.vaccinelist.no_of_doses >= 2) {
           const dose2Interval = vaccineData.vaccinelist.intervals.find(

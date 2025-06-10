@@ -3,35 +3,24 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput } from "lucide-react";
+import { Search, FileInput } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { handleDeleteFirstAidList } from "../requests/DeleteRequest";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { FirstAidColumns } from "./MedicineListColumsn";
-import { FirstAidRecords } from "./MedicineListColumsn";
-import { getTransactionFirstAid } from "../requests/GetRequest";
+import { FirstAidColumns } from "./columns/FirstAidCol";
+import { FirstAidRecords } from "./type";
+import { getTransactionFirstAid } from "../restful-api/GetRequest";
+import { useFirstaid } from "../queries/FetchQueries";
+
 
 export default function FirstAidList() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
-    React.useState(false);
-  const [faToDelete, setFaToDelete] = React.useState<number | null>(null);
-  const [isDialog, setIsDialog] = React.useState(false);
-  const queryClient = useQueryClient();
-
-  // Fetch first aid data using useQuery
-  const { data: firstAidData, isLoading: isLoadingFirstAid } = useQuery({
-    queryKey: ["TransactionfirstAid"],
-    queryFn: getTransactionFirstAid,
-    refetchOnMount: true,
-    staleTime: 0,
-  });
-
+  const{data:firstAidData, isLoading: isLoadingFirstAid} = useFirstaid();
+  const columns = FirstAidColumns();
+  
   // Format first aid data
   const formatFirstAidData = React.useCallback(() => {
     if (!firstAidData) return [];
@@ -64,19 +53,6 @@ export default function FirstAidList() {
     currentPage * pageSize
   );
 
-  // Handle delete operation
-  const handleDelete = async () => {
-    if (faToDelete !== null) {
-      await handleDeleteFirstAidList(faToDelete, () => {
-        queryClient.invalidateQueries({ queryKey: ["firstAid"] });
-      });
-      setIsDeleteConfirmationOpen(false);
-      setFaToDelete(null);
-    }
-  };
-
-  // Generate columns using FirstAidColumns
-  const columns = FirstAidColumns();
 
   if (isLoadingFirstAid) {
     return (
@@ -161,13 +137,7 @@ export default function FirstAidList() {
         </div>
       </div>
 
-      <ConfirmationDialog
-        isOpen={isDeleteConfirmationOpen}
-        onOpenChange={setIsDeleteConfirmationOpen}
-        onConfirm={handleDelete}
-        title="Delete First Aid Item"
-        description="Are you sure you want to delete this first aid item? This action cannot be undone."
-      />
+    
     </div>
   );
 }

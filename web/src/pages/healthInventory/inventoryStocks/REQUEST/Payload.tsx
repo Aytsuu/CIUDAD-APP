@@ -1,5 +1,5 @@
 import { MedicineStockType, CommodityStockType } from "../REQUEST/type";
-import { ImmunizationSuppliesType } from "@/form-schema/inventory/inventoryStocksSchema";
+import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 // export const MedicinePayload = (
 //   data: any, // Replace with the correct type if available
 //   inv_id: number 

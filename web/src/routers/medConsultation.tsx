@@ -3,6 +3,8 @@ import AllMedicalConRecords from "@/pages/healthServices/medicalconsultation/med
 import NonPHMedicalForm from "@/pages/healthServices/medicalconsultation/NoPHmedForm";
 import InvMedicalConRecords from "@/pages/healthServices/medicalconsultation/medicalconsultationRecords/IndividualRecords";
 import PHMedicalForm from "@/pages/healthServices/medicalconsultation/PHmedForm";
+import MedConView from "@/pages/healthServices/medicalconsultation/DisplayMedCon";
+
 export const medicalConsultation = [
  
   {
@@ -20,7 +22,14 @@ export const medicalConsultation = [
     element: <AllMedicalConRecords />,
   },
   {
-    path: "/invMedRecords",
+    path: "/invMedicalRecord",
     element: <InvMedicalConRecords />,
   },
+
+  {
+    path: "/viewMedConRecord",
+    element: <MedConView />,
+  }
+
+
 ];

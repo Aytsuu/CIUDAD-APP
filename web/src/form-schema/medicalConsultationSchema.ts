@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { positiveNumberSchema } from "@/helpers/PositiveNumber";
 
 
 
 export const PhilHealthSchema = z.object({
+  pat_id:positiveNumberSchema,
   isTransient: z.string().default("Resident"),
   atc:z.string().min(1,"Please Select"),
   pin:z.number().min(1,"Pin is required"),
@@ -12,7 +14,7 @@ export const PhilHealthSchema = z.object({
   lname: z.string().min(1, "Last Name is required"),
   mname: z.string(),
   date: z.string().min(1, "Date is required"),
-  age: z.number().min(1, "Age is required"),
+  age: z.string().min(1, "Age is required"),
   sex: z.string().min(1, "Sex is required"),
   status:z.string().min(1,"Status is required"),
   dob: z.string().min(1, "Date of Birth is required"),
@@ -22,14 +24,15 @@ export const PhilHealthSchema = z.object({
   barangay: z.string().min(1, "Barangay is required"),
   province: z.string().optional(),
   city: z.string().optional(),
+  
   bhwAssign: z.string().min(1, "BHW Assignment is required"),
-  hr: z.number().min(1, "Heart rate is required"),
-  bpsystolic: z.number().min(1, "Blood pressure Systolic is required"),
-  bpdiastolic: z.number().min(1, "Blood pressure Diastolic is required"),
-  rrc: z.number().min(1, "Respiratory Rate Count is required"),
-  temp: z.number().min(1, "Temperature is required"),
-  ht: z.number(),
-  wt: z.number(),
+  hr: positiveNumberSchema, //z.number().min(1, "Heart rate is required"),
+  bpsystolic:positiveNumberSchema, // z.number().min(1, "Blood pressure Systolic is required"),
+  bpdiastolic: positiveNumberSchema,//z.number().min(1, "Blood pressure Diastolic is required"),
+  rrc: positiveNumberSchema,//z.number().min(1, "Respiratory Rate Count is required"),
+  temp:   positiveNumberSchema,// z.number().min(1, "Temperature is required"),
+  ht: positiveNumberSchema,
+  wt: positiveNumberSchema,
   chiefComplaint: z.string(),
   doctor: z.string().min(1,"Doctor is required")
 });

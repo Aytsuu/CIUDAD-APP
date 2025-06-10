@@ -50,7 +50,7 @@ export interface VaccinationRecord {
     vaccinelist: {
       vac_id: number;
       vaccat_details: {
-        vaccat_id: number;
+        category: string;
         vaccat_type: string;
       };
       intervals: {
@@ -68,7 +68,7 @@ export interface VaccinationRecord {
       specify_age: string;
       created_at: string;
       updated_at: string;
-      vaccat_id: number;
+      category: string;
     };
 
     inv_id: number;
@@ -210,17 +210,7 @@ export default function IndivVaccinationRecords() {
   };
 
   const columns: ColumnDef<VaccinationRecord>[] = [
-    {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-            {row.index + 1}
-          </div>
-        </div>
-      ),
-    },
+  
     {
       accessorKey: "vaccine_name",
       header: "Vaccine",
@@ -258,8 +248,8 @@ export default function IndivVaccinationRecords() {
                   <span>{vital.vital_temp}°C</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="font-medium mr-1">RR:</span>
-                  <span>{vital.vital_RR}</span>
+                  {/* <span className="font-medium mr-1">RR:</span>
+                  <span>{vital.vital_RR}</span> */}
                 </div>
                 <div className="flex items-center">
                   <span className="font-medium mr-1">O2:</span>

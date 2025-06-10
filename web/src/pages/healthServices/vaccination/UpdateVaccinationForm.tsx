@@ -301,6 +301,7 @@ console.log("Patrec",Vaccination.patrec_id);
         vital_temp: data.temp?.toString() || "",
         vital_RR: "N/A",
         vital_o2: data.o2?.toString() || "",
+        vital_pulse: data.pr?.toString() || "",
         created_at: new Date().toISOString(),
       });
       vital_id = vitalSignsResponse.data.vital_id;

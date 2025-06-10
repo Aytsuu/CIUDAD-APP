@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from datetime import date  # Add this import
+from rest_framework import serializers
 
 
 
@@ -14,16 +15,21 @@ class PartialUpdateMixin:
 
 
 class MedicineListSerializers(serializers.ModelSerializer):
+    catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
     class Meta: 
         model = Medicinelist
         fields = '__all__'
   
 class FirstAidListSerializers(serializers.ModelSerializer):
+    catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
+    
     class Meta:
         model = FirstAidList
         fields = '__all__'
 
 class CommodityListSerializers(serializers.ModelSerializer):
+    catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
+
     class Meta:
         model = CommodityList
         fields = '__all__'
@@ -35,9 +41,6 @@ class CategorySerializers(serializers.ModelSerializer):
         model=Category
         fields = '__all__'
     
-from datetime import date
-from rest_framework import serializers
-from .models import Inventory  # Ensure the correct import path
 
 class InventorySerializers(serializers.ModelSerializer):
     class Meta:
@@ -70,12 +73,11 @@ class InventorySerializers(serializers.ModelSerializer):
 class MedicineInventorySerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     med_detail = MedicineListSerializers(source='med_id', read_only=True)  
-    cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     med_id = serializers.PrimaryKeyRelatedField(queryset=Medicinelist.objects.all())
-    cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    # cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
 
     class Meta:
@@ -97,7 +99,6 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)
     minv_detail = MedicineInventorySerializer(source='minv_id', read_only=True)
     med_detail = MedicineListSerializers(source='med_id', read_only=True)
-    cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
     med_name = serializers.CharField(source='minv_id.med_id.med_name', read_only=True)
 
@@ -108,9 +109,7 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
     med_id = serializers.PrimaryKeyRelatedField(
         queryset=Medicinelist.objects.all(), write_only=True, required=False
     )
-    cat_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), write_only=True, required=False
-    )
+   
 
     class Meta:
         model = MedicineTransactions
@@ -121,12 +120,11 @@ class MedicineTransactionSerializers(serializers.ModelSerializer):
 class CommodityInventorySerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     com_detail = CommodityListSerializers(source='com_id', read_only=True)  
-    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+    # cat_detail = CategorySerializers(source='cat_id', read_only=True)
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     com_id = serializers.PrimaryKeyRelatedField(queryset=CommodityList.objects.all())
-    cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
-
+    # cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
     class Meta:
         model = CommodityInventory
@@ -147,7 +145,6 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)
     cinv_detail = CommodityInventorySerializer(source='cinv_id', read_only=True)
     com_detail = CommodityListSerializers(source='com_id', read_only=True)
-    cat_detail = CategorySerializers(source='cat_id', read_only=True)
 
 
     com_name = serializers.CharField(source='cinv_id.com_id.com_name', read_only=True)
@@ -159,26 +156,20 @@ class CommodityTransactionSerializer(serializers.ModelSerializer):
     com_id = serializers.PrimaryKeyRelatedField(
         queryset=Medicinelist.objects.all(), write_only=True, required=False
     )
-    cat_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), write_only=True, required=False
-    )
-
-
     class Meta:
         model = CommodityTransaction
         fields = '__all__'
         
-       
-
+    
 class FirstAidInventorySerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)  
-    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+    # cat_detail = CategorySerializers(source='cat_id', read_only=True)
     
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     fa_id = serializers.PrimaryKeyRelatedField(queryset=FirstAidList.objects.all())
-    cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    # cat_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
 
     class Meta:
@@ -201,7 +192,7 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
     inv_detail = InventorySerializers(source='inv_id', read_only=True)
     finv_detail = FirstAidInventorySerializer(source='finv_id', read_only=True)
     fa_detail = FirstAidListSerializers(source='fa_id', read_only=True)
-    cat_detail = CategorySerializers(source='cat_id', read_only=True)
+    # cat_detail = CategorySerializers(source='cat_id', read_only=True)
     fa_name = serializers.CharField(source='finv_id.fa_id.fa_name', read_only=True)
 
     # Write-only fields for creation
@@ -211,9 +202,9 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
     fa_id = serializers.PrimaryKeyRelatedField(
         queryset=FirstAidList.objects.all(), write_only=True, required=False
     )
-    cat_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), write_only=True, required=False
-    )
+    # cat_id = serializers.PrimaryKeyRelatedField(
+    #     queryset=Category.objects.all(), write_only=True, required=False
+    # )
 
     class Meta:
         model = FirstAidTransactions
@@ -222,15 +213,13 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
 
 
 
-class VaccineCategorySerializer(serializers.ModelSerializer):
+# class VaccineCategorySerializer(serializers.ModelSerializer):
      
-    class Meta:
-        model = VaccineCategory
-        fields = '__all__'
+#     class Meta:
+#         model = AntigenCategory
+#         fields = '__all__'
 
 class ImmunizationSuppliesSerializer(serializers.ModelSerializer):
-    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
-
     class Meta:
         model = ImmunizationSupplies
         fields = '__all__'
@@ -246,7 +235,6 @@ class RoutineFrequencySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VacccinationListSerializer(serializers.ModelSerializer):
-    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     
     # All intervals for this vaccine (using the related_name)
     intervals = VaccineIntervalSerializer(many=True, read_only=True)
@@ -259,7 +247,6 @@ class VacccinationListSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class VaccineStockSerializer(serializers.ModelSerializer):
-    vaccat_details = VaccineCategorySerializer(source='vaccat_id', read_only=True)
     vaccinelist = VacccinationListSerializer(source='vac_id', read_only = True)
     inv_details = InventorySerializers(source='inv_id', read_only=True)
     # Foreign keys (required for creation but optional for updates)
@@ -282,11 +269,19 @@ class VaccineStockSerializer(serializers.ModelSerializer):
         
 
 class AntigenTransactionSerializer(serializers.ModelSerializer):
+    vaccine_detail = VaccineStockSerializer(source='imzStck_id', read_only=True)
+
+    vacStck_id = VaccineStockSerializer(read_only=True)
     class Meta:
         model = AntigenTransaction
         fields = '__all__' 
         
 class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
+    inv_details = InventorySerializers(source='inv_id', read_only=True)
+    immunization_supplies = ImmunizationSuppliesSerializer(source='imz_id', read_only=True)
+    
+    inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    imz_id = serializers.PrimaryKeyRelatedField(queryset=ImmunizationSupplies.objects.all())
     class Meta:
         model = ImmunizationStock
         fields = '__all__'
@@ -302,6 +297,9 @@ class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
         
         
 class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
+    imzstock_detail = ImmnunizationStockSuppliesSerializer(source='imzStck_id', read_only=True)
+    imzStck_id = serializers.PrimaryKeyRelatedField(queryset=ImmunizationStock.objects.all())
+
     class Meta:
         model = ImmunizationTransaction
         fields = '__all__'

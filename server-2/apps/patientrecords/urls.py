@@ -22,4 +22,14 @@ urlpatterns = [
 
      path('follow-up-visit/', FollowUpVisitView.as_view(), name='follow-up-visit'),
      path('follow-up-visit/<int:followv_id>/', DeleteUpdateFollowUpVisitView.as_view(), name='follow-up-visit-detail'),
+     
+     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
+     path('body-measurements/<int:body_id>/', DeleteUpdateBodyMeasurementView.as_view(), name='body-measurements-detail'),
+     path("findings/", FindingView.as_view(), name="findings"),
+     path('findings/<int:find_id>/', DeleteUpdateFindingView.as_view(), name='findings-detail'),
+     path("physial-examination/", PhysicalExaminationView.as_view(), name="physical-examination"),
+     path('physial-examination/<int:pe_id>/', DeleteUpdatePhysicalExaminationView.as_view(), name='physical-examination-detail'),
+     path("physical-exam-list/", PhysicalExamListView.as_view(), name="physical-examination-list"),
+     path('physical-exam-list/<int:pel_id>/', DeleteUpdatePhysicalExamListView.as_view(), name='physical-examination-list-detail'),
+
 ]

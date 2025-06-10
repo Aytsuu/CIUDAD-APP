@@ -26,8 +26,6 @@ class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
         model = VaccinationRecord
         fields = '__all__'
 
-
-
 class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
     vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
@@ -45,8 +43,7 @@ class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer
         fields = '__all__'
 
 
-# VACCCINATION RECORD 
-# VACCINATION RECORD 
+# ALL  VACCINATION RECORD 
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
     # vaccination_records = serializers.SerializerMethodField()

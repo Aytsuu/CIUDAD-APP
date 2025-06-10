@@ -5,12 +5,17 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { Button } from "@/components/ui/button/button";
-import { VaccineSchema, VaccineType } from "@/form-schema/inventory/inventoryListSchema";
-import { addVaccine, handlePrimaryVaccine, handleRoutineVaccine, handleSubmissionError } from "@/pages/healthInventory/InventoryList/requests/post/vaccination";
+import {
+  VaccineSchema,
+  VaccineType,
+} from "@/form-schema/inventory/lists/inventoryListSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import {useQueryClient } from "@tanstack/react-query";
-
-
+import { Label } from "@/components/ui/label";
+import { Pill, CircleCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useSubmitVaccine } from "../queries/Antigen/VaccinePostQueries";
+import { getVaccineList } from "../restful-api/Antigen/VaccineFetchAPI";
+import { toast } from "sonner";
 
 const timeUnits = [
   { id: "years", name: "Years" },
@@ -32,16 +37,12 @@ const vaccineTypes = [
   { id: "primary", name: "Primary Series" },
 ];
 
-
-interface VaccineModalProps {
-setIsDialog: (isOpen: boolean) => void;
-}
-export default function VaccinationModal({setIsDialog}: VaccineModalProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function AddVaccinationList() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [formData, setFormData] = useState<VaccineType | null>(null);
-  const queryClient = useQueryClient();
-
+  const { mutateAsync: submitVaccine, isPending: isSubmitting } =
+    useSubmitVaccine();
+  const navigate = useNavigate();
   const form = useForm<VaccineType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
@@ -54,82 +55,109 @@ export default function VaccinationModal({setIsDialog}: VaccineModalProps) {
       type: "routine",
       routineFrequency: {
         interval: 1,
-        unit: "years"
+        unit: "years",
       },
     },
   });
 
   const { watch, setValue, control, handleSubmit, reset } = form;
-  const [type, ageGroup, noOfDoses, specifyAge] = watch(["type", "ageGroup", "noOfDoses", "specifyAge"]);
+  const [type, ageGroup, noOfDoses, specifyAge] = watch([
+    "type",
+    "ageGroup",
+    "noOfDoses",
+    "specifyAge",
+  ]);
 
   useEffect(() => {
     if (noOfDoses < watch("noOfDoses") || type !== watch("type")) {
       setValue("intervals", []);
       setValue("timeUnits", []);
     }
-    if (type === 'routine') {
-      setValue('noOfDoses', 1);
+    if (type === "routine") {
+      setValue("noOfDoses", 1);
     }
   }, [noOfDoses, type, setValue, watch]);
 
-  const handleFormSubmit = (data: VaccineType) => {
-    setFormData(data);
-    setIsConfirmOpen(true);
+  const isDuplicateVaccineList = (
+    vaccinelist: any[],
+    newVaccinelist: string,
+    age_group: string
+  ) => {
+    return vaccinelist.some(
+      (vac) =>
+        vac.vac_name.trim().toLowerCase() ===
+          newVaccinelist.trim().toLowerCase() &&
+        String(vac.age_group) === String(age_group)
+    );
+  };
+
+  const handleFormSubmit = async (data: VaccineType) => {
+    console.log("Form data received:", data); // Debug log
+
+    try {
+      console.log("Checking for duplicates..."); // Debug log
+      const existingVaccineList = await getVaccineList();
+      console.log("Existing vaccine list:", existingVaccineList); // Debug log
+
+      if (!Array.isArray(existingVaccineList)) {
+        console.error(
+          "Invalid API response - expected array, got:",
+          existingVaccineList
+        );
+        throw new Error("Invalid API response - expected an array");
+      }
+
+      const isDuplicate = isDuplicateVaccineList(
+        existingVaccineList,
+        data.vaccineName,
+        data.ageGroup
+      );
+
+      console.log("Is duplicate:", isDuplicate); // Debug log
+
+      if (isDuplicate) {
+        console.log("Duplicate found, setting error"); // Debug log
+        form.setError("vaccineName", {
+          type: "manual",
+          message: "This vaccine already exists for the selected age group",
+        });
+        return;
+      }
+      setFormData(data);
+      setIsConfirmOpen(true);
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+      toast.error("Failed to verify vaccine", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
+    }
   };
 
   const confirmSubmit = async () => {
     if (!formData) return;
-    setIsDialog(false);
-    setIsSubmitting(true);
     setIsConfirmOpen(false);
-    
+
     try {
-      if (!formData.vaccineName || !formData.ageGroup) {
-        throw new Error("Vaccine name and age group are required");
-      }
-      
-      const vaccinePayload = {
-        vac_type_choices: formData.type,
-        vac_name: formData.vaccineName,
-        vaccat_id: 1,
-        no_of_doses: Number(formData.noOfDoses) || 1,
-        age_group: formData.ageGroup,
-        specify_age: formData.ageGroup === "0-5" ? String(formData.specifyAge || "") : formData.ageGroup,
-      };
-
-      const vaccineResponse = await addVaccine(vaccinePayload);
-      
-      if (!vaccineResponse?.vac_id) {
-        throw new Error("Failed to create vaccine record");
-      }
-
-      const vaccineId = vaccineResponse.vac_id;
-      
-      if (formData.type === 'primary') {
-        await handlePrimaryVaccine({ ...formData, intervals: formData.intervals || [], timeUnits: formData.timeUnits || [] }, vaccineId);
-      } else if (formData.type === 'routine') {
-        if (!formData.routineFrequency) {
-          throw new Error("Routine frequency is required");
-        }
-        await handleRoutineVaccine(
-          { ...formData, intervals: formData.intervals || [], timeUnits: formData.timeUnits || [] },
-          vaccineId
-        );
-      }
-
-      alert("Vaccine saved successfully!");
-      queryClient.invalidateQueries({ queryKey: ["vaccines"] });
-
+      await submitVaccine(formData);
       reset();
-    } catch (error: unknown) {
-      handleSubmissionError(error);
-    } finally {
-      setIsSubmitting(false);
+      navigate("/mainInventoryList");
+
+      toast.success("Vaccine added successfully", {
+        icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error("Failed to submit vaccine", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
     }
   };
 
   const renderDoseFields = () => {
-    if (type === 'routine') {
+    if (type === "routine") {
       return (
         <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
           <p className="text-sm text-blue-600 mb-2">
@@ -161,14 +189,14 @@ export default function VaccinationModal({setIsDialog}: VaccineModalProps) {
 
       const getDoseLabel = () => {
         if (isFirstDose) {
-          return ageGroup === "0-5" 
-            ? `First dose at ${specifyAge || "specified"} ` 
+          return ageGroup === "0-5"
+            ? `First dose at ${specifyAge || "specified"} `
             : `First dose for ${ageGroup}`;
         }
-        
+
         const interval = watch(`intervals.${doseIndex - 1}`);
         const timeUnit = watch(`timeUnits.${doseIndex - 1}`);
-        return interval && timeUnit 
+        return interval && timeUnit
           ? `Dose ${doseNumber} after ${interval} ${timeUnit}`
           : `Dose ${doseNumber}`;
       };
@@ -204,10 +232,17 @@ export default function VaccinationModal({setIsDialog}: VaccineModalProps) {
   };
 
   return (
-    <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+    <div className="w-full flex items-center justify-center ">
       <Form {...form}>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          <div className="space-y-6 p-2">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="bg-white p-4 w-full max-w-[500px] rounded-sm"
+        >
+          <div className="space-y-2 ">
+            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+              <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+              Add Vaccine List
+            </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormInput
                 control={control}
@@ -236,7 +271,7 @@ export default function VaccinationModal({setIsDialog}: VaccineModalProps) {
               label="Required Dose/s"
               type="number"
             />
-            {type === 'routine' && (
+            {type === "routine" && (
               <p className="text-sm text-muted-foreground">
                 Routine vaccines always have 1 required dose
               </p>
@@ -252,12 +287,22 @@ export default function VaccinationModal({setIsDialog}: VaccineModalProps) {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-darkBlue1">Dose Schedule</h3>
+            <h3 className="text-lg font-semibold text-darkBlue1">
+              Dose Schedule
+            </h3>
             {renderDoseFields()}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
+          <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Link to="/mainInventoryList">Cancel</Link>
+            </Button>
+
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </div>
