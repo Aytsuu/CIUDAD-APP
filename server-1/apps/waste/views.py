@@ -60,8 +60,6 @@ class DeleteWasteReportView(generics.DestroyAPIView):
         rep_id = self.kwargs.get('rep_id')
         return get_object_or_404(WasteReport, rep_id=rep_id) 
 
-from rest_framework import generics
-
 class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
     serializer_class = WastePersonnelSerializer
     queryset = WastePersonnel.objects.all()
@@ -152,7 +150,7 @@ class WasteTruckView(APIView):
         trucks = WasteTruck.objects.filter(truck_is_archive=is_archive)
         
         serializer = WasteTruckSerializer(trucks, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data)    
     
     def post(self, request):
         serializer = WasteTruckSerializer(data=request.data)
@@ -237,3 +235,100 @@ class CollectorPersonnelAPIView(APIView):
 class SitioListView(generics.ListCreateAPIView):
     queryset = Sitio.objects.all()
     serializer_class = SitioSerializer
+     
+class GarbagePickupRequestPendingView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestPendingSerializer
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset
+    
+class GarbagePickupRequestRejectedView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestRejectedSerializer
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset
+    
+class GarbagePickupRequestAcceptedView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestAcceptedSerializer
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset
+    
+class GarbagePickupRequestCompletedView(generics.ListAPIView):
+    serializer_class = GarbagePickupRequestCompletedSerializer
+    def get_queryset(self):
+        queryset = Garbage_Pickup_Request.objects.all()
+        status = self.request.query_params.get('status', None)
+        
+        if status:
+            queryset = queryset.filter(garb_req_status__iexact=status.lower())
+        
+        return queryset 
+
+
+class UpdateGarbagePickupRequestStatusView(generics.UpdateAPIView):
+    serializer_class = GarbagePickupRequestPendingSerializer
+    queryset = Garbage_Pickup_Request.objects.all()
+    lookup_field = 'garb_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UpdatePickupAssignmentView(generics.UpdateAPIView):
+    serializer_class = PickupAssignmentSerializer
+    queryset = Pickup_Assignment.objects.all()
+    lookup_field = 'pick_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class PickupRequestDecisionView(generics.ListCreateAPIView):
+    serializer_class = PickupRequestDecisionSerializer
+    queryset = Pickup_Request_Decision.objects.all()
+
+
+class PickupAssignmentView(generics.ListCreateAPIView):
+    serializer_class = PickupAssignmentSerializer
+    queryset = Pickup_Assignment.objects.all()
+
+class AssignmentCollectorView(generics.ListCreateAPIView):
+    serializer_class = AssignmentCollectorSerializer
+    queryset = Assignment_Collector.objects.all()
+
+class PickupConfirmationView(generics.ListCreateAPIView):
+    serializer_class = PickupConfirmationSerializer
+    queryset = Pickup_Confirmation.objects.all()
+
+class AssignmentCollectorDeleteView(generics.DestroyAPIView):
+    serializer_class = AssignmentCollectorSerializer
+    queryset = Assignment_Collector.objects.all()
+    lookup_field = 'acl_id'  # Or the primary key field name for Assignment_Collector
+
+    def get_object(self):
+        acl_id = self.kwargs.get('acl_id')
+        return get_object_or_404(Assignment_Collector, acl_id=acl_id)

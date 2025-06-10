@@ -36,4 +36,17 @@ urlpatterns = [
 
     # Sitio URL
     path("sitio/", SitioListView.as_view(), name="sitio-list")
-]
+
+    path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
+    path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
+    path('garbage-pickup-request-accepted/', GarbagePickupRequestAcceptedView.as_view(), name='garbage-pickup-request-accepted'), #retrieve accepted requests
+    path('garbage-pickup-request-completed/', GarbagePickupRequestCompletedView.as_view(), name='garbage-pickup-request-completed'), #retrieve completed requests
+    path('update-garbage-pickup-request/<int:garb_id>/', UpdateGarbagePickupRequestStatusView.as_view(), name='update-garbage-pickup-request'), #reject request update status to rejected
+    path('update-pickup-assignment/<int:pick_id>/', UpdatePickupAssignmentView.as_view(), name='update-pickup-assignment'), #update pickup assignment
+    path('delete-assignment-collector/<int:acl_id>/', AssignmentCollectorDeleteView.as_view(), name='delete-assignment-collector'), #update pickup assignment
+    path('pickup-request-decision/', PickupRequestDecisionView.as_view(), name='pickup-request-decision'),
+    path('pickup-assignment/', PickupAssignmentView.as_view(), name='pickup-assignment'),
+    path('assignment-collector/', AssignmentCollectorView.as_view(), name='assignment-collector'),
+    path('pickup-confirmation/', PickupConfirmationView.as_view(), name='pickup-confirmation'),
+
+]  
