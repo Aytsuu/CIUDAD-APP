@@ -1,22 +1,15 @@
-// CombinedTransactionList.tsx
+// src/app/combined-transactions/CombinedTransactionList.tsx
 import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
-import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileInput } from "lucide-react";
+import { Search } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { useQuery } from "@tanstack/react-query";
-import {
-  getVaccineTransactions,
-  getImmunizationTransactions,
-} from "../requests/GetRequest";
 import { Skeleton } from "@/components/ui/skeleton";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import {
-  CombinedTransactionColumns,
-  CombinedTransactionRecords,
-} from "./columns/AntigenCol";
+import { CombinedTransactionColumns } from "./columns/AntigenCol";
+import { CombinedTransactionRecords } from "./type";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { useVaccineTransaction, useImzTransactions } from "../queries/FetchQueries";
+import { ExportButton } from "@/components/ui/export";
 
 export default function CombinedTransactionList() {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -26,72 +19,47 @@ export default function CombinedTransactionList() {
     "all" | "vaccine" | "immunization"
   >("all");
 
-  // Fetch both types of transactions
-  const { data: vaccineData, isLoading: isLoadingVaccine } = useQuery({
-    queryKey: ["vaccineTransactions"],
-    queryFn: getVaccineTransactions,
-    staleTime: 0,
-  });
-
-  const { data: immunizationData, isLoading: isLoadingImmunization } = useQuery(
-    {
-      queryKey: ["immunizationTransactions"],
-      queryFn: getImmunizationTransactions,
-      staleTime: 0,
-    }
-  );
+  const { data: vaccineData, isLoading: isLoadingVaccine } = useVaccineTransaction();
+  const { data: immunizationData, isLoading: isLoadingImmunization } = useImzTransactions();
 
   const formatCombinedData = React.useCallback(() => {
     const vaccineTransactions =
-      vaccineData?.map((transaction: any) => {
-        // Debug log for each transaction
-        console.log("Vaccine Transaction:", transaction);
-
-        return {
-          id: transaction.antt_id || 0,
-          type: "Vaccine" as const,
-          name: transaction?.vacStck_id?.vaccinelist?.vac_name,
-          batch_number: String(transaction?.vacStck_id?.batch_number),
-          quantity: String(transaction.antt_qty),
-          action: String(transaction.antt_action),
-          staff: transaction.staff,
-          created_at: transaction.created_at
-            ? new Date(transaction.created_at).toLocaleDateString()
-            : "N/A",
-        };
-      }) || [];
+      vaccineData?.map((transaction: any) => ({
+        id: transaction.antt_id || 0,
+        type: "Vaccine" as const,
+        name: transaction?.vacStck_id?.vaccinelist?.vac_name,
+        batch_number: String(transaction?.vacStck_id?.batch_number),
+        quantity: String(transaction.antt_qty),
+        action: String(transaction.antt_action),
+        staff: transaction.staff,
+        created_at: transaction.created_at
+          ? new Date(transaction.created_at).toLocaleDateString()
+          : "N/A",
+      })) || [];
 
     const immunizationTransactions =
-      immunizationData?.map((transaction: any) => {
-        console.log("Immunization Transaction:", transaction);
-
-        return {
-          id: transaction.imzt_id || 0,
-          type: "Immunization" as const,
-          name:
-            transaction?.imzstock_detail?.immunization_supplies?.imz_name ||
-            "N/A",
-          batch_number: String(
-            transaction?.imzstock_detail?.batch_number || "N/A"
-          ),
-          quantity: String(transaction.imzt_qty || 0),
-          action: String(transaction.imzt_action || "Unknown"),
-          staff: transaction.staff,
-          created_at: transaction.created_at
-            ? new Date(transaction.created_at).toLocaleDateString()
-            : "N/A",
-        };
-      }) || [];
+      immunizationData?.map((transaction: any) => ({
+        id: transaction.imzt_id || 0,
+        type: "Immunization" as const,
+        name:
+          transaction?.imzstock_detail?.immunization_supplies?.imz_name || "N/A",
+        batch_number: String(
+          transaction?.imzstock_detail?.batch_number || "N/A"
+        ),
+        quantity: String(transaction.imzt_qty || 0),
+        action: String(transaction.imzt_action || "Unknown"),
+        staff: transaction.staff,
+        created_at: transaction.created_at
+          ? new Date(transaction.created_at).toLocaleDateString()
+          : "N/A",
+      })) || [];
 
     return [...vaccineTransactions, ...immunizationTransactions];
   }, [vaccineData, immunizationData]);
 
-  console.log("Combined Data:", formatCombinedData());
-  // Filter data based on search and type
   const filteredTransactions = React.useMemo(() => {
     let combined = formatCombinedData();
 
-    // Filter by type
     if (transactionType !== "all") {
       combined = combined.filter((record) =>
         transactionType === "vaccine"
@@ -100,7 +68,6 @@ export default function CombinedTransactionList() {
       );
     }
 
-    // Filter by search query
     return combined.filter((record: CombinedTransactionRecords) =>
       Object.values(record)
         .join(" ")
@@ -109,7 +76,6 @@ export default function CombinedTransactionList() {
     );
   }, [searchQuery, formatCombinedData, transactionType]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredTransactions.length / pageSize);
   const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * pageSize,
@@ -117,6 +83,21 @@ export default function CombinedTransactionList() {
   );
 
   const columns = CombinedTransactionColumns();
+
+  const exportColumns = [
+    { key: "id", header: "ID" },
+    { key: "type", header: "Type" },
+    { key: "name", header: "Name" },
+    { key: "batch_number", header: "Batch Number" },
+    { 
+      key: "quantity", 
+      header: "Quantity",
+      format: (value: string) => parseInt(value) || 0
+    },
+    { key: "action", header: "Action" },
+    { key: "staff", header: "Staff" },
+    { key: "created_at", header: "Date" },
+  ];
 
   if (isLoadingVaccine || isLoadingImmunization) {
     return (
@@ -150,9 +131,9 @@ export default function CombinedTransactionList() {
             label=""
             className="bg-white w-48"
             options={[
-              { id: "all", name: "All Types" },
-              { id: "vaccine", name: "Vaccine Only" },
-              { id: "immunization", name: "Immunization Only" },
+              { id: "all", name: "All " },
+              { id: "vaccine", name: "Vaccine " },
+              { id: "immunization", name: "Immunization Supplies" },
             ]}
             value={transactionType}
             onChange={(value) => setTransactionType(value as any)}
@@ -170,27 +151,16 @@ export default function CombinedTransactionList() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                if (value >= 1) {
-                  setPageSize(value);
-                } else {
-                  setPageSize(1);
-                }
+                setPageSize(value >= 1 ? value : 1);
               }}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
+          <ExportButton
+            data={filteredTransactions}
+            filename="transactions"
+            columns={exportColumns}
           />
         </div>
         <div className="overflow-x-auto">

@@ -1,12 +1,11 @@
 // columns/commodityStocksCol.ts
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash, Edit } from "lucide-react";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 import { CommodityStocksRecord } from "../../tables/type";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert";
+import { Plus } from "lucide-react";
 
 export const CommodityStocksColumns = (
   setCommodityToArchive: (id: number | null) => void,
@@ -203,7 +202,7 @@ export const CommodityStocksColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
-          <Button variant="outline" disabled={expired}>
+          <Button variant="outline" disabled={expired} >
             <Link
               to="/editCommodityStock"
               state={{
@@ -212,8 +211,8 @@ export const CommodityStocksColumns = (
                 },
               }}
             >
-              <Edit size={16} />
-            </Link>
+              <Plus size={16} />
+              </Link>
           </Button>
           <Button
             variant="destructive"

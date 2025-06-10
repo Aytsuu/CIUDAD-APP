@@ -9,11 +9,10 @@ export const useAddCommodityInventory = () => {
   return useMutation({
     mutationFn: ({
       data,
-      inv_id,
     }: {
       data: Record<string, any>;
       inv_id: number;
-    }) => addCommodityInventory(data, inv_id),
+    }) => addCommodityInventory(data),
     onError: (error: Error) => {
       console.error(error.message);
     },
@@ -50,10 +49,7 @@ export const useSubmitCommodityStock = () => {
   return useMutation({
     mutationFn: async (data: any) => {
       // Step 1: Create inventory record
-      const inventoryResponse = await addInventory({
-        data,
-        inv_type: "Commodity",
-      });
+      const inventoryResponse = await addInventory({ data,inv_type: "Commodity" });
 
       if (!inventoryResponse?.inv_id) {
         throw new Error("Failed to generate inventory ID.");
@@ -104,6 +100,7 @@ export const useSubmitCommodityStock = () => {
         cinv_id,
         action,
       });
+
 
       if (!commodityTransactionResponse || commodityTransactionResponse.error) {
         throw new Error("Failed to add Commodity transaction.");

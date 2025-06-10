@@ -204,7 +204,7 @@ export const getColumns = (
             </Link>
           </Button>
 
-          <Button variant="outline" disabled={expired}  className="bg-green-50 border border-green-200">
+          <Button variant="outline" disabled={expired} >
             <Link
               to="/editFirstAidStock"
               state={{

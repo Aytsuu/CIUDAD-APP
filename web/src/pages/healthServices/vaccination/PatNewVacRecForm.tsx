@@ -80,7 +80,7 @@ export default function PatNewVacRecForm() {
       form.setValue("mname", personalInfo?.per_mname || "");
       form.setValue("sex", personalInfo?.per_sex || "");
       form.setValue("dob", personalInfo?.per_dob || "");
-      form.setValue("age", `${calculateAge(personalInfo?.per_dob)} old`);
+      form.setValue("age", `${calculateAge(personalInfo?.per_dob)} `);
       form.setValue("patientType", selectedPatient.pat_type || "Resident");
 
       // Set address information if available

@@ -1,16 +1,6 @@
 // CombinedTransactionColumns.tsx
 import { ColumnDef } from "@tanstack/react-table";
-
-export type CombinedTransactionRecords = {
-  id: number;
-  type: 'Vaccine' | 'Immunization';
-  name: string;
-  batch_number: string;
-  quantity: string;
-  action: string;
-  staff: number;
-  created_at: string;
-};
+import { CombinedTransactionRecords } from "../../tables/type";
 
 export const CombinedTransactionColumns = (): ColumnDef<CombinedTransactionRecords>[] => {
   return [
@@ -23,17 +13,7 @@ export const CombinedTransactionColumns = (): ColumnDef<CombinedTransactionRecor
         </div>
       ),
     },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <div className="capitalize">
-          {row.original.type}
-          {row.original.type === 'Vaccine' && ' 💉'}
-          {row.original.type === 'Immunization' && ' 🏥'}
-        </div>
-      ),
-    },
+  
     {
       accessorKey: "name",
       header: "Item Name",

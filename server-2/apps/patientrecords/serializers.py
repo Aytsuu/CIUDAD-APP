@@ -42,6 +42,8 @@ class PatientSerializer(serializers.ModelSerializer):
         resident_profiles = obj.rp_id.per.personal_information.all()
         households = Household.objects.filter(rp__in=resident_profiles)
         return HouseholdMinimalSerializer(households, many=True, context=self.context).data
+    
+    
 
 
 class PatientRecordSerializer(serializers.ModelSerializer):

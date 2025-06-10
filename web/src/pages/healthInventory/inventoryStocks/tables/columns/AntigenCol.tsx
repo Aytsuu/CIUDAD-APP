@@ -292,7 +292,7 @@ export const getStockColumns = (
             </Link>
             </Button>
 
-          <Button variant="outline" disabled={expired}  className="bg-green-50 border border-green-200" asChild>
+          <Button variant="outline" disabled={expired}   asChild>
             <Link
               to={isVaccine ? "/editVaccineStock" : "/editImzSupplyStock"}
               state={{ initialData: vaccine }}

@@ -1,31 +1,13 @@
 import {api} from "@/pages/api/api";
 
-// Commodity Inventory API
 export const addCommodityInventory = async (
-  data: Record<string, any>,
-  inv_id: number
+  data: Record<string, any>
 ) => {
   try {
     if (!data.com_id) {
       throw new Error("Commodity ID is required.");
     }
-
-    const qty = Number(data.cinv_qty) || 0;
-    const pcs = Number(data.cinv_pcs) || 0;
-    const cinv_qty_avail = data.cinv_qty_unit === "boxes" ? qty * pcs : qty;
-
-    const res = await api.post("inventory/commodityinventorylist/", {
-      com_id:data.com_id,
-      cat_id: Number(data.cat_id) || 0,
-      cinv_qty: qty,
-      cinv_qty_unit: data.cinv_qty_unit,
-      cinv_pcs: pcs,
-      cinv_recevFrom: data.cinv_recevFrom.toUpperCase() || "",
-      cinv_dispensed: 0,
-      cinv_qty_avail: cinv_qty_avail,
-      inv_id: inv_id,
-      expiryDate: data.expiryDate || null,
-    });
+    const res = await api.post("inventory/commodityinventorylist/", data);
 
     if (res.data.error) {
       throw new Error(res.data.error);
@@ -33,9 +15,11 @@ export const addCommodityInventory = async (
 
     return res.data;
   } catch (err) {
-    console.error(err)
-}
+    console.error(err);
+    throw err; 
+  }
 };
+
 
 export const addCommodityTransaction = async (
   string_qty: string,

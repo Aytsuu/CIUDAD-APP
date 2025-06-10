@@ -120,8 +120,8 @@ class MedicineInventory(models.Model):
     minv_pcs = models.PositiveIntegerField(default=0)
     minv_distributed = models.PositiveIntegerField(default=0)
     minv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,  db_column='inv_id')
-    med_id = models.ForeignKey('Medicinelist', on_delete=models.CASCADE, db_column='med_id')
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,  db_column='inv_id')
+    med_id = models.ForeignKey(Medicinelist, on_delete=models.CASCADE, db_column='med_id')
 
     class Meta: 
         db_table = 'medicine_inventory'
@@ -135,7 +135,7 @@ class MedicineTransactions(models.Model):
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.CASCADE,  db_column='minv_id')
+    minv_id = models.ForeignKey(MedicineInventory, on_delete=models.CASCADE,  db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
@@ -151,7 +151,7 @@ class CommodityInventory(models.Model):
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
-    com_id = models.ForeignKey('CommodityList', on_delete=models.CASCADE)
+    com_id = models.ForeignKey(CommodityList, on_delete=models.CASCADE)
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:
@@ -164,7 +164,7 @@ class CommodityTransaction(models.Model):
     comt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.CASCADE,  db_column='cinv_id')
+    cinv_id = models.ForeignKey(CommodityInventory, on_delete=models.CASCADE,  db_column='cinv_id')
 
     class Meta:
         db_table = 'commodity_transaction'
@@ -179,8 +179,8 @@ class FirstAidInventory(models.Model):
     finv_pcs = models.PositiveIntegerField(default=0)
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
-    fa_id = models.ForeignKey('FirstAidList', on_delete=models.CASCADE)
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE)
+    fa_id = models.ForeignKey(FirstAidList, on_delete=models.CASCADE)
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:
@@ -194,7 +194,7 @@ class FirstAidTransactions(models.Model):
     fat_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.CASCADE,  db_column='finv_id')
+    finv_id = models.ForeignKey(FirstAidInventory, on_delete=models.CASCADE,  db_column='finv_id')
 
     class Meta:
         db_table = 'firstaid_transaction'
@@ -220,7 +220,7 @@ class VaccineList(models.Model):
 class VaccineInterval(models.Model):
     vacInt_id = models.BigAutoField(primary_key=True)
     vac_id = models.ForeignKey(
-        'VaccineList', 
+        VaccineList, 
         on_delete=models.CASCADE,  
         db_column='vac_id',
         related_name='intervals'
@@ -238,7 +238,7 @@ class RoutineFrequency(models.Model):
     dose_number = models.PositiveIntegerField(default=0)
     time_unit = models.CharField(max_length=100)
     vac_id = models.OneToOneField(
-        'VaccineList', 
+        VaccineList, 
         on_delete=models.CASCADE,
         related_name='routine_frequency'
     )
@@ -260,8 +260,8 @@ class VaccineStock(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
-    vac_id = models.ForeignKey('VaccineList',on_delete=models.CASCADE,related_name='vaccine_stock')
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
+    vac_id = models.ForeignKey(VaccineList,on_delete=models.CASCADE,related_name='vaccine_stock')
  
     class Meta:
         db_table = 'vaccine_stocks'
@@ -273,7 +273,7 @@ class AntigenTransaction(models.Model):
     antt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
-    vacStck_id = models.ForeignKey('VaccineStock', on_delete=models.CASCADE,  db_column='vacStck_id',related_name='antigen_transactions')
+    vacStck_id = models.ForeignKey(VaccineStock, on_delete=models.CASCADE,  db_column='vacStck_id',related_name='antigen_transactions')
 
 
     class Meta:
@@ -306,8 +306,8 @@ class ImmunizationStock(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,related_name='immunization_stock')
-    imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.CASCADE ,related_name='immunization_stock')
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,related_name='immunization_stock')
+    imz_id = models.ForeignKey(ImmunizationSupplies,on_delete=models.CASCADE ,related_name='immunization_stock')
 
     
     class Meta:
@@ -320,7 +320,7 @@ class ImmunizationTransaction(models.Model):
     imzt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
-    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.CASCADE, db_column='imzStck_id')
+    imzStck_id = models.ForeignKey(ImmunizationStock, on_delete=models.CASCADE, db_column='imzStck_id')
 
 
     class Meta:

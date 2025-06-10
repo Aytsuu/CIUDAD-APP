@@ -1,6 +1,5 @@
 import {api} from "@/pages/api/api";
 
-// Fetches the list of medicines from the API
 export const getTransactionMedicines = async () => {
   try {
     const res = await api.get("inventory/medicinetransaction/");
@@ -31,13 +30,8 @@ export const getTransactionFirstAid = async () => {
 
 export const getTransactionCommodity = async() =>{
   try{
-
     const res = await api.get("inventory/commoditytransaction/");
-
-
-    if(res.status==200){
-      return res.data;
-    }
+    if(res.status==200){ return res.data;}
     console.error(res.status)
     return[]
   }catch(err){
@@ -46,20 +40,14 @@ export const getTransactionCommodity = async() =>{
   }
   
 }
-
 
 
 
 
 export const getVaccineTransactions = async() =>{
   try{
-
     const res = await api.get("inventory/antigens_stocks/");
-
-
-    if(res.status==200){
-      return res.data;
-    }
+    if(res.status==200){return res.data;}
     console.error(res.status)
     return[]
   }catch(err){
@@ -70,16 +58,10 @@ export const getVaccineTransactions = async() =>{
 }
 
 
-
 export const getImmunizationTransactions = async() =>{
   try{
-
     const res = await api.get("inventory/imz_transaction/");
-
-
-    if(res.status==200){
-      return res.data;
-    }
+    if(res.status==200){ return res.data; }
     console.error(res.status)
     return[]
   }catch(err){

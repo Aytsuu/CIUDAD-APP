@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
-import { Trash, Edit } from "lucide-react";
+import { Trash, Plus } from "lucide-react";
 import { Link } from "react-router";
 import { MedicineStocksRecord } from "../type";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert";
@@ -205,7 +205,7 @@ export const getColumns = (
                 },
               }}
             >
-              <Edit size={16} />
+              <Plus size={16} />
             </Link>
           </Button>
           <Button
