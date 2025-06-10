@@ -121,7 +121,7 @@ class WasteHotspot(models.Model):
     wh_num = models.BigAutoField(primary_key=True)
     wh_date = models.DateField(null=True)
     wh_time = models.TimeField(null=True)
-    wh_add_info = models.CharField(max_length=200, null=True)
+    wh_add_info = models.CharField(max_length=200, null=True, blank=True)
     wh_is_archive = models.BooleanField(default=False)
     sitio_id = models.ForeignKey(
         'profiling.Sitio',

@@ -36,7 +36,6 @@ urlpatterns = [
 
     # Sitio URL
     path("sitio/", SitioListView.as_view(), name="sitio-list"),
-
-
+    
     path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman")
 ]

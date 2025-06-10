@@ -36,7 +36,6 @@ class WasteHotspotView(generics.ListCreateAPIView):
             'sitio_id'                   
         ).all()
 
-
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()
