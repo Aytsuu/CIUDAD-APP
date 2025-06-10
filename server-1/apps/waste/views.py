@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status, filters
 from .models import WasteTruck
 from apps.profiling.models import Sitio
+from rest_framework import generics
 
 # Create your views here.
 #KANI 3RD
@@ -64,8 +65,6 @@ class DeleteWasteReportView(generics.DestroyAPIView):
     def get_object(self):
         rep_id = self.kwargs.get('rep_id')
         return get_object_or_404(WasteReport, rep_id=rep_id) 
-
-from rest_framework import generics
 
 class WastePersonnelView(generics.ListAPIView):  # ONLY GET method allowed
     serializer_class = WastePersonnelSerializer
@@ -226,7 +225,7 @@ class DriverPersonnelAPIView(APIView):
 #get Collectors for garbage collection Form
 class CollectorPersonnelAPIView(APIView):
     def get(self, request, *args, **kwargs): 
-        allowed_positions = ["Waste Collector", "Colector"]  
+        allowed_positions = ["Waste Collector", "Collector"]  
         
         collectors = WastePersonnel.objects.filter(
             staff_id__pos__pos_title__in=allowed_positions

@@ -3,24 +3,32 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { FileInput, Search, Plus, Trash, Pen} from "lucide-react";
+import { FileInput, Search, Plus, Trash, Pen, Archive, ArchiveRestore} from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import WasteHotSched from "./waste-hotspot-sched";
 import { useState } from "react";
 import { useGetHotspotRecords, type Hotspot } from "./queries/hotspotFetchQueries";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HistoryTable } from "@/components/ui/table/history-table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 function WasteHotspotMain() {
     const [ isDialogOpen, setIsDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("active")
     const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
 
-    const columns: ColumnDef<Hotspot>[] = [
+     const commonColumns: ColumnDef<Hotspot>[] = [
         { accessorKey: "watchman", header: "Watchman" },
         { accessorKey: "wh_date", header: "Assignment Date" },
         { accessorKey: "wh_time", header: "Assignment Time" },
         { accessorKey: "sitio", header: "Sitio" },
-        { accessorKey: "wh_add_info", header: "Additional Info" },
+        { accessorKey: "wh_add_info", header: "Additional Info" }
+    ];
+
+    // Columns for active tab
+    const activeColumns: ColumnDef<Hotspot>[] = [
+        ...commonColumns,
         {
             accessorKey: "action", 
             header: "Action",
@@ -32,9 +40,32 @@ function WasteHotspotMain() {
                             content="Edit"
                         />
                         <TooltipLayout
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer" > <Trash size={16} /></div>}
-                            content = "Delete"
-                            />
+                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                            content="Delete"
+                        />
+                    </div>
+                )
+            }
+        }
+    ];
+
+    // Columns for archive tab
+    const archiveColumns: ColumnDef<Hotspot>[] = [
+        ...commonColumns,
+        {
+            accessorKey: "action", 
+            header: "Action",
+            cell: ({ row }) => {
+                return (
+                    <div className="flex justify-center gap-2">
+                        <TooltipLayout
+                            trigger={<div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
+                            content="Restore"
+                        />
+                        <TooltipLayout
+                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                            content="Delete"
+                        />
                     </div>
                 )
             }
@@ -112,10 +143,35 @@ function WasteHotspotMain() {
                             </DropdownMenu>                    
                         </div>
                     </div>
+                    
+                     <Tabs value={activeTab} onValueChange={setActiveTab}>
+                        <div className='ml-5'>
+                            <TabsList className="grid w-full grid-cols-2 max-w-xs">
+                                <TabsTrigger value="active">Active  Watchlist</TabsTrigger>
+                                <TabsTrigger value="all">
+                                    <div className="flex items-center gap-2">
+                                        <Archive size={16} /> Archive
+                                    </div>
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
 
-                    <div className="border overflow-auto max-h-[400px]">
-                        <DataTable columns={columns} data={fetchedData}></DataTable>
-                    </div>
+                        <TabsContent value="active">
+                            <div className="border overflow-auto max-h-[400px]">
+                                <DataTable 
+                                    columns={activeColumns} 
+                                    data={fetchedData.filter(row => row.wh_is_archive === false)} 
+                                />
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="all">
+                            <div className="border overflow-auto max-h-[400px]">
+                                <HistoryTable columns={archiveColumns} data={fetchedData.filter(row => row.wh_is_archive == true)} />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+
                 </div>
             </div>
         </div>
