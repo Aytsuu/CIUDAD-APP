@@ -4,18 +4,24 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { ResidentReportColumns } from "../DRRColumns";
+import { IRColumns } from "../ReportColumns";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { FileInput } from "lucide-react";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import React from "react";
+import { useGetIncidentReport } from "../queries/reportFetch";
 
 // Main component for displaying the DRR Resident Report
 export default function IRRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const { data: incidentReports, isLoading } = useGetIncidentReport();
+
+  const IRList = incidentReports?.results || [];
+  const totalCount = incidentReports?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <MainLayoutComponent
@@ -71,21 +77,25 @@ export default function IRRecords() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={ResidentReportColumns()} data={[]} />
+          <DataTable 
+            columns={IRColumns()} 
+            data={IRList} 
+            isLoading={isLoading}
+          />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
-            {/* Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredResidents.length)} of{" "}
-            {filteredResidents.length} rows */}
+            Showing {(currentPage - 1) * pageSize + 1}-
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} rows
           </p>
-          {/* {paginatedResidents.length > 0 && (
+          {totalPages > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
             />
-          )} */}
+          )}
         </div>
       </div>
     </MainLayoutComponent>

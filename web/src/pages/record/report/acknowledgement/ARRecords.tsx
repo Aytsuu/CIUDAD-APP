@@ -5,7 +5,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { acknowledgeReportColumns } from "../DRRColumns";
+import { acknowledgeReportColumns } from "../ReportColumns";
 import { Link } from "react-router";
 
 // Main component for the DRR Acknowledgement Report

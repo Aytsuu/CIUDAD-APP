@@ -16,6 +16,9 @@ import { useGetSitio } from "@/screens/_global_queries/Retrieve"
 import { formatSitio } from "@/helpers/formatSitio"
 import { Input } from "@/components/ui/input"
 import { useAddIncidentReport } from "../queries/reportAdd"
+import { useGetReportType } from "../queries/reportFetch"
+import { formatReportType } from "@/helpers/formatReportType"
+import { capitalizeAllFields } from "@/helpers/capitalize"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
@@ -26,13 +29,15 @@ export default () => {
   const [addReportType, setAddReportType] = React.useState<string>('');
   const [isOtherType, setIsOtherType] = React.useState<boolean>(false);
   const { mutateAsync: addIncidentReport } = useAddIncidentReport();
-  const { data: sitioList, isLoading } = useGetSitio();
+  const { data: sitioList, isLoading: isLoadingSitioList } = useGetSitio();
+  const { data: irReportType, isLoading: isLoadingIRReportType} = useGetReportType();
   const { control, trigger, getValues, watch } = useForm<IncidentReport>({
     resolver: zodResolver(IncidentReportSchema),
     defaultValues
   });
 
   const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
+  const formattedRT = React.useMemo(() => formatReportType(irReportType), [irReportType]);
   
   React.useEffect(() => {
     const type = watch('ir_type');
@@ -49,9 +54,8 @@ export default () => {
     const formIsValid = await trigger([
       'ir_add_details',
       'ir_street',
-      'ir_time',
       'ir_type',
-      'sitio',
+      'ir_sitio',
     ]);
 
     if (!selectedImage) {
@@ -66,10 +70,11 @@ export default () => {
 
     try {
       const values = getValues();
-      addIncidentReport({
+      addIncidentReport(capitalizeAllFields({
         ...values,
-        'ir_other_type': addReportType
-      }, {
+        'ir_other_type': addReportType,
+        'rp': "00003250609",
+      }), {
         onSuccess: () => {
           
         }
@@ -80,8 +85,9 @@ export default () => {
     console.log(formIsValid);
   }
 
-  if(isLoading) return;
-
+  if(isLoadingSitioList || isLoadingIRReportType) {
+    return;
+  }
   return (
     <_ScreenLayout
       header={'Incident Report'}
@@ -98,15 +104,17 @@ export default () => {
             contentContainerStyle={{ paddingBottom: 120 }}
             keyboardShouldPersistTaps="handled"
           >
-            <FormSelect label="Type" control={control} name="ir_type" options={[{label: 'Other', value: 'other'}]} />
+            <FormSelect label="Type" control={control} name="ir_type" options={[
+              ...formattedRT,
+              {label: 'Other', value: 'other'}
+            ]} />
             {isOtherType && 
               <View>
                 <Input value={addReportType} onChangeText={(text) => setAddReportType(text)} />
               </View>
             }
-            <FormSelect label="Sitio" control={control} name="sitio" options={formattedSitio} />
+            <FormSelect label="Sitio" control={control} name="ir_sitio" options={formattedSitio} />
             <FormInput label="Street" control={control} name="ir_street" />
-            <FormTimeInput label="Time " control={control} name='ir_time' mode="12h" />
             <FormTextArea 
               label="Additional Details" 
               control={control} 

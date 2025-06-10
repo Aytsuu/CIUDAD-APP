@@ -5,10 +5,8 @@ export const IncidentReportSchema = z.object({
     .min(1),
   ir_add_details: z.string()
     .min(1),
-  ir_time: z.string()
-    .min(1),
   ir_street: z.string()
     .min(1),
-  sitio: z.string()
+  ir_sitio: z.string()
     .min(1),
 })

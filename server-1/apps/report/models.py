@@ -11,7 +11,7 @@ class ReportType(models.Model):
 class IncidentReport(models.Model):
   ir_id = models.BigAutoField(primary_key=True)
   ir_add_details = models.TextField()
-  ir_time = models.TimeField()
+  ir_time = models.TimeField(auto_now_add=True)
   ir_date = models.DateField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
@@ -53,8 +53,11 @@ class WeeklyARComposition(models.Model):
 
 class IncidentReportFile(models.Model):
   irf_id = models.BigAutoField(primary_key=True)
+  irf_name = models.CharField(max_length=500)
+  irf_type = models.CharField(max_length=50)
+  irf_path = models.CharField(max_length=100)
+  irf_url = models.URLField()
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE)
-  file = models.ForeignKey('file.File', on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'incident_report_file'

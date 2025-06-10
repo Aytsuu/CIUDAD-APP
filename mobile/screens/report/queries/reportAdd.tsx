@@ -9,6 +9,7 @@ export const useAddIncidentReport = () => {
         const res = await api.post('report/ir/create/', data);
         return res.data;
       } catch (err) {
+        console.log(err)
         throw err;
       }
     }

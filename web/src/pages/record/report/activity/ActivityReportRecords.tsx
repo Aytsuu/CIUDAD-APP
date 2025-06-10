@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { ResidentReportColumns } from "../DRRColumns";
+import { IRColumns } from "../ReportColumns";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { Button } from "@/components/ui/button/button";
 import { FileInput } from "lucide-react";
@@ -71,7 +71,7 @@ export default function ActivityReportRecords() {
           />
         </div>
         <div className="overflow-x-auto">
-          <DataTable columns={ResidentReportColumns()} data={[]} />
+          <DataTable columns={IRColumns()} data={[]} />
         </div>
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
