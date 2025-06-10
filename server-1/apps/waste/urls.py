@@ -35,7 +35,7 @@ urlpatterns = [
     path('waste-ass-collectors/', WasteCollectorView.as_view(), name='waste-ass-collectors'),   
 
     # Sitio URL
-    path("sitio/", SitioListView.as_view(), name="sitio-list")
+    path("sitio/", SitioListView.as_view(), name="sitio-list"),
 
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
