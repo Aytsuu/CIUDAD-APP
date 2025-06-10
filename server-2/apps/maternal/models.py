@@ -7,18 +7,27 @@ from apps.patientrecords.models import PatientRecord
 # from apps.healthProfiling.models import Staff
 
 # ************** prenatal **************
+today = datetime.now()
+month = str(today.month).zfill(2)  
+year = str(today.year)
+
 class Prenatal_Form(models.Model):
-    pf_id = models.BigAutoField(primary_key=True)
+    pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
     pf_lmp = models.DateField()
     pf_edc = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id')
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True)  # TEMPORARY to handle existing records
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id')
+    # patrec_id = models.OneToOneField(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True  # TEMPORARY to handle existing records)
 
-    patrec_id = models.OneToOneField(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id',        null=True  # TEMPORARY to handle existing records
-)
-    
+    def save(self, *args, **kwargs):
+        if not self.pf_id:
+            prefix = f'PF{month}{year}'
+            count = Prenatal_Form.objects.filter(pf_id__startswith=prefix).count() + 1
+            self.pf_id = f'{prefix}{str(count).zfill(4)}'
+
+
     class Meta:
         db_table = 'prenatal_form'
 
@@ -120,7 +129,7 @@ class Checklist(models.Model):
 
 # ************** postpartum **************
 class PostpartumRecord(models.Model):
-    ppr_id = models.CharField(primary_key=True, max_length=15, unique=True, editable=False)
+    ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
     ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
     ppr_tor = models.CharField(max_length=100, default="Not Applicable")
     ppr_lochial_discharges = models.CharField(max_length=100)
@@ -134,13 +143,9 @@ class PostpartumRecord(models.Model):
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, null=True, related_name='postpartum_record', db_column='pf_id')
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
-    today = datetime.now()
-    month = str(today.month).zfill(2)  
-    year = str(today.year)
-
     def save(self, *args, **kwargs):
         if not self.ppr_id:
-            prefix = f'PPR{self.month}{self.year}'
+            prefix = f'PPR{month}{year}'
             count = PostpartumRecord.objects.filter(ppr_id__startswith=prefix).count() + 1
             self.ppr_id = f'{prefix}{str(count).zfill(5)}'
         super().save(*args, **kwargs)
@@ -156,6 +161,7 @@ class PostpartumDeliveryRecord(models.Model):
     ppdr_place_of_delivery = models.CharField(max_length=50)
     ppdr_attended_by = models.CharField(max_length=50)
     ppdr_outcome = models.CharField(max_length=50)
+    ppr_id = models.ForeignKey(PostpartumRecord, on_delete=models.CASCADE, related_name='postpartum_delivery_record', db_column='ppr_id')
 
     class Meta:
         db_table = 'postpartum_delivery_record'

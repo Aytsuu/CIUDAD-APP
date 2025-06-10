@@ -14,6 +14,7 @@ from apps.healthProfiling.models import Personal, ResidentProfile
 #     class Meta:
 #         db_table = 'patient'
 #         ordering = ['-created_at']
+
 class Patient(models.Model):
     pat_id = models.CharField(
         max_length=15,
