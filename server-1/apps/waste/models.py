@@ -29,19 +29,6 @@ class WasteCollectionStaff(models.Model):
         db_table = 'waste_collection_staff'
 
 
-class WasteHotspot(models.Model):
-    wh_num = models.BigAutoField(primary_key=True)
-    wh_date = models.DateField(null=True)
-    wh_time = models.TimeField(null=True)
-    wh_add_info = models.CharField(max_length=200, null=True)
-    # sitio_id = models.ForeignKey(Sitio, on_delete=models.CASCADE)
-    # staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'waste_hotspot'
-
-
 class WasteReport(models.Model):
     rep_id = models.BigAutoField(primary_key=True)
     rep_image = models.CharField(default="none")
@@ -129,6 +116,36 @@ class WasteTruck(models.Model):
     class Meta:
         db_table = 'truck'
 
+
+class WasteHotspot(models.Model):
+    wh_num = models.BigAutoField(primary_key=True)
+    wh_date = models.DateField(null=True)
+    wh_time = models.TimeField(null=True)
+    wh_add_info = models.CharField(max_length=200, null=True)
+    wh_is_archive = models.BooleanField(default=False)
+    sitio_id = models.ForeignKey(
+        'profiling.Sitio',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        db_column='sitio_id'
+    )
+    
+    wstp_id =  models.ForeignKey(
+        'WastePersonnel', 
+        on_delete=models.CASCADE,
+        db_column='wstp_id',
+        default= None,
+    )
+
+    class Meta:
+        db_table = 'waste_hotspot'
+
+    # staff_id =  models.ForeignKey(
+    #     'profiling.Staff', 
+    #     on_delete=models.CASCADE,
+    #     db_column='staff_id'
+    # ),
 
 class WasteCollectionSched(models.Model):
     wc_num = models.BigAutoField(primary_key=True)
