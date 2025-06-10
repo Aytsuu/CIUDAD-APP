@@ -117,7 +117,7 @@ class Checklist(models.Model):
 
 # ************** postpartum **************
 class PostpartumRecord(models.Model):
-    ppr_id = models.BigAutoField(primary_key=True)
+    ppr_id = models.CharField(primary_key=True, max_length=15, unique=True, editable=False)
     ppr_transferred_fr = models.CharField(max_length=100, default="Not Applicable")
     ppr_tor = models.CharField(max_length=100, default="Not Applicable")
     ppr_lochial_discharges = models.CharField(max_length=100)
@@ -128,11 +128,19 @@ class PostpartumRecord(models.Model):
     ppr_time_of_bf = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pf_id')
+    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, null=True, related_name='postpartum_record', db_column='pf_id')
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
-    # def save(self, *args, **kwargs):
-    #     if not 
+    today = datetime.now()
+    month = str(today.month).zfill(2)  
+    year = str(today.year)
+
+    def save(self, *args, **kwargs):
+        if not self.ppr_id:
+            prefix = f'PPR{self.month}{self.year}'
+            count = PostpartumRecord.objects.filter(ppr_id__startswith=prefix).count() + 1
+            self.ppr_id = f'{prefix}{str(count).zfill(5)}'
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'postpartum_record'  
