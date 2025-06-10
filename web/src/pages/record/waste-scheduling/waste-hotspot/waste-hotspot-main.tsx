@@ -13,8 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { useArchiveHotspot } from "./queries/hotspotDeleteQueries";
-import { formatDate } from "@/helpers/dateFormatter";
+import { useArchiveHotspot, useDeleteHotspot } from "./queries/hotspotDeleteQueries";
 import { formatTime } from "@/helpers/timeFormatter";
 
 function WasteHotspotMain() {
@@ -22,9 +21,14 @@ function WasteHotspotMain() {
     const [activeTab, setActiveTab] = useState("active")
     const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
     const { mutate : archiveHotspot} = useArchiveHotspot()
+    const { mutate: deleteHotspot} = useDeleteHotspot()
 
     const handleConfirm = (wh_num: string) => {
         archiveHotspot(wh_num);
+    }
+
+    const handleDelete = (wh_num: string) => {
+        deleteHotspot(wh_num)
     }
 
      const commonColumns: ColumnDef<Hotspot>[] = [
@@ -52,7 +56,16 @@ function WasteHotspotMain() {
                 return (
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
-                            trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16}/></div>}
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16}/></div>}
+                                        actionLabel="Confirm"
+                                        description=""
+                                        title=""
+                                    />
+                                </div>
+                            }
                             content="Edit"
                         />
                         <TooltipLayout
@@ -89,7 +102,17 @@ function WasteHotspotMain() {
                             content="Restore"
                         />
                         <TooltipLayout
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                                        title="Permanent Deletion Confirmation"
+                                        description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
+                                        actionLabel="confirm"
+                                        onClick={() => handleDelete(row.original.wh_num)}
+                                    />
+                                </div>
+                            }
                             content="Delete"
                         />
                     </div>

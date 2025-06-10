@@ -2,7 +2,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import z from "zod"
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { archiveHotspot } from "../restful-API/hotspotDeleteAPI";
+import { archiveHotspot, deleteHotspot } from "../restful-API/hotspotDeleteAPI";
 
 export const useArchiveHotspot = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
@@ -28,6 +28,31 @@ export const useArchiveHotspot = (onSuccess?: () => void) => {
             id: "updateGarbageStatus",
             duration: 2000
             });
+        }
+    })
+}
+
+export const useDeleteHotspot = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: (wh_num: string) => deleteHotspot(wh_num),
+      onSuccess: () => {
+            toast.loading("Deleting record...", { id: "deleteHotspot" });
+
+            toast.success('Schedule deleted successfully', {
+            id: 'deleteHotspot',
+            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+            duration: 2000
+        });
+
+        queryClient.invalidateQueries({ queryKey: ['hotspots'] });
+        
+        if (onSuccess) onSuccess();
+    },
+        onError: (err) => {
+        console.error("Error archiving entry:", err);
+        toast.error("Failed to archive entry");
         }
     })
 }

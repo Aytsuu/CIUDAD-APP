@@ -53,6 +53,14 @@ class UpdateHotspotView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class DeleteHotspotView(generics.DestroyAPIView):
+    serializer_class = WasteHotspotSerializer    
+    queryset = WasteHotspot.objects.all()
+
+    def get_object(self):
+        wh_num = self.kwargs.get('wh_num')
+        return get_object_or_404(WasteHotspot, wh_num=wh_num) 
     
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
