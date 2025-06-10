@@ -41,6 +41,19 @@ class WasteHotspotView(generics.ListCreateAPIView):
             'sitio_id'                   
         ).all()
 
+class UpdateHotspotView(generics.RetrieveUpdateAPIView): 
+    serializer_class = WasteHotspotSerializer
+    queryset = WasteHotspot.objects.all()
+    lookup_field = 'wh_num'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class WasteReportView(generics.ListCreateAPIView):
     serializer_class = WasteReportSerializer
     queryset = WasteReport.objects.all()

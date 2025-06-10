@@ -37,6 +37,7 @@ urlpatterns = [
     # Sitio URL
     path("sitio/", SitioListView.as_view(), name="sitio-list"),
     path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman"),
+    path('update-waste-hotspot/<int:wh_num>/', UpdateHotspotView.as_view(), name='update-waste-hotspot'),
 
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests

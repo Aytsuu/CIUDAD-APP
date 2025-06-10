@@ -12,16 +12,32 @@ import { useGetHotspotRecords, type Hotspot } from "./queries/hotspotFetchQuerie
 import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/table/history-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useArchiveHotspot } from "./queries/hotspotDeleteQueries";
+import { formatDate } from "@/helpers/dateFormatter";
+import { formatTime } from "@/helpers/timeFormatter";
 
 function WasteHotspotMain() {
     const [ isDialogOpen, setIsDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("active")
     const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
+    const { mutate : archiveHotspot} = useArchiveHotspot()
+
+    const handleConfirm = (wh_num: string) => {
+        archiveHotspot(wh_num);
+    }
 
      const commonColumns: ColumnDef<Hotspot>[] = [
         { accessorKey: "watchman", header: "Watchman" },
-        { accessorKey: "wh_date", header: "Assignment Date" },
-        { accessorKey: "wh_time", header: "Assignment Time" },
+        { accessorKey: "wh_date", header: "Assignment Date"},
+        { 
+            accessorKey: "wh_time", 
+            header: "Assignment Time",
+            cell: ({ row }) => {
+                const date = row.original.wh_time;
+                return formatTime(date);
+            }
+        },
         { accessorKey: "sitio", header: "Sitio" },
         { accessorKey: "wh_add_info", header: "Additional Info" }
     ];
@@ -40,7 +56,17 @@ function WasteHotspotMain() {
                             content="Edit"
                         />
                         <TooltipLayout
-                            trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                            trigger={
+                                <div>
+                                    <ConfirmationModal
+                                        trigger={ <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                                        title="Delete Schedule"
+                                        description="This schedule will be archived and removed from the active list. Do you wish to proceed?"
+                                        actionLabel="Confirm"
+                                        onClick={() => handleConfirm(row.original.wh_num)}
+                                    />
+                                </div>
+                            }
                             content="Delete"
                         />
                     </div>
