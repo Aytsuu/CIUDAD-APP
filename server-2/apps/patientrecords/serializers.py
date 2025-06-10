@@ -146,3 +146,30 @@ class SpouseCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"{field} is required.")
             
         return data
+class BodyMeasurementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BodyMeasurement
+        fields = '__all__'
+
+class IllnessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Illness
+class FindingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Finding
+        fields = '__all__'
+        
+class PhysicalExaminationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalExamination
+        fields = '__all__'
+
+class PhysicalExamListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhysicalExamList
+        fields = '__all__'
+        
+class DiagnosisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Diagnosis
+        fields = '__all__'

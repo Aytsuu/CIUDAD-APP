@@ -113,7 +113,6 @@ class Spouse(models.Model):
     spouse_mnane = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouses' ,null=True)
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouse', db_column='pat_id')
 
     class Meta:
