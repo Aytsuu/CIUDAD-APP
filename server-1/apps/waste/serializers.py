@@ -57,3 +57,4 @@ class WasteCollectorSerializer(serializers.ModelSerializer):
     class Meta:
         model = WasteCollector
         fields = '__all__' 
+

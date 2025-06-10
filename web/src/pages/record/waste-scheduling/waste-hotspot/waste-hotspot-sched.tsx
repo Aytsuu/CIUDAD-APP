@@ -1,21 +1,18 @@
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SelectLayout } from '@/components/ui/select/select-layout';
-import { Textarea } from '@/components/ui/textarea';
+import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { Button } from '@/components/ui/button/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
 import WasteHotspotSchema from '@/form-schema/waste-hots-form-schema';
-
-// Define the options for sitios and announcements
-const sitioOptions = [
-    { id: "sitio1", label: "Sitio 1" },
-    { id: "sitio2", label: "Sitio 2" },
-];
+import { FormSelect } from '@/components/ui/form/form-select';
+import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
+import { useGetWatchman } from './queries/hotspotFetchQueries';
+import { useGetSitio } from './queries/hotspotFetchQueries';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const announcementOptions = [
     { id: "all", label: "All" },
@@ -27,15 +24,30 @@ const announcementOptions = [
     { id: "watchmen", label: "Watchmen" },
 ];
 
+
+
 function WasteHotSched() {
+    const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
+    const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
+    const watchmanOptions = fetchedWatchman.map(watchman => ({
+        id: watchman.id,  
+        name: `${watchman.firstname} ${watchman.lastname}`  
+    }));
+
+    const sitioOptions = fetchedSitio.map(sitio => ({
+        id: sitio.sitio_id,  
+        name: sitio.sitio_name 
+    }));
+
+
     const form = useForm<z.infer<typeof WasteHotspotSchema>>({
         resolver: zodResolver(WasteHotspotSchema),
         defaultValues: {
             date: '',
             time: '',
             additionalInstructions: '',
-            selectedSitios: [], // Ensure this is an array of strings
-            selectedAnnouncements: [], // Ensure this is an array of strings
+            sitio: '', 
+            selectedAnnouncements: [], 
             watchman: '',
         },
     });
@@ -45,122 +57,64 @@ function WasteHotSched() {
         // Handle form submission
     };
 
-    const handleResetSitios = () => {
-        form.setValue('selectedSitios', []);
-    };
-
     const handleResetAnnouncements = () => {
         form.setValue('selectedAnnouncements', []);
     };
 
+    if(isLoadingSitio || isLoadingWatchman){
+         return (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <div className="flex justify-end">
+                    <Skeleton className="h-10 w-24" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 max-w-4xl mx-auto">
-                <Label className="text-lg font-semibold leading-none tracking-tight text-darkBlue1">WATCHMAN FOR HOTSPOT</Label>
-
-                {/* Sitio Selection */}
-                <FormField
-                    control={form.control}
-                    name="selectedSitios"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Sitio:</Label>
-                            <Accordion type="multiple" className="w-full">
-                                <AccordionItem value="sitios">
-                                    <AccordionTrigger>Select Sitio</AccordionTrigger>
-                                    <AccordionContent className='flex flex-col gap-3'>
-                                        {sitioOptions.map((option) => (
-                                            <div key={option.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={option.id}
-                                                    checked={field.value.includes(option.id)}
-                                                    onCheckedChange={(checked) => {
-                                                        const newSelected = checked
-                                                            ? [...field.value, option.id]
-                                                            : field.value.filter((id) => id !== option.id);
-                                                        field.onChange(newSelected);
-                                                    }}
-                                                />
-                                                <Label htmlFor={option.id}>{option.label}</Label>
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
+            <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-4xl mx-auto">
                 {/* Watchman Selection */}
-                <FormField
+                <FormSelect
                     control={form.control}
                     name="watchman"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Watchman:</Label>
-                            <FormControl>
-                                <SelectLayout
-                                    className="w-full"
-                                    label="Watchman"
-                                    placeholder="Assign Watchman"
-                                    options={[
-                                        { id: '1', name: 'Watchman 1' },
-                                        { id: '2', name: 'Watchman 2' }
-                                    ]}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                    label="Watchman"
+                    options={watchmanOptions}
+                />
+
+                {/* Sitio Selection */}
+                <FormSelect
+                    control={form.control}
+                    name="sitio"
+                    label="Sitio"
+                    options={sitioOptions}
                 />
 
                 {/* Date and Time */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                    <FormField
+                <FormDateTimeInput
                         control={form.control}
                         name="date"
-                        render={({ field }) => (
-                            <FormItem>
-                                <Label>Date:</Label>
-                                <FormControl>
-                                    <input type="date" {...field} className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        type="date"
+                        label="Date"
+                />
 
-                    <FormField
-                        control={form.control}
-                        name="time"
-                        render={({ field }) => (
-                            <FormItem>
-                                <Label>Time:</Label>
-                                <FormControl>
-                                    <input type="time" {...field} className="mt-[8px] w-full border  p-1.5 shadow-sm sm:text-sm focus:outline-none rounded-md" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
+                <FormDateTimeInput
+                    control={form.control}
+                    name="time"
+                    type="time"
+                    label="Time"
+                />
+    
                 {/* Additional Instructions */}
-                <FormField
+                <FormTextArea
                     control={form.control}
                     name="additionalInstructions"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Additional Instructions:</Label>
-                            <FormControl>
-                                <Textarea placeholder="Enter additional instructions (if there is any)" {...field} className="w-full" />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                    label="Additional Instructions"
                 />
 
                 {/* Announcement Audience Selection */}
@@ -199,9 +153,7 @@ function WasteHotSched() {
 
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
-                    <Button type="submit" className="bg-blue hover:bg-blue hover:opacity-[95%] w-full sm:w-auto">
-                        Schedule
-                    </Button>
+                    <Button type="submit">Save</Button>
                 </div>
             </form>
         </Form>

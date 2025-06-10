@@ -89,7 +89,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import EventCalendar from "@/components/ui/calendar/EventCalendar";
 import WasteColSched from "./waste-colllection/waste-col-sched";
-import WasteHotSched from "./waste-hotspot/waste-hotspot-sched";
+import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
 import WasteEventSched from "./waste-event-sched";
 
 
@@ -159,7 +159,7 @@ const WasteMainScheduling = () => {
         </TabsContent>
 
         <TabsContent value="hotspot" className="space-y-4">
-          {/* <WasteHotSched /> */}
+          <WasteHotspotMain/>
         </TabsContent>
 
         <TabsContent value="waste-events" className="space-y-4">

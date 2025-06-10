@@ -237,3 +237,16 @@ class SitioListView(generics.ListCreateAPIView):
 class WasteCollectorView(generics.ListCreateAPIView):
     serializer_class = WasteCollectorSerializer
     queryset = WasteCollector.objects.all()
+
+
+class WatchmanView(generics.GenericAPIView): 
+    def get(self, request, *args, **kwargs):
+        watchmen = WastePersonnel.objects.filter(
+            staff_id__pos__pos_title="Watchman"  
+        ).select_related(
+            'staff_id__pos',
+            'staff_id__rp__per'
+        )
+
+        data = [watchman.to_dict() for watchman in watchmen]
+        return Response(data)
