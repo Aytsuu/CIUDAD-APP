@@ -1,9 +1,12 @@
 from django.db import models
-from datetime import date
+from datetime import date, datetime
 from django.core.validators import MaxValueValidator
 
 # Create your models here.
 # KANI UNA 
+
+def current_time():
+    return datetime.now().time()
 
 class WasteEvent(models.Model):
     we_num = models.BigAutoField(primary_key=True)
@@ -62,8 +65,9 @@ class WastePersonnel(models.Model):
 
     def get_staff_name(self):
         if self.staff_id.rp and self.staff_id.rp.per:
-            return f"{self.staff_id.rp.per.first_name} {self.staff_id.rp.per.last_name}"
+            return f"{self.staff_id.rp.per.per_fname} {self.staff_id.rp.per.per_lname}"
         return "Unknown"
+    
 
     
     def to_dict(self):
@@ -117,36 +121,6 @@ class WasteTruck(models.Model):
         db_table = 'truck'
 
 
-class WasteHotspot(models.Model):
-    wh_num = models.BigAutoField(primary_key=True)
-    wh_date = models.DateField(null=True)
-    wh_time = models.TimeField(null=True)
-    wh_add_info = models.CharField(max_length=200, null=True, blank=True)
-    wh_is_archive = models.BooleanField(default=False)
-    sitio_id = models.ForeignKey(
-        'profiling.Sitio',
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        db_column='sitio_id'
-    )
-    
-    wstp_id =  models.ForeignKey(
-        'WastePersonnel', 
-        on_delete=models.CASCADE,
-        db_column='wstp_id',
-        default= None,
-    )
-
-    class Meta:
-        db_table = 'waste_hotspot'
-
-    # staff_id =  models.ForeignKey(
-    #     'profiling.Staff', 
-    #     on_delete=models.CASCADE,
-    #     db_column='staff_id'
-    # ),
-
 class WasteCollectionSched(models.Model):
     wc_num = models.BigAutoField(primary_key=True)
     wc_date = models.DateField(null=True)
@@ -154,7 +128,6 @@ class WasteCollectionSched(models.Model):
     wc_add_info = models.CharField(max_length=200, null=True)
     wc_is_archive = models.BooleanField(default=False)
     staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, null=True, blank=True)
-    # feat_id = models.ForeignKey(Feature, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'waste_collection_sched'
@@ -177,3 +150,123 @@ class WasteCollector(models.Model):
 
     class Meta:
         db_table = 'waste_collector'
+class Garbage_Pickup_Request(models.Model):
+    garb_id = models.BigAutoField(primary_key=True)
+    garb_location = models.CharField(max_length=20, null=False)
+    garb_waste_type = models.CharField(max_length=20, null=False)
+    garb_pref_date = models.DateField(default=date.today)
+    garb_pref_time = models.TimeField(default=current_time)
+    garb_req_status = models.CharField(max_length=20, null=False)
+    garb_additional_notes = models.TextField()
+    garb_created_at = models.DateTimeField(default=datetime.now)
+    rp = models.ForeignKey(
+        'profiling.ResidentProfile' , 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    
+    file = models.ForeignKey(
+        'file.File',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='file_id'
+    )
+
+    class Meta:
+        db_table = 'garbage_pickup_request'
+
+    def get_resident_name(self):
+        return str(self.rp.per) if self.rp and self.rp.per else "Unknown"
+    
+class Pickup_Request_Decision(models.Model):
+    dec_id = models.BigAutoField(primary_key=True)
+    dec_rejection_reason = models.TextField(null=True, blank=True)
+    dec_date = models.DateTimeField(default=datetime.now)
+    garb_id = models.ForeignKey(
+        Garbage_Pickup_Request,
+        on_delete=models.CASCADE,
+        db_column='garb_id' 
+    )
+    # staff_id = models.ForeignKey(
+    #     'administration.Staff',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     db_column='staff_id'
+    # )
+
+    class Meta:
+        db_table = 'pickup_request_decision'
+    
+
+class Pickup_Assignment(models.Model):
+    pick_id = models.BigAutoField(primary_key=True)
+    pick_date = models.DateField(default=date.today)
+    pick_time = models.TimeField(default=current_time)
+    truck_id  = models.ForeignKey(
+        WasteTruck, 
+        on_delete=models.CASCADE,
+        db_column='truck_id' 
+    )
+    wstp_id = models.ForeignKey(
+        WastePersonnel,
+        on_delete=models.CASCADE,
+        db_column='wstp_id' 
+    )
+    # staff_id = models.ForeignKey(
+    #     'administration.Staff',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     db_column='staff_id'
+    # )
+    garb_id = models.ForeignKey(
+        Garbage_Pickup_Request,
+        on_delete=models.CASCADE,
+        db_column='garb_id' 
+    )
+
+    class Meta:
+        db_table = 'pickup_assignment'
+
+class Assignment_Collector(models.Model):
+    acl_id = models.BigAutoField(primary_key=True)
+    wstp_id = models.ForeignKey(
+        WastePersonnel, 
+        on_delete=models.CASCADE,
+        db_column='wstp_id' 
+    )
+    pick_id = models.ForeignKey(
+        Pickup_Assignment, 
+        on_delete=models.CASCADE,
+        db_column='pick_id' 
+    )
+
+    class Meta:
+        db_table = 'assignment_collector'
+
+
+class Pickup_Confirmation(models.Model):
+    conf_id = models.BigAutoField(primary_key=True)
+    conf_resident_conf = models.BooleanField(blank=True)
+    conf_staff_conf = models.BooleanField(blank=True)
+    conf_staff_conf_date = models.DateTimeField(default=datetime.now)
+    conf_resident_conf_date = models.DateTimeField(null=True, blank=True)
+    garb_id = models.ForeignKey(
+        Garbage_Pickup_Request,
+        on_delete=models.CASCADE,
+        db_column='garb_id' 
+    )
+
+    class Meta: 
+        db_table="pickup_confirmation"
+
+
+
+
+    
+
+
+

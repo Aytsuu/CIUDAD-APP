@@ -521,6 +521,9 @@ import { useGetWasteSitio } from './queries/wasteColFetchQueries';
 import { useCreateWasteSchedule } from './queries/wasteColAddQueries';
 import { useCreateWasteAssignment } from './queries/wasteColAddQueries';
 
+interface WasteColSchedProps {
+    onSuccess?: () => void;
+}
 
 const announcementOptions = [
     { id: "all", label: "All" },
@@ -533,7 +536,7 @@ const announcementOptions = [
 ];
 
 
-function WasteColSched() {
+function WasteColSched({ onSuccess }: WasteColSchedProps) {
 
     //ADD QUERY MUTATIONS
     const { mutate: createAssignment } = useCreateWasteAssignment();
@@ -556,6 +559,14 @@ function WasteColSched() {
     // });
 
     const { mutate: createSchedule } = useCreateWasteSchedule(async (wc_num) => {
+        // createAssignment({
+        //     wc_num: wc_num, // FK to assignment
+        //     sitio_id: form.getValues("selectedSitios"),
+        //     wstp_id: form.getValues("driver"), // DRIVER goes here → wstp_id in assignment
+        //     truck_id: form.getValues("collectionTruck"),
+        //     staff_id: null,
+        //     selectedCollectors: form.getValues("selectedCollectors") // pass collectors → used for waste-ass-collectors
+        // });
         createAssignment({
             wc_num: wc_num, // FK to assignment
             sitio_id: form.getValues("selectedSitios"),
@@ -563,6 +574,11 @@ function WasteColSched() {
             truck_id: form.getValues("collectionTruck"),
             staff_id: null,
             selectedCollectors: form.getValues("selectedCollectors") // pass collectors → used for waste-ass-collectors
+        }, {
+            onSuccess: () => {
+                form.reset();
+                onSuccess?.(); 
+            }
         });
     });
 
