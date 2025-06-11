@@ -38,7 +38,7 @@ function WasteHotspotMain() {
         restoreHotspot(wh_num)
     }
 
-     const commonColumns: ColumnDef<Hotspot>[] = [
+    const commonColumns: ColumnDef<Hotspot>[] = [
         { accessorKey: "watchman", header: "Watchman" },
         { accessorKey: "wh_date", header: "Assignment Date"},
         { 

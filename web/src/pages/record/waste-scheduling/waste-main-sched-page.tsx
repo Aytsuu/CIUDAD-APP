@@ -82,24 +82,151 @@
 
 // export default WasteMainScheduling;
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus } from 'lucide-react';
-import React, { useState } from "react";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { SelectLayout } from "@/components/ui/select/select-layout";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// import React, { useState } from "react";
+// import { SelectLayout } from "@/components/ui/select/select-layout";
+// import EventCalendar from "@/components/ui/calendar/EventCalendar";
+// import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
+// import { useGetHotspotRecords, type Hotspot } from "./waste-hotspot/queries/hotspotFetchQueries";
+// import { formatTime } from "@/helpers/timeFormatter";
+// import { ColumnDef } from "@tanstack/react-table";
+
+// const commonColumns: ColumnDef<Hotspot>[] = [
+//         { accessorKey: "watchman", header: "Watchman" },
+//         { accessorKey: "wh_date", header: "Assignment Date"},
+//         { 
+//             accessorKey: "wh_time", 
+//             header: "Assignment Time",
+//             cell: ({ row }) => {
+//                 const date = row.original.wh_time;
+//                 return formatTime(date);
+//             }
+//         },
+//         { accessorKey: "sitio", header: "Sitio" },
+//         { accessorKey: "wh_add_info", header: "Additional Info" }
+//   ];
+
+
+// interface ScheduleComponentProps {
+//   [key: string]: React.ReactNode;
+// }
+
+// const WasteMainScheduling = () => {
+//   const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
+//   const [activeTab, setActiveTab] = useState("calendar");
+
+//   return (
+//     <div className="w-full h-full">
+//       {/* Header Section */}
+//       <div className="flex-col items-center mb-4">
+//         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+//           Calendar
+//         </h1>
+//         <p className="text-xs sm:text-sm text-darkGray">
+//           Manage and view scheduled tasks and events.
+//         </p>
+//       </div>
+//       <hr className="border-gray mb-6 sm:mb-8" />
+
+//       {/* Tabs Section */}
+//        <Tabs defaultValue="calendar" className="mb-6">
+//         <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
+//            <TabsTrigger 
+//             value="calendar" 
+//             onClick={() => setActiveTab("calendar")} 
+//             className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800 data-[state=active]:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
+//           >
+//             Calendar 
+//           </TabsTrigger>
+//           <TabsTrigger 
+//             value="waste-collection" 
+//             onClick={() => setActiveTab("waste-collection")} 
+//             className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800 data-[state=active]:border-purple-300 hover:bg-purple-50 hover:text-purple-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
+//           >
+//             Waste Collection 
+//           </TabsTrigger>
+//           <TabsTrigger 
+//             value="hotspot" 
+//             onClick={() => setActiveTab("hotspot")} 
+//             className="data-[state=active]:bg-cyan-100 data-[state=active]:text-cyan-800 data-[state=active]:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
+//           >
+//             Hotspot 
+//           </TabsTrigger>
+//           <TabsTrigger 
+//             value="waste-events" 
+//             onClick={() => setActiveTab("waste-events")} 
+//             className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-800 data-[state=active]:border-orange-300 hover:bg-orange-50 hover:text-orange-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
+//           >
+//             Waste Events 
+//           </TabsTrigger>
+//         </TabsList>
+
+//         <TabsContent value="calendar" className="space-y-4">
+//           {/* Calendar Section */}
+//           <div className="w-full bg-white">
+//             <EventCalendar name="Hotspot Assignment" titleAccessor="wh_num" columns={commonColumns} data={fetchedData}/>
+//           </div>
+//         </TabsContent>
+
+//         <TabsContent value="waste-collection" className="space-y-4">
+//           {/* <WasteColSched /> */}
+//         </TabsContent>
+
+//         <TabsContent value="hotspot" className="space-y-4">
+//           <WasteHotspotMain/>
+//         </TabsContent>
+
+//         <TabsContent value="waste-events" className="space-y-4">
+//           {/* <WasteEventSched /> */}
+//         </TabsContent>
+//       </Tabs>
+//     </div>
+//   );
+// };
+
+// export default WasteMainScheduling;
+
+import {Tabs,TabsContent,TabsList,TabsTrigger} from "@/components/ui/tabs";
 import EventCalendar from "@/components/ui/calendar/EventCalendar";
-import WasteColSched from "./waste-colllection/waste-col-sched";
 import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
-import WasteEventSched from "./waste-event-sched";
+import {useGetHotspotRecords,type Hotspot,} from "./waste-hotspot/queries/hotspotFetchQueries";
+import { formatTime } from "@/helpers/timeFormatter";
+import { EventDetailColumn } from "@/components/ui/calendar/event-detail-column";
+import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
+const commonColumns: EventDetailColumn<Hotspot>[] = [
+  { accessorKey: "watchman", header: "Watchman" },
+  { accessorKey: "wh_date", header: "Assignment Date" },
+  {
+    accessorKey: "wh_time",
+    header: "Assignment Time",
+    cell: (props: { row: { original: Hotspot } }) =>
+      formatTime(props.row.original.wh_time),
+  },
+  { accessorKey: "sitio", header: "Sitio" },
+  { accessorKey: "wh_add_info", header: "Additional Info" },
+];
 
-interface ScheduleComponentProps {
-  [key: string]: React.ReactNode;
-}
 
 const WasteMainScheduling = () => {
-
+  const { data: fetchedData = [], isLoading } = useGetHotspotRecords();
   const [activeTab, setActiveTab] = useState("calendar");
+
+  if (isLoading){
+      return (
+          <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="flex justify-end">
+              <Skeleton className="h-10 w-24" />
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="w-full h-full">
@@ -115,42 +242,46 @@ const WasteMainScheduling = () => {
       <hr className="border-gray mb-6 sm:mb-8" />
 
       {/* Tabs Section */}
-       <Tabs defaultValue="calendar" className="mb-6">
+      <Tabs defaultValue="calendar" className="mb-6">
         <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white h-[50px] rounded-lg shadow-sm border border-gray-100 text-center">
-           <TabsTrigger 
-            value="calendar" 
-            onClick={() => setActiveTab("calendar")} 
+          <TabsTrigger
+            value="calendar"
+            onClick={() => setActiveTab("calendar")}
             className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800 data-[state=active]:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Calendar 
+            Calendar
           </TabsTrigger>
-          <TabsTrigger 
-            value="waste-collection" 
-            onClick={() => setActiveTab("waste-collection")} 
+          <TabsTrigger
+            value="waste-collection"
+            onClick={() => setActiveTab("waste-collection")}
             className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-800 data-[state=active]:border-purple-300 hover:bg-purple-50 hover:text-purple-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Waste Collection 
+            Waste Collection
           </TabsTrigger>
-          <TabsTrigger 
-            value="hotspot" 
-            onClick={() => setActiveTab("hotspot")} 
+          <TabsTrigger
+            value="hotspot"
+            onClick={() => setActiveTab("hotspot")}
             className="data-[state=active]:bg-cyan-100 data-[state=active]:text-cyan-800 data-[state=active]:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Hotspot 
+            Hotspot
           </TabsTrigger>
-          <TabsTrigger 
-            value="waste-events" 
-            onClick={() => setActiveTab("waste-events")} 
+          <TabsTrigger
+            value="waste-events"
+            onClick={() => setActiveTab("waste-events")}
             className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-800 data-[state=active]:border-orange-300 hover:bg-orange-50 hover:text-orange-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Waste Events 
+            Waste Events
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
-          {/* Calendar Section */}
           <div className="w-full bg-white">
-            <EventCalendar />
+            <EventCalendar
+              name="Hotspot Assignment"
+              titleAccessor="watchman"
+              data={fetchedData.filter(row => row.wh_is_archive === false)}
+              columns={commonColumns}
+            />
           </div>
         </TabsContent>
 
@@ -159,7 +290,7 @@ const WasteMainScheduling = () => {
         </TabsContent>
 
         <TabsContent value="hotspot" className="space-y-4">
-          <WasteHotspotMain/>
+          <WasteHotspotMain />
         </TabsContent>
 
         <TabsContent value="waste-events" className="space-y-4">
@@ -171,4 +302,5 @@ const WasteMainScheduling = () => {
 };
 
 export default WasteMainScheduling;
+
 
