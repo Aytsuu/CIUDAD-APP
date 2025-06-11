@@ -34,13 +34,24 @@ class WasteCollectorSerializer(serializers.ModelSerializer):
 class WasteHotspotSerializer(serializers.ModelSerializer):
     watchman = serializers.SerializerMethodField()
     sitio = serializers.SerializerMethodField()
+    sitio_id = serializers.PrimaryKeyRelatedField(
+        queryset=Sitio.objects.all(),  # Replace Sitio with your actual model
+    )
+    wstp_id = serializers.PrimaryKeyRelatedField(
+        queryset=WastePersonnel.objects.all(),  # Replace with your actual model
+    )
 
     class Meta:
         model = WasteHotspot
         fields = '__all__'
 
     def get_watchman(self, obj):
-        return str(obj.wstp_id.staff_id.rp.per) if obj.wstp_id and obj.wstp_id.staff_id else ""
+        try:
+            return str(obj.wstp_id.staff_id.rp.per)
+        except AttributeError:
+            return ""
+        except WastePersonnel.DoesNotExist:
+            return ""
 
     def get_sitio(self, obj):
         return str(obj.sitio_id) if obj.sitio_id else ""

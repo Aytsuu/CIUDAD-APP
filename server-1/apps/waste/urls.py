@@ -20,6 +20,9 @@ urlpatterns = [
 
     # Waste Hotspot URLs
     path("waste-hotspot/", WasteHotspotView.as_view(), name="waste-hotspot-list"),
+    path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman"),
+    path('update-waste-hotspot/<int:wh_num>/', UpdateHotspotView.as_view(), name='update-waste-hotspot'),
+    path('delete-waste-hotspot/<int:wh_num>/', DeleteHotspotView.as_view(), name='delete-waste-hotpot'),
 
     # Waste Report URLs
     path("waste-report/", WasteReportView.as_view(), name="waste-report-list"),
@@ -36,10 +39,8 @@ urlpatterns = [
 
     # Sitio URL
     path("sitio/", SitioListView.as_view(), name="sitio-list"),
-    path("waste-watchman/", WatchmanView.as_view(), name="waste-watchman"),
-    path('update-waste-hotspot/<int:wh_num>/', UpdateHotspotView.as_view(), name='update-waste-hotspot'),
-    path('delete-waste-hotspot/<int:wh_num>/', DeleteHotspotView.as_view(), name='delete-waste-hotpot'),
 
+    # Garbage Pickup Urls
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
     path('garbage-pickup-request-accepted/', GarbagePickupRequestAcceptedView.as_view(), name='garbage-pickup-request-accepted'), #retrieve accepted requests

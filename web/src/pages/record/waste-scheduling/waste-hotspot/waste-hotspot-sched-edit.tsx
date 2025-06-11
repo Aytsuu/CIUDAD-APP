@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
-import { WasteHotspotSchema } from '@/form-schema/waste-hots-form-schema';
+import { WasteHotspotEditSchema } from '@/form-schema/waste-hots-form-schema';
 import { FormSelect } from '@/components/ui/form/form-select';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { useGetWatchman } from './queries/hotspotFetchQueries';
@@ -26,7 +26,13 @@ const announcementOptions = [
 ];
 
 
-function WasteHotSched({onSuccess}: {
+function WasteHotSchedEdit({wh_num, wh_date, wh_time, wh_add_info, wstp_id, sitio_id, onSuccess}: {
+    wh_num: string;
+    wh_date: string;
+    wh_time: string;
+    wh_add_info: string;
+    wstp_id: string;
+    sitio_id: string;
     onSuccess?: () => void;
 }) {
     const {mutate: addHotspotAssignment} = useAddHotspot(onSuccess);
@@ -42,19 +48,19 @@ function WasteHotSched({onSuccess}: {
     }));
 
 
-    const form = useForm<z.infer<typeof WasteHotspotSchema>>({
-        resolver: zodResolver(WasteHotspotSchema),
+    const form = useForm<z.infer<typeof WasteHotspotEditSchema>>({
+        resolver: zodResolver(WasteHotspotEditSchema),
         defaultValues: {
-            date: '',
-            time: '',
-            additionalInstructions: '',
-            sitio: '', 
+            date: wh_date,
+            time: wh_time,
+            additionalInstructions: wh_add_info,
+            sitio: String(sitio_id), 
             selectedAnnouncements: [], 
-            watchman: '',
+            watchman: String(wstp_id),
         },
     });
 
-    const onSubmit = (values: z.infer<typeof WasteHotspotSchema>) => {
+    const onSubmit = (values: z.infer<typeof WasteHotspotEditSchema>) => {
         console.log('Values:', values)
         addHotspotAssignment(values)    
     };
@@ -162,4 +168,4 @@ function WasteHotSched({onSuccess}: {
     );
 }
 
-export default WasteHotSched;
+export default WasteHotSchedEdit;
