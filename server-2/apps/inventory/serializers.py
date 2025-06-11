@@ -269,9 +269,9 @@ class VaccineStockSerializer(serializers.ModelSerializer):
         
 
 class AntigenTransactionSerializer(serializers.ModelSerializer):
-    vaccine_detail = VaccineStockSerializer(source='imzStck_id', read_only=True)
+    vaccine_detail = VaccineStockSerializer(source='vacStck_id', read_only=True)
 
-    vacStck_id = VaccineStockSerializer(read_only=True)
+    vacStck_id = serializers.PrimaryKeyRelatedField(queryset=VaccineStock.objects.all())
     class Meta:
         model = AntigenTransaction
         fields = '__all__' 

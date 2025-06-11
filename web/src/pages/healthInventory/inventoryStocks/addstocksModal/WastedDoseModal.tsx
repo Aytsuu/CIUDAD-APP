@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { Loader2, CircleCheck } from "lucide-react";
 import { FormInput } from "@/components/ui/form/form-input";
 const formSchema = z.object({
-  wastedDose: z
+  wastedDose: z.coerce
     .number()
     .min(1, "Wasted dose must be at least 1")
     .int("Must be a whole number"),
