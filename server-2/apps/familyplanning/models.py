@@ -11,6 +11,7 @@ class FP_Record(models.Model):
     four_ps = models.BooleanField(default=False)
     plan_more_children = models.BooleanField(default=False)
     avg_monthly_income = models.CharField(max_length=15)
+    occupation = models.CharField(max_length=30, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE)
@@ -67,10 +68,10 @@ class FP_Physical_Exam(models.Model):
     BREAST_EXAM_CHOICES = [("normal", "Normal"),("mass", "Mass"),("nipple_discharge", "Nipple Discharge")]
     ABDOMEN_EXAM_CHOICES = [("normal", "Normal"),("abdominal_mass", "Abdominal Mass"),("varicosities", "Varicosities")]
     EXTREMITIES_EXAM_CHOICES = [("normal", "Normal"),("edema", "Edema"),("varicosities", "Varicosities")]
-    weight = models.CharField(max_length=3, default="0")
-    height = models.CharField(max_length=3, default="0")
-    bloodpressure = models.CharField(max_length=3, default="0")
-    pulserate = models.CharField(max_length=3, default="0")
+    # weight = models.CharField(max_length=3, default="0")
+    # height = models.CharField(max_length=3, default="0")
+    # bloodpressure = models.CharField(max_length=3, default="0")
+    # pulserate = models.CharField(max_length=3, default="0")
     skinExamination = models.CharField(max_length=20, choices=SKIN_EXAM_CHOICES)
     conjunctivaExamination = models.CharField(max_length=20, choices=CONJUNCTIVA_EXAM_CHOICES)
     neckExamination = models.CharField(max_length=30, choices=NECK_EXAM_CHOICES)
@@ -128,7 +129,8 @@ class FP_Obstetrical_History(models.Model):
     fpob_ectopic_pregnancy = models.BooleanField(default=False)
     
     fprecord_id = models.ForeignKey(FP_Record, on_delete=models.CASCADE)
-
+    obs_id = models.ForeignKey(Obstetrical_History, on_delete=models.CASCADE, null=True, blank=True)
+    
     class Meta:
         db_table = "famplan_obs_history"
     
@@ -177,7 +179,8 @@ class FP_Assessment_Record(models.Model):
     
     # for method used
     fpt_id = models.ForeignKey(FP_type,on_delete=models.CASCADE) 
-    fp_pe_id = models.ForeignKey(FP_Physical_Exam,on_delete=models.CASCADE)
+    #for weight
+    bm_id = models.ForeignKey(BodyMeasurement,on_delete=models.CASCADE)
     staff_id = models.ForeignKey(Staff,on_delete=models.CASCADE)
     
     class Meta:

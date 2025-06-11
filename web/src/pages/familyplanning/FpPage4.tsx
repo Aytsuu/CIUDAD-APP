@@ -219,7 +219,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
               {/* Cervical and Uterine Examination - Only enabled for IUD acceptors */}
               <div className={isIUDSelected ? "" : "opacity-50 pointer-events-none"}>
                 <div className="mb-4">
-                  <p className="font-semibold mb-2">CERVICAL CONSISTENCY</p>
+                  <p className="font-semibold mt-7">CERVICAL CONSISTENCY</p>
                   <FormField
                     control={form.control}
                     name="cervicalConsistency"

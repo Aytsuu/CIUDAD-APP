@@ -14,6 +14,7 @@ from apps.healthProfiling.models import Personal, ResidentProfile
 #     class Meta:
 #         db_table = 'patient'
 #         ordering = ['-created_at']
+
 class Patient(models.Model):
     pat_id = models.CharField(
         max_length=15,
@@ -88,7 +89,7 @@ class Obstetrical_History(models.Model):
     obs_fullterm = models.PositiveIntegerField()
     obs_preterm = models.PositiveIntegerField()
     obs_record_from = models.CharField(max_length=100)
-    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='obstetrical_history', db_column='patrec_id')
+    # patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='obstetrical_history', db_column='patrec_id')
 
     class Meta:
         db_table = 'obstetrical_history'

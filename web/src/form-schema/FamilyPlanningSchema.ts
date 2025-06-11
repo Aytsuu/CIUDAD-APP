@@ -536,8 +536,7 @@ const FamilyPlanningBaseSchema = z.object({
         "injectable",
         "stm",
         "implant",
-        "condom",
-        "others",
+        "condom", 
       ])
       .refine((val) => val !== undefined, { message: "Please select a method" }),
     clientSignature: z.string().optional(),
