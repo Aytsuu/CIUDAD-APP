@@ -13,10 +13,11 @@ import {
   ImageOff,
 } from "lucide-react";
 import React from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 // Main component for the DRR Report Form
 export default function IRFormLayout() {
+  const navigate = useNavigate();
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
   const data = React.useMemo(() => params?.data, [params]);
@@ -60,7 +61,17 @@ export default function IRFormLayout() {
           <Button variant={"destructive"}>
             <Trash />
           </Button>
-          <Button variant={"outline"}>
+          <Button variant={"outline"} 
+            onClick={() => {
+              navigate('/report/acknowledgement/form', {
+                state: {
+                  params: {
+                    data
+                  }
+                }
+              })
+            }}
+          >
             Create Acknowledgement Report
           </Button>
         </div>

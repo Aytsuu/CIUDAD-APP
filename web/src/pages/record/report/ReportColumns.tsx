@@ -1,25 +1,34 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoveRight } from "lucide-react";
-import { Report } from "./ReportTypes";
+import { IRReport, ARReport } from "./ReportTypes";
 import { Button } from "@/components/ui/button/button";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import DRRReportForm from "./incident/IRFormLayout";
 import ViewButton from "@/components/ui/view-button";
 import { useNavigate } from "react-router";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define the columns for the data table
-export const IRColumns = (): ColumnDef<Report>[] => [
+export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
     accessorKey: "ir_id",
     header: 'Report No.'
   },
   {
       accessorKey: "ir_location", 
-      header: "Location", 
+      header: "Location",
+      cell: ({row}) => {
+        const sitio = row.original.ir_sitio;
+        const street = row.original.ir_street;
+
+        return `Sitio ${sitio}, ${street} `
+      }
   },
   {
       accessorKey: "ir_add_details", 
       header: "Description",
+  },
+  {
+    accessorKey: "ir_type",
+    header: "Type"
   },
   {
       accessorKey: "ir_reported_by", 
@@ -40,7 +49,7 @@ export const IRColumns = (): ColumnDef<Report>[] => [
         const navigate = useNavigate()
 
         const handleViewClick = () => {
-          navigate('/report/incident/form', {
+          navigate('form', {
             state: {
               params: {
                 data: row.original
@@ -53,37 +62,82 @@ export const IRColumns = (): ColumnDef<Report>[] => [
           <ViewButton onClick={handleViewClick}/>
         )
       },
-      enableSorting: false, // Disable sorting
-      enableHiding: false, // Disable hiding
   },
 ]
 
-export const acknowledgeReportColumns: ColumnDef<Report>[] = [
+export const ARColumns = (isCreatingWeeklyAR: boolean): ColumnDef<ARReport>[] => [
   {
-    accessorKey: "incidentActivity",
+    accessorKey: "select",
+    header: ({ table }) => {
+      if(isCreatingWeeklyAR) {
+        return <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="border border-gray w-5 h-5"
+        />
+      }
+    },
+    cell: ({ row }) => { 
+      if(isCreatingWeeklyAR) {
+        return <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="border border-gray w-5 h-5"
+        />
+      }
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "ar_id",
+    header: "Report No.",
+  },
+  {
+    accessorKey: "ar_title",
     header: "Incident/Activity",
   },
   {
-    accessorKey: "location",
+    accessorKey: "ar_location",
     header: "Location", 
+    cell: ({row}) => {
+      const sitio = row.original.ar_sitio;
+      const street = row.original.ar_street;
+
+      return `Sitio ${sitio}, ${street} `
+    }
   },
   {
-    accessorKey: "sitio",
-    header: "Sitio",
-  },
-  {
-    accessorKey: "date", 
+    accessorKey: "ar_date", 
     header: "Date",
   },
   {
-    accessorKey: "status", 
+    accessorKey: "ar_status", 
     header: "Status",
   },
   {
-    accessorKey: "action", // Key for action column (empty for now)
     header: "Action",
-    cell: ({ row }) => (
-    <Button variant={"outline"}>View <MoveRight/></Button>
-    )
+    cell: ({row}) => {
+      const navigate = useNavigate()
+
+      const handleViewClick = () => {
+        navigate('form', {
+          state: {
+            params: {
+              data: row.original
+            }
+          }
+        });
+      }
+
+      return (
+        <ViewButton onClick={handleViewClick}/>
+      )
+    },
   },
 ];

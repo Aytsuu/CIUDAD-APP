@@ -15,3 +15,19 @@ export const useGetIncidentReport = () => {
     staleTime: 5000
   })
 }
+
+export const useGetAcknowledgementReport = () => {
+  return useQuery({
+    queryKey: ['arReports'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('report/ar/list/table/');
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}

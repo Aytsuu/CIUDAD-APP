@@ -4,9 +4,28 @@ import IRFormLayout from '@/pages/record/report/incident/IRFormLayout';
 import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
 import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
 import ActivityReportRecords from '@/pages/record/report/activity/ActivityReportRecords';
+import ReportLayout from '@/pages/record/report/ReportLayout';
 
 // Creating routes
 export const report_router = [
+  {
+    path: '/report',
+    element: <ReportLayout/>,
+    children: [
+      {
+        path: '/report/incident',
+        element: <IRRecords/>
+      },
+      {
+        path: '/report/activity',
+        element: <ActivityReportRecords/>
+      },
+      {
+        path: '/report/acknowledgement',
+        element: <ARRecords/>
+      },
+    ]
+  },
   {
     path: '/weekly/report',
     element: <WeeklyARReport/>
@@ -18,14 +37,6 @@ export const report_router = [
   {
     path: '/report/incident/form',
     element: <IRFormLayout/>
-  },
-  {
-    path: '/report/activity/',
-    element: <ActivityReportRecords/>
-  },
-  {
-    path: '/report/acknowledgement',
-    element: <ARRecords/>
   },
   {
     path: '/report/acknowledgement/form',

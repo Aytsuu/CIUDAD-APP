@@ -23,14 +23,22 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
    
   interface DataTableProps<TData, TValue> {
-    header?: boolean
-    headerClassName?: string
-    isLoading?: boolean
-    columns: ColumnDef<TData, TValue>[]
-    data: TData[]
+    header?: boolean;
+    headerClassName?: string;
+    isLoading?: boolean;
+    columns: ColumnDef<TData, TValue>[];
+    data: TData[];
+    onSelectedRowsChange?: (rows: TData[]) => void
   }
    
-  export function DataTable<TData, TValue>({isLoading=false, headerClassName, header=true, columns, data}: DataTableProps<TData, TValue>) {
+  export function DataTable<TData, TValue>({
+    isLoading=false, 
+    headerClassName, 
+    header=true, 
+    columns, 
+    data,
+    onSelectedRowsChange
+  }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -38,22 +46,29 @@ import { cn } from "@/lib/utils"
     const [rowSelection, setRowSelection] = React.useState({})
 
     const table = useReactTable({
-        data,
-        columns,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
-        state: {
-            sorting,
-            columnFilters,
-            columnVisibility,
-            rowSelection,
-        },
+      data,
+      columns,
+      onSortingChange: setSorting,
+      onColumnFiltersChange: setColumnFilters,
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      onColumnVisibilityChange: setColumnVisibility,
+      onRowSelectionChange: setRowSelection,
+      state: {
+        sorting,
+        columnFilters,
+        columnVisibility,
+        rowSelection,
+      },
     })
+
+     React.useEffect(() => {
+      if (onSelectedRowsChange) {
+        const selectedRows = table.getSelectedRowModel().rows.map(row => row.original)
+        onSelectedRowsChange(selectedRows)
+      }
+    }, [onSelectedRowsChange, rowSelection])
    
     return (
         <Table>

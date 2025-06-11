@@ -11,21 +11,29 @@ class IRBaseSerializer(serializers.ModelSerializer):
 
 class IRTableSerializer(serializers.ModelSerializer):
   ir_reported_by = serializers.SerializerMethodField()
-  ir_location = serializers.SerializerMethodField()
+  ir_sitio = serializers.SerializerMethodField()
+  ir_street = serializers.SerializerMethodField()
   ir_time = serializers.SerializerMethodField()
+  ir_type = serializers.SerializerMethodField()
 
   class Meta: 
     model = IncidentReport
-    fields = ['ir_id', 'ir_location', 'ir_add_details', 'ir_time', 'ir_date', 'ir_reported_by']
+    fields = ['ir_id', 'ir_sitio', 'ir_street', 'ir_add_details', 'ir_type',
+             'ir_time', 'ir_date', 'ir_reported_by']
   
+  def get_ir_type(self, obj):
+    return obj.rt.rt_label
+
   def get_ir_time(self, obj):
     if obj.ir_time:
         return obj.ir_time.strftime("%I:%M %p")
     return None
 
-  def get_ir_location(self, obj):
-    info = obj.add
-    return f"{info.sitio.sitio_name}, {info.add_street}"
+  def get_ir_sitio(self, obj):
+    return obj.add.sitio.sitio_name
+  
+  def get_ir_street(self, obj):
+    return obj.add.add_street
   
   def get_ir_reported_by(self, obj):
     info = obj.rp.per
@@ -97,7 +105,6 @@ class IRCreateSerializer(serializers.ModelSerializer):
         address = address_serializer.save()
         validated_data['add'] = address
 
-    print(validated_data)
     incident_report = IncidentReport.objects.create(**validated_data)
     return incident_report
     
