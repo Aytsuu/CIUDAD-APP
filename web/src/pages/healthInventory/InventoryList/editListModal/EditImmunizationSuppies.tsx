@@ -27,9 +27,10 @@ export default function EditImmunizationSupplies() {
   const location = useLocation();
   const navigate = useNavigate();
   const initialData = location.state?.initialData as ImmunizationData;
-  
+
   const { mutate: updateImzSupplyMutation, isPending } = useUpdateImzSupply();
-  const [isUpdateConfirmationOpen, setIsUpdateConfirmationOpen] = useState(false);
+  const [isUpdateConfirmationOpen, setIsUpdateConfirmationOpen] =
+    useState(false);
   const [updatedName, setUpdatedName] = useState<string>("");
 
   const form = useForm<ImmunizationType>({
@@ -130,19 +131,21 @@ export default function EditImmunizationSupplies() {
             Edit Commodity
           </Label>
 
-
-<div className="py-4">
-
-<FormInput
-            control={form.control}
-            name="imz_name"
-            label="Immunization Supply Name"
-            placeholder="Enter immunization supply name"
-          />
-</div>
+          <div className="py-4">
+            <FormInput
+              control={form.control}
+              name="imz_name"
+              label="Immunization Supply Name"
+              placeholder="Enter immunization supply name"
+            />
+          </div>
 
           <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-white pb-2">
-            <Button variant="outline" className="w-full sm:w-auto" type="button">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              type="button"
+            >
               <Link to="/mainInventoryList">Cancel</Link>
             </Button>
             <Button
