@@ -19,7 +19,7 @@ import { formatTime } from "@/helpers/timeFormatter";
 
 function WasteHotspotMain() {
     const [ isDialogOpen, setIsDialogOpen] = useState(false);
-    const [ isDialogOpenEdit, setIsDialogOpenEdit] = useState(false);
+    const [ editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
     const { data: fetchedData = [], isLoading} = useGetHotspotRecords()
     const { mutate : archiveHotspot} = useArchiveHotspot()
@@ -68,7 +68,7 @@ function WasteHotspotMain() {
                                         <DialogLayout
                                             trigger={  <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><Pen size={16}/></div>}
                                             title="Edit Hotspot Assignment and Schedule"
-                                            description="Assign a watchman to a hotspot location with the right schedule."
+                                            description="Update the assignment and schedule details for this hotspot."
                                             mainContent={
                                                 <WasteHotSchedEdit
                                                     wh_num = {row.original.wh_num}
@@ -77,11 +77,11 @@ function WasteHotspotMain() {
                                                     wh_add_info = {row.original.wh_add_info}
                                                     sitio_id = {row.original.sitio_id}
                                                     wstp_id = {row.original.wstp_id}
-                                                    onSuccess={() => setIsDialogOpenEdit(false)}
+                                                    onSuccess={() => setEditingRowId(null)}
                                                 />
                                             }
-                                            isOpen={isDialogOpenEdit}
-                                            onOpenChange={setIsDialogOpenEdit}
+                                            isOpen={editingRowId === Number(row.original.wh_num)}
+                                            onOpenChange={(open) => setEditingRowId(open ? Number(row.original.wh_num) : null)}
                                         />
                                     </div>
                                 }

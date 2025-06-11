@@ -35,10 +35,10 @@ class WasteHotspotSerializer(serializers.ModelSerializer):
     watchman = serializers.SerializerMethodField()
     sitio = serializers.SerializerMethodField()
     sitio_id = serializers.PrimaryKeyRelatedField(
-        queryset=Sitio.objects.all(),  # Replace Sitio with your actual model
+        queryset=Sitio.objects.all(),  
     )
     wstp_id = serializers.PrimaryKeyRelatedField(
-        queryset=WastePersonnel.objects.all(),  # Replace with your actual model
+        queryset=WastePersonnel.objects.all(),  
     )
 
     class Meta:

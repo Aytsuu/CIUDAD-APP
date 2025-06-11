@@ -3,7 +3,7 @@ import { addHotspot } from "../restful-API/hotspotPostAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import z from "zod"
-import WasteHotspotSchema from "@/form-schema/waste-hots-form-schema";
+import { WasteHotspotSchema } from "@/form-schema/waste-hots-form-schema";
 
 export const useAddHotspot = (onSuccess?: () => void) => {
         const queryClient = useQueryClient();
