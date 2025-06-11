@@ -143,7 +143,7 @@
 
 // export default EventCalendar;
 
- import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Card, CardContent, CardHeader, Container } from "@mui/material";
 import { Calendar, type Event, dateFnsLocalizer } from "react-big-calendar";
 import format from "date-fns/format";
@@ -258,17 +258,17 @@ const EventCalendar = <T extends Record<string, any>>({
               defaultView="month"
               components={{
                 event: ({ event }) => (
-                  <div style={{ 
-                    backgroundColor: event.color, 
-                    padding: '2px 5px',
-                    borderRadius: '3px',
-                    color: 'white'
-                  }}>
+                  <div
+                    className="text-white text-sm font-semibold rounded px-1.5 py-0.5"
+                    style={{ backgroundColor: event.color }}
+                  >
                     {event.title}
                   </div>
                 )
               }}
+
               eventPropGetter={(event) => ({
+                className: "border text-white text-sm font-semibold rounded px-1.5 py-0.5",
                 style: {
                   backgroundColor: event.color,
                   borderColor: event.color,
@@ -291,6 +291,7 @@ const EventCalendar = <T extends Record<string, any>>({
           handleClose={() => setSelectedEvent(null)}
           currentEvent={selectedEvent}
           columns={columns}
+          title={name}
         />
       )}
     </Box>

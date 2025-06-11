@@ -63,6 +63,7 @@ interface EventInfoModalProps<T extends Record<string, any>> {
   handleClose: () => void;
   currentEvent: IEventInfo<T> | null;
   columns: EventDetailColumn<T>[];
+  title: string; 
 }
 
 const EventInfoModal = <T extends Record<string, any>>({
@@ -70,7 +71,9 @@ const EventInfoModal = <T extends Record<string, any>>({
   handleClose,
   currentEvent,
   columns,
+  title, // ← add this line
 }: EventInfoModalProps<T>) => {
+
   if (!currentEvent) return null;
 
   const dataSource = currentEvent.originalData;
@@ -95,27 +98,30 @@ const EventInfoModal = <T extends Record<string, any>>({
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-center text-darkBlue2 text-[25px] font-semibold mb-6 mt-6">
-          Event Details
+        <h2 className="text-center text-darkBlue2 text-[25px] font-semibold mb-6 mt-5">
+          {title}
         </h2>
 
-        <div className="grid grid-cols-[150px_1fr] gap-3 mb-6">
-          {columns.map((column) => {
-            const value = dataSource[column.accessorKey];
-            const displayValue = column.cell
-              ? column.cell({ row: { original: dataSource } })
-              : value !== undefined && value !== null
-                ? value.toString()
-                : 'N/A';
+        {/* Details Area */}
+        <div className="border border-gray-300 p-4 mb-6">
+            <div className="grid grid-cols-[150px_1fr] gap-3">
+              {columns.map((column) => {
+                const value = dataSource[column.accessorKey];
+                const displayValue = column.cell
+                  ? column.cell({ row: { original: dataSource } })
+                  : value !== undefined && value !== null
+                    ? value.toString()
+                    : 'N/A';
 
-            return (
-              <React.Fragment key={String(column.accessorKey)}>
-                <p className="font-semibold text-black">{column.header}:</p>
-                <p className="text-md text-black">{displayValue}</p>
-              </React.Fragment>
-            );
-          })}
-        </div>
+                return (
+                  <React.Fragment key={String(column.accessorKey)}>
+                    <p className="font-semibold text-black">{column.header}:</p>
+                    <p className="text-md text-black">{displayValue}</p>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
       </Box>
     </Modal>
   );
