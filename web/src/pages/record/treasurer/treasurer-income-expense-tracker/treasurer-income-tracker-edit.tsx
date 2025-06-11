@@ -1,3 +1,5 @@
+
+//PINAKA LATEST WORKINGGG
 // import { Input } from "@/components/ui/input";
 // import { SelectLayout } from "@/components/ui/select/select-layout";
 // import { Button } from "@/components/ui/button/button";
@@ -13,65 +15,85 @@
 // import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpenseFetchQueries";
 // import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 // import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
+// import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+// import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+
 
 
 // interface IncomeEditFormProps {
 //     inc_num: number;
+//     inc_serial_num: string;
+//     incp_id: number;
 //     inc_particulars: string;
 //     inc_amount: string;
 //     inc_additional_notes: string;
 //     inc_receipt_image: string;    
-//     onSuccess?: () => void; // Add this prop type
+//     onSuccess?: () => void;
 // }
 
-
-
-
-// function IncomeEditForm( { inc_num, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, onSuccess }: IncomeEditFormProps) {
-
+// function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, onSuccess }: IncomeEditFormProps) {
 //     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
 //     const [activeVideoId, setActiveVideoId] = useState<string>("");
+//     const [isEditing, setIsEditing] = useState(false);
+//     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+//     const [formValues, setFormValues] = useState<z.infer<typeof IncomeEditFormSchema>>();
 
 //     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
     
-//     const { data: budgetItems = [] } = useBudgetItems();
-
-//     const particularSelector = budgetItems.map(item => ({
-//         id: `${item.id} ${item.name}`,
-//         name: item.name,
-//         proposedBudget: item.proposedBudget
-//     }));
-
 
 //     const form = useForm<z.infer<typeof IncomeEditFormSchema>>({
 //         resolver: zodResolver(IncomeEditFormSchema),
 //         defaultValues: {
 //             inc_entryType: "",
-//             inc_particulars: inc_particulars,
+//             inc_serial_num: inc_serial_num,
+//             inc_particulars: `${incp_id} ${inc_particulars}`,
 //             inc_amount: inc_amount,
 //             inc_additional_notes: inc_additional_notes,
 //             inc_receipt_image: undefined,
 //         },
 //     });
 
-
 //     const { mutate: updateIncome } = useUpdateIncome(inc_num, onSuccess);
 
 //     const onSubmit = (values: z.infer<typeof IncomeEditFormSchema>) => {
-//         updateIncome(values)
+//         updateIncome(values);
+//         setIsEditing(false);
 //     };
 
+//     const handleSaveClick = () => {
+//         setFormValues(form.getValues()); // Store current form values
+//         setIsConfirmOpen(true); // Open confirmation modal
+//     };
 
-//     // const selectedParticularId = form.watch("iet_particulars");
-//     // const selectedParticular = budgetItems.find(item => item.id === selectedParticularId?.split(' ')[0]);
-
-
+//     const handleConfirmSave = () => {
+//         setIsConfirmOpen(false); // Close confirmation modal
+//         form.handleSubmit(onSubmit)(); // Call the submit function
+//     };
 
 //     return (
 //         <Form {...form}>
-//             <form onSubmit={form.handleSubmit(onSubmit)}>
-//                 {/* Step 1: Amount, Entry Type, and Particulars */}
-                       
+//             <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
+
+//                 {inc_serial_num !== "None" && ( 
+
+//                     <div className="pb-5">
+//                         <FormField
+//                             control={form.control}
+//                             name="inc_serial_num"
+//                             render={({ field }) => (
+//                                 <FormItem>
+//                                     <FormLabel>Serial Number</FormLabel>
+//                                     <FormControl>
+//                                         <Input {...field} placeholder="Enter serial number" readOnly/>
+//                                     </FormControl>
+//                                     <FormMessage />
+//                                 </FormItem>
+//                             )}
+//                         />
+//                     </div>    
+//                 )}     
+                
+
 //                 <div className="pb-5">
 //                     <FormField
 //                         control={form.control}
@@ -81,9 +103,10 @@
 //                             <FormLabel>Particulars</FormLabel>
 //                             <FormControl>
 //                                 <Input 
-//                                     placeholder="Enter Event Title" 
+//                                     placeholder="Enter Particular " 
 //                                     className={inputcss} 
-//                                     {...field} 
+//                                     {...field}
+//                                     readOnly={!isEditing}
 //                                 />                           
 //                             </FormControl>
 //                             <FormMessage />
@@ -100,7 +123,12 @@
 //                             <FormItem>
 //                                 <FormLabel>Amount</FormLabel>
 //                                 <FormControl>
-//                                     <Input {...field} type="number" placeholder="Enter amount" />
+//                                     <Input 
+//                                         {...field} 
+//                                         type="number" 
+//                                         placeholder="Enter amount" 
+//                                         readOnly={!isEditing}
+//                                     />
 //                                 </FormControl>
 //                                 <FormMessage />
 //                             </FormItem>
@@ -116,7 +144,11 @@
 //                             <FormItem>
 //                                 <FormLabel>Additional Notes</FormLabel>
 //                                 <FormControl>
-//                                     <Textarea {...field} placeholder="Add more details (Optional)" />
+//                                     <Textarea 
+//                                         {...field} 
+//                                         placeholder="Add more details (Optional)" 
+//                                         readOnly={!isEditing}
+//                                     />
 //                                 </FormControl>
 //                                 <FormMessage />
 //                             </FormItem>
@@ -138,7 +170,6 @@
 //                                         mediaFiles={mediaFiles}
 //                                         activeVideoId={activeVideoId}
 //                                         setMediaFiles={(value: SetStateAction<any[]>) => {
-//                                             // Handle both direct value and functional update
 //                                             const newFiles = typeof value === 'function' 
 //                                                 ? value(mediaFiles) 
 //                                                 : value;
@@ -155,7 +186,29 @@
 //                 </div>
 
 //                 <div className="flex justify-end mt-[20px] space-x-2">
-//                     <Button type="submit">Save Entry</Button>
+//                     {!isEditing ? (
+//                         <Button
+//                             type="button"
+//                             onClick={(e) => {
+//                                 e.preventDefault();
+//                                 setIsEditing(true);
+//                             }}
+//                         >
+//                             Edit
+//                         </Button>
+//                     ) : (
+//                         <ConfirmationModal
+//                             trigger={
+//                                 <Button type="button" onClick={handleSaveClick}>
+//                                     Save
+//                                 </Button>
+//                             }
+//                             title="Confirm Save"
+//                             description="Are you sure you want to save the changes?"
+//                             actionLabel="Confirm"
+//                             onClick={handleConfirmSave}
+//                         />
+//                     )}
 //                 </div>
 //             </form>
 //         </Form>
@@ -163,6 +216,15 @@
 // }
 
 // export default IncomeEditForm;
+
+
+
+
+
+
+
+
+
 
 
 
@@ -174,7 +236,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { MediaUpload } from "@/components/ui/media-upload";
 import { SetStateAction } from "react";
@@ -182,9 +244,17 @@ import { useBudgetItems, type BudgetItem } from "./queries/treasurerIncomeExpens
 import { useUpdateIncome } from "./queries/treasurerIncomeExpenseUpdateQueries";
 import IncomeEditFormSchema from "@/form-schema/treasurer/income-tracker-edit-schema";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
+import { useIncomeParticular } from "./queries/treasurerIncomeExpenseFetchQueries";
+import { useAddParticular } from "./request/particularsPostRequest";
+import { useDeleteParticular } from "./request/particularsDeleteRequest";
+
+
 
 interface IncomeEditFormProps {
     inc_num: number;
+    inc_serial_num: string;
+    incp_id: number;
     inc_particulars: string;
     inc_amount: string;
     inc_additional_notes: string;
@@ -192,7 +262,7 @@ interface IncomeEditFormProps {
     onSuccess?: () => void;
 }
 
-function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, onSuccess }: IncomeEditFormProps) {
+function IncomeEditForm({ inc_num, inc_serial_num, incp_id, inc_particulars, inc_amount, inc_additional_notes, inc_receipt_image, onSuccess }: IncomeEditFormProps) {
     const [mediaFiles, setMediaFiles] = useState<any[]>([]);
     const [activeVideoId, setActiveVideoId] = useState<string>("");
     const [isEditing, setIsEditing] = useState(false);
@@ -201,25 +271,44 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
 
     const inputcss = "mt-[12px] w-full p-1.5 shadow-sm sm:text-sm";
     
-    const { data: budgetItems = [] } = useBudgetItems();
-
-    const particularSelector = budgetItems.map(item => ({
-        id: `${item.id} ${item.name}`,
-        name: item.name,
-        proposedBudget: item.proposedBudget
-    }));
-
+    console.log("URL IMAGE: ", inc_receipt_image)
     const form = useForm<z.infer<typeof IncomeEditFormSchema>>({
         resolver: zodResolver(IncomeEditFormSchema),
         defaultValues: {
             inc_entryType: "",
-            inc_particulars: inc_particulars,
+            inc_serial_num: inc_serial_num,
+            inc_particulars: String(incp_id),
             inc_amount: inc_amount,
             inc_additional_notes: inc_additional_notes,
-            inc_receipt_image: undefined,
+            inc_receipt_image: inc_receipt_image,
         },
     });
 
+
+    useEffect(() => {
+        if (mediaFiles.length > 0 && mediaFiles[0].publicUrl) {
+            form.setValue('inc_receipt_image', mediaFiles[0].publicUrl);
+        } else {
+            form.setValue('inc_receipt_image', '');
+        }
+    }, [mediaFiles, form]);
+
+
+    //Handling the Income Particular
+    const { handleAddParticular } = useAddParticular();
+    const { handleDeleteConfirmation, ConfirmationDialogs } = useDeleteParticular();
+
+    const { data: IncomeParticularItems = [] } = useIncomeParticular();
+
+    const IncomeParticulars = IncomeParticularItems
+            .filter(item => item.id && item.name)
+            .map(item => ({
+                id: item.id,
+                name: item.name,
+    }));
+
+
+    //Updating Income
     const { mutate: updateIncome } = useUpdateIncome(inc_num, onSuccess);
 
     const onSubmit = (values: z.infer<typeof IncomeEditFormSchema>) => {
@@ -233,13 +322,34 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
     };
 
     const handleConfirmSave = () => {
-        setIsConfirmOpen(false); // Close confirmation modal
-        form.handleSubmit(onSubmit)(); // Call the submit function
+        setIsConfirmOpen(false); 
+        form.handleSubmit(onSubmit)(); 
     };
 
     return (
         <Form {...form}>
             <form onSubmit={(e) => { e.preventDefault(); handleSaveClick(); }}>
+
+                {inc_serial_num !== "None" && ( 
+
+                    <div className="pb-5">
+                        <FormField
+                            control={form.control}
+                            name="inc_serial_num"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Serial Number</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} placeholder="Enter serial number" readOnly/>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>    
+                )}     
+                
+
                 <div className="pb-5">
                     <FormField
                         control={form.control}
@@ -248,12 +358,20 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
                         <FormItem>  
                             <FormLabel>Particulars</FormLabel>
                             <FormControl>
-                                <Input 
-                                    placeholder="Enter Event Title" 
-                                    className={inputcss} 
-                                    {...field}
-                                    readOnly={!isEditing}
-                                />                           
+                                <SelectLayoutWithAdd
+                                    placeholder="Select a particular"
+                                    label="Particulars"
+                                    options={IncomeParticulars}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onAdd={(newParticular) => {
+                                        handleAddParticular(newParticular, (newId) => {
+                                            field.onChange(newId); // This updates the form value
+                                        });
+                                    }}
+                                    onDelete={(id) => handleDeleteConfirmation(Number(id))}
+                                    className={inputcss}
+                                />                         
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -308,20 +426,14 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
                         name="inc_receipt_image"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Receipt</FormLabel>
+                                <FormLabel>Receipt Image</FormLabel>
                                 <FormControl>
                                     <MediaUpload
                                         title="Receipt Image"
                                         description="Upload an image of your receipt as proof of transaction"
                                         mediaFiles={mediaFiles}
                                         activeVideoId={activeVideoId}
-                                        setMediaFiles={(value: SetStateAction<any[]>) => {
-                                            const newFiles = typeof value === 'function' 
-                                                ? value(mediaFiles) 
-                                                : value;
-                                            setMediaFiles(newFiles);
-                                            field.onChange(newFiles.length > 0 ? newFiles[0] : undefined);
-                                        }}
+                                        setMediaFiles={setMediaFiles}
                                         setActiveVideoId={setActiveVideoId}
                                     />
                                 </FormControl>
@@ -329,6 +441,11 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
                             </FormItem>
                         )}
                     />
+                </div>
+                <div className="flex flex-col gap-4 border p-5 rounded-md">
+                    <div>
+                        <img src={inc_receipt_image} className="w-52 h-52 border shadow-sm"/>
+                    </div>
                 </div>
 
                 <div className="flex justify-end mt-[20px] space-x-2">
@@ -357,6 +474,7 @@ function IncomeEditForm({ inc_num, inc_particulars, inc_amount, inc_additional_n
                     )}
                 </div>
             </form>
+            {ConfirmationDialogs()}
         </Form>
     );
 }

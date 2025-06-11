@@ -5,7 +5,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
-from django.db.models import Count
+from django.db.models import Count, Prefetch
+from apps.healthProfiling.models import PersonalAddress
  
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
@@ -13,6 +14,27 @@ class PatientView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Patient.objects.select_related(
+            'rp_id__per',
+        ).prefetch_related(
+            Prefetch(
+                'rp_id__per__personaladdress_set',
+                queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
+            )
+        ).filter(pat_status='Active')
+
+class PatientDetailView(generics.RetrieveAPIView):
+    serializer_class = PatientSerializer
+    lookup_field = 'pat_id'
+
+    def get_queryset(self):
+        return Patient.objects.select_related(
+            'rp_id__per'
+        ).prefetch_related(
+            'rp_id__per__personaladdress_set__add__sitio'
+        )
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer
@@ -55,7 +77,57 @@ class ObstetricalHistoryView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+
+# **Spouse**
+# class SpouseView(generics.ListCreateAPIView):
+#     serializer_class = SpouseSerializer
+#     queryset = Spouse.objects.all()
+
+#     def create(self, request, *args, **kwargs):
+#         return super().create(request, *args, **kwargs)
+
+class SpouseCreateView(generics.CreateAPIView):
+    serializer_class = SpouseCreateSerializer
+
+    def create(self, request, *args, **kwargs):
+        required_fields = ['spouse_lname', 'spouse_fname', 'spouse_occupation', 'pat_id']
+
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response(
+                    {'error': 'f{field} is required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        if 'spouse_dob' not in request.data:
+            request.data['spouse_dob'] = None
+        
+        return super().create(request, *args, **kwargs)
+
+class SpouseListView(generics.ListAPIView):
+    serializer_class = SpouseSerializer
+
+    def get_queryset(self):
+        pat_id = self.request.query_params.get('pat_id')
+
+        if pat_id:
+            return Spouse.objects.filter(pat_id=pat_id)
+        return Spouse.objects.all()
+
+class SpouseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = SpouseSerializer
+    queryset = Spouse.objects.all()
+    lookup_field = 'spouse_id'
     
+# class SpouseRetrieveDeleteUpdate(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = SpouseSerializer
+#     queryset = Spouse.objects.all()
+#     lookup_field = 'spouse_id'
+
+#     def get_object(self):
+#         spouse_id = self.kwargs.get('spouse_id')
+#         return get_object_or_404(Spouse, spouse_id=spouse_id)
 
         
 class FollowUpVisitView(generics.ListCreateAPIView):

@@ -1,12 +1,12 @@
 
-import {api} from "@/pages/api/api";
-import { toTitleCase } from "@/helpers/ToTitleCase";
+import { api } from "@/pages/api/api";
+import { toTitleCase } from "../case";
 
-export const updateImzSuppliesList = async (imz_id: number, imz_name: string) => {
+export const updateImzSuppliesList = async (imz_id: number, comName: string) => {
   
     try {
       const res = await api.put(`inventory/imz_supplies/${imz_id}/`, {
-        imz_name: toTitleCase(imz_name),
+        imz_name: toTitleCase(comName),
         updated_at: new Date().toISOString(),
       });
   

@@ -3,17 +3,12 @@ import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { View, Text } from "react-native";
 import { Button } from "@/components/ui/button";
-import { RegistrationFormSchema } from "@/form-schema/registration-schema"; 
-import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { FormDateInput } from "@/components/ui/form/form-date-input";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
-
-const defaultValues = generateDefaultValues(RegistrationFormSchema)
-
 export const IdentityVerificationForm = () => {
   const router = useRouter();
-  const { control, trigger, getValues, formState } = useRegistrationFormContext()
+  const { control, trigger } = useRegistrationFormContext()
 
   const handleSubmit = async () => {
     const formIsValid = await trigger(["verificationSchema.dob"])

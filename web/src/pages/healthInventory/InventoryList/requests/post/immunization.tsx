@@ -1,6 +1,6 @@
 
-import {api} from "@/pages/api/api";
-import { toTitleCase } from "@/helpers/ToTitleCase";
+import { api } from "@/pages/api/api";
+import { toTitleCase } from "../case";
 
 export const addImzSupplies = async (imz_name: string) => {
     try {

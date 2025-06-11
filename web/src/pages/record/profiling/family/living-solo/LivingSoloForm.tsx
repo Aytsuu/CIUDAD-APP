@@ -8,6 +8,7 @@ import { LoadButton } from "@/components/ui/button/load-button";
 import { demographicInfoSchema } from "@/form-schema/profiling-schema";
 import { Link } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { FormInput } from "@/components/ui/form/form-input";
 
 export default function LivingSoloForm({
   residents,
@@ -88,9 +89,8 @@ export default function LivingSoloForm({
             { id: "renter", name: "Renter" },
             { id: "other", name: "Other" },
           ]}
-          readOnly={false}
+          readOnly={form.watch("building") === "owner" ? true : false}
         />
-
         <FormSelect
           control={form.control}
           name="indigenous"

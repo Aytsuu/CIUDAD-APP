@@ -18,8 +18,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown/dropdown-menu";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+// import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { FileInput } from "lucide-react";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MaternalAllRecords() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -232,99 +233,93 @@ export default function MaternalAllRecords() {
 
   // const [value, setValue] = useState("");
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Header Section */}
-      <div className="flex-col items-center mb-4">
-          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Maternal Health Records
-          </h1>
-          <p className="text-xs sm:text-sm text-darkGray">
-            Manage and view mother's information
-          </p>
-      </div>
-      <hr className="border-gray mb-5 sm:mb-8" />
-
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        {/* Search Input and Filter Dropdown */}
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="flex gap-x-2">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                size={17}
+    <LayoutWithBack 
+      title="Maternal Health Records  "
+      description="Manage and view mother's information"
+    >
+      <div className="w-full h-full flex flex-col">
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+          {/* Search Input and Filter Dropdown */}
+          <div className="flex flex-col md:flex-row gap-4 w-full">
+            <div className="flex gap-x-2">
+              <div className="relative flex-1">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                  size={17}
+                />
+                <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
+              </div>
+              <SelectLayout
+                className="w-full md:w-[200px] bg-white"
+                label="Filter"
+                placeholder="Select"
+                options={filter}
+                value={selectedFilter}
+                onChange={setSelectedFilter}
               />
-              <Input placeholder="Search..." className="pl-10 w-72 bg-white" />
             </div>
-            <SelectLayout
-              className="w-full md:w-[200px] bg-white"
-              label=""
-              placeholder="Select"
-              options={filter}
-              value={selectedFilter}
-              onChange={setSelectedFilter}
-            />
           </div>
-        </div>
 
-        <div className="w-full sm:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="default">New Record</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>
-                <Link to="/prenatalform">Prenatal</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="">Postpartum</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/*  */}
-
-      {/* Table Container */}
-      <div className="h-full w-full rounded-md">
-        <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-8" defaultValue="10" />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export
-                </Button>
+                <Button variant="default">New Record</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/prenatalform">Prenatal</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/postpartumform">Postpartum</Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {/* Table Placement */}
-          <DataTable columns={columns} data={filteredData} />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing 1-10 of 150 rows
-          </p>
 
-          {/* Pagination */}
-          <div className="w-full sm:w-auto flex justify-center">
-            {/* <PaginationLayout className="" /> */}
+        {/*  */}
+
+        {/* Table Container */}
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input type="number" className="w-14 h-8" defaultValue="10" />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileInput />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto">
+            {/* Table Placement */}
+            <DataTable columns={columns} data={filteredData} />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            {/* Showing Rows Info */}
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing 1-10 of 150 rows
+            </p>
+
+            {/* Pagination */}
+            <div className="w-full sm:w-auto flex justify-center">
+              {/* <PaginationLayout className="" /> */}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </LayoutWithBack>
   );
 }

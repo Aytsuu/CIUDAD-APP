@@ -99,7 +99,7 @@ const items: MenuItem[] = [
       { title: "Budget Plan", url: "/treasurer-budget-plan" },
       {
         title: "Income & Expense Tracking",
-        url: "/treasurer-income-and-expense-tracking",
+        url: "/treasurer-income-expense-main",
       },
       {
         title: "Income & Disbursement",
@@ -120,7 +120,7 @@ const items: MenuItem[] = [
   },
   {
     title: "Donation",
-    url: "/donation",
+    url: "/donation-record",
   },
   {
     title: "Illegal Dumping Reports",
@@ -135,6 +135,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
+      { title: "Administration", url: "/health-administration" },
       { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },
@@ -142,6 +143,10 @@ const items: MenuItem[] = [
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
       { title: "Vaccination", url: "/allRecordsForVaccine" },
+      { title: "Patients Record", url: "/patients-record-main" },
+      { title: "Family Profiling", url: "/family-profiling-main" },
+      
+      
       {
         title: "Inventory",
         url: "/",

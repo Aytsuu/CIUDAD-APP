@@ -1,12 +1,13 @@
-import {api} from "@/api/api";
+import { api } from "@/api/api";
+import { capitalize } from "@/helpers/capitalize";
 import { formatDate } from "@/helpers/dateFormatter";
 
-export const addStaff = async (personalId: string, positionId: string, staffId: string) => {
+export const addStaff = async (residentId: string, positionId: string, staffId: string) => {
   try {
     const res = await api.post("administration/staff/", {
-      staff_id: personalId,
+      staff_id: residentId,
       staff_assign_date: formatDate(new Date()),
-      rp_id: personalId,
+      rp_id: residentId,
       pos_id: positionId,
       manager: staffId,
     });
@@ -21,7 +22,8 @@ export const addStaff = async (personalId: string, positionId: string, staffId: 
 export const addPosition = async (data: any, staffId: string) => {
   try {
     const res = await api.post("administration/position/", {
-      pos_title: data.pos_title,
+      pos_id: data.pos_title.toLowerCase(),
+      pos_title: capitalize(data.pos_title),
       pos_max: data.pos_max,
       staff: staffId,
     });

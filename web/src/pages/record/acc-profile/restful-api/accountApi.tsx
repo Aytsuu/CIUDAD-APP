@@ -1,4 +1,4 @@
-import api from "@/api/api";
+
 
 export const updatePassword = async() => {
     try{

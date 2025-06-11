@@ -3,85 +3,51 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Plus, ClockArrowUp, FileInput, Search } from "lucide-react";
 import { Link } from "react-router";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { exportToCSV, exportToExcel, exportToPDF } from "./ExportFunctions";
 import { residentColumns } from "./ResidentColumns";
-import { ResidentRecord } from "../profilingTypes";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useResidents } from "../queries/profilingFetchQueries";
+import { useResidentsTable } from "../queries/profilingFetchQueries";
+import { useResidentsTableHealth } from "../../health-family-profiling/family-profling/queries/profilingFetchQueries";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
-
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
-
-  // Format resident to populate data table
-  const formatResidentData = React.useCallback((): ResidentRecord[] => {
-    if (!residents) return [];
-
-    return residents.map((resident: any) => {
-      const personal = resident?.per;
-      const [family_composition] = resident?.family_compositions;
-      const family = family_composition?.fam
-      const household = family?.hh;
-      const staff = resident?.staff?.rp?.per;
-
-      return {
-        id: resident.rp_id || "",
-        householdNo: household?.hh_id || "",
-        sitio: household?.sitio.sitio_name || "",
-        familyNo: family?.fam_id || "",
-        lname: personal.per_lname || "",
-        fname: personal.per_fname || "",
-        mname: personal.per_mname || "-",
-        suffix: personal.per_suffix || "-",
-        dateRegistered: resident.rp_date_registered || "",
-        registeredBy: (staff ? `${staff.per_lname}, 
-          ${staff.per_fname} 
-          ${staff.per_mname ? staff.per_mname[0] + '.' : ''}` : '-')
-      };
-    });
-  }, [residents]);
+  const debouncedSearchQuery = useDebounce(searchQuery, 100);
+  const debouncedPageSize = useDebounce(pageSize, 100);
   
-  // Filter residents based on search query
-  const filteredResidents = React.useMemo(() => {
-    const formattedData = formatResidentData();
-    if (!formattedData?.length) return [];
-
-    return formattedData.filter((record: any) =>
-      Object.values(record)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, residents]);
-
-  // Calculate total pages for pagination
-  const totalPages = Math.ceil(filteredResidents?.length / pageSize);
-
-  // Slice the data for the current page
-  const paginatedResidents = filteredResidents.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  const {data: residentsTableData, isLoading } = useResidentsTable(
+    currentPage, 
+    debouncedPageSize,
+    debouncedSearchQuery
   );
+  const {data: residentsTableHealthData, isLoading: isLoadingHealth } = useResidentsTableHealth(
+    currentPage, 
+    debouncedPageSize,
+    debouncedSearchQuery
+  );
+  
+  // Combined loading state
+  const isLoadingCombined = isLoading || isLoadingHealth;
+  
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
 
-  if (isLoadingResidents) {
-    return (
-      <div className="w-full h-full">
-        <Skeleton className="h-10 w-1/6 mb-3 opacity-30" />
-        <Skeleton className="h-7 w-1/4 mb-6 opacity-30" />
-        <Skeleton className="h-10 w-full mb-4 opacity-30" />
-        <Skeleton className="h-4/5 w-full mb-4 opacity-30" />
-      </div>
-    );
-  }
+  const residents = residentsTableData?.results || [];
+  const residentsHealth = residentsTableHealthData?.results || [];
+  const totalCount = residentsTableData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Combine residents with their health data
+  const combinedResidentsData = residents.map((resident: any) => ({
+    ...resident,
+    healthData: residentsHealth.find((health: any) => health.resident_id === resident.id)
+  }));
 
   return (
     <MainLayoutComponent
@@ -111,10 +77,10 @@ export default function ResidentRecords() {
             to="/resident/form"
             state={{
               params: {
+                origin: 'create',
                 title: "Resident Registration",
-                description:
-                  "Provide the necessary details, and complete the registration.",
-              },
+                Description: "Provide the necessary details, and complete the registration."
+              }
             }}
           >
             <Button variant="default">
@@ -156,19 +122,18 @@ export default function ResidentRecords() {
             ]}
           />
         </div>
-        <div className="overflow-x-auto">
-          <DataTable
-            columns={residentColumns(residents)}
-            data={paginatedResidents}
-          />
-        </div>
+        <DataTable
+          columns={residentColumns}
+          data={combinedResidentsData}
+          isLoading={isLoadingCombined}
+        />
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, filteredResidents?.length)} of{" "}
-            {filteredResidents?.length} rows
+            {Math.min(currentPage * pageSize, totalCount)} of{" "}
+            {totalCount} rows
           </p>
-          {paginatedResidents?.length > 0 && (
+          {totalPages > 0 && (
             <PaginationLayout
               currentPage={currentPage}
               totalPages={totalPages}

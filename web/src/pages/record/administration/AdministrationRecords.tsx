@@ -8,7 +8,7 @@ import { Search, UserRoundCog, Plus } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdministrationRecord } from "./administrationTypes";
-import { useFeatures, useStaffs, useResidents } from "./queries/administrationFetchQueries";
+import { useFeatures, useStaffs } from "./queries/administrationFetchQueries";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 
 export default function AdministrationRecords() {
@@ -17,7 +17,6 @@ export default function AdministrationRecords() {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  const { data: residents, isLoading: isLoadingResidents } = useResidents();
   const { data: staffs, isLoading: isLoadingStaffs } = useStaffs();
   const { data: features, isLoading: isLoadingFeatures } = useFeatures();
 
@@ -63,8 +62,7 @@ export default function AdministrationRecords() {
     currentPage * pageSize
   );
 
-  if (isLoadingResidents || isLoadingStaffs
-    || isLoadingFeatures
+  if (isLoadingStaffs || isLoadingFeatures
   ) {
     return (
       <div className="w-full h-full">
@@ -110,11 +108,10 @@ export default function AdministrationRecords() {
             to="/resident/form"
             state={{
               params: {
+                origin: "administration",
                 title: "Staff Registration",
                 description:
-                  "Ensure that all required fields are filled out correctly before submission.",
-                origin: "administration",
-                residents: residents,
+                  "Ensure that all required fields are filled out correctly before submission."
               },
             }}
           >

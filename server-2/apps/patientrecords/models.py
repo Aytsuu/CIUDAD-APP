@@ -1,4 +1,5 @@
 from django.db import models
+from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
 
 # Create your models here.
@@ -13,7 +14,14 @@ from apps.healthProfiling.models import Personal, ResidentProfile
 #     class Meta:
 #         db_table = 'patient'
 #         ordering = ['-created_at']
+
 class Patient(models.Model):
+    pat_id = models.CharField(
+        max_length=15,
+        primary_key=True,
+        editable=False,
+        unique=True
+    )
     pat_id = models.CharField(
         max_length=15,
         primary_key=True,
@@ -106,7 +114,7 @@ class Spouse(models.Model):
     spouse_mnane = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    pat = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouses' ,null=True)
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouse', db_column='pat_id')
 
     class Meta:
         db_table = 'spouse'

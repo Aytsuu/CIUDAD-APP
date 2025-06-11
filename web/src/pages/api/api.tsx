@@ -13,3 +13,4 @@ export const api2 = axios.create({
         'Content-Type': 'application/json', // Ensure JSON is used for requests
     },
 });
+

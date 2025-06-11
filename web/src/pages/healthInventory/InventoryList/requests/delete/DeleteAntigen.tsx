@@ -1,5 +1,5 @@
 
-import {api} from "@/pages/api/api";
+import { api } from "@/pages/api/api";
 
 export const handleDeleteVaccine = async (
     id: number,
@@ -21,20 +21,24 @@ export const handleDeleteVaccine = async (
 
   export const handleDeleteAntigen = async (
     id: number,
-    category: string,
+    type: "vaccine" | "supplies",
   ) => {
     try {
-      const endpoint = category === "Vaccine"
+      const endpoint = type === "vaccine"
         ? `inventory/vac_list/${id}/`
         : `inventory/imz_supplies/${id}/`;
   
       const res = await api.delete(endpoint);
   
       if (res.status === 200 || res.status === 204) {
-        console.log(`✅ deleted successfully!`);
+        console.log(`✅ ${type === "vaccine" ? "Vaccine" : "Immunization supply"} deleted successfully!`);
+  
+        // Option 1: Update local state directly
+        
+        // Option 2: Invalidate query to refetch data
       } else {
         console.error(res);
-        throw new Error(`Failed to delete `);
+        throw new Error(`Failed to delete ${type}`);
       }
     } catch (err) {
       console.error(err);
