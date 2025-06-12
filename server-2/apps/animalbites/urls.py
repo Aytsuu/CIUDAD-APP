@@ -29,11 +29,12 @@ urlpatterns = [
     
     # Complete patient data
     path('patient-details/', AnimalbitePatientDetailsView.as_view(), name='animalbite-patient-details'),
+    path('patient-details/<str:patient_id>/', AnimalbitePatientDetailsView.as_view(), name='animalbite-patient-details-by-id'), # New path for filtering by patient_id
     
     # CRUD operations - try the raw SQL version first
     path('create-record/', CreateAnimalBiteRecordView.as_view(), name='create-animalbite-record'),
     # Alternative endpoint if the first one doesn't work
-    path('create-record-alt/', CreateAnimalBiteRecordAlternativeView.as_view(), name='create-animalbite-record-alt'),
+    # path('create-record-alt/', CreateAnimalBiteRecordAlternativeView.as_view(), name='create-animalbite-record-alt'),
     path('update-record/<int:bite_id>/', UpdateAnimalBiteRecordView.as_view(), name='update-animalbite-record'),
     
     # Delete operations

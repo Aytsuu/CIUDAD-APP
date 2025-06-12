@@ -22,8 +22,8 @@ const ReferralFormSchema = z.object({
   exposure_type: z.string().min(1, "Exposure type is required"),
   exposure_site: z.string().min(1, "Site of exposure is required"),
   biting_animal: z.string().min(1, "Biting animal is required"),
-  p_actions: z.string().min(1, "Actions taken is required"),
-  p_referred: z.string().min(1, "Referred by is required"),
+  actions_taken: z.string().min(1, "Actions taken is required"),
+  referredby: z.string().min(1, "Referred by is required"),
 })
 
 export default ReferralFormSchema

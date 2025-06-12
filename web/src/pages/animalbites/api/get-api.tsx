@@ -1,4 +1,9 @@
 import { api2 } from "@/api/api"
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { submitAnimalBiteReferral } from "../db-request/postrequest";
+
+
 
 // Helper function for consistent error handling
 const handleApiError = (err: any, operation: string) => {
@@ -10,340 +15,176 @@ const handleApiError = (err: any, operation: string) => {
   throw new Error(err.response?.data?.detail || `Failed to ${operation.toLowerCase()}`)
 }
 
-// Fetch all animal bite patients
+
 export const getAnimalbitePatients = async () => {
   try {
-    console.log("🔍 Fetching animal bite patients...")
-    const res = await api2.get("patientrecords/patient/")
-    const allPatients = res.data
+    console.log("🔍 Fetching comprehensive animal bite patient records from /animalbites/patient-details/...");
+    const res = await api2.get("animalbites/patient-details/"); // <--- Corrected API endpoint
+    const allAnimalBiteRecords = res.data;
 
-    // Filter only Animal Bite records
-    const animalBitePatients = allPatients.filter((patient: any) => patient.patrec_type === "Animal Bites")
-    console.log(`✅ Found ${animalBitePatients.length} animal bite patients`)
-    return animalBitePatients
+    console.log(`✅ Found ${allAnimalBiteRecords.length} comprehensive animal bite records.`);
+    // console.log("Sample fetched data for overall:", allAnimalBiteRecords.slice(0, 2)); // Uncomment for debugging
+
+    return allAnimalBiteRecords;
   } catch (error) {
-    console.error("❌ Error fetching animal bite patients:", error)
-    return []
+    console.error("❌ Error fetching comprehensive animal bite patients:", error);
+    handleApiError(error, "Fetch Animal Bite Patients (Comprehensive)");
+    // Return an empty array or re-throw to allow error handling in React Query
+    return [];
   }
-}
+};
 
-// Fetch all patients (for the combobox in referral form)
+// Fetch all animal bite patients (this function is intended to fetch a list of patients
+// that can be selected in the referral form, so it fetches from patientrecords/patient/)
 export const getAllPatients = async () => {
   try {
     const res = await api2.get("patientrecords/patient/")
     console.log("✅ Patients fetched successfully:", res.data)
     return res.data
   } catch (error) {
-    console.error("❌ Error fetching patients:", error)
+    handleApiError(error, "Fetch All Patients")
     return []
   }
 }
 
-// Fetch all animal bite referrals
-export const getAnimalbiteReferrals = async () => {
+// Fetch all combined animal bite patient details (for overall.tsx and individual.tsx)
+// This will fetch from the /animalbites/patient-details/ endpoint
+export const getAnimalBitePatientDetails = async (patientId?: string) => {
   try {
-    console.log("🔍 Fetching animal bite referrals...")
-    const res = await api2.get("animalbites/referral/")
-    console.log(`✅ Found ${res.data.length} animal bite referrals`)
-    return res.data
+    console.log(`🔍 Fetching animal bite patient details for patientId: ${patientId || 'all'}...`);
+    const url = patientId 
+      ? `animalbites/patient-details/?patient_id=${patientId}` 
+      : "animalbites/patient-details/";
+    const res = await api2.get(url);
+    console.log("✅ Animal bite patient details fetched successfully:", res.data);
+    return res.data;
   } catch (error) {
-    console.error("❌ Error fetching animal bite referrals:", error)
-    return []
+    handleApiError(error, "Fetch Animal Bite Patient Details");
+    return [];
   }
-}
+};
 
-// Fetch all animal bite details
+// This function is called by overall.tsx's useEffect. It now fetches combined data.
+export const getAnimalbiteReferrals = async () => {
+  return getAnimalBitePatientDetails(); 
+};
+
+
+// The following functions are assumed to be used elsewhere or might be needed for other operations
 export const getAnimalbiteDetails = async () => {
   try {
-    console.log("🔍 Fetching animal bite details...")
-    const res = await api2.get("animalbites/details/")
-    return res
-    } 
-  catch (error) {
-    console.error("❌ Error fetching animal bite details:", error)
-    return []
+    const res = await api2.get("animalbites/details/");
+    console.log("✅ Animal bite details fetched successfully:", res.data);
+    return res.data;
+  } catch (error) {
+    handleApiError(error, "Fetch Animal Bite Details");
+    return [];
   }
-}
+};
 
-
-
-// Get unique patients (no duplicates) for the overall table
 export const getUniqueAnimalbitePatients = async () => {
   try {
-    console.log("🔍 Fetching unique animal bite patients...")
-    const allPatients = await getAnimalbitePatients()
-    const allReferrals = await getAnimalbiteReferrals()
-    const allBiteDetails = await getAnimalbiteDetails()
-
-    // Group patients by pat_id to avoid duplicates
-    const uniquePatients = new Map()
-
-    for (const patient of allPatients) {
-      const patientId = patient.pat_details?.personal_info?.pat_id
-
-      if (patientId && !uniquePatients.has(patientId)) {
-        // Find all referrals for this patient
-        const patientReferrals = allReferrals.filter((ref: any) => ref.patrec === patient.patrec_id)
-
-        // Sort referrals by date (most recent first)
-        const sortedReferrals = patientReferrals.sort(
-          (a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-        )
-
-        // Get the most recent referral
-        const mostRecentReferral = sortedReferrals[0]
-
-        // Find bite details for the most recent referral
-        const biteDetail = mostRecentReferral
-          ? allBiteDetails.find((detail: any) => detail.referral === mostRecentReferral.referral_id)
-          : null
-
-        uniquePatients.set(patientId, {
-          ...patient,
-          recordCount: patientReferrals.length,
-          mostRecentReferral,
-          mostRecentBiteDetail: biteDetail,
-          referrals: patientReferrals,
-        })
-      }
-    }
-
-    const result = Array.from(uniquePatients.values())
-    console.log(`✅ Found ${result.length} unique animal bite patients`)
-    return result
+    console.log("🔍 Fetching unique animal bite patients...");
+    // This function might need to be adjusted or removed if getAnimalBitePatientDetails
+    // with client-side aggregation in overall.tsx covers its functionality.
+    // For now, assuming it's for something specific if not handled by getAnimalBitePatientDetails.
+    const res = await api2.get("animalbites/unique-patients/"); // This endpoint doesn't exist yet, just a placeholder.
+    console.log("✅ Unique animal bite patients fetched successfully:", res.data);
+    return res.data;
   } catch (error) {
-    console.error("❌ Error fetching unique animal bite patients:", error)
-    return []
+    handleApiError(error, "Fetch Unique Animal Bite Patients");
+    return [];
   }
-}
+};
 
-// Get all records for a specific patient by pat_id
-export const getPatientRecordsByPatId = async (patId: string) => {
-  try {
-    console.log(`🔍 Fetching records for patient ID: ${patId}`)
 
-    // Get all patient records for this pat_id
-    const allPatients = await getAnimalbitePatients()
-    const patientRecords = allPatients.filter(
-      (patient: any) => patient.pat_details?.personal_info?.pat_id?.toString() === patId.toString(),
-    )
-
-    if (patientRecords.length === 0) {
-      console.warn(`⚠️ No patient records found for patient ID: ${patId}`)
-      throw new Error("Patient not found")
-    }
-
-    console.log(`✅ Found ${patientRecords.length} patient records for patient ID: ${patId}`)
-
-    // Get all referrals for these patient records
-    const allReferrals = await getAnimalbiteReferrals()
-    const allBiteDetails = await getAnimalbiteDetails()
-
-    // Get biting animals and exposure sites for enriching the data
-    const bitingAnimals = await getBitingAnimals()
-    const exposureSites = await getExposureSites()
-
-    const patientData = []
-
-    for (const patientRecord of patientRecords) {
-      const patrecId = patientRecord.patrec_id
-
-      // Find referrals for this patient record
-      const referrals = allReferrals.filter((ref: any) => ref.patrec === patrecId)
-      console.log(`✅ Found ${referrals.length} referrals for patient record ID: ${patrecId}`)
-
-      for (const referral of referrals) {
-        const biteDetail = allBiteDetails.find((detail: any) => detail.referral === referral.referral_id)
-
-        if (biteDetail) {
-          // Enrich with biting animal and exposure site data
-          let bitingAnimal = biteDetail.biting_animal
-          let exposureSite = biteDetail.exposure_site
-
-          // If these are IDs, find the corresponding objects
-          if (typeof bitingAnimal === "number") {
-            const animal = bitingAnimals.find((a: any) => a.animal_id === bitingAnimal)
-            if (animal) {
-              bitingAnimal = animal
-            }
-          }
-
-          if (typeof exposureSite === "number") {
-            const site = exposureSites.find((s: any) => s.exposure_site_id === exposureSite)
-            if (site) {
-              exposureSite = site
-            }
-          }
-
-          patientData.push({
-            id: referral.referral_id,
-            date: referral.date,
-            transient: referral.transient,
-            receiver: referral.receiver,
-            sender: referral.sender,
-            exposure: biteDetail.exposure_type,
-            siteOfExposure: exposureSite,
-            bitingAnimal: bitingAnimal,
-            actions: biteDetail.actions_taken,
-            referredBy: biteDetail.referrer_name || "N/A",
-            lab_exam: biteDetail.lab_exam || "N/A",
-            bite_id: biteDetail.bite_id,
-            patientInfo: patientRecord.pat_details.personal_info,
-          })
-        }
-      }
-    }
-
-    console.log(`✅ Processed ${patientData.length} records for patient ID: ${patId}`)
-
-    return {
-      patientInfo: patientRecords[0].pat_details.personal_info,
-      records: patientData,
-    }
-  } catch (error) {
-    console.error(`❌ Error fetching patient records for patient ID: ${patId}:`, error)
-    throw error
-  }
-}
-
-// Get all records for a specific referral ID
-export const getPatientRecordsByReferralId = async (referralId: string) => {
-  try {
-    console.log(`🔍 Fetching records for referral ID: ${referralId}`)
-
-    // Get the specific referral
-    const allReferrals = await getAnimalbiteReferrals()
-    const referral = allReferrals.find((ref: any) => ref.referral_id.toString() === referralId)
-
-    if (!referral) {
-      console.warn(`⚠️ No referral found with ID: ${referralId}`)
-      throw new Error("Referral not found")
-    }
-
-    // Get the patient record associated with this referral
-    const allPatients = await getAnimalbitePatients()
-    const patientRecord = allPatients.find((patient: any) => patient.patrec_id === referral.patrec)
-
-    if (!patientRecord) {
-      console.warn(`⚠️ No patient record found for referral ID: ${referralId}`)
-      throw new Error("Patient record not found")
-    }
-
-    // Get all bite details for this referral
-    const allBiteDetails = await getAnimalbiteDetails()
-    const biteDetail = allBiteDetails.find((detail: any) => detail.referral === parseInt(referralId))
-
-    // Get biting animals and exposure sites for enriching the data
-    const bitingAnimals = await getBitingAnimals()
-    const exposureSites = await getExposureSites()
-
-    // Enrich with biting animal and exposure site data
-    let bitingAnimal = biteDetail?.biting_animal || "N/A"
-    let exposureSite = biteDetail?.exposure_site || "N/A"
-
-    // If these are IDs, find the corresponding objects
-    if (typeof bitingAnimal === "number") {
-      const animal = bitingAnimals.find((a: any) => a.animal_id === bitingAnimal)
-      if (animal) {
-        bitingAnimal = animal
-      }
-    }
-
-    if (typeof exposureSite === "number") {
-      const site = exposureSites.find((s: any) => s.exposure_site_id === exposureSite)
-      if (site) {
-        exposureSite = site
-      }
-    }
-
-    // Format the data for the frontend
-    const formattedData = {
-      patientInfo: patientRecord.pat_details.personal_info,
-      records: [{
-        id: referral.referral_id,
-        date: referral.date,
-        transient: referral.transient,
-        receiver: referral.receiver,
-        sender: referral.sender,
-        exposure: biteDetail?.exposure_type || "N/A",
-        siteOfExposure: exposureSite,
-        bitingAnimal: bitingAnimal,
-        actions: biteDetail?.actions_taken || "N/A",
-        referredBy: biteDetail?.referrer_name || "N/A",
-        lab_exam: biteDetail?.lab_exam || "N/A",
-        bite_id: biteDetail?.bite_id || 0,
-      }]
-    }
-
-    console.log(`✅ Processed record for referral ID: ${referralId}`)
-    return formattedData
-  } catch (error) {
-    console.error(`❌ Error fetching record for referral ID: ${referralId}:`, error)
-    throw error
-  }
-}
-
-// Fetch a single patient by ID
+// Fetch a single patient by ID (for pre-filling form if needed)
 export const getPatientById = async (patientId: string) => {
   try {
-    console.log(`🔍 Fetching patient with ID: ${patientId}`)
-    const res = await api2.get(`patientrecords/patient/${patientId}/`)
-    console.log("✅ Patient fetched successfully:", res.data)
-    return res.data
+    console.log(`🔍 Fetching patient with ID: ${patientId}...`);
+    const res = await api2.get(`patientrecords/patient/${patientId}/`);
+    console.log("✅ Patient fetched successfully:", res.data);
+    return res.data;
   } catch (error) {
-    handleApiError(error, "Fetch Patient")
-    return null
+    handleApiError(error, `Fetch Patient by ID: ${patientId}`);
+    return null;
   }
-}
+};
 
-// Create a new patient
+
+// Create a patient (if the flow allows creating a patient from this section)
 export const createPatient = async (patientData: any) => {
   try {
-    console.log("📝 Creating new patient:", patientData)
-    const res = await api2.post("patientrecords/patient/", patientData)
-    console.log("✅ Patient created successfully:", res.data)
-    return res.data
+    console.log("📝 Creating new patient:", patientData);
+    const res = await api2.post("patientrecords/patient/", patientData);
+    console.log("✅ Patient created successfully:", res.data);
+    return res.data;
   } catch (error) {
-    handleApiError(error, "Create Patient")
-    return null
+    handleApiError(error, "Create Patient");
+    return null;
   }
-}
+};
 
 // Update an existing patient
 export const updatePatient = async (patientId: string, patientData: any) => {
   try {
-    console.log(`📝 Updating patient with ID: ${patientId}`, patientData)
-    const res = await api2.put(`patientrecords/patient/${patientId}/`, patientData)
-    console.log("✅ Patient updated successfully:", res.data)
-    return res.data
+    console.log(`📝 Updating patient with ID: ${patientId}`, patientData);
+    const res = await api2.put(`patientrecords/patient/${patientId}/`, patientData);
+    console.log("✅ Patient updated successfully:", res.data);
+    return res.data;
   } catch (error) {
-    handleApiError(error, "Update Patient")
-    return null
+    handleApiError(error, "Update Patient");
+    return null;
   }
-}
+};
 
 // Delete a patient
 export const deletePatient = async (patientId: string) => {
   try {
-    console.log(`🗑️ Deleting patient with ID: ${patientId}`)
-    await api2.delete(`patientrecords/patient/${patientId}/`)
-    console.log("✅ Patient deleted successfully")
-    return true
+    console.log(`🗑️ Deleting patient with ID: ${patientId}`);
+    await api2.delete(`patientrecords/patient/${patientId}/`);
+    console.log("✅ Patient deleted successfully");
+    return true;
   } catch (error) {
-    handleApiError(error, "Delete Patient")
-    return false
+    handleApiError(error, "Delete Patient");
+    return false;
   }
-}
+};
 
-// Create a patient record
+// Create a patient record (if this is a separate step)
 export const createPatientRecord = async (recordData: any) => {
   try {
-    console.log("📝 Creating new patient record:", recordData)
-    const res = await api2.post("patientrecords/patient-record/", recordData)
-    console.log("✅ Patient record created successfully:", res.data)
-    return res.data
+    console.log("📝 Creating new patient record:", recordData);
+    const res = await api2.post("patientrecords/patient-record/", recordData);
+    console.log("✅ Patient record created successfully:", res.data);
+    return res.data;
   } catch (error) {
-    handleApiError(error, "Create Patient Record")
-    return null
+    handleApiError(error, "Create Patient Record");
+    return null;
   }
-}
+};
+
+export const getPatientRecordsByPatId = async (patId: string) => {
+  try {
+    // This function will now fetch from animalbites/patient-details/ with a filter
+    const res = await api2.get(`animalbites/patient-details/?patient_id=${patId}`);
+    console.log("✅ Patient records by pat_id fetched successfully:", res.data);
+    return res.data;
+  } catch (error) {
+    handleApiError(error, `Fetch Patient Records by Pat ID: ${patId}`);
+    return [];
+  }
+};
+
+export const getPatientRecordsByReferralId = async (referralId: string) => {
+  try {
+    // This is for fetching records specifically by referral ID if needed.
+    // The current flow mostly uses patient ID or overall records.
+    const res = await api2.get(`animalbites/referral/${referralId}/`); // Assuming an endpoint exists for this.
+    console.log("✅ Patient records by referral ID fetched successfully:", res.data);
+    return res.data;
+  } catch (error) {
+    handleApiError(error, `Fetch Patient Records by Referral ID: ${referralId}`);
+    return [];
+  }
+};

@@ -74,8 +74,8 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       exposure_type: "",
       exposure_site: "",
       biting_animal: "",
-      p_actions: "",
-      p_referred: "Midwife",
+      actions_taken: "",
+      referredby: "Midwife",
     },
   })
 
@@ -89,33 +89,33 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
   // Static options
   const exposureTypeOptions: SelectOption[] = [
-    { id: "bite", name: "Bite" },
-    { id: "non-bite", name: "Non-bite" }
+    { id: "Bite", name: "Bite" },
+    { id: "Non-bite", name: "Non-bite" }
   ]
 
   // Initialize state with static options - these will be the dynamic arrays
   const [exposureSites, setExposureSites] = useState<SelectOption[]>([
-    { id: "head", name: "Head" },
-    { id: "neck", name: "Neck" },
-    { id: "hand", name: "Hand" },
-    { id: "foot", name: "Foot" },
-    { id: "trunk", name: "Trunk" },
+    { id: "Head", name: "Head" },
+    { id: "Neck", name: "Neck" },
+    { id: "Hand", name: "Hand" },
+    { id: "Foot", name: "Foot" },
+    { id: "Trunk", name: "Trunk" },
   ])
 
   const [bitingAnimals, setBitingAnimals] = useState<SelectOption[]>([
-    { id: "dog", name: "Dog" },
-    { id: "cat", name: "Cat" },
-    { id: "rodent", name: "Rodent" },
+    { id: "Dog", name: "Dog" },
+    { id: "Cat", name: "Cat" },
+    { id: "Rodent", name: "Rodent" },
 
   ])
 
   // Keep track of default options for deletion prevention
   const defaultExposureSiteIds = new Set([
-    "head", "neck", "foot", "hand", "trunk"
+    "Head", "Neck", "Foot", "Hand", "Trunk"
   ])
   
   const defaultBitingAnimalIds = new Set([
-    "dog", "cat", "rodent"
+    "Dog", "Cat", "Rodent"
   ])
 
   useEffect(() => {
@@ -260,7 +260,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     }
 
     const values = form.getValues()
-    if (!values.pat_id || !values.exposure_site || !values.biting_animal || !values.p_referred) {
+    if (!values.pat_id || !values.exposure_site || !values.biting_animal || !values.referredby) {
       toast.error("Please fill in all required fields")
       return
     }
@@ -282,10 +282,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const handleClose = () => {
-    form.reset()
   }
 
   if (loading) {
@@ -474,14 +470,15 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
               <div className="md:col-span-2">
                 <FormTextArea 
                   control={form.control} 
-                  name="p_actions" 
+                  name="actions_taken" 
                   label="Actions Taken" 
                 />
               </div>
-
+              
+              
               <FormInput 
                 control={form.control} 
-                name="p_referred" 
+                name="referredby" 
                 label="Referred by" 
               />
             </div>
@@ -489,15 +486,6 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
 
           {/* Submit Button */}
           <div className="flex flex-col sm:flex-row sm:justify-end gap-4 pt-6 border-t">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting || !selectedPatientId} 
@@ -511,4 +499,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
     </div>
   )
 }
+
+
+
+
+
+
+
 
