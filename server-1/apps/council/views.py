@@ -21,11 +21,52 @@ class CouncilSchedulingDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CouncilScheduling.objects.all()
     lookup_field = 'ce_id'
 
+    def get_object(self):
+        # Use the lookup_field (ce_id) from URL kwargs
+        queryset = self.get_queryset()
+        lookup_value = self.kwargs[self.lookup_field]
+        try:
+            obj = queryset.get(pk=lookup_value)
+        except CouncilScheduling.DoesNotExist:
+            raise status.HTTP_404_NOT_FOUND  # Let Django handle 404
+        return obj
+
+    def get(self, request, *args, **kwargs):
+        # Already handled by RetrieveUpdateDestroyAPIView's default get
+        return super().get(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        # Already handled by RetrieveUpdateDestroyAPIView's default put
+        return super().put(request, *args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.ce_is_archive = True
+        if not instance:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            # Permanent delete
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            # Soft delete (archive)
+            instance.ce_is_archive = True
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CouncilSchedulingRestoreView(generics.UpdateAPIView):
+    queryset = CouncilScheduling.objects.filter(ce_is_archive=True)
+    serializer_class = CouncilSchedulingSerializer
+    lookup_field = 'ce_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.ce_is_archive = False
         instance.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_200_OK)
 
 class AttendeesView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendeesSerializer

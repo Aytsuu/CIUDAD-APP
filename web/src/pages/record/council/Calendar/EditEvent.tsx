@@ -43,7 +43,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   >(initialValues.attendees || []);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [allowModalOpen, setAllowModalOpen] = useState<boolean>(false);
-  const [ceId] = useState<number>(initialValues.ce_id);
+ const ceId = useMemo(() => initialValues?.ce_id, [initialValues]);
 
   const { mutate: updateEvent, isPending: isUpdating } = useUpdateCouncilEvent();
   const { mutate: updateAttendees } = useUpdateAttendees();
@@ -155,12 +155,16 @@ useEffect(() => {
   }
 
   const handleDelete = () => {
-    deleteEvent(ceId, {
-      onSuccess: () => {
-        if (onClose) onClose();
-      },
-    });
-  };
+  if (!ceId) {
+    console.error("Cannot delete - ceId is undefined");
+    return;
+  }
+  
+  deleteEvent(ceId, {
+    onSuccess: () => onClose?.(),
+    onError: (error) => console.error("Delete failed:", error)
+  });
+};
 
   const handleNextClick = async () => {
     const isValid = await form.trigger();

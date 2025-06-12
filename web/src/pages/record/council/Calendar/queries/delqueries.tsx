@@ -1,26 +1,88 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { delCouncilEvent, delAttendee, delAttendanceSheet } from "../api/delreq";
+import { delCouncilEvent, restoreCouncilEvent, delAttendee, delAttendanceSheet } from "../api/delreq";
 import { CouncilEvent, Attendee, AttendanceSheet } from "./fetchqueries";
 
 export const useDeleteCouncilEvent = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (ce_id: number) => delCouncilEvent(ce_id),
+    mutationFn: ({ ce_id, permanent = false }: { ce_id: number; permanent?: boolean }) => 
+      delCouncilEvent(ce_id, permanent),
+    onSuccess: (data, variables) => {
+      const { ce_id, permanent } = variables;
+      if (permanent) {
+        // Permanent delete
+        queryClient.setQueryData(["councilEvents"], (old: CouncilEvent[] = []) => 
+          old.filter(event => event.ce_id !== ce_id)
+        );
+        toast.success("Council event permanently deleted successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000
+        });
+      } else {
+        // Soft delete (archive)
+        queryClient.setQueryData(["councilEvents"], (old: CouncilEvent[] = []) => 
+          old.map(event => 
+            event.ce_id === ce_id ? { ...event, ce_is_archive: true } : event
+          )
+        );
+        toast.success("Council event archived successfully", {
+          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          duration: 2000
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete council event", {
+        description: error.message,
+        duration: 2000
+      });
+    },
+    onMutate: async (variables) => {
+      const { ce_id, permanent = false } = variables;
+      await queryClient.cancelQueries({ queryKey: ['councilEvents'] });
+      const previousEvents = queryClient.getQueryData(['councilEvents']);
+      if (permanent) {
+        queryClient.setQueryData(['councilEvents'], (old: CouncilEvent[] = []) => 
+          old.filter(event => event.ce_id !== ce_id)
+        );
+      } else {
+        queryClient.setQueryData(['councilEvents'], (old: CouncilEvent[] = []) => 
+          old.map(event => 
+            event.ce_id === ce_id ? { ...event, ce_is_archive: true } : event
+          )
+        );
+      }
+      return { previousEvents };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['councilEvents'] });
+    }
+  });
+};
+
+export const useRestoreCouncilEvent = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (ce_id: number) => restoreCouncilEvent(ce_id),
     onSuccess: (_, ce_id) => {
       queryClient.setQueryData(["councilEvents"], (old: CouncilEvent[] = []) => 
-        old.filter(event => event.ce_id !== ce_id)
+        old.map(event => 
+          event.ce_id === ce_id ? { ...event, ce_is_archive: false } : event
+        )
       );
       queryClient.invalidateQueries({ queryKey: ["councilEvents"] });
-      toast.success("Council event deleted successfully", {
+      toast.success("Council event restored successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000
       });
     },
     onError: (error: Error) => {
-      toast.error("Failed to delete council event", {
+      toast.error("Failed to restore council event", {
         description: error.message,
         duration: 2000
       });
@@ -29,7 +91,9 @@ export const useDeleteCouncilEvent = () => {
       await queryClient.cancelQueries({ queryKey: ['councilEvents'] });
       const previousEvents = queryClient.getQueryData(['councilEvents']);
       queryClient.setQueryData(['councilEvents'], (old: CouncilEvent[] = []) => 
-        old.filter(event => event.ce_id !== ce_id)
+        old.map(event => 
+          event.ce_id === ce_id ? { ...event, ce_is_archive: false } : event
+        )
       );
       return { previousEvents };
     },
