@@ -5,6 +5,7 @@ import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
 import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
 import ActivityReportRecords from '@/pages/record/report/activity/ActivityReportRecords';
 import ReportLayout from '@/pages/record/report/ReportLayout';
+import { Navigate } from 'react-router';
 
 // Creating routes
 export const report_router = [
@@ -12,6 +13,10 @@ export const report_router = [
     path: '/report',
     element: <ReportLayout/>,
     children: [
+      {
+        path: '/report',
+        element: <Navigate to='incident' />
+      },
       {
         path: '/report/incident',
         element: <IRRecords/>
@@ -24,15 +29,11 @@ export const report_router = [
         path: '/report/acknowledgement',
         element: <ARRecords/>
       },
+      {
+        path: '/report/weekly',
+        element: <WeeklyARReport/>
+      }
     ]
-  },
-  {
-    path: '/weekly/report',
-    element: <WeeklyARReport/>
-  },
-  {
-    path: '/report/incident',
-    element: <IRRecords/>
   },
   {
     path: '/report/incident/form',

@@ -3,7 +3,7 @@ from ..models import AcknowledgementReport, ReportType
 from apps.profiling.models import Address
 import datetime
 
-class ARBaseSerialize(serializers.ModelSerializer):
+class ARBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = AcknowledgementReport
     fields = '__all__'
@@ -31,7 +31,7 @@ class ARCreateSerializer(serializers.ModelSerializer):
   class Meta:
     model = AcknowledgementReport
     fields = ['ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 
-              'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'rt', 'staff'] 
+              'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'ir', 'rt', 'staff'] 
     
   def create(self, validated_data):
     report_type = validated_data.pop('rt', None)

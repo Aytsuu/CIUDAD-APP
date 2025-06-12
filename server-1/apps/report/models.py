@@ -32,6 +32,7 @@ class AcknowledgementReport(models.Model):
   ar_created_at = models.DateField(auto_now_add=True)
   ar_status = models.CharField(max_length=20, default='Unsigned')
   ar_is_archive = models.BooleanField(default=False)
+  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
   add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
@@ -58,7 +59,7 @@ class WeeklyAcknowledgementReport(models.Model):
     db_table = 'weekly_acknowledgement_report'
 
 class WeeklyARComposition(models.Model):
-  warc = models.BigAutoField(primary_key=True)
+  warc_id = models.BigAutoField(primary_key=True)
   ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
   war = models.ForeignKey(WeeklyAcknowledgementReport, on_delete=models.CASCADE)
 

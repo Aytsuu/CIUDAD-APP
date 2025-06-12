@@ -20,7 +20,7 @@ export default function ActivityReportRecords() {
   return (
     <MainLayoutComponent
       title="Activity Reports"
-      description="Manage and view incident reports"
+      description="Manage and view activity reports"
     >
       <div className="relative w-full lg:flex justify-between items-center mb-4">
         <div className="relative w-full flex">

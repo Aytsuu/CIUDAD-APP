@@ -10,7 +10,8 @@ urlpatterns = [
   path('rt/create/', ReportTypeCreateView.as_view(), name="create-rt"),
   path('rt/list/<str:rt_category>/', ReportTypeListView.as_view(), name='rt-list'),
   path('ar/list/table/', ARTableView.as_view(), name='ar-list'),
-  path('ar/create/', ARCreateView.as_view(), name='create_ar'),
+  path('ar/create/', ARCreateView.as_view(), name='create-ar'),
   path('war/create/', WARCreateView.as_view(), name='create-war'),
-  path('war/comp/create/', WARCompCreateView.as_view(), name='create-war-comp')
+  path('war/comp/create/', WARCompCreateView.as_view(), name='create-war-comp'),
+  path('war-comp/list/', WARListView.as_view(), name='war-comp-list')
 ]

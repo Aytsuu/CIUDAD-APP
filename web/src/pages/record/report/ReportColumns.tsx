@@ -1,94 +1,138 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoveRight } from "lucide-react";
+import { ArrowUpDown, CircleAlert, MoveRight } from "lucide-react";
 import { IRReport, ARReport } from "./ReportTypes";
 import { Button } from "@/components/ui/button/button";
 import ViewButton from "@/components/ui/view-button";
 import { useNavigate } from "react-router";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import React from "react";
+import { ro } from "date-fns/locale";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
     accessorKey: "ir_id",
-    header: 'Report No.'
+    header: "Report No.",
   },
   {
-      accessorKey: "ir_location", 
-      header: "Location",
-      cell: ({row}) => {
-        const sitio = row.original.ir_sitio;
-        const street = row.original.ir_street;
+    accessorKey: "ir_location",
+    header: "Location",
+    cell: ({ row }) => {
+      const sitio = row.original.ir_sitio;
+      const street = row.original.ir_street;
 
-        return `Sitio ${sitio}, ${street} `
-      }
+      return `Sitio ${sitio}, ${street} `;
+    },
   },
   {
-      accessorKey: "ir_add_details", 
-      header: "Description",
+    accessorKey: "ir_add_details",
+    header: "Description",
   },
   {
     accessorKey: "ir_type",
-    header: "Type"
+    header: "Type",
   },
   {
-      accessorKey: "ir_reported_by", 
-      header: "Reported By",
+    accessorKey: "ir_reported_by",
+    header: "Reported By",
   },
   {
-      accessorKey: "ir_time", 
-      header: "Time", 
+    accessorKey: "ir_time",
+    header: "Time",
   },
   {
-      accessorKey: "ir_date", 
-      header: "Date", 
+    accessorKey: "ir_date",
+    header: "Date",
   },
   {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({row}) => {
-        const navigate = useNavigate()
+    accessorKey: "action",
+    header: "Action",
+    cell: ({ row }) => {
+      const navigate = useNavigate();
 
-        const handleViewClick = () => {
-          navigate('form', {
-            state: {
-              params: {
-                data: row.original
-              }
-            }
-          });
-        }
+      const handleViewClick = () => {
+        navigate("form", {
+          state: {
+            params: {
+              data: row.original,
+            },
+          },
+        });
+      };
 
-        return (
-          <ViewButton onClick={handleViewClick}/>
-        )
-      },
+      return <ViewButton onClick={handleViewClick} />;
+    },
   },
-]
+];
 
-export const ARColumns = (isCreatingWeeklyAR: boolean): ColumnDef<ARReport>[] => [
+export const ARColumns = (
+  isCreatingWeeklyAR: boolean
+): ColumnDef<ARReport>[] => [
   {
     accessorKey: "select",
     header: ({ table }) => {
-      if(isCreatingWeeklyAR) {
-        return <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-          className="border border-gray w-5 h-5"
-        />
+      if (isCreatingWeeklyAR) {
+        return (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => {
+
+              table.toggleAllPageRowsSelected(!!value)
+            }}
+            aria-label="Select all"
+            className="border border-gray w-5 h-5"
+          />
+        );
       }
     },
-    cell: ({ row }) => { 
-      if(isCreatingWeeklyAR) {
-        return <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          className="border border-gray w-5 h-5"
-        />
+    cell: ({ row }) => {
+      if (isCreatingWeeklyAR) {
+
+        React.useEffect(() => {
+          selectionValidator();
+        }, [isCreatingWeeklyAR, row.getIsSelected()])
+
+        const selectionValidator = React.useCallback(() => {
+          if(row.getIsSelected() && row.original.ar_status === 'Unsigned') {
+            toast(`Report No. ${row.original.ar_id} is Unsigned`, {
+              icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+              style: {
+                border: "1px solid rgb(225, 193, 193)",
+                padding: "16px",
+                color: "#b91c1c",
+                background: "#fef2f2",
+              }
+            });
+            row.toggleSelected(false);
+          }
+        },[isCreatingWeeklyAR, row.getIsSelected()])
+      
+        return (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => {
+              if(row.original.ar_status === 'Unsigned') {
+                toast("Cannot add unsigned reports", {
+                  icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+                  style: {
+                    border: "1px solid rgb(225, 193, 193)",
+                    padding: "16px",
+                    color: "#b91c1c",
+                    background: "#fef2f2",
+                  }
+                })
+                return;
+              }
+              row.toggleSelected(!!value)
+            }}
+            aria-label="Select row"
+            className="border border-gray w-5 h-5"
+          />
+        );
       }
     },
     enableSorting: false,
@@ -104,40 +148,38 @@ export const ARColumns = (isCreatingWeeklyAR: boolean): ColumnDef<ARReport>[] =>
   },
   {
     accessorKey: "ar_location",
-    header: "Location", 
-    cell: ({row}) => {
+    header: "Location",
+    cell: ({ row }) => {
       const sitio = row.original.ar_sitio;
       const street = row.original.ar_street;
 
-      return `Sitio ${sitio}, ${street} `
-    }
+      return `Sitio ${sitio}, ${street} `;
+    },
   },
   {
-    accessorKey: "ar_date", 
+    accessorKey: "ar_date",
     header: "Date",
   },
   {
-    accessorKey: "ar_status", 
+    accessorKey: "ar_status",
     header: "Status",
   },
   {
     header: "Action",
-    cell: ({row}) => {
-      const navigate = useNavigate()
+    cell: ({ row }) => {
+      const navigate = useNavigate();
 
       const handleViewClick = () => {
-        navigate('form', {
+        navigate("form", {
           state: {
             params: {
-              data: row.original
-            }
-          }
+              data: row.original,
+            },
+          },
         });
-      }
+      };
 
-      return (
-        <ViewButton onClick={handleViewClick}/>
-      )
+      return <ViewButton onClick={handleViewClick} />;
     },
   },
 ];

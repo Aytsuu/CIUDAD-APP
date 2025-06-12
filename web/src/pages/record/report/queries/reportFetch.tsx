@@ -31,3 +31,19 @@ export const useGetAcknowledgementReport = () => {
     staleTime: 5000
   })
 }
+
+export const useGetWeeklyAR = () => {
+  return useQuery({
+    queryKey: ['weeklyAR'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('report/war-comp/list/');
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}

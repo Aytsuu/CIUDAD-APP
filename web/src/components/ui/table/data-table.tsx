@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils"
     isLoading?: boolean;
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    reset?: boolean;
+    setReset?: React.Dispatch<React.SetStateAction<boolean>>
     onSelectedRowsChange?: (rows: TData[]) => void
   }
    
@@ -37,6 +39,8 @@ import { cn } from "@/lib/utils"
     header=true, 
     columns, 
     data,
+    reset,
+    setReset,
     onSelectedRowsChange
   }: DataTableProps<TData, TValue>) {
 
@@ -68,7 +72,14 @@ import { cn } from "@/lib/utils"
         const selectedRows = table.getSelectedRowModel().rows.map(row => row.original)
         onSelectedRowsChange(selectedRows)
       }
-    }, [onSelectedRowsChange, rowSelection])
+    }, [onSelectedRowsChange, rowSelection]);
+
+    React.useEffect(() => {
+      if(reset) {
+        table.resetRowSelection();
+        setReset && setReset(false);
+      }
+    }, [reset])
    
     return (
         <Table>

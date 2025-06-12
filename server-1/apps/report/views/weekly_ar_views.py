@@ -31,4 +31,6 @@ class WARCompCreateView(generics.CreateAPIView):
       status=status.HTTP_201_CREATED
     )
 
-
+class WARListView(generics.ListAPIView):
+  serializer_class = WARListSerializer
+  queryset = WeeklyAcknowledgementReport.objects.all().order_by('war_created_at')
