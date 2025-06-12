@@ -191,7 +191,7 @@ import EventCalendar from "@/components/ui/calendar/EventCalendar";
 import WasteHotspotMain from "./waste-hotspot/waste-hotspot-main";
 import {useGetHotspotRecords,type Hotspot,} from "./waste-hotspot/queries/hotspotFetchQueries";
 import { formatTime } from "@/helpers/timeFormatter";
-import { EventDetailColumn } from "@/components/ui/calendar/event-detail-column";
+import { EventDetailColumn } from "@/components/ui/calendar/EventCalendar";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -277,7 +277,7 @@ const WasteMainScheduling = () => {
         <TabsContent value="calendar" className="space-y-4">
           <div className="w-full bg-white">
             <EventCalendar
-              name="Hotspot Assignment"
+              name="Hotspot Assignment & Schedule"
               titleAccessor="watchman"
               data={fetchedData.filter(row => row.wh_is_archive === false)}
               columns={commonColumns}
