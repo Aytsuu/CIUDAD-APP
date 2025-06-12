@@ -14,7 +14,6 @@ import AttendanceSheetView from "./AttendanceSheetView";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { useAddCouncilEvent, useAddAttendee } from "./queries/addqueries";
 import { useGetStaffList } from "./queries/fetchqueries";
-import { format } from 'date-fns';
 import { formatDate } from '@/helpers/dateFormatter';
 
 interface SchedEventFormProps {
@@ -241,9 +240,9 @@ function SchedEventForm({ onSuccess }: SchedEventFormProps) {
                       Preview
                     </Button>
                   }
-                  className="max-w-[1000px] max-h-full flex flex-col overflow-auto scrollbar-custom"
+                  className="w-full max-w-[1000px] h-full flex flex-col overflow-auto scrollbar-custom"
                   title="Attendance Sheet Preview"
-                  description="Review the attendance sheet before saving"
+                  description="Review the attendance sheet before downloading"
                   mainContent={
                     <AttendanceSheetView
                       ce_id={ceId}
