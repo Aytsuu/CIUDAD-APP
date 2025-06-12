@@ -1088,12 +1088,6 @@ export function Toolbar({ editor, uploadImage, onMarginChange, onPaperSizeChange
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* <TooltipLayout trigger={<Toggle size="lg" onClick={() => editor.chain().focus().insertContent({ type: "pageBreak" }).run()}><TableRowsSplit size={20} /></Toggle>} content="Page Break" />
-      <TooltipLayout trigger={<Toggle size="lg" onPressedChange={() => editor.chain().focus().undo().run()}><Undo2 size={20} /></Toggle>} content="Undo" />
-      <TooltipLayout trigger={<Toggle size="lg" onPressedChange={() => editor.chain().focus().redo().run()}><Redo2 size={20} /></Toggle>} content="Redo" /> */}
-
-      {/* Hidden File Input */}
-      {/* <input type="file" accept="image/*" onChange={onSelectFile} style={{ display: "none" }} id="image-upload" /> */}
       <div className="flex items-center gap-2 border-l pl-3 ml-3">
         <TooltipLayout trigger={<Toggle size="lg" onClick={() => editor.chain().focus().insertContent({ type: "pageBreak" }).run()}><TableRowsSplit size={20} /></Toggle>} content="Page Break" />
         <TooltipLayout trigger={<Toggle size="lg" onPressedChange={() => editor.chain().focus().undo().run()}><Undo2 size={20} /></Toggle>} content="Undo" />

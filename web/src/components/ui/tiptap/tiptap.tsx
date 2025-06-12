@@ -769,6 +769,362 @@
 // }
 
 
+// import { useEditor, EditorContent } from "@tiptap/react";
+// import StarterKit from "@tiptap/starter-kit";
+// import { Toolbar } from "./toolbar";
+// import Heading from "@tiptap/extension-heading";
+// import BulletList from "@tiptap/extension-bullet-list";
+// import OrderedList from "@tiptap/extension-ordered-list";
+// import ListItem from "@tiptap/extension-list-item";
+// import Image from "@tiptap/extension-image";
+// import ResizeImage from "tiptap-extension-resize-image";
+// import TextAlign from "@tiptap/extension-text-align";
+// import Underline from "@tiptap/extension-underline";
+// import Highlight from "@tiptap/extension-highlight";
+// import FontFamily from "@tiptap/extension-font-family";
+// import TextStyle from "@tiptap/extension-text-style";
+// import FontSize from "@tiptap/extension-font-size";
+// import { useState } from "react";
+// import { Node } from "@tiptap/core";
+
+// // Custom Page Break Node
+// const PageBreak = Node.create({
+//   name: "pageBreak",
+//   inline: false,
+//   group: "block",
+//   selectable: false,
+//   parseHTML() {
+//     return [{ tag: 'hr[data-type="page-break"]' }];
+//   },
+//   renderHTML() {
+//     return [
+//       "hr",
+//       { "data-type": "page-break", style: "border: 1px dashed gray; margin: 20px 0;" },
+//     ];
+//   },
+// });
+
+// const EmptyLine = Node.create({
+//   name: "emptyLine",
+//   group: "block",
+//   content: "text*",
+//   parseHTML() {
+//     return [{ tag: "br" }];
+//   },
+//   renderHTML() {
+//     return ["br"];
+//   },
+// });
+
+// export default function Tiptap({
+//   description,
+//   onChange,
+// }: {
+//   description: string;
+//   onChange: (richText: string) => void;
+// }) {
+//   const editor = useEditor({
+//     extensions: [
+//       StarterKit,
+//       Heading.configure({
+//         levels: [2],
+//         HTMLAttributes: {
+//           class: "text-xl font-bold",
+//         },
+//       }),
+//       TextAlign.configure({
+//         types: ["heading", "paragraph"],
+//         alignments: ["left", "center", "right", "justify"],
+//       }),
+//       BulletList,
+//       OrderedList.configure({
+//         HTMLAttributes: {
+//           class: "list-decimal pl-5 pr-5",
+//         },
+//       }),
+//       ListItem,
+//       Image,
+//       ResizeImage,
+//       Underline,
+//       Highlight.configure({ multicolor: true }),
+//       TextStyle, // Needed for inline styles like font-size
+//       FontFamily.configure({
+//         types: ['textStyle'],
+//       }),
+//       PageBreak,
+//       EmptyLine,
+//       FontSize.configure({
+//         types: ['textStyle'],
+//     }),
+//     ],
+//     content: description,
+//     editorProps: {
+//       attributes: {
+//         class:
+//           "border min-h-[500px] border-input bg-background px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50 outline-none",
+//       },
+//     },
+//     onUpdate({ editor }) {
+//       let html = editor.getHTML();
+//       html = html.replace(/(<p style="text-align: (left|right|center|justify)"><\/p>)/g, "<br/>");
+//       onChange(html);
+//     },
+//   });
+
+//   const uploadImage = (imageUrl: string) => {
+//     if (!editor) return;
+//     editor.chain().focus().setImage({ src: imageUrl }).run();
+//   };
+
+//   const [editorMargin, setEditorMargin] = useState("96px");
+//   const handleMarginChange = (margin: string) => {
+//     setEditorMargin(margin);
+//   };
+
+//   const [paperSize, setPaperSize] = useState<"short" | "long">("short");
+//   const handlePaperSizeChange = (size: "short" | "long") => {
+//     setPaperSize(size);
+//   };
+
+//   const getPaperDimensions = () => {
+//     return paperSize === "short"
+//       ? { width: "816px", height: "1056px" }
+//       : { width: "816px", height: "1248px" };
+//   };
+
+//   const dimensions = getPaperDimensions();
+
+//   return (
+//     <div className="flex flex-col h-full w-full">
+//       <Toolbar
+//         editor={editor}
+//         uploadImage={uploadImage}
+//         onMarginChange={handleMarginChange}
+//         onPaperSizeChange={handlePaperSizeChange}
+//       />
+//       <div className="flex justify-center mt-3">
+//         <EditorContent
+//           key={editorMargin}
+//           style={{
+//             whiteSpace: "pre-line",
+//             overflowY: "auto",
+//             maxHeight: dimensions.height,
+//           }}
+//           editor={editor}
+//           className="mt-[7px]"
+//         />
+//       </div>
+//       <style
+//         dangerouslySetInnerHTML={{
+//           __html: `
+//             .tiptap.ProseMirror {
+//               padding: ${editorMargin};
+//               width: ${dimensions.width};
+//               height: ${dimensions.height};
+//               overflow-y: auto;
+//               white-space: pre-wrap;
+//             }
+//           `,
+//         }}
+//       />
+//     </div>
+//   );
+// }
+
+// FUNCTIONAL PAGE BREAK=============================================
+// import { useEditor, EditorContent } from "@tiptap/react";
+// import StarterKit from "@tiptap/starter-kit";
+// import { Toolbar } from "./toolbar";
+// import Heading from "@tiptap/extension-heading";
+// import BulletList from "@tiptap/extension-bullet-list";
+// import OrderedList from "@tiptap/extension-ordered-list";
+// import ListItem from "@tiptap/extension-list-item";
+// import Image from "@tiptap/extension-image";
+// import ResizeImage from "tiptap-extension-resize-image";
+// import TextAlign from "@tiptap/extension-text-align";
+// import Underline from "@tiptap/extension-underline";
+// import Highlight from "@tiptap/extension-highlight";
+// import FontFamily from "@tiptap/extension-font-family";
+// import TextStyle from "@tiptap/extension-text-style";
+// import FontSize from "@tiptap/extension-font-size";
+// import { useState, useEffect } from "react";
+// import { Node } from "@tiptap/core";
+
+// const PageBreak = Node.create({
+//   name: "pageBreak",
+//   inline: false,
+//   group: "block",
+//   selectable: false,
+//   parseHTML() {
+//     return [{ tag: 'hr[data-type="page-break"]' }];
+//   },
+//   renderHTML() {
+//     return [
+//       "hr",
+//       { "data-type": "page-break", style: "border: 1px dashed gray; margin: 20px 0;" },
+//     ];
+//   },
+// });
+
+// const EmptyLine = Node.create({
+//   name: "emptyLine",
+//   group: "block",
+//   content: "text*",
+//   parseHTML() {
+//     return [{ tag: "br" }];
+//   },
+//   renderHTML() {
+//     return ["br"];
+//   },
+// });
+
+// export default function Tiptap({
+//   description,
+//   onChange,
+// }: {
+//   description: string;
+//   onChange: (richText: string) => void;
+// }) {
+//   const [editorMargin, setEditorMargin] = useState("96px");
+//   const [paperSize, setPaperSize] = useState<"short" | "long">("short");
+
+//   const getPaperDimensions = () => {
+//     return paperSize === "short"
+//       ? { width: "816px", height: "1056px" }
+//       : { width: "816px", height: "1248px" };
+//   };
+
+//   const dimensions = getPaperDimensions();
+
+//   const editor = useEditor({
+//     extensions: [
+//       StarterKit,
+//       Heading.configure({
+//         levels: [2],
+//         HTMLAttributes: {
+//           class: "text-xl font-bold",
+//         },
+//       }),
+//       TextAlign.configure({
+//         types: ["heading", "paragraph"],
+//         alignments: ["left", "center", "right", "justify"],
+//       }),
+//       BulletList,
+//       OrderedList.configure({
+//         HTMLAttributes: {
+//           class: "list-decimal pl-5 pr-5",
+//         },
+//       }),
+//       ListItem,
+//       Image,
+//       ResizeImage,
+//       Underline,
+//       Highlight.configure({ multicolor: true }),
+//       TextStyle,
+//       FontFamily.configure({
+//         types: ["textStyle"],
+//       }),
+//       FontSize.configure({
+//         types: ["textStyle"],
+//       }),
+//       PageBreak,
+//       EmptyLine,
+//     ],
+//     content: description,
+//     editorProps: {
+//       attributes: {
+//         class:
+//           "border min-h-[500px] border-input bg-background px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50 outline-none",
+//       },
+//     },
+//     onUpdate({ editor }) {
+//       autoInsertPageBreaks(editor);
+//       let html = editor.getHTML();
+//       html = html.replace(/(<p style=\"text-align: (left|right|center|justify)\"><\/p>)/g, "<br/>");
+//       onChange(html);
+//     },
+//   });
+
+//   const autoInsertPageBreaks = (editorInstance: any) => {
+//     const container = document.querySelector(".tiptap.ProseMirror") as HTMLElement;
+//     if (!container) return;
+
+//     let cumHeight = 0;
+//     const maxHeight = parseInt(dimensions.height) - parseInt(editorMargin) * 2;
+//     let lastBreak = 0;
+
+//     Array.from(container.children).forEach((block: any) => {
+//       const rect = block.getBoundingClientRect();
+//       const isBreak = block.tagName === "HR" && block.dataset.type === "page-break";
+
+//       cumHeight += rect.height;
+
+//       if (cumHeight > maxHeight && !isBreak) {
+//         const pos = editorInstance.view.posAtDOM(block, block.childNodes.length);
+//         if (pos > lastBreak + 5) {
+//           editorInstance.chain().focus()
+//             .insertContentAt(pos, [
+//               { type: "pageBreak" },
+//               { type: "paragraph" }
+//             ]).run();
+//           lastBreak = pos;
+//         }
+//         cumHeight = 0;
+//       }
+//       if (isBreak) cumHeight = 0;
+//     });
+//   };
+
+//   const uploadImage = (imageUrl: string) => {
+//     if (!editor) return;
+//     editor.chain().focus().setImage({ src: imageUrl }).run();
+//   };
+
+//   const handleMarginChange = (margin: string) => {
+//     setEditorMargin(margin);
+//   };
+
+//   const handlePaperSizeChange = (size: "short" | "long") => {
+//     setPaperSize(size);
+//   };
+
+//   return (
+//     <div className="flex flex-col h-full w-full">
+//       <Toolbar
+//         editor={editor}
+//         uploadImage={uploadImage}
+//         onMarginChange={handleMarginChange}
+//         onPaperSizeChange={handlePaperSizeChange}
+//       />
+//       <div className="flex justify-center mt-3">
+//         <EditorContent
+//           key={editorMargin}
+//           style={{
+//             whiteSpace: "pre-line",
+//             overflowY: "auto",
+//             maxHeight: dimensions.height,
+//           }}
+//           editor={editor}
+//           className="mt-[7px]"
+//         />
+//       </div>
+//       <style
+//         dangerouslySetInnerHTML={{
+//           __html: `
+//             .tiptap.ProseMirror {
+//               padding: ${editorMargin};
+//               width: ${dimensions.width};
+//               min-height: ${dimensions.height};
+//               white-space: pre-wrap;
+//             }
+//           `,
+//         }}
+//       />
+//     </div>
+//   );
+// }
+
+
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./toolbar";
@@ -787,7 +1143,6 @@ import FontSize from "@tiptap/extension-font-size";
 import { useState } from "react";
 import { Node } from "@tiptap/core";
 
-// Custom Page Break Node
 const PageBreak = Node.create({
   name: "pageBreak",
   inline: false,
@@ -799,7 +1154,10 @@ const PageBreak = Node.create({
   renderHTML() {
     return [
       "hr",
-      { "data-type": "page-break", style: "border: 1px dashed gray; margin: 20px 0;" },
+      {
+        "data-type": "page-break",
+        style: "border: 1px dashed gray; margin: 96px 0;",
+      },
     ];
   },
 });
@@ -823,6 +1181,19 @@ export default function Tiptap({
   description: string;
   onChange: (richText: string) => void;
 }) {
+  const [editorMargin, setEditorMargin] = useState("96px");
+  const [paperSize, setPaperSize] = useState<"short" | "long">("short");
+
+  const getPaperDimensions = () => {
+    return paperSize === "short"
+      ? { width: "816px", height: "1056px" }
+      : { width: "816px", height: "1248px" };
+  };
+
+  const dimensions = getPaperDimensions();
+  const usableHeight =
+    parseInt(dimensions.height) - parseInt(editorMargin) * 2;
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -847,15 +1218,15 @@ export default function Tiptap({
       ResizeImage,
       Underline,
       Highlight.configure({ multicolor: true }),
-      TextStyle, // Needed for inline styles like font-size
+      TextStyle,
       FontFamily.configure({
-        types: ['textStyle'],
+        types: ["textStyle"],
+      }),
+      FontSize.configure({
+        types: ["textStyle"],
       }),
       PageBreak,
       EmptyLine,
-      FontSize.configure({
-        types: ['textStyle'],
-    }),
     ],
     content: description,
     editorProps: {
@@ -865,34 +1236,59 @@ export default function Tiptap({
       },
     },
     onUpdate({ editor }) {
+      autoInsertPageBreaks(editor);
       let html = editor.getHTML();
-      html = html.replace(/(<p style="text-align: (left|right|center|justify)"><\/p>)/g, "<br/>");
+      html = html.replace(/(<p style=\"text-align: (left|right|center|justify)\"><\/p>)/g, "<br/>");
       onChange(html);
     },
   });
+
+  const autoInsertPageBreaks = (editorInstance: any) => {
+    const container = document.querySelector(".tiptap.ProseMirror") as HTMLElement;
+    if (!container) return;
+
+    let cumHeight = 0;
+    const blocks = Array.from(container.children);
+    let lastBreak = 0;
+
+    blocks.forEach((block: any, index: number) => {
+      const rect = block.getBoundingClientRect();
+      const isBreak = block.tagName === "HR" && block.dataset.type === "page-break";
+
+      cumHeight += rect.height;
+
+      if (cumHeight > usableHeight && !isBreak) {
+        const pos = editorInstance.view.posAtDOM(block, block.childNodes.length);
+        if (pos > lastBreak + 5) {
+          editorInstance.chain().focus()
+            .insertContentAt(pos, [
+              { type: "pageBreak" },
+              { type: "paragraph" },
+            ])
+            .run();
+          lastBreak = pos;
+        }
+        cumHeight = 0;
+      }
+
+      if (isBreak) {
+        cumHeight = 0; // reset height after break
+      }
+    });
+  };
 
   const uploadImage = (imageUrl: string) => {
     if (!editor) return;
     editor.chain().focus().setImage({ src: imageUrl }).run();
   };
 
-  const [editorMargin, setEditorMargin] = useState("96px");
   const handleMarginChange = (margin: string) => {
     setEditorMargin(margin);
   };
 
-  const [paperSize, setPaperSize] = useState<"short" | "long">("short");
   const handlePaperSizeChange = (size: "short" | "long") => {
     setPaperSize(size);
   };
-
-  const getPaperDimensions = () => {
-    return paperSize === "short"
-      ? { width: "816px", height: "1056px" }
-      : { width: "816px", height: "1248px" };
-  };
-
-  const dimensions = getPaperDimensions();
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -920,8 +1316,7 @@ export default function Tiptap({
             .tiptap.ProseMirror {
               padding: ${editorMargin};
               width: ${dimensions.width};
-              height: ${dimensions.height};
-              overflow-y: auto;
+              min-height: ${dimensions.height};
               white-space: pre-wrap;
             }
           `,
