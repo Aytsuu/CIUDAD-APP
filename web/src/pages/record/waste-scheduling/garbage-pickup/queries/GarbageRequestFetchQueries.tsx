@@ -1,8 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getDrivers } from "../restful-API/GarbageRequestGetAPI";
-import { getTrucks } from "../restful-API/GarbageRequestGetAPI";
-import { getCollectors } from "../restful-API/GarbageRequestGetAPI";
-import { getGarbagePendingRequest, getGarbageRejectedRequest, getGarbageAcceptedRequest, getGarbageCompletedRequest} from "../restful-API/GarbageRequestGetAPI";
+import { getTrucks, getDrivers, getCollectors, getGarbageAcceptedRequest, getGarbageCompletedRequest, getGarbagePendingRequest, getGarbageRejectedRequest } from "../restful-api/GarbageRequestGetAPI";
 
 // Retrieve Drivers
 export type Drivers = {
@@ -90,7 +87,7 @@ export type GarbageRequestPending = {
     garb_pref_time: string;
     garb_created_at: string;
     garb_additional_notes: string; 
-    file_id: string;
+    file_url: string;
 }  
 
 export const useGetGarbagePendingRequest = () => {
@@ -111,6 +108,7 @@ export type GarbageRequestReject = {
     dec_id?: string | null;  
     dec_date?: string | null;
     dec_reason: string;
+    file_url: string;
 };
 
 
@@ -141,6 +139,7 @@ export type GarbageRequestAccept = {
     pick_date?: string;
     truck?: string;
   } | null;
+  file_url: string;
 };
 
 
@@ -169,6 +168,7 @@ export type GarbageRequestComplete = {
     pick_date?: string;      
     truck?: string;
   } | null;
+  file_url: string;
 }
 
 export const useGetGarbageCompleteRequest = () => {
@@ -178,4 +178,6 @@ export const useGetGarbageCompleteRequest = () => {
         staleTime: 1000 * 60 * 30,
     });
 }
+
+
 

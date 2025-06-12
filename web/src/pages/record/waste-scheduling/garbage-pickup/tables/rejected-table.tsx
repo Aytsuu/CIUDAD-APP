@@ -6,7 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatTimestamp } from "@/helpers/timestampformatter";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "@/components/ui/dropdown/dropdown-menu";
 import { Button } from "@/components/ui/button/button"
-import { FileInput } from "lucide-react"
+import { FileInput, Image } from "lucide-react"
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+
 
 export default function RejectedTable() {
 
@@ -34,6 +37,32 @@ export default function RejectedTable() {
         if (!date) return ""; 
         return formatTimestamp(date as string | Date);
       }
+    }, 
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      cell: ({row}) => (
+        <TooltipLayout
+            trigger={
+                <div className="flex justify-center gap-2">
+                    <DialogLayout
+                      trigger={<div className="bg-stone-200 hover:bg-stone-300 text-sm text-gray-500 px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Image size={16} /></div>}
+                      title="Request Image"
+                      mainContent={
+                        <div className="flex justify-center items-center w-full h-full p-4">
+                          <img
+                            src={row.original.file_url} alt="Rejected request"
+                            className="max-w-full max-h-[500px] object-contain rounded-md shadow"
+                          />
+                        </div>
+
+                      }
+                    />
+                </div>
+            }
+            content="View Image"
+        />
+      )
     }
   ]
 

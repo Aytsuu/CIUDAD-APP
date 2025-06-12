@@ -81,6 +81,7 @@ class SitioSerializer(serializers.ModelSerializer):
 
 class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -91,12 +92,15 @@ class GarbagePickupRequestPendingSerializer(serializers.ModelSerializer):
             return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
         return "Unknown"
     
+    def get_file_url(self, obj):
+        return obj.file.file_url if obj.file else ""
+    
 class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
     dec_id = serializers.SerializerMethodField()
     dec_date = serializers.SerializerMethodField()
     dec_reason = serializers.SerializerMethodField()
-    file_id = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -109,7 +113,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
             'dec_id',
             'dec_date',
             'dec_reason',
-            'file_id'
+            'file_url'
         ]
 
     def get_garb_requester(self, obj):
@@ -135,7 +139,7 @@ class GarbagePickupRequestRejectedSerializer(serializers.ModelSerializer):
         decision = self.get_decision(obj)
         return decision.dec_rejection_reason if decision else ""
 
-    def get_file_id(self, obj):
+    def get_file_url(self, obj):
         return obj.file.file_url if obj.file else ""
     
 
@@ -148,6 +152,7 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
     collector_ids = serializers.SerializerMethodField()
     pickup_assignment_id = serializers.SerializerMethodField()
     assignment_collector_ids = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -165,6 +170,7 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             'assignment_info',
             'pickup_assignment_id',         
             'assignment_collector_ids',    
+            'file_url',
         ]
 
 
@@ -272,13 +278,15 @@ class GarbagePickupRequestAcceptedSerializer(serializers.ModelSerializer):
             print(f"Error getting acl_ids: {str(e)}")
             return []
 
-
+    def get_file_url(self, obj):
+        return obj.file.file_url if obj.file else ""
 
 
 class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
     garb_requester = serializers.SerializerMethodField()
     confirmation_info = serializers.SerializerMethodField()
     assignment_info = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Garbage_Pickup_Request
@@ -290,6 +298,7 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             'garb_requester',
             'confirmation_info',
             'assignment_info',
+            'file_url',
         ]
 
     def get_garb_requester(self, obj):
@@ -357,6 +366,9 @@ class GarbagePickupRequestCompletedSerializer(serializers.ModelSerializer):
             return "Truck info unavailable"
         except Exception:
             return "Truck info unavailable"
+        
+    def get_file_url(self, obj):
+        return obj.file.file_url if obj.file else ""
     
 
 class PickupRequestDecisionSerializer(serializers.ModelSerializer):

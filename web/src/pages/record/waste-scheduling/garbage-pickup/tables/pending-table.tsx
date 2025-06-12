@@ -40,8 +40,20 @@ export default function PendingTable(){
                 <div className="flex justify-center gap-2">
                     <TooltipLayout
                         trigger={
-                            <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-3 rounded cursor-pointer">
-                                <Image size={16} />
+                            <div className="flex justify-center gap-2">
+                                <DialogLayout
+                                trigger={<div className="bg-stone-200 hover:bg-stone-300 text-sm text-gray-500 px-4 py-3 rounded cursor-pointer shadow-none h-full flex items-center"><Image size={16} /></div>}
+                                title="Request Image"
+                                mainContent={
+                                    <div className="flex justify-center items-center w-full h-full p-4">
+                                    <img
+                                        src={row.original.file_url} alt="Rejected request"
+                                        className="max-w-full max-h-[500px] object-contain rounded-md shadow"
+                                    />
+                                    </div>
+
+                                }
+                                />
                             </div>
                         }
                         content="View Image"
