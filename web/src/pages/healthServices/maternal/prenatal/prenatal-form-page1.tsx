@@ -28,8 +28,8 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 // import { toast } from "sonner";
-import { usePatients } from "../queries/prenatalFetchQueries";
-import { set } from "date-fns";
+import { usePatients } from "../queries/maternalFetchQueries";
+// import { set } from "date-fns";
 
 
 interface PatientRecord{
@@ -61,7 +61,7 @@ interface PatientRecord{
         spouse_mname: string
         spouse_dob: string
         spouse_occupation: string
-    } | null;
+    };
     
 }
 

@@ -23,6 +23,8 @@ class PartialUpdateMixin:
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
+    spouse = serializers.SerializerMethodField()
+    # Use the minimal serializer for resident profile
     resident_profile = ResidentProfileMinimalSerializer(source='rp_id', read_only=True)
     family_compositions = serializers.SerializerMethodField()
     households = serializers.SerializerMethodField()
@@ -52,6 +54,7 @@ class PatientSerializer(serializers.ModelSerializer):
         households = Household.objects.filter(rp__in=resident_profiles)
         return HouseholdMinimalSerializer(households, many=True, context=self.context).data
     
+
     def get_address(self, obj):
         if obj.rp_id and obj.rp_id.per:
             personal_address = PersonalAddress.objects.filter(per=obj.rp_id.per).first()
@@ -66,11 +69,21 @@ class PatientSerializer(serializers.ModelSerializer):
                 }
         return None
     
+    
     def get_spouse(self, obj):
-        return None
+        try:
+            spouse = obj.spouse.get()
+            return {
+                'spouse_type': spouse.spouse_type,
+                'spouse_lname': spouse.spouse_lname,
+                'spouse_fname': spouse.spouse_fname,
+                'spouse_mnane': spouse.spouse_mnane,
+                'spouse_occupation': spouse.spouse_occupation,
+                'spouse_dob': spouse.spouse_dob.strftime('%Y-%m-%d') if spouse.spouse_dob else None,
+            }
+        except Spouse.DoesNotExist:
+            return None
     
-    
-
 
 class PatientRecordSerializer(serializers.ModelSerializer):
     pat_details = PatientSerializer(source='pat_id', read_only=True)

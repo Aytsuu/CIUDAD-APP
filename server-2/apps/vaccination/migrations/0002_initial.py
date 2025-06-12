@@ -9,8 +9,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('inventory', '0075_alter_antigentransaction_vacstck_id_and_more'),
-        ('vaccination', '0001_initial'),
+        # ('inventory', '0075_alter_antigentransaction_vacstck_id_and_more'),
+        # ('vaccination', '0001_initial'),
     ]
 
     operations = [
