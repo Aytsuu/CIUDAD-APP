@@ -25,7 +25,7 @@ import { CircleCheck, Loader2 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 export interface VaccinationRecord {
-  pat_id: number;
+  pat_id: string;
   fname: string;
   lname: string;
   mname: string;
@@ -73,8 +73,9 @@ export default function AllVaccinationRecords() {
     if (!vaccinationRecords) return [];
   
     return vaccinationRecords.map((record: any) => {
-      const details = record.patient_details || {};
-      const info = details.personal_info || {};
+      // const details = record.patient_details || {};
+      const info = record.patient_details.personal_info || {};
+      const address = record.patient_details.address || {}; // Changed to get address from details
   
       return {
         pat_id: record.pat_id,
@@ -85,19 +86,25 @@ export default function AllVaccinationRecords() {
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob,
         householdno: "12", // optional if not present
-        street: info.per_address,
-        sitio: "Keneme", // optional if not present
-        barangay: "KornDog", // optional if not present
-        city: "dsds", // optional if not present
-        province: "sdsds", // optional if not present
-        pat_type: details.pat_type,
-        address: `${info.per_address ?? ''}`,
-        vaccination_count: record.vaccination_count,
+        street: address.add_street,
+        sitio: address.sitio,
+        barangay: address.add_barangay,
+        city: address.add_city,
+        province: address.add_province,
+        pat_type: record.patient_details.pat_type,
+        address: [
+          address.add_street,
+          address.sitio,
+          address.add_barangay,
+          address.add_city,
+          address.add_province
+        ]
+          .filter(Boolean) // Remove empty values
+          .join(', '),
+        vaccination_count: record.vaccination_count || 0,
       };
     });
   }, [vaccinationRecords]);
-  
-  
 
 
 

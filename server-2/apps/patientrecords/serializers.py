@@ -45,7 +45,6 @@ class PatientSerializer(serializers.ModelSerializer):
         compositions = FamilyComposition.objects.filter(rp__in=resident_profiles)
         return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
 
-
     def get_households(self, obj):
         resident_profiles = obj.rp_id.per.personal_information.all()
         resident_profiles = obj.rp_id.per.personal_information.all()

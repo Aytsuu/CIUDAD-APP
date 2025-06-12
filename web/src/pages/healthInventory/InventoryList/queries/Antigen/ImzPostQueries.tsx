@@ -7,7 +7,7 @@ import { ImmunizationType } from "@/form-schema/inventory/lists/inventoryListSch
 export const useAddImzSupplies = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: ImmunizationType) => addImzSupplies(data),
+    mutationFn: (data: Record<string,any>) => addImzSupplies(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["immunizationsupplies"] });
     },

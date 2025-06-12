@@ -48,6 +48,7 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
     # vaccination_records = serializers.SerializerMethodField()
     patient_details = PatientSerializer(source='*', read_only=True)
+    
 
     class Meta:
         model = Patient
@@ -57,8 +58,7 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         return VaccinationHistory.objects.filter(
             vacrec__patrec_id__pat_id=obj,
             vacrec__patrec_id__patrec_type__iexact='Vaccination'
-        ).exclude(
-            vachist_status__iexact='forwarded'
+        
         ).count()
 
 

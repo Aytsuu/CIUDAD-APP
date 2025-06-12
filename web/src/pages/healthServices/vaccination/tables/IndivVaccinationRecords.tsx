@@ -22,6 +22,8 @@ import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmMo
 import { UserRound, Fingerprint, Syringe, MapPin } from "lucide-react";
 import { calculateAge } from "@/helpers/ageCalculator"; // Adjust the import path as necessary
 
+
+
 export interface VaccinationRecord {
   patrec_id: number;
   vachist_id: number;

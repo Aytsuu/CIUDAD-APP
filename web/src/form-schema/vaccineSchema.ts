@@ -13,7 +13,7 @@ export const VitalSignsSchema = z.object({
 
 // Schema for vaccine details
 export const VaccineSchema = z.object({ 
-  pat_id :positiveNumberSchema,
+  pat_id :z.string().min(1, "Patient ID is required"),
   vaccinetype: z.string().min(1, "Vaccine is required"),
   datevaccinated: z.string().min(1, "Date is required"),
   lname: z.string().min(1, "Last name is Required"),

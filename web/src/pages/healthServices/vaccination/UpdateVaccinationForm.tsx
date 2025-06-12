@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
@@ -14,32 +13,34 @@ import {
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Combobox } from "@/components/ui/combobox";
-import { api } from "@/api/api";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { fetchSpecificVaccinesWithStock } from "./restful-api/FetchVaccination";
+import { fetchVaccinesWithStockVacID } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
-import { patient } from "@/pages/animalbites/postrequest";
 import { calculateNextVisitDate } from "./FunctionHelpers";
+import {
+  useSubmitStep1,
+  useSubmitStep2,
+} from "./queries/UpdateVaccinationQueries";
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
     "self"
   );
-  const [vaccineLoading, setVaccineLoading] = useState(false);
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, Vaccination } = params || {};
-  const { vaccineStocksOptions, error } = fetchSpecificVaccinesWithStock(
-    Vaccination.vacStck
-  );
+  const vacId = Number(Vaccination?.vaccine_stock?.vaccinelist?.vac_id); // Convert to number
+
+  console.log("Vac_id:", vacId);
+
+  const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStockVacID(vacId);
 
   interface OrdinalNumberProps {
     number: number;
@@ -61,8 +62,6 @@ export default function UpdateVaccinationForm() {
     );
   };
 
-
-
   let displayDoses = Vaccination.vachist_doseNo + 1;
 
   const renderDoseLabel = (className?: string) => {
@@ -73,17 +72,11 @@ export default function UpdateVaccinationForm() {
     }
   };
 
-  console.log("Dose No:", Vaccination.vachist_doseNo);
-  console.log("Vaccination Data:", Vaccination.vaccine_details.vac_type);
-
-
-  console.log("VacStck:", Vaccination.vacStck);
-
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
       pat_id: patientData.pat_id || "",
-      vaccinetype: Vaccination.vacStck.toString(), // Set initial value from Vaccination data
+      vaccinetype: "", // Will be set dynamically in useEffect
       datevaccinated: new Date().toISOString().split("T")[0],
       lname: patientData.lname || "",
       fname: patientData.fname || "",
@@ -117,430 +110,120 @@ export default function UpdateVaccinationForm() {
     console.log("Form errors:", form.formState.errors);
   }, [form.formState.errors]);
 
-  const deductVaccineStock = async (vaccineId: number) => {
-    try {
-      // Get current vaccine stock
-      const inventoryList = await api.get("inventory/vaccine_stocks/");
-
-      const existingItem = inventoryList.data.find(
-        (item: any) => item.vacStck_id === vaccineId
-      );
-      if (!existingItem) {
-        throw new Error("Vaccine item not found. Please check the ID.");
-      }
-
-      const currentQtyAvail = existingItem.vacStck_qty_avail;
-      const existingUsedItem = existingItem.vacStck_used;
-
-      if (currentQtyAvail < 1) {
-        throw new Error("Insufficient vaccine stock available.");
-      }
-
-      const updatePayload = {
-        vacStck_qty_avail: currentQtyAvail - 1,
-        vacStck_used: existingUsedItem + 1,
-      };
-
-      await api.put(`inventory/vaccine_stocks/${vaccineId}/`, updatePayload);
-
-      // Record the transaction
-      const transactionPayload = {
-        antt_qty: "1 dose",
-        antt_action: "Used from TT",
-        staff: 1, // Replace with actual staff ID
-        vacStck_id: vaccineId,
-      };
-
-      await api.post("inventory/antigens_stocks/", transactionPayload);
-      return true;
-    } catch (error) {
-      console.error("Vaccine stock update failed:", error);
-      throw error;
-    }
-  };
-
-  const onSubmitStep1 = async (data: VaccineSchemaType) => {
-    try {
-      if (assignmentOption === "other") {
-        let patrec_id: string | null = null;
-        let vacrec_id: string | null = null;
-
-        try {
-          // Step 1: Create patient record
-          const serviceResponse = await api.post(
-            "patientrecords/patient-record/",
-            {
-              patrec_type: "Vaccination",
-              pat_id: data.pat_id,
-              created_at: new Date().toISOString(),
-            }
-          );
-          patrec_id = serviceResponse.data.patrec_id;
-
-          // Step 2: Create vaccination record
-          // Step 2: Create vaccination record
-          const vaccinationRecordResponse = await api.post(
-            "vaccination/vaccination-record/",
-            {
-              patrec_id: patrec_id,
-              vacrec_status: "forwarded",
-              varec_total_doses: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }
-          );
-          vacrec_id = vaccinationRecordResponse.data.vacrec_id;
-
-          // Step 4: Create vaccination history
-          await api.post("vaccination/vaccination-history/", {
-            vachist_doseNo: 0,
-            vachist_status: "forwarded",
-            vachist_age: data.age,
-            patrec: patrec_id,
-
-            staff_id: 1,
-            vacrec: vacrec_id,
-            vital: null,
-            created_at: new Date().toISOString(),
-            vacStck: data.vaccinetype,
-            assigned_to: parseInt(data.assignto, 10),
-          });
-
-          toast.success(`Form assigned to others for Step 2 completion!`);
-          form.reset();
-        } catch (error) {
-          console.error("Error during submission:", error);
-
-          // Rollback in reverse order of creation
-          try {
-            if (vacrec_id) {
-              await api.delete(`vaccination/vaccination-record/${vacrec_id}/`);
-            }
-          } catch (deleteError) {
-            console.error(
-              "Error rolling back vaccination record:",
-              deleteError
-            );
-          }
-
-          try {
-            if (patrec_id) {
-              await api.delete(`patientrecords/patient-record/${patrec_id}/`);
-            }
-          } catch (deleteError) {
-            console.error("Error rolling back patient record:", deleteError);
-          }
-
-          throw error;
-        }
-      }
-    } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Form submission failed. Please check the fields.", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
-    }
-  };
-
-  const onSubmitStep2 = async (data: VitalSignsType) => {
-    // First check if form2 (Step 2) is valid
-    const vaccineType = form.getValues("vaccinetype");
-console.log("Patrec",Vaccination.patrec_id);
-    // Check if vaccine type is selected
-    if (!vaccineType) {
-      form.setError("vaccinetype", {
-        type: "manual",
-        message: "Please select a vaccine type",
-      });
-      toast.error("Please select a vaccine type");
-      return;
-    }
-
-    let patrec_id = Vaccination.patrec_id;
-    // let vacrec_id;
-    let vital_id;
-    let vachist_id;
-    let newfollowv_id;
-    let newpatrec_id;
-    let newVaccrec_id;
-    let oldVaccrec_id = Vaccination.vacrec;
-    let oldpatrec_id = Vaccination.patrec_id;
-    let oldFollowv_id = Vaccination.follow_up_visit.followv_id;
-    console.log("old Vacine ID:", oldFollowv_id);
-    console.log("oldvacrec_id:", oldVaccrec_id);
-
-    try {
-      // Step 1: Create patient record
-      const pat_id = patientData.pat_id;
-      const vac_type = Vaccination.vaccine_details.vac_type;
-      const vacStck = form.getValues("vaccinetype");
-      const vacStck_id = parseInt(vacStck, 10);
-      const vacStckResponse = await api.get(
-        `inventory/vaccine_stocks/${vacStck_id}/`
-      );
-      const vaccineData = vacStckResponse.data;
-      console.log("Vaccine No of Doses:", vaccineData.vaccinelist.no_of_doses);
-
-      const { no_of_doses: maxDoses } = vacStckResponse.data.vaccinelist;
-      console.log("Max doses allowed:", maxDoses);
-      const previousDoses = await api.get(
-        `vaccination/vaccination-history/${Vaccination.vachist_id}/`
-      );
-
-      const doseCount = previousDoses.data.vachist_doseNo;
-      const doseNumber = doseCount + 1;
-
-      console.log("Dose Count:", doseCount);
-      console.log("Dose Number:", doseNumber);
-
-
-      // Step 3: Create vital signs record
-      const vitalSignsResponse = await api.post("patientrecords/vital-signs/", {
-        vital_bp_systolic: data.bpsystolic?.toString() || "",
-        vital_bp_diastolic: data.bpdiastolic?.toString() || "",
-        vital_temp: data.temp?.toString() || "",
-        vital_RR: "N/A",
-        vital_o2: data.o2?.toString() || "",
-        vital_pulse: data.pr?.toString() || "",
-        created_at: new Date().toISOString(),
-      });
-      vital_id = vitalSignsResponse.data.vital_id;
-
-      // Step 5: Deduct vaccine from stock
-      await deductVaccineStock(vacStck_id);
-
-      if (vac_type === "routine") {
-        // UPDATE PREVIOUS VACCINATION HISTORY
-        await api.put(`patientrecords/follow-up-visit/${oldFollowv_id}/`, {
-          followv_status: "completed",
-        });
-
-        //NEW PATIENT RECORD
-        const patientRecResponse = await api.post(
-          "patientrecords/patient-record/",
-          {
-            patrec_type: "Vaccination",
-            pat_id: pat_id,
-            created_at: new Date().toISOString(),
-          }
-        );
-        newpatrec_id = patientRecResponse.data.patrec_id;
-
-        //NEW VACCINATION RECORD
-        const newvaccinationRecordResponse = await api.post(
-          "vaccination/vaccination-record/",
-          {
-            patrec_id: patrec_id,
-            vacrec_status: "completed",
-            varec_total_doses: 1,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        );
-        newVaccrec_id = newvaccinationRecordResponse.data.vacrec_id;
-
-        //NEW SCHEDULE
-        let interval = vaccineData.vaccinelist.routine_frequency.interval;
-        let time_unit = vaccineData.vaccinelist.routine_frequency.time_unit;
-        const nextVisitDate = calculateNextVisitDate(
-          interval,
-          time_unit,
-          new Date().toISOString()
-        );
-
-        //NEW FOLLOW UP VISIT
-        const followUpVisitResponse = await api.post(
-          "patientrecords/follow-up-visit/",
-          {
-            followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
-            patrec: newpatrec_id,
-            followv_status: "pending",
-            created_at: new Date().toISOString(),
-          }
-        );
-
-        newfollowv_id = followUpVisitResponse.data.followv_id;
-
-        //NEW VACCINE HISTORY
-        await api.post("vaccination/vaccination-history/", {
-          vachist_doseNo: 1,
-          vachist_age: form.getValues("age"),
-          vachist_status: "completed",
-
-          created_at: new Date().toISOString(),
-          staff_id: 1,
-          vital: vital_id,
-          vacStck: vacStck_id,
-          vacrec: newVaccrec_id,
-          assigned_to: null,
-          followv: newfollowv_id,
-        });
-        
-      }
-       else {
-
-
-        if (vaccineData.vaccinelist.no_of_doses > doseNumber) {
-          console.log("Not the last dose");
-            //UPDATE FOLLOW UP VISIT
-           await api.put(
-            `patientrecords/follow-up-visit/${oldFollowv_id}/`,
-            {
-              followv_status: "completed",
-            }
-          );
-
-          await api.put(`vaccination/vaccination-record/${oldVaccrec_id}/`, {
-            updated_at: new Date().toISOString(),
-            // vacrec_status: "partially vaccinated",
-          });
-
-          const doseInterval = vaccineData.vaccinelist.intervals.find(
-            (interval: {
-              dose_number: number;
-              interval: number;
-              time_unit: string;
-            }) => interval.dose_number === doseNumber
-          );   
-          if (doseInterval) {
-            const nextVisitDate = calculateNextVisitDate(
-              doseInterval.interval,
-              doseInterval.time_unit,
-              new Date().toISOString()
-            );
-
-            console.log(
-              "Next visit should be on:",
-              nextVisitDate.toISOString()
-            );
-           
-            //NEW SCHEDULE
-            const followUpVisitResponse = await api.post(
-              "patientrecords/follow-up-visit/",
-              {
-                followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
-                patrec:oldpatrec_id ,
-                followv_status: "pending",
-                created_at: new Date().toISOString(),
-              }
-            );
-            newfollowv_id = followUpVisitResponse.data.followv_id;
-          }
-
-          // // UPDATE VACCINA
-          // await api.put(`vaccination/vaccination-history/${Vaccination.vachist_id}/`, {
-          //   vachist_doseNo: doseNumber,
-          //   vachist_status: "completed",
-          // });    
-          
-          // ADD NEW VACCINE HISTORY
-          await api.post("vaccination/vaccination-history/", {
-            vachist_doseNo: doseNumber,
-            vachist_age: form.getValues("age"),
-            vachist_status: "partially vaccinated",
-            created_at: new Date().toISOString(),
-            staff_id: 1,
-            vital: vital_id,
-            vacStck: vacStck_id,
-            vacrec: oldVaccrec_id,
-            assigned_to: null,
-            followv: newfollowv_id,
-          });
-        }
-
-        else{
-
-          console.log("last dose");
-
-          await api.put(
-            `patientrecords/follow-up-visit/${oldFollowv_id}/`,
-            {
-              followv_status: "completed",
-            }
-          ); 
-
-          await api.put(`vaccination/vaccination-record/${oldVaccrec_id}/`, {
-            updated_at: new Date().toISOString(),
-            vacrec_status: "completed",
-          });
-
-
-         // ADD NEW VACCINE HISTORY
-         await api.post("vaccination/vaccination-history/", {
-          vachist_doseNo: doseNumber,
-          vachist_age: form.getValues("age"),
-          vachist_status: "completed",
-          created_at: new Date().toISOString(),
-          staff_id: 1,
-          vital: vital_id,
-          vacStck: vacStck_id,
-          vacrec: oldVaccrec_id,
-          assigned_to: null,
-          followv: null,
-        });
-          
-        }
-
-      }
-   
-
-      form.reset();
-      form2.reset();
-      setAssignmentOption("self");
-    } catch (error) {
-      console.error("Form submission error:", error);
-
-      // Rollback in reverse order of creation
-      try {
-        if (vital_id) {
-          await api.delete(`patientrecords/vital-signs/${vital_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back vital signs:", deleteError);
-      }
-
-      try {
-        if (newVaccrec_id) {
-          await api.delete(`vaccination/vaccination-record/${newVaccrec_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back vaccination record:", deleteError);
-      }
-
-      try {
-        if (newpatrec_id) {
-          await api.delete(`patientrecords/patient-record/${newpatrec_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back patient record:", deleteError);
-      }
-
-      try {
-        if (vachist_id) {
-          await api.delete(`vaccination/vaccination-history/${vachist_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back vaccination history:", deleteError);
-      }
-      toast.error("Form submission failed. Please check the form for errors.", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
-    }
-  };
-
   useEffect(() => {
     form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
   }, [form]);
+
+  // Set default vaccinetype based on vacId
+  useEffect(() => {
+    if (vacId && !isLoading && vaccineStocksOptions.length > 0) {
+      const selectedVaccine = vaccineStocksOptions[0]; // Only one vaccine expected
+      if (selectedVaccine && selectedVaccine.available) {
+        form.setValue("vaccinetype", selectedVaccine.id);
+      } else {
+        console.warn(`Vaccine with vac_id ${vacId} is not available.`);
+        form.setValue("vaccinetype", "");
+        let errorMessage = "Selected vaccine is unavailable";
+        if (selectedVaccine.isExpired && selectedVaccine.expiryDate) {
+          errorMessage += ` (expired on ${format(new Date(selectedVaccine.expiryDate), "MMM dd, yyyy")}).`;
+        } else if (selectedVaccine.isOutOfStock) {
+          errorMessage += " (out of stock).";
+        }
+        toast.error(errorMessage, {
+          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        });
+      }
+    } else if (vacId && !isLoading && vaccineStocksOptions.length === 0) {
+      console.warn(`Vaccine with vac_id ${vacId} not found or archived.`);
+      form.setValue("vaccinetype", "");
+      toast.error("Vaccine not found or archived.", {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+    }
+  }, [vacId, vaccineStocksOptions, isLoading, form]);
+
+  // Check if the selected vaccine is available
+  const selectedVaccineId = form.watch("vaccinetype");
+  const selectedVaccine = vaccineStocksOptions.find(
+    (vaccine) => vaccine.id === selectedVaccineId
+  );
+  const isVaccineAvailable = selectedVaccine?.available ?? false;
+
+  // Format option label with name, expiration date, and stock status
+  const formatOptionLabel = (vaccine: typeof vaccineStocksOptions[0]) => {
+    let label = vaccine.name;
+    if (vaccine.isOutOfStock) {
+      label += " (Out of Stock)";
+    } else if (vaccine.isExpired && vaccine.expiryDate) {
+      label += ` (Expired: ${format(new Date(vaccine.expiryDate), "MMM dd, yyyy")})`;
+    } else if (vaccine.expiryDate) {
+      label += ` (Expires: ${format(new Date(vaccine.expiryDate), "MMM dd, yyyy")})`;
+    }
+    return label;
+  };
+
+  
+  const submitStep1 = useSubmitStep1();
+  const submitStep2 = useSubmitStep2();
+  const onSubmitStep1 = (data: VaccineSchemaType) => {
+    if (!isVaccineAvailable) {
+      let errorMessage = "Cannot submit: Selected vaccine is unavailable";
+      if (selectedVaccine?.isExpired && selectedVaccine?.expiryDate) {
+        errorMessage += ` (expired on ${format(new Date(selectedVaccine.expiryDate), "MMM dd, yyyy")}).`;
+      } else if (selectedVaccine?.isOutOfStock) {
+        errorMessage += " (out of stock).";
+      }
+      toast.error(errorMessage, {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+      return;
+    }
+    submitStep1.mutate({
+      data,
+      assignmentOption,
+      form: {
+        setError: form.setError,
+        getValues: form.getValues,
+        reset: form.reset,
+      },
+    });
+  };
+
+  const onSubmitStep2 = (data: VitalSignsType) => {
+    if (!isVaccineAvailable) {
+      let errorMessage = "Cannot submit: Selected vaccine is unavailable";
+      if (selectedVaccine?.isExpired && selectedVaccine?.expiryDate) {
+        errorMessage += ` (expired on ${format(new Date(selectedVaccine.expiryDate), "MMM dd, yyyy")}).`;
+      } else if (selectedVaccine?.isOutOfStock) {
+        errorMessage += " (out of stock).";
+      }
+      toast.error(errorMessage, {
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+      });
+      return;
+    }
+    submitStep2.mutate({
+      data,
+      patientId: patientData.pat_id,
+      vaccinationData: Vaccination,
+      form: {
+        setError: form.setError,
+        getValues: form.getValues,
+        reset: form.reset,
+      },
+      form2: { reset: form2.reset },
+      setAssignmentOption,
+      calculateNextVisitDate,
+    });
+  };
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <Button
           className="text-black p-2 mb-2 self-start"
-          variant={"outline"}
-          onClick={() => {
-            navigate(-1);
-          }}
+          variant="outline"
+          onClick={() => navigate(-1)}
         >
           <ChevronLeft />
         </Button>
@@ -572,21 +255,19 @@ console.log("Patrec",Vaccination.patrec_id);
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormSelect
-                control={form.control}
-                name="vaccinetype"
-                label="Vaccine Type"
-                options={vaccineStocksOptions.map((vaccine) => ({
-                  id: vaccine.id,
-                  name: vaccine.expiry
-                    ? `${vaccine.name} (Exp: ${new Date(
-                        vaccine.expiry
-                      ).toLocaleDateString()})`
-                    : vaccine.name,
-                  disabled: !vaccine.available,
-                }))}
-                emptyMessage={error || "No vaccine options available"}
-              />
+              <div>
+                <FormSelect
+                  control={form.control}
+                  name="vaccinetype"
+                  label="Vaccine Type"
+                  options={vaccineStocksOptions.map((vaccine) => ({
+                    id: vaccine.id,
+                    name: formatOptionLabel(vaccine), // Include expiry and stock status
+                    disabled: !vaccine.available, // Disable unavailable vaccines
+                  }))}
+                  emptyMessage={isLoading ? "Loading..." : "Vaccine unavailable or not found"}
+                />
+              </div>
               <FormDateTimeInput
                 control={form.control}
                 name="datevaccinated"
@@ -612,7 +293,6 @@ console.log("Patrec",Vaccination.patrec_id);
                 ]}
                 readOnly
               />
-
               <FormInput
                 control={form.control}
                 name="lname"
@@ -751,8 +431,12 @@ console.log("Patrec",Vaccination.patrec_id);
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="w-[120px]">
-                  Save & Assign
+                <Button
+                  type="submit"
+                  className="w-[120px]"
+                  disabled={submitStep1.isPending || !isVaccineAvailable}
+                >
+                  {submitStep1.isPending ? "Submitting..." : "Save & Assign"}
                 </Button>
               </div>
             )}
@@ -828,8 +512,12 @@ console.log("Patrec",Vaccination.patrec_id);
                 >
                   Back
                 </Button>
-                <Button type="submit" className="w-[120px]">
-                  Complete
+                <Button
+                  type="submit"
+                  className="w-[120px]"
+                  disabled={submitStep2.isPending || !isVaccineAvailable}
+                >
+                  {submitStep2.isPending ? "Submitting..." : "Complete"}
                 </Button>
               </div>
             </form>
