@@ -288,7 +288,7 @@ export const getFamilyPlanningPatients = async () => {
   try {
     const response = await api2.get("patientrecords/patient/", {
       params: {
-        patrec_type: "family planning",
+        patrec_type: "Family Planning",
       },
     })
     return response.data

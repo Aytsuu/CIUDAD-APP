@@ -10,73 +10,69 @@ import { useForm } from "react-hook-form"
 import SignatureCanvas from "react-signature-canvas"
 import type { FormData } from "@/form-schema/FamilyPlanningSchema"
 
-// type FamilyPlanningMethod =
-//   | "coc"
-//   | "iud-interval"
-//   | "iud-postpartum"
-//   | "bom/cmm"
-//   | "lam"
-//   | "pop"
-//   | "bbt"
-//   | "sdm"
-//   | "injectable"
-//   | "stm"
-//   | "implant"
-//   | "condom"
-//   | "others"
+type FamilyPlanningMethod =
+  | "COC"
+  | "IUD-Interval"
+  | "IUD-Post Partum"
+  | "BOM/CMM"
+  | "LAM"
+  | "POP"
+  | "BBT"
+  | "SDM"
+  | "Injectable"
+  | "STM"
+  | "Implant"
+  | "Condom"
+  | "Pills"
+  | "Others"
+  | "DMPA"
+  | "Lactating Amenorrhea"
+  | "Bilateral Tubal Ligation"
+  | "Vasectomy"
 
-const methodLabels: Record<string> = {
-  // coc: "COC",
-  // "iud-interval": "Intrauterine Device - Interval (IUD)",
-  // "iud-postpartum": "Intrauterine Device - Post Partum (IUD)",
-  // "bom/cmm": "Billings Ovulation Method/Cervical Mucus Method",
-  // lam: "Lactational Amenorrhea Method",
-  // pop: "Progestin-only Pills",
-  // bbt: "Basal Body Temperature",
-  // sdm: "Standard Days Method",
-  // injectable: "Injectable Contraceptives",
-  // stm: "Symptothermal Method",
-  // implant: "Contraceptive Implant",
-  // condom: "Condom",
-  // others: "Others",
 
+const methodLabels: Record<string,string> = {
   coc: "COC",
-  "iud-interval": "IUD - Interval",
-  "iud-postpartum": "IUD - Post Partum",
+  "iud-interval": "IUD-Interval",
+  "iud-postpartum": "IUD-Post Partum",
   "bom/cmm": "BOM/CMM",
   lam: "LAM",
+  BBT: "BBT",
   pop: "POP",
-  bbt: "BBT",
-  sdm: "SDM",
+  SDM: "SDM",
   injectable: "Injectable",
-  stm: "STM",
+  STM: "STM",
   implant: "Implant",
   condom: "Condom",
-  // others: "Others",
-
+  Others: "Others",
+  pills: "Pills",
+  dmpa: "DMPA",
+  lactating: "Lactating Amenorrhea",
+  bilateral: "Bilateral Tubal Ligation",
+  vasectomy: "Vasectomy",
 }
 
 // Helper function to map method values between pages
 const mapMethodFromPage1 = (methodFromPage1: string): string => {
   const methodMapping: Record<string, string> = {
     // From FpPage1 to FpPage5 mapping
-    pills: "Pills",
-    dmpa: "DMPA",
-    "iud-interval": "iud-interval",
-    "iud-postpartum": "iud-postpartum",
-    implant: "implant",
-    condom: "condom",
-    lactating: "LAM",
-    bilateral: "Bilateral",
-    vasectomy: "Vasectomy",
-    coc: "COC",
-    pop: "POP",
-    injectable: "Injectable",
-    "bom/cmm": "BOM/CMM",
+    Pills: "Pills",
+    DMPA: "DMPA",
+    "IUD-Interval": "IUD-Interval",
+    "IUD-Post Partum": "IUD-Post Partum",
+    Implant: "Implant",
+    Condom: "Condom",
+    "Lactating Amenorrhea": "Lactating Amenorrhea",
+    "Bilateral Tubal Ligation": "Bilateral Tubal Ligation",
+    Vasectomy: "Vasectomy",
+    COC: "COC",
+    POP: "POP",
+    Injectable: "Injectable",
+    "BOM/CMM": "BOM/CMM",
     bbt: "BBT",
     stm: "STM",
     sdm: "SDM",
-    lam: "LAM",
+    LAM: "LAM",
     others: "Others",
   }
 
