@@ -6,7 +6,7 @@ export type MinutesOfMeetingRecords = {
     mom_date: string;
     mom_agenda: string;
     mom_title: string;
-    mom_is_archive: string;
+    mom_is_archive: boolean;
     file_url: string;
     areas_of_focus: string[];
 }

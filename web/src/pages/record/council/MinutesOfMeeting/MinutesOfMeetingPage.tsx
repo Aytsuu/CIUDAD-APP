@@ -2,7 +2,7 @@ import { useState } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Pencil, Trash, Eye, Plus, Search, FileText, FileWarning, Download, File, ExternalLink } from "lucide-react";
+import { Pencil, Trash, Eye, Plus, Search} from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,16 @@ import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import AddMinutesOfMeeting from "./addMinutesOfMeeting";
 import { useGetMinutesOfMeetingRecords, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries";
-import { Row } from "react-day-picker";
+import { useArchiveMinutesOfMeeting } from "./queries/MOMDeleteQueries";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function MinutesOfMeetingPage() {
     const [filter, setFilter] = useState<string>("all");
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null> (null)
     const {data: momRecords = [], isLoading} = useGetMinutesOfMeetingRecords();
+    const {mutate: archiveMOM} = useArchiveMinutesOfMeeting();
     const getAreaFocusDisplayName = (focus: string): string => {
         switch (focus) {
             case 'gad': return 'GAD';
@@ -28,6 +31,10 @@ function MinutesOfMeetingPage() {
             default: return focus;
         }
     };
+
+    const handleConfirm = (mom_id: string) => {
+        archiveMOM(mom_id);
+    }
 
     const columns: ColumnDef<MinutesOfMeetingRecords>[] = [
     {
@@ -91,17 +98,15 @@ function MinutesOfMeetingPage() {
                 />
                 <TooltipLayout
                     trigger={
-                        <DialogLayout
-                            trigger={
-                                <div className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8">
-                                    <Trash size={16} />
-                                </div>
-                            }
-                            className="max-w-[50%] h-2/3 flex flex-col"
-                            title="Delete Confirmation"
-                            description="Are you sure you want to delete this meeting record?"
-                            mainContent={<p className="text-center text-sm">This action cannot be undone.</p>}
-                        />
+                        <div>
+                            <ConfirmationModal
+                                trigger={ <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                                title="Delete Confirmation"
+                                description="This record will be archived and removed from the active list. Do you wish to proceed?"
+                                actionLabel="Confirm"
+                                onClick={() => handleConfirm(row.original.mom_id)}
+                            />
+                        </div>
                     }
                     content="Delete"
                 />
@@ -122,6 +127,20 @@ function MinutesOfMeetingPage() {
 
     const filteredData =filter === "all"? momRecords: momRecords.filter((record) =>record.areas_of_focus.includes(filter));
 
+    if (isLoading){
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <div className="flex justify-end">
+                <Skeleton className="h-10 w-24" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full h-full">
@@ -178,7 +197,7 @@ function MinutesOfMeetingPage() {
                     <p className="text-xs sm:text-sm">Entries</p>
                 </div>                              
 
-                <DataTable columns={columns} data={filteredData} />
+                <DataTable columns={columns} data={filteredData.filter(row => row.mom_is_archive == false)} />
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

@@ -18,4 +18,5 @@ urlpatterns=[
     path('minutes-of-meeting/', MinutesOfMeetingView.as_view(), name="minutes-of-meeting"),
     path('mom-area-of-focus/', MOMAreaOfFocusView.as_view(), name='mom-area-of-focus'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),
+    path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
 ]

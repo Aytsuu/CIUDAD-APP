@@ -245,8 +245,7 @@ export default function AddMinutesOfMeeting({onSuccess}: {
     const {mutate: addMOM} = useInsertMinutesOfMeeting(onSuccess)
     const form = useForm<z.infer<typeof minutesOfMeetingFormSchema>>({
         resolver: zodResolver(minutesOfMeetingFormSchema),
-        mode: 'onChange',
-        defaultValues: {
+            defaultValues: {
             meetingTitle: "",        
             meetingAgenda: "",
             meetingDate: "",

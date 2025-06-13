@@ -6,10 +6,10 @@ import { MediaUploadType } from "@/components/ui/media-upload";
 import minutesOfMeetingFormSchema from "@/form-schema/council/minutesOfMeetingSchema";
 import { z } from "zod";
 
-type MOMSubmissionData = {
-  values: z.infer<typeof minutesOfMeetingFormSchema>;
-  mediaFiles: MediaUploadType;
-};
+// type MOMSubmissionData = {
+//   values: z.infer<typeof minutesOfMeetingFormSchema>;
+//   mediaFiles: MediaUploadType;
+// };
 
 export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
