@@ -16,6 +16,7 @@ import { useGetStaffList, useGetAttendees, Staff } from "./queries/fetchqueries"
 import { formatDate } from "@/helpers/dateFormatter";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useDeleteCouncilEvent } from "./queries/delqueries";
 
 interface EditEventFormProps {
   initialValues: {
@@ -49,7 +50,7 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
   const { mutate: updateAttendees } = useUpdateAttendees();
   const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const { data: attendees = [] } = useGetAttendees(ceId);
-  
+  const { mutate: deleteCouncilEvent, isPending: isArchiving } = useDeleteCouncilEvent();
 
   const form = useForm<z.infer<typeof AddEventFormSchema>>({
     resolver: zodResolver(AddEventFormSchema),
@@ -181,6 +182,17 @@ function EditEventForm({ initialValues, onClose }: EditEventFormProps) {
     }
   };
 
+  const handleArchive = () => {
+    deleteCouncilEvent(
+      { ce_id: ceId, permanent: false },
+      {
+        onSuccess: () => {
+          if (onClose) onClose();
+        },
+      }
+    );
+  };
+
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const handleConfirmPreview = () => {
     setIsPreviewOpen(false);
@@ -228,7 +240,7 @@ return (
               type="date"
               label="Event Date"
               readOnly={!isEditMode || isArchived}
-            />
+          />
 
             <FormDateTimeInput
               control={form.control}
@@ -304,6 +316,27 @@ return (
         <div className="mt-4 flex justify-end gap-3">
           {isEditMode ? (
             <>
+              <ConfirmationModal
+                trigger={
+                  <Button
+                    type="button"
+                    className="bg-yellow-500 text-black hover:bg-yellow-600"
+                    disabled={isArchiving}
+                  >
+                    {isArchiving ? (
+                      <>
+                        Archiving <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      </>
+                    ) : (
+                      "Archive"
+                    )}
+                  </Button>
+                }
+                title="Confirm Archive"
+                description={`Are you sure you want to archive the event "${initialValues.ce_title}"? It will be moved to the archived events list.`}
+                actionLabel="Archive"
+                onClick={handleArchive}
+              />
               <Button
                 type="button"
                 className="bg-gray-500 text-black hover:bg-gray-600"

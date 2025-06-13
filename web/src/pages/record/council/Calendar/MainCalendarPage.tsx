@@ -4,7 +4,7 @@ import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Button } from "@/components/ui/button/button.tsx";
 import SchedEventForm from "./SchedEventForm.tsx";
 import { Plus, Archive, RotateCcw, Trash, Eye } from "lucide-react";
-import { useGetCouncilEvents } from "./queries/fetchqueries";
+import { useGetCouncilEvents, CouncilEvent } from "./queries/fetchqueries";
 import { format } from "date-fns";
 import EditEventForm from "./EditEvent.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,12 +12,36 @@ import { useDeleteCouncilEvent, useRestoreCouncilEvent } from "./queries/delquer
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 
+interface EventDetailColumn<T> {
+  accessorKey: keyof T;
+  header: string;
+  cell?: (props: { row: { original: T } }) => React.ReactNode;
+}
+
+const councilEventColumns: EventDetailColumn<CouncilEvent>[] = [
+  { accessorKey: "ce_title", header: "Event Title" },
+  { accessorKey: "ce_place", header: "Location" },
+  { 
+    accessorKey: "ce_date", 
+    header: "Date",
+    cell: ({ row }) => format(new Date(row.original.ce_date), "MMM d, yyyy"),
+  },
+  { accessorKey: "ce_time", header: "Time" },
+  {
+  accessorKey: "ce_type",
+  header: "Type",
+  cell: (props: { row: { original: { ce_type: string } } }) =>
+    props.row.original.ce_type.charAt(0).toUpperCase() + props.row.original.ce_type.slice(1)
+}
+];
+
 function CalendarPage() {
   const { data: councilEvents = [], isLoading } = useGetCouncilEvents();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [eventViewMode, setEventViewMode] = useState<"upcoming" | "archive">("upcoming");
   const [viewEvent, setViewEvent] = useState<any | null>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
+  const calendarEvents = councilEvents.filter((event) => !event.ce_is_archive);
 
 const filteredEvents = councilEvents.filter((event) => {
   const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
@@ -132,7 +156,13 @@ const filteredEvents = councilEvents.filter((event) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 sm:p-4">
-            <EventCalendar />
+            <EventCalendar
+                name=""
+                titleAccessor="ce_title"
+                data={calendarEvents}
+                columns={councilEventColumns}
+                viewEditComponent={EditEventForm}
+              />
           </div>
           <div className="sm:col-span-1 lg:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 sm:p-4">
             <div className="flex flex-col sm:flex-row items-center mb-4">
