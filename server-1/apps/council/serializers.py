@@ -50,3 +50,20 @@ class StaffSerializer(serializers.ModelSerializer):
             return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}"
         except AttributeError:
             return "Unknown"
+        
+
+class MinutesOfMeetingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MinutesOfMeeting
+        fields = '__all__'
+    
+
+class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MOMAreaOfFocus
+        fields = '__all__'
+
+class MOMFileSerialzer(serializers.ModelSerializer):
+    class Meta: 
+        model = MOMFile
+        fields = '__all__'

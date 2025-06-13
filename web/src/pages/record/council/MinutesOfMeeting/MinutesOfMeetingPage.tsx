@@ -86,7 +86,7 @@ export const columns: ColumnDef<Meeting>[] = [
         accessorKey: "action",
         header: "Action",
         cell: () => (
-            <div className="flex flex-wrap justify-center gap-1 pr-2">
+            <div className="flex flex-grid justify-center gap-2">
                 <TooltipLayout
                     trigger={
                         <DialogLayout
@@ -138,6 +138,8 @@ export const columns: ColumnDef<Meeting>[] = [
 
 function MinutesOfMeetingPage() {
     const [filter, setFilter] = useState<string>("all");
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [editingRowId, setEditingRowId] = useState<number | null> (null)
 
     const filterOptions = [
         { id: "all", name: "All" },
@@ -176,11 +178,23 @@ function MinutesOfMeetingPage() {
                 </div>
 
                 <div className="w-full md:w-auto">
-                    <Link to="/add-mom">
+                    {/* <Link to="/add-mom">
                         <Button className="w-full md:w-auto">
                             Create <Plus className="ml-2" />
                         </Button>
-                    </Link>
+                    </Link> */}
+                    <DialogLayout
+                        trigger={<Button className="w-full md:w-auto">Create <Plus className="ml-2" /></Button>}
+                        title="Create New Minutes of the Meeting"
+                        description=""
+                        mainContent={
+                            <AddMinutesOfMeeting
+                             onSuccess={() => setIsDialogOpen(false)}
+                            />
+                        }
+                        isOpen={isDialogOpen}
+                        onOpenChange={setIsDialogOpen}
+                    />
                 </div>
             </div>
 
@@ -203,13 +217,13 @@ function MinutesOfMeetingPage() {
 
                 {/* Pagination */}
                 <div className="w-full sm:w-auto flex justify-center">
-                    <PaginationLayout className="" />
+                    {/* <PaginationLayout className="" /> */}
                 </div>
             </div>                    
         </div>
     );
 }
-
+ 
 export default MinutesOfMeetingPage;
 
 

@@ -107,3 +107,16 @@ class UpdateTemplateView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class MinutesOfMeetingView(generics.ListCreateAPIView):
+    serializer_class = MinutesOfMeetingSerializer
+    queryset = MinutesOfMeeting.objects.all()
+
+class MOMAreaOfFocusView(generics.ListCreateAPIView):
+    serializer_class = MOMAreaOfFocusSerializer
+    queryset = MOMAreaOfFocus.objects.all()
+
+class MOMFileView(generics.ListCreateAPIView):
+    serializer_class = MOMFileSerialzer
+    queryset = MOMFile.objects.all()
