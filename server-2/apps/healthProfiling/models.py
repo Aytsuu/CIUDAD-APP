@@ -66,7 +66,7 @@ class PersonalAddress(models.Model):
         db_table = 'personal_address'
 
 class ResidentProfile(models.Model):
-    rp_id = models.BigAutoField(primary_key=True)
+    rp_id = models.CharField(max_length=50, primary_key=True)
     rp_date_registered = models.DateField(default=date.today)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name='personal_information')
     staff = models.ForeignKey("administration.Staff", on_delete=models.CASCADE, null=True, related_name="resident_profiles")

@@ -178,4 +178,4 @@ class Diagnosis(models.Model):
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True)
     class Meta:
         db_table = 'diagnosis'
-        
+            
