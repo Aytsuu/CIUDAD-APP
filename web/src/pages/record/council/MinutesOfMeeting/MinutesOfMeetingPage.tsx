@@ -2,7 +2,7 @@ import { useState } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Pencil, Trash, Eye, Plus, Search } from "lucide-react";
+import { Pencil, Trash, Eye, Plus, Search, FileText, FileWarning, Download, File, ExternalLink } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import AddMinutesOfMeeting from "./addMinutesOfMeeting";
 import { useGetMinutesOfMeetingRecords, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries";
+import { Row } from "react-day-picker";
 
 function MinutesOfMeetingPage() {
     const [filter, setFilter] = useState<string>("all");
@@ -63,23 +64,20 @@ function MinutesOfMeetingPage() {
     {
         accessorKey: "action",
         header: "Action",
-        cell: () => (
+        cell: ({row}) => (
             <div className="flex flex-grid justify-center gap-1">
-                <TooltipLayout
+               <TooltipLayout
                     trigger={
-                        <DialogLayout
-                            trigger={
-                                <div className="bg-white hover:bg-gray-200 border text-black px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8">
-                                    <Eye size={16} />
-                                </div>
-                            }
-                            className="max-w-[50%] h-2/3 flex flex-col"
-                            title="Image Details"
-                            description="Here is the image related to the report."
-                            mainContent={<img src="path_to_your_image.jpg" alt="Report Image" className="w-full h-auto" />}
-                        />
+                        <a 
+                        href={row.original.file_url} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-white hover:bg-gray-200 border text-black px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8"
+                        >
+                        <Eye size={16} />
+                        </a>
                     }
-                    content="View"
+                    content="Open Document"
                 />
                 <TooltipLayout
                     trigger={
