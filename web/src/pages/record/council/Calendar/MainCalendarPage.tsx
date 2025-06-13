@@ -18,14 +18,27 @@ function CalendarPage() {
   const [eventViewMode, setEventViewMode] = useState<"upcoming" | "archive">("upcoming");
   const [viewEvent, setViewEvent] = useState<any | null>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
-  const currentDateTime = new Date(); 
 
-  const filteredEvents = councilEvents.filter((event) => {
-    const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
-    return eventViewMode === "upcoming"
-      ? eventDateTime >= currentDateTime && !event.ce_is_archive
-      : event.ce_is_archive;
-  });
+const filteredEvents = councilEvents.filter((event) => {
+  const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
+  const now = new Date();
+  
+  // Calculate 5 days from now (including time component)
+  const fiveDaysFromNow = new Date(now);
+  fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
+  
+  if (eventViewMode === "upcoming") {
+    // Show events from now up to 5 days in the future
+    return (
+      eventDateTime >= now && 
+      eventDateTime <= fiveDaysFromNow && 
+      !event.ce_is_archive
+    );
+  } else {
+    // Show archived events
+    return event.ce_is_archive;
+  }
+});
 
   const handleDialogClose = () => {
     setViewEvent(null);
