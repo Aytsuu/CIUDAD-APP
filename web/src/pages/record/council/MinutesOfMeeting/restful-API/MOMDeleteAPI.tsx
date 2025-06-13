@@ -1,10 +1,8 @@
 import { api } from "@/api/api";
 
-export const archiveMinutesOfMeeting = async (mom_id: string) => {
+export const deleteMinutesOfMeeting = async (mom_id: string) => {
     try{
-        const res = await api.put(`council/update-minutes-of-meeting/${mom_id}/`, {
-            mom_is_archive: true
-        })
+        const res = await api.delete(`council/delete-minutes-of-meeting/${mom_id}/`)
         return res.data
     }catch(err){
         console.error(err)

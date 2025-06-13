@@ -1,21 +1,21 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { archiveMinutesOfMeeting } from "../restful-API/MOMDeleteAPI";
+import { deleteMinutesOfMeeting } from "../restful-API/MOMDeleteAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 
-export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
+export const useDeleteMinutesofMeeting = (onSuccess?: () => void) => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (mom_id: string) => archiveMinutesOfMeeting(mom_id),
+        mutationFn: (mom_id: string) => deleteMinutesOfMeeting(mom_id),
         onMutate: () =>{
-            toast.loading("Deleting record ...", { id: "archiveMOM" });
+            toast.loading("Deleting record ...", { id: "deleteMOM" });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['momRecords'] });
 
-            toast.success('Schedule is archived successfully', {
-                id: "archiveMOM",
+            toast.success('Record is deleted successfully', {
+                id: "deleteMOM",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
                 duration: 2000
             });
@@ -23,9 +23,9 @@ export const useArchiveMinutesOfMeeting = (onSuccess?: () => void) => {
             onSuccess?.();
         },
         onError: (err) => {
-            console.error("Error archiving record:", err);
-            toast.error("Failed to archive record", {
-            id: "archiveMOM",
+            console.error("Error deleting record:", err);
+            toast.error("Failed to delete record", {
+            id: "deleteMOM",
             duration: 2000
             });
         }

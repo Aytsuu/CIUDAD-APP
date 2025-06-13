@@ -4,21 +4,19 @@ import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput} from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import AddMinutesOfMeeting from "./addMinutesOfMeeting";
 import { useGetMinutesOfMeetingRecords, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries";
-import { useArchiveMinutesOfMeeting } from "./queries/MOMDeleteQueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryTable } from "@/components/ui/history-table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-
+import { useRestoreMinutesOfMeeting, useArchiveMinutesOfMeeting } from "./queries/MOMUpdateQueries";
+import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries";
 
 
 function MinutesOfMeetingPage() {
@@ -26,7 +24,9 @@ function MinutesOfMeetingPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null> (null)
     const {data: momRecords = [], isLoading} = useGetMinutesOfMeetingRecords();
+    const {mutate: restoreMOM} = useRestoreMinutesOfMeeting();
     const {mutate: archiveMOM} = useArchiveMinutesOfMeeting();
+    const {mutate: deleteMOM} = useDeleteMinutesofMeeting();
     const [activeTab, setActiveTab] = useState("active")
     const getAreaFocusDisplayName = (focus: string): string => {
         switch (focus) {
@@ -40,6 +40,14 @@ function MinutesOfMeetingPage() {
 
     const handleConfirm = (mom_id: string) => {
         archiveMOM(mom_id);
+    }
+
+    const handleRestore = (mom_id: string) => {
+        restoreMOM(mom_id);
+    }
+
+    const handleDelete = (mom_id: string) => {
+        deleteMOM(mom_id);
     }
 
     const commonColumns: ColumnDef<MinutesOfMeetingRecords>[] = [
@@ -139,10 +147,10 @@ function MinutesOfMeetingPage() {
                                 <div>
                                     <ConfirmationModal
                                         trigger={ <div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
-                                        title="Restore Archived Schedule"
-                                        description="Would you like to restore this schedule from the archive and make it active again?"
+                                        title="Restore Archived Record"
+                                        description="Would you like to restore this record from the archive and make it active again?"
                                         actionLabel="confirm"
-                                        // onClick={() => handleRestore(row.original.wh_num)}
+                                        onClick={() => handleRestore(row.original.mom_id)}
                                     />
                                 </div>
                             }
@@ -156,7 +164,7 @@ function MinutesOfMeetingPage() {
                                         title="Permanent Deletion Confirmation"
                                         description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
                                         actionLabel="confirm"
-                                        // onClick={() => handleDelete(row.original.wh_num)}
+                                        onClick={() => handleDelete(row.original.mom_id)}
                                     />
                                 </div>
                             }
@@ -194,33 +202,6 @@ function MinutesOfMeetingPage() {
         );
     }
 
-    //   <SelectLayout
-    //                     className="min-w-[150px] bg-white"
-    //                     label=""
-    //                     placeholder="Filter"
-    //                     options={filterOptions}
-    //                     value={filter}
-    //                     onChange={(value) => setFilter(value)}
-    //                 />
-
-       {/* <Link to="/add-mom">
-                        <Button className="w-full md:w-auto">
-                            Create <Plus className="ml-2" />
-                        </Button>
-                    </Link> */}
-
-                    //  <DialogLayout
-                    //     trigger={<Button className="w-full md:w-auto">Create <Plus className="ml-2" /></Button>}
-                    //     title="Create New Minutes of the Meeting"
-                    //     description=""
-                    //     mainContent={
-                    //         <AddMinutesOfMeeting
-                    //          onSuccess={() => setIsDialogOpen(false)}
-                    //         />
-                    //     }
-                    //     isOpen={isDialogOpen}
-                    //     onOpenChange={setIsDialogOpen}
-                    // />
     return (
         <div className="w-full h-full">
             <div className="flex flex-col mb-4">
@@ -231,28 +212,29 @@ function MinutesOfMeetingPage() {
 
             <div className="flex flex-col gap-5 mt-4">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                        <div className="relative flex-1"> 
-                            <Search  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17}/>
-                            <Input placeholder="Search..." className="pl-10 w-full bg-white text-sm" /> {/* Adjust padding and text size */}
+                    <div className="flex-1"> 
+                        <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17}/>
+                        <Input placeholder="Search..." className="pl-10 w-[20rem] bg-white text-sm" />
                         </div>
-                            <div className="w-full md:w-auto flex justify-end">
-                               <DialogLayout
-                                trigger={<Button className="w-full md:w-auto">Create <Plus className="ml-2" /></Button>}
-                                title="Create New Minutes of the Meeting"
-                                description=""
-                                mainContent={
-                                    <AddMinutesOfMeeting
-                                    onSuccess={() => setIsDialogOpen(false)}
-                                    />
-                                }
-                        isOpen={isDialogOpen}
-                        onOpenChange={setIsDialogOpen}
-                    />
-                        </div>                            
                     </div>
                     
+                    <div className="w-full md:w-auto">
+                        <DialogLayout
+                        trigger={<Button className="w-full md:w-auto">Create <Plus className="ml-2" /></Button>}
+                        title="Create New Minutes of the Meeting"
+                        description=""
+                        mainContent={
+                            <AddMinutesOfMeeting
+                            onSuccess={() => setIsDialogOpen(false)}
+                            />
+                        }
+                        isOpen={isDialogOpen}
+                        onOpenChange={setIsDialogOpen}
+                        />
+                    </div>
                 </div>
+               
 
                 <div className="bg-white">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6">
@@ -315,5 +297,20 @@ function MinutesOfMeetingPage() {
  
 export default MinutesOfMeetingPage;
 
+
+    //   <SelectLayout
+    //                     className="min-w-[150px] bg-white"
+    //                     label=""
+    //                     placeholder="Filter"
+    //                     options={filterOptions}
+    //                     value={filter}
+    //                     onChange={(value) => setFilter(value)}
+    //                 />
+
+       {/* <Link to="/add-mom">
+                        <Button className="w-full md:w-auto">
+                            Create <Plus className="ml-2" />
+                        </Button>
+                    </Link> */}
 
 

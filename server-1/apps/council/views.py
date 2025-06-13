@@ -134,3 +134,11 @@ class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
+    serializer_class = MinutesOfMeetingSerializer    
+    queryset = MinutesOfMeeting.objects.all()
+
+    def get_object(self):
+        mom_id = self.kwargs.get('mom_id')
+        return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
