@@ -46,14 +46,32 @@ export const delAttendee = async (atn_id: number) => {
     }
 };
 
-export const delAttendanceSheet = async (att_id: number) => {
+export const delAttendanceSheet = async (att_id: number, permanent: boolean = false) => {
+    if (!att_id || isNaN(att_id)) {
+        throw new Error(`Invalid attendance sheet ID: ${att_id}`);
+    }
+
     try {
-        console.log("Deleting attendance sheet with att_id:", att_id);
-        const res = await api.delete(`council/attendance-sheet/${att_id}/`);
+        console.log("Deleting attendance sheet with att_id:", att_id, "Permanent:", permanent);
+        const res = await api.delete(`council/attendance-sheet/${att_id}/`, {
+            params: { permanent }
+        });
         console.log("Delete response:", res.data);
         return res.data;
     } catch (err) {
         console.error("Error deleting attendance sheet:", err);
+        throw err;
+    }
+};
+
+export const restoreAttendanceSheet = async (att_id: number) => {
+    try {
+        console.log("Restoring attendance sheet with att_id:", att_id);
+        const res = await api.put(`council/attendance-sheet/${att_id}/restore/`);
+        console.log("Restore response:", res.data);
+        return res.data;
+    } catch (err) {
+        console.error("Error restoring attendance sheet:", err);
         throw err;
     }
 };

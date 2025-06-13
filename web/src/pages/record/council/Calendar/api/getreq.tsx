@@ -28,17 +28,10 @@ export const getAttendees = async (ceId?: number) => {
 };
 
 
-export const getAttendanceSheets = async () => {
-    try {
-        const res = await api.get('council/attendance-sheet/',{
-            params: { is_archive: false }  // Filter non-archived
-        });
-        const data = res.data?.data ?? res.data ?? [];
-        return Array.isArray(data) ? data : [];
-    } catch (err) {
-        console.error("API Error fetching attendance sheets:", err);
-        return [];
-    }
+export const getAttendanceSheets = async (isArchived?: boolean) => {
+  const params = isArchived !== undefined ? { archived: isArchived } : {};
+  const response = await api.get('council/attendance-sheet/', { params });
+  return response.data;
 };
 
 // export const getStaffList = async () => {

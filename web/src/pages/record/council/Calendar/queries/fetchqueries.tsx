@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCouncilEvents, getAttendees, getAttendanceSheets, getStaffList } from "../api/getreq";
-import axios from "axios";
 
 export type CouncilEvent = {
   ce_id: number;
@@ -27,6 +26,7 @@ export type CouncilEventInput = {
 
 export type Attendance = {
   ceId: number; 
+  att_id?: number;
   attMettingTitle: string;
   attMeetingDate: string;
   attMeetingDescription: string;
@@ -65,6 +65,17 @@ export type AttendanceSheetInput = {
   file_id?: number | null;
   staff_id?: string | null;
 };
+
+export type AttendanceRecord = {
+  ceId: number;
+  attMettingTitle: string;
+  attMeetingDate: string;
+  attMeetingDescription: string;
+  attAreaOfFocus?: string[];
+  isArchived: boolean;
+  sheets: AttendanceSheet[];
+};
+
 
 export type Staff = {
   staff_id: string;
@@ -106,14 +117,11 @@ export const useGetCouncilEvents = () => {
     });
   };
 
-export const useGetAttendanceSheets = () => {
+export const useGetAttendanceSheets = (isArchived?: boolean) => {
   return useQuery<AttendanceSheet[], Error>({
-    queryKey: ["attendanceSheets"],
-    queryFn: () => getAttendanceSheets().catch((error) => {
-      console.error("Error fetching attendance sheets:", error);
-      throw error;
-    }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryKey: ["attendanceSheets", isArchived],
+    queryFn: () => getAttendanceSheets(isArchived),
+    staleTime: 1000 * 60 * 5,
   });
 };
 

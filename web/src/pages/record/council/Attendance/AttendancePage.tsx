@@ -1,23 +1,138 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Eye, Stamp, Search, Trash2 } from "lucide-react";
+import { Eye, Stamp, Search, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useDeleteAttendanceSheet } from "../Calendar/queries/delqueries";
+import {
+  useDeleteAttendanceSheet,
+  useArchiveAttendanceSheet,
+  useRestoreAttendanceSheet,
+} from "../Calendar/queries/delqueries";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import Attendees from "./Attendees";
 import {
   useGetCouncilEvents,
   useGetAttendanceSheets,
-  Attendance,
+  type CouncilEvent,
+  type AttendanceSheet,
+  type AttendanceRecord
 } from "../Calendar/queries/fetchqueries";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { HistoryTable } from "@/components/ui/table/history-table";
 
-export const columns: ColumnDef<Attendance>[] = [
+const ArchiveTabActions = ({
+  row,
+  refetchEvents,
+  refetchSheets,
+}: {
+  row: { original: AttendanceRecord };
+  refetchEvents: () => void;
+  refetchSheets: () => void;
+}) => {
+  const restoreSheet = useRestoreAttendanceSheet();
+  const deleteSheet = useDeleteAttendanceSheet();
+
+  return (
+    <div className="flex justify-center gap-2">
+      <TooltipLayout
+        trigger={
+          <DialogLayout
+            trigger={
+              <div className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]">
+                <Eye size={16} className="text-black" />
+              </div>
+            }
+            className="max-w-[50%] h-2/3 flex flex-col overflow-y-auto"
+            title="Archived Attendance Sheets"
+            description="Here are the archived files related to the meeting."
+            mainContent={
+              <div className="w-full h-full">
+                {row.original.sheets.length > 0 ? (
+                  row.original.sheets.map((sheet, index) => (
+                    <div key={sheet.att_id} className="mb-4">
+                      {sheet.file_url ? (
+                        <div className="relative flex flex-row items-end gap-2">
+                          <div className="flex-1">
+                            <img
+                              src={sheet.file_url}
+                              alt={`Archived Event File ${index + 1}`}
+                              className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
+                              onError={(e) => (e.currentTarget.src = "/placeholder-image.png")}
+                            />
+                          </div>
+                          <TooltipLayout
+                            trigger={
+                              <ConfirmationModal
+                                trigger={
+                                  <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-green-500 transition-colors">
+                                    <ArchiveRestore size={16} />
+                                  </div>
+                                }
+                                title="Restore Attendance Sheet"
+                                description="Would you like to restore this attendance sheet?"
+                                actionLabel="Restore"
+                                onClick={() =>
+                                  restoreSheet.mutate(sheet.att_id, {
+                                    onSuccess: () => {
+                                      refetchSheets();
+                                      refetchEvents();
+                                    },
+                                  })
+                                }
+                              />
+                            }
+                            content="Restore this attendance sheet"
+                          />
+                          <TooltipLayout
+                            trigger={
+                              <ConfirmationModal
+                                trigger={
+                                  <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors">
+                                    <Trash2 size={16} />
+                                  </div>
+                                }
+                                title="Permanently Delete"
+                                description="This will permanently delete the attendance sheet. Continue?"
+                                actionLabel="Delete"
+                                onClick={() =>
+                                  deleteSheet.mutate(sheet.att_id, {
+                                    onSuccess: () => {
+                                      refetchSheets();
+                                      refetchEvents();
+                                    },
+                                  })
+                                }
+                              />
+                            }
+                            content="Delete this attendance sheet permanently"
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          No file uploaded for Archived Attendance Sheet #{index + 1}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div>No archived attendance sheets for this meeting.</div>
+                )}
+              </div>
+            }
+          />
+        }
+        content="View"
+      />
+    </div>
+  );
+};
+
+export const columns: ColumnDef<AttendanceRecord>[] = [
   {
     accessorKey: "attMeetingDate",
     header: "Date",
@@ -34,8 +149,7 @@ export const columns: ColumnDef<Attendance>[] = [
     cell: ({ row }) => {
       const title = row.getValue("attMettingTitle") as string;
       const lines = title.split("\n");
-      const displayText =
-        lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : title;
+      const displayText = lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : title;
       return (
         <div className="line-clamp-3 overflow-hidden text-ellipsis">
           {displayText}
@@ -50,8 +164,7 @@ export const columns: ColumnDef<Attendance>[] = [
     cell: ({ row }) => {
       const desc = row.getValue("attMeetingDescription") as string;
       const lines = desc.split("\n");
-      const displayText =
-        lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : desc;
+      const displayText = lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : desc;
       return (
         <div className="line-clamp-3 overflow-hidden text-ellipsis">
           {displayText}
@@ -65,23 +178,33 @@ export const columns: ColumnDef<Attendance>[] = [
     header: "Action",
     cell: ({ row }) => {
       const ceId = row.original.ceId;
-      const { data: attendanceSheet } = useGetAttendanceSheets();
-      const sheets =
-        attendanceSheet?.filter(
-          (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
-        ) || [];
-      const deleteAttendanceSheet = useDeleteAttendanceSheet();
+      const { data: attendanceSheet, refetch: refetchSheets } = useGetAttendanceSheets();
+      const { refetch: refetchEvents } = useGetCouncilEvents();
+      const sheets = attendanceSheet?.filter(
+        (sheet) => sheet.ce_id === ceId && !sheet.att_is_archive
+      ) || [];
+      const archiveSheet = useArchiveAttendanceSheet();
       const [isAttendeesDialogOpen, setIsAttendeesDialogOpen] = useState(false);
       const [isEditMode, setIsEditMode] = useState(false);
 
       const handleDialogClose = () => {
-      setIsAttendeesDialogOpen(false);
-      setIsEditMode(false); 
-    };
+        setIsAttendeesDialogOpen(false);
+        setIsEditMode(false);
+      };
 
-    const handleSaveSuccess = () => {
-      setIsEditMode(false); 
-    };
+      const handleSaveSuccess = () => {
+        setIsEditMode(false);
+      };
+
+      if (row.original.isArchived) {
+        return (
+          <ArchiveTabActions
+            row={row}
+            refetchEvents={refetchEvents}
+            refetchSheets={refetchSheets}
+          />
+        );
+      }
 
       return (
         <div className="flex justify-center gap-1">
@@ -102,48 +225,47 @@ export const columns: ColumnDef<Attendance>[] = [
                       sheets.map((sheet, index) => (
                         <div key={sheet.att_id} className="mb-4">
                           {sheet.file_url ? (
-                            <div className="flex flex-col items-start">
-                              <div className="relative w-full">
+                            <div className="relative flex flex-row items-end gap-2">
+                              <div className="flex-1">
                                 <img
                                   src={sheet.file_url}
                                   alt={`Event File ${index + 1}`}
                                   className="w-full h-auto max-h-[calc(100vh-200px)] object-contain"
                                 />
-                                <TooltipLayout
-                                  trigger={
-                                    <ConfirmationModal
-                                      trigger={
-                                        <div className="absolute top-2 right-2 w-6 h-6 cursor-pointer text-gray-500 hover:text-red-500 transition-colors">
-                                          <Trash2 size={16} />
-                                        </div>
-                                      }
-                                      title="Confirm Deletion"
-                                      description="Are you sure you want to delete this attendance sheet? This action cannot be undone."
-                                      actionLabel="Delete"
-                                      onClick={() =>
-                                        deleteAttendanceSheet.mutate(
-                                          sheet.att_id
-                                        )
-                                      }
-                                    />
-                                  }
-                                  content="Delete this attendance sheet"
-                                />
                               </div>
+                              <TooltipLayout
+                                trigger={
+                                  <ConfirmationModal
+                                    trigger={
+                                      <div className="w-6 h-6 cursor-pointer text-gray-500 hover:text-yellow-500 transition-colors">
+                                        <Archive size={16} />
+                                      </div>
+                                    }
+                                    title="Archive Attendance Sheet"
+                                    description="Are you sure you want to archive this attendance sheet?"
+                                    actionLabel="Archive"
+                                    onClick={() =>
+                                      archiveSheet.mutate(sheet.att_id, {
+                                        onSuccess: () => {
+                                          refetchSheets();
+                                          refetchEvents();
+                                        },
+                                      })
+                                    }
+                                  />
+                                }
+                                content="Archive this attendance sheet"
+                              />
                             </div>
                           ) : (
                             <div className="text-sm text-gray-500">
                               No file uploaded for Attendance Sheet #{index + 1}
-                              .
                             </div>
                           )}
                         </div>
                       ))
                     ) : (
-                      <div>
-                        No attendance sheets have been uploaded for this meeting
-                        yet.
-                      </div>
+                      <div>No attendance sheets have been uploaded for this meeting yet.</div>
                     )}
                   </div>
                 }
@@ -162,17 +284,17 @@ export const columns: ColumnDef<Attendance>[] = [
                 className="max-w-[700px] h-[400px] flex flex-col overflow-auto"
                 title={isEditMode ? "Edit" : "View"}
                 description={
-                isEditMode
-                  ? "Edit participants attendance."
-                  : "View participants attendance."
-              }
+                  isEditMode
+                    ? "Edit participants attendance."
+                    : "View participants attendance."
+                }
                 isOpen={isAttendeesDialogOpen}
                 onOpenChange={(open) => {
-                setIsAttendeesDialogOpen(open);
-                if (!open) {
-                  setIsEditMode(false); // Reset edit mode when dialog closes
-                }
-              }}
+                  setIsAttendeesDialogOpen(open);
+                  if (!open) {
+                    setIsEditMode(false);
+                  }
+                }}
                 mainContent={
                   <Attendees
                     ceId={ceId}
@@ -190,56 +312,82 @@ export const columns: ColumnDef<Attendance>[] = [
     },
     enableSorting: false,
     enableHiding: false,
-    size: 100,
+    size: 150,
   },
 ];
 
 function AttendancePage() {
-  const { data: councilEvents = [], isLoading, error } = useGetCouncilEvents();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const data: Attendance[] =
-    councilEvents
-      ?.filter((event) => event.ce_type === "meeting")
-      .map((event) => ({
-        ceId: event.ce_id,
-        attMettingTitle: event.ce_title,
-        attMeetingDate: event.ce_date,
-        attMeetingDescription: event.ce_description,
-        attAreaOfFocus: [event.ce_type],
-        isArchived: event.ce_is_archive,
-      }))
-      .filter((event) => !event.isArchived) || [];
-
-  const years = [
-    ...new Set(
-      data.map((record) =>
-        new Date(record.attMeetingDate).getFullYear().toString()
-      )
-    ),
-  ].sort((a, b) => parseInt(b) - parseInt(a));
-  const filterOptions = [
-    { id: "all", name: "All" },
-    ...years.map((year) => ({ id: year, name: year })),
-  ];
-
   const [filter, setFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
+  
+  const { data: councilEvents = [], isLoading, error } = useGetCouncilEvents();
+  const { data: attendanceSheets = [] } = useGetAttendanceSheets();
 
-  const filteredData = data.filter((record) => {
-    const matchesSearch =
-      searchTerm === ""
-        ? true
-        : [
-            record.attMeetingDate.toLowerCase(),
-            record.attMettingTitle.toLowerCase(),
-            record.attMeetingDescription.toLowerCase(),
-          ].some((field) => field.includes(searchTerm.toLowerCase()));
-    const matchesYear =
-      filter === "all"
-        ? true
-        : new Date(record.attMeetingDate).getFullYear().toString() === filter;
+  const tableData = useMemo(() => {
+    const eventMap = new Map<number, CouncilEvent>();
+    councilEvents.forEach(event => {
+      eventMap.set(event.ce_id, event);
+    });
+
+    let data: AttendanceRecord[] = [];
+
+    if (activeTab === "active") {
+      councilEvents
+        .filter(event => event.ce_type === "meeting" && !event.ce_is_archive)
+        .forEach(event => {
+          const nonArchivedSheets = attendanceSheets.filter(
+            sheet => sheet.ce_id === event.ce_id && !sheet.att_is_archive
+          );
+          data.push({
+            ceId: event.ce_id,
+            attMettingTitle: event.ce_title || "Untitled Meeting",
+            attMeetingDate: event.ce_date || "N/A",
+            attMeetingDescription: event.ce_description || "No description",
+            isArchived: false,
+            sheets: nonArchivedSheets
+          });
+        });
+    } else {
+      // Group archived sheets by ce_id to avoid duplicate meetings
+      const archivedSheetsByEvent = new Map<number, AttendanceSheet[]>();
+      attendanceSheets
+        .filter(sheet => sheet.att_is_archive)
+        .forEach(sheet => {
+          const sheets = archivedSheetsByEvent.get(sheet.ce_id) || [];
+          sheets.push(sheet);
+          archivedSheetsByEvent.set(sheet.ce_id, sheets);
+        });
+
+      archivedSheetsByEvent.forEach((sheets, ce_id) => {
+        const event = eventMap.get(ce_id);
+        if (event && event.ce_type === "meeting") {
+          data.push({
+            ceId: event.ce_id,
+            attMettingTitle: event.ce_title || "Untitled Meeting",
+            attMeetingDate: event.ce_date || "N/A",
+            attMeetingDescription: event.ce_description || "No description",
+            isArchived: true,
+            sheets
+          });
+        }
+      });
+    }
+
+    return data;
+  }, [councilEvents, attendanceSheets, activeTab]);
+
+  const filteredData = tableData.filter(record => {
+    const matchesSearch = searchTerm === "" || 
+      [record.attMeetingDate, record.attMettingTitle, record.attMeetingDescription]
+        .some(field => field.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesYear = filter === "all" || 
+      record.attMeetingDate === "N/A" ||
+      new Date(record.attMeetingDate).getFullYear().toString() === filter;
+      
     return matchesSearch && matchesYear;
   });
 
@@ -254,6 +402,18 @@ function AttendancePage() {
     setPageSize(newSize);
     setCurrentPage(1);
   };
+
+  const years = [
+    ...new Set(
+      tableData.map((record) =>
+        record.attMeetingDate !== "N/A" ? new Date(record.attMeetingDate).getFullYear().toString() : null
+      ).filter((year): year is string => year !== null)
+    ),
+  ].sort((a, b) => parseInt(b) - parseInt(a));
+  const filterOptions = [
+    { id: "all", name: "All" },
+    ...years.map((year) => ({ id: year, name: year })),
+  ];
 
   if (isLoading) {
     return (
@@ -345,18 +505,44 @@ function AttendancePage() {
       </div>
 
       <div className="w-full bg-white border border-none">
-        <div className="flex gap-x-2 items-center p-4">
-          <p className="text-xs sm:text-sm">Show</p>
-          <Input
-            type="number"
-            className="w-14 h-8"
-            defaultValue="10"
-            onChange={handlePageSizeChange}
-          />
-          <p className="text-xs sm:text-sm">Entries</p>
+        <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-4">
+          <div className="flex gap-x-2 items-center">
+            <p className="text-xs sm:text-sm">Show</p>
+            <Input
+              type="number"
+              className="w-14 h-8"
+              defaultValue="10"
+              onChange={handlePageSizeChange}
+            />
+            <p className="text-xs sm:text-sm">Entries</p>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "archive")}>
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="archive">
+                <div className="flex items-center gap-2">
+                  <Archive size={16} /> Archive
+                </div>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        <DataTable columns={columns} data={paginatedData} />
+        <Tabs value={activeTab}>
+          <TabsContent value="active">
+            <DataTable
+              columns={columns}
+              data={paginatedData}
+            />
+          </TabsContent>
+          <TabsContent value="archive">
+            <HistoryTable
+              columns={columns}
+              data={paginatedData}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">

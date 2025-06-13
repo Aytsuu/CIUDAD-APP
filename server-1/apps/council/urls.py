@@ -11,6 +11,7 @@ urlpatterns=[
     path("attendees/bulk/", AttendeesBulkView.as_view(), name="council-attendees-bulk"),
     path("attendance-sheet/", AttendanceView.as_view(), name="council-attendance-sheet"),
     path("attendance-sheet/<int:att_id>/", AttendanceDetailView.as_view(), name="council-attendance-sheet-detail"),
+    path("attendance-sheet/<int:att_id>/restore/", RestoreAttendanceView.as_view(), name="council-attendance-sheet-restore"),
     path('api/staff/', StaffListView.as_view(), name='staff-list'),
 
     path("template/", TemplateView.as_view(), name="document-template"),

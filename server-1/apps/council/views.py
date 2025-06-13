@@ -80,6 +80,13 @@ class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
 class AttendanceView(generics.ListCreateAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
+    def get_queryset(self):
+        queryset = CouncilAttendance.objects.all()
+        archived = self.request.query_params.get('archived')
+        if archived is not None:
+            archived = archived.lower() == 'true'
+            queryset = queryset.filter(att_is_archive=archived)
+        return queryset
 
 class AttendeesBulkView(generics.GenericAPIView):
     serializer_class = CouncilAttendeesSerializer
@@ -116,9 +123,42 @@ class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.att_is_archive = True
+        if not instance:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        if permanent:
+            # Permanent delete
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            # Soft delete (archive)
+            instance.att_is_archive = True
+            instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+class RestoreAttendanceView(generics.UpdateAPIView):
+    serializer_class = CouncilAttendanceSerializer
+    queryset = CouncilAttendance.objects.all()
+    lookup_field = 'att_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        if not instance.att_is_archive:
+            return Response(
+                {"detail": "Attendance sheet is not archived."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        instance.att_is_archive = False
         instance.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { delCouncilEvent, restoreCouncilEvent, delAttendee, delAttendanceSheet } from "../api/delreq";
+import { delCouncilEvent, restoreCouncilEvent, delAttendee, delAttendanceSheet, restoreAttendanceSheet } from "../api/delreq";
 import { CouncilEvent, Attendee, AttendanceSheet } from "./fetchqueries";
 
 export const useDeleteCouncilEvent = () => {
@@ -138,17 +138,56 @@ export const useDeleteAttendee = () => {
   });
 };
 
+export const useArchiveAttendanceSheet = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (att_id: number) => delAttendanceSheet(att_id, false),
+    onSuccess: (_, att_id) => {
+      queryClient.setQueryData(["attendanceSheets"], (old: AttendanceSheet[] = []) => 
+        old.map(sheet => 
+          sheet.att_id === att_id ? { ...sheet, att_is_archive: true } : sheet
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
+      toast.success("Attendance sheet archived successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to archive attendance sheet", {
+        description: error.message,
+        duration: 2000
+      });
+    },
+    onMutate: async (att_id) => {
+      await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });
+      const previousSheets = queryClient.getQueryData(['attendanceSheets']);
+      queryClient.setQueryData(['attendanceSheets'], (old: AttendanceSheet[] = []) => 
+        old.map(sheet => 
+          sheet.att_id === att_id ? { ...sheet, att_is_archive: true } : sheet
+        )
+      );
+      return { previousSheets };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendanceSheets'] });
+    }
+  });
+};
+
 export const useDeleteAttendanceSheet = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (att_id: number) => delAttendanceSheet(att_id),
+    mutationFn: (att_id: number) => delAttendanceSheet(att_id, true),
     onSuccess: (_, att_id) => {
       queryClient.setQueryData(["attendanceSheets"], (old: AttendanceSheet[] = []) => 
         old.filter(sheet => sheet.att_id !== att_id)
       );
       queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
-      toast.success("Attendance sheet deleted successfully", {
+      toast.success("Attendance sheet permanently deleted successfully", {
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
         duration: 2000
       });
@@ -164,6 +203,45 @@ export const useDeleteAttendanceSheet = () => {
       const previousSheets = queryClient.getQueryData(['attendanceSheets']);
       queryClient.setQueryData(['attendanceSheets'], (old: AttendanceSheet[] = []) => 
         old.filter(sheet => sheet.att_id !== att_id)
+      );
+      return { previousSheets };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendanceSheets'] });
+    }
+  });
+};
+
+export const useRestoreAttendanceSheet = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (att_id: number) => restoreAttendanceSheet(att_id),
+    onSuccess: (_, att_id) => {
+      queryClient.setQueryData(["attendanceSheets"], (old: AttendanceSheet[] = []) => 
+        old.map(sheet => 
+          sheet.att_id === att_id ? { ...sheet, att_is_archive: false } : sheet
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["attendanceSheets"] });
+      toast.success("Attendance sheet restored successfully", {
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to restore attendance sheet", {
+        description: error.message,
+        duration: 2000
+      });
+    },
+    onMutate: async (att_id) => {
+      await queryClient.cancelQueries({ queryKey: ['attendanceSheets'] });
+      const previousSheets = queryClient.getQueryData(['attendanceSheets']);
+      queryClient.setQueryData(['attendanceSheets'], (old: AttendanceSheet[] = []) => 
+        old.map(sheet => 
+          sheet.att_id === att_id ? { ...sheet, att_is_archive: false } : sheet
+        )
       );
       return { previousSheets };
     },
