@@ -1,16 +1,19 @@
 import React from 'react';
 import supabase from '@/utils/supabase';
+import { MediaUploadType } from '@/components/ui/media-upload';
 
-type FileWithMeta = {
-  file: File;
-  publicUrl?: string;
-  status: 'uploading' | 'success' | 'error';
-  error?: string;
-  path?: string;
-};
-
-export const useInstantFileUpload = (bucketName: string = 'image-bucket') => {
-  const [files, setFiles] = React.useState<FileWithMeta[]>([]);
+export const useInstantFileUpload = ({
+    mediaFiles, 
+    activeVideoId, 
+    setMediaFiles, 
+    setActiveVideoId
+  } : {
+    mediaFiles?: MediaUploadType,
+    activeVideoId?: string,
+    setMediaFiles?: React.Dispatch<React.SetStateAction<MediaUploadType>>,
+    setActiveVideoId?: React.Dispatch<React.SetStateAction<string>>
+  }
+) => {
 
   const generateFileName = (file: File) => {
     const fileExt = file.name.split('.').pop();
@@ -23,95 +26,105 @@ export const useInstantFileUpload = (bucketName: string = 'image-bucket') => {
     const fileName = generateFileName(file);
     const filePath = `uploads/${fileName}`;
 
-    try {
-      // Update file status to uploading
-      setFiles(prev => prev.map(f => 
-        f.file === file ? { ...f, status: 'uploading' } : f
-      ));
+    const { error } = await supabase.storage
+      .from("image-bucket")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
 
-      // Upload to Supabase
-      const { error } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+    if (error) throw error;
 
-      if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage
+      .from("image-bucket")
+      .getPublicUrl(filePath);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-
-      // Update file status to success
-      setFiles(prev => prev.map(f => 
-        f.file === file ? { ...f, status: 'success', publicUrl, path: filePath } : f
-      ));
-
-      return { success: true, publicUrl, path: filePath };
-    } catch (error) {
-      // Update file status to error
-      setFiles(prev => prev.map(f => 
-        f.file === file ? { ...f, status: 'error', error: (error as Error).message } : f
-      ));
-      return { success: false, error: (error as Error).message };
-    }
+    return { publicUrl, storagePath: filePath };
   };
 
-  const removeFile = async (fileToRemove: File) => {
-    const fileMeta = files.find(f => f.file === fileToRemove);
+  const deleteFile = async (path: string) => {
+    const { error } = await supabase.storage
+      .from("image-bucket")
+      .remove([path]);
     
-    if (fileMeta?.path) {
+    if (error) throw error;
+    return true;
+  };
+
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newMediaFiles = files.map((file) => {
+      const previewUrl = URL.createObjectURL(file);
+      const type = file.type.startsWith("image/")
+        ? "image"
+        : file.type.startsWith("video/")
+        ? "video"
+        : "document" as "image" | "video" | "document";
+
+      return {
+        id: `media-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+        type,
+        file,
+        status: "uploading" as const,
+        previewUrl: previewUrl
+      };
+    });
+
+    setMediaFiles!((prev) => [...prev, ...newMediaFiles]);
+
+    // Upload files and update state with URLs
+    for (const media of newMediaFiles) {
       try {
-        // Remove from Supabase storage
-        await supabase.storage
-          .from(bucketName)
-          .remove([fileMeta.path]);
+        const { publicUrl, storagePath } = await uploadFile(media.file);
+        if (publicUrl) {
+          setMediaFiles!((prev) =>
+            prev.map((m) =>
+              m.id === media.id 
+                ? { ...m, publicUrl, storagePath, status: "uploaded" } 
+                : m
+            )
+          );
+        }
       } catch (error) {
-        console.error('Failed to delete file from storage:', error);
+        console.error("Upload failed:", error);
       }
     }
 
-    // Remove from local state
-    setFiles(prev => prev.filter(f => f.file !== fileToRemove));
+    e.target.value = "";
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+  const handleRemoveFile = async (id: string) => {
+    const mediaToRemove = mediaFiles?.find((media) => media.id === id);
+    if (!mediaToRemove) return;
 
-    const newFiles = Array.from(e.target.files);
-    
-    // Filter out already existing files
-    const uniqueNewFiles = newFiles.filter(
-      newFile => !files.some(existingFile => 
-        existingFile.file.name === newFile.name && 
-        existingFile.file.size === newFile.size
-      )
-    );
+    try {
+      // Remove from Supabase if already uploaded
+      if (mediaToRemove.storagePath) {
+        await deleteFile(mediaToRemove.storagePath);
+      }
 
-    // Add new files to state with initial status
-    setFiles(prev => [
-      ...prev,
-      ...uniqueNewFiles.map(file => ({
-        file,
-        status: 'uploading' as const,
-      }))
-    ]);
-
-    // Immediately upload each new file
-    uniqueNewFiles.forEach(uploadFile);
-  };
-
-  const handleRemoveFile = async (fileToRemove: File) => {
-    await removeFile(fileToRemove);
+      // Remove from local state
+      setMediaFiles!((prev) => prev.filter((media) => media.id !== id));
+      
+      // Clean up video playback if needed
+      if (activeVideoId === id) setActiveVideoId!("");
+      
+      // Clean up object URL
+      if (mediaToRemove.previewUrl) {
+        URL.revokeObjectURL(mediaToRemove.previewUrl);
+      }
+    } catch (error) {
+      console.error("Failed to delete file:", error);
+    }
   };
 
   return {
-    files,
+    uploadFile,
+    deleteFile,
     handleFileChange,
     handleRemoveFile,
-    isUploading: files.some(f => f.status === 'uploading'),
-    hasErrors: files.some(f => f.status === 'error'),
   };
 };

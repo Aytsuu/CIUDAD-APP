@@ -170,7 +170,7 @@ export const ARColumns = (
       const navigate = useNavigate();
 
       const handleViewClick = () => {
-        navigate("form", {
+        navigate("/report/acknowledgement/document", {
           state: {
             params: {
               data: row.original,

@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
@@ -19,19 +17,19 @@ import { Separator } from "@/components/ui/separator"
 import { formatDate, getWeekNumber } from "@/helpers/dateFormatter"
 
 export default function ARRecords() {
-  const { user } = useAuth()
-  const [searchQuery, setSearchQuery] = React.useState<string>("")
-  const [pageSize, setPageSize] = React.useState<number>(10)
-  const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const [selectedRows, setSelectedRows] = React.useState<any[]>([])
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false)
-  const [isCreatingWeeklyAR, setIsCreatingWeeklyAR] = React.useState<boolean>(false)
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [pageSize, setPageSize] = React.useState<number>(10);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [selectedRows, setSelectedRows] = React.useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isCreatingWeeklyAR, setIsCreatingWeeklyAR] = React.useState<boolean>(false);
   const [isCreatable, setIsCreatable] = React.useState<boolean>(true);
   const [reset, setReset] = React.useState<boolean>(false);
   const { data: arReports, isLoading: isLoadingArReports } = useGetAcknowledgementReport()
   const { data: weeklyAR, isLoading: isLoadingWeeklyAR } = useGetWeeklyAR();
-  const { mutateAsync: addWAR } = useAddWAR()
-  const { mutateAsync: addWARComp } = useAddWARComp()
+  const { mutateAsync: addWAR } = useAddWAR();
+  const { mutateAsync: addWARComp } = useAddWARComp();
 
   const ARList = arReports?.results || []
   const totalCount = arReports?.count || 0
@@ -135,7 +133,7 @@ export default function ARRecords() {
             <Badge variant="secondary" className="text-xs">
               {totalCount} Total Reports
             </Badge>
-            {!isLoadingWeeklyAR && !isLoadingArReports &&  (isCreatable ? (
+            {!isLoadingWeeklyAR && !isLoadingArReports && ARList.length > 0 &&  (isCreatable ? (
               isCreatingWeeklyAR ? (
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">

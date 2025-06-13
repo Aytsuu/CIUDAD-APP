@@ -6,7 +6,8 @@ from .views.weekly_ar_views import *
 
 urlpatterns = [
   path('ir/create/', IRCreateView.as_view(), name="create-ir"),
-  path('ir/list/table/', IRTableView.as_view(), name='ir-list'),
+  path('ir/active/list/table/', IRActiveTableView.as_view(), name='ir-active-list'),
+  path('ir/archive/list/table/', IRArchiveTableView.as_view(), name='ir-archive-list'),
   path('rt/create/', ReportTypeCreateView.as_view(), name="create-rt"),
   path('rt/list/<str:rt_category>/', ReportTypeListView.as_view(), name='rt-list'),
   path('ar/list/table/', ARTableView.as_view(), name='ar-list'),

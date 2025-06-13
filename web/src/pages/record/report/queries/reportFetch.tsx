@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/pages/api/api";
 
-export const useGetIncidentReport = () => {
+export const useGetActiveIR = () => {
   return useQuery({
-    queryKey: ['incidentReports'],
+    queryKey: ['activeIRs'],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ir/list/table/');
+        const res = await api.get('report/ir/active/list/table/');
         return res.data;
        } catch (err) {
         throw err;
@@ -14,6 +14,21 @@ export const useGetIncidentReport = () => {
     },
     staleTime: 5000
   })
+}
+
+export const useGetArchiveIR = () => {
+  return useQuery({
+    queryKey: ['archiveIRs'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('report/ir/archive/list/table/');
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  }) 
 }
 
 export const useGetAcknowledgementReport = () => {

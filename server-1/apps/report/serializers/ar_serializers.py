@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from ..models import AcknowledgementReport, ReportType
 from apps.profiling.models import Address
+from ..serializers.incident_report_serializers import IRBaseSerializer
 import datetime
 
 class ARBaseSerializer(serializers.ModelSerializer):
@@ -37,6 +38,7 @@ class ARCreateSerializer(serializers.ModelSerializer):
     report_type = validated_data.pop('rt', None)
     sitio = validated_data.pop('ir_sitio', None)
     street = validated_data.pop('ir_street', None)
+    incident_report = validated_data.get('ir', None)
 
     if report_type:
       validated_data['rt'] = ReportType.objects.filter(rt_label=report_type).first()
@@ -44,6 +46,14 @@ class ARCreateSerializer(serializers.ModelSerializer):
     if sitio and street:
       print(validated_data)
       validated_data['add'] = Address.objects.filter(add_street=street, sitio=sitio.lower()).first()
+
+    if incident_report:
+      is_archive = {
+        'ir_is_archive': True
+      }
+      archive_ir = IRBaseSerializer(incident_report, data=is_archive, partial=True)
+      if archive_ir.is_valid():
+        archive_ir.save()
     
     instance = AcknowledgementReport(**validated_data)
     instance.save()

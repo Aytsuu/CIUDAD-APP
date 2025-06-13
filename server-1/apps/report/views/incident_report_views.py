@@ -7,8 +7,13 @@ class IRCreateView(generics.CreateAPIView):
   serializer_class = IRCreateSerializer
   queryset = IncidentReport.objects.all()
   
-class IRTableView(generics.ListAPIView):
+class IRActiveTableView(generics.ListAPIView):
   serializer_class = IRTableSerializer
-  queryset = IncidentReport.objects.all()
+  queryset = IncidentReport.objects.filter(ir_is_archive=False)
   pagination_class = StandardResultsPagination
   
+class IRArchiveTableView(generics.ListAPIView):
+  serializer_class = IRTableSerializer
+  queryset = IncidentReport.objects.filter(ir_is_archive=True)
+  pagination_class = StandardResultsPagination
+
