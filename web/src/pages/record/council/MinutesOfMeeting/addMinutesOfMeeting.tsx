@@ -256,11 +256,12 @@ export default function AddMinutesOfMeeting({onSuccess}: {
     });
 
     const meetingAreaOfFocus = [
-        { id: "council", name: "Council" },
         { id: "gad", name: "GAD" },
-        { id: "waste", name: "Waste Committee" },
-        { id: "finance", name: "Finance" }
+        { id: "finance", name: "Finance" },
+        { id: "council", name: "Council" },
+        { id: "waste", name: "Waste Committee" }
     ];
+
 
     const onSubmit = (values: z.infer<typeof minutesOfMeetingFormSchema>)  => {
         console.log("Values", values);

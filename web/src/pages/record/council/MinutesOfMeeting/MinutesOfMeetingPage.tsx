@@ -1,82 +1,60 @@
-
 import { useState } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
-import TableLayout from "@/components/ui/table/table-layout.tsx";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Pencil, Trash, Eye, Plus, Search } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-
 import AddMinutesOfMeeting from "./addMinutesOfMeeting";
+import { useGetMinutesOfMeetingRecords, type MinutesOfMeetingRecords } from "./queries/MOMFetchQueries";
 
-export type Meeting = {
-    meetingDate: string;
-    meetingTitle: string;
-    meetingAgenda: string;
-    meetingAreaOfFocus: string[];
-};
+function MinutesOfMeetingPage() {
+    const [filter, setFilter] = useState<string>("all");
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [editingRowId, setEditingRowId] = useState<number | null> (null)
+    const {data: momRecords = [], isLoading} = useGetMinutesOfMeetingRecords();
+    const getAreaFocusDisplayName = (focus: string): string => {
+        switch (focus) {
+            case 'gad': return 'GAD';
+            case 'finance': return 'Finance';
+            case 'council': return 'Council';
+            case 'waste': return 'Waste Committee';
+            default: return focus;
+        }
+    };
 
-export const meetingRecords: Meeting[] = [
+    const columns: ColumnDef<MinutesOfMeetingRecords>[] = [
     {
-        meetingDate: "02/10/24",
-        meetingTitle: "Budget Plan Meeting",
-        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et",
-        meetingAreaOfFocus: ["GAD", "Council"],
-    },
-    {
-        meetingDate: "02/13/24",
-        meetingTitle: "Escuchas a tellus Hectesus",
-        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et",
-        meetingAreaOfFocus: ["GAD"],
-    },
-    {
-        meetingDate: "02/15/24",
-        meetingTitle: "Las Palabras Pellentesque",
-        meetingAgenda: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et",
-        meetingAreaOfFocus: ["GAD", "Waste Committee"],
-    },
-];
-
-export const columns: ColumnDef<Meeting>[] = [
-    {
-        accessorKey: "meetingDate",
+        accessorKey: "mom_date",
         header: "Date",
         cell: ({ row }) => (
-            <div className="w-[120px]">{row.getValue("meetingDate")}</div>
+            <div className="w-[110px]">{row.getValue("mom_date")}</div>
         ),
     },
     {
-        accessorKey: "meetingAgenda",
+        accessorKey: "mom_agenda",
         header: "Meeting Agenda",
-        cell: ({ row }) => (
-            <div className="max-w-[600px] w-auto overflow-hidden text-ellipsis whitespace-nowrap">
-                {row.getValue("meetingAgenda")}
-            </div>
-        ),
     },
     {
-        accessorKey: "meetingTitle",
+        accessorKey: "mom_title",
         header: "Meeting Title",
         cell: ({ row }) => (
-            <div className="max-w-[300px]">{row.getValue("meetingTitle")}</div>
+            <div className="max-w-[300px]">{row.getValue("mom_title")}</div>
         ),
     },
     {
-        accessorKey: "meetingAreaOfFocus",
+        accessorKey: "areas_of_focus",
         header: "Area of Focus",
         cell: ({ row }) => (
-            <div className="text-center max-w-[120px]">
-                {row.original.meetingAreaOfFocus.map((focus, index) => (
+          <div className="text-center max-w-[200px]">
+                {row.original.areas_of_focus.map((focus: string, index: number) => (
                     <div key={index} className="text-sm">
-                        {focus}
+                    {getAreaFocusDisplayName(focus)}
                     </div>
                 ))}
             </div>
@@ -86,7 +64,7 @@ export const columns: ColumnDef<Meeting>[] = [
         accessorKey: "action",
         header: "Action",
         cell: () => (
-            <div className="flex flex-grid justify-center gap-2">
+            <div className="flex flex-grid justify-center gap-1">
                 <TooltipLayout
                     trigger={
                         <DialogLayout
@@ -136,20 +114,16 @@ export const columns: ColumnDef<Meeting>[] = [
     },
 ];
 
-function MinutesOfMeetingPage() {
-    const [filter, setFilter] = useState<string>("all");
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [editingRowId, setEditingRowId] = useState<number | null> (null)
-
     const filterOptions = [
         { id: "all", name: "All" },
         { id: "Council", name: "Council" },
         { id: "Waste Committee", name: "Waste Committee" },
         { id: "GAD", name: "GAD" },
+        { id: "Finance", name: "Finance" },
     ];
 
-    const filteredData =
-        filter === "all" ? meetingRecords : meetingRecords.filter((record) => record.meetingAreaOfFocus.includes(filter));
+    const filteredData =filter === "all"? momRecords: momRecords.filter((record) =>record.areas_of_focus.includes(filter));
+
 
     return (
         <div className="w-full h-full">

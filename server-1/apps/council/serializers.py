@@ -37,6 +37,8 @@ class TemplateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 Staff = apps.get_model('administration', 'Staff')
+
+
 class StaffSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     position_title = serializers.CharField(source='pos.pos_title', allow_null=True, default=None)  # Add position title
@@ -50,13 +52,30 @@ class StaffSerializer(serializers.ModelSerializer):
             return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}"
         except AttributeError:
             return "Unknown"
-        
 
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    areas_of_focus = serializers.SerializerMethodField()
+
     class Meta:
         model = MinutesOfMeeting
-        fields = '__all__'
-    
+        fields = '__all__'  
+        extra_fields = [
+            'file_url',
+            'areas_of_focus'
+        ]
+
+    def get_file_url(self, obj):
+        file = obj.momfile_set.first()
+        return file.momf_url if file else None
+
+    def get_areas_of_focus(self, obj):
+        return [
+            area.mof_area
+            for area in obj.momareaoffocus_set.all()
+            if area.mof_area
+        ]
+
 
 class MOMAreaOfFocusSerializer(serializers.ModelSerializer):
     class Meta:
