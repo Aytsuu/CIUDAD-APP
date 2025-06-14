@@ -144,6 +144,19 @@ function MinutesOfMeetingPage() {
                     <div className="flex justify-center gap-2">
                         <TooltipLayout
                             trigger={
+                                <a 
+                                href={row.original.file_url} 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white hover:bg-gray-200 border text-black px-4 py-2 rounded cursor-pointer flex items-center justify-center h-8"
+                                >
+                                <Eye size={16} />
+                                </a>
+                            }
+                            content="Open Document"
+                        />
+                        <TooltipLayout
+                            trigger={
                                 <div>
                                     <ConfirmationModal
                                         trigger={ <div className="bg-[#10b981] hover:bg-[#34d399] text-white px-4 py-2 rounded cursor-pointer"><ArchiveRestore size={16}/></div>}
