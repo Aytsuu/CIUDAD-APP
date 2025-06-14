@@ -2,7 +2,7 @@ import { useState } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput } from "lucide-react";
+import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, FileText } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -27,7 +27,8 @@ function MinutesOfMeetingPage() {
     const { mutate: restoreMOM } = useRestoreMinutesOfMeeting();
     const { mutate: archiveMOM } = useArchiveMinutesOfMeeting();
     const { mutate: deleteMOM } = useDeleteMinutesofMeeting();
-    const [activeTab, setActiveTab] = useState("active");
+    const [activeTab, setActiveTab] = useState("minutes");
+    const [activeSubTab, setActiveSubTab] = useState("active");
     const [searchQuery, setSearchQuery] = useState("");
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
@@ -255,144 +256,176 @@ function MinutesOfMeetingPage() {
             </div>
             <hr className="border-gray mb-6 sm:mb-10" />
 
-            <div className="bg-white rounded-lg shadow-sm">
-                {/* Header with Search and Create Button */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
-                    <div className="flex items-center space-x-2">
-                        <h2 className="text-lg font-medium text-gray-800">
-                            {activeTab === "active" ? "Active Records" : "Archived Records"} (
-                            {activeTab === "active" 
-                                ? momRecords.filter(row => row.mom_is_archive === false).length
-                                : momRecords.filter(row => row.mom_is_archive === true).length
-                            })
-                        </h2>
+            {/* Main Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+                <TabsList className="grid w-full grid-cols-2 max-w-md">
+                    <TabsTrigger value="minutes">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Minutes of Meeting
+                    </TabsTrigger>
+                    <TabsTrigger value="supporting">
+                        <FileInput className="mr-2 h-4 w-4" />
+                        Supporting Documents
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+
+            {/* Minutes of Meeting Tab Content */}
+            {activeTab === "minutes" && (
+                <div className="bg-white rounded-lg shadow-sm">
+                    {/* Header with Search and Create Button */}
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
+                        <div className="flex items-center space-x-2">
+                            <h2 className="text-lg font-medium text-gray-800">
+                                {activeSubTab === "active" ? "Active Records" : "Archived Records"} (
+                                {activeSubTab === "active" 
+                                    ? momRecords.filter(row => row.mom_is_archive === false).length
+                                    : momRecords.filter(row => row.mom_is_archive === true).length
+                                })
+                            </h2>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                            {/* Search Input */}
+                            <div className="relative w-full sm:w-64">
+                                <Search
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                    size={17}
+                                />
+                                <Input
+                                    placeholder="Search..."
+                                    className="pl-10 bg-white w-full"
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            </div>
+
+                            {activeSubTab === "active" && (
+                                <div className="w-full sm:w-auto">
+                                    <DialogLayout
+                                        trigger={<Button className="w-full sm:w-auto">Create <Plus className="ml-2" /></Button>}
+                                        title="Create New Minutes of the Meeting"
+                                        description="Fill out the form to document meeting details and upload supporting files"
+                                        mainContent={
+                                            <AddMinutesOfMeeting
+                                                onSuccess={() => setIsDialogOpen(false)}
+                                            />
+                                        }
+                                        isOpen={isDialogOpen}
+                                        onOpenChange={setIsDialogOpen}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                        {/* Search Input */}
-                        <div className="relative w-full sm:w-64">
-                            <Search
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                size={17}
-                            />
+                    {/* Entries per page selector */}
+                    <div className="flex justify-between p-3 border-t">
+                        <div className="flex items-center gap-2">
+                            <Label className="text-xs sm:text-sm">Show</Label>
                             <Input
-                                placeholder="Search..."
-                                className="pl-10 bg-white w-full"
-                                value={searchQuery}
+                                type="number"
+                                className="w-14 h-8"
+                                min="1"
+                                value={pageSize}
                                 onChange={(e) => {
-                                    setSearchQuery(e.target.value);
+                                    const value = +e.target.value;
+                                    setPageSize(value >= 1 ? value : 1);
                                     setCurrentPage(1);
                                 }}
                             />
+                            <Label className="text-xs sm:text-sm">Entries</Label>
                         </div>
 
-                        {activeTab === "active" && (
-                            <div className="w-full sm:w-auto">
-                                <DialogLayout
-                                    trigger={<Button className="w-full sm:w-auto">Create <Plus className="ml-2" /></Button>}
-                                    title="Create New Minutes of the Meeting"
-                                    description="Fill out the form to document meeting details and upload supporting files"
-                                    mainContent={
-                                        <AddMinutesOfMeeting
-                                            onSuccess={() => setIsDialogOpen(false)}
-                                        />
-                                    }
-                                    isOpen={isDialogOpen}
-                                    onOpenChange={setIsDialogOpen}
+                        <div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="flex items-center gap-2">
+                                        <FileInput size={16} />
+                                        Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+
+                    {/* Sub Tabs for Active/Archive */}
+                    <Tabs value={activeSubTab} onValueChange={(value) => {
+                        setActiveSubTab(value);
+                        setCurrentPage(1);
+                    }}>
+                        <div className='ml-5'>
+                            <TabsList className="grid w-full grid-cols-2 max-w-xs">
+                                <TabsTrigger value="active">Records</TabsTrigger>
+                                <TabsTrigger value="all">
+                                    <div className="flex items-center gap-2">
+                                        <Archive size={16} /> Archive
+                                    </div>
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
+
+                        <TabsContent value="active">
+                            <div className="border overflow-auto max-h-[400px]">
+                                <DataTable
+                                    columns={activeColumns}
+                                    data={paginatedData.filter(row => row.mom_is_archive === false)}
                                 />
                             </div>
+                        </TabsContent>
+
+                        <TabsContent value="all">
+                            <div className="border overflow-auto max-h-[400px]">
+                                <HistoryTable
+                                    columns={archiveColumns}
+                                    data={paginatedData.filter(row => row.mom_is_archive === true)}
+                                />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+
+                    {/* Pagination Section */}
+                    <div className="flex flex-col sm:flex-row justify-between items-center p-3 border-t gap-3">
+                        <p className="text-xs sm:text-sm text-gray-600">
+                            Showing {(currentPage - 1) * pageSize + 1}-
+                            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+                            {filteredData.length} rows
+                        </p>
+                        {filteredData.length > 0 && (
+                            <PaginationLayout
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={(page) => {
+                                    setCurrentPage(page);
+                                }}
+                            />
                         )}
                     </div>
                 </div>
+            )}
 
-                {/* Entries per page selector */}
-                <div className="flex justify-between p-3 border-t">
-                    <div className="flex items-center gap-2">
-                        <Label className="text-xs sm:text-sm">Show</Label>
-                        <Input
-                            type="number"
-                            className="w-14 h-8"
-                            min="1"
-                            value={pageSize}
-                            onChange={(e) => {
-                                const value = +e.target.value;
-                                setPageSize(value >= 1 ? value : 1);
-                                setCurrentPage(1);
-                            }}
-                        />
-                        <Label className="text-xs sm:text-sm">Entries</Label>
-                    </div>
-
-                    <div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="flex items-center gap-2">
-                                    <FileInput size={16} />
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+            {/* Supporting Documents Tab Content */}
+            {activeTab === "supporting" && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <FileInput className="h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Supporting Documents</h3>
+                        <p className="text-sm text-gray-500 mb-6">This section will contain all supporting documents</p>
+                        <Button variant="outline">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Supporting Document
+                        </Button>
                     </div>
                 </div>
-
-                {/* Tabs and Table */}
-                <Tabs value={activeTab} onValueChange={(value) => {
-                    setActiveTab(value);
-                    setCurrentPage(1);
-                }}>
-                    <div className='ml-5'>
-                        <TabsList className="grid w-full grid-cols-2 max-w-xs">
-                            <TabsTrigger value="active">Records</TabsTrigger>
-                            <TabsTrigger value="all">
-                                <div className="flex items-center gap-2">
-                                    <Archive size={16} /> Archive
-                                </div>
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-
-                    <TabsContent value="active">
-                        <div className="border overflow-auto max-h-[400px]">
-                            <DataTable
-                                columns={activeColumns}
-                                data={paginatedData.filter(row => row.mom_is_archive === false)}
-                            />
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="all">
-                        <div className="border overflow-auto max-h-[400px]">
-                            <HistoryTable
-                                columns={archiveColumns}
-                                data={paginatedData.filter(row => row.mom_is_archive === true)}
-                            />
-                        </div>
-                    </TabsContent>
-                </Tabs>
-
-                {/* Pagination Section */}
-                <div className="flex flex-col sm:flex-row justify-between items-center p-3 border-t gap-3">
-                    <p className="text-xs sm:text-sm text-gray-600">
-                        Showing {(currentPage - 1) * pageSize + 1}-
-                        {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                        {filteredData.length} rows
-                    </p>
-                    {filteredData.length > 0 && (
-                        <PaginationLayout
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={(page) => {
-                                setCurrentPage(page);
-                            }}
-                        />
-                    )}
-                </div>
-            </div>
+            )}
         </div>
     );
 }
