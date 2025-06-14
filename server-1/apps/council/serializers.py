@@ -93,3 +93,9 @@ class MOMFileSerialzer(serializers.ModelSerializer):
     class Meta: 
         model = MOMFile
         fields = '__all__'
+
+
+class MOMSuppDocSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = MOMSuppDoc
+        fields = '__all__'

@@ -161,13 +161,15 @@ class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
 
 class DeleteMOMAreaOfFocusView(APIView):
     def delete(self, request, mom_id):
-        # Correct the lookup field name here
         get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
-
-        # This assumes MOMAreaOfFocus has a ForeignKey to MinutesOfMeeting using `mom_id`
         deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
 
         return Response(
             {"detail": f"{deleted_count} area(s) of focus deleted."},
             status=status.HTTP_204_NO_CONTENT
         )
+    
+
+class MOMSuppDocView(generics.ListCreateAPIView):
+    serializer_class = MOMSuppDocSerializer
+    query_set = MOMSuppDoc.objects.all()

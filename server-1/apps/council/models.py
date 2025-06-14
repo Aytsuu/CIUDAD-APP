@@ -127,3 +127,17 @@ class MOMFile(models.Model):
     class Meta:
         db_table = 'mom_file'
 
+
+class MOMSuppDoc(models.Model):
+    momsp_id = models.BigAutoField(primary_key=True)
+    momsp_is_archive = models.BooleanField(default=False)
+    mom_id = models.ForeignKey(
+        'council.MinutesOfMeeting',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='mom_id'
+    )
+
+    class Meta: 
+        db_table = 'mom_supporting_document'
