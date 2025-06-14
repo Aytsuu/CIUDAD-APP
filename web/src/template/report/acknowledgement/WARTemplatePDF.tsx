@@ -19,16 +19,16 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto",
   },
   header: {
-    width: "53%",
+    width: "54%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignSelf: "center",
     marginBottom: 15,
   },
   logoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 48,
     overflow: "hidden",
   },
   logo: {
