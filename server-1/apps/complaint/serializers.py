@@ -1,33 +1,47 @@
+# serializers.py
 from rest_framework import serializers
-from .models import *
-
-class ComplainantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Complainant
-        fields = '__all__'
+from .models import Complaint, Complainant, Accused, ComplaintAccused, Complaint_File
+from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 
 class AccusedSerializer(serializers.ModelSerializer):
+    add = AddressBaseSerializer(read_only=True)
+    
     class Meta:
         model = Accused
-        fields = '__all__'
+        fields = ['acsd_id', 'acsd_name', 'add']
+
+class ComplainantSerializer(serializers.ModelSerializer):
+    add = AddressBaseSerializer(read_only=True)
+    
+    class Meta:
+        model = Complainant
+        fields = ['cpnt_id', 'cpnt_name', 'add']
+
+class ComplaintFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Complaint_File
+        fields = ['cf_id', 'file']
 
 class ComplaintSerializer(serializers.ModelSerializer):
-    complainant_detail = ComplainantSerializer(source='cpnt_id', read_only=True)
-    accused_detail = AccusedSerializer(source='acsd_id', read_only=True)
+    cpnt = ComplainantSerializer(read_only=True)
+    accused_persons = serializers.SerializerMethodField()
+    complaint_files = ComplaintFileSerializer(source='complaint_file', many=True, read_only=True)
     
-    cpnt_id = serializers.PrimaryKeyRelatedField(
-        queryset=Complainant.objects.all(),
-        write_only=True
-    )
-    acsd_id = serializers.PrimaryKeyRelatedField(
-        queryset=Accused.objects.all(),
-        write_only=True
-    )
-
     class Meta:
         model = Complaint
-        fields = '__all__'
-        read_only_fields = ['comp_created_at']
-
-    def create(self, validated_data):
-        return Complaint.objects.create(**validated_data)
+        fields = [
+            'comp_id', 
+            'comp_incident_type', 
+            'comp_datetime', 
+            'comp_allegation', 
+            'comp_created_at',
+            'comp_is_archive',
+            'cpnt', 
+            'accused_persons',
+            'complaint_files'
+        ]
+    
+    def get_accused_persons(self, obj):
+        """Get all accused persons for this complaint"""
+        complaint_accused = ComplaintAccused.objects.filter(comp=obj).select_related('acsd__add')
+        return AccusedSerializer([ca.acsd for ca in complaint_accused], many=True).data

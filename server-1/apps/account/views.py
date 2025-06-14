@@ -47,7 +47,7 @@ class LoginView(TokenObtainPairView):
         
         if not email_or_username or not password:
             return Response(
-                {"error": "Both email/username and password are required"},
+                {"error": "Both email/username and password are required"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -61,9 +61,8 @@ class LoginView(TokenObtainPairView):
             print(f"User found: {user.username}")
             
             if not user.check_password(password):
-                print("Invalid password")
                 return Response(
-                    {"error": "Invalid credentials"},
+                    {"error": "Invalid password"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
                 
@@ -84,14 +83,13 @@ class LoginView(TokenObtainPairView):
                 if staff:
                     staff_data = StaffFullSerializer(staff).data
             
-            print("Returning successful response")
             return Response({
                 "id": user.id,
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
                 "username": user.username,
                 "email": user.email,
-                "profile_image": user.profile_image.url if user.profile_image else None,
+                "profile_image": user.profile_image if user.profile_image else None,
                 "rp": rp_data,
                 "staff": staff_data,
             })
@@ -99,7 +97,7 @@ class LoginView(TokenObtainPairView):
         except Account.DoesNotExist:
             print("User not found")
             return Response(
-                {"error": "Invalid credentials"},
+                {"error": "User not found"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
         except Exception as e:
@@ -118,81 +116,115 @@ class UserAccountView(generics.RetrieveUpdateDestroyAPIView):
         return [permissions.AllowAny()]
     
 class UploadImage(APIView):
-    parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication] 
     
     def post(self, request, *args, **kwargs):
-        if 'profile_image' not in request.FILES:
-            return Response({"error": "No file provided"}, status=400)
-
-        file = request.FILES['profile_image']
-        user = request.user
+        print(f"Upload image request from user: {request.user}")
+        print(f"Request data: {request.data}")
         
+        user = request.user
+        image_url = request.data.get('image_url')
+        
+        if not image_url:
+            return Response({
+                "error": "No image URL provided"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            # Delete previous image if exists
-            if user.profile_image:
-                try:
-                    # Extract the filename from the URL
-                    old_url = user.profile_image
-                    old_filename = old_url.split('userimage/')[1].split('?')[0]
-                    
-                    delete_result = supabase.storage.from_("userimage").remove([old_filename])
-                except Exception as delete_error:
-                    print(f"WARNING: Failed to delete old image - {str(delete_error)}")
-
-            # Generate new filename and upload
-            file_ext = os.path.splitext(file.name)[1]
-            filename = f"user_{user.id}/{uuid.uuid4()}{file_ext}"
-            file_content = file.read()
-            
-            upload_result = supabase.storage.from_("userimage").upload(
-                path=filename,
-                file=file_content,
-                file_options={"content-type": file.content_type},
-            )
-            # Get public URL and update user
-            url = supabase.storage.from_("userimage").get_public_url(filename)
-
-            user.profile_image = url
+            # Update user with new URL
+            user.profile_image = image_url
             user.save()
+            
+            print(f"Profile image updated successfully for user {user.username}: {image_url}")
 
             return Response({
-                "message": "Image uploaded successfully", 
-                "url": url,
-                "old_image_deleted": bool(user.profile_image) 
-            }, status=200)
+                "message": "Profile image updated successfully", 
+                "url": image_url
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            print(f"ERROR: {str(e)}")
+            print(f"ERROR in UploadImage: {str(e)}")
             return Response({
-                "error": "Upload failed",
+                "error": "Failed to update profile image",
                 "details": str(e)
-            }, status=500)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class ChangePassword(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
     
     def post(self, request):
-        print("Raw Request Data:", json.dumps(request.data, indent=2))  
-        serializer = ChangePasswordSerializer(data=request.data)
+        print(f"Change Password Request from user: {request.user}")
+        print(f"Request Data: {json.dumps(request.data, indent=2)}")
         
-        if serializer.is_valid():
-            # Check if old password is correct
-            user = request.user
-            if not user.check_password(serializer.data.get('old_password')):
-                return Response({'old_password': ['Wrong password.']}, 
-                                status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = ChangePasswordSerializer(data=request.data)
             
-            # Set the new password
-            user.set_password(serializer.data.get('new_password'))
-            user.save()
+            if serializer.is_valid():
+                user = request.user
+                old_password = serializer.validated_data.get('old_password')
+                new_password = serializer.validated_data.get('new_password')
+                
+                print(f"Validating password for user: {user.username}")
+                
+                # Check if old password is correct
+                if not user.check_password(old_password):
+                    print("Old password validation failed")
+                    return Response({
+                        'old_password': ['Current password is incorrect.']
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check if new password is different from old password
+                if old_password == new_password:
+                    print("New password same as old password")
+                    return Response({
+                        'new_password': ['New password must be different from current password.']
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Set the new password
+                user.set_password(new_password)
+                user.save()
+                
+                print(f"Password updated successfully for user: {user.username}")
+                
+                return Response({
+                    'message': 'Password updated successfully'
+                }, status=status.HTTP_200_OK)
+            else:
+                print(f"Serializer validation errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"Change password error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'error': 'An error occurred while updating password',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class LogOutView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response({
+                    "error": "Refresh token is required"
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            token = RefreshToken(refresh_token)
+            token.blacklist()
             
-            # Update session after password change to prevent logout
-            update_session_auth_hash(request, user)
+            return Response({
+                "message": "Successfully logged out!"
+            }, status=status.HTTP_205_RESET_CONTENT)
             
-            return Response({'message': 'Password updated successfully'}, 
-                            status=status.HTTP_200_OK)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Logout error: {str(e)}")
+            return Response({
+                "error": "Failed to logout",
+                "details": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)

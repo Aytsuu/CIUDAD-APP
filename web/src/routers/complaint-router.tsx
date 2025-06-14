@@ -1,6 +1,7 @@
 import ComplaintRecord from "@/pages/record/complaint/ComplaintRecord";
 import { ComplaintReport } from "@/pages/record/complaint/ComplaintReport";
 import { ComplaintViewRecord } from "@/pages/record/complaint/ComplaintViewRecord";
+import ArchiveComplaints from "@/pages/record/complaint/ComplaintArchive";
 
 export const complaint_router = [
   {
@@ -8,11 +9,15 @@ export const complaint_router = [
     element: <ComplaintRecord />,
   },
   {
-    path: "/blotter-record/:id",
+    path: "/complaint-record/:id",
     element: <ComplaintViewRecord />,
   },
   {
-    path: "/blotter-report",
+    path: "/complaint-report",
     element: <ComplaintReport />,
+  },
+  {
+    path: "/complaint-archive",
+    element: <ArchiveComplaints />,
   },
 ];

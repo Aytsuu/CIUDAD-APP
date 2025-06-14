@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Account
 
 class UserAccountSerializer(serializers.ModelSerializer):
+    # password = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -20,7 +21,8 @@ class UserAccountSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         user = Account(**validated_data)
         if password:
-            user.set_password(password)
+            # user.set_password(password) //encrypts the password
+            user.password = password
         user.save()
 
         # Step 3: Assign M2M relationships using .set()

@@ -6,7 +6,6 @@ import {
   Menu,
   X,
   Settings,
-  LogOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button/button";
@@ -74,15 +73,6 @@ const AccountSettings = () => {
                 <Settings size={18} className="mr-2" /> Preferences
               </Button>
             </nav>
-
-            {/* <div className="p-4 border-t mt-auto">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-              >
-                <LogOut size={18} className="mr-2" /> Log out
-              </Button>
-            </div> */}
           </div>
         </aside>
 
