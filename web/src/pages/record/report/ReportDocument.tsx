@@ -1,11 +1,46 @@
-import { Button } from "@/components/ui/button/button"
+import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { ARTemplatePage } from "@/template/report/acknowledgement/ARTemplatePage"
+import { ARDocTemplate } from "@/template/report/acknowledgement/ARDocTemplate"
 import { CircleAlert, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
+import { Input } from "@/components/ui/input"
+import { useInstantFileUpload } from "@/hooks/use-file-upload"
+import { WARDocTemplate } from "@/template/report/acknowledgement/WARDocTemplate"
 
 export default function ReportDocument() {
+  const { uploadFile } = useInstantFileUpload({});
+  const [file, setFile] = React.useState<any>();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if(files.length === 0) return;
+    const newFile = {
+      type: files[0].type.startsWith("image/")
+        ? "image"
+        : files[0].type.startsWith("video/")
+        ? "video"
+        : ("document" as "image" | "video" | "document"),
+      file: files[0],
+      status: "uploading" as const,
+      previewUrl: URL.createObjectURL(files[0]),
+    };
+
+    setFile(newFile);
+
+    const { publicUrl, storagePath } = await uploadFile(newFile.file);
+    if (publicUrl) {
+      setFile((prev: any) => ({
+        ...prev,
+        storagePath,
+        status: "uploaded",
+      }));
+    }
+  }
+
+  console.log(file)
+
   return (
     <LayoutWithBack title="AR Document" description="Review and manage your AR document">
       <div className="w-full h-full flex">
@@ -31,10 +66,21 @@ export default function ReportDocument() {
 
               <div className="space-y-3 pt-2">
                 <h3 className="text-sm font-medium">Actions</h3>
-                <Button className="w-full gap-2" size="sm">
-                  <Upload className="h-4 w-4" />
-                  Upload signed document
-                </Button>
+                <Input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label htmlFor="file-upload" 
+                  className="flex justify-center items-center cursor-pointer bg-buttonBlue 
+                          text-white px-3 py-2 gap-2 rounded-lg"
+                >
+                    <Upload className="h-4 w-4" />
+                    <span className="text-[13px] font-medium">Upload signed document</span>
+                </label>
               </div>
 
               <div className="space-y-2 pt-2">
@@ -54,7 +100,7 @@ export default function ReportDocument() {
 
         {/* Document - Scrollable content */}
         <div className="w-full flex flex-col gap-4">
-          <ARTemplatePage />
+          <WARDocTemplate />
         </div>
       </div>
     </LayoutWithBack>

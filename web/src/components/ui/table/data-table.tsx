@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
   interface DataTableProps<TData, TValue> {
     header?: boolean;
     headerClassName?: string;
+    cellClassName?: string;
     isLoading?: boolean;
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils"
   export function DataTable<TData, TValue>({
     isLoading=false, 
     headerClassName, 
+    cellClassName,
     header=true, 
     columns, 
     data,
@@ -85,10 +87,10 @@ import { cn } from "@/lib/utils"
         <Table>
           {header && (<TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className={cn("bg-lightBlue hover:bg-lightBlue h-12", headerClassName)}>
+              <TableRow key={headerGroup.id} className="bg-lightBlue hover:bg-lightBlue h-10">
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="text-center">
+                    <TableHead key={header.id} className={cn("text-center", headerClassName)}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -111,7 +113,7 @@ import { cn } from "@/lib/utils"
                   className={!header ? "border-none hover:bg-white" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="text-center">
+                    <TableCell key={cell.id} className={cn("text-center", cellClassName)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

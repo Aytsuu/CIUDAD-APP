@@ -5,8 +5,9 @@ import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import { Upload } from "lucide-react";
 import React from "react";
 import { ARTemplatePDF } from "./ARTemplatePDF";
+import { Label } from "@/components/ui/label";
 
-export const ARTemplatePage = () => {
+export const ARDocTemplate = () => {
   const [logo1, setLogo1] = React.useState<string>();
   const [file1, setFile1] = React.useState<any>();
   const { uploadFile } = useInstantFileUpload({});
@@ -58,10 +59,10 @@ export const ARTemplatePage = () => {
             />
         </PDFViewer>
       </div>
-      <section className="w-full h-full bg-white mb-5 shadow-sm border flex flex-col items-center">
-        <div className="w-[90%] h-full flex flex-col items-center gap-1">
-          <div className="w-[60%] flex justify-between">
-            <div className="flex flex-col items-center my-4 relative">
+      <section className="w-full h-full bg-white mb-5 shadow-sm border flex flex-col items-center p-[30px]">
+        <div className="w-full h-full flex flex-col items-center gap-1">
+          <div className="w-[53%] flex justify-between ">
+            <div className="flex flex-col items-center relative">
               <Input
                 type="file"
                 ref={fileInputRef}
@@ -75,21 +76,21 @@ export const ARTemplatePage = () => {
                 <img
                   src={file1?.previewUrl}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover bg-gray"
+                  className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <Upload size={24} className="text-white" />
                 </div>
               </label>
             </div>
-            <div className="text-center">
-              <h1>REPUBLIC OF THE PHILIPPINES</h1>
-              <h1>CITY OF CEBU</h1>
-              <h1>CEBU CITY DISASTER RISK REDUCTION MANAGEMENT OFFICE</h1>
-              <h1>BARANGAY BASE RESPONDERS</h1>
-              <h1>BARANGAY SAN ROQUE (CIUDAD) </h1>
+            <div className="flex flex-col gap-2 text-center">
+              <Label>REPUBLIC OF THE PHILIPPINES</Label>
+              <Label>CITY OF CEBU</Label>
+              <Label>CEBU CITY DISASTER RISK REDUCTION MANAGEMENT OFFICE</Label>
+              <Label>BARANGAY BASE RESPONDERS</Label>
+              <Label>BARANGAY SAN ROQUE (CIUDAD) </Label>
             </div>
-            <div className="flex flex-col items-center my-4 relative">
+            <div className="flex flex-col items-center relative">
               <Input
                 type="file"
                 ref={fileInputRef}
@@ -103,7 +104,7 @@ export const ARTemplatePage = () => {
                 <img
                   src={file1?.previewUrl}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover bg-gray"
+                  className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <Upload size={24} className="text-white" />
@@ -111,35 +112,35 @@ export const ARTemplatePage = () => {
               </label>
             </div>
           </div>
-          <Separator />
+          <Separator className="bg-black mt-4"/>
           <div className="w-full flex flex-col items-center">
-            <h1>ACTION PHOTO REPORTS</h1>
-            <div className="w-full">
-              <h1>NAME OF INCIDENT OR ACTIVITY: </h1>
-              <h1>DATE & TIME:</h1>
-              <h1>LOCATION:</h1>
-              <h1>ACTIONS TAKEN:</h1>
+            <Label className="my-2">ACTION PHOTO REPORTS</Label>
+            <div className="w-full flex flex-col space-y-2">
+              <Label>NAME OF INCIDENT OR ACTIVITY: </Label>
+              <Label>DATE & TIME:</Label>
+              <Label>LOCATION:</Label>
+              <Label>ACTIONS TAKEN:</Label>
             </div>
-            <div className="flex gap-10">
-              <img className="w-[230px] h-[200px] bg-gray" />
-              <img className="w-[230px] h-[200px] bg-gray" />
-              <img className="w-[230px] h-[200px] bg-gray" />
+            <div className="flex gap-8 mt-6">
+              <img className="w-[250px] h-[220px] bg-gray" />
+              <img className="w-[250px] h-[220px] bg-gray" />
+              <img className="w-[250px] h-[220px] bg-gray" />
             </div>
-            <div className="w-[85%] flex justify-between">
-              <div>
-                <h1>PREPARED BY:</h1>
-                <h1>Juno</h1>
-                <h1>TEAM LEADER</h1>
+            <div className="w-[85%] flex justify-between mt-12">
+              <div className="flex flex-col gap-2">
+                <Label className="mb-5">PREPARED BY:</Label>
+                <Label>Juno</Label>
+                <Label>TEAM LEADER</Label>
               </div>
-              <div>
-                <h1>RECOMMENDED BY:</h1>
-                <h1>Juno</h1>
-                <h1>BARANGAY CAPTAIN</h1>
+              <div className="flex flex-col gap-2">
+                <Label className="mb-5">RECOMMENDED BY:</Label>
+                <Label>Juno</Label>
+                <Label>BARANGAY CAPTAIN</Label>
               </div>
-              <div>
-                <h1>APPROVED BY:</h1>
-                <h1>Juno</h1>
-                <h1>ASST. DEPARTMENT HEAD</h1>
+              <div className="flex flex-col gap-2">
+                <Label className="mb-5">APPROVED BY:</Label>
+                <Label>Juno</Label>
+                <Label>ASST. DEPARTMENT HEAD</Label>
               </div>
             </div>
           </div>

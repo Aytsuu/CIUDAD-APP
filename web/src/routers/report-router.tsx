@@ -1,4 +1,4 @@
-import WeeklyARReport from '@/pages/record/report/acknowledgement/WeeklyARReport';
+import WeeklyAR from '@/pages/record/report/acknowledgement/WeeklyAR';
 import IRRecords from '@/pages/record/report/incident/IRRecords';
 import IRFormLayout from '@/pages/record/report/incident/IRFormLayout';
 import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
@@ -32,7 +32,7 @@ export const report_router = [
       },
       {
         path: '/report/weekly',
-        element: <WeeklyARReport/>
+        element: <WeeklyAR/>
       }
     ]
   },

@@ -1,11 +1,13 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, FileText, AlertCircle, Clock, TrendingUp } from "lucide-react"
+import { Calendar, FileText, AlertCircle, Clock, TrendingUp, MoveRight } from "lucide-react"
 import { useGetWeeklyAR } from "../queries/reportFetch"
 import { getMonthName, getMonths, getWeekNumber } from "@/helpers/dateFormatter"
+import { useNavigate } from "react-router"
 
-export default function WeeklyARReport() {
+export default function WeeklyAR() {
+  const navigate = useNavigate();
   const { data: weeklyAR, isLoading, error } = useGetWeeklyAR();
   const months = getMonths;
 
@@ -176,6 +178,16 @@ export default function WeeklyARReport() {
                                           </div>
                                         )
                                       )}
+                                      <div className="w-full flex justify-end">
+                                        <label className="flex gap-2 cursor-pointer"
+                                          onClick={() => {
+                                            navigate('/report/acknowledgement/document');
+                                          }}
+                                        >
+                                          <span>View</span>
+                                          <MoveRight />
+                                        </label>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
