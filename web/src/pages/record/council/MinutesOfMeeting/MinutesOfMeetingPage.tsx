@@ -77,12 +77,15 @@ function MinutesOfMeetingPage() {
             accessorKey: "mom_date",
             header: "Date",
             cell: ({ row }) => (
-                <div className="w-[110px]">{row.getValue("mom_date")}</div>
+                <div className="w-[110px] flex justify-center">{row.getValue("mom_date")}</div>
             ),
         },
         {
             accessorKey: "mom_agenda",
             header: "Meeting Agenda",
+             cell: ({ row }) => (
+                <div className="flex justify-center">{row.getValue("mom_agenda")}</div>
+            ),
         },
         {
             accessorKey: "mom_title",
