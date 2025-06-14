@@ -20,4 +20,6 @@ urlpatterns=[
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
+    path('update-mom-file/<int:momf_id>/', UpdateMOMFileView.as_view(), name="update-mom-file"),
+    path('delete-mom-area-of-focus/<int:mom_id>/', DeleteMOMAreaOfFocusView.as_view(), name='delete-mom-area-of-focus'),
 ]

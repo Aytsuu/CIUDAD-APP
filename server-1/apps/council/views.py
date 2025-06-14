@@ -9,6 +9,7 @@ from django.db.models import Q
 from datetime import datetime
 from rest_framework.permissions import AllowAny
 import logging
+from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
@@ -142,3 +143,31 @@ class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
     def get_object(self):
         mom_id = self.kwargs.get('mom_id')
         return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
+    
+
+class UpdateMOMFileView(generics.RetrieveUpdateAPIView):
+    serializer_class = MOMFileSerialzer
+    queryset = MOMFile.objects.all()
+    lookup_field = 'momf_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteMOMAreaOfFocusView(APIView):
+    def delete(self, request, mom_id):
+        # Correct the lookup field name here
+        get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
+
+        # This assumes MOMAreaOfFocus has a ForeignKey to MinutesOfMeeting using `mom_id`
+        deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
+
+        return Response(
+            {"detail": f"{deleted_count} area(s) of focus deleted."},
+            status=status.HTTP_204_NO_CONTENT
+        )

@@ -17,11 +17,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuIte
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useRestoreMinutesOfMeeting, useArchiveMinutesOfMeeting } from "./queries/MOMUpdateQueries";
 import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries";
+import EditMinutesOfMeeting from "./editMinutesOfMeeting";
 
 
 function MinutesOfMeetingPage() {
     const [filter, setFilter] = useState<string>("all");
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [isEditDialogOpen, setIsEditDilaogOpen] = useState(false);
     const [editingRowId, setEditingRowId] = useState<number | null> (null)
     const {data: momRecords = [], isLoading} = useGetMinutesOfMeetingRecords();
     const {mutate: restoreMOM} = useRestoreMinutesOfMeeting();
@@ -106,11 +108,27 @@ function MinutesOfMeetingPage() {
                     />
                     <TooltipLayout
                         trigger={
-                            <Link to="/update-mom">
-                                <div className="bg-white hover:bg-gray-200 border text-black h-[32px] px-4 py-2 rounded cursor-pointer shadow-none flex items-center">
-                                    <Pencil size={16} />
-                                </div>
-                            </Link>
+                            <div>
+                                <DialogLayout
+                                    trigger={<div className="bg-white hover:bg-gray-200 border text-black h-[32px] px-4 py-2 rounded cursor-pointer shadow-none flex items-center"><Pencil size={16} /></div>}
+                                    title="Edit Minutes of Meeting"
+                                    description="Update meeting details, agenda, or attached documents"
+                                    mainContent={
+                                        <EditMinutesOfMeeting
+                                            mom_title={row.original.mom_title}
+                                            mom_agenda={row.original.mom_agenda}
+                                            mom_date={row.original.mom_date}
+                                            mom_id={row.original.mom_id}
+                                            file_id={row.original.file_id}
+                                            file_url={row.original.file_url}
+                                            areas_of_focus = {row.original.areas_of_focus}
+                                            onSuccess={() => setEditingRowId(null)}
+                                        />
+                                    }
+                                    isOpen={editingRowId === Number(row.original.mom_id)}
+                                    onOpenChange={(open) => setEditingRowId(open ? Number(row.original.mom_id) : null)}
+                                />
+                            </div>
                         }
                         content="Update"
                     />
@@ -234,16 +252,16 @@ function MinutesOfMeetingPage() {
                     
                     <div className="w-full md:w-auto">
                         <DialogLayout
-                        trigger={<Button className="w-full md:w-auto">Create <Plus className="ml-2" /></Button>}
-                        title="Create New Minutes of the Meeting"
-                        description=""
-                        mainContent={
-                            <AddMinutesOfMeeting
-                            onSuccess={() => setIsDialogOpen(false)}
-                            />
-                        }
-                        isOpen={isDialogOpen}
-                        onOpenChange={setIsDialogOpen}
+                            trigger={<Button className="w-full md:w-auto">Create <Plus className="ml-2" /></Button>}
+                            title="Create New Minutes of the Meeting"
+                            description="Fill out the form to document meeting details and upload supporting files"
+                            mainContent={
+                                <AddMinutesOfMeeting
+                                onSuccess={() => setIsDialogOpen(false)}
+                                />
+                            }
+                            isOpen={isDialogOpen}
+                            onOpenChange={setIsDialogOpen}
                         />
                     </div>
                 </div>
@@ -325,5 +343,14 @@ export default MinutesOfMeetingPage;
                             Create <Plus className="ml-2" />
                         </Button>
                     </Link> */}
-
+//    <TooltipLayout
+//                         trigger={
+//                             <Link to="/update-mom">
+//                                 <div className="bg-white hover:bg-gray-200 border text-black h-[32px] px-4 py-2 rounded cursor-pointer shadow-none flex items-center">
+//                                     <Pencil size={16} />
+//                                 </div>
+//                             </Link>
+//                         }
+//                         content="Update"
+//                     />
 

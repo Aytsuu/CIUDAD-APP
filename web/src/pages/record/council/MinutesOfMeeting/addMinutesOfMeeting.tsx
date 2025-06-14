@@ -229,7 +229,7 @@ import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input.tsx
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import minutesOfMeetingFormSchema from '@/form-schema/council/minutesOfMeetingSchema.ts';
+import { minutesOfMeetingFormSchema } from '@/form-schema/council/minutesOfMeetingSchema';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { MediaUpload, MediaUploadType } from '@/components/ui/media-upload';
 import { useState } from 'react';
@@ -282,14 +282,14 @@ export default function AddMinutesOfMeeting({onSuccess}: {
             {/* Form Inside Dialog */}
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    {/* Ordinance Title Field */}
+                    {/* Title Field */}
                     <FormTextArea
                         control={form.control}
                         name="meetingTitle"
                         label="Meeting Tile"    
                     />
 
-                    {/* Ordinance Meeting Agenda */}
+                    {/*Meeting Agenda */}
                      <FormTextArea
                         control={form.control}
                         name="meetingAgenda"
@@ -309,7 +309,6 @@ export default function AddMinutesOfMeeting({onSuccess}: {
                         name="meetingFile"
                         render={({ field }) => (
                             <FormItem>
-                                {/* <FormLabel>Meeting File</FormLabel> */}
                                 <FormControl>
                                     <MediaUpload
                                         title="Meeting File"

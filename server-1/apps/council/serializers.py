@@ -53,21 +53,28 @@ class StaffSerializer(serializers.ModelSerializer):
         except AttributeError:
             return "Unknown"
 
+
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
+    file_id = serializers.SerializerMethodField()
     areas_of_focus = serializers.SerializerMethodField()
 
     class Meta:
         model = MinutesOfMeeting
-        fields = '__all__'  
+        fields = '__all__'
         extra_fields = [
             'file_url',
+            'file_id',
             'areas_of_focus'
         ]
 
     def get_file_url(self, obj):
         file = obj.momfile_set.first()
         return file.momf_url if file else None
+
+    def get_file_id(self, obj):
+        file = obj.momfile_set.first()
+        return file.momf_id if file else None
 
     def get_areas_of_focus(self, obj):
         return [
