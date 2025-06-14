@@ -1,12 +1,18 @@
 from rest_framework import serializers
-from ..models import AcknowledgementReport, ReportType
+from ..models import *
 from apps.profiling.models import Address
+from apps.profiling.serializers.address_serializers import AddressBaseSerializer
 from ..serializers.incident_report_serializers import IRBaseSerializer
 import datetime
 
 class ARBaseSerializer(serializers.ModelSerializer):
   class Meta:
     model = AcknowledgementReport
+    fields = '__all__'
+
+class ARFileBaseSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = ARFile
     fields = '__all__'
 
 class ARTableSerializer(serializers.ModelSerializer):
@@ -16,7 +22,7 @@ class ARTableSerializer(serializers.ModelSerializer):
 
   class Meta:
     model = AcknowledgementReport
-    fields = ['ar_id', 'ar_title', 'ar_sitio', 'ar_street', 'ar_date', 'ar_status']
+    fields = ['ar_id', 'ar_title', 'ar_action_taken','ar_date_completed', 'ar_time_completed', 'ar_sitio', 'ar_street', 'ar_date', 'ar_status']
 
   def get_ar_sitio(self, obj):
     return obj.add.sitio.sitio_name
@@ -28,11 +34,16 @@ class ARCreateSerializer(serializers.ModelSerializer):
   rt = serializers.CharField()
   ir_sitio = serializers.CharField(write_only=True, required=False)
   ir_street = serializers.CharField(write_only=True, required=False)
+  ir = serializers.PrimaryKeyRelatedField(queryset=IncidentReport.objects.all(), write_only=True, required=False)
+  rt = serializers.PrimaryKeyRelatedField(queryset=ReportType.objects.all(), write_only=True, required=False)
 
   class Meta:
     model = AcknowledgementReport
-    fields = ['ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 
+    fields = ['ar_id', 'ar_title', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 
               'ar_time_completed', 'ar_action_taken', 'ir_sitio', 'ir_street', 'ir', 'rt', 'staff'] 
+    extra_kwargs = {
+      'ar_id' : {'read_only': True}
+    }
     
   def create(self, validated_data):
     report_type = validated_data.pop('rt', None)
@@ -44,8 +55,23 @@ class ARCreateSerializer(serializers.ModelSerializer):
       validated_data['rt'] = ReportType.objects.filter(rt_label=report_type).first()
     
     if sitio and street:
-      print(validated_data)
-      validated_data['add'] = Address.objects.filter(add_street=street, sitio=sitio.lower()).first()
+      existing_add = Address.objects.filter(add_street=street, sitio=sitio.lower()).first()
+
+      if existing_add:
+        validated_data['add'] = existing_add
+      else:
+        data = {
+          'add_province': 'Cebu',
+          'add_city': 'Cebu City',
+          'add_barangay': 'San Roque',
+          'sitio': sitio,
+          'add_street': street
+        }
+
+        new_add = AddressBaseSerializer(data=data)
+        if new_add.is_valid():
+          new_add.save()
+          validated_data['add'] = new_add
 
     if incident_report:
       is_archive = {

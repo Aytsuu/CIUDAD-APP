@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto",
   },
   header: {
-    width: "54%",
+    width: "45  %",
     flexDirection: "row",
     justifyContent: "space-between",
     alignSelf: "center",
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     width: "15%",
   },
   resultCol: {
-    width: "240px",
+    width: "292px",
   },
   bottomSection: {
     flexDirection: "row",
@@ -167,7 +167,7 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
   approvedBy = "JUNO",
 }) => (
   <Document>
-    <Page size="A4" style={styles.page} orientation="landscape">
+    <Page size="LEGAL" style={styles.page} orientation="landscape">
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           {logo1 ? (

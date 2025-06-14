@@ -173,6 +173,7 @@ export const ARColumns = (
         navigate("/report/acknowledgement/document", {
           state: {
             params: {
+              type: "AR",
               data: row.original,
             },
           },

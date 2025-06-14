@@ -7,7 +7,19 @@ import React from "react";
 import { ARTemplatePDF } from "./ARTemplatePDF";
 import { Label } from "@/components/ui/label";
 
-export const ARDocTemplate = () => {
+export const ARDocTemplate = ({
+  incident,
+  dateTime,
+  location,
+  act_taken,
+  images,
+} : {
+  incident: string;
+  dateTime: string;
+  location: string;
+  act_taken: string;
+  images: any[]
+}) => {
   const [logo1, setLogo1] = React.useState<string>();
   const [file1, setFile1] = React.useState<any>();
   const { uploadFile } = useInstantFileUpload({});
@@ -116,10 +128,10 @@ export const ARDocTemplate = () => {
           <div className="w-full flex flex-col items-center">
             <Label className="my-2">ACTION PHOTO REPORTS</Label>
             <div className="w-full flex flex-col space-y-2">
-              <Label>NAME OF INCIDENT OR ACTIVITY: </Label>
-              <Label>DATE & TIME:</Label>
-              <Label>LOCATION:</Label>
-              <Label>ACTIONS TAKEN:</Label>
+              <Label>NAME OF INCIDENT OR ACTIVITY: <span>{incident}</span></Label>
+              <Label>DATE & TIME: <span>{dateTime}</span></Label>
+              <Label>LOCATION: <span>{location}</span></Label>
+              <Label>ACTIONS TAKEN: <span>{act_taken}</span></Label>
             </div>
             <div className="flex gap-8 mt-6">
               <img className="w-[250px] h-[220px] bg-gray" />

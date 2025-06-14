@@ -5,7 +5,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { useInstantFileUpload } from "@/hooks/use-file-upload";
 import { Upload } from "lucide-react";
 import React from "react";
-import { WARDummy, WARTemplateColumns } from "./ARTemplateColumns";
+import { WARDummy } from "@/template/report/acknowledgement/ARTemplateColumns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@react-pdf/renderer";
@@ -86,7 +86,7 @@ export const WARDocTemplate = () => {
       </div>
       <section className="w-full h-full bg-white mb-5 shadow-sm border flex flex-col items-center p-[30px]">
         <div className="w-full h-full flex flex-col items-center gap-2">
-          <div className="w-[53%] flex justify-between ">
+          <div className="w-[50%] flex justify-between ">
             <div className="flex flex-col items-center relative">
               <Input
                 type="file"

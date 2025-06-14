@@ -32,8 +32,8 @@ class AcknowledgementReport(models.Model):
   ar_created_at = models.DateField(auto_now_add=True)
   ar_status = models.CharField(max_length=20, default='Unsigned')
   ar_is_archive = models.BooleanField(default=False)
-  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE)
-  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
+  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
+  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
   add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
@@ -48,7 +48,7 @@ class ARFile(models.Model):
   arf_url = models.URLField()
   ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
 
-class WeeklyAcknowledgementReport(models.Model):
+class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(auto_now_add=True)
   war_status = models.CharField(max_length=50, default='Unsigned')
@@ -61,7 +61,7 @@ class WeeklyAcknowledgementReport(models.Model):
 class WeeklyARComposition(models.Model):
   warc_id = models.BigAutoField(primary_key=True)
   ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
-  war = models.ForeignKey(WeeklyAcknowledgementReport, on_delete=models.CASCADE)
+  war = models.ForeignKey(WeeklyAccomplishmentReport, on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'weekly_ar_composition'
@@ -76,3 +76,6 @@ class IncidentReportFile(models.Model):
 
   class Meta:
     db_table = 'incident_report_file'
+
+class ReportTemplate(models.Model):
+  rt_id = models.BigAutoField(primary_key=True)

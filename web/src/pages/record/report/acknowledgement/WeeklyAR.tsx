@@ -131,8 +131,8 @@ export default function WeeklyAR() {
                                   </div>
                                   <Badge variant="secondary">
                                     {data.reduce(
-                                      (total, ar) =>
-                                        total + ar.war_composition.length,
+                                      (total, war) =>
+                                        total + war.war_composition.length,
                                       0
                                     )}{" "}
                                     Reports
@@ -141,12 +141,12 @@ export default function WeeklyAR() {
                               </AccordionTrigger>
                               <AccordionContent className="pt-2 pb-3">
                                 <div className="space-y-2">
-                                  {data.map((ar, arIndex) => (
+                                  {data.map((war, arIndex) => (
                                     <div
                                       key={`${month}-week-${weekNo}-ar-${arIndex}`}
                                       className="space-y-1"
                                     >
-                                      {ar.war_composition.map(
+                                      {war.war_composition.map(
                                         (comp: any, compIndex: number) => (
                                           <div
                                             key={`${month}-week-${weekNo}-ar-${arIndex}-comp-${compIndex}`}
@@ -181,7 +181,14 @@ export default function WeeklyAR() {
                                       <div className="w-full flex justify-end">
                                         <label className="flex gap-2 cursor-pointer"
                                           onClick={() => {
-                                            navigate('/report/acknowledgement/document');
+                                            navigate('/report/acknowledgement/document', {
+                                              state: {
+                                                params: {
+                                                  type: "WAR",
+                                                  data: war
+                                                }
+                                              }
+                                            });
                                           }}
                                         >
                                           <span>View</span>

@@ -1,17 +1,24 @@
 import React from "react"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { ARDocTemplate } from "@/template/report/acknowledgement/ARDocTemplate"
+import { ARDocTemplate } from "./template/ARDocTemplate"
+import { WARDocTemplate } from "./template/WARDocTemplate"
 import { CircleAlert, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Input } from "@/components/ui/input"
 import { useInstantFileUpload } from "@/hooks/use-file-upload"
-import { WARDocTemplate } from "@/template/report/acknowledgement/WARDocTemplate"
+import { useLocation } from "react-router"
+import { ar } from "date-fns/locale"
+import { getDateTimeFormat } from "@/helpers/dateFormatter"
 
 export default function ReportDocument() {
+  const location = useLocation();
+  const params = React.useMemo(() => location.state?.params, [location.state]);
   const { uploadFile } = useInstantFileUpload({});
   const [file, setFile] = React.useState<any>();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const data = React.useMemo(() => params?.data, [params]);
+  const type = React.useMemo(() => params?.type, [params]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -39,10 +46,16 @@ export default function ReportDocument() {
     }
   }
 
-  console.log(file)
+  console.log("data", data)
 
   return (
-    <LayoutWithBack title="AR Document" description="Review and manage your AR document">
+    <LayoutWithBack 
+      title={type === "AR" ? "Acknowledgement Report Document" : "Weekly AR Document"} 
+      description={type === "AR" ? 
+        "Review and manage your AR document" : 
+        "Review and manage your Weekly AR document"
+      }
+    >
       <div className="w-full h-full flex">
         <div className="w-80 pr-6">
           <Card className="rounded-none">
@@ -100,7 +113,16 @@ export default function ReportDocument() {
 
         {/* Document - Scrollable content */}
         <div className="w-full flex flex-col gap-4">
-          <WARDocTemplate />
+          {type === "AR" ? 
+            <ARDocTemplate
+              incident={data.ar_title}
+              dateTime={getDateTimeFormat(`${data.ar_date_completed} ${data.ar_time_completed}`)}
+              location={`Sitio ${data.ar_sitio}, ${data.ar_street}`}
+              act_taken={data.ar_action_taken}
+              images={[]}
+            /> : 
+            <WARDocTemplate />
+            }
         </div>
       </div>
     </LayoutWithBack>

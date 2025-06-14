@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from ..models import WeeklyAcknowledgementReport, WeeklyARComposition, AcknowledgementReport
+from ..models import WeeklyAccomplishmentReport, WeeklyARComposition, AcknowledgementReport
 from ..serializers.ar_serializers import ARBaseSerializer
 
 class WARBaseSerializer(serializers.ModelSerializer):
   class Meta: 
-    model = WeeklyAcknowledgementReport
+    model = WeeklyAccomplishmentReport
     fields = '__all__'
 
 class WARCompBaseSerializer(serializers.ModelSerializer):
@@ -25,7 +25,7 @@ class WARListSerializer(serializers.ModelSerializer):
   war_composition = serializers.SerializerMethodField()
 
   class Meta:
-    model = WeeklyAcknowledgementReport
+    model = WeeklyAccomplishmentReport
     fields = ['war_id', 'war_created_at', 'war_status', 'war_composition']
 
   def get_war_composition(self, obj):

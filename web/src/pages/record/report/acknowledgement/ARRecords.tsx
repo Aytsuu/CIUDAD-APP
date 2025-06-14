@@ -15,9 +15,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { formatDate, getWeekNumber } from "@/helpers/dateFormatter"
+import { useNavigate } from "react-router"
+import { getSitioList } from "../../profiling/restful-api/profilingGetAPI"
+import { useLoading } from "@/context/LoadingContext"
 
 export default function ARRecords() {
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -120,6 +125,25 @@ export default function ARRecords() {
     }
   }
 
+  const handleCreateAR = async () => {
+    showLoading();
+    const sitio = await getSitioList();
+
+    if(sitio) {
+      hideLoading();
+      navigate('form', {
+      state: {
+        params: {
+          selected: false,
+          data: {
+            sitio
+          }
+        }
+      }
+    })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -165,6 +189,9 @@ export default function ARRecords() {
                 Weekly AR Created
               </Badge>
             ))}
+            <Button onClick={handleCreateAR}>
+              Create AR
+            </Button>
           </div>
         </div>
 

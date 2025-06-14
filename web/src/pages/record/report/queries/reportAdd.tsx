@@ -16,6 +16,19 @@ export const useAddAR = () => {
   })
 }
 
+export const useAddARFile = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>[]) => {
+      try {
+        const res = await api.post('report/ar/file/create/', data);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
+  })
+}
+
 export const useAddWAR = () => {
   return useMutation({
     mutationFn: async (data: string) => {

@@ -1,12 +1,12 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.db import transaction
-from ..models import WeeklyAcknowledgementReport, WeeklyARComposition
+from ..models import WeeklyAccomplishmentReport, WeeklyARComposition
 from ..serializers.weekly_ar_serializers import *
 
 class WARCreateView(generics.CreateAPIView):
   serializer_class = WARBaseSerializer
-  queryset = WeeklyAcknowledgementReport.objects.all()
+  queryset = WeeklyAccomplishmentReport.objects.all()
 
 class WARCompCreateView(generics.CreateAPIView):
   serializer_class = WARCompBaseSerializer
@@ -33,4 +33,4 @@ class WARCompCreateView(generics.CreateAPIView):
 
 class WARListView(generics.ListAPIView):
   serializer_class = WARListSerializer
-  queryset = WeeklyAcknowledgementReport.objects.all().order_by('war_created_at')
+  queryset = WeeklyAccomplishmentReport.objects.all().order_by('war_created_at')

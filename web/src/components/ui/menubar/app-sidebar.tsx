@@ -59,6 +59,10 @@ const items: MenuItem[] = [
     url: "/blotter-record",
   },
   {
+    title: "Team",
+    url: "/report",
+  },
+  {
     title: "Report",
     url: "/report",
   },
@@ -308,7 +312,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   );
 };
 
-export function AppSidebar({assignedFeatures}: { assignedFeatures: any[] }) {
+export function AppSidebar({ assignedFeatures }: { assignedFeatures: any[] }) {
   const [activeItem, setActiveItem] = useState<string>("");
 
   // const items: MenuItem[] = assignedFeatures.map((item) => {

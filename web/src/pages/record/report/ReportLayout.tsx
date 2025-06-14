@@ -3,7 +3,6 @@ import { Link, Outlet, useLocation } from "react-router-dom"
 
 const NavItemList = [
   { path: "incident", title: "Incident" },
-  { path: "activity", title: "Activity" },
   { path: "acknowledgement", title: "Acknowledgement" },
   { path: "weekly", title: "Weekly AR" },
   { path: "securado", title: "Securado" },

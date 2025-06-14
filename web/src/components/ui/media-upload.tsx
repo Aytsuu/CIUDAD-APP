@@ -98,7 +98,7 @@ export const MediaUpload = ({
             </div>
   
             {/* File type indicator and remove button remain the same */}
-            <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
+            <div className="absolute top-2 left-2 bg-white rounded-full p-1 shadow">
               {media.type === "video" ? (
                 <Film size={16} />
               ) : media.type === "image" ? (
@@ -108,14 +108,16 @@ export const MediaUpload = ({
               )}
             </div>
   
-            <div
-              onClick={() => handleRemoveFile(media.id)}
-              className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-1 
-                        opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-              aria-label="Remove media"
-            >
-              <X size={16} />
-            </div>
+            {!(media.status === "uploading") &&
+              <div
+                onClick={() => handleRemoveFile(media.id)}
+                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 
+                          opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                aria-label="Remove media"
+              >
+                <X size={16} />
+              </div>
+            }
           </div>
         ))}
   
