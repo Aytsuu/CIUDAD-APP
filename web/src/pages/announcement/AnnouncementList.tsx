@@ -193,7 +193,7 @@ function AnnouncementTracker() {
                             description=""
                             mainContent={
                               <div className="w-full h-full">
-                                <AnnouncementView ann_id={announcement.ann_id} onSaveSuccess={refetch} />
+                                <AnnouncementView ann_id={announcement.ann_id!} onSaveSuccess={refetch} />
                               </div>
                             }
                           />
@@ -212,7 +212,7 @@ function AnnouncementTracker() {
                             title="Confirm Delete"
                             description="Are you sure you want to delete this announcement?"
                             actionLabel="Confirm"
-                            onClick={() => handleDelete(announcement.ann_id)}
+                            onClick={() => announcement.ann_id !== undefined && handleDelete(announcement.ann_id)}
                           />
                         }
                         content="Delete announcement"

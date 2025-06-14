@@ -1,17 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { deleteAnnouncement } from "../request-db/announcementDelRequest";
+import { deleteAnnouncement } from "../restful-api/announcementDelRequest";
 
 export type Announcement = {
   ann_id: number;
   ann_title: string;
   ann_details: string;
-  ann_created_at: Date;
-  ann_start_at: Date;
-  ann_end_at: Date;
+  ann_created_at: Date | string;
+  ann_start_at: Date | string;
+  ann_end_at: Date | string;
   ann_type: string;
-  // staff: number;
+  staff?: string;
+  ar_type: string;
+  ar_mode: string;
+  rp_id: string;
 };
 
 export const useDeleteAnnouncement = () => {

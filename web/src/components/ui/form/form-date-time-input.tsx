@@ -9,7 +9,7 @@ import {
 
 // Reusable Form Date Input Component
 export const FormDateTimeInput = React.memo(({ control, name, label, readOnly, type }: 
-    { control: any; name: string; label: string; readOnly?: boolean; type: "date" | "time"}
+    { control: any; name: string; label: string; readOnly?: boolean; type: "date" | "time" | "datetime-local"}
   ) => (
     <FormField
       control={control}

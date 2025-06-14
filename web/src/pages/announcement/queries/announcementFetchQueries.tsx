@@ -1,25 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAnnouncementRequest } from "../request-db/announcementGetRequest";
+import {
+  getAnnouncementRequest,
+  getAnnouncementRecipientRequest,
+} from "../restful-api/announcementGetRequest";
 
 export type Announcement = {
-  ann_id: number;
+  ann_id?: number;
   ann_title: string;
   ann_details: string;
-  ann_created_at: Date;
-  ann_start_at: Date;
-  ann_end_at: Date;
+  ann_created_at: Date | string;
+  ann_start_at: Date | string;
+  ann_end_at: Date | string;
   ann_type: string;
-  // staff: number;
+  staff: string;
 };
 
+export type AnnouncementRecipient = {
+  ar_id: number;
+  ar_type: string;
+  ar_mode: string;
+  ann: number;
+};
 
 export const useGetAnnouncement = () => {
   return useQuery<Announcement[], Error>({
-    queryKey: ["announcement"],
-    queryFn:  () => getAnnouncementRequest().catch((error) => {
-        console.error("Error fetching announcements:", error);
-        throw error; // Re-throw to let React Query handle the error
-      }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryKey: ["announcements"],
+    queryFn: getAnnouncementRequest,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useGetAnnouncementRecipient = () => {
+  return useQuery<AnnouncementRecipient[], Error>({
+    queryKey: ["recipients"],
+    queryFn: getAnnouncementRecipientRequest,
   });
 };

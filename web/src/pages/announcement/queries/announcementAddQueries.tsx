@@ -1,35 +1,45 @@
-import {useMutation, useQueryClient} from '@tanstack/react-query';
-import { toast } from 'sonner'; 
-import { CircleCheck } from 'lucide-react';
-import { useNavigate } from "react-router";
-import { postAnnouncement } from '../request-db/announcementPostRequest';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { z } from "zod";
+import { postAnnouncement, postAnnouncementRecipient } from "../restful-api/announcementPostRequest";
+import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
 
-export type Announcement = {
-  ann_id?: number;
-  ann_title: string;
-  ann_details: string;
-  ann_created_at: Date;
-  ann_start_at: Date;
-  ann_end_at: Date;
-  ann_type: string;
-  // staff: number;
-};
-
-export const useAddAnnouncement = () => {
+export const usePostAnnouncement = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: (newAnnouncement: Announcement) => postAnnouncement(newAnnouncement),
+    mutationFn: (values: z.infer<typeof AnnouncementSchema>) =>
+      postAnnouncement(values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
-      toast.success('Announcement added successfully', {
-        icon: <CircleCheck className="h-4 w-4" />,
+      toast.loading('Submitting Record...', { id: "addAnnouncement" });
+
+      toast.success('Record Submitted!', {
+        id: "addAnnouncement",
+        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+        duration: 2000,
       });
-      navigate('/announcement');
     },
-    onError: (error) => {
-      toast.error(`Error adding announcement: ${error.message}`);
+    onError: (err) => {
+      console.error("Error submitting announcement:", err);
+      toast.error("Failed to submit announcement.", { duration: 2000 });
+    },
+  });
+};
+
+export const usePostAnnouncementRecipient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (values: any) =>
+      postAnnouncementRecipient(values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcement_recipients'] });
+    },
+    onError: (err) => {
+      console.error("Error submitting recipient:", err);
+      toast.error("Failed to submit recipient.", { duration: 2000 });
     },
   });
 };

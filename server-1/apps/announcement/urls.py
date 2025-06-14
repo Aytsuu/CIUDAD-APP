@@ -1,22 +1,23 @@
-# urls.py
 from django.urls import path
 from .views import (
     AnnouncementView, AnnouncementDetailView,
     AnnouncementRecipientView, AnnouncementRecipientDetailView,
+    AnnouncementRecipientByTypeView,
     AnnouncementFileView, AnnouncementFileDetailView
 )
 
 urlpatterns = [
-    path("announcements/", AnnouncementView.as_view(), name="announcements"),
-    path("announcements/<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-delete"),
-    path("announcements/<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-update"),
+    # Announcement
+    path("create/", AnnouncementView.as_view(), name="create-announcements"),
+    path("announcements/<int:ann_id>/", AnnouncementDetailView.as_view(), name="announcements-detail"),
+    path("announcements/", AnnouncementView.as_view(), name="retrieve-announcements"),
 
+    # Recipients
+    path("create-recipient/", AnnouncementRecipientView.as_view(), name="recipient"),
+    path("recipients/<int:ar_id>/", AnnouncementRecipientDetailView.as_view(), name="recipient-detail"),
+    path("recipients-by-type", AnnouncementRecipientByTypeView.as_view(), name="recipients-by-type"),
 
-    path("announcements/<int:ann_id>/recipients/", AnnouncementRecipientView.as_view(), name="recipient"),
-    path("announcements/<int:ann_id>/recipients/", AnnouncementRecipientDetailView.as_view(), name="recipient-delete"),
-    path("announcements/<int:ann_id>/recipients/", AnnouncementRecipientDetailView.as_view(), name="recipient-update"),
-
-    path("announcements/<int:ann_id>/files/", AnnouncementFileView.as_view(), name="file"),
-    path("announcements/<int:ann_id>/files/", AnnouncementFileDetailView.as_view(), name="file-delete"),
-    path("announcements/<int:ann_id>/files/", AnnouncementFileDetailView.as_view(), name="file-update"),
+    # Files
+    path("create-files/", AnnouncementFileView.as_view(), name="file"),
+    path("files/<int:af_id>/", AnnouncementFileDetailView.as_view(), name="file-detail"),
 ]
