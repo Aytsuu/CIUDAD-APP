@@ -44,8 +44,12 @@ function MinutesOfMeetingPage() {
         }
     };
 
-    // Filter data based on search query and active filter
-    const filteredData = momRecords.filter((record) => {
+    // First filter by archive status
+    const activeData = momRecords.filter(row => row.mom_is_archive === false);
+    const archivedData = momRecords.filter(row => row.mom_is_archive === true);
+
+    // Then apply search and area filter to each subset
+    const filteredActiveData = activeData.filter((record) => {
         const matchesFilter = filter === "all" || record.areas_of_focus.includes(filter);
         const matchesSearch = `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.areas_of_focus.join(' ')}`
             .toLowerCase()
@@ -53,12 +57,26 @@ function MinutesOfMeetingPage() {
         return matchesFilter && matchesSearch;
     });
 
-    // Pagination calculations
-    const totalPages = Math.ceil(filteredData.length / pageSize);
-    const paginatedData = filteredData.slice(
+    const filteredArchivedData = archivedData.filter((record) => {
+        const matchesFilter = filter === "all" || record.areas_of_focus.includes(filter);
+        const matchesSearch = `${record.mom_title} ${record.mom_agenda} ${record.mom_date} ${record.areas_of_focus.join(' ')}`
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
+    });
+
+    // Get the appropriate dataset based on active tab
+    const currentData = activeSubTab === "active" ? filteredActiveData : filteredArchivedData;
+    const totalPages = Math.ceil(currentData.length / pageSize);
+
+    // Paginate the correct dataset
+   const paginatedData = currentData.length > 0 
+    ? currentData.slice(
         (currentPage - 1) * pageSize,
-        currentPage * pageSize
-    );
+        Math.min(currentPage * pageSize, currentData.length)
+        )
+    : [];
+
 
     const handleConfirm = (mom_id: string) => {
         archiveMOM(mom_id);
@@ -229,14 +247,6 @@ function MinutesOfMeetingPage() {
         },
     ];
 
-    const filterOptions = [
-        { id: "all", name: "All" },
-        { id: "Council", name: "Council" },
-        { id: "Waste Committee", name: "Waste Committee" },
-        { id: "GAD", name: "GAD" },
-        { id: "Finance", name: "Finance" },
-    ];
-
     if (isLoading) {
         return (
             <div className="space-y-4">
@@ -280,7 +290,6 @@ function MinutesOfMeetingPage() {
                 </TabsList>
             </Tabs>
 
-
             {/* Minutes of Meeting Tab Content */}
             {activeTab === "minutes" && (
                 <div className="bg-white rounded-lg">
@@ -290,8 +299,8 @@ function MinutesOfMeetingPage() {
                             <h2 className="text-lg font-medium text-gray-800">
                                 {activeSubTab === "active" ? "Active Records" : "Archived Records"} (
                                 {activeSubTab === "active" 
-                                    ? momRecords.filter(row => row.mom_is_archive === false).length
-                                    : momRecords.filter(row => row.mom_is_archive === true).length
+                                    ? filteredActiveData.length
+                                    : filteredArchivedData.length
                                 })
                             </h2>
                         </div>
@@ -343,8 +352,8 @@ function MinutesOfMeetingPage() {
                                 min="1"
                                 value={pageSize}
                                 onChange={(e) => {
-                                    const value = +e.target.value;
-                                    setPageSize(value >= 1 ? value : 1);
+                                    const value = Math.max(1, +e.target.value); // Ensure at least 1
+                                    setPageSize(value);
                                     setCurrentPage(1);
                                 }}
                             />
@@ -388,7 +397,7 @@ function MinutesOfMeetingPage() {
                             <div className="border overflow-auto max-h-[400px]">
                                 <DataTable
                                     columns={activeColumns}
-                                    data={paginatedData.filter(row => row.mom_is_archive === false)}
+                                    data={paginatedData}
                                 />
                             </div>
                         </TabsContent>
@@ -397,7 +406,7 @@ function MinutesOfMeetingPage() {
                             <div className="border overflow-auto max-h-[400px]">
                                 <HistoryTable
                                     columns={archiveColumns}
-                                    data={paginatedData.filter(row => row.mom_is_archive === true)}
+                                    data={paginatedData}
                                 />
                             </div>
                         </TabsContent>
@@ -406,11 +415,11 @@ function MinutesOfMeetingPage() {
                     {/* Pagination Section */}
                     <div className="flex flex-col sm:flex-row justify-between items-center p-3 border-t gap-3">
                         <p className="text-xs sm:text-sm text-gray-600">
-                            Showing {(currentPage - 1) * pageSize + 1}-
-                            {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                            {filteredData.length} rows
+                            {currentData.length > 0 
+                                ? `Showing ${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, currentData.length)} of ${currentData.length} rows`
+                                : 'No records to display'}
                         </p>
-                        {filteredData.length > 0 && (
+                        {currentData.length > pageSize && (
                             <PaginationLayout
                                 currentPage={currentPage}
                                 totalPages={totalPages}
@@ -425,17 +434,6 @@ function MinutesOfMeetingPage() {
 
             {/* Supporting Documents Tab Content */}
             {activeTab === "supporting" && (
-                // <div className="bg-white rounded-lg p-6">
-                //     <div className="flex flex-col items-center justify-center py-12">
-                //         <FileInput className="h-12 w-12 text-gray-400 mb-4" />
-                //         <h3 className="text-lg font-medium text-gray-900 mb-2">Supporting Documents</h3>
-                //         <p className="text-sm text-gray-500 mb-6">This section will contain all supporting documents</p>
-                //         <Button variant="outline">
-                //             <Plus className="mr-2 h-4 w-4" />
-                //             Add Supporting Document
-                //         </Button>
-                //     </div>
-                // </div>
                 <MOMSuppDoc/>
             )}
         </div>
