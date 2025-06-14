@@ -1,13 +1,11 @@
-// import CreateAnnouncement from "@/pages/announcement/AddAnnouncement";
+
 import AnnouncementDashboard from "@/pages/announcement/AnnouncementList";
+
+
 
 export const announcement_route = [
     {
-        path: '/viewAnnouncement',
+        path: '/Announcement',
         element: <AnnouncementDashboard/>
-    },
-    {
-        path: '/createAnnouncement',
-        element: "/"
     }
 ]
