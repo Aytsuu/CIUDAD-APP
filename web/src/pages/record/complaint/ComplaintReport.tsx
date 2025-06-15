@@ -42,17 +42,19 @@ interface FormAccused {
 interface FormValues {
   complainant: FormComplainant;
   incident_type: string;
+  other_incident_type?: string;
+  comp_category?: string;
   datetime: string;
   allegation: string;
 }
 
 // Constants
 const INCIDENT_TYPES = [
-  { id: "1", name: "Theft" },
-  { id: "2", name: "Assault" },
-  { id: "3", name: "Noise Complaint" },
-  { id: "4", name: "Property Damage" },
-  { id: "5", name: "Other" },
+  { id: "Theft", name: "Theft" },
+  { id: "Assault", name: "Assault" },
+  { id: "Noise Complaint", name: "Noise Complaint" },
+  { id: "Property Damage", name: "Property Damage" },
+  { id: "Other", name: "Other" },
 ] as const;
 
 const EMPTY_ADDRESS: FormAddress = {
@@ -291,71 +293,136 @@ const AccusedPersonForm = ({  person,  index,  total, onUpdate }: {
   </div>
 );
 
-const IncidentDetailsSection = ({ form }: { form: any }) => (
-  <div className="border rounded-md p-4 bg-white shadow-sm">
-    <div className="flex items-center gap-2 mb-4">
-      <AlertTriangle className="w-5 h-5 text-darkBlue2" />
-      <h2 className="font-medium text-lg text-darkBlue2">Incident Details</h2>
-    </div>
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+const IncidentDetailsSection = ({ form }: { form: any }) => {
+  const incidentType = form.watch("incident_type");
+  const showOtherInput = incidentType === "Other";
+
+  return (
+    <div className="border rounded-md p-4 bg-white shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <AlertTriangle className="w-5 h-5 text-darkBlue2" />
+        <h2 className="font-medium text-lg text-darkBlue2">Incident Details</h2>
+      </div>
+      <div className="space-y-4">
+        {/* Incident Type & Other Input Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Incident Type Field (takes full width if alone, half if with "Other") */}
+          <div className={showOtherInput ? "" : "md:col-span-2"}>
+            <FormField
+              control={form.control}
+              name="incident_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-darkGray">Incident Type *</FormLabel>
+                  <FormControl>
+                    <SelectLayout
+                      label="Select Incident Type"
+                      placeholder="Select Options"
+                      options={INCIDENT_TYPES}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Other Incident Input (shown on same row when "Other" is selected) */}
+          {showOtherInput && (
+            <FormField
+              control={form.control}
+              name="other_incident_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-darkGray">
+                    Please specify *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Describe the incident type"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+
+        {/* Priority and Date/Time Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="comp_category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium text-darkGray">Priority Level</FormLabel>
+                <FormControl>
+                  <SelectLayout
+                    label="Set Importance"
+                    placeholder="Select Options"
+                    options={[
+                      { id: "Low", name: "Low" },
+                      { id: "Normal", name: "Normal" },
+                      { id: "Urgent", name: "Urgent" },
+                    ]}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="datetime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium text-darkGray flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Date & Time of Incident *
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    type="datetime-local" 
+                    {...field} 
+                    className="w-52" 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        {/* Incident Description (full width) */}
         <FormField
           control={form.control}
-          name="incident_type"
+          name="allegation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-darkGray">Category *</FormLabel>
+              <FormLabel className="text-sm font-medium text-darkGray">Incident Description *</FormLabel>
               <FormControl>
-                <SelectLayout
-                  label="Select incident type"
-                  placeholder="Choose category"
-                  options={INCIDENT_TYPES}
-                  value={field.value}
-                  onChange={field.onChange}
+                <textarea
+                  className="w-full border rounded-md p-3 min-h-32 resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Provide a detailed description of what happened..."
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="datetime"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-medium text-darkGray flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Date & Time of Incident *
-              </FormLabel>
-              <FormControl>
-                <Input type="datetime-local" {...field} className="w-full" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
-      
-      <FormField
-        control={form.control}
-        name="allegation"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-sm font-medium text-darkGray">Incident Description *</FormLabel>
-            <FormControl>
-              <textarea
-                className="w-full border rounded-md p-3 min-h-32 resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Provide a detailed description of what happened, including time, location, and circumstances..."
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
-  </div>
-);
+  );
+};
 
 export function ComplaintReport() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -375,7 +442,10 @@ export function ComplaintReport() {
 
 const transformedPayload = useMemo(() => {
   const complainantData = form.watch("complainant");
-  
+  const incidentType = form.watch("incident_type");
+  const otherIncidentType = form.watch("other_incident_type");
+  const compCategory = form.watch("comp_category");
+
   return {
     // Django view expects nested complainant object
     complainant: {
@@ -401,7 +471,8 @@ const transformedPayload = useMemo(() => {
         sitio: null
       }
     })),
-    incident_type: form.watch("incident_type") || '',
+    incident_type: incidentType === "Other" ? (otherIncidentType || "") : (incidentType || ""),
+    category: compCategory || '', 
     datetime: form.watch("datetime") || '',
     allegation: form.watch("allegation") || '',
     media_files: mediaFiles

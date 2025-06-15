@@ -1,4 +1,3 @@
-# views.py
 from rest_framework import generics, permissions
 from .serializers import ComplaintSerializer
 from apps.profiling.models import Address
@@ -22,7 +21,10 @@ class ComplaintCreateView(APIView):
             # Parse JSON data from FormData
             complainant_data = json.loads(request.data.get('complainant', '{}'))
             accused_list = json.loads(request.data.get('accused', '[]'))
-            media_files = json.loads(request.data.get('media_files', '[]')) 
+            
+            # Get media files - handle both File objects and URLs
+            media_files = request.FILES.getlist('media_files')  # For File objects
+            media_urls = request.data.getlist('media_urls', [])  # For URLs
             
             # Process complainant
             address_data = complainant_data.get('address', {})
@@ -46,6 +48,7 @@ class ComplaintCreateView(APIView):
                 comp_incident_type=request.data.get('incident_type', ''),
                 comp_datetime=request.data.get('datetime', ''),
                 comp_allegation=request.data.get('allegation', ''),
+                comp_category=request.data.get('category', 'Normal'),
                 cpnt=complainant
             )
             
@@ -71,13 +74,60 @@ class ComplaintCreateView(APIView):
                     acsd=accused
                 )
             
-            # Process media files from Supabase URLs
-            for file_info in media_files:
+            # Process media files (File objects)
+            for file_obj in media_files:
+                file_name = file_obj.name
+                file_type = file_name.split('.')[-1].lower()
+                
+                # Map file extension to type
+                if file_type in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                    file_type = 'image'
+                elif file_type in ['mp4', 'mov', 'avi', 'webm']:
+                    file_type = 'video'
+                elif file_type == 'pdf':
+                    file_type = 'pdf'
+                else:
+                    file_type = 'document'
+                
+                # Save file to your storage and get URL
+                # (Implement your file storage logic here)
+                file_url = f"/media/{file_name}"  # Example URL
+                
                 new_file = File.objects.create(
-                    file_name=file_info['original_name'],
-                    file_type=file_info['file_type'],
-                    file_path=file_info['file_url'],  # Store the Supabase URL
-                    file_url=file_info['file_url']    # Store the public URL
+                    file_name=file_name,
+                    file_type=file_type,
+                    file_path=file_url,
+                    file_url=file_url
+                )
+                
+                Complaint_File.objects.create(
+                    comp=complaint,
+                    file=new_file
+                )
+            
+            # Process media URLs
+            for file_url in media_urls:
+                if not file_url:
+                    continue
+                    
+                file_name = file_url.split('/')[-1].split('?')[0]
+                file_type = file_name.split('.')[-1].lower()
+                
+                # Map file extension to type
+                if file_type in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                    file_type = 'image'
+                elif file_type in ['mp4', 'mov', 'avi', 'webm']:
+                    file_type = 'video'
+                elif file_type == 'pdf':
+                    file_type = 'pdf'
+                else:
+                    file_type = 'document'
+                
+                new_file = File.objects.create(
+                    file_name=file_name,
+                    file_type=file_type,
+                    file_path=file_url,
+                    file_url=file_url
                 )
                 
                 Complaint_File.objects.create(
@@ -88,7 +138,7 @@ class ComplaintCreateView(APIView):
             return Response({
                 'comp_id': complaint.comp_id,
                 'status': 'success',
-                'message': 'Complaint created successfully with multiple accused persons'
+                'message': 'Complaint created successfully'
             }, status=status.HTTP_201_CREATED)
             
         except json.JSONDecodeError as e:
@@ -104,7 +154,7 @@ class ComplaintCreateView(APIView):
                 'status': 'error',
                 'details': 'Check server logs for more information'
             }, status=status.HTTP_400_BAD_REQUEST)
-
+            
 class ComplaintListView(generics.ListAPIView):
     serializer_class = ComplaintSerializer
     # permission_classes = [permissions.IsAuthenticated]
@@ -174,6 +224,24 @@ def archived_complaints(request):
         complaints = Complaint.objects.filter(comp_is_archive=True)
         serializer = ComplaintSerializer(complaints, many=True)
         return Response(serializer.data)
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+def restore_complaint(request, pk):
+    try:
+        complaint = Complaint.objects.get(pk=pk, comp_is_archive=True)
+        complaint.comp_is_archive = False
+        complaint.save()
+        serializer = ComplaintSerializer(complaint)
+        return Response(serializer.data)
+    except Complaint.DoesNotExist:
+        return Response(
+            {"error": "Archived complaint not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
     except Exception as e:
         return Response(
             {"error": str(e)},

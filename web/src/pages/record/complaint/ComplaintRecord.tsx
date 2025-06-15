@@ -20,13 +20,18 @@ export default function ComplaintRecord() {
   const [pageSizeInput, setPageSizeInput] = useState(DEFAULT_PAGE_SIZE.toString());
   const [currentPage, setCurrentPage] = useState(1);
   const { data: complaints = [], isLoading, error } = useGetComplaint();
-  const [timeFilter, setTimeFilter] = useState<string | null>(null); // New state for time filter
+  const [timeFilter, setTimeFilter] = useState<string | null>(null);
 
   const columns = useMemo(() => complaintColumns(complaints), [complaints]);
 
+  // Filter out archived complaints first
+  const nonArchivedComplaints = useMemo(() => {
+    return complaints.filter((complaint: ComplaintRecord) => !complaint.comp_is_archive);
+  }, [complaints]);
+
   // Filter data based on search query and time filter
   const filteredData = useMemo(() => {
-    let result = complaints;
+    let result = nonArchivedComplaints; // Use non-archived complaints as base
     
     // Apply time filter if selected
     if (timeFilter) {
@@ -38,15 +43,15 @@ export default function ComplaintRecord() {
           startDate.setHours(0, 0, 0, 0);
           break;
         case 'week':
-          startDate.setDate(now.getDate() - now.getDay()); // Start of current week
+          startDate.setDate(now.getDate() - now.getDay());
           startDate.setHours(0, 0, 0, 0);
           break;
         case 'month':
-          startDate.setDate(1); // First day of current month
+          startDate.setDate(1);
           startDate.setHours(0, 0, 0, 0);
           break;
         case 'year':
-          startDate.setMonth(0, 1); // January 1st of current year
+          startDate.setMonth(0, 1);
           startDate.setHours(0, 0, 0, 0);
           break;
       }
@@ -84,7 +89,7 @@ export default function ComplaintRecord() {
     }
     
     return result;
-  }, [complaints, searchQuery, timeFilter]);
+  }, [nonArchivedComplaints, searchQuery, timeFilter]);
 
   // Calculate paginated data
   const paginatedData = useMemo(() => {
