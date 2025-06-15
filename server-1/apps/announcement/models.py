@@ -35,13 +35,10 @@ class AnnouncementFile(models.Model):
         Announcement,
         on_delete=models.CASCADE,
     )
-    file = models.ForeignKey(
-        'file.File',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column='file_id'
-    )
+    af_name = models.TextField()
+    af_type = models.CharField(max_length=50)
+    af_path = models.TextField()
+    af_url = models.TextField()
   
     class Meta:
         db_table = 'announcement_file'

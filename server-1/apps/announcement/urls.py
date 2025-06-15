@@ -18,6 +18,5 @@ urlpatterns = [
     path("recipients-by-type", AnnouncementRecipientByTypeView.as_view(), name="recipients-by-type"),
 
     # Files
-    path("create-files/", AnnouncementFileView.as_view(), name="file"),
-    path("files/<int:af_id>/", AnnouncementFileDetailView.as_view(), name="file-detail"),
+    path("upload-files/", AnnouncementFileView.as_view(), name="file"),
 ]

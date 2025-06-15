@@ -1,124 +1,3 @@
-// import { useForm } from "react-hook-form";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { z } from "zod";
-// import { Form } from "@/components/ui/form/form";
-// import { FormInput } from "@/components/ui/form/form-input";
-// import { FormSelect } from "@/components/ui/form/form-select";
-// import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-// import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
-// import { usePostAnnouncement, usePostAnnouncementRecipient } from "./queries/announcementAddQueries";
-// import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
-// import { Button } from "@/components/ui/button/button";
-// import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-
-// const AnnouncementCreate = () => {
-//   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
-//   const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient();
-
-//   type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema>;
-//   const defaultValues = generateDefaultValues(AnnouncementSchema);
-
-//   const form = useForm<AnnouncementCreateFormValues>({
-//     resolver: zodResolver(AnnouncementSchema),
-//     defaultValues,
-//   });
-
-//   const onSubmit = async () => {
-//     const formIsValid = await form.trigger();
-//     if (!formIsValid) return;
-
-//     const values = form.getValues();
-//     console.log("Submitting values:", values);
-
-//     try {
-//       // Submit announcement and get back the newly created announcement
-//       const createdAnnouncement = await postAnnouncement(values);
-
-//       // Construct recipient payload based on ar_type and ar_mode
-//       const recipients = values.ar_type.map((type: string) => {
-//         return values.ar_mode.map((mode: string) => ({
-//           ar_type: type,
-//           ar_mode: mode,
-//           ann: createdAnnouncement?.ann_id, // use returned ann_id
-//         }));
-//       }).flat();
-
-//       // Send each recipient record
-//       recipients.forEach((recipient) => {
-//         postAnnouncementRecipient(recipient);
-//       });
-
-//     } catch (error) {
-//       console.error("Error during submission:", error);
-//     }
-//   };
-
-//   return (
-//     <div className="flex flex-col min-h-0 h-auto p-6 max-w-4xl mx-auto rounded-lg overflow-auto">
-//       <div className="pb-4">
-//         <h2 className="text-lg font-semibold">CREATE ANNOUNCEMENT</h2>
-//         <p className="text-xs text-black/50">
-//           Fill in the details below to create an announcement
-//         </p>
-//       </div>
-
-//       <Form {...form}>
-//         <form onSubmit={(e) => {
-//           e.preventDefault();
-//           onSubmit();
-//         }} className="flex flex-col gap-4">
-
-//           <FormInput control={form.control} name="ann_title" label="Announcement Title" placeholder="Enter announcement title" />
-//           <FormInput control={form.control} name="ann_details" label="Announcement Details" placeholder="Enter announcement details" />
-//           <FormDateTimeInput control={form.control} name="ann_start_at" label="Start Date" type="datetime-local" />
-//           <FormDateTimeInput control={form.control} name="ann_end_at" label="End Date" type="datetime-local" />
-
-//           <FormSelect
-//             control={form.control}
-//             name="ann_type"
-//             label="Type"
-//             options={[
-//               { id: "general", name: "General" },
-//               { id: "urgent", name: "Urgent" },
-//               { id: "event", name: "Event" },
-//             ]}
-//           />
-
-//           <FormComboCheckbox
-//             control={form.control}
-//             name="ar_type"
-//             label="Recipient Type"
-//             options={[
-//               { id: "everyone", name: "Everyone" },
-//               { id: "resident", name: "All Residents" },
-//               { id: "staff", name: "All Staff" },
-//             ]}
-//           />
-
-//           <FormComboCheckbox
-//             control={form.control}
-//             name="ar_mode"
-//             label="Delivery Mode"
-//             options={[
-//               { id: "email", name: "Email" },
-//               { id: "sms", name: "SMS" },
-//             ]}
-//           />
-
-//           <FormInput control={form.control} name="staff" label="Staff ID" placeholder="Enter your staff ID" />
-          
-          
-//           <Button type='submit'>Submit</Button>
-//         </form>
-//       </Form>
-//     </div>
-//   );
-// };
-
-// export default AnnouncementCreate;
-
-
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { z } from "zod"
@@ -127,7 +6,7 @@ import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import AnnouncementSchema from "@/form-schema/Announcement/announcementschema"
-import { usePostAnnouncement, usePostAnnouncementRecipient } from "./queries/announcementAddQueries"
+import { usePostAnnouncement, usePostAnnouncementRecipient, usePostAnnouncementFile } from "./queries/announcementAddQueries"
 import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox"
 import { Button } from "@/components/ui/button/button"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
@@ -135,10 +14,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Megaphone, FileText, Calendar, Users, Mail, User, Clock, Send } from "lucide-react"
+import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload"
+import React from "react"
 
 const AnnouncementCreate = () => {
   const { mutateAsync: postAnnouncement } = usePostAnnouncement()
   const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient()
+  const uploadFile = usePostAnnouncementFile();
+
+  const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
+  const [activeVideoId, setActiveVideoId] = React.useState<string>("");
 
   type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema>
   const defaultValues = generateDefaultValues(AnnouncementSchema)
@@ -148,39 +33,49 @@ const AnnouncementCreate = () => {
     defaultValues,
   })
 
-  const onSubmit = async () => {
-    const formIsValid = await form.trigger()
-    if (!formIsValid) return
 
-    const values = form.getValues()
-    console.log("Submitting values:", values)
+const onSubmit = async () => {
+  const formIsValid = await form.trigger();
+  if (!formIsValid) return;
 
-    try {
-      // Submit announcement and get back the newly created announcement
-      const createdAnnouncement = await postAnnouncement(values)
+  const values = form.getValues();
+  try {
+    const createdAnnouncement = await postAnnouncement(values);
 
-      // Construct recipient payload based on ar_type and ar_mode
-      const recipients = values.ar_type.flatMap((type: string) => {
-        return values.ar_mode.map((mode: string) => ({
-          ar_type: type,
-          ar_mode: mode,
-          ann: createdAnnouncement?.ann_id, // use returned ann_id
-        }))
-      })
+    // Post recipients
+    const recipients = values.ar_type.flatMap((type: string) =>
+      values.ar_mode.map((mode: string) => ({
+        ar_type: type,
+        ar_mode: mode,
+        ann: createdAnnouncement?.ann_id,
+      }))
+    );
+    recipients.forEach((recipient) => postAnnouncementRecipient(recipient));
 
-      // Send each recipient record
-      recipients.forEach((recipient) => {
-        postAnnouncementRecipient(recipient)
-      })
-    } catch (error) {
-      console.error("Error during submission:", error)
-    }
+    // Upload announcement files
+      await Promise.all(
+        mediaFiles.map((media) =>
+          uploadFile.mutateAsync({
+            af_name: media.file.name,
+            af_type: media.file.type,
+            af_path: media.storagePath || "",
+            af_url: media.publicUrl || "",
+            ann: createdAnnouncement?.ann_id,
+          })
+        )
+      )
+
+    console.log("Announcement, recipients, and files successfully submitted.");
+  } catch (error) {
+    console.error("Submission failed:", error);
   }
+};
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -288,7 +183,6 @@ const AnnouncementCreate = () => {
                     <FormComboCheckbox
                       control={form.control}
                       name="ar_type"
-                     
                       options={[
                         { id: "everyone", name: "Everyone" },
                         { id: "resident", name: "All Residents" },
@@ -307,7 +201,6 @@ const AnnouncementCreate = () => {
                     <FormComboCheckbox
                       control={form.control}
                       name="ar_mode"
-                     
                       options={[
                         { id: "email", name: "Email" },
                         { id: "sms", name: "SMS" },
@@ -328,12 +221,21 @@ const AnnouncementCreate = () => {
                   <FormInput
                     control={form.control}
                     name="staff"
-               
                     placeholder="Enter your staff identification number"
                   />
                 </div>
               </CardContent>
             </Card>
+
+            {/* Media Upload Section */}
+            <MediaUpload
+              title="Upload Image"
+              description="Upload images"
+              mediaFiles={mediaFiles}
+              activeVideoId={activeVideoId}
+              setActiveVideoId={setActiveVideoId}
+              setMediaFiles={setMediaFiles} 
+            />
 
             {/* Submit Button */}
             <div className="flex justify-end pt-4">

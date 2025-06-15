@@ -10,7 +10,7 @@ const AnnouncementSchema = z.object({
   ann_type: z.string().nonempty({ message: "Type is required" }),
   ar_type: z.array(z.string()).nonempty({ message: "Recipient type is required" }),
   staff: z.string().nonempty({ message: "Staff is required" }),
-  ar_mode: z.array(z.string()).nonempty({ message: "Announcement mode is required" }),  
+  ar_mode: z.array(z.string()).nonempty({ message: "Announcement mode is required" }), 
 });
 
 export default AnnouncementSchema;
