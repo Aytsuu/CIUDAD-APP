@@ -25,6 +25,8 @@ type PatientRecordDetail = {
   patient_dob: string;
   patient_address: string;
   patient_id: string; // This is the pat_id from the Patient model (varchar)
+  patient_type: string; // New: 'Resident' or 'Transient'
+  patient_age: string; // New: Age as calculated by backend serializer
   referral_id: number;
   referral_date: string;
   referral_transient: boolean;
@@ -51,7 +53,6 @@ const PrintableReferralForm: React.FC<PrintableReferralFormProps> = ({ record, o
     if (printContent) {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        // printWindow.document.write('<html><head><title>Referral Form</title>');
         printWindow.document.write(`
           <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
           <style>
@@ -76,7 +77,6 @@ const PrintableReferralForm: React.FC<PrintableReferralFormProps> = ({ record, o
         `);
         printWindow.document.write('</head><body>');
         printWindow.document.write(printContent.innerHTML);
-        printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
@@ -120,10 +120,13 @@ const PrintableReferralForm: React.FC<PrintableReferralFormProps> = ({ record, o
             <UserSquare size={18} /> Patient Information
           </div>
           <div className="print-section-content">
+            {/* Display patient type here */}
+            <div className="print-item"><span className="print-label">Patient Type:</span> <span className="print-value">{record.patient_type}</span></div>
             {/* <div className="print-item"><span className="print-label">Patient ID:</span> <span className="print-value">{record.patient_id}</span></div> */}
             <div className="print-item"><span className="print-label">Name:</span> <span className="print-value">{record.patient_fname} {record.patient_mname ? record.patient_mname + " " : ""}{record.patient_lname}</span></div>
             <div className="print-item"><span className="print-label">Sex:</span> <span className="print-value">{record.patient_sex}</span></div>
             <div className="print-item"><span className="print-label">Date of Birth:</span> <span className="print-value">{new Date(record.patient_dob).toLocaleDateString()}</span></div>
+            <div className="print-item"><span className="print-label">Age:</span> <span className="print-value">{record.patient_age}</span></div> {/* Display age from backend */}
             <div className="print-item"><span className="print-label">Address:</span> <span className="print-value">{record.patient_address}</span></div>
           </div>
         </div>
@@ -168,7 +171,7 @@ const ComparisonViewer: React.FC<ComparisonViewerProps> = ({ record1, record2, o
       <Button onClick={onClose} className="absolute top-2 right-2" variant="ghost">
         <XCircle size={20} />
       </Button>
-      <h2 className="text-xl font-bold mb-4 text-center">Record Comparison</h2>
+      {/* <h2 className="text-xl font-bold mb-4 text-center">Record Comparison</h2> */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Record 1 Column */}
         <div className="border p-4 rounded-lg bg-gray-50">
@@ -320,6 +323,11 @@ const IndividualPatientHistory: React.FC = () => {
       cell: ({ row }) => new Date(row.original.referral_date).toLocaleDateString(),
     },
     {
+      accessorKey: "patient_type", // New column for patient type
+      header: "Patient Type",
+      cell: ({ row }) => row.original.patient_type,
+    },
+    {
       accessorKey: "exposure_type",
       header: "Exposure Type",
     },
@@ -346,11 +354,6 @@ const IndividualPatientHistory: React.FC = () => {
     {
       accessorKey: "referral_sender",
       header: "Sender",
-    },
-    {
-      accessorKey: "referral_transient",
-      header: "Transient",
-      cell: ({ row }) => (row.original.referral_transient ? "Yes" : "No"),
     },
     {
       accessorKey: "record_created_at",
@@ -390,6 +393,7 @@ const IndividualPatientHistory: React.FC = () => {
     return <div className="p-4 text-center text-red-600">Error: {error?.message || "Failed to load patient history."}</div>;
   }
 
+  // Use the new patient_fname and patient_lname from the first record for the header
   const patientName = patientRecords && patientRecords.length > 0
     ? `${patientRecords[0].patient_fname} ${patientRecords[0].patient_lname}`
     : "Unknown Patient";
@@ -402,7 +406,7 @@ const IndividualPatientHistory: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">Animal Bite History for {patientName} (ID: {id})</h1>
+        <h1 className="text-2xl font-bold">Animal Bite History for {patientName}</h1>
         {selectedForComparison.length === 2 && (
           <Button 
             variant="default" 
@@ -440,7 +444,7 @@ const IndividualPatientHistory: React.FC = () => {
       {comparisonModalOpen && recordsToCompare && (
         <DialogLayout
           isOpen={comparisonModalOpen}
-          onClose={handleCloseComparisonModal}
+          // onClose={handleCloseComparisonModal}
           title="Record Comparison"
           description="Compare key details between two selected records."
           className="max-w-5xl" 

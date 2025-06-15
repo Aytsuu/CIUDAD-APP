@@ -331,7 +331,6 @@
 // };
 
 // export default Overall;
-
 "use client"
 
 import type React from "react"
@@ -347,7 +346,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout"
 import { Link } from "react-router-dom"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { TooltipProvider } from "@radix-ui/react-tooltip"
-import { getAnimalBitePatientDetails } from "./api/get-api"
+import { getAnimalBitePatientDetails } from "./api/get-api" // This API now provides comprehensive patient details
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"
 import { toast } from "sonner"
 import { deleteAnimalBitePatient } from "./db-request/postrequest"
@@ -360,7 +359,8 @@ type UniquePatientDisplay = {
   gender: string
   age: string
   date: string
-  transient: boolean
+  transient: boolean // This now reflects referral_transient from backend
+  patientType: string // New: 'Resident' or 'Transient'
   exposure: string
   siteOfExposure: string
   bitingAnimal: string
@@ -369,7 +369,7 @@ type UniquePatientDisplay = {
   recordCount: number
 }
 
-// Age calculation
+// Age calculation - remains the same, but data source will be more reliable from backend
 const calculateAge = (dobString: string): string => {
   if (!dobString) return "N/A"
   const dob = new Date(dobString)
@@ -397,46 +397,50 @@ const Overall: React.FC = () => {
     setError(null)
     try {
       // Fetch all animal bite records (backend now sorts by latest)
+      // getAnimalBitePatientDetails now returns the comprehensive serialized data
       const allRecords = await getAnimalBitePatientDetails()
-      console.log("Fetched records:", allRecords)
+      console.log("Fetched records (from getAnimalBitePatientDetails):", allRecords)
 
-      // Group records by patient ID
+      // Group records by patient ID to get the latest record for each patient
       const patientGroups = new Map<string, any[]>()
 
       allRecords.forEach((record: any) => {
-        const patientId = record.patient_id
+        const patientId = record.patient_id // This is the pat_id from the backend
         if (!patientGroups.has(patientId)) {
           patientGroups.set(patientId, [])
         }
+        // Ensure records are pushed to the group for count
         patientGroups.get(patientId)?.push(record)
       })
 
-      // Create unique patient display objects with latest record and count
       const uniquePatients: UniquePatientDisplay[] = []
 
-      patientGroups.forEach((records, patientId) => {
-        // The backend should already sort by latest, so the first record is the most recent.
-        // No client-side sort needed here if backend ordering is reliable.
-        const latestRecord = records[0] 
+      // Iterate through the grouped data to create unique patient entries
+      patientGroups.forEach((recordsForPatient, patientId) => {
+        // The backend should sort by latest, so the first record in the group is the most recent.
+        const latestRecord = recordsForPatient[0] // Assuming the backend returns records sorted by latest date first
 
         if (latestRecord) {
           uniquePatients.push({
-            id: patientId,
-            fname: latestRecord.patient_fname || "Unknown",
-            lname: latestRecord.patient_lname || "Unknown",
-            gender: latestRecord.patient_sex || "Unknown",
-            age: calculateAge(latestRecord.patient_dob),
+            id: patientId, // Use patient_id for routing
+            fname: latestRecord.patient_fname || "N/A", // Use data directly from serializer
+            lname: latestRecord.patient_lname || "N/A", // Use data directly from serializer
+            gender: latestRecord.patient_sex || "N/A", // Use data directly from serializer
+            age: latestRecord.patient_age?.toString() || "N/A", // Use patient_age from serializer (it's already calculated)
             date: latestRecord.referral_date,
-            transient: latestRecord.referral_transient,
+            transient: latestRecord.referral_transient, // From SerializerMethodField
+            patientType: latestRecord.patient_type || "N/A", // New field from serializer
             exposure: latestRecord.exposure_type,
             siteOfExposure: latestRecord.exposure_site,
             bitingAnimal: latestRecord.biting_animal,
             actions_taken: latestRecord.actions_taken || "",
             referredby: latestRecord.referredby || "",
-            recordCount: records.length,
+            recordCount: recordsForPatient.length, // Total count of records for this patient
           })
         }
       })
+      // Optional: Sort uniquePatients by latest referral date if not already sorted by backend
+      // uniquePatients.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setPatients(uniquePatients)
     } catch (err) {
@@ -485,9 +489,8 @@ const Overall: React.FC = () => {
 
   const filteredPatients = useMemo(() => {
     return patients.filter((p) => {
-      const str =
-        `${p.fname} ${p.lname} ${p.age} ${p.gender} ${p.date} ${p.exposure} ${p.siteOfExposure} ${p.bitingAnimal}`.toLowerCase()
-      const matchesSearch = str.includes(searchQuery.toLowerCase())
+      const searchTerms = `${p.fname} ${p.lname} ${p.age} ${p.gender} ${p.date} ${p.exposure} ${p.siteOfExposure} ${p.bitingAnimal} ${p.patientType}`.toLowerCase()
+      const matchesSearch = searchTerms.includes(searchQuery.toLowerCase())
       const matchesFilter =
         filterValue === "All" ||
         (filterValue === "Bite" && p.exposure === "Bite") ||
@@ -512,7 +515,7 @@ const Overall: React.FC = () => {
             <div className="flex flex-col w-full">
               {/* Link to individual history using patient's pat_id */}
               <Link to={`/Animalbite_individual/${p.id}`} className="hover:text-blue-600 hover:underline">
-                <div className="font-medium truncate">{`${p.lname}, ${p.fname}`}</div>
+                <div className="font-medium truncate">{`${p.lname}, ${p.fname} ${p.mname || ''}`.trim()}</div>
                 <div className="text-sm text-darkGray">
                   {p.gender}, {p.age} years old
                   {p.recordCount > 1 && (
@@ -527,6 +530,11 @@ const Overall: React.FC = () => {
           </div>
         )
       },
+    },
+    { 
+      accessorKey: "patientType",
+      header: "Patient Type",
+      cell: ({ row }) => row.original.patientType, // Display the patient type
     },
     { accessorKey: "date", header: "Date" },
     { accessorKey: "exposure", header: "Exposure Type" },

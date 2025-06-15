@@ -1,6 +1,7 @@
 from django.db import models
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
+from django.utils import timezone
 
 # Create your models here.
 
@@ -15,40 +16,104 @@ from apps.healthProfiling.models import Personal, ResidentProfile
 #         db_table = 'patient'
 #         ordering = ['-created_at']
 
+
+
+class TransientAddress(models.Model):
+    tradd_id = models.BigAutoField(primary_key=True)
+    tradd_province = models.CharField(max_length=50)
+    tradd_city = models.CharField(max_length=50)
+    tradd_barangay = models.CharField(max_length=50)
+    tradd_street = models.CharField(max_length=50)
+    tradd_sitio= models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta:
+        db_table = 'transient_address'
+
+   
+class Transient(models.Model):
+    trans_id = models.CharField(max_length=15, primary_key=True)
+    tran_lname = models.CharField(max_length=100)
+    tran_fname = models.CharField(max_length=100)
+    tran_mname = models.CharField(max_length=100, null=True, blank=True)
+    tran_suffix = models.CharField(max_length=50, null=True, blank=True)
+    tran_dob = models.DateField()
+    tran_sex = models.CharField(max_length=10)
+    tran_status = models.CharField(max_length=50)
+    tran_ed_attainment = models.CharField(max_length=100)
+    tran_religion = models.CharField(max_length=100)
+    tran_contact = models.CharField(max_length=20)
+    tradd_id = models.ForeignKey(TransientAddress, on_delete=models.CASCADE, related_name='transients', db_column='tradd_id', null=True, blank=True)
+
+    class Meta:
+        db_table = 'transient'
+      
+      
 class Patient(models.Model):
+    PATIENT_TYPES = [
+        ("Resident", "Resident"),
+        ("Transient", "Transient"),
+    ]
+
     pat_id = models.CharField(
         max_length=15,
         primary_key=True,
         editable=False,
         unique=True
     )
-    pat_id = models.CharField(
-        max_length=15,
-        primary_key=True,
-        editable=False,
-        unique=True
+    pat_type = models.CharField(
+        max_length=100,
+        choices=PATIENT_TYPES,
+        default="Resident"
     )
-    pat_type = models.CharField(max_length=100, default="Resident")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     pat_status = models.CharField(max_length=100, default="Active")
     rp_id = models.ForeignKey(
-       ResidentProfile,
+        ResidentProfile,
         on_delete=models.CASCADE,
         related_name='patients',
-        db_column='rp_id',
-        null=True
+        null=True,
+        blank=True,
+        db_column='rp_id'
     )
+    trans_id = models.ForeignKey(
+        Transient,
+        on_delete=models.CASCADE,
+        related_name='patients',
+        null=True,
+        blank=True,
+        db_column='trans_id'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.pat_type == 'Resident' and not self.resident_profile:
+            raise ValidationError("Resident patients must have a resident_profile.")
+        if self.pat_type == 'Transient' and not self.trans_id:
+            raise ValidationError("Transient patients must have a transient_profile.")
+        if self.resident_profile and self.trans_id:
+            raise ValidationError("Patient cannot have both resident_profile and trans_id.")
 
     def save(self, *args, **kwargs):
-        if not self.pat_id and self.rp_id and hasattr(self.rp_id, 'per') and self.rp_id.per.per_dob:
-            year = self.rp_id.per.per_dob.year
-            type_code = 'R' if self.pat_type.lower() == 'resident' else 'T'
+        # Auto-generate pat_id if not set
+        if not self.pat_id:
+            # Determine DOB source
+            dob = None
+            if self.pat_type == 'Resident' and self.resident_profile and hasattr(self.resident_profile, 'per'):
+                dob = getattr(self.resident_profile.per, 'per_dob', None)
+            elif self.pat_type == 'Transient' and self.trans_id:
+                dob = self.trans_id.tran_dob
+
+            year = dob.year if dob else timezone.now().year
+            type_code = 'R' if self.pat_type == 'Resident' else 'T'
             prefix = f'P{type_code}{year}'
             count = Patient.objects.filter(pat_id__startswith=prefix).count() + 1
             self.pat_id = f'{prefix}{str(count).zfill(4)}'
+
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"{self.pat_id} ({self.pat_type})"
     class Meta:
         db_table = 'patient'
         ordering = ['-created_at']
@@ -178,4 +243,4 @@ class Diagnosis(models.Model):
     find = models.ForeignKey(Finding, on_delete=models.CASCADE, related_name='diagnosis', null=True)
     class Meta:
         db_table = 'diagnosis'
-            
+        

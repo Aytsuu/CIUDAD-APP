@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('patientrecords', '0002_remove_patient_per_id_patient_rp_id'),
+        # ('patientrecords', '0002_remove_patient_per_id_patient_rp_id'),
     ]
 
     operations = [

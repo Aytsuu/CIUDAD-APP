@@ -372,17 +372,22 @@
 #             )
 
 
+
 import datetime
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction, connection
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+# Import serializers and models from current app (animalbites)
 from .serializers import *
 from .models import *
-# Ensure Patient and PatientRecord models are correctly imported from their app
+# Import Patient and PatientRecord from patientrecords app
 from apps.patientrecords.models import Patient, PatientRecord 
-from django.db.models import F # Import F object for database expressions
+# Import other models from healthProfiling if needed for specific operations (e.g., getting ResidentProfile or Personal)
+from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
+
+from django.db.models import F 
 
 class AnimalbitePatientDetailsView(generics.ListAPIView):
     """
@@ -392,18 +397,13 @@ class AnimalbitePatientDetailsView(generics.ListAPIView):
     serializer_class = AnimalBitePatientDetailsSerializer
     
     def get_queryset(self):
-        # Get patient_id from URL kwargs (for /patient-details/<str:patient_id>/)
-        # This is how individual patient view passes the ID.
         patient_id = self.kwargs.get('patient_id') 
-        # Fallback to query_params for cases like /patient-details/?patient_id=X (less common for this view)
         if not patient_id:
             patient_id = self.request.query_params.get('patient_id', None)
 
         print(f"DEBUG VIEWS: get_queryset called. Received patient_id: '{patient_id}'")
 
         if patient_id:
-            # If a patient_id is provided, use raw SQL to precisely filter.
-            # This ensures correct behavior with CharField primary keys and complex joins.
             print(f"DEBUG VIEWS: Filtering by specific patient_id: '{patient_id}'.")
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -414,30 +414,24 @@ class AnimalbitePatientDetailsView(generics.ListAPIView):
                     JOIN patient_record pr ON abr.patrec_id = pr.patrec_id
                     JOIN patient p ON pr.pat_id = p.pat_id
                     WHERE CAST(p.pat_id AS TEXT) = %s
-                    AND pr.patrec_type = 'Animal Bites' -- Explicitly filter by patient record type
+                    AND pr.patrec_type = 'Animal Bites' 
                     """,
-                    [str(patient_id)] # Ensure the ID is treated as a string for comparison
+                    [str(patient_id)]
                 )
-                # Fetch all bite_ids that match the patient_id
                 bite_ids = [row[0] for row in cursor.fetchall()]
             
             if bite_ids:
-                # Construct the queryset using the filtered bite_ids
                 queryset = AnimalBite_Details.objects.filter(bite_id__in=bite_ids)
                 print(f"DEBUG VIEWS: Raw SQL found {queryset.count()} records for patient_id '{patient_id}'.")
             else:
-                # If raw SQL finds no bite_ids for the patient, return an empty queryset
                 queryset = AnimalBite_Details.objects.none() 
                 print(f"DEBUG VIEWS: Raw SQL found 0 records for patient_id '{patient_id}'. Returning empty queryset.")
         else:
-            # If no patient_id is provided (this path should be for the overall list view),
-            # return all "Animal Bites" records without patient-specific filtering.
             queryset = AnimalBite_Details.objects.filter(
                 referral__patrec__patrec_type="Animal Bites"
             )
             print(f"DEBUG VIEWS: No specific patient_id provided. Returning all 'Animal Bites' records (count: {queryset.count()}).")
         
-        # Finally, order the results to show the latest records first
         final_queryset = queryset.order_by('-referral__date', '-referral__patrec__created_at')
         print(f"DEBUG VIEWS: Final queryset count before serialization: {final_queryset.count()}")
         return final_queryset
@@ -460,32 +454,21 @@ class CreateAnimalBiteRecordView(APIView):
         print("✅ Validated data:", data)
         
         try:
-            with transaction.atomic(): # Ensures atomicity of the database operations
-                # 1. Get the Patient instance
-                pat_id_str = str(data['pat_id']).strip() # Ensure pat_id is a string and strip whitespace
+            with transaction.atomic(): 
+                # 1. Get the Patient instance based on pat_id (which can be Resident or Transient)
+                pat_id_str = str(data['pat_id']).strip() 
                 print(f"🔍 Looking for patient with pat_id: '{pat_id_str}'")
                 
                 try:
-                    # Use raw SQL to query the Patient model's pat_id (CharField)
-                    # This avoids potential ORM issues with CharField primary keys
-                    with connection.cursor() as cursor:
-                        cursor.execute(
-                            "SELECT * FROM patient WHERE CAST(pat_id AS TEXT) = %s LIMIT 1", 
-                            [pat_id_str]
-                        )
-                        patient_row = cursor.fetchone()
+                    patient = Patient.objects.get(pk=pat_id_str) # Directly query by CharField PK
+                    print(f"✅ Found patient: {patient} (pat_id: {patient.pat_id}, type: {patient.pat_type})")
                     
-                    if not patient_row:
-                        print(f"❌ Patient with pat_id '{pat_id_str}' not found")
-                        return Response(
-                            {'error': f'Patient with ID {pat_id_str} not found'}, 
-                            status=status.HTTP_404_NOT_FOUND
-                        )
-                    
-                    # Reconstruct the Patient object from the fetched row (assuming row[0] is the primary key)
-                    patient = Patient.objects.get(pk=patient_row[0])
-                    print(f"✅ Found patient: {patient} (pat_id: {patient.pat_id})")
-                    
+                except Patient.DoesNotExist:
+                    print(f"❌ Patient with pat_id '{pat_id_str}' not found")
+                    return Response(
+                        {'error': f'Patient with ID {pat_id_str} not found'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
                 except Exception as e:
                     print(f"❌ Error finding patient: {str(e)}")
                     return Response(
@@ -493,11 +476,9 @@ class CreateAnimalBiteRecordView(APIView):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
                 
-                # 2. Create PatientRecord
+                # 2. Get or Create PatientRecord
                 print("🏥 Handling patient record...")
                 try:
-                    # Attempt to get the latest PatientRecord for "Animal Bites" for this patient
-                    # If multiple exist, .first() will pick the latest one due to PatientRecord's default ordering.
                     existing_patient_record = PatientRecord.objects.filter(
                         pat_id=patient,
                         patrec_type="Animal Bites"
@@ -507,7 +488,6 @@ class CreateAnimalBiteRecordView(APIView):
                         patient_record = existing_patient_record
                         print(f"✅ Found existing patient record: {patient_record.patrec_id}")
                     else:
-                        # If no existing record, create a new one
                         patient_record = PatientRecord.objects.create(
                             pat_id=patient,
                             patrec_type="Animal Bites"
@@ -520,15 +500,15 @@ class CreateAnimalBiteRecordView(APIView):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
                 
-                # 3. Create AnimalBite_Referral
+                # 3. Create AnimalBite_Referral (NO 'transient' field here now)
                 print("📝 Creating referral...")
                 try:
                     referral = AnimalBite_Referral.objects.create(
                         receiver=data['receiver'],
                         sender=data['sender'],
                         date=data['date'],
-                        transient=data['transient'],
-                        patrec=patient_record # Link to the PatientRecord
+                        # transient=data['transient'], # REMOVED THIS LINE
+                        patrec=patient_record 
                     )
                     print(f"✅ Created AnimalBite_Referral: {referral.referral_id}")
                 except Exception as e:
@@ -541,12 +521,9 @@ class CreateAnimalBiteRecordView(APIView):
                 # 4. Create AnimalBite_Details
                 print("🦷 Creating bite details...")
                 try:
-                    # Handle custom exposure sites and biting animals by using the actual name
-                    # sent from the frontend if a "custom-" ID was selected.
                     exposure_site_value = data.get('exposure_site', '')
                     biting_animal_value = data.get('biting_animal', '')
                     
-                    # If the selected option was a custom one, use the provided name field
                     if exposure_site_value and str(exposure_site_value).startswith('custom-'):
                         exposure_site_value = data.get('exposure_site_name', exposure_site_value)
                     
@@ -558,11 +535,11 @@ class CreateAnimalBiteRecordView(APIView):
 
                     bite_details = AnimalBite_Details.objects.create(
                         exposure_type=data['exposure_type'],
-                        exposure_site=exposure_site_value, # Use the resolved value
-                        biting_animal=biting_animal_value, # Use the resolved value
+                        exposure_site=exposure_site_value, 
+                        biting_animal=biting_animal_value, 
                         actions_taken=data.get('actions_taken', ''),
                         referredby=data.get('referredby', ''),
-                        referral=referral # Link to the AnimalBite_Referral
+                        referral=referral 
                     )
                     print(f"✅ Created AnimalBite_Details: {bite_details.bite_id}")
                 except Exception as e:
@@ -572,7 +549,6 @@ class CreateAnimalBiteRecordView(APIView):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
                 
-                # Success response
                 response_data = {
                     'patrec_id': patient_record.patrec_id,
                     'referral_id': referral.referral_id,
@@ -584,10 +560,9 @@ class CreateAnimalBiteRecordView(APIView):
                 return Response(response_data, status=status.HTTP_201_CREATED)
                 
         except Exception as e:
-            # Catch any unexpected errors during the entire transaction
             print(f"❌ Transaction failed: {e}")
             import traceback
-            traceback.print_exc() # Print full traceback for debugging
+            traceback.print_exc()
             return Response(
                 {"detail": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -599,14 +574,13 @@ class AnimalbiteDetailsView(generics.ListCreateAPIView):
     Can be filtered by referral ID.
     """
     serializer_class = AnimalBiteDetailsSerializer
-    queryset = AnimalBite_Details.objects.all() # Base queryset
+    queryset = AnimalBite_Details.objects.all() 
 
     def get_queryset(self):
-        # Allow filtering by referral_id if provided in query parameters
         referral_id = self.request.query_params.get('referral', None)
         if referral_id:
             return AnimalBite_Details.objects.filter(referral=referral_id)
-        return super().get_queryset() # Return all if no filter
+        return super().get_queryset() 
 
 class AnimalbiteReferralView(generics.ListCreateAPIView):
     """
@@ -621,31 +595,26 @@ class UpdateAnimalBiteRecordView(APIView):
     """
     def put(self, request, bite_id):
         try:
-            # Retrieve the AnimalBite_Details instance or return 404
             bite_detail = get_object_or_404(AnimalBite_Details, bite_id=bite_id)
-            referral = bite_detail.referral # Get the related referral object
+            referral = bite_detail.referral 
             
-            # Update fields of AnimalBite_Details from request data
-            # Use .get() with default to keep existing value if not provided
             bite_detail.exposure_type = request.data.get('exposure_type', bite_detail.exposure_type)
             bite_detail.exposure_site = request.data.get('exposure_site', bite_detail.exposure_site)
             bite_detail.biting_animal = request.data.get('biting_animal', bite_detail.biting_animal)
             bite_detail.actions_taken = request.data.get('actions_taken', bite_detail.actions_taken)
             bite_detail.referredby = request.data.get('referredby', bite_detail.referredby)
-            bite_detail.save() # Save changes to bite details
+            bite_detail.save() 
             
-            # Update fields of AnimalBite_Referral from request data
             if 'receiver' in request.data:
                 referral.receiver = request.data['receiver']
             if 'sender' in request.data:
                 referral.sender = request.data['sender']
             if 'date' in request.data:
                 referral.date = request.data['date']
-            if 'transient' in request.data:
-                referral.transient = request.data['transient']
-            referral.save() # Save changes to referral
+            # if 'transient' in request.data: # REMOVED THIS LINE
+            #     referral.transient = request.data['transient'] # REMOVED THIS LINE
+            referral.save() 
             
-            # Serialize the updated bite_detail and return success response
             serializer = AnimalBiteDetailsSerializer(bite_detail)
             return Response({
                 'message': 'Animal bite record updated successfully',
@@ -653,7 +622,6 @@ class UpdateAnimalBiteRecordView(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            # Handle any exceptions during the update process
             return Response(
                 {'error': f'Failed to update animal bite record: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -664,18 +632,17 @@ class DeleteAnimalBitePatientView(APIView):
     API view to delete all animal bite records associated with a specific patient.
     Deletes PatientRecord, which cascades to AnimalBite_Referral and AnimalBite_Details.
     """
-    def delete(self, request, patient_id): # patient_id here is the pat_id (varchar) from the frontend
+    def delete(self, request, patient_id): 
         try:
-            with transaction.atomic(): # Ensures atomicity
-                patient_id_str = str(patient_id).strip() # Ensure it's treated as string
+            with transaction.atomic(): 
+                patient_id_str = str(patient_id).strip() 
                 
-                # Use raw SQL to find patrec_ids for "Animal Bites" records belonging to the patient
                 with connection.cursor() as cursor:
                     cursor.execute(
                         """
                         SELECT pr.patrec_id 
                         FROM patient_record pr
-                        JOIN patient p ON pr.pat_id_id = p.pat_id
+                        JOIN patient p ON pr.pat_id = p.pat_id
                         WHERE CAST(p.pat_id AS TEXT) = %s AND pr.patrec_type = 'Animal Bites'
                         """, 
                         [patient_id_str]
@@ -688,8 +655,6 @@ class DeleteAnimalBitePatientView(APIView):
                         status=status.HTTP_404_NOT_FOUND
                     )
                 
-                # Delete all identified PatientRecord instances
-                # This will trigger CASCADE deletes for related AnimalBite_Referral and AnimalBite_Details
                 for patrec_id in patient_record_ids:
                     PatientRecord.objects.filter(patrec_id=patrec_id).delete()
                 
@@ -699,7 +664,6 @@ class DeleteAnimalBitePatientView(APIView):
                 }, status=status.HTTP_200_OK)
                 
         except Exception as e:
-            # Handle any exceptions during the deletion process
             return Response(
                 {"detail": f"Error deleting patient records: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -721,8 +685,6 @@ class DeleteAnimalBiteRecordView(APIView):
                 bite_detail.delete()
                 referral.delete()
                 
-                # Check if this patient_record is now orphaned or if other referrals exist
-                # If no other referrals link to this patient_record, delete the patient_record too.
                 if not AnimalBite_Referral.objects.filter(patrec=patient_record).exists():
                     patient_record.delete()
                 
@@ -737,7 +699,6 @@ class DeleteAnimalBiteRecordView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# This class seems redundant given DeleteAnimalBiteRecordView
 class AnimalbiteDetailsDeleteView(generics.DestroyAPIView):
     """
     Alternative API view for deleting a single AnimalBite_Details record.
@@ -750,13 +711,13 @@ class AnimalbiteDetailsDeleteView(generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                instance = self.get_object() # Gets the AnimalBite_Details instance
+                instance = self.get_object() 
                 referral = instance.referral
                 patient_record = referral.patrec
                 
-                instance.delete() # Deletes AnimalBite_Details
-                referral.delete() # Deletes AnimalBite_Referral
-                patient_record.delete() # Deletes PatientRecord
+                instance.delete() 
+                referral.delete() 
+                patient_record.delete() 
                 
                 return Response(
                     {"message": "Record deleted successfully"}, 
