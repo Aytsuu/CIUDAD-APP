@@ -18,12 +18,12 @@ export const createPatientRecord = async (pat_id: string) => {
 
 export const createVaccinationRecord = async (
   patrec_id: string,
-  status: "forwarded" | "completed" | "partially vaccinated",
+  // status: "forwarded" | "completed" | "partially vaccinated",
   totalDoses: number
 ) => {
   const response = await api.post("vaccination/vaccination-record/", {
     patrec_id: patrec_id,
-    vacrec_status: status,
+    // vacrec_status: status,
     vacrec_totaldose: totalDoses,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -96,13 +96,13 @@ export const getVaccinationHistory = async (vachist_id: string) => {
     });
   };
   
-  // New API function for updating vaccination record
-  export const updateVaccinationRecord = async (vacrec_id: string, status: string | null, updated_at: string) => {
-    await api.put(`vaccination/vaccination-record/${vacrec_id}/`, {
-      updated_at,
-      ...(status && { vacrec_status: status }),
-    });
-  };
+  // // New API function for updating vaccination record
+  // export const updateVaccinationRecord = async (vacrec_id: string, status: string | null, updated_at: string) => {
+  //   await api.put(`vaccination/vaccination-record/${vacrec_id}/`, {
+  //     updated_at,
+  //     ...(status && { vacrec_status: status }),
+  //   });
+  // };
 
   
   

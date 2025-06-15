@@ -22,7 +22,7 @@ import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchVaccinesWithStockVacID } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
-import { calculateNextVisitDate } from "./FunctionHelpers";
+import { calculateNextVisitDate } from "./Calculatenextvisit";
 import {
   useSubmitStep1,
   useSubmitStep2,
@@ -78,18 +78,13 @@ export default function UpdateVaccinationForm() {
       pat_id: patientData.pat_id || "",
       vaccinetype: "", // Will be set dynamically in useEffect
       datevaccinated: new Date().toISOString().split("T")[0],
-      lname: patientData.lname || "",
-      fname: patientData.fname || "",
-      mname: patientData.mname || "",
-      age: patientData.age || "",
-      sex: patientData.sex || "",
-      dob: patientData.dob || "",
-      householdno: patientData.householdno || "",
-      street: patientData.street || "",
-      sitio: patientData.sitio || "",
-      barangay: patientData.barangay || "",
-      city: patientData.city || "",
-      province: patientData.province || "",
+      // lname: patientData.lname || "",
+      // fname: patientData.fname || "",
+      // mname: patientData.mname || "",
+      // age: patientData.age || "",
+      // sex: patientData.sex || "",
+      // dob: patientData.dob || "",
+      
       assignto: "",
       patientType: patientData.patientType || "Resident",
     },
@@ -101,8 +96,8 @@ export default function UpdateVaccinationForm() {
       pr: "",
       temp: "",
       o2: "",
-      bpsystolic: undefined,
-      bpdiastolic: undefined,
+      bpsystolic: "",
+      bpdiastolic: "",
     },
   });
 

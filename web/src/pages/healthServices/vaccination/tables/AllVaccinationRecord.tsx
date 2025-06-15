@@ -76,7 +76,7 @@ export default function AllVaccinationRecords() {
       // const details = record.patient_details || {};
       const info = record.patient_details.personal_info || {};
       const address = record.patient_details.address || {}; // Changed to get address from details
-  
+      
       return {
         pat_id: record.pat_id,
         fname: info.per_fname,
@@ -85,7 +85,7 @@ export default function AllVaccinationRecords() {
         sex: info.per_sex,
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob,
-        householdno: "12", // optional if not present
+        householdno: record.patient_details?.households?.[0]?.hh_id || "N/A",       
         street: address.add_street,
         sitio: address.sitio,
         barangay: address.add_barangay,

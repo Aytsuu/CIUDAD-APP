@@ -5,19 +5,11 @@ import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ZodError } from "zod";
-import {
-  VaccineSchema,
-  type VaccineSchemaType,
-} from "@/form-schema/vaccineSchema";
-import {
-  VitalSignsSchema,
-  type VitalSignsType,
-} from "@/form-schema/vaccineSchema";
+import { VaccineSchema, type VaccineSchemaType } from "@/form-schema/vaccineSchema";
+import { VitalSignsSchema, type VitalSignsType } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link, useNavigate } from "react-router-dom";
 import { Combobox } from "@/components/ui/combobox";
-import { api } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -26,16 +18,13 @@ import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
-import { calculateNextVisitDate } from "./FunctionHelpers";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { fetchPatientRecords } from "./restful-api/FetchPatient";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 
 export default function PatNewVacRecForm() {
   const navigate = useNavigate();
-  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
-    "self"
-  );
+  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">("self");
   const [patients, setPatients] = useState({
     default: [] as any[],
     formatted: [] as { id: string; name: string }[],
@@ -69,27 +58,16 @@ export default function PatNewVacRecForm() {
     if (selectedPatient) {
       setSelectedPatientData(selectedPatient);
       const personalInfo = selectedPatient.personal_info;
-      const residentProfile = selectedPatient.resident_profile?.[0];
-      const household = selectedPatient.households?.[0];
 
       // Update form values
       form.setValue("pat_id", selectedPatient.pat_id);
-      form.setValue("lname", personalInfo?.per_lname || "");
-      form.setValue("fname", personalInfo?.per_fname || "");
-      form.setValue("mname", personalInfo?.per_mname || "");
-      form.setValue("sex", personalInfo?.per_sex || "");
-      form.setValue("dob", personalInfo?.per_dob || "");
-      form.setValue("age", `${calculateAge(personalInfo?.per_dob)} `);
+      // form.setValue("lname", personalInfo?.per_lname || "");
+      // form.setValue("fname", personalInfo?.per_fname || "");
+      // form.setValue("mname", personalInfo?.per_mname || "");
+      // form.setValue("sex", personalInfo?.per_sex || "");
+      // form.setValue("dob", personalInfo?.per_dob || "");
+      // form.setValue("age", `${calculateAge(personalInfo?.per_dob)} `);
       form.setValue("patientType", selectedPatient.pat_type || "Resident");
-
-      // Set address information if available
-      if (household) {
-        form.setValue("householdno", household.hh_id || "");
-        form.setValue("street", household.hh_street || "");
-        form.setValue("barangay", household.hh_barangay || "");
-        form.setValue("city", household.hh_city || "");
-        form.setValue("province", household.hh_province || "");
-      }
     }
   };
 
@@ -99,18 +77,12 @@ export default function PatNewVacRecForm() {
       pat_id: undefined,
       vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
-      lname: "",
-      fname: "",
-      mname: "",
-      age: "",
-      sex: "",
-      dob: "",
-      householdno: "",
-      street: "",
-      sitio: "",
-      barangay: "",
-      city: "",
-      province: "",
+      // lname: "",
+      // fname: "",
+      // mname: "",
+      // age: "",
+      // sex: "",
+      // dob: "",
       assignto: "",
       patientType: "Resident",
     },
@@ -122,8 +94,8 @@ export default function PatNewVacRecForm() {
       pr: "",
       temp: "",
       o2: "",
-      bpsystolic: undefined,
-      bpdiastolic: undefined,
+      bpsystolic: "",
+      bpdiastolic: "",
     },
   });
 
@@ -157,8 +129,8 @@ export default function PatNewVacRecForm() {
         reset: form.reset // Use form.reset
       },
       form2: { reset: form2.reset },
-      setAssignmentOption,
-      calculateNextVisitDate,
+      // setAssignmentOption,
+      // calculateNextVisitDate,
     });
   };
 
@@ -268,7 +240,6 @@ export default function PatNewVacRecForm() {
                 ]}
                 readOnly
               />
-
               <FormInput
                 control={form.control}
                 name="lname"
@@ -320,24 +291,43 @@ export default function PatNewVacRecForm() {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="householdno"
-                label="Household No."
-              />
-              <FormInput control={form.control} name="street" label="Street" />
-              <FormInput control={form.control} name="sitio" label="Sitio" />
-              <FormInput
-                control={form.control}
-                name="barangay"
-                label="Barangay"
-              />
-              <FormInput control={form.control} name="city" label="City" />
-              <FormInput
-                control={form.control}
-                name="province"
-                label="Province"
-              />
+              <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">Street</Label>
+              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                {selectedPatientData?.address?.add_street || ""}
+              </div>
+              </div>
+              <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">Sitio</Label>
+              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                {selectedPatientData?.address?.sitio || ""}
+              </div>
+              </div>
+              <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">Barangay</Label>
+              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                {selectedPatientData?.address?.add_barangay || ""}
+              </div>
+              </div>
+              <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">City</Label>
+              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                {selectedPatientData?.address?.add_city || ""}
+              </div>
+              </div>
+              <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">Province</Label>
+              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                {selectedPatientData?.address?.add_province || ""}
+              </div>
+              </div>
+              {/* Optional: Uncomment to display Household ID if needed */}
+              <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">Household No.</Label>
+              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                {selectedPatientData?.households?.[0]?.hh_id || ""}
+              </div>
+              </div>
             </div>
 
             <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">

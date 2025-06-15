@@ -25,9 +25,9 @@ import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
-import { calculateNextVisitDate } from "./FunctionHelpers";
+import { calculateNextVisitDate } from "./Calculatenextvisit";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/NewVacRecordQueries";
-
+import { calculateAge } from "@/helpers/ageCalculator";
 export default function VaccinationForm() {
   const navigate = useNavigate();
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
@@ -44,18 +44,18 @@ export default function VaccinationForm() {
       pat_id: patientData.pat_id || "",
       vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
-      lname: patientData.lname || "",
-      fname: patientData.fname || "",
-      mname: patientData.mname || "",
-      age: patientData.age || "",
-      sex: patientData.sex || "",
-      dob: patientData.dob || "",
-      householdno: patientData.householdno || "",
-      street: patientData.street || "",
-      sitio: patientData.sitio || "",
-      barangay: patientData.barangay || "",
-      city: patientData.city || "",
-      province: patientData.province || "",
+      // lname: patientData.lname || "",
+      // fname: patientData.fname || "",
+      // mname: patientData.mname || "",
+      // age: patientData.age || "",
+      // sex: patientData.sex || "",
+      // dob: patientData.dob || "",
+      // householdno: patientData.householdno || "",
+      // street: patientData.street || "",
+      // sitio: patientData.sitio || "",
+      // barangay: patientData.barangay || "",
+      // city: patientData.city || "",
+      // province: patientData.province || "",
       assignto: "",
       patientType: patientData.patientType || "Resident",
     },
@@ -67,16 +67,15 @@ export default function VaccinationForm() {
       pr: "",
       temp: "",
       o2: "",
-      bpsystolic: undefined,
-      bpdiastolic: undefined,
+      bpsystolic: "",
+      bpdiastolic: "",
     },
   });
+
 
   useEffect(() => {
     console.log("Form errors:", form.formState.errors);
   }, [form.formState.errors]);
-
-
 
   const submitStep1 = useSubmitStep1();
   const submitStep2 = useSubmitStep2();
@@ -85,11 +84,7 @@ export default function VaccinationForm() {
     submitStep1.mutate({
       data,
       assignmentOption,
-      form: {
-        setError: form.setError,
-        getValues: form.getValues,
-        reset: form.reset,
-      },
+      form: { reset: form.reset },
     });
   };
 
@@ -102,17 +97,25 @@ export default function VaccinationForm() {
         getValues: form.getValues,
         reset: form.reset,
       },
-      form2: { reset: form2.reset },
-      setAssignmentOption,
-      calculateNextVisitDate,
+      form2: { getValues: form.getValues, reset: form2.reset },
     });
   };
-
 
   const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock();
   useEffect(() => {
     form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
   }, [form]);
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "vaccinetype") {
+        const selectedVaccine = vaccineStocksOptions.find(
+          (vaccine) => vaccine.id === value.vaccinetype
+        );
+        console.log("Selected Vaccine ID:", selectedVaccine?.id);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, vaccineStocksOptions]);
 
   return (
     <div>
@@ -128,7 +131,7 @@ export default function VaccinationForm() {
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-           Vaccination Form
+            Vaccination Form
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view patients information
@@ -174,111 +177,117 @@ export default function VaccinationForm() {
               />
             </div>
 
+        
             <h2 className="font-semibold text-blue bg-blue-50 rounded-md">
               Basic Information
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormSelect
-                control={form.control}
-                name="patientType"
-                label="Patient Type"
-                options={[
-                  { id: "Resident", name: "Resident" },
-                  { id: "Transient", name: "Transient" },
-                  { id: "Regular", name: "Regular" },
-                ]}
-                readOnly
-              />
 
-              <FormInput
-                control={form.control}
-                name="lname"
-                label="Last Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="fname"
-                label="First Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="mname"
-                label="Middle Name"
-                readOnly
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormDateTimeInput
-                control={form.control}
-                name="dob"
-                label="Date of Birth"
-                type="date"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="age"
-                label="Age"
-                type="number"
-                readOnly
-              />
-              <FormSelect
-                control={form.control}
-                name="sex"
-                label="Sex"
-                options={[
-                  { id: "female", name: "Female" },
-                  { id: "male", name: "Male" },
-                ]}
-                readOnly
-              />
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Last Name.
+                  </Label>
+                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                    {patientData.lname || "N/A"}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium text-gray-700">
+                    First Name
+                  </Label>
+                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                    {patientData.fname || "N/A"}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Middle Name
+                  </Label>
+                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                    {patientData.mname || "N/A"}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Date of Birth
+                  </Label>
+                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                    {patientData.dob || "N/A"}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Age
+                  </Label>
+                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {calculateAge(
+                      patientData.dob || "",)}                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <Label className="text-sm font-medium text-gray-700">
+                    Sex
+                  </Label>
+                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                    {patientData.sex || "N/A"}
+                  </div>
+                </div>
+              </div>
+       
 
             <h2 className="font-semibold text-blue py-2 bg-blue-50 rounded-md mb-3">
               Address Information
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="householdno"
-                label="Household No."
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="street"
-                label="Street"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="sitio"
-                label="Sitio"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="barangay"
-                label="Barangay"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="city"
-                label="City"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="province"
-                label="Province"
-                readOnly
-              />
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Household No.
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.householdno || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Street
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.street || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Sitio
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.sitio || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Barangay
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.barangay || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  City
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.city || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Province
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.province || "N/A"}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
@@ -325,7 +334,7 @@ export default function VaccinationForm() {
                   variant="outline"
                   className="w-[120px] border-gray-300 hover:bg-gray-50"
                   type="button"
-                  onClick={() => form.reset()}
+                  onClick={() => navigate(-1)}
                 >
                   Cancel
                 </Button>
@@ -402,9 +411,9 @@ export default function VaccinationForm() {
                   type="button"
                   variant="outline"
                   className="w-[120px] border-gray-300 hover:bg-gray-50"
-                  onClick={() => setAssignmentOption("other")}
+                  onClick={() => navigate(-1)}
                 >
-                  Back
+                  Cancel
                 </Button>
                 <Button type="submit" className="w-[120px]">
                   Complete

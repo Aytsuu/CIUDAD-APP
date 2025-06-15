@@ -14,16 +14,9 @@ class PatientView(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
+    
     def get_queryset(self):
-        return Patient.objects.select_related(
-            'rp_id__per',
-        ).prefetch_related(
-            Prefetch(
-                'rp_id__per__personaladdress_set',
-                queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
-            )
-        ).filter(pat_status='Active')
+        return Patient.objects.filter(pat_status='Active')
 
 class PatientDetailView(generics.RetrieveAPIView):
     serializer_class = PatientSerializer

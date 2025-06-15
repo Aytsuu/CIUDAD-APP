@@ -14,7 +14,7 @@ import {
   deleteVitalSigns, 
   deleteVaccinationHistory,
   updateFollowUpVisit,
-  updateVaccinationRecord, 
+  // updateVaccinationRecord, 
   createAntigenStockTransaction
 } from '../restful-api/PostAPI';
 import { VaccineSchemaType, VitalSignsType } from '@/form-schema/vaccineSchema';
@@ -104,7 +104,7 @@ export const useSubmitStep1 = () => {
             throw new Error("Patient record ID is null. Cannot create vaccination record.");
           }
 
-          const vaccinationRecord = await createVaccinationRecord(patrec_id, "forwarded", 0);
+          const vaccinationRecord = await createVaccinationRecord(patrec_id,  0);
           vacrec_id = vaccinationRecord.vacrec_id;
 
           if (vacrec_id) {
@@ -221,7 +221,7 @@ export const useSubmitStep2 = () => {
             throw new Error("Patient record ID is null. Cannot create vaccination record.");
           }
 
-          const newVaccinationRecord = await createVaccinationRecord(newpatrec_id, "completed", 1);
+          const newVaccinationRecord = await createVaccinationRecord(newpatrec_id, 1);
           newVaccrec_id = newVaccinationRecord.vacrec_id;
 
           const { interval, time_unit } = vaccineData.vaccinelist.routine_frequency || {};
@@ -243,11 +243,12 @@ export const useSubmitStep2 = () => {
             newfollowv_id
           );
           vachist_id = vaccinationHistory.vachist_id;
+
         } else {
           if (maxDoses > doseNumber) {
             await updateFollowUpVisit(oldFollowv_id, "completed");
 
-            await updateVaccinationRecord(oldVaccrec_id, null, new Date().toISOString());
+            // await updateVaccinationRecord(oldVaccrec_id, null, new Date().toISOString());
 
             const doseInterval = vaccineData.vaccinelist.intervals.find(
               (interval: { dose_number: number; interval: number; time_unit: string }) =>
@@ -279,7 +280,7 @@ export const useSubmitStep2 = () => {
             vachist_id = vaccinationHistory.vachist_id;
           } else {
             await updateFollowUpVisit(oldFollowv_id, "completed");
-            await updateVaccinationRecord(oldVaccrec_id, "completed", new Date().toISOString());
+            // await updateVaccinationRecord(oldVaccrec_id, "completed", new Date().toISOString());
 
             const vaccinationHistory = await createVaccinationHistory(
               oldVaccrec_id,

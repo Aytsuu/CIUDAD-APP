@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('patientrecords', '0029_finding_illness_physicalexamlist_bodymeasurement_and_more'),
+        # ('patientrecords', '0029_finding_illness_physicalexamlist_bodymeasurement_and_more'),
     ]
 
     operations = [

@@ -1,6 +1,6 @@
 
 import { useState,useEffect } from "react";
-import { getVaccintStocks,getSpecificVaccintStocks } from "./GetVaccination"
+import { getVaccintStocks,getVaccinationHistory } from "./GetVaccination"
 
 
 export const fetchVaccinesWithStock = () => {
@@ -32,7 +32,7 @@ export const fetchVaccinesWithStock = () => {
 
                 // Transform data only if stocks exist
                 const transformedData = availableStocks.map((stock: any) => ({
-                    id: String(stock.vacStck_id),
+                    id: String(stock.vaccinelist?.vac_id),
                     name: stock.vaccinelist?.vac_name || 'Unknown Vaccine',
                     vac_id: String(stock.vac_id),
                     expiry: stock.inv_details?.expiry_date || null,
@@ -57,6 +57,12 @@ export const fetchVaccinesWithStock = () => {
 };
 
 
+// export const checkVachistory =() =>{
+
+//    vachistResponse = await getVaccinationHistory()
+
+
+// }
 
 // export const fetchSpecificVaccinesWithStock = (vacStck_id: number) => {
 //     const [vaccines, setVaccines] = useState<{

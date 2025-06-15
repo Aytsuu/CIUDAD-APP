@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('auth', '0012_alter_user_first_name_max_length'),
-        ('healthProfiling', '0003_patient_solid_waste_mgmt_and_more'),
+        # ('healthProfiling', '0003_patient_solid_waste_mgmt_and_more'),
     ]
 
     operations = [

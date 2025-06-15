@@ -55,17 +55,17 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        return VaccinationHistory.objects.filter(
-            vacrec__patrec_id__pat_id=obj,
-            vacrec__patrec_id__patrec_type__iexact='Vaccination'
+        return VaccinationRecord.objects.filter(
+            patrec_id__pat_id=obj,
+            patrec_id__patrec_type__iexact='Vaccination'
         
         ).count()
 
 
 
-    # def get_vaccination_records(self, obj):
-    #     records = obj.patient_records.filter(
-    #         patrec_type__iexact='Vaccination',
-    #         vaccination_records__vacrec_status__iexact='complete'
-    #     ).distinct()
-    #     return PatientRecordSerializer(records, many=True).data
+    def get_vaccination_records(self, obj):
+        records = obj.patient_records.filter(
+            patrec_type__iexact='Vaccination',
+            vaccination_records__vacrec_status__iexact='complete'
+        ).distinct()
+        return PatientRecordSerializer(records, many=True).data

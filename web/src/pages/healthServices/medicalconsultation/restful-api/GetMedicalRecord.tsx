@@ -22,7 +22,7 @@ import {api} from "@/api/api";
 // }
 
 
-export const getPatientRecord =  async () => {
+export const getPatient =  async () => {
   try {
     const response = await api.get(`/patient`);
     return response.data;

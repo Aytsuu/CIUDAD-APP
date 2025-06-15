@@ -51,7 +51,7 @@ export default function EditCommodityStock() {
       {
         onSuccess: () => {
           navigate("/mainInventoryStocks");
-          toast.success("Commodity stock updated successfully", {
+          toast.success("Stock updated successfully", {
             icon: (
               <CircleCheck size={24} className="fill-green-500 stroke-white" />
             ),

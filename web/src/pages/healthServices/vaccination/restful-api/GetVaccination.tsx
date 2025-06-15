@@ -22,7 +22,7 @@ export interface VaccinationPatientRecord {
 }
 
 
-export const getPatientRecord =  async () => {
+export const getPatient =  async () => {
   try {
     const response = await api.get(`/patient`);
     return response.data;
@@ -91,4 +91,13 @@ export const getVaccinelist =  async () => {
       }
   }
 
+
+  export const getVaccinationHistory =  async () => {
+    try {
+        const response = await api.get(`/vaccination/vaccination-history/`);
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }   
+  }
     
