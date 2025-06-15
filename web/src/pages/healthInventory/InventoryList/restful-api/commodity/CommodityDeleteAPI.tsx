@@ -1,5 +1,5 @@
 
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 
 export const handleDeleteCommodityList = async (id: string, callback?: () => void) => {
     try {
@@ -12,7 +12,7 @@ export const handleDeleteCommodityList = async (id: string, callback?: () => voi
   
 
   
-// import {api} from "@/pages/api/api";
+// import {api} from "@/api/api";
 
 // export const handleDeleteCommodityList = async (
 //     com_id: number,

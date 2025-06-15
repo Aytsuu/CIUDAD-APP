@@ -1,5 +1,5 @@
 
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 
 export const handleDeleteFirstAidList = async (id: string, callback?: () => void) => {
     try {

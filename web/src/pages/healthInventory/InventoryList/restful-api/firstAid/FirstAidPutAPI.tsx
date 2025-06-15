@@ -1,5 +1,5 @@
 
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const updateFirstAid = async (fa_id: string, data:Record<string,string>) => {

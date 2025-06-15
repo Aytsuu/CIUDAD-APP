@@ -1,4 +1,4 @@
-import {api}  from "@/pages/api/api";
+import {api}  from "@/api/api";
 
 export const addMedicineInventory = async (data: Record<string, any>, inv_id: number) => {
   try {

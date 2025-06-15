@@ -1,4 +1,4 @@
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 import { updateInventoryTimestamp } from "../../InventoryAPIQueries"; // Adjust the path if needed
 
 export const updateVaccineStock = async (

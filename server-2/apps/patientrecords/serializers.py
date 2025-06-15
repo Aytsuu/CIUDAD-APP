@@ -20,12 +20,11 @@ class PartialUpdateMixin:
                     self.fields[field].required = False
         return super().to_internal_value(data)
     
+
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
-    # spouse = serializers.SerializerMethodField()
-    # Use the minimal serializer for resident profile
-    resident_profile = ResidentProfileMinimalSerializer(source='rp_id', read_only=True)
+    rp_id = ResidentProfileMinimalSerializer(read_only=True)
     family_compositions = serializers.SerializerMethodField()
     households = serializers.SerializerMethodField()
 
@@ -34,46 +33,97 @@ class PatientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_personal_info(self, obj):
-        personal = obj.rp_id.per  # ✅ Get the full Personal instance
-        return PersonalSerializer(personal, context=self.context).data
-
-    def get_personal_info(self, obj):
-        personal = obj.rp_id.per  # ✅ Get the full Personal instance
-        return PersonalSerializer(personal, context=self.context).data
+        # Resident personal data
+        if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
+            personal = obj.rp_id.per
+            return PersonalSerializer(personal, context=self.context).data
+        #
+        # Transient personal data
+        if obj.pat_type == 'Transient' and obj.trans_id:
+            trans = obj.trans_id
+            return {
+                'per_fname': trans.tran_fname,
+                'per_lname': trans.tran_lname,
+                'per_mname': trans.tran_mname,
+                'per_suffix': trans.tran_suffix,
+                'per_dob': trans.tran_dob,
+                'per_sex': trans.tran_sex,
+                'per_status': trans.tran_status,
+                'per_edAttainment': trans.tran_ed_attainment,
+                'per_religion': trans.tran_religion,
+                'per_contact': trans.tran_contact,
+            }
+        return None
 
     def get_family_compositions(self, obj):
-        resident_profiles = obj.rp_id.per.personal_information.all()
-        resident_profiles = obj.rp_id.per.personal_information.all()
-        compositions = FamilyComposition.objects.filter(rp__in=resident_profiles)
-        return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
-
-    def get_household_no(self, obj):
-        """Get the household number for this patient"""
-        try:
-            households = obj.rp_id.household_set.first()
-            return households.hh_id if households else None
-        except (AttributeError, TypeError):
-            return None
+        if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
+            rp_ids = obj.rp_id.per.personal_information.all()
+            compositions = FamilyComposition.objects.filter(rp__in=rp_ids)
+            return FCWithProfileDataSerializer(compositions, many=True, context=self.context).data
+        return []
 
     def get_households(self, obj):
-        resident_profiles = obj.rp_id.per.personal_information.all()
-        resident_profiles = obj.rp_id.per.personal_information.all()
-        households = Household.objects.filter(rp__in=resident_profiles)
-        return HouseholdMinimalSerializer(households, many=True, context=self.context).data
-    
+        if obj.pat_type == 'Resident' and obj.rp_id and hasattr(obj.rp_id, 'per'):
+            rp_ids = obj.rp_id.per.personal_information.all()
+            households = Household.objects.filter(rp__in=rp_ids)
+            return HouseholdMinimalSerializer(households, many=True, context=self.context).data
+        return []
 
     def get_address(self, obj):
-        if obj.rp_id and obj.rp_id.per:
-            personal_address = PersonalAddress.objects.filter(per=obj.rp_id.per).first()
+        if obj.pat_type == 'Resident' and obj.rp_id:
+            # First: Try to fetch PersonalAddress
+            personal_address = PersonalAddress.objects.select_related('add', 'add__sitio').filter(per=obj.rp_id.per).first()
             if personal_address and personal_address.add:
                 address = personal_address.add
-                return {
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                full_address = f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
+                result = {
                     'add_street': address.add_street,
                     'add_barangay': address.add_barangay,
                     'add_city': address.add_city,
                     'add_province': address.add_province,
-                    'sitio': address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                    'sitio': sitio,
+                    'full_address': full_address
                 }
+                print("✅ PersonalAddress used →", result)
+                return result
+
+            # Fallback: Try to fetch from Household
+            household = Household.objects.select_related('add', 'add__sitio').filter(rp=obj.rp_id).first()
+            if household and household.add:
+                address = household.add
+                sitio = address.sitio.sitio_name if address.sitio else address.add_external_sitio
+                full_address = f"{sitio}, {address.add_barangay}, {address.add_city}, {address.add_province}, {address.add_street}"
+                result = {
+                    'add_street': address.add_street,
+                    'add_barangay': address.add_barangay,
+                    'add_city': address.add_city,
+                    'add_province': address.add_province,
+                    'sitio': sitio,
+                    'full_address': full_address
+                }
+                print("⚠️ No PersonalAddress. Used Household instead →", result)
+                return result
+
+            print("❌ No PersonalAddress or Household address found.")
+        
+        # Transient fallback
+        if obj.pat_type == 'Transient' and obj.trans_id and obj.trans_id.tradd_id:
+            trans_addr = obj.trans_id.tradd_id
+            sitio = trans_addr.tradd_sitio
+            full_address = f"{sitio}, {trans_addr.tradd_barangay}, {trans_addr.tradd_city}, {trans_addr.tradd_province}, {trans_addr.tradd_street}"
+            result = {
+                'add_street': trans_addr.tradd_street,
+                'add_barangay': trans_addr.tradd_barangay,
+                'add_city': trans_addr.tradd_city,
+                'add_province': trans_addr.tradd_province,
+                'sitio': sitio,
+                'full_address': full_address
+            }
+            print("📦 Transient Address →", result)
+            return result
+
+        print("❓ Address not found for any type.")
         return None
     
     
@@ -90,6 +140,9 @@ class PatientSerializer(serializers.ModelSerializer):
     #         }
     #     except Spouse.DoesNotExist:
     #         return None
+
+
+
     
 
 class PatientRecordSerializer(serializers.ModelSerializer):

@@ -3,6 +3,7 @@ from django.db.models import Max
 from django.utils import timezone
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
+from django.utils import timezone
 
 # Create your models here.
 
@@ -16,6 +17,8 @@ from apps.healthProfiling.models import Personal, ResidentProfile
 #     class Meta:
 #         db_table = 'patient'
 #         ordering = ['-created_at']
+
+
 
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
@@ -87,18 +90,18 @@ class Patient(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
         if self.pat_type == 'Resident' and not self.rp_id:
-            raise ValidationError("Resident patients must have a resident_profile.")
+            raise ValidationError("Resident patients must have a rp_id.")
         if self.pat_type == 'Transient' and not self.trans_id:
             raise ValidationError("Transient patients must have a transient_profile.")
         if self.rp_id and self.trans_id:
-            raise ValidationError("Patient cannot have both resident_profile and trans_id.")
+            raise ValidationError("Patient cannot have both rp_id and trans_id.")
 
     def save(self, *args, **kwargs):
         # Auto-generate pat_id if not set
         if not self.pat_id:
             # Determine DOB source
             dob = None
-            if self.pat_type == 'Resident' and self.rp_id and hasattr(self.rp_id, 'per'):  
+            if self.pat_type == 'Resident' and self.rp_id and hasattr(self.rp_id, 'per'):
                 dob = getattr(self.rp_id.per, 'per_dob', None)
             elif self.pat_type == 'Transient' and self.trans_id:
                 dob = self.trans_id.tran_dob
@@ -127,7 +130,6 @@ class Patient(models.Model):
 
     def __str__(self):
         return f"{self.pat_id} ({self.pat_type})"
-    
     class Meta:
         db_table = 'patient'
         ordering = ['-created_at']

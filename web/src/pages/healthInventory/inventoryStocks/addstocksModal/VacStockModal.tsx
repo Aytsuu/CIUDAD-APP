@@ -9,7 +9,7 @@ import {
   VaccineStocksSchema,
 } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { useEffect, useState } from "react";
-import { getVaccine } from "../REQUEST/Get";
+import { getVaccine } from "../REQUEST/Antigen/restful-api/VaccineGetAPI";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Link, useNavigate } from "react-router";
 import { Pill, CircleCheck,Loader2 } from "lucide-react";

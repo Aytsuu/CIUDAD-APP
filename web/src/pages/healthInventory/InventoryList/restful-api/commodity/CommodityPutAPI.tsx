@@ -1,5 +1,5 @@
 
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export const updateCommodity = async (com_id: string, data:Record<string,string>) => {

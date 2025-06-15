@@ -14,3 +14,16 @@ export const getFirstAidInventoryList = async () => {
   
 
   
+  export const  getFirstAidStocks = async()=>{
+    try{
+      const res= await api.get("inventory/firstaidinventorylist/")
+      if(res.status==200){
+        return res.data;
+      }
+      console.error(res.status)
+      return[]
+    }catch(err){
+      console.log(err)
+      return[]
+    }
+  }

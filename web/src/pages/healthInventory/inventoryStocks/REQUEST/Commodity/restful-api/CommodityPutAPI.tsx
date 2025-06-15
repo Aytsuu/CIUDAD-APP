@@ -1,4 +1,4 @@
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 
 export const fetchCommodityStock = async (cinv_id: number) => {
   const res = await api.get(`inventory/commodityinventorylist/`);

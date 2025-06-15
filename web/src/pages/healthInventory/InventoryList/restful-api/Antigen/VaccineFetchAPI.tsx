@@ -1,4 +1,4 @@
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 export const getVaccineList = async () => {
     try {
       const res = await api.get("inventory/vac_list/");

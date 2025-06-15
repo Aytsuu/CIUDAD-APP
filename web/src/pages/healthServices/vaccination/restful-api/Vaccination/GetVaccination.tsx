@@ -22,7 +22,7 @@ export interface VaccinationPatientRecord {
 }
 
 
-export const getPatientRecord =  async () => {
+export const getPatient =  async () => {
   try {
     const response = await api.get(`/patient`);
     return response.data;
@@ -56,7 +56,15 @@ export const getVaccinationRecordById =  async (id: number) => {
 }
 
 
-
+export const getVaccinationCount = async (patId: string) => {
+  try {
+    const response = await api.get(`/vaccination/vacrec-count/${patId}/`);
+    return response.data.vaccination_count;
+  } catch (err) {
+    console.error("Failed to fetch vaccination count:", err);
+    return 0; // or throw if you want error handling on the UI
+  }
+};
 
   export const getVaccintStocks =  async () => {
       try {
@@ -81,15 +89,33 @@ export const getVaccinelist =  async () => {
 
 
 
-
    
-    export const getSpecificVaccintStocks =  async (id:number) => {
+    export const getSpecificVaccintStocks =  async (vac_id:number) => {
       try {
-          const response = await api.get(`/inventory/vaccine_stocks/${id}/`);
+          const response = await api.get(`/inventory/vaccine_stocks_vac/${vac_id}/`);
           return response.data;
       } catch (err) {
           console.error(err);
       }
   }
 
+
+  export const getVaccinationHistory =  async () => {
+    try {
+        const response = await api.get(`/vaccination/vaccination-history/`);
+        return response.data;
+    } catch (err) {
+        console.error(err);
+    }   
+  }
     
+  export const getVaccinatedCount = async () => {
+    try {
+      const response = await api.get('/vaccination/count-vaccinated/');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch vaccinated count:", error);
+      throw error;
+    }
+  };
+  

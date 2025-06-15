@@ -1,6 +1,6 @@
 
 import { useMutation,useQueryClient } from "@tanstack/react-query"; // or 'react-query' depending on your version
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 import {updateVaccineStock} from "../restful-api/VaccinePutAPI"; // Adjust the path if needed
 import { AntigenTransaction } from "../restful-api/VaccinePostAPI";
 

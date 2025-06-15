@@ -14,7 +14,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getFirstAidStocks } from "../REQUEST/Get";
+import { getFirstAidStocks } from "../REQUEST/FirstAid/restful-api/FirstAidGetAPI";
 import { archiveInventory } from "../REQUEST/Archive/ArchivePutAPI";
 import { getColumns } from "../tables/columns/FirstAidCol";
 import { toast } from "sonner";

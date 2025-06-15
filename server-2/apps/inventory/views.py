@@ -422,6 +422,15 @@ class VaccineStockRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
         obj = get_object_or_404(VaccineStock, vacStck_id=vacStck_id)
         return obj
     
+# class VaccineStockVacRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = VaccineStockSerializer
+#     queryset = VaccineStock.objects.all()
+#     lookup_field = 'vac_id'
+#     def get_object(self):
+#         vac_id = self.kwargs.get('vac_id')
+#         obj = get_object_or_404(VaccineStock, vac_id=vac_id)
+#         return obj
+    
     
     
 class ImmunizationStockSuppliesView(generics.ListCreateAPIView):

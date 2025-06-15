@@ -1,4 +1,4 @@
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 import { ca } from "date-fns/locale";
 

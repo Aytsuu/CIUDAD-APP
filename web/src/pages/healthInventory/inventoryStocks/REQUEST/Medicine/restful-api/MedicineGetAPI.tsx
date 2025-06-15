@@ -1,5 +1,5 @@
 // medicineStockService.ts
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 
 
 export const getMedicineInventory = async () => {

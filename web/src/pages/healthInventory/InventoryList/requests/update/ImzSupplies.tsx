@@ -1,5 +1,5 @@
 
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 import { toTitleCase } from "../case";
 
 export const updateImzSuppliesList = async (imz_id: number, comName: string) => {

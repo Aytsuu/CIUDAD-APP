@@ -12,16 +12,20 @@ import {
   Activity,
   Calendar,
   ChevronRight,
+  Heart,
+  Thermometer,
+  Wind,
+  Droplets,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api } from "@/api/api";
-import { DataTable } from "@/components/ui/table/history-table-col"; // Make sure this path is correct
+import { DataTable } from "@/components/ui/table/history-table-col";
 import { ColumnDef } from "@tanstack/react-table";
 
-type VaccinationHistory = { 
+type VaccinationHistory = {
   vachist_id: string;
   vachist_doseNo: number;
   vachist_status: string;
@@ -46,7 +50,6 @@ type VaccinationHistory = {
   vacrec_id: number;
 };
 
-// Cache object outside the component
 const vaccinationHistoryCache: Record<string, VaccinationHistory[]> = {};
 
 export default function VaccinationView() {
@@ -54,7 +57,9 @@ export default function VaccinationView() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, Vaccination } = params || {};
-  const [vaccinationHistory, setVaccinationHistory] = useState<VaccinationHistory[]>([]);
+  const [vaccinationHistory, setVaccinationHistory] = useState<
+    VaccinationHistory[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,7 +70,6 @@ export default function VaccinationView() {
   const fetchVaccinationHistory = useCallback(async () => {
     if (!patientId) return;
 
-    // Check cache first
     if (vaccinationHistoryCache[patientId]) {
       setVaccinationHistory(vaccinationHistoryCache[patientId]);
       setLoading(false);
@@ -82,7 +86,8 @@ export default function VaccinationView() {
       const responseData = response.data;
 
       if (!responseData || responseData.length === 0) {
-        throw new Error("No vaccination histories found");
+        setVaccinationHistory([]);
+        return;
       }
 
       const formattedHistories = responseData.map((history: any) => ({
@@ -122,6 +127,7 @@ export default function VaccinationView() {
     } catch (err) {
       console.error("Error fetching vaccination history:", err);
       setError("Failed to load vaccination history");
+      setVaccinationHistory([]);
     } finally {
       setLoading(false);
     }
@@ -131,9 +137,6 @@ export default function VaccinationView() {
     fetchVaccinationHistory();
   }, [fetchVaccinationHistory]);
 
-
-
-  
   const currentVaccination = useMemo(() => {
     return vaccinationHistory.find(
       (history) => history.vachist_id === Vaccination?.vachist_id
@@ -143,18 +146,18 @@ export default function VaccinationView() {
   const relevantHistory = useMemo(() => {
     if (!Vaccination?.created_at) return [];
     return vaccinationHistory.filter(
-      (history) => new Date(history.created_at) <= new Date(Vaccination.created_at)
+      (history) =>
+        new Date(history.created_at) <= new Date(Vaccination.created_at)
     );
   }, [vaccinationHistory, Vaccination]);
 
+  const hasHistory = useMemo(() => {
+    return relevantHistory.length > 0;
+  }, [relevantHistory]);
 
-
-
-  // Create data for DataTable - transform the records for table display
   const tableData = useMemo(() => {
-    if (relevantHistory.length === 0) return [];
-    
-    // Create columns for each record
+    if (!hasHistory) return [];
+
     const tableRows = [
       { attribute: "Date", type: "heading" },
       { attribute: "Vaccine Name", type: "data" },
@@ -166,33 +169,40 @@ export default function VaccinationView() {
       { attribute: "Respiratory Rate", type: "data" },
       { attribute: "Oxygen Saturation", type: "data" },
     ];
-    
 
-
-    // For each row, add the data from each record
     return tableRows.map((row) => {
       const rowData: any = {
         attribute: row.attribute,
         type: row.type,
       };
-      
-      relevantHistory.forEach((record, index) => {
+
+      relevantHistory.forEach((record) => {
         const recordId = `record_${record.vachist_id}`;
-        
+
         if (row.attribute === "Date") {
-          rowData[recordId] = format(new Date(record.created_at), "MMM d, yyyy");
+          rowData[recordId] = format(
+            new Date(record.created_at),
+            "MMM d, yyyy"
+          );
         } else if (row.attribute === "Vaccine Name") {
           rowData[recordId] = record.vaccine_name;
         } else if (row.attribute === "Dose") {
-          rowData[recordId] = record.vachist_doseNo === record.vaccine_details.no_of_doses ? 
-            `${record.vachist_doseNo} (Final)` : 
-            `${record.vachist_doseNo}`;
+          rowData[recordId] =
+            record.vachist_doseNo === 1
+              ? "1st Dose"
+              : record.vachist_doseNo === 2
+              ? "2nd Dose"
+              : record.vachist_doseNo === 3
+              ? "3rd Dose"
+              : `${record.vachist_doseNo}th Dose`;
         } else if (row.attribute === "Status") {
           rowData[recordId] = record.vachist_status;
         } else if (row.attribute === "Age at Vaccination") {
           rowData[recordId] = record.vachist_age;
         } else if (row.attribute === "Blood Pressure") {
-          rowData[recordId] = `${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} mmHg`;
+          rowData[
+            recordId
+          ] = `${record.vital_signs.vital_bp_systolic}/${record.vital_signs.vital_bp_diastolic} mmHg`;
         } else if (row.attribute === "Temperature") {
           rowData[recordId] = `${record.vital_signs.vital_temp} °C`;
         } else if (row.attribute === "Respiratory Rate") {
@@ -201,14 +211,11 @@ export default function VaccinationView() {
           rowData[recordId] = `${record.vital_signs.vital_o2}%`;
         }
       });
-      
+
       return rowData;
     });
-  }, [relevantHistory]);
+  }, [relevantHistory, hasHistory]);
 
-
-
-  // Define columns for the DataTable
   const columns = useMemo<ColumnDef<any>[]>(() => {
     const cols: ColumnDef<any>[] = [
       {
@@ -217,64 +224,61 @@ export default function VaccinationView() {
         cell: ({ row }) => {
           const rowType = row.original.type;
           return rowType === "heading" ? (
-            <div className="font-medium text-gray-900">{row.getValue("attribute")}</div>
+            <div className="font-semibold text-gray-900 text-base">
+              {row.getValue("attribute")}
+            </div>
           ) : (
-            <div className="font-medium text-gray-600">{row.getValue("attribute")}</div>
+            <div className="font-medium text-gray-700 text-base">
+              {row.getValue("attribute")}
+            </div>
           );
         },
       },
     ];
-    
-    // Add a column for each vaccination record
-    relevantHistory.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage).forEach((record) => {
-      const recordId = `record_${record.vachist_id}`;
-      cols.push({
-        id: recordId,
-        accessorKey: recordId,
-        header: () => {
-          return (
-            <div className="font-medium">
-              {format(new Date(record.created_at), "MMM d, yyyy")}
-            </div>
-          );
-        },
-        cell: ({ row }) => {
-          const value = row.getValue(recordId) as string;
-          const rowData = row.original;
-          
-          if (rowData.attribute === "Status") {
-            const statusClass = value === "completed" 
-              ? "bg-green-100 text-green-800" 
-              : value === "Partially Vaccinated" 
-              ? "bg-yellow-100 text-yellow-800" 
-              : "bg-blue-100 text-blue-800";
-            
+
+    relevantHistory
+      .slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage)
+      .forEach((record) => {
+        const recordId = `record_${record.vachist_id}`;
+        const isCurrent = record.vachist_id === Vaccination?.vachist_id;
+
+        cols.push({
+          id: recordId,
+          accessorKey: recordId,
+          header: () => {
             return (
-              <span className={`inline-flex px-2 py-1 rounded-full text-xs ${statusClass}`}>
-                {value}
-              </span>
-            );
-          }
-          
-          if (rowData.attribute === "Dose" && value?.includes("(Final)")) {
-            const [doseNum] = value.split(" ");
-            return (
-              <div>
-                {doseNum}
-                <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  Final
-                </span>
+              <div className=" text-black font-bold px-3 py-2 rounded-lg text-sm ">
+                {isCurrent ? (
+                  <span className=" text-black font-bold px-3 py-2 rounded-lg text-sm ">
+                    Current
+                  </span>
+                ) : (
+                  format(new Date(record.created_at), "MMM d, yyyy")
+                )}
               </div>
             );
-          }
-          
-          return <div>{value || "N/A"}</div>;
-        },
+          },
+          cell: ({ row }) => {
+            const value = row.getValue(recordId) as string;
+            const rowData = row.original;
+
+            if (rowData.attribute === "Status") {
+              const statusClass = value === "completed";
+
+              return (
+                <span className={`  text-sm  text-gray-600 ${statusClass}`}>
+                  {value}
+                </span>
+              );
+            }
+
+            return <div className="text-base">{value || "N/A"}</div>;
+          },
+        });
       });
-    });
-    
+
     return cols;
-  }, [relevantHistory, currentPage, recordsPerPage]);
+  }, [relevantHistory, currentPage, recordsPerPage, Vaccination?.vachist_id]);
 
   const { totalPages } = useMemo(() => {
     const totalPages = Math.ceil(relevantHistory.length / recordsPerPage);
@@ -296,24 +300,24 @@ export default function VaccinationView() {
   if (!patientData || !Vaccination) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <p>No vaccination data found.</p>
+        <p className="text-xl text-gray-600">No vaccination data found.</p>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="w-full h-full flex flex-col p-2 sm:p-4">
+      <div className="w-full h-full flex flex-col p-4 sm:p-6">
         <div className="flex items-center gap-4 mb-4 sm:mb-6">
           <Button
-            className="text-black p-2"
+            className="text-darkGray p-2"
             variant="outline"
             onClick={() => navigate(-1)}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="font-semibold text-lg sm:text-2xl text-darkBlue2">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Vaccination Record
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
@@ -322,9 +326,10 @@ export default function VaccinationView() {
           </div>
         </div>
         <hr className="border-gray mb-4 sm:mb-6" />
+
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-6">
-            <p className="text-lg text-gray-600">Loading vaccination data...</p>
+          <div className="text-center p-8">
+            <p className="text-xl text-gray-600">Loading vaccination data...</p>
           </div>
         </div>
       </div>
@@ -332,17 +337,17 @@ export default function VaccinationView() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-full flex flex-col p-2 sm:p-4">
+    <div className="w-full max-w-7xl mx-auto h-full flex flex-col p-4 sm:p-6">
       <div className="flex items-center gap-4 mb-4 sm:mb-6">
         <Button
-          className="text-black p-2"
+          className="text-darkGray p-2"
           variant="outline"
           onClick={() => navigate(-1)}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="font-semibold text-lg sm:text-2xl text-darkBlue2">
+          <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
             Vaccination Record
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
@@ -352,236 +357,311 @@ export default function VaccinationView() {
       </div>
       <hr className="border-gray mb-4 sm:mb-6" />
 
-      <div className="space-y-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2 bg-gray-50">
-            <CardTitle className="text-md flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Patient Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Patient ID:</span>
-                  <span>{patientData.pat_id}</span>
+      {/* Single Comprehensive Card */}
+      <Card className="shadow-lg border-2 border-gray-300">
+        <CardContent className="p-6 sm:p-8">
+          {/* Patient Information Section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <User className=" text-darkBlue3" size={18} />
+              <h2 className="font-bold text-lg text-darkBlue3">
+                Patient Information
+              </h2>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-300">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <span className="font-semibold text-lg text-gray-700 min-w-32">
+                      Patient ID:
+                    </span>
+                    <span className="text-lg text-gray-900 font-medium">
+                      {patientData.pat_id}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-semibold text-lg text-gray-700 min-w-32">
+                      Full Name:
+                    </span>
+                    <span className="text-lg text-gray-900 font-medium">
+                      {`${patientData.lname}, ${patientData.fname} ${
+                        patientData.mname || ""
+                      }`}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-semibold text-lg text-gray-700 min-w-32">
+                      Date of Birth:
+                    </span>
+                    <span className="text-lg text-gray-900 font-medium">
+                      {patientData.dob
+                        ? format(new Date(patientData.dob), "MMMM d, yyyy")
+                        : "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-semibold text-lg text-gray-700 min-w-32">
+                      Gender:
+                    </span>
+                    <span className="text-lg text-gray-900 font-medium">
+                      {patientData.sex
+                        ? patientData.sex.charAt(0).toUpperCase() +
+                          patientData.sex.slice(1)
+                        : "N/A"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Name:</span>
-                  <span>{`${patientData.lname}, ${patientData.fname} ${
-                    patientData.mname || ""
-                  }`}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Date of Birth:</span>
-                  <span>
-                    {patientData.dob
-                      ? format(new Date(patientData.dob), "MMMM d, yyyy")
-                      : "N/A"}
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Sex:</span>
-                  <span>
-                    {patientData.sex
-                      ? patientData.sex.charAt(0).toUpperCase() +
-                        patientData.sex.slice(1)
-                      : "N/A"}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Patient Type:</span>
-                  <span>{patientData.pat_type || "N/A"}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row">
-                  <span className="font-medium w-24 mt-1">Address:</span>
-                  <span className="text-wrap">
-                    {[
-                      patientData.householdno,
-                      patientData.street,
-                      patientData.sitio,
-                      patientData.barangay,
-                      patientData.city,
-                      patientData.province,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "N/A"}
-                  </span>
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <span className="font-semibold text-lg text-gray-700 min-w-32">
+                      Patient Type:
+                    </span>
+                    <span className="text-lg text-gray-900 font-medium">
+                      {patientData.pat_type || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="font-semibold text-lg text-gray-700 min-w-32">
+                      Address:
+                    </span>
+                    <span className="text-lg text-gray-900 font-medium">
+                      {[
+                        patientData.householdno,
+                        patientData.street,
+                        patientData.sitio,
+                        patientData.barangay,
+                        patientData.city,
+                        patientData.province,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "N/A"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {currentVaccination && (
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2 bg-blue-50">
-              <CardTitle className="text-md flex items-center gap-2">
-                <Syringe className="h-4 w-4" />
-                Current Vaccination
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Vaccine:</span>
-                  <span>{currentVaccination.vaccine_name}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Dose:</span>
-                  <div>
-                    <span>{currentVaccination.vachist_doseNo}</span>
-                    {currentVaccination.vachist_doseNo ===
-                      currentVaccination.vaccine_details.no_of_doses && (
-                      <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                        Final Dose
+          <Separator className="my-8" />
+
+          {/* Current Vaccination Section */}
+          {currentVaccination && (
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <Syringe className=" text-green-700" size={18} />
+                <h2 className="font-bold text-lg text-green-700">
+                  Current Vaccination Details
+                </h2>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-xl border border-gray-300">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <span className="font-semibold text-lg text-gray-700 min-w-32">
+                        Vaccine:
                       </span>
-                    )}
+                      <span className="text-lg text-gray-900 font-medium">
+                        {currentVaccination.vaccine_name}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="font-semibold text-lg text-gray-700 min-w-32">
+                        Dose:
+                      </span>
+                      <span className="text-lg text-gray-900 font-medium">
+                        {currentVaccination.vachist_doseNo === 1
+                          ? "1st Dose"
+                          : currentVaccination.vachist_doseNo === 2
+                          ? "2nd Dose"
+                          : currentVaccination.vachist_doseNo === 3
+                          ? "3rd Dose"
+                          : `${currentVaccination.vachist_doseNo}th Dose`}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="font-semibold text-lg text-gray-700 min-w-32">
+                        Status:
+                      </span>
+                      <span className="text-lg text-gray-900 font-medium">
+
+                        {currentVaccination.vachist_status}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Status:</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-xs inline-block ${
-                      currentVaccination.vachist_status === "completed"
-                        ? "bg-green-100 text-green-700"
-                        : currentVaccination.vachist_status ===
-                          "Partially Vaccinated"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {currentVaccination.vachist_status}
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Date:</span>
-                  <span>
-                    {format(
-                      new Date(currentVaccination.created_at),
-                      "MMMM d, yyyy"
-                    )}
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <span className="font-medium w-24">Age:</span>
-                  <span>{currentVaccination.vachist_age}</span>
-                </div>
-              </div>
-
-              <Separator className="my-4" />
-
-              <h3 className="font-medium text-sm mb-3">Vital Signs</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
-                <div className="bg-gray-50 p-2 rounded shadow-sm">
-                  <p className="text-xs text-gray-500">BP</p>
-                  <p>
-                    {currentVaccination.vital_signs.vital_bp_systolic}/
-                    {currentVaccination.vital_signs.vital_bp_diastolic} mmHg
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-2 rounded shadow-sm">
-                  <p className="text-xs text-gray-500">Temp</p>
-                  <p>{currentVaccination.vital_signs.vital_temp} °C</p>
-                </div>
-                <div className="bg-gray-50 p-2 rounded shadow-sm">
-                  <p className="text-xs text-gray-500">Resp Rate</p>
-                  <p>{currentVaccination.vital_signs.vital_RR}</p>
-                </div>
-                <div className="bg-gray-50 p-2 rounded shadow-sm">
-                  <p className="text-xs text-gray-500">O₂ Sat</p>
-                  <p>{currentVaccination.vital_signs.vital_o2}%</p>
-                </div>
-              </div>
-
-              {currentVaccination.follow_up_visit && (
-                <>
-                  <Separator className="my-4" />
-                  <div className="flex items-center gap-1 mb-3">
-                    <Calendar className="h-4 w-4 text-blue-600" />
-                    <h3 className="font-medium text-sm text-blue-600">
-                      Follow-up Schedule
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="font-medium w-24">Next Dose Date:</span>
-                      <span>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <span className="font-semibold text-lg text-gray-700 min-w-32">
+                        Date:
+                      </span>
+                      <span className="text-lg text-gray-900 font-medium">
                         {format(
-                          new Date(
-                            currentVaccination.follow_up_visit.followv_date
-                          ),
+                          new Date(currentVaccination.created_at),
                           "MMMM d, yyyy"
                         )}
                       </span>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="font-medium w-24">Status:</span>
-                      <span
-                        className={`${
-                          currentVaccination.follow_up_visit.followv_status ===
-                          "completed"
-                            ? "text-green-600"
-                            : "text-yellow-600"
-                        }`}
-                      >
-                        {currentVaccination.follow_up_visit.followv_status}
+                    <div className="flex items-start">
+                      <span className="font-semibold text-lg text-gray-700 min-w-32">
+                        Age:
+                      </span>
+                      <span className="text-lg text-gray-900 font-medium">
+                        {currentVaccination.vachist_age}
                       </span>
                     </div>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                </div>
 
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2 bg-gray-50">
-            <CardTitle className="text-md flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Vaccination History
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {error ? (
-              <div className="text-center p-6 bg-red-50 rounded-lg">
-                <p className="text-red-600">{error}</p>
+                {/* Vital Signs */}
+                <div className="mb-6">
+                  <h3 className="font-bold text-xl text-gray-800 mb-4 flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-darkGray" />
+                    Vital Signs
+                  </h3>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Heart className="h-5 w-5 text-darkGray" />
+                        <p className="text-sm font-semibold text-gray-600">
+                          Blood Pressure
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold text-gray-900">
+                        {currentVaccination.vital_signs.vital_bp_systolic}/
+                        {currentVaccination.vital_signs.vital_bp_diastolic}
+                      </p>
+                      <p className="text-sm text-gray-500">mmHg</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Thermometer className="h-5 w-5 text-darkGray" />
+                        <p className="text-sm font-semibold text-gray-600">
+                          Temperature
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold text-gray-900">
+                        {currentVaccination.vital_signs.vital_temp}
+                      </p>
+                      <p className="text-sm text-gray-500">°C</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Wind className="h-5 w-5 text-darkGray" />
+                        <p className="text-sm font-semibold text-gray-600">
+                          Respiratory Rate
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold text-gray-900">
+                        {currentVaccination.vital_signs.vital_RR}
+                      </p>
+                      <p className="text-sm text-gray-500">per min</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Droplets className="h-5 w-5 text-darkGray" />
+                        <p className="text-sm font-semibold text-gray-600">
+                          Oxygen Saturation
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold text-gray-900">
+                        {currentVaccination.vital_signs.vital_o2}
+                      </p>
+                      <p className="text-sm text-gray-500">%</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Follow-up Schedule */}
+                {currentVaccination.follow_up_visit && (
+                  <div className="bg-gray-100 p-6 rounded-xl border border-gray-300">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Calendar className="h-6 w-6 text-darkGray" />
+                      <h3 className="font-bold text-xl text-darkGray">
+                        Follow-up Schedule
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-start">
+                        <span className="font-semibold text-lg text-gray-700  px-3">
+                          Next Dose Date:
+                        </span>
+                        <span className="text-lg text-gray-900 font-medium">
+                          {format(
+                            new Date(
+                              currentVaccination.follow_up_visit.followv_date
+                            ),
+                            "MMMM d, yyyy"
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="font-semibold text-lg text-gray-700 px-3">
+                          Status:
+                        </span>
+                        <span className="text-lg text-gray-900 font-medium">
+                          {currentVaccination.follow_up_visit.followv_status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : relevantHistory.length > 0 ? (
-              <>
-                {/* Replace the existing table with DataTable */}
+            </div>
+          )}
+
+          <Separator className="my-8" />
+
+          {/* Vaccination History Section */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-gray-100 p-3 rounded-full">
+                <Activity className="h-6 w-6 text-darkGray" />
+              </div>
+              <h2 className="font-bold text-lg text-darkGray">
+                Vaccination History
+              </h2>
+            </div>
+
+            {loading ? (
+              <div className="text-center p-8 bg-gray-50 rounded-xl">
+                <p className="text-xl text-gray-600">
+                  Loading vaccination history...
+                </p>
+              </div>
+            ) : error ? (
+              <div className="text-center p-8 bg-red-50 rounded-xl border border-red-200">
+                <p className="text-xl text-red-600 font-medium">{error}</p>
+              </div>
+            ) : relevantHistory.length > 1 ? (
+              <div className="bg-gray-50 p-6 rounded-xl border border-gray-300">
                 <div className="overflow-x-auto">
                   {tableData.length > 0 && (
-                    <DataTable
-                      columns={columns}
-                      data={tableData}
-                    />
+                    <DataTable columns={columns} data={tableData} />
                   )}
                 </div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center mt-4 gap-2">
+                  <div className="flex justify-center mt-6 gap-3">
                     <Button
                       variant="outline"
                       onClick={prevPage}
                       disabled={currentPage === 1}
-                      className="text-sm px-2 py-1 h-8"
+                      className="text-sm px-4 py-2 h-auto font-medium"
                     >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Prev</span>
+                      <ChevronLeft className="px-2 mr-2" />
+                      Previous
                     </Button>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                         (number) => (
                           <Button
                             key={number}
-                            variant={currentPage === number ? "default" : "outline"}
-                            className="w-8 h-8 p-0"
+                            variant={
+                              currentPage === number ? "default" : "outline"
+                            }
+                            className="w-8 h-8 text-sm font-medium"
                             onClick={() => paginate(number)}
                           >
                             {number}
@@ -594,24 +674,25 @@ export default function VaccinationView() {
                       variant="outline"
                       onClick={nextPage}
                       disabled={currentPage === totalPages}
-                      className="text-sm px-2 py-1 h-8"
+                      className="text-sm px-4 py-2 h-auto font-medium"
                     >
-                      <span className="hidden sm:inline">Next</span>
-                      <ChevronRight className="h-4 w-4 ml-1" />
+                      Next
+                      <ChevronRight className="h-5 w-5 ml-2" />
                     </Button>
                   </div>
                 )}
-              </>
+              </div>
             ) : (
-              <div className="text-center p-6 bg-gray-50 rounded-lg">
-                <p className="text-gray-600">
-                  No previous vaccination history found for this patient.
+              <div className="text-center p-8 bg-gray-50 rounded-xl border border-gray-300">
+                <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-xl text-gray-600 font-medium">
+                  No previous vaccination history found for this vaccine.
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

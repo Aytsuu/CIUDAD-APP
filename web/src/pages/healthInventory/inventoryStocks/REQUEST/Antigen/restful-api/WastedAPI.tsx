@@ -1,4 +1,4 @@
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const fetchVaccineStockById = async (vacStck_id: number) => {
   const response = await api.get(`inventory/vaccine_stocks/${vacStck_id}/`);
