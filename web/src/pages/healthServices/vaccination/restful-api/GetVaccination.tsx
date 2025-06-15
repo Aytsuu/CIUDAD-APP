@@ -56,7 +56,15 @@ export const getVaccinationRecordById =  async (id: number) => {
 }
 
 
-
+export const getVaccinationCount = async (patId: string) => {
+  try {
+    const response = await api.get(`/vaccination/vacrec-count/${patId}/`);
+    return response.data.vaccination_count;
+  } catch (err) {
+    console.error("Failed to fetch vaccination count:", err);
+    return 0; // or throw if you want error handling on the UI
+  }
+};
 
   export const getVaccintStocks =  async () => {
       try {

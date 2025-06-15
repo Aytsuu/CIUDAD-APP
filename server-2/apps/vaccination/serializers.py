@@ -55,12 +55,9 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        return VaccinationRecord.objects.filter(
-            patrec_id__pat_id=obj,
-            patrec_id__patrec_type__iexact='Vaccination'
-        
-        ).count()
-
+        count = VaccinationRecord.objects.filter(patrec_id__pat_id=obj.pat_id).count()
+        print(f"Vaccination count for patient {obj.pat_id}: {count}")
+        return count
 
 
     def get_vaccination_records(self, obj):

@@ -128,3 +128,11 @@ class GetPatientInfoFromVaccinationRecord(APIView):
             return Response(data, status=status.HTTP_404_NOT_FOUND)
 
         return Response(data, status=status.HTTP_200_OK)
+class GetVaccinationCountView(APIView):
+    
+    def get(self, request, pat_id):
+        try:
+            count = get_vaccination_record_count(pat_id)
+            return Response({'pat_id': pat_id, 'vaccination_count': count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

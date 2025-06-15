@@ -20,5 +20,6 @@ urlpatterns = [
     path('check-vaccine/<str:pat_id>/<int:vac_id>/', CheckVaccineExistsView.as_view(), name='check-vaccine'),
     path('patient-vaccine-followups/<str:pat_id>/', PatientVaccineFollowUpView.as_view(), name='patient-vaccine-followups'),
     path('patient-info/<str:patrec_pat_id>/', GetPatientInfoFromVaccinationRecord.as_view()),
+    path('vacrec-count/<str:pat_id>/', GetVaccinationCountView.as_view(), name='get-vaccination-count'),
 
 ]
