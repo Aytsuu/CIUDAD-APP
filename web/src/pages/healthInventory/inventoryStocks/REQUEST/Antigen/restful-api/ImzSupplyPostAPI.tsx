@@ -1,5 +1,5 @@
 // REQUEST/InventoryStock.ts
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ImmunizationStockTransaction } from "../../Payload";
 

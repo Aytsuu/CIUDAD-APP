@@ -1,4 +1,4 @@
-import { api } from '@/pages/api/api';
+import { api } from '@/api/api';
 import { formatDate } from '@/helpers/dateFormatter';
 
 export const postdonationreq= async (donationInfo: Record<string, any>) => {

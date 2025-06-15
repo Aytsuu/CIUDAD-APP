@@ -15,7 +15,7 @@ import {
   deleteVitalSigns,
   deleteFollowUpVisit,
 } from "../restful-api/PostAPI";
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 import { getVaccinationHistory } from "../restful-api/GetVaccination";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
@@ -135,7 +135,7 @@ export const useSubmitStep1 = () => {
       }
     },
     onSuccess: () => {
-      navigate("/invVaccinationRecord")
+      navigate(-1)
       toast.success("Form forwarded successfully", {
         icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
         duration: 2000,
@@ -187,18 +187,6 @@ export const useSubmitStep2 = () => {
         const vacStck = vaccineType;
         const vaccineData = await getVaccineStock(vacStck);
         const maxDoses = vaccineData.vaccinelist.no_of_doses;
-
-        // const checkVaccinationHistory = await getVaccinationHistory();
-        // const existingVAccinationHistory = checkVaccinationHistory.find(
-        //   (record: { vacStck: { vac_id: string } }) =>
-        //     record.vacStck.vac_id === data.vaccineType
-        // );
-        // if (existingVAccinationHistory) {
-        //   form.reset();
-        //   form2.reset();
-        //   throw new Error("Vaccination already exists in the record.");
-
-        // }
 
         const response = await api.get(
           `/vaccination/check-vaccine/${patientId}/${parseInt(vaccineType)}`
@@ -300,7 +288,7 @@ export const useSubmitStep2 = () => {
       }
     },
     onSuccess: () => {
-      navigate("/invVaccinationRecord")
+      navigate(-1)
 
       toast.success("Successfully  Recorded", {
         icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,

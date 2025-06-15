@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {api} from "@/pages/api/api";
+import {api} from "@/api/api";
 import { ConfirmationDialog } from "../../../../../components/ui/confirmationLayout/ConfirmModal";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";

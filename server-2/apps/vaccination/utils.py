@@ -1,6 +1,9 @@
 from .models import *
 from apps.inventory.models import *
 from apps.patientrecords.serializers import PatientSerializer
+from apps.patientrecords.models import *
+from django.db.models import Q
+from collections import defaultdict
 
 # def get_unvaccinated_vaccines_for_patient(pat_id):
 #     vaccinated_vac_ids = VaccinationHistory.objects.filter(
@@ -9,6 +12,7 @@ from apps.patientrecords.serializers import PatientSerializer
 
 #     unvaccinated_vaccines = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids)
 #     return unvaccinated_vaccines
+
 
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
@@ -123,4 +127,33 @@ def get_vaccination_record_count(pat_id):
 #     # 6. Get the VaccineList entries for those
 #     unvaccinated_vaccines = VaccineList.objects.filter(vac_id__in=unvaccinated_vac_ids)
 
-#     return unvaccinated_vaccines
+#     return 
+
+
+
+
+def get_all_residents_not_vaccinated():
+    results = defaultdict(list)
+
+    # Step 1: Get all active Resident patients
+    residents = Patient.objects.filter(pat_type="Resident", pat_status="Active")
+
+    # Step 2: Get all vaccines
+    all_vaccines = VaccineList.objects.all()
+
+    for vaccine in all_vaccines:
+        # Step 3: Get IDs of residents who HAVE received this vaccine
+        vaccinated_ids = VaccinationHistory.objects.filter(
+            vacStck__vac_id=vaccine.vac_id
+        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
+
+        # Step 4: Get residents who have NOT received this vaccine
+        unvaccinated = residents.exclude(pat_id__in=vaccinated_ids)
+
+        for patient in unvaccinated:
+            results[vaccine.vac_name].append({
+                'pat_id': patient.pat_id,
+                'rp_id': getattr(patient.rp_id, 'id', None),  # or any other details
+            })
+
+    return results

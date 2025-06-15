@@ -14,7 +14,7 @@ import {
   deleteVitalSigns,
   deleteFollowUpVisit,
 } from "../restful-api/PostAPI";
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 import { getVaccinationHistory, getVaccinationRecords } from "../restful-api/GetVaccination";
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";

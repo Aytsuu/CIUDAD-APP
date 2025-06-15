@@ -6,39 +6,50 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { addInventory } from "../REQUEST/Inventory";
-import { getSupplies } from "../REQUEST/Get";
-import { InventoryAntigenPayload } from "../REQUEST/Payload";
-import { api } from "@/pages/api/api";
+import { getSupplies } from "../REQUEST/Antigen/restful-api/ImzGetAPI";
 import {
   ImmunizationSuppliesSchema,
   ImmunizationSuppliesType,
-} from "@/form-schema/inventory/inventoryStocksSchema";
-import {  ImmunizationStockTransaction } from "../REQUEST/Payload";
+} from "@/form-schema/inventory/stocks/inventoryStocksSchema";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { useSubmitImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupplyPostQueries";
+import { toast } from "sonner";
+import { CircleCheck } from "lucide-react";
+import { useNavigate, Link } from "react-router";
+import { Label } from "@/components/ui/label";
+import { Pill } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/ImzFetchAPI";
 
-export default function ImmunizationStockForm({
-  setIsDialog,
-}: {
-  setIsDialog: (isOpen: boolean) => void;
-}) {
-  const [supplyOptions, setSupplyOptions] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [formData, setFormData] = useState<ImmunizationSuppliesType | null>(null);
 
+export default function AddImzSupplyStock() {
   const form = useForm<ImmunizationSuppliesType>({
     resolver: zodResolver(ImmunizationSuppliesSchema),
     defaultValues: {
       imz_id: "",
       batch_number: "",
-      imzStck_qty: undefined,
-      imzStck_pcs: undefined,
+      imzStck_qty: 0,
+      imzStck_pcs: 0,
       imzStck_unit: "boxes",
       expiryDate: "",
     },
   });
+  const [supplyOptions, setSupplyOptions] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [formData, setFormData] = useState<ImmunizationSuppliesType | null>(
+    null
+  );
+  const currentUnit = form.watch("imzStck_unit");
+  const qty = form.watch("imzStck_qty");
+  const pcs = form.watch("imzStck_pcs");
+  const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
+
+  const navigate = useNavigate();
+  const { mutate: submit, isPending } = useSubmitImmunizationStock();
+  const batchNumbers = useBatchNumbers();
 
   useEffect(() => {
     const fetchSupplies = async () => {
@@ -54,84 +65,65 @@ export default function ImmunizationStockForm({
     fetchSupplies();
   }, []);
 
-  // Watch form values
-  const currentUnit = form.watch("imzStck_unit");
-  const qty = form.watch("imzStck_qty");
-  const pcs = form.watch("imzStck_pcs");
-  const totalPieces = currentUnit === "boxes" ? qty * (pcs || 0) : qty;
 
+
+  const isDuplicateBatchNumber = (
+    stocks: { batchNumber: string }[],
+    newBatchNumber: string
+  ) => {
+    return stocks.some(
+      (stock) =>
+        stock.batchNumber.trim().toLowerCase() === newBatchNumber.trim().toLowerCase()
+    );
+  };
+  
+
+  
   const onSubmit = (data: ImmunizationSuppliesType) => {
     setFormData(data);
+    if (isDuplicateBatchNumber(batchNumbers, data.batch_number)) {
+      form.setError("batch_number", {
+        type: "manual",
+        message: "Batch number already exists for this immunization supply",
+      });
+      return;
+    }
     setIsConfirmationOpen(true);
   };
-  const handleConfirm = async () => {
+
+  const handleConfirm = () => {
     if (!formData) return;
-    
-    try {
-      setIsSubmitting(true);
-      
-      // Calculate all values as individual constants
-      const isBoxes = formData.imzStck_unit === "boxes";
-      const imzStck_qty = isBoxes ? formData.imzStck_qty : 0;
-      const imzStck_per_pcs = isBoxes ? formData.imzStck_pcs : 0;
-      const imzStck_pcs = isBoxes ? formData.imzStck_qty * (formData.imzStck_pcs || 0) : formData.imzStck_qty;
-      const imzStck_avail = imzStck_pcs; // Same as above
-  
-      // Inventory API call
-      const inventoryResponse = await addInventory(formData, "Antigen");
-      if (!inventoryResponse?.inv_id) {
-        alert("Failed to generate inventory ID.");
-        return;
-      }
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
-  
-      // Stock API call
-      const stockResponse = await api.post("inventory/immunization_stock/", {
-        ...formData,
-        imzStck_qty,
-        imzStck_per_pcs,
-        imzStck_pcs,
-        imzStck_avail,
-        inv_id
-      });
-  
-      if (!stockResponse.data?.imzStck_id) {
-        alert("Failed to add immunization stock");
-        return;
-      }
-  
-      // Transaction API call
-      const transactionResponse = await api.post(
-        "inventory/imz_transaction/",
-        ImmunizationStockTransaction(
-          imzStck_avail,
-          stockResponse.data.imzStck_id,
-          formData.imzStck_unit,
-          isBoxes ? imzStck_qty : undefined,
-          isBoxes ? imzStck_per_pcs : undefined
-        )
-      );
-  
-      if (!transactionResponse.data?.imzt_id) {
-        console.warn("Transaction created but failed to get response");
-      }
-  
-      setIsDialog(false);
-      alert("Immunization stock added successfully!");
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred while saving the stock");
-    } finally {
-      setIsSubmitting(false);
-      setIsConfirmationOpen(false);
-    }
+    setIsConfirmationOpen(false);
+    submit(formData, {
+      onSuccess: () => {
+        toast.success("Successfully Added", {
+          icon: (
+            <CircleCheck size={24} className="fill-green-500 stroke-white" />
+          ),
+          duration: 2000,
+        });
+        form.reset();
+        navigate("/mainInventoryStocks");
+      },
+      onError: (error: Error) => {
+        console.error("Error in handleSubmit:", error);
+        toast.error("Failed to Add");
+      },
+    });
   };
 
   return (
     <>
-      <div className="max-h-[calc(100vh-8rem)] overflow-y-auto px-1">
+      <div className="w-full flex items-center justify-center p-4 sm:p-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5"
+          >
+            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
+              <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+              Add Immunization Supply Stocks
+            </Label>
             <div className="space-y-6 p-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormSelect
@@ -152,7 +144,11 @@ export default function ImmunizationStockForm({
                 <FormInput
                   control={form.control}
                   name="imzStck_qty"
-                  label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity (pieces)"}
+                  label={
+                    currentUnit === "boxes"
+                      ? "Number of Boxes"
+                      : "Quantity (pieces)"
+                  }
                   type="number"
                   placeholder="Quantity"
                 />
@@ -203,10 +199,25 @@ export default function ImmunizationStockForm({
                 />
               </div>
             </div>
+            <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
+              <Button variant="outline" className="w-full">
+                <Link to="/mainInventoryStocks">Cancel</Link>
+              </Button>
 
-            <div className="flex justify-end gap-3 bottom-0 bg-white pb-2">
-              <Button type="submit" className="w-[120px]" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Stock"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isPending}
+                onClick={form.handleSubmit(onSubmit)}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}{" "}
               </Button>
             </div>
           </form>

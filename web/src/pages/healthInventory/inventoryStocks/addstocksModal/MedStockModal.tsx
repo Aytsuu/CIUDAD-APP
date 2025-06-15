@@ -194,9 +194,7 @@ export default function AddMedicineStock() {
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
            
-          <Button variant="outline" className="w-full">
-                <Link to="/mainInventoryStocks">Cancel</Link>
-              </Button>
+           
            
             <Button
               className="w-full "

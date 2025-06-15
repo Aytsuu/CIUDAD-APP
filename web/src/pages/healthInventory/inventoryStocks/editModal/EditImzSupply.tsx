@@ -3,12 +3,8 @@ import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import UseHideScrollbar from "@/components/ui/HideScrollbar";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import { api } from "@/pages/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
-import { ImmunizationStockTransaction } from "../REQUEST/Payload";
 import {
   ImmunizationStockType,
   ImmunizationStocksSchema,
@@ -22,7 +18,6 @@ import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useSubmitUpdateImmunizationStock } from "../REQUEST/Antigen/queries/ImzSupluPutQueries";
-import { vaccination } from "@/routers/vaccination";
 
 export default function EditImzSupplyStock() {
   const location = useLocation();

@@ -49,7 +49,7 @@ export default function VaccinationForm() {
       // mname: patientData.mname || "",
       // age: patientData.age || "",
       // sex: patientData.sex || "",
-      // dob: patientData.dob || "",
+      age: patientData.age,
       // householdno: patientData.householdno || "",
       // street: patientData.street || "",
       // sitio: patientData.sitio || "",
@@ -71,7 +71,6 @@ export default function VaccinationForm() {
       bpdiastolic: "",
     },
   });
-
 
   useEffect(() => {
     console.log("Form errors:", form.formState.errors);
@@ -99,6 +98,7 @@ export default function VaccinationForm() {
       },
       form2: { getValues: form.getValues, reset: form2.reset },
     });
+    
   };
 
   const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock();
@@ -177,63 +177,56 @@ export default function VaccinationForm() {
               />
             </div>
 
-        
             <h2 className="font-semibold text-blue bg-blue-50 rounded-md">
               Basic Information
             </h2>
 
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Last Name.
-                  </Label>
-                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
-                    {patientData.lname || "N/A"}
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium text-gray-700">
-                    First Name
-                  </Label>
-                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
-                    {patientData.fname || "N/A"}
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Middle Name
-                  </Label>
-                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
-                    {patientData.mname || "N/A"}
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Date of Birth
-                  </Label>
-                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
-                    {patientData.dob || "N/A"}
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Age
-                  </Label>
-                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
-                  {calculateAge(
-                      patientData.dob || "",)}                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Sex
-                  </Label>
-                  <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
-                    {patientData.sex || "N/A"}
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Last Name.
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.lname || "N/A"}
                 </div>
               </div>
-       
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  First Name
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.fname || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Middle Name
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.mname || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Date of Birth
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.dob || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Age</Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.age || ""}{" "}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Sex</Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.sex || "N/A"}
+                </div>
+              </div>
+            </div>
 
             <h2 className="font-semibold text-blue py-2 bg-blue-50 rounded-md mb-3">
               Address Information

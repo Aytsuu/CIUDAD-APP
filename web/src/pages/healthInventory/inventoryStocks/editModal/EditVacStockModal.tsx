@@ -8,9 +8,7 @@ import {
   VaccineStocksSchema,
 } from "@/form-schema/inventory/stocks/EditAntigenSchema";
 import { useEffect, useState } from "react"; // Added useState
-import { api } from "@/pages/api/api";
-import { VaccineTransactionPayload } from "../REQUEST/Payload";
-import { AntigenTransaction } from "../REQUEST/Antigen/restful-api/VaccinePostAPI";
+import { api } from "@/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"; // Added import
 import { useLocation } from "react-router-dom";
 import { StockRecords } from "../tables/type";

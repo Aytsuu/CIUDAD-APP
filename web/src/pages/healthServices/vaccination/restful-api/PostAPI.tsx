@@ -1,4 +1,4 @@
-import { api } from "@/pages/api/api";
+import { api } from "@/api/api";
 
 // Helper function to get vaccine stock info
 export const getVaccineStock = async (vaccineTypeId: string) => {

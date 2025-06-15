@@ -18,7 +18,7 @@ export const VaccineSchema = z.object({
   // lname: z.string().min(1, "Last name is Required"),
   // fname: z.string().min(1, "First Name is required"),
   // mname: z.string().optional(),
-  // age: z.string().min(1, "Age is required"),
+  age: z.string().min(1, "Age is required"),
   // sex: z.string().min(1, "Sex is required"),
   // dob: z.string().min(1, "DOB is required"),
   // householdno: z.string().optional(),

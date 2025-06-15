@@ -136,3 +136,13 @@ class GetVaccinationCountView(APIView):
             return Response({'pat_id': pat_id, 'vaccination_count': count}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class GetAllResidentsNotVaccinated(APIView):
+    def get(self, request):
+        try:
+            data = get_all_residents_not_vaccinated()
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -87,20 +87,20 @@ class Patient(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        if self.pat_type == 'Resident' and not self.resident_profile:
-            raise ValidationError("Resident patients must have a resident_profile.")
+        if self.pat_type == 'Resident' and not self.rp_id:
+            raise ValidationError("Resident patients must have a rp_id.")
         if self.pat_type == 'Transient' and not self.trans_id:
             raise ValidationError("Transient patients must have a transient_profile.")
-        if self.resident_profile and self.trans_id:
-            raise ValidationError("Patient cannot have both resident_profile and trans_id.")
+        if self.rp_id and self.trans_id:
+            raise ValidationError("Patient cannot have both rp_id and trans_id.")
 
     def save(self, *args, **kwargs):
         # Auto-generate pat_id if not set
         if not self.pat_id:
             # Determine DOB source
             dob = None
-            if self.pat_type == 'Resident' and self.resident_profile and hasattr(self.resident_profile, 'per'):
-                dob = getattr(self.resident_profile.per, 'per_dob', None)
+            if self.pat_type == 'Resident' and self.rp_id and hasattr(self.rp_id, 'per'):
+                dob = getattr(self.rp_id.per, 'per_dob', None)
             elif self.pat_type == 'Transient' and self.trans_id:
                 dob = self.trans_id.tran_dob
 
