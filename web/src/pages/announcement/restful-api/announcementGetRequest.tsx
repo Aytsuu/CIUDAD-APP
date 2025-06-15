@@ -2,7 +2,7 @@ import api from "@/pages/api/api";
 
 export const getAnnouncementRequest = async () => {
   try {
-    const response = await api.get(`announcement/announcements/`);
+    const response = await api.get(`announcement/list/`);
     const data = response.data?.data ?? response.data ?? [];
     const announcements = Array.isArray(data) ? data : [];
 
@@ -19,18 +19,6 @@ export const getAnnouncementRequest = async () => {
 export const getAnnouncementRecipientRequest = async () => {
   try {
     const response = await api.get(`announcement/create-recipient/`);
-    const data = response.data?.data ?? response.data ?? [];
-    return Array.isArray(data) ? data : [];
-  } catch (err) {
-    console.error("API Error:", err);
-    return [];
-  }
-};
-
-
-export const getAnnouncementFilesRequest = async () => {
-  try {
-    const response = await api.get(`announcement/upload-files/`);
     const data = response.data?.data ?? response.data ?? [];
     return Array.isArray(data) ? data : [];
   } catch (err) {

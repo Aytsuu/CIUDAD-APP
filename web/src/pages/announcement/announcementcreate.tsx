@@ -1,75 +1,108 @@
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import type { z } from "zod"
-import { Form } from "@/components/ui/form/form"
-import { FormInput } from "@/components/ui/form/form-input"
-import { FormSelect } from "@/components/ui/form/form-select"
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
-import AnnouncementSchema from "@/form-schema/Announcement/announcementschema"
-import { usePostAnnouncement, usePostAnnouncementRecipient, usePostAnnouncementFile } from "./queries/announcementAddQueries"
-import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox"
-import { Button } from "@/components/ui/button/button"
-import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Megaphone, FileText, Calendar, Users, Mail, User, Clock, Send } from "lucide-react"
-import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload"
-import React from "react"
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
+import { Form } from "@/components/ui/form/form";
+import { FormInput } from "@/components/ui/form/form-input";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
+import {
+  usePostAnnouncement,
+  usePostAnnouncementRecipient,
+} from "./queries/announcementAddQueries";
+import { FormComboCheckbox } from "@/components/ui/form/form-combo-checkbox";
+import { Button } from "@/components/ui/button/button";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import {
+  Megaphone,
+  FileText,
+  Calendar,
+  Users,
+  Mail,
+  User,
+  Clock,
+  Send,
+} from "lucide-react";
+import {
+  MediaUpload,
+  MediaUploadType,
+} from "@/components/ui/media-upload";
+import React from "react";
+import { postAnnouncementFile as postAnnouncementFileApi } from "./restful-api/announcementPostRequest";
+import { useAuth } from "@/context/AuthContext";
+
 
 const AnnouncementCreate = () => {
-  const { mutateAsync: postAnnouncement } = usePostAnnouncement()
-  const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient()
-  const uploadFile = usePostAnnouncementFile();
+  const { mutateAsync: postAnnouncement } = usePostAnnouncement();
+  const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient();
+  const { mutate: postAnnouncementFile } = postAnnouncementFileApi();
 
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
+  const { user } = useAuth();
 
-  type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema>
-  const defaultValues = generateDefaultValues(AnnouncementSchema)
+  type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema>;
+  const defaultValues = generateDefaultValues(AnnouncementSchema);
 
   const form = useForm<AnnouncementCreateFormValues>({
     resolver: zodResolver(AnnouncementSchema),
     defaultValues,
-  })
+  });
 
+  const onSubmit = async () => {
+    const formIsValid = await form.trigger();
+    if (!formIsValid) return;
 
-const onSubmit = async () => {
-  const formIsValid = await form.trigger();
-  if (!formIsValid) return;
+    const values = form.getValues();
 
-  const values = form.getValues();
-  try {
-    const createdAnnouncement = await postAnnouncement(values);
+    try {
+      const createdAnnouncement = await postAnnouncement({...values, staff: user?.staff.staff_id});
 
-    // Post recipients
-    const recipients = values.ar_type.flatMap((type: string) =>
-      values.ar_mode.map((mode: string) => ({
-        ar_type: type,
-        ar_mode: mode,
-        ann: createdAnnouncement?.ann_id,
-      }))
-    );
-    recipients.forEach((recipient) => postAnnouncementRecipient(recipient));
+      const recipients = values.ar_type.flatMap((type: string) =>
+        values.ar_mode.map((mode: string) => ({
+          ar_type: type,
+          ar_mode: mode,
+          ann: createdAnnouncement?.ann_id,
+        }))
+      );
 
-    // Upload announcement files
-      await Promise.all(
-        mediaFiles.map((media) =>
-          uploadFile.mutateAsync({
-            af_name: media.file.name,
-            af_type: media.file.type,
-            af_path: media.storagePath || "",
-            af_url: media.publicUrl || "",
-            ann: createdAnnouncement?.ann_id,
-          })
-        )
-      )
+      recipients.forEach((recipient) =>
+        postAnnouncementRecipient(recipient, {
 
-    console.log("Announcement, recipients, and files successfully submitted.");
-  } catch (error) {
-    console.error("Submission failed:", error);
-  }
-};
+          
+          onSuccess: () => {
+            console.log();
+            const files = mediaFiles.map((media) => ({
+              'af_name': media.file.name,
+              'af_type': media.file.type,
+              'af_path': media.storagePath,
+              'af_url': media.publicUrl,
+              'ann': createdAnnouncement?.ann_id,
+              'staff': user?.staff.staff_id 
+            }));
+
+            postAnnouncementFile(files, {
+              onSuccess: () => {
+                console.log('File Created!');
+              }
+            });
+          }
+        })
+      );
+
+    } catch (err) {
+      console.error("Error during announcement creation:", err);
+    }
+  };
 
 
 
@@ -93,12 +126,12 @@ const onSubmit = async () => {
         <Form {...form}>
           <form
             onSubmit={(e) => {
-              e.preventDefault()
-              onSubmit()
+              e.preventDefault();
+              onSubmit();
             }}
             className="space-y-6"
           >
-            {/* Basic Information Card */}
+            {/* Basic Information */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -135,7 +168,7 @@ const onSubmit = async () => {
               </CardContent>
             </Card>
 
-            {/* Schedule Card */}
+            {/* Schedule */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -162,7 +195,7 @@ const onSubmit = async () => {
               </CardContent>
             </Card>
 
-            {/* Recipients & Delivery Card */}
+            {/* Recipients & Delivery */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -210,31 +243,18 @@ const onSubmit = async () => {
                 </div>
 
                 <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      <User className="h-3 w-3 mr-1" />
-                      Creator Information
-                    </Badge>
-                  </div>
-                  <FormInput
-                    control={form.control}
-                    name="staff"
-                    placeholder="Enter your staff identification number"
-                  />
-                </div>
+                
               </CardContent>
             </Card>
 
-            {/* Media Upload Section */}
+            {/* Media Upload */}
             <MediaUpload
               title="Upload Image"
               description="Upload images"
               mediaFiles={mediaFiles}
               activeVideoId={activeVideoId}
               setActiveVideoId={setActiveVideoId}
-              setMediaFiles={setMediaFiles} 
+              setMediaFiles={setMediaFiles}
             />
 
             {/* Submit Button */}
@@ -252,7 +272,7 @@ const onSubmit = async () => {
         </Form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AnnouncementCreate
+export default AnnouncementCreate;

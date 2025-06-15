@@ -3,8 +3,15 @@ from .models import Announcement, AnnouncementFile, AnnouncementRecipient
 
 
 class AnnouncementBaseSerializer(serializers.ModelSerializer):
+    files= serializers.SerializerMethodField()
+    
+    def get_files(self,obj):
+        files = AnnouncementFile.objects.filter(ann = obj)
+        return AnnouncementFileSerializer(files, many = True).data
+
     class Meta:
         model = Announcement
+
         fields = '__all__'
 
 
@@ -12,6 +19,8 @@ class AnnouncementFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementFile
         fields = '__all__'
+
+
 
 
 class AnnouncementRecipientSerializer(serializers.ModelSerializer):
