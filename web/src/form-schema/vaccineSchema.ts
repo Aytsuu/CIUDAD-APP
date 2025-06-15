@@ -29,7 +29,7 @@ export const VaccineSchema = z.object({
   // city: z.string().optional(),
   assignto: z.string().min(1, "choose a person  to do the vitalsigns"),
   // signature: z.string().min(1, "signature is required"),
-  patientType: z.string().min(1, "Patient type is required"),
+  // patientType: z.string().min(1, "Patient type is required"),
 
 });
 

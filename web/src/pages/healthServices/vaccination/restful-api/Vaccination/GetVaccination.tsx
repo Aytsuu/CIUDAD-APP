@@ -109,3 +109,13 @@ export const getVaccinelist =  async () => {
     }   
   }
     
+  export const getVaccinatedCount = async () => {
+    try {
+      const response = await api.get('/vaccination/count-vaccinated/');
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch vaccinated count:", error);
+      throw error;
+    }
+  };
+  

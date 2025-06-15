@@ -142,7 +142,7 @@ const items: MenuItem[] = [
       { title: "Maternal Services", url: "/maternalrecords" },
       { title: "Family Planning", url: "/FamPlanning_table" },
       { title: "Medical Consultation", url: "/allMedRecords" },
-      { title: "Vaccination", url: "/allRecordsForVaccine" },
+      { title: "Vaccination", url: "/VaccinationManagement" },
       { title: "Patients Record", url: "/patients-record-main" },
       { title: "Family Profiling", url: "/family-profiling-main" },
       

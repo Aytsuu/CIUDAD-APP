@@ -13,9 +13,9 @@ import {
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-} from "../restful-api/PostAPI";
+} from "../restful-api/Vaccination/PostAPI";
 import { api } from "@/api/api";
-import { getVaccinationHistory, getVaccinationRecords } from "../restful-api/GetVaccination";
+import { getVaccinationHistory, getVaccinationRecords } from "../restful-api/Vaccination/GetVaccination";
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../Calculatenextvisit";
@@ -299,7 +299,7 @@ export const useSubmitStep2 = () => {
         icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
         duration: 2000,
       });
-      navigate("/allRecordsForVaccine");
+      navigate("/VaccinationManagement");
     },
     onError: (error: Error) => {
       toast.error(`${error.message}`, {

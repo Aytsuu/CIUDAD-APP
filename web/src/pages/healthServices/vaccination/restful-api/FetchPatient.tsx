@@ -26,14 +26,16 @@ export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
   }
 };
 
-export const usePatientInfo = (patId: string) => {
-  return useQuery({
-    queryKey: ["patientInfo", patId],
-    queryFn: () => fetchPatientInfo(patId),
-    enabled: !!patId, // Only fetch if patId is provided
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-};
+// export const usePatientInfo = (patId: string) => {
+//   return useQuery({
+//     queryKey: ["patientInfo", patId],
+//     queryFn: () => fetchPatientInfo(patId),
+//     enabled: !!patId, // Only fetch if patId is provided
+//     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+//   });
+// };
+
+
 export const fetchPatientRecords = async () => {
   try {
     const response = await api.get("patientrecords/patient/");
@@ -44,13 +46,20 @@ export const fetchPatientRecords = async () => {
       formatted: patientData.map((patient: any) => ({
         id: patient.pat_id.toString(),
         pat_id: patient.pat_id,
-        name: `${patient.personal_info?.per_lname || ""}, ${
-          patient.personal_info?.per_fname || ""
-        } ${patient.personal_info?.per_mname || ""} [${
-          patient.pat_type
-        }]`.trim(),
-      }))
-      
+        name: (
+          <div className="flex items-center gap-3">
+            <span>
+            <span className="bg-green-500 rounded text-white p-1 mt-2 mr-4"> {patient.pat_id}</span>
+
+              {`${patient.personal_info?.per_lname || ""}, ${
+                patient.personal_info?.per_fname || ""
+              } ${patient.personal_info?.per_mname || ""} [${
+                patient.pat_type
+              }]`}
+            </span>
+          </div>
+        ),
+      })),
     };
   } catch (error) {
     console.error("Error fetching patients:", error);
@@ -58,5 +67,4 @@ export const fetchPatientRecords = async () => {
     throw error;
   }
 };
-
 

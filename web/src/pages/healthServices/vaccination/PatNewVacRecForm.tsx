@@ -16,7 +16,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
+import { fetchVaccinesWithStock } from "./restful-api/Vaccination/FetchVaccination";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { fetchPatientRecords } from "./restful-api/FetchPatient";
@@ -61,13 +61,6 @@ export default function PatNewVacRecForm() {
 
       // Update form values
       form.setValue("pat_id", selectedPatient.pat_id);
-      // form.setValue("lname", personalInfo?.per_lname || "");
-      // form.setValue("fname", personalInfo?.per_fname || "");
-      // form.setValue("mname", personalInfo?.per_mname || "");
-      // form.setValue("sex", personalInfo?.per_sex || "");
-      // form.setValue("dob", personalInfo?.per_dob || "");
-      // form.setValue("age", `${calculateAge(personalInfo?.per_dob)} `);
-      form.setValue("patientType", selectedPatient.pat_type || "Resident");
     }
   };
 
@@ -77,14 +70,7 @@ export default function PatNewVacRecForm() {
       pat_id: undefined,
       vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
-      // lname: "",
-      // fname: "",
-      // mname: "",
-      // age: "",
-      // sex: "",
-      // dob: "",
       assignto: "",
-      patientType: "Resident",
     },
   });
 
@@ -129,8 +115,6 @@ export default function PatNewVacRecForm() {
         reset: form.reset // Use form.reset
       },
       form2: { reset: form2.reset },
-      // setAssignmentOption,
-      // calculateNextVisitDate,
     });
   };
 
@@ -229,61 +213,53 @@ export default function PatNewVacRecForm() {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormSelect
-                control={form.control}
-                name="patientType"
-                label="Patient Type"
-                options={[
-                  { id: "Resident", name: "Resident" },
-                  { id: "Transient", name: "Transient" },
-                  { id: "Regular", name: "Regular" },
-                ]}
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="lname"
-                label="Last Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="fname"
-                label="First Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="mname"
-                label="Middle Name"
-                readOnly
-              />
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Patient Type</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.pat_type || ""}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Last Name</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.personal_info?.per_lname || ""}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">First Name</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.personal_info?.per_fname || ""}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Middle Name</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.personal_info?.per_mname || ""}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormDateTimeInput
-                control={form.control}
-                name="dob"
-                label="Date of Birth"
-                type="date"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="age"
-                label="Age"
-                readOnly
-              />
-              <FormSelect
-                control={form.control}
-                name="sex"
-                label="Sex"
-                options={[
-                  { id: "female", name: "Female" },
-                  { id: "male", name: "Male" },
-                ]}
-                readOnly
-              />
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Date of Birth</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.personal_info?.per_dob || ""}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Age</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.personal_info?.per_dob 
+                    ? calculateAge(selectedPatientData.personal_info.per_dob) 
+                    : ""}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Sex</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.personal_info?.per_sex || ""}
+                </div>
+              </div>
             </div>
 
             <h2 className="font-semibold text-blue py-2 bg-blue-50 rounded-md mb-3">
@@ -292,41 +268,40 @@ export default function PatNewVacRecForm() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Street</Label>
-              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
-                {selectedPatientData?.address?.add_street || ""}
-              </div>
-              </div>
-              <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Sitio</Label>
-              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
-                {selectedPatientData?.address?.sitio || ""}
-              </div>
+                <Label className="text-sm font-medium text-gray-700">Street</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.address?.add_street || ""}
+                </div>
               </div>
               <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Barangay</Label>
-              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
-                {selectedPatientData?.address?.add_barangay || ""}
-              </div>
-              </div>
-              <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">City</Label>
-              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
-                {selectedPatientData?.address?.add_city || ""}
-              </div>
+                <Label className="text-sm font-medium text-gray-700">Sitio</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.address?.sitio || ""}
+                </div>
               </div>
               <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Province</Label>
-              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
-                {selectedPatientData?.address?.add_province || ""}
+                <Label className="text-sm font-medium text-gray-700">Barangay</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.address?.add_barangay || ""}
+                </div>
               </div>
-              </div>
-              {/* Optional: Uncomment to display Household ID if needed */}
               <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Household No.</Label>
-              <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
-                {selectedPatientData?.households?.[0]?.hh_id || ""}
+                <Label className="text-sm font-medium text-gray-700">City</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.address?.add_city || ""}
+                </div>
               </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Province</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.address?.add_province || ""}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Household No.</Label>
+                <div className="border rounded-md p-1 bg-gray-100 text-gray-700 h-[36px]">
+                  {selectedPatientData?.households?.[0]?.hh_id || ""}
+                </div>
               </div>
             </div>
 

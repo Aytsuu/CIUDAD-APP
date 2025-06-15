@@ -16,6 +16,7 @@ urlpatterns = [
     path('vaccination-record/<int:vacrec_id>/', DeleteUpdateVaccinationRecordView.as_view(), name='vaccination-record-detail'),
     
     
+    
     # path('vital-signs/<int:vital_id>/', DeleteUpdateVitalSignsView.as_view(), name='vital-signs-detail'),
     path('vaccination-history/<int:vachist_id>/', DeleteUpdateVaccinationHistoryView.as_view(), name='vaccination-history-detail'),
     path('unvaccinated-vaccines/<str:pat_id>/', UnvaccinatedVaccinesView.as_view(), name='unvaccinated-vaccines'),
@@ -24,5 +25,6 @@ urlpatterns = [
     path('patient-info/<str:patrec_pat_id>/', GetPatientInfoFromVaccinationRecord.as_view()),
     path('vacrec-count/<str:pat_id>/', GetVaccinationCountView.as_view(), name='get-vaccination-count'),
     path('residents/unvaccinated/', GetAllResidentsNotVaccinated.as_view(), name='unvaccinated-residents'),
+    path('count-vaccinated/', CountVaccinatedByPatientTypeView.as_view(), name='count-vaccinated'),
 
 ]
