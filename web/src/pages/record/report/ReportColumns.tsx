@@ -7,7 +7,6 @@ import { useNavigate } from "react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import React from "react";
-import { ro } from "date-fns/locale";
 
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
@@ -139,7 +138,7 @@ export const ARColumns = (
     enableHiding: false,
   },
   {
-    accessorKey: "ar_id",
+    accessorKey: "id",
     header: "Report No.",
   },
   {
@@ -157,11 +156,11 @@ export const ARColumns = (
     },
   },
   {
-    accessorKey: "ar_date",
+    accessorKey: "date",
     header: "Date",
   },
   {
-    accessorKey: "ar_status",
+    accessorKey: "status",
     header: "Status",
   },
   {

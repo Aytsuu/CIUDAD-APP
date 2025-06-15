@@ -10,7 +10,6 @@ export const getWeekNumber = (dateString: string): number => {
   const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
   const firstDayWeekDay = firstDay.getDay();
   const dayOfMonth = date.getDate();
-
   return Math.ceil((dayOfMonth + firstDayWeekDay) / 7);
 };
 

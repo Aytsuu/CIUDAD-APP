@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const useAddAR = () => {
   return useMutation({
@@ -50,6 +50,19 @@ export const useAddWARComp = () => {
     mutationFn: async (data: Record<string, any>[]) => {
       try {;
         const res = await api.post('report/war/comp/create/', data);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
+  })
+}
+
+export const useAddWARFile = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>[]) => {
+      try {
+        const res = await api.post('report/war/file/create/', data);
         return res.data;
       } catch (err) {
         throw err;

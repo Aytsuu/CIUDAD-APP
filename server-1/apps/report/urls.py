@@ -3,6 +3,7 @@ from .views.incident_report_views import *
 from .views.report_type_views import *
 from .views.ar_views import *
 from .views.weekly_ar_views import *
+from .views.rep_template_views import *
 
 urlpatterns = [
   path('ir/create/', IRCreateView.as_view(), name="create-ir"),
@@ -15,5 +16,9 @@ urlpatterns = [
   path('ar/file/create/', ARFileCreateView.as_view(), name='ar-create'),
   path('war/create/', WARCreateView.as_view(), name='create-war'),
   path('war/comp/create/', WARCompCreateView.as_view(), name='create-war-comp'),
-  path('war/comp/list/', WARListView.as_view(), name='war-comp-list')
+  path('war/comp/list/', WARListView.as_view(), name='war-comp-list'),
+  path('war/file/create/', WARFileCreateView.as_view(), name='war-create'),
+  path('template/list/create/', RTEListCreateView.as_view(), name="list-create-template"),
+  path('template/<str:rte_type>/', RTESpecificTypeView.as_view(), name="specific-template"),
+  path('template/<str:rte_type>/update/', RTEUpdateView.as_view(), name="template-update"),
 ]

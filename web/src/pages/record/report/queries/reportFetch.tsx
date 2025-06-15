@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const useGetActiveIR = () => {
   return useQuery({
@@ -60,5 +60,19 @@ export const useGetWeeklyAR = () => {
       }
     },
     staleTime: 5000
+  })
+}
+
+export const useGetSpecificTemplate = (type: string) => {
+  return useQuery({
+    queryKey: ['reportTemplate', type],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`report/template/${type}/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    }
   })
 }

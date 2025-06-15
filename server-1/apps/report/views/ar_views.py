@@ -1,6 +1,5 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from django.db import transaction
 from ..models import AcknowledgementReport
 from ..serializers.ar_serializers import *
 from apps.pagination import StandardResultsPagination
@@ -28,13 +27,21 @@ class ARFileCreateView(generics.CreateAPIView):
           ARFile(**item)
           for item in serializer.validated_data
       ]
-
       created_instances = ARFile.objects.bulk_create(instances)
 
+      # Check for pdf, docs, word upload
+      contains_doc = [
+        item for item in serializer.validated_data
+        if item['arf_type'] == "application/pdf" 
+      ]
+
+      if contains_doc:
+        ar = AcknowledgementReport.objects.filter(ar_id=contains_doc[0]['ar'].pk).first()
+        if ar:
+          ar.ar_status = "Signed"
+          ar.save()
+        
       if len(created_instances) > 0 and created_instances[0].pk is not None:
-          response_serializer = self.get_serializer(created_instances, many=True)
-          return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+          return Response(status=status.HTTP_201_CREATED)
       
-      return Response({"detail": "Bulk create successful", "count": len(instances)},
-          status=status.HTTP_201_CREATED
-      )
+      return Response(status=status.HTTP_201_CREATED)

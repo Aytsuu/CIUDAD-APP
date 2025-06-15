@@ -34,3 +34,31 @@ class WARCompCreateView(generics.CreateAPIView):
 class WARListView(generics.ListAPIView):
   serializer_class = WARListSerializer
   queryset = WeeklyAccomplishmentReport.objects.all().order_by('war_created_at')
+
+class WARFileCreateView(generics.CreateAPIView):
+  serializer_class = WARFileBaseSerializer
+  queryset = WARFile.objects.all()
+
+  @transaction.atomic
+  def create(self, request, *args, **kwargs):
+      serializer = self.get_serializer(data=request.data, many=True)
+      serializer.is_valid(raise_exception=True)
+
+      # Prepare model instances
+      instances = [
+          WARFile(**item)
+          for item in serializer.validated_data
+      ]
+      created_instances = WARFile.objects.bulk_create(instances)
+
+      war = WeeklyAccomplishmentReport.objects.filter(
+        war_id=serializer.validated_data[0]['war'].pk
+      ).first()
+      if war:
+        war.war_status = "Signed"
+        war.save()
+        
+      if len(created_instances) > 0 and created_instances[0].pk is not None:
+          return Response(status=status.HTTP_201_CREATED)
+      
+      return Response(status=status.HTTP_201_CREATED)

@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     width: "100%",
-    marginBottom: 15,
+    marginBottom: 5,
   },
   detailRow: {
     fontSize: 12,
@@ -70,11 +70,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 20,
-    marginVertical: 15,
+    marginVertical: 5,
   },
   image: {
-    width: 230,
-    height: 200,
+    width: 250,
+    height: 220,
     backgroundColor: "#e5e7eb",
   },
   signMainContaniner: {
@@ -86,12 +86,12 @@ const styles = StyleSheet.create({
     width: "85%",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
+    marginTop: 25,
   },
   signatureTitle: {
     fontSize: 12,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: 25,
   },
   signatureName: {
     fontSize: 12,
@@ -109,8 +109,8 @@ interface ARTemplatePDFProps {
   incidentName?: string
   dateTime?: string
   location?: string
-  actionsTaken?: string
-  images?: string[]
+  actionsTaken?: string 
+  images?: any[]
   preparedBy?: string
   recommendedBy?: string
   approvedBy?: string
@@ -168,11 +168,9 @@ export const ARTemplatePDF: React.FC<ARTemplatePDFProps> = ({
       </View>
 
       <View style={styles.imagesContainer}>
-        {[0, 1, 2].map((index) => (
+        {images.map((img, index) => (
           <View key={index} style={styles.image}>
-            {images[index] && (
-              <Image src={images[index] || "/placeholder.svg"} style={{ width: "100%", height: "100%" }} />
-            )}
+              <Image src={img.arf_url || "/placeholder.svg"} style={{ width: "100%", height: "100%" }} />
           </View>
         ))}
       </View>

@@ -1,15 +1,14 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { DataTable } from "@/components/ui/table/data-table";
 import { useInstantFileUpload } from "@/hooks/use-file-upload";
 import { Upload } from "lucide-react";
 import React from "react";
-import { WARDummy } from "@/template/report/acknowledgement/ARTemplateColumns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table/table";
 import { cn } from "@/lib/utils";
 import { PDFViewer } from "@react-pdf/renderer";
 import { WARTemplatePDF } from "./WARTemplatePDF";
+import { useUpdateTemplate } from "../queries/reportUpdate";
+import { useGetSpecificTemplate } from "../queries/reportFetch";
 
 const header = [
   {
@@ -34,14 +33,51 @@ const header = [
   },
 ]
 
-export const WARDocTemplate = () => {
-  const [logo1, setLogo1] = React.useState<string>();
-  const [file1, setFile1] = React.useState<any>();
+export const WARDocTemplate = ({
+  data
+} : {
+  data: any
+}) => {
   const { uploadFile } = useInstantFileUpload({});
+  const { mutateAsync: updateTemplate } = useUpdateTemplate();
+    const { data: reportTemplate, isLoading } = useGetSpecificTemplate('WAR');  
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLeftLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    try {
+      const publicUrl = await handleImageUpload(files);
+      if(publicUrl){
+        updateTemplate({
+          data: {
+            rte_logoLeft: publicUrl
+          },
+          type: 'WAR'  
+        })
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+  
+  const handleRightLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    try {
+      const publicUrl = await handleImageUpload(files);
+      if(publicUrl){
+        updateTemplate({
+          data: {
+            rte_logoRight: publicUrl
+          },
+          type: 'WAR'  
+        })
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  const handleImageUpload = React.useCallback(async (files: any[]) => {
     if (files.length === 0) return;
 
     const newFile = {
@@ -55,18 +91,17 @@ export const WARDocTemplate = () => {
       previewUrl: URL.createObjectURL(files[0]),
     };
 
-    setFile1(newFile);
-
-    const { publicUrl, storagePath } = await uploadFile(newFile.file);
+    const { publicUrl } = await uploadFile(newFile.file);
     if (publicUrl) {
-      setLogo1(publicUrl);
-      setFile1((prev: any) => ({
-        ...prev,
-        storagePath,
-        status: "uploaded",
-      }));
+      return publicUrl
     }
-  };
+    return null;
+  }, []);
+
+  if(isLoading){
+    return;
+  }
+
   return (
     <div className="w-full h-[700px]">
       <div className="mb-4">
@@ -74,10 +109,10 @@ export const WARDocTemplate = () => {
           className="w-full h-[700px] bg-blue-500 text-black hover:bg-blue-600"
         >
           <WARTemplatePDF
-                logo1={logo1}
-                logo2={logo1}
+                logo1={reportTemplate?.rte_logoLeft}
+                logo2={reportTemplate?.rte_logoRight}
                 reportPeriod=""
-                tableData={WARDummy}
+                data={data}
                 preparedBy={"JUNO"}
                 recommendedBy={"JUNO"}
                 approvedBy={"JUNO"}
@@ -91,7 +126,7 @@ export const WARDocTemplate = () => {
               <Input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleImageUpload}
+                onChange={handleLeftLogoChange}
                 accept="image/*"
                 className="hidden"
                 id="logo-1"
@@ -99,7 +134,7 @@ export const WARDocTemplate = () => {
 
               <label htmlFor="logo-1" className="relative cursor-pointer">
                 <img
-                  src={file1?.previewUrl}
+                  src={reportTemplate?.rte_logoLeft}
                   alt="Profile"
                   className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
                 />
@@ -119,15 +154,15 @@ export const WARDocTemplate = () => {
               <Input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleImageUpload}
+                onChange={handleRightLogoChange}
                 accept="image/*"
                 className="hidden"
-                id="logo-1"
+                id="logo-2"
               />
 
-              <label htmlFor="logo-1" className="relative cursor-pointer">
+              <label htmlFor="logo-2" className="relative cursor-pointer">
                 <img
-                  src={file1?.previewUrl}
+                  src={reportTemplate?.rte_logoRight}
                   alt="Profile"
                   className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
                 />
@@ -153,26 +188,20 @@ export const WARDocTemplate = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {WARDummy.map((row, rowIndex) => (
+                  {data.map((row: any, rowIndex: number) => (
                     <TableRow key={`row-${rowIndex}`}>
                       {Object.entries(row).map(([_, value], cellIndex) => (
                         <TableCell
                           key={`cell-${cellIndex}`}
                           className="text-center text-[13px] border border-black" // Responsive font size and padding
                         >
-                          {value}
+                          {value as string}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              {/* <DataTable 
-                columns={WARTemplateColumns} 
-                data={WARDummy}
-                headerClassName="bg-white border border-black text-black text-[13px]"
-                cellClassName="border border-black text-black"
-              /> */}
             </div>
             <div className="w-full h-full flex border-x border-b border-black">
               <div className="w-full flex border-r border-black h-full py-5">

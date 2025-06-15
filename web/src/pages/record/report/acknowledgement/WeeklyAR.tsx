@@ -11,21 +11,23 @@ export default function WeeklyAR() {
   const { data: weeklyAR, isLoading, error } = useGetWeeklyAR();
   const months = getMonths;
 
+  console.log(weeklyAR)
+
   // Group data by month and week for better organization
   const organizedData = months
     .map((month) => {
       const monthData =
         weeklyAR?.filter(
-          (ar: any) => month === getMonthName(ar.war_created_at)
+          (war: any) => month === getMonthName(war.date)
         ) || [];
 
       // Group by week within the month
-      const weekGroups = monthData.reduce((acc: any, ar: any) => {
-        const weekNo = getWeekNumber(ar.war_created_at);
+      const weekGroups = monthData.reduce((acc: any, war: any) => {
+        const weekNo = getWeekNumber(war.date);
         if (!acc[weekNo]) {
           acc[weekNo] = [];
         }
-        acc[weekNo].push(ar);
+        acc[weekNo].push(war);
         return acc;
       }, {});
 
@@ -230,7 +232,7 @@ export default function WeeklyAR() {
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-3 w-3 text-primary" />
                           <span className="text-sm font-medium">
-                            Week {getWeekNumber(report.war_created_at)}
+                            Week {getWeekNumber(report.date)}
                           </span>
                         </div>
                         <Badge variant="outline" className="text-xs">
@@ -238,8 +240,8 @@ export default function WeeklyAR() {
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground mb-2">
-                        {getMonthName(report.war_created_at)} •{" "}
-                        {new Date(report.war_created_at).toLocaleDateString()}
+                        {getMonthName(report.date)} •{" "}
+                        {new Date(report.date).toLocaleDateString()}
                       </div>
                       <div className="space-y-1">
                         {report.war_composition
@@ -282,39 +284,6 @@ export default function WeeklyAR() {
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Total Reports
-                  </span>
-                  <Badge variant="secondary">
-                    {weeklyAR?.reduce(
-                      (total: number, ar: any) =>
-                        total + ar.war_composition.length,
-                      0
-                    ) || 0}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Total Weeks
-                  </span>
-                  <Badge variant="secondary">{weeklyAR?.length || 0}</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Active Months
-                  </span>
-                  <Badge variant="secondary">{organizedData.length}</Badge>
-                </div>
               </CardContent>
             </Card>
           </div>

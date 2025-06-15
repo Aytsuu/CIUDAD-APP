@@ -29,6 +29,7 @@ class AcknowledgementReport(models.Model):
   ar_date_completed = models.DateField()
   ar_time_completed = models.TimeField()
   ar_action_taken = models.TextField()
+  ar_result = models.TextField()
   ar_created_at = models.DateField(auto_now_add=True)
   ar_status = models.CharField(max_length=20, default='Unsigned')
   ar_is_archive = models.BooleanField(default=False)
@@ -48,6 +49,9 @@ class ARFile(models.Model):
   arf_url = models.URLField()
   ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
 
+  class Meta:
+    db_table = 'ar_file'
+
 class WeeklyAccomplishmentReport(models.Model):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(auto_now_add=True)
@@ -57,6 +61,17 @@ class WeeklyAccomplishmentReport(models.Model):
 
   class Meta:
     db_table = 'weekly_acknowledgement_report'
+
+class WARFile(models.Model):
+  warf_id = models.BigAutoField(primary_key=True)
+  warf_name = models.CharField(max_length=500)
+  warf_type = models.CharField(max_length=50)
+  warf_path = models.CharField(max_length=500)
+  warf_url = models.URLField()
+  war = models.ForeignKey(WeeklyAccomplishmentReport, on_delete=models.CASCADE)
+
+  class Meta:
+    db_table = 'war_file'
 
 class WeeklyARComposition(models.Model):
   warc_id = models.BigAutoField(primary_key=True)
@@ -78,4 +93,11 @@ class IncidentReportFile(models.Model):
     db_table = 'incident_report_file'
 
 class ReportTemplate(models.Model):
-  rt_id = models.BigAutoField(primary_key=True)
+  rte_id = models.BigAutoField(primary_key=True)
+  rte_logoLeft = models.URLField(null=True)
+  rte_logoRight = models.URLField(null=True)
+  rte_headerText = models.TextField(null=True)
+  rte_type = models.CharField(max_length=50, null=True)
+  
+  class Meta:
+    db_table = "report_template"

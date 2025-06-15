@@ -145,13 +145,7 @@ interface WARTemplatePDFProps {
   logo1?: string
   logo2?: string
   reportPeriod?: string
-  tableData?: Array<{
-    incident_area: string
-    act_undertaken: string
-    time_started: string
-    time_completed: string
-    result: string
-  }>
+  data?: any
   preparedBy?: string
   recommendedBy?: string
   approvedBy?: string
@@ -161,10 +155,11 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
   logo1,
   logo2,
   reportPeriod = "September 01-05, 2024",
-  tableData = [],
+  data = [],
   preparedBy = "JUNO",
   recommendedBy = "JUNO",
   approvedBy = "JUNO",
+  
 }) => (
   <Document>
     <Page size="LEGAL" style={styles.page} orientation="landscape">
@@ -205,7 +200,7 @@ export const WARTemplatePDF: React.FC<WARTemplatePDFProps> = ({
         </View>
 
         {/* Table Body */}
-        {tableData.map((row, index) => (
+        {data.map((row: any, index: number) => (
           <View key={index} style={styles.tableRow}>
             <Text style={[styles.tableCell, styles.incidentAreaCol]}>{row.incident_area}</Text>
             <Text style={[styles.tableCell, styles.activitiesCol]}>{row.act_undertaken}</Text>

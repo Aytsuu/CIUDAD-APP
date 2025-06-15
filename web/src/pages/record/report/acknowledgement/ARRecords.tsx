@@ -189,9 +189,9 @@ export default function ARRecords() {
                 Weekly AR Created
               </Badge>
             ))}
-            <Button onClick={handleCreateAR}>
+            {!isCreatingWeeklyAR && <Button onClick={handleCreateAR}>
               Create AR
-            </Button>
+            </Button>}
           </div>
         </div>
 

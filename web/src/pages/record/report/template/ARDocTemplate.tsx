@@ -1,11 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useInstantFileUpload } from "@/hooks/use-file-upload";
-import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
+import { PDFViewer } from "@react-pdf/renderer";
 import { Upload } from "lucide-react";
 import React from "react";
 import { ARTemplatePDF } from "./ARTemplatePDF";
 import { Label } from "@/components/ui/label";
+import { useUpdateTemplate } from "../queries/reportUpdate";
+import { useGetSpecificTemplate } from "../queries/reportFetch";
 
 export const ARDocTemplate = ({
   incident,
@@ -20,13 +22,46 @@ export const ARDocTemplate = ({
   act_taken: string;
   images: any[]
 }) => {
-  const [logo1, setLogo1] = React.useState<string>();
-  const [file1, setFile1] = React.useState<any>();
   const { uploadFile } = useInstantFileUpload({});
+  const { mutateAsync: updateTemplate } = useUpdateTemplate();
+  const { data: reportTemplate, isLoading } = useGetSpecificTemplate('AR');  
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLeftLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    try {
+      const publicUrl = await handleImageUpload(files);
+      if(publicUrl){
+        updateTemplate({
+          data: {
+            rte_logoLeft: publicUrl
+          },
+          type: 'AR'  
+        })
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  const handleRightLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    try {
+      const publicUrl = await handleImageUpload(files);
+      if(publicUrl){
+        updateTemplate({
+          data: {
+            rte_logoRight: publicUrl
+          },
+          type: 'AR'  
+        })
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  const handleImageUpload = React.useCallback(async (files: any[]) => {
     if (files.length === 0) return;
 
     const newFile = {
@@ -40,18 +75,17 @@ export const ARDocTemplate = ({
       previewUrl: URL.createObjectURL(files[0]),
     };
 
-    setFile1(newFile);
-
-    const { publicUrl, storagePath } = await uploadFile(newFile.file);
+    const { publicUrl } = await uploadFile(newFile.file);
     if (publicUrl) {
-      setLogo1(publicUrl);
-      setFile1((prev: any) => ({
-        ...prev,
-        storagePath,
-        status: "uploaded",
-      }));
+      return publicUrl
     }
-  };
+    return null;
+  }, []);
+
+  if(isLoading){
+    return;
+  }
+
   return (
     <div className="w-full h-[700px]">
       <div className="mb-4">
@@ -59,15 +93,16 @@ export const ARDocTemplate = ({
           className="w-full h-[700px] bg-blue-500 text-black hover:bg-blue-600"
         >
           <ARTemplatePDF 
-              logo1={logo1}
-              logo2={logo1}
-              incidentName={""}
-              dateTime={""}
-              location={""}
-              actionsTaken={""}
-              preparedBy={""}
-              recommendedBy={""}
-              approvedBy={""}
+              logo1={reportTemplate.rte_logoLeft}
+              logo2={reportTemplate.rte_logoRight}
+              incidentName={incident}
+              dateTime={dateTime}
+              location={location}
+              actionsTaken={act_taken}
+              preparedBy={"JUNO"}
+              recommendedBy={"JUNO"}
+              approvedBy={"JUNO"}
+              images={images}
             />
         </PDFViewer>
       </div>
@@ -78,7 +113,7 @@ export const ARDocTemplate = ({
               <Input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleImageUpload}
+                onChange={handleLeftLogoChange}
                 accept="image/*"
                 className="hidden"
                 id="logo-1"
@@ -86,8 +121,8 @@ export const ARDocTemplate = ({
 
               <label htmlFor="logo-1" className="relative cursor-pointer">
                 <img
-                  src={file1?.previewUrl}
-                  alt="Profile"
+                  src={reportTemplate?.rte_logoLeft}
+                  alt="Logo"
                   className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -106,16 +141,16 @@ export const ARDocTemplate = ({
               <Input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleImageUpload}
+                onChange={handleRightLogoChange}
                 accept="image/*"
                 className="hidden"
-                id="logo-1"
+                id="logo-2"
               />
 
-              <label htmlFor="logo-1" className="relative cursor-pointer">
+              <label htmlFor="logo-2" className="relative cursor-pointer">
                 <img
-                  src={file1?.previewUrl}
-                  alt="Profile"
+                  src={reportTemplate?.rte_logoRight}
+                  alt="Logo"
                   className="w-[70px] h-[70px] rounded-full object-cover bg-gray"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -134,9 +169,9 @@ export const ARDocTemplate = ({
               <Label>ACTIONS TAKEN: <span>{act_taken}</span></Label>
             </div>
             <div className="flex gap-8 mt-6">
-              <img className="w-[250px] h-[220px] bg-gray" />
-              <img className="w-[250px] h-[220px] bg-gray" />
-              <img className="w-[250px] h-[220px] bg-gray" />
+              {images.map((image: any) => (
+                <img src={image.arf_url} className="w-[250px] h-[220px] bg-gray" />
+              ))}
             </div>
             <div className="w-[85%] flex justify-between mt-12">
               <div className="flex flex-col gap-2">

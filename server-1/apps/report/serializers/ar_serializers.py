@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 from ..models import *
 from apps.profiling.models import Address
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
@@ -16,19 +17,39 @@ class ARFileBaseSerializer(serializers.ModelSerializer):
     fields = '__all__'
 
 class ARTableSerializer(serializers.ModelSerializer):
+  id = serializers.IntegerField(source='ar_id')
+  status = serializers.CharField(source='ar_status')
   ar_sitio = serializers.SerializerMethodField()
   ar_street = serializers.SerializerMethodField()
-  ar_date = serializers.DateField(source='ar_created_at')
+  date = serializers.DateField(source='ar_created_at')
+  ar_files = serializers.SerializerMethodField()
+  ar_time_started = serializers.SerializerMethodField()
+  ar_time_completed = serializers.SerializerMethodField()
 
   class Meta:
     model = AcknowledgementReport
-    fields = ['ar_id', 'ar_title', 'ar_action_taken','ar_date_completed', 'ar_time_completed', 'ar_sitio', 'ar_street', 'ar_date', 'ar_status']
+    fields = ['id', 'ar_title', 'ar_action_taken', 'ar_date_started', 'ar_time_started', 'ar_date_completed',
+              'ar_time_completed', 'ar_sitio', 'ar_street', 'date', 'status', 'ar_files', 'ar_result']
+  
+  def get_ar_time_started(self, obj):
+    if obj.ar_time_started:
+      return obj.ar_time_started.strftime("%I:%M %p")
+    return None
+  
+  def get_ar_time_completed(self, obj):
+    if obj.ar_time_completed:
+      return obj.ar_time_completed.strftime("%I:%M %p")
+    return None
 
   def get_ar_sitio(self, obj):
     return obj.add.sitio.sitio_name
   
   def get_ar_street(self, obj):
     return obj.add.add_street
+
+  def get_ar_files(self, obj):
+    files = ARFile.objects.filter(ar=obj)
+    return ARFileBaseSerializer(files, many=True).data
 
 class ARCreateSerializer(serializers.ModelSerializer):
   rt = serializers.CharField()

@@ -49,7 +49,10 @@ export default function ARForm({
         <FormDateTimeInput control={form.control} name="ar_date_completed" label="Date Completed" type="date"/>
         <FormDateTimeInput control={form.control} name="ar_time_completed" label="Time Completed" type="time" />
       </div>
-      <FormTextArea control={form.control} name="ar_action_taken" label="Action Taken"/>
+      <div className="grid grid-cols-2 gap-4">
+        <FormTextArea control={form.control} name="ar_action_taken" label="Action Taken"/>
+        <FormTextArea control={form.control} name="ar_result" label="Result"/>
+      </div>
 
       {/* Image upload field */}
       <div className="w-full">
