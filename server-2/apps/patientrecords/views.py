@@ -1,19 +1,33 @@
 from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
+from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
 from django.db.models import Count, Prefetch
 from apps.healthProfiling.models import PersonalAddress
+from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
+
+
+@api_view(['GET'])
+def get_resident_profile_list(request):
+    residents = ResidentProfile.objects.filter(
+        patients__isnull=True
+    ).select_related('per').prefetch_related('per__personaladdress_set__add__sitio')
+
+    serializer = ResidentProfileListSerializer(residents, many=True)
+    return Response(serializer.data)
  
+
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     queryset = Patient.objects.all()
     
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+    # def create(self, request, *args, **kwargs):
+    #     return super().create(request, *args, **kwargs)
 
     def get_queryset(self):
         return Patient.objects.select_related(
@@ -22,7 +36,8 @@ class PatientView(generics.ListCreateAPIView):
             Prefetch(
                 'rp_id__per__personaladdress_set',
                 queryset=PersonalAddress.objects.select_related('add', 'add__sitio')
-            )
+            ),
+            'rp_id__household_set',
         ).filter(pat_status='Active')
 
 class PatientDetailView(generics.RetrieveAPIView):
@@ -34,7 +49,10 @@ class PatientDetailView(generics.RetrieveAPIView):
             'rp_id__per'
         ).prefetch_related(
             'rp_id__per__personaladdress_set__add__sitio'
+        ).prefetch_related(
+            'rp_id__household_set'
         )
+    
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer
@@ -91,7 +109,7 @@ class SpouseCreateView(generics.CreateAPIView):
     serializer_class = SpouseCreateSerializer
 
     def create(self, request, *args, **kwargs):
-        required_fields = ['spouse_lname', 'spouse_fname', 'spouse_occupation', 'pat_id']
+        required_fields = ['spouse_lname', 'spouse_fname', 'spouse_occupation', 'rp_id']
 
         for field in required_fields:
             if not request.data.get(field):
@@ -109,10 +127,10 @@ class SpouseListView(generics.ListAPIView):
     serializer_class = SpouseSerializer
 
     def get_queryset(self):
-        pat_id = self.request.query_params.get('pat_id')
+        rp_id = self.request.query_params.get('rp_id')
 
-        if pat_id:
-            return Spouse.objects.filter(pat_id=pat_id)
+        if rp_id:
+            return Spouse.objects.filter(rp_id=rp_id)
         return Spouse.objects.all()
 
 class SpouseDetailView(generics.RetrieveUpdateDestroyAPIView):

@@ -23,7 +23,7 @@ import { usePatients } from "../queries/maternalFetchQueries"
 
 interface PatientRecord {
     pat_id: string;
-    pat_type: string | "Postpartum";
+    pat_type: string;
     pat_status: string;
 
     personal_info: {
@@ -41,12 +41,12 @@ interface PatientRecord {
         sitio?: string
     };
     
-    spouse?: {
-        spouse_lname: string;
-        spouse_fname: string;
-        spouse_mnane: string;
-        spouse_dob: string;
-    };
+    // spouse?: {
+    //     spouse_lname: string;
+    //     spouse_fname: string;
+    //     spouse_mnane: string;
+    //     spouse_dob: string;
+    // };
 }
 
 const calculateAge = (dob: string): number => {
@@ -100,7 +100,7 @@ export default function PostpartumFormFirstPg(
 
           const personalInfo = selectedPatient.personal_info;
           const address = selectedPatient.address;
-          const spouse = selectedPatient.spouse;
+        //   const spouse = selectedPatient.spouse;
 
             setValue("mothersPersonalInfo.familyNo", selectedPatient.pat_id)
             setValue("mothersPersonalInfo.motherLName", personalInfo?.per_lname) 
@@ -109,17 +109,17 @@ export default function PostpartumFormFirstPg(
             setValue("mothersPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
             setValue("mothersPersonalInfo.motherDOB", personalInfo?.per_dob)
 
-            if(spouse){
-                setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
-                setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
-                setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mnane || "")
-                setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
-            } else {
-                setValue("mothersPersonalInfo.husbandLName", "")
-                setValue("mothersPersonalInfo.husbandFName", "")
-                setValue("mothersPersonalInfo.husbandMName", "")
-                setValue("mothersPersonalInfo.husbandDob", "")
-            }
+            // if(spouse){
+            //     setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+            //     setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+            //     setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mnane || "")
+            //     setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
+            // } else {
+            //     setValue("mothersPersonalInfo.husbandLName", "")
+            //     setValue("mothersPersonalInfo.husbandFName", "")
+            //     setValue("mothersPersonalInfo.husbandMName", "")
+            //     setValue("mothersPersonalInfo.husbandDob", "")
+            // }
 
             if(address){
                 setValue("mothersPersonalInfo.address.street", address.add_street)
