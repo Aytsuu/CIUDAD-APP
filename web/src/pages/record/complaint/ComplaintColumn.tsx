@@ -1,115 +1,111 @@
-import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoveRight } from "lucide-react";
+import { ComplaintRecord } from "./complaint-type";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
-import { ComplaintFormValues } from "./complaint-type";
+import { ArrowRight } from "lucide-react";
 
-export const blotterColumns = (complaint: any[]): ColumnDef<ComplaintFormValues>[] => [
+export const complaintColumns = (data: ComplaintRecord[]): ColumnDef<ComplaintRecord>[] => [
   {
-    accessorKey: 'id',
-    header: ({ column }) => (
-      <div
-        className="flex items-center gap-2 cursor-pointer min-w-[100px]"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Case No.
-        <ArrowUpDown size={14} />
-      </div>
-    ),
+    accessorKey: "comp_id",
+    header: "ID",
     cell: ({ row }) => (
-      <div className="min-w-[100px]">
-        {row.getValue('id')}
-      </div>
+      <div className="font-medium">{row.getValue("comp_id")}</div>
     ),
   },
   {
-    accessorKey: 'bc_complainant',
-    header: ({ column }) => (
-      <div
-        className="flex items-center justify-center gap-2 cursor-pointer min-w-[150px]"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Complainant
-        <ArrowUpDown size={14} />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="min-w-[150px] max-w-[200px] truncate" title={row.getValue('bc_complainant')}>
-        {row.getValue('bc_complainant')}
-      </div>
-    ),
+    accessorKey: "comp_incident_type",
+    header: "Incident Type",
+    cell: ({ row }) => <div>{row.getValue("comp_incident_type")}</div>,
   },
   {
-    accessorKey: 'bc_accused',
-    header: 'Accused',
-    cell: ({ row }) => (
-      <div className="min-w-[150px] max-w-[200px] truncate" title={row.getValue('bc_accused')}>
-        {row.getValue('bc_accused')}
-      </div>
-    ),
+    accessorKey: "cpnt.cpnt_name",
+    header: "Complainant",
+    cell: ({ row }) => <div>{row.original.cpnt.cpnt_name}</div>,
   },
   {
-    accessorKey: 'bc_incident_type',
-    header: 'Incident Type',
-    cell: ({ row }) => (
-      <div className="min-w-[120px] max-w-[180px] truncate" title={row.getValue('bc_incident_type')}>
-        {row.getValue('bc_incident_type')}
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'bc_datetime',
-    header: 'Date/Time',
+    accessorKey: "accused_persons",
+    header: "Accused",
     cell: ({ row }) => {
-      const date = new Date(row.original.bc_datetime);
+      const accusedPersons = row.original.accused_persons;
+      if (!accusedPersons || accusedPersons.length === 0) {
+        return <div>No accused persons</div>;
+      }
+
+      // Display first accused person's name, with count if multiple
+      const firstAccused = accusedPersons[0].acsd_name;
+      const remainingCount = accusedPersons.length - 1;
+
       return (
-        <div className="min-w-[150px]">
-          {date.toLocaleString()}
+        <div>
+          {firstAccused}
+          {remainingCount > 0 && (
+            <span className="text-gray-500 text-sm">
+              {" "}
+              +{remainingCount} more
+            </span>
+          )}
         </div>
       );
-    }
+    },
   },
   {
-    accessorKey: 'bc_allegation',
-    header: 'Allegation',
-    cell: ({ row }) => (
-      <div className="min-w-[150px] max-w-[250px] line-clamp-2" title={row.getValue('bc_allegation')}>
-        {row.getValue('bc_allegation')}
-      </div>
-    ),
+    accessorKey: "comp_datetime",
+    header: "Date & Time",
+    cell: ({ row }) => {
+      const datetime = row.getValue("comp_datetime") as string;
+      return <div>{new Date(datetime).toLocaleString()}</div>;
+    },
+  },
+  {
+    accessorKey: "comp_allegation",
+    header: "Allegation",
+    cell: ({ row }) => {
+      const allegation = row.getValue("comp_allegation") as string;
+      return (
+        <div className="max-w-xs truncate" title={allegation}>
+          {allegation}
+        </div>
+      );
+    },
   },
   // {
-  //   accessorKey: 'bc_cmplnt_address',
-  //   header: 'Complainant Address',
-  //   cell: ({ row }) => (
-  //     <div className="min-w-[150px] max-w-[200px] truncate" title={row.getValue('bc_cmplnt_address')}>
-  //       {row.getValue('bc_cmplnt_address')}
-  //     </div>
-  //   ),
-  // },
-  // {
-  //   accessorKey: 'bc_accused_address',
-  //   header: 'Accused Address',
-  //   cell: ({ row }) => (
-  //     <div className="min-w-[150px] max-w-[200px] truncate" title={row.getValue('bc_accused_address')}>
-  //       {row.getValue('bc_accused_address')}
-  //   </div>
-  //   ),
+  //   accessorKey: "cpnt.add",
+  //   header: "Complainant Location",
+  //   cell: ({ row }) => {
+  //     const address = row.original.cpnt.add;
+  //     return (
+  //       <div className="text-sm">
+  //         {`${address.add_barangay}, ${address.add_city}, ${address.add_province}`}
+  //       </div>
+  //     );
+  //   },
   // },
   {
-    id: 'actions',
-    header: 'Action',
+    accessorKey: "comp_created_at",
+    header: "Created At",
+    cell: ({ row }) => {
+      const createdAt = row.getValue("comp_created_at") as string;
+      return <div>{new Date(createdAt).toLocaleDateString()}</div>;
+    },
+  },
+  {
+    accessorKey: "actions",
+    header: "Action",
     cell: ({ row }) => (
       <div className="min-w-[100px]">
         <Link 
-          to={`/blotter-record/${row.original.id}`} 
-          state={{ blotter: row.original }}
+          to={`/complaint-record/${row.original.comp_id}`}
+          state={{ complaint: row.original }}
         >
-          <Button variant={"outline"} size="sm">
-            View <MoveRight size={14} />
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full w-8 h-8 p-0"
+          >
+            <ArrowRight size={14} />
           </Button>
         </Link>
       </div>
-    )
+    ),
   },
 ];

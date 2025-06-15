@@ -1,4 +1,4 @@
-import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
+import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 import AccNotification from "./navItems/notification/accNotification";
 import AccountProfile from "./navItems/user/accountProfile";
 

@@ -30,41 +30,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only store non-sensitive user data in localStorage
-    const storedUser = localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user") || "null")
-      : null;
+    // Load stored data on app initialization
+    const storedUser = localStorage.getItem("user");
+    const storedAccessToken = localStorage.getItem("accessToken");
+    const storedRefreshToken = localStorage.getItem("refreshToken");
 
-    setUser(storedUser);
+    if (storedUser && storedAccessToken) {
+      setUser(JSON.parse(storedUser));
+      setAccessToken(storedAccessToken);
+      setRefreshToken(storedRefreshToken);
+    }
   }, []);
 
   const login = (userData: User & { accessToken: string; refreshToken: string }) => {
-    // Store user data (non-sensitive) in localStorage
-    localStorage.setItem("user", JSON.stringify({
+    const userToStore = {
       id: userData.id,
       username: userData.username,
       email: userData.email,
       profile_image: userData.profile_image,
       rp: userData.rp,
       staff: userData.staff
-    }));
+    };
 
-    // Store tokens in memory only
+    // Store everything in localStorage for persistence
+    localStorage.setItem("user", JSON.stringify(userToStore));
+    localStorage.setItem("accessToken", userData.accessToken);
+    localStorage.setItem("refreshToken", userData.refreshToken);
+
+    // Update state
     setAccessToken(userData.accessToken);
     setRefreshToken(userData.refreshToken);
-    setUser({
-      id: userData.id,
-      username: userData.username,
-      email: userData.email,
-      profile_image: userData.profile_image,
-      rp: userData.rp,
-      staff: userData.staff
-    });
+    setUser(userToStore);
   };
 
   const logout = () => {
     // Clear everything
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
@@ -81,7 +84,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const getAccessToken = () => {
-    return accessToken;
+    return accessToken || localStorage.getItem("accessToken");
   };
 
   return (

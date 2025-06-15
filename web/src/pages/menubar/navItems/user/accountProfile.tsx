@@ -21,6 +21,7 @@ import CardLayout from "../../../../components/ui/card/card-layout";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 
 
 export default function AccountProfile(): JSX.Element {
@@ -70,7 +71,7 @@ export default function AccountProfile(): JSX.Element {
   const profilePopOverHeaderDesc = (
     <div className="flex items-center gap-x-2">
       <img
-        src={user?.profile_image || "Profile Picture"}
+        src={user?.profile_image || sanRoqueLogo}
         alt="Profile Picture"
         className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
       />
@@ -86,7 +87,7 @@ export default function AccountProfile(): JSX.Element {
       <Popover>
         <PopoverTrigger className="flex items-center space-x-2">
           <img
-            src={user?.profile_image || "Profile Picture"}
+            src={user?.profile_image || sanRoqueLogo}
             alt="Profile"
             className="w-8 h-8 rounded-full"
           />

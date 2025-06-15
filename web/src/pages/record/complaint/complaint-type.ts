@@ -1,55 +1,96 @@
-export interface MediaFile {
-  storage_path: any;
-  file_name: string;
-  file_type: any;
-  id: number | string;
-  type: "image" | "video" | "document";
-  url: string;
-  file?: File;
-  description: string;
+export interface Address {
+  add_province: string;
+  add_city: string;
+  add_barangay: string;
+  add_street: string;
+  add_external_sitio?: string;
+  sitio?: number;
 }
 
+export interface Complainant {
+  cpnt_id: number;
+  cpnt_name: string;
+  add: Address;
+}
+
+export interface AccusedPerson {
+  acsd_id: number;
+  acsd_name: string;
+  add: Address;
+}
+
+export interface ComplaintFile {
+  cf_id: number;
+  file: any;
+}
+
+export interface ComplaintRecord {
+  comp_id: number;
+  comp_incident_type: string;
+  comp_datetime: string;
+  comp_allegation: string;
+  comp_created_at: string;
+  comp_is_archive: boolean;
+  cpnt: Complainant;
+  accused_persons: AccusedPerson[];
+  complaint_files?: ComplaintFile[];
+}
+
+// This interface matches what your Django view expects
 export interface ComplaintFormValues {
-  id: string,
-  bc_complainant: string;
-  bc_street: string;
-  bc_barangay: string;
-  bc_city: string;
-  bc_province: string;
-  bc_accused: string;
-  bc_accused_address: string;
-  bc_incident_type: string;
-  bc_allegation: string;
-  bc_datetime: string;
-  bc_evidence: FileList | null;
+  complainant: {
+    name: string;
+    address: Address;
+  };
+  accused: Array<{
+    name: string;
+    address: Address;
+  }>;
+  incident_type: string;
+  datetime: string;
+  allegation: string;
+  media_files: File[];
 }
 
-export interface ComplaintRecord extends Omit<ComplaintFormValues, 'bc_evidence'> {
+// For media upload component
+export interface MediaFile {
   id: string;
-  created_at?: string;
-  updated_at?: string;
-  comp_status?: 'Pending' | 'Resolved' | 'In Progress';
-  media?: MediaFile[]; 
+  file: File | null;
+  preview?: string;
 }
 
-export type Accused = {
-  lastname: string;
-  firstname: string;
-  middlename: string;
-  suffix: string;
-  street: string;
-  barangay: string;
-  city: string;
-  province: string;
-};
+export interface SupabaseUploadResponse {
+  original_name: string;
+  file_url: string;
+  file_type: string;
+  file_path: string;
+}
 
-export type Complainant = {
-  lastname: string;
-  firstname: string;
-  middlename: string;
-  suffix: string;
-  street: string;
-  barangay: string;
-  city: string;
-  province: string;
-};
+export interface ComplaintPayload {
+  complainant: {
+    name: string;
+    address: {
+      add_province: string;
+      add_city: string;
+      add_barangay: string;
+      add_street: string;
+      add_external_sitio: string;
+      sitio: null | number;
+    };
+  };
+  accused: Array<{
+    name: string;
+    address: {
+      add_province: string;
+      add_city: string;
+      add_barangay: string;
+      add_street: string;
+      add_external_sitio: string;
+      sitio: null | number;
+    };
+  }>;
+  incident_type: string;
+  datetime: string;
+  allegation: string;
+  media_files: File[];
+}

@@ -2,19 +2,7 @@ import { useState, useRef } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  User,
-  Mail,
-  Calendar,
-  Lock,
-  KeyRound,
-  CheckCircle,
-  AlertCircle,
-  Camera,
-  Eye,
-  EyeOff,
-  Info,
-} from "lucide-react";
+import {User, Mail, Calendar, Lock, KeyRound, CheckCircle, AlertCircle, Camera, Eye, EyeOff, Info} from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent } from "@/components/ui/card/card";
 import { Input } from "@/components/ui/input";
@@ -26,11 +14,12 @@ import { toast } from "sonner";
 import { updatePassword, updateProfilePicture } from "../restful-api/accountApi";
 import { passwordFormSchema } from "@/form-schema/account-schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
 export default function Profile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, getAccessToken } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -55,22 +44,24 @@ export default function Profile() {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordFormSchema),
   });
 
+  // Watch the new password to validate requirements in real-time
+  const newPassword = watch("new_password");
+
   const onSubmit = async (data: PasswordFormData) => {
-    if (!user?.token) {
-      toast.error("You must be logged in to change your password");
-      return;
-    }
+    const token = getAccessToken() ?? "";
 
     setIsSubmitting(true);
 
     try {
-      await updatePassword(data.old_password, data.new_password, user.token);
-      toast.success("✅   Your password has been updated successfully!");
+      await updatePassword(data.old_password, data.new_password, token);
+      toast.success("✅ Your password has been updated successfully!");
       reset();
+      setIsChangingPassword(false);
     } catch (error: any) {
       toast.error(error);
     } finally {
@@ -82,11 +73,18 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    const token = getAccessToken() ?? "";
+
+    setIsUploading(true);
+    setUploadError("");
+
     try {
-      const imageUrl = await updateProfilePicture(file, user.token);
+      const imageUrl = await updateProfilePicture(file, token);
       updateUser({ profile_image: imageUrl });
+      toast.success("Profile picture updated successfully!");
     } catch (error: any) {
       setUploadError(error);
+      toast.error(error);
     } finally {
       setIsUploading(false);
     }
@@ -101,14 +99,11 @@ export default function Profile() {
           <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-end pt-10 mb-6">
             <div className="relative">
               {/* Updated Avatar with image upload functionality */}
-              <label
-                htmlFor="profile-image-upload"
-                className="relative cursor-pointer block"
-              >
+              <div className="relative cursor-pointer block group">
                 <Avatar className="h-20 w-20 border-4 border-background">
                   <AvatarImage
                     src={
-                      user?.profile_image || "../assets/images/sanRoqueLogo.svg"
+                      user?.profile_image || sanRoqueLogo
                     }
                     alt="Profile"
                   />
@@ -116,22 +111,23 @@ export default function Profile() {
                 </Avatar>
                 <Button
                   size="icon"
-                  className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground"
+                  className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                   onClick={(e) => {
                     e.preventDefault();
                     fileInputRef.current?.click();
                   }}
+                  disabled={isUploading}
                 >
                   <Camera size={12} />
                 </Button>
-              </label>
+              </div>
 
               {/* Hidden file input for image upload */}
               <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleImageUpload}
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 id="profile-image-upload"
               />
@@ -153,7 +149,9 @@ export default function Profile() {
               <h2 className="text-xl font-bold">
                 {user?.username || "Roque, San"}
               </h2>
-              <p className="text-muted-foreground">Staff Position</p>
+              <p className="text-muted-foreground">
+                {user?.staff?.position || "Staff Position"}
+              </p>
             </div>
           </div>
           <CardContent className="p-0">
@@ -167,13 +165,6 @@ export default function Profile() {
                     {user?.username || "Roque, San"}
                   </p>
                 </div>
-
-                {/* <div>
-                  <Label className="text-muted-foreground flex items-center gap-2 mb-1">
-                    <Calendar size={14} /> Birthday
-                  </Label>
-                  <p className="font-medium">January 1, 1999</p>
-                </div> */}
               </div>
 
               <div className="space-y-4">
@@ -308,22 +299,27 @@ export default function Profile() {
                         <p className="text-sm font-medium mb-2">
                           Password Requirements:
                         </p>
-                        {passwordRequirements.map((req, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <CheckCircle
-                              size={14}
-                              className={
-                                errors.new_password
-                                  ? "text-muted-foreground"
-                                  : "text-emerald-500"
-                              }
-                            />
-                            <span>{req.text}</span>
-                          </div>
-                        ))}
+                        {passwordRequirements.map((req, index) => {
+                          const isValid = newPassword ? req.regex.test(newPassword) : false;
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <CheckCircle
+                                size={14}
+                                className={
+                                  isValid
+                                    ? "text-emerald-500"
+                                    : "text-muted-foreground"
+                                }
+                              />
+                              <span className={isValid ? "text-emerald-700" : ""}>
+                                {req.text}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="flex gap-2 pt-2">
@@ -375,7 +371,6 @@ export default function Profile() {
           Only you can see these settings. You might also want to review your
           settings for
           <span className="font-medium">
-            {" "}
             Personal Info, Privacy, Security, and Notifications.
           </span>
         </AlertDescription>
