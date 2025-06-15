@@ -50,3 +50,45 @@ class StaffSerializer(serializers.ModelSerializer):
             return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}"
         except AttributeError:
             return "Unknown"
+
+
+# ==================================  RESOLUTION =================================
+
+class ResolutionFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResolutionFile
+        fields = '__all__'
+
+class ResolutionSerializer(serializers.ModelSerializer):
+    resolution_files = ResolutionFileSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Resolution
+        fields = '__all__'
+
+# class ResolutionSerializer(serializers.ModelSerializer):
+#     rf_id = serializers.SerializerMethodField()
+#     rf_url = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Resolution
+#         fields = [
+#             'res_num',
+#             'res_title',
+#             'res_date_approved',
+#             'res_area_of_focus',
+#             'res_is_archive',
+#             'staff',
+#             'rf_id',
+#             'rf_url'
+#         ]
+
+#     def get_rf_id(self, obj):
+#         if obj.resolution_files.exists():
+#             return obj.resolution_files.first().rf_id
+#         return None
+
+#     def get_rf_url(self, obj):
+#         if obj.resolution_files.exists():
+#             return obj.resolution_files.first().rf_url
+#         return None
