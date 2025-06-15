@@ -35,9 +35,7 @@ export const useCreateResolution = (onSuccess?: () => void) => {
     },  
     onSuccess: () => {
       // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ['incomeExpense'] });
-      queryClient.invalidateQueries({ queryKey: ['budgetItems'] });
-      queryClient.invalidateQueries({ queryKey: ['income_expense_card'] });
+      queryClient.invalidateQueries({ queryKey: ['resData'] });
 
       toast.loading("Creating resolution...", { id: "createRes" });
       
