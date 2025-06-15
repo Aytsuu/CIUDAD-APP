@@ -22,6 +22,7 @@ export type AnnouncementRecipient = {
   ann: number;
 };
 
+
 export const useGetAnnouncement = () => {
   return useQuery<Announcement[], Error>({
     queryKey: ["announcements"],
@@ -36,3 +37,10 @@ export const useGetAnnouncementRecipient = () => {
     queryFn: getAnnouncementRecipientRequest,
   });
 };
+
+// export const useGetAnnouncementFiles = () => {
+//    return useQuery<AnnouncementFiles[], Error>({
+//     queryKey: ["files"],
+//     queryFn: getAnnouncementRecipientRequest,
+//   });
+// };
