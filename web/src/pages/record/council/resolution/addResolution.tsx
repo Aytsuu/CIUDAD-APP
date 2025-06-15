@@ -265,8 +265,7 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     ];
 
     function onSubmit(values: z.infer<typeof resolutionFormSchema>) {
-        // createResolution(values)
-        console.log(values)
+        createResolution(values)
     }
 
     return (
