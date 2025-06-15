@@ -16,10 +16,10 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStock } from "./restful-api/Vaccination/FetchVaccination";
+import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { fetchPatientRecords } from "./restful-api/FetchPatient";
+import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 
 export default function PatNewVacRecForm() {

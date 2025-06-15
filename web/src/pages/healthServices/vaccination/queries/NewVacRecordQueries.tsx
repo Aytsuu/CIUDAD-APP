@@ -14,9 +14,9 @@ import {
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-} from "../restful-api/Vaccination/PostAPI";
+} from "../restful-api/PostAPI";
 import { api } from "@/api/api";
-import { getVaccinationHistory } from "../restful-api/Vaccination/GetVaccination";
+import { getVaccinationHistory } from "../restful-api/GetVaccination";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
 import { useNavigate } from "react-router";

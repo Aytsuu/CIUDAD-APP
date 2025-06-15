@@ -1,0 +1,493 @@
+import React, { useState, useEffect } from "react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, Eye, Search, ChevronLeft } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown/dropdown-menu";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { UserRound, Pill, MapPin } from "lucide-react";
+import { calculateAge } from "@/helpers/ageCalculator";
+import { api } from "@/api/api";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+
+type filter = "all" | "requested" | "recorded";
+
+export interface MedicineRecord {
+  medrec_id: number;
+  medrec_qty: string;
+  status: string;
+  req_type: string;
+  reason: string | null;
+  is_archived: boolean;
+  requested_at: string;
+  fulfilled_at: string | null;
+  signature: string | null;
+  patrec_id: number;
+  minv_id: number;
+  minv_details: {
+    minv_id: number;
+    inv_detail: {
+      inv_id: number;
+      expiry_date: string;
+      inv_type: string;
+      created_at: string;
+      is_Archived: boolean;
+      updated_at: string;
+    };
+    med_detail: {
+      med_id: string;
+      catlist: string;
+      med_name: string;
+      med_type: string;
+      created_at: string;
+      updated_at: string;
+      cat: number;
+    };
+    inv_id: number;
+    med_id: string;
+    minv_dsg: number;
+    minv_dsg_unit: string;
+    minv_form: string;
+    minv_qty: number;
+    minv_qty_unit: string;
+    minv_pcs: number;
+    minv_distributed: number;
+    minv_qty_avail: number;
+  };
+}
+
+export default function IndivMedicineRecords() {
+  const location = useLocation();
+  const { params } = location.state || {};
+  const { patientData } = params || {};
+  const navigate = useNavigate();
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
+    useState(false);
+  const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filter, setFilter] = useState<filter>("all");
+  const [medicineCount, setMedicineCount] = useState(0);
+
+  // Guard clause for missing patientData
+  if (!patientData?.pat_id) {
+    return <div>Error: Patient ID not provided</div>;
+  }
+
+  // Fetch medicine records
+  const { data: medicineRecords, isLoading } = useQuery({
+    queryKey: ["patientMedicineDetails", patientData.pat_id],
+    queryFn: async () => {
+      const response = await api.get(
+        `/medicine/indiv-medicine-record/${patientData.pat_id}/`
+      );
+      return response.data;
+    },
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+
+  // Fetch medicine count
+  useEffect(() => {
+    const fetchMedicineCount = async () => {
+      try {
+        const response = await api.get(
+          `/medicine-records/medicine-count/${patientData.pat_id}/`
+        );
+        setMedicineCount(response.data.count || 0);
+      } catch (error) {
+        console.error("Error fetching medicine count:", error);
+      }
+    };
+
+    fetchMedicineCount();
+  }, [patientData.pat_id]);
+
+  const formatMedicineData = React.useCallback((): MedicineRecord[] => {
+    if (!medicineRecords) return [];
+    return medicineRecords.map((record: any) => {
+      return {
+        medrec_id: record.medrec_id,
+        medrec_qty: record.medrec_qty,
+        status: record.status,
+        req_type: record.req_type,
+        reason: record.reason,
+        is_archived: record.is_archived,
+        requested_at: record.requested_at,
+        fulfilled_at: record.fulfilled_at,
+        signature: record.signature,
+        patrec_id: record.patrec_id,
+        minv_id: record.minv_id,
+        minv_details: record.minv_details || null,
+      };
+    });
+  }, [medicineRecords]);
+
+  const filteredData = React.useMemo(() => {
+    return formatMedicineData().filter((record) => {
+      const searchText =
+        `${record.medrec_id} ${record.minv_details?.med_detail?.med_name} ${record.status} ${record.req_type}`.toLowerCase();
+      const matchesSearch = searchText.includes(searchQuery.toLowerCase());
+      let matchesFilter = true;
+      if (filter !== "all") {
+        const status = record.status.toLowerCase();
+        matchesFilter = status === filter.toLowerCase();
+      }
+      return matchesSearch && matchesFilter;
+    });
+  }, [searchQuery, formatMedicineData, filter]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const confirmArchiveRecord = async () => {
+    if (recordToArchive !== null) {
+      try {
+        await api.patch(`/medicine-records/${recordToArchive}/archive/`);
+        toast.success("Medicine record archived successfully!");
+      } catch (error) {
+        toast.error("Failed to archive the record.");
+      } finally {
+        setIsArchiveConfirmationOpen(false);
+        setRecordToArchive(null);
+      }
+    }
+  };
+
+  const columns: ColumnDef<MedicineRecord>[] = [
+    {
+      accessorKey: "medicine",
+      header: "Medicine",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[200px] px-2">
+          <div className="font-medium">
+            {row.original.minv_details?.med_detail?.med_name || "Unknown"}
+            <div className="text-xs text-gray-500">
+              Category:{" "}
+              {row.original.minv_details?.med_detail?.catlist || "N/A"}
+            </div>
+            <div className="text-xs text-gray-500">
+              Type: {row.original.minv_details?.med_detail?.med_type || "N/A"}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "details",
+      header: "Details",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[200px] px-2">
+          <div className="flex flex-col">
+            <div className="text-sm">
+              <span className="font-medium">Dosage: </span>
+              {row.original.minv_details?.minv_dsg}{" "}
+              {row.original.minv_details?.minv_dsg_unit}
+            </div>
+            <div className="text-sm">
+              <span className="font-medium">Form: </span>
+              {row.original.minv_details?.minv_form}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "details",
+      header: "Quantity",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[200px] px-2">
+          {row.original.medrec_qty}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "signature",
+      header: "Signature",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[200px] px-2">
+          {row.original.signature || "N/A"}
+        </div>
+      ),
+    },
+
+    {
+      accessorKey: "dates",
+      header: "Dates",
+      cell: ({ row }) => {
+        const requestedAt = new Date(row.original.requested_at);
+        const fulfilledAt = row.original.fulfilled_at
+          ? new Date(row.original.fulfilled_at)
+          : null;
+
+        return (
+          <div className="flex flex-col text-sm">
+            <div>
+              <span className="font-medium">Requested: </span>
+              {requestedAt.toLocaleDateString()}
+            </div>
+            {fulfilledAt && (
+              <div>
+                <span className="font-medium">Fulfilled: </span>
+                {fulfilledAt.toLocaleDateString()}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "action",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex justify-center gap-2">
+          <Link
+            to="/medicineView"
+            state={{ params: { Medicine: row.original, patientData } }}
+          >
+            <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
+              View
+            </Button>
+          </Link>
+          {row.original.status.toLowerCase() === "requested" && (
+            <Link
+              to="/updateMedicineForm"
+              state={{ params: { Medicine: row.original, patientData } }}
+            >
+              <Button variant="destructive" size="sm" className="h-8 p-2">
+                Update
+              </Button>
+            </Link>
+          )}
+          {!row.original.is_archived && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => {
+                setRecordToArchive(row.original.medrec_id);
+                setIsArchiveConfirmationOpen(true);
+              }}
+            >
+              Archive
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full">
+        <Skeleton className="h-10 w-1/6 mb-3" />
+        <Skeleton className="h-7 w-1/4 mb-6" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-4/5 w-full mb-4" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Toaster position="top-right" />
+      <div className="w-full h-full flex flex-col">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <Button
+            className="text-black p-2 mb-2 self-center"
+            variant={"outline"}
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="flex-col items-center mb-4">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Medicine Records
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Manage and view patient's medicine records
+            </p>
+          </div>
+        </div>
+        <hr className="border-gray mb-5 sm:mb-8" />
+
+        <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
+            <UserRound className="h-5 w-5" />
+            Patient Information
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Full Name */}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Full Name</p>
+              <p className="font-medium">
+                {`${patientData.lname}, ${patientData.fname} ${
+                  patientData.mname || ""
+                }`.trim() || "N/A"}
+              </p>
+            </div>
+
+            {/* Date of Birth & Age */}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Date of Birth</p>
+              <p className="font-medium">
+                {patientData.dob
+                  ? new Date(patientData.dob).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })
+                  : "N/A"}
+              </p>
+            </div>
+
+            {/* Age */}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Age</p>
+              <p className="font-medium">{patientData.age}</p>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Address</p>
+              <p className="font-medium">
+                {patientData.address || "Not provided"}
+              </p>
+            </div>
+
+            {/* Total Medicine Records */}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Total Medicine Records</p>
+              <p className="font-medium">{medicineCount}</p>
+            </div>
+
+            {/* Patient Type */}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Patient Type</p>
+              <p className="font-medium">
+                {patientData.pat_type || "Not specified"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+          <div className="flex flex-col md:flex-row gap-4 w-full">
+            <div className="w-full flex gap-2 mr-2">
+              <div className="relative flex-1">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-black"
+                  size={17}
+                />
+                <Input
+                  placeholder="Search records..."
+                  className="pl-10 bg-white w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div>
+                <SelectLayout
+                  placeholder="Filter"
+                  label=""
+                  className="bg-white w-48"
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "requested", name: "Requested" },
+                    { id: "recorded", name: "Recorded" },
+                  ]}
+                  value={filter}
+                  onChange={(value) => setFilter(value as filter)}
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <Button className="w-full sm:w-auto">
+              <Link to="/medicineForm" state={{ params: { patientData } }}>
+                New Medicine Record
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="h-full w-full rounded-md">
+          <div className="w-full h-auto sm:h-16 bg-white flex flex-col sm:flex-row justify-between items-center sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-8"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                }}
+                min="1"
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" aria-label="Export data">
+                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto">
+            <DataTable columns={columns} data={paginatedData} />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing{" "}
+              {paginatedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+              {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
+              {filteredData.length} records
+            </p>
+            <div className="w-full sm:w-auto flex justify-center">
+              <PaginationLayout
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={isArchiveConfirmationOpen}
+        onOpenChange={setIsArchiveConfirmationOpen}
+        onConfirm={confirmArchiveRecord}
+        title="Archive Medicine Record"
+        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
+      />
+    </>
+  );
+}

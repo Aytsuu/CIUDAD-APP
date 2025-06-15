@@ -3,12 +3,9 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import VaccinationForm from "../NewVacRecForm";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Eye, Trash, Search, Plus, FileInput } from "lucide-react";
-import { Link } from "react-router-dom";
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { ArrowUpDown, Eye, Search, Plus, FileInput } from "lucide-react";
+import { Link } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,14 +15,12 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getVaccinationRecords, getVaccinatedCount } from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
-import { CircleCheck, Loader2 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { calculateAge } from "@/helpers/ageCalculator";
+import { getMedicineRecords } from "../restful-api/getAPI";
 
-export interface VaccinationRecord {
+export interface MedicineRecord {
   pat_id: string;
   fname: string;
   lname: string;
@@ -40,58 +35,32 @@ export interface VaccinationRecord {
   province: string;
   pat_type: string;
   address: string;
-  vaccination_count: number;
+  medicine_count: number;
   dob: string;
 }
 
-export default function AllVaccinationRecords() {
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
-  const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+export default function AllMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
-  const [vaccinationCounts, setVaccinationCounts] = useState({
-    resident_vaccinated: 0,
-    transient_vaccinated: 0
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await getVaccinatedCount();
-        setVaccinationCounts(result);
-      } catch (err) {
-        console.error("Error loading vaccination counts", err);
-      }
-    };
-
-    const timeoutId = setTimeout(fetchData, 0); // Trigger fetch immediately with minimal delay
-
-    return () => clearTimeout(timeoutId); // Cleanup timeout
-  }, []);
-
-  // Fetch vaccination records from API
-  const { data: vaccinationRecords, isLoading } = useQuery<VaccinationRecord[]>(
+ 
+ 
+  // Fetch medicine records from API
+  const { data: medicineRecords, isLoading } = useQuery<MedicineRecord[]>(
     {
-      queryKey: ["vaccinationRecords"],
-      queryFn: getVaccinationRecords,
+      queryKey: ["medicineRecords"],
+      queryFn: getMedicineRecords,
       refetchOnMount: true,
       staleTime: 0,
     }
   );
 
-  useEffect(() => {
-    console.log(vaccinationRecords);
-  }, []);
+  const formatMedicineData = React.useCallback((): MedicineRecord[] => {
+    if (!medicineRecords) return [];
 
-  const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
-    if (!vaccinationRecords) return [];
-
-    return vaccinationRecords.map((record: any) => {
+    return medicineRecords.map((record: any) => {
       const info = record.patient_details.personal_info || {};
       const address = record.patient_details.address || {};
 
@@ -119,14 +88,14 @@ export default function AllVaccinationRecords() {
         ]
           .filter(Boolean)
           .join(", "),
-        vaccination_count: record.vaccination_count || 0,
+        medicine_count: record.medicine_count || 0,
       };
     });
-  }, [vaccinationRecords]);
+  }, [medicineRecords]);
 
   // Filter data based on search query and patient type
   const filteredData = React.useMemo(() => {
-    return formatVaccinationData().filter((record) => {
+    return formatMedicineData().filter((record) => {
       const searchText = `${record.pat_id} 
         ${record.lname} 
         ${record.fname} 
@@ -138,7 +107,7 @@ export default function AllVaccinationRecords() {
 
       return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
     });
-  }, [searchQuery, formatVaccinationData, patientTypeFilter]);
+  }, [searchQuery, formatMedicineData, patientTypeFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -147,22 +116,7 @@ export default function AllVaccinationRecords() {
     currentPage * pageSize
   );
 
-  // Archive confirmation handler
-  const confirmArchiveRecord = async () => {
-    if (recordToArchive !== null) {
-      try {
-        toast.success("Record archived successfully!");
-        queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
-      } catch (error) {
-        toast.error("Failed to archive the record.");
-      } finally {
-        setIsArchiveConfirmationOpen(false);
-        setRecordToArchive(null);
-      }
-    }
-  };
-
-  const columns: ColumnDef<VaccinationRecord>[] = [
+  const columns: ColumnDef<MedicineRecord>[] = [
     {
       accessorKey: "patient",
       header: ({ column }) => (
@@ -223,12 +177,12 @@ export default function AllVaccinationRecords() {
       ),
     },
     {
-      accessorKey: "vaccination_count",
+      accessorKey: "medicine_count",
       header: "No of Records",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
-            {row.original.vaccination_count}
+            {row.original.medicine_count}
           </div>
         </div>
       ),
@@ -240,14 +194,14 @@ export default function AllVaccinationRecords() {
         <div className="flex justify-center gap-2">
           <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
             <Link
-              to="/invVaccinationRecord"
+              to="/IndivMedicineRecord"
               state={{
                 params: {
                   patientData: row.original,
                 },
               }}
             >
-              View{" "}
+              View
             </Link>
           </div>
         </div>
@@ -269,24 +223,7 @@ export default function AllVaccinationRecords() {
   return (
     <>
       <div className="w-full h-full flex flex-col">
-        {/* Vaccination Counts Cards */}
-        <div className="flex gap-4 mb-4">
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Residents Vaccinated</h3>
-            <p className="text-2xl font-bold">{vaccinationCounts.resident_vaccinated}</p>
-          </div>
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Transients Vaccinated</h3>
-            <p className="text-2xl font-bold">{vaccinationCounts.transient_vaccinated}</p>
-          </div>
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Total Vaccinated</h3>
-            <p className="text-2xl font-bold">
-              {vaccinationCounts.resident_vaccinated + vaccinationCounts.transient_vaccinated}
-            </p>
-          </div>
-        </div>
-
+       
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
@@ -317,7 +254,7 @@ export default function AllVaccinationRecords() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/patNewVacRecForm`}>New Record</Link>
+              <Link to={`/patNewMedRecForm`}>New Record</Link>
             </Button>
           </div>
         </div>
@@ -381,14 +318,6 @@ export default function AllVaccinationRecords() {
           </div>
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={isArchiveConfirmationOpen}
-        onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveRecord}
-        title="Archive Vaccination Record"
-        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
-      />
     </>
   );
 }

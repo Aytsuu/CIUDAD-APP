@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   getVaccinationRecordById,
   getVaccinationCount,
-} from "../restful-api/Vaccination/GetVaccination";
+} from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";

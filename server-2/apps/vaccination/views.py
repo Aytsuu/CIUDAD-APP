@@ -28,6 +28,7 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
     serializer_class = VaccinationHistorySerializer
     queryset  =VaccinationHistory.objects.all()
     
+# all Vaccination  Display  
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     
@@ -38,16 +39,16 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
 
 
 
-class PatientRecordWithVaccinationSerializer(PatientRecordSerializer):
-    vaccination_records = VaccinationRecordSerializer(
-        source='vaccination_records', 
-        many=True, 
-        read_only=True
-    )
+# class PatientRecordWithVaccinationSerializer(PatientRecordSerializer):
+#     vaccination_records = VaccinationRecordSerializer(
+#         source='vaccination_records', 
+#         many=True, 
+#         read_only=True
+#     )
     
-    class Meta:
-        model = PatientRecord
-        fields = '__all__'
+#     class Meta:
+#         model = PatientRecord
+#         fields = '__all__'
 
 # INDIVIDUAL RECORDS VIEW
 class VaccinationHistorRecordView(generics.ListAPIView):

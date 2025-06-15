@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     # 'apps.gad'
     'apps.account',
     'apps.medicalConsultation',
+    'apps.medicine',
 
 ]
 
