@@ -67,9 +67,9 @@ const fetchComplaints = async () => {
       category: complaint.comp_incident_type || 'Uncategorized',
       description: complaint.comp_allegation || '',
       dateCreated: complaint.comp_created_at,
-      dateArchived: complaint.updated_at, // Use updated_at as archive date
+      dateArchived: new Date().toISOString(),
       status: 'Archived',
-      priority: 'Medium', // You might want to add this field to your model
+      priority: complaint.comp_category, 
       accusedPersons: complaint.accused_persons?.map((a: any) => a.acsd_name) || [],
       location: complaint.cpnt?.add?.add_barangay || 'Not specified'
     }));
@@ -160,59 +160,70 @@ const fetchComplaints = async () => {
     }
   };
 
-  const handleRestore = async (complaintId: string) => {
-    try {
-      const token = getAccessToken() ?? "";
-      await api.post(`/complaints/${complaintId}/restore/`, {}, {
+const handleRestore = async (complaintId: string) => {
+  try {
+    const token = getAccessToken() ?? "";
+    // Use PATCH instead of GET since we're modifying data
+    await api.patch(`/complaint/${complaintId}/restore/`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+    
+    // Update the complaint in state instead of removing it
+    setComplaints(prev => prev.map(complaint => 
+      complaint.id === complaintId 
+        ? { ...complaint, status: 'Active', comp_is_archive: false }
+        : complaint
+    ));
+    
+    toast.success('Complaint restored successfully');
+  } catch (error: any) {
+    console.error('Failed to restore complaint:', error);
+    toast.error('Failed to restore complaint', {
+      description: error.response?.data?.message || error.message
+    });
+  }
+};
+
+const handleBulkRestore = async () => {
+  if (selectedComplaints.length === 0) return;
+  
+  try {
+    const token = getAccessToken() ?? "";
+    await Promise.all(selectedComplaints.map(id => 
+      api.patch(`/complaint/${id}/restore/`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
-      });
-      
-      setComplaints(prev => prev.filter(complaint => complaint.id !== complaintId));
-      toast.success('Complaint restored successfully', {
-        description: `Complaint ${complaintId} has been restored to active complaints.`
-      });
-    } catch (error: any) {
-      console.error('Failed to restore complaint:', error);
-      toast.error('Failed to restore complaint', {
-        description: error.response?.data?.message || error.message
-      });
-    }
-  };
-
-  const handleBulkRestore = async () => {
-    if (selectedComplaints.length === 0) return;
+      })
+    ));
     
-    try {
-      const token = getAccessToken() ?? "";
-      await Promise.all(selectedComplaints.map(id => 
-        api.post(`/complaints/${id}/restore/`, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
-        })
-      ));
-      
-      setComplaints(prev => prev.filter(complaint => !selectedComplaints.includes(complaint.id)));
-      setSelectedComplaints([]);
-      toast.success('Bulk restore successful', {
-        description: `${selectedComplaints.length} complaint(s) have been restored.`
-      });
-    } catch (error: any) {
-      console.error('Failed to bulk restore:', error);
-      toast.error('Failed to restore some complaints', {
-        description: error.response?.data?.message || error.message
-      });
-    }
-  };
+    // Update all selected complaints in state
+    setComplaints(prev => prev.map(complaint => 
+      selectedComplaints.includes(complaint.id)
+        ? { ...complaint, status: 'Active', comp_is_archive: false }
+        : complaint
+    ));
+    
+    setSelectedComplaints([]);
+    toast.success('Bulk restore successful', {
+      description: `${selectedComplaints.length} complaint(s) have been restored.`
+    });
+  } catch (error: any) {
+    console.error('Failed to bulk restore:', error);
+    toast.error('Failed to restore some complaints', {
+      description: error.response?.data?.message || error.message
+    });
+  }
+};
 
   const handlePermanentDelete = async (complaintId: string) => {
     if (!confirm('Are you sure you want to permanently delete this complaint? This action cannot be undone.')) return;
 
     try {
       const token = getAccessToken() ?? "";
-      await api.delete(`/complaints/${complaintId}/`, {
+      await api.delete(`/complaint/${complaintId}/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
@@ -291,7 +302,7 @@ const fetchComplaints = async () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High': return 'bg-red-100 text-red-700 border-red-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'Normal': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'Low': return 'bg-green-100 text-green-700 border-green-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -317,7 +328,7 @@ const fetchComplaints = async () => {
               </Link>
             </Button>
           <h1 className="text-3xl font-bold text-darkBlue2">Archived Complaints</h1>
-          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+          <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
             {filteredComplaints.length} archived
           </span>
         </div>
@@ -472,7 +483,7 @@ const fetchComplaints = async () => {
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            <span>Archived: {new Date(complaint.dateArchived).toLocaleDateString()}</span>
+                            <span className=''>Archived: {new Date(complaint.dateArchived).toLocaleDateString()}</span>
                           </div>
                         </div>
                       </div>

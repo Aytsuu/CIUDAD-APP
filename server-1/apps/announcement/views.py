@@ -2,13 +2,7 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Announcement, AnnouncementRecipient, AnnouncementFile
-from .serializers import (
-    AnnouncementBaseSerializer,
-    AnnouncementRecipientSerializer,
-    AnnouncementFileSerializer,
-    AnnouncementRecipientFilteredSerializer,
-    BulkAnnouncementRecipientSerializer
-)
+from .serializers import *
 
 
 class AnnouncementView(generics.ListCreateAPIView):

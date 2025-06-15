@@ -1,4 +1,3 @@
-# serializers.py
 from rest_framework import serializers
 from .models import Complaint, Complainant, Accused, ComplaintAccused, Complaint_File
 from apps.profiling.serializers.address_serializers import AddressBaseSerializer
@@ -8,19 +7,19 @@ class AccusedSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Accused
-        fields = ['acsd_id', 'acsd_name', 'add']
+        fields = '__all__'
 
 class ComplainantSerializer(serializers.ModelSerializer):
     add = AddressBaseSerializer(read_only=True)
     
     class Meta:
         model = Complainant
-        fields = ['cpnt_id', 'cpnt_name', 'add']
+        fields = '__all__'
 
 class ComplaintFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complaint_File
-        fields = ['cf_id', 'file']
+        fields = '__all__'
 
 class ComplaintSerializer(serializers.ModelSerializer):
     cpnt = ComplainantSerializer(read_only=True)
@@ -36,6 +35,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'comp_allegation', 
             'comp_created_at',
             'comp_is_archive',
+            'comp_category',
             'cpnt', 
             'accused_persons',
             'complaint_files'

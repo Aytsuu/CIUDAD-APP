@@ -3,14 +3,29 @@ import { ComplaintRecord } from "./complaint-type";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button/button";
 import { ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export const complaintColumns = (data: ComplaintRecord[]): ColumnDef<ComplaintRecord>[] => [
   {
     accessorKey: "comp_id",
-    header: "ID",
+    header: "Complaint ID",
     cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("comp_id")}</div>
+      <Badge>{row.original.comp_id}</Badge>
     ),
+  },
+    {
+    accessorKey: "comp_category",
+    header: "Category",
+    cell: ({ row }) => {
+      const category = row.original.comp_category as string;
+      return (
+        <Badge className={`max-w-xs text-white font-semibold truncate p-2
+          ${ category === 'Low' ? 'bg-yellow-500' : 
+              category === 'Normal' ? 'bg-orange-500' :
+              'bg-red-500'
+           } `}>{category}</Badge>
+      );
+    },
   },
   {
     accessorKey: "comp_incident_type",
@@ -54,38 +69,6 @@ export const complaintColumns = (data: ComplaintRecord[]): ColumnDef<ComplaintRe
     cell: ({ row }) => {
       const datetime = row.getValue("comp_datetime") as string;
       return <div>{new Date(datetime).toLocaleString()}</div>;
-    },
-  },
-  {
-    accessorKey: "comp_allegation",
-    header: "Allegation",
-    cell: ({ row }) => {
-      const allegation = row.getValue("comp_allegation") as string;
-      return (
-        <div className="max-w-xs truncate" title={allegation}>
-          {allegation}
-        </div>
-      );
-    },
-  },
-  // {
-  //   accessorKey: "cpnt.add",
-  //   header: "Complainant Location",
-  //   cell: ({ row }) => {
-  //     const address = row.original.cpnt.add;
-  //     return (
-  //       <div className="text-sm">
-  //         {`${address.add_barangay}, ${address.add_city}, ${address.add_province}`}
-  //       </div>
-  //     );
-  //   },
-  // },
-  {
-    accessorKey: "comp_created_at",
-    header: "Created At",
-    cell: ({ row }) => {
-      const createdAt = row.getValue("comp_created_at") as string;
-      return <div>{new Date(createdAt).toLocaleDateString()}</div>;
     },
   },
   {

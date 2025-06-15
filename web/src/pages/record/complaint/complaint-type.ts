@@ -29,6 +29,7 @@ export interface ComplaintRecord {
   comp_incident_type: string;
   comp_datetime: string;
   comp_allegation: string;
+  comp_category: string;
   comp_created_at: string;
   comp_is_archive: boolean;
   cpnt: Complainant;
@@ -49,6 +50,7 @@ export interface ComplaintFormValues {
   incident_type: string;
   datetime: string;
   allegation: string;
+  category: string;
   media_files: File[];
 }
 
@@ -57,13 +59,6 @@ export interface MediaFile {
   id: string;
   file: File | null;
   preview?: string;
-}
-
-export interface SupabaseUploadResponse {
-  original_name: string;
-  file_url: string;
-  file_type: string;
-  file_path: string;
 }
 
 export interface ComplaintPayload {
@@ -92,5 +87,6 @@ export interface ComplaintPayload {
   incident_type: string;
   datetime: string;
   allegation: string;
+  category: string;
   media_files: File[];
 }

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Announcement, AnnouncementFile, AnnouncementRecipient
+from .models import *
 
 
 class AnnouncementBaseSerializer(serializers.ModelSerializer):
