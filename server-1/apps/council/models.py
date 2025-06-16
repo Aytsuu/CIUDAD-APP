@@ -100,7 +100,7 @@ class MOMAreaOfFocus(models.Model):
     mof_area = models.CharField(null=False)
     mom_id = models.ForeignKey(
         'council.MinutesOfMeeting',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         db_column='mom_id'
@@ -118,7 +118,7 @@ class MOMFile(models.Model):
     momf_url = models.CharField(max_length=500)
     mom_id = models.ForeignKey(
         'council.MinutesOfMeeting',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         db_column='mom_id'
@@ -130,10 +130,14 @@ class MOMFile(models.Model):
 
 class MOMSuppDoc(models.Model):
     momsp_id = models.BigAutoField(primary_key=True)
+    momsp_name = models.CharField(max_length=255)
+    momsp_type = models.CharField(max_length=100)
+    momsp_path = models.CharField(max_length=500)
+    momsp_url = models.CharField(max_length=500)
     momsp_is_archive = models.BooleanField(default=False)
     mom_id = models.ForeignKey(
         'council.MinutesOfMeeting',
-        on_delete=models.SET_NULL,
+        on_delete= models.CASCADE,
         null=True,
         blank=True,
         db_column='mom_id'

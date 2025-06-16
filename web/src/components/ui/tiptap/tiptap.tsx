@@ -1136,10 +1136,10 @@ import Image from "@tiptap/extension-image";
 import ResizeImage from "tiptap-extension-resize-image";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
-import Highlight from "@tiptap/extension-highlight";
-import FontFamily from "@tiptap/extension-font-family";
+// import Highlight from "@tiptap/extension-highlight";
+// import FontFamily from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
-import FontSize from "@tiptap/extension-font-size";
+// import FontSize from "@tiptap/extension-font-size";
 import { useState } from "react";
 import { Node } from "@tiptap/core";
 
@@ -1217,14 +1217,14 @@ export default function Tiptap({
       Image,
       ResizeImage,
       Underline,
-      Highlight.configure({ multicolor: true }),
+      // Highlight.configure({ multicolor: true }),
       TextStyle,
-      FontFamily.configure({
-        types: ["textStyle"],
-      }),
-      FontSize.configure({
-        types: ["textStyle"],
-      }),
+      // FontFamily.configure({
+      //   types: ["textStyle"],
+      // }),
+      // FontSize.configure({
+      //   types: ["textStyle"],
+      // }),
       PageBreak,
       EmptyLine,
     ],
