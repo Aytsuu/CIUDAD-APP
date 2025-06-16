@@ -2,7 +2,7 @@ import { useState } from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, FileText } from "lucide-react";
+import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, Image, FileText } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout.tsx";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -18,7 +18,7 @@ import { useRestoreMinutesOfMeeting, useArchiveMinutesOfMeeting } from "./querie
 import { useDeleteMinutesofMeeting } from "./queries/MOMDeleteQueries";
 import EditMinutesOfMeeting from "./editMinutesOfMeeting";
 import { Label } from "@/components/ui/label";
-import MOMSuppDoc from "./MOMSuppDoc";
+// import MOMSuppDoc from "./MOMSuppDoc";
 
 function MinutesOfMeetingPage() {
     const [filter, setFilter] = useState<string>("all");
@@ -125,13 +125,18 @@ function MinutesOfMeetingPage() {
                 </div>
             ),
         },
+        {
+            accessorKey: "supporting_docs",
+            header: "Supporting Documents",
+
+        }
     ];
 
     const activeColumns: ColumnDef<MinutesOfMeetingRecords>[] = [
         ...commonColumns,
         {
             accessorKey: "action",
-            header: "Action",
+            header: "Actions",
             cell: ({ row }) => (
                 <div className="flex flex-grid justify-center gap-1">
                     <TooltipLayout
@@ -147,6 +152,21 @@ function MinutesOfMeetingPage() {
                         }
                         content="Open Document"
                     />
+                    {/* <TooltipLayout
+                        trigger={
+                            <div>
+                                <DialogLayout
+                                    trigger={<div className="bg-stone-200 hover:bg-stone-300 text-sm text-gray-500 px-4 py-2 rounded cursor-pointer shadow-none h-full flex items-center"><Image size={16} /></div>}
+                                    title=""
+                                    description=""
+                                    mainContent={
+                                        <div></div>
+                                    }
+                                />
+                            </div>
+                        }
+                        content="View Supporting Documents"
+                    /> */}
                     <TooltipLayout
                         trigger={
                             <div>
@@ -196,7 +216,7 @@ function MinutesOfMeetingPage() {
         ...commonColumns,
         {
             accessorKey: "action",
-            header: "Action",
+            header: "Actions",
             cell: ({ row }) => {
                 return (
                     <div className="flex justify-center gap-2">
@@ -271,7 +291,7 @@ function MinutesOfMeetingPage() {
             <hr className="border-gray mb-6 sm:mb-10" />
 
             {/* Main Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4 flex justify-center">
+            {/* <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4 flex justify-center">
                 <TabsList className="flex flex-row gap-2 w-full grid-cols-2 max-w-[345px] rounded-full bg-white shadow-md py-6">
                     <TabsTrigger
                         value="minutes"
@@ -288,11 +308,11 @@ function MinutesOfMeetingPage() {
                         Supporting Documents
                     </TabsTrigger>
                 </TabsList>
-            </Tabs>
+            </Tabs> */}
 
             {/* Minutes of Meeting Tab Content */}
-            {activeTab === "minutes" && (
-                <div className="bg-white rounded-lg">
+           {/* { activeTab === "minutes" && ( */}
+            <div className="bg-white rounded-lg">
                     {/* Header with Search and Create Button */}
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-6">
                         <div className="flex items-center space-x-2">
@@ -430,12 +450,12 @@ function MinutesOfMeetingPage() {
                         )}
                     </div>
                 </div>
-            )}
+           
 
             {/* Supporting Documents Tab Content */}
-            {activeTab === "supporting" && (
+            {/* {activeTab === "supporting" && (
                 <MOMSuppDoc/>
-            )}
+            )} */}
         </div>
     );
 }
