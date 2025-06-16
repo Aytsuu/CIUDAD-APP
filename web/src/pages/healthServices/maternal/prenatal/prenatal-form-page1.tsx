@@ -429,7 +429,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 )}
                             />
                         </div>
-                        <div className="grid grid-cols-5 gap-4 mt-2">
+                        <div className="grid grid-cols-5 gap-4 mt-4">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.motherLName"
@@ -464,7 +464,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                         </div>
 
                         {/* dob, husband's name, occupation */}
-                        <div className="grid grid-cols-5 gap-4 mt-2">
+                        <div className="grid grid-cols-5 gap-4 mt-4">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.husbandLName"
@@ -498,7 +498,7 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                         </div>
 
                         {/* address */}
-                        <div className="grid grid-cols-5 gap-4 mt-2">
+                        <div className="grid grid-cols-5 gap-4 mt-4">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.address.street"
@@ -529,6 +529,9 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
                                 label="Province"
                                 placeholder="Enter Province"
                             />
+                            
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 mt-4">
                             <FormInput
                                 control={control}
                                 name="motherPersonalInfo.motherWt"

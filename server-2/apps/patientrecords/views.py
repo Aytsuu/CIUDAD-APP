@@ -25,9 +25,150 @@ def get_resident_profile_list(request):
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     queryset = Patient.objects.all()
-    
-    # def create(self, request, *args, **kwargs):
-    #     return super().create(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        print("Creating patient with data:", request.data)
+        
+        # Validate required fields
+        pat_type = request.data.get('pat_type')
+        rp_id = request.data.get('rp_id')
+        
+        if not pat_type:
+            return Response(
+                {'error': 'pat_type is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+                
+        try:
+            if pat_type  == 'Resident':
+                rp_id = request.data.get('rp_id')
+                if not rp_id:
+                    return Response(
+                        {'error': 'rp_id is required for Resident type'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                try:
+                    resident_profile = ResidentProfile.objects.get(rp_id=rp_id)
+                except ResidentProfile.DoesNotExist:
+                    return Response(
+                        {'error': f'Resident profile with rp_id {rp_id} does not exist'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+        
+                # check if patient already exists for this resident
+                existing_patient = Patient.objects.filter(rp_id=rp_id, pat_status='Active').first()
+                if existing_patient:
+                    return Response(
+                        {'error': 'A patient record already exists for this resident'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                patient_data = {
+                    'pat_type': pat_type,
+                    'rp_id': resident_profile,
+                    'pat_status': 'Active' 
+                }
+
+                patient = Patient.objects.create(**patient_data)
+        
+                
+            elif pat_type == 'Transient':
+            # Handle Transient Patient
+                transient_data = request.data.get('transient_data')
+                
+                if not transient_data:
+                    return Response(
+                        {'error': 'transient_data is required for transient patients'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Validate required transient fields
+                required_transient_fields = [
+                    'tran_lname', 'tran_fname', 'tran_dob', 'tran_sex', 
+                    'tran_status', 'tran_ed_attainment', 'tran_religion', 'tran_contact'
+                ]
+                
+                for field in required_transient_fields:
+                    if not transient_data.get(field):
+                        return Response(
+                            {'error': f'{field} is required for transient patients'}, 
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
+                # Create TransientAddress if address data is provided
+                transient_address = None
+                address_data = transient_data.get('address')
+                if address_data:
+                    required_address_fields = ['tradd_province', 'tradd_city', 'tradd_barangay', 'tradd_street']
+                    
+                    for field in required_address_fields:
+                        if not address_data.get(field):
+                            return Response(
+                                {'error': f'{field} is required in address data'}, 
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                    
+                    transient_address = TransientAddress.objects.create(
+                        tradd_province=address_data['tradd_province'],
+                        tradd_city=address_data['tradd_city'],
+                        tradd_barangay=address_data['tradd_barangay'],
+                        tradd_street=address_data['tradd_street'],
+                        tradd_sitio=address_data.get('tradd_sitio', '')
+                    )
+                
+                # Generate unique trans_id
+                year = datetime.now().year
+                prefix = f'T{year}'
+                
+                existing_transients = Transient.objects.filter(
+                    trans_id__startswith=prefix
+                ).values_list('trans_id', flat=True)
+                
+                existing_numbers = []
+                for trans_id in existing_transients:
+                    try:
+                        number_part = trans_id[len(prefix):]
+                        existing_numbers.append(int(number_part))
+                    except (ValueError, IndexError):
+                        continue
+                
+                next_number = max(existing_numbers, default=0) + 1
+                trans_id = f'{prefix}{str(next_number).zfill(4)}'
+                
+                # Create Transient record
+                transient = Transient.objects.create(
+                    trans_id=trans_id,
+                    tran_lname=transient_data['tran_lname'],
+                    tran_fname=transient_data['tran_fname'],
+                    tran_mname=transient_data.get('tran_mname', ''),
+                    tran_suffix=transient_data.get('tran_suffix', ''),
+                    tran_dob=transient_data['tran_dob'],
+                    tran_sex=transient_data['tran_sex'],
+                    tran_status=transient_data['tran_status'],
+                    tran_ed_attainment=transient_data['tran_ed_attainment'],
+                    tran_religion=transient_data['tran_religion'],
+                    tran_contact=transient_data['tran_contact'],
+                    tradd_id=transient_address
+                )
+                
+                # Create transient patient
+                patient_data = {
+                    'pat_type': pat_type,
+                    'trans_id': transient,
+                    'pat_status': 'Active'
+                }
+                patient = Patient.objects.create(**patient_data)
+                
+            serializer = self.get_serializer(patient)
+            print(f"Patient created successfully: {patient.pat_id}")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            print(f"Error creating patient: {str(e)}")  
+            return Response(
+                {'error': f'Failed to create patient: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def get_queryset(self):
         return Patient.objects.select_related(

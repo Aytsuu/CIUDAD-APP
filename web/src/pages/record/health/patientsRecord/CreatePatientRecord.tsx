@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Save } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import CardLayout from "@/components/ui/card/card-layout";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -27,13 +27,12 @@ import { Label } from '@/components/ui/label';
 import { useResidents } from "./queries/patientsFetchQueries";
 import { useAddPatient } from "./queries/patientsAddQueries";
 
+
 interface ResidentProfile {
   rp_id: string;
-  
   households: {
     hh_id: string;
   }
-
   personal_info: {
     per_lname: string;
     per_fname: string;
@@ -51,10 +50,9 @@ interface ResidentProfile {
   }
 }
 
-// Updated interface for the simplified patient creation
 interface PatientCreationData {
   pat_type: string;
-  rp_id: string; // Only reference to existing resident profile
+  rp_id: string; 
 }
 
 export default function CreatePatientRecord() {
@@ -62,8 +60,8 @@ export default function CreatePatientRecord() {
   const navigate = useNavigate();
   // const [isReadOnly, setIsReadOnly] = React.useState<boolean>(true); // Changed to true since we're only selecting existing residents
   const defaultValues = generateDefaultValues(patientRecordSchema);
-  const location = useLocation();
-  const { params } = location.state || { params: {} };
+  // const location = useLocation();
+  // const { params } = location.state || { params: {} };
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<z.infer<typeof patientRecordSchema>>({
@@ -85,13 +83,15 @@ export default function CreatePatientRecord() {
 
   const handlePatientSelection = (id: string) => {
     setSelectedResidentId(id);
+    console.log("Selected Resident ID:", id);
     const selectedPatient: ResidentProfile | undefined = persons.default.find((p: ResidentProfile) => p.rp_id.toString() === id);
 
     if(selectedPatient && selectedPatient.personal_info){
       console.log("Selected Patient:", selectedPatient);
-      setSelectedResidentId(selectedPatient.rp_id.toString());
+      // setSelectedResidentId(selectedPatient.rp_id.toString());
 
       const personalInfo = selectedPatient.personal_info;
+      const sexLowercase = personalInfo.per_sex?.toLowerCase();
       
       if (Array.isArray(selectedPatient?.households)) {
         console.log("Household Nos:", selectedPatient.households.map(h => h.hh_id));
@@ -101,9 +101,10 @@ export default function CreatePatientRecord() {
       form.setValue("lastName", personalInfo.per_lname || "");
       form.setValue("firstName", personalInfo.per_fname || "");
       form.setValue("middleName", personalInfo.per_mname || "");
-      form.setValue("sex", personalInfo.per_sex || "");
+      form.setValue("sex", sexLowercase || "");
       form.setValue("contact", personalInfo.per_contact || "");
       form.setValue("dateOfBirth", personalInfo.per_dob || "");
+      form.setValue("patientType", "resident"); 
 
 
       if (selectedPatient.personal_info.per_addresses && selectedPatient.personal_info.per_addresses.length > 0) {
@@ -124,44 +125,30 @@ export default function CreatePatientRecord() {
     }
   }
 
-  const createNewPatient = useAddPatient();
 
+  const createNewPatient = useAddPatient();
   const handleCreatePatientId = async (patientData: PatientCreationData) => {
-  try {
-    const result = await createNewPatient.mutateAsync(patientData);
-    
-    if (result) {
-      toast({
-        title: "Success",
-        description: "Patient record has been created successfully",
-      });
-      return true;
-    } else {
-      toast({
-        title: "Warning",
-        description: "Patient record may have been created. Please refresh to verify.",
-        variant: "destructive",
-      });
+    try {
+      const result = await createNewPatient.mutateAsync(patientData);
+      
+      if (result) {
+        toast("Patient record has been created successfully");
+        return true;
+      } else {
+        toast("Patient record may have been created. Please refresh to verify.");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error creating patient record:", error);
+      toast("Failed to create patient record.", {
+        description: "An error occurred while creating the patient record. Please check the details and try again."});
       return false;
     }
-  } catch (error) {
-    console.error("Error creating patient record:", error);
-    toast({
-      title: "Error",
-      description: "Failed to create patient record. Please try again.",
-      variant: "destructive",
-    });
-    return false;
   }
-}
 
   const submit = async () => {
     if (!selectedResidentId) {
-      toast({
-        title: "Error",
-        description: "Please select a resident first",
-        variant: "destructive",
-      });
+      toast("Please select a resident first");
       return;
     }
 
@@ -169,11 +156,23 @@ export default function CreatePatientRecord() {
     try {
       const formData = form.getValues();
       
-      // Only create patient record with reference to existing resident
+      const patientType =
+        formData.patientType === "resident"
+          ? "Resident"
+          : formData.patientType === "transient"
+            ? "Transient"
+            : "Resident" //
       const patientData: PatientCreationData = {
-        pat_type: formData.patientType || "Resident",
+        pat_type: patientType,
         rp_id: selectedResidentId
       };
+
+      if (patientType === 'Resident' && !patientData.rp_id) {
+        toast.error("Resident ID is missing");
+        return;
+      }
+      
+      console.log("Creating patient with data:", patientData);
 
       const success = await handleCreatePatientId(patientData);
       
@@ -181,28 +180,10 @@ export default function CreatePatientRecord() {
         form.reset(defaultValues);
         setSelectedResidentId("");
 
-        navigate("/patients-record-main", {
-          state: {
-            params: {
-              showSuccessMessage: true,
-              message: "Patient registration successful",
-            } 
-          }
-        })
-
-        //   toast({
-        //   title: "Success",
-        //   description: "Patient registered successfully",
-        //   variant: "default",
-        // });
+        navigate("/patients-record-main")
       }
-
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create patient record. Please try again.",
-        variant: "destructive",
-      });
+      toast("Failed to create patient record. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -235,15 +216,15 @@ export default function CreatePatientRecord() {
       <div className="mb-4 max-w-lg">
         <div className="relative">
           <Combobox
-            options={persons.formatted}
+            options={persons.default}
             value={selectedResidentId}
             onChange={handlePatientSelection}
             placeholder={residentLoading ? "Loading residents..." : "Select a resident"}
             triggerClassName="font-normal w-[30rem]"
             emptyMessage={
-              <div className="flex gap-2 justify-center items-center">
+              <div className="flex flex-col gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">
-                  {residentLoading ? "Loading..." : "No resident found."}
+                  {residentLoading ? "Loading..." : "No residents were found without an assigned Patient ID."}
                 </Label>
                 <Link to="/residents/new">
                   <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
@@ -275,9 +256,9 @@ export default function CreatePatientRecord() {
                   >
                     {/* Personal Information Section - Read Only */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={true} />
-                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={true} />
-                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={true} />
+                      <FormInput control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={false} />
+                      <FormInput control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={false} />
+                      <FormInput control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={false} />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -291,8 +272,8 @@ export default function CreatePatientRecord() {
                         ]}
                         readOnly={false}
                       />
-                      <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={true} />
-                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type='date' readOnly={true}/>
+                      <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={false} />
+                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type='date' readOnly={false}/>
                       <FormSelect 
                         control={form.control} 
                         name="patientType" 
@@ -307,7 +288,7 @@ export default function CreatePatientRecord() {
 
                     {/* Address Section - Read Only */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                      <FormInput control={form.control} name="address.street" label="Address" placeholder="Enter street " readOnly={false} />
+                      <FormInput control={form.control} name="address.street" label="Street" placeholder="Enter street " readOnly={false} />
                       <FormInput control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={false}/>
                       <FormInput control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={false}/>
                       <FormInput control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={false}/>

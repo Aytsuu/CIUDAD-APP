@@ -20,6 +20,17 @@ class PartialUpdateMixin:
                     self.fields[field].required = False
         return super().to_internal_value(data)
     
+class TransientAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransientAddress
+        fields = '__all__'
+
+class TransientSerializer(serializers.ModelSerializer):
+    tradd_id = TransientAddressSerializer(read_only=True)
+    
+    class Meta:
+        model = Transient
+        fields = '__all__'
 
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()
@@ -141,9 +152,6 @@ class PatientSerializer(serializers.ModelSerializer):
     #     except Spouse.DoesNotExist:
     #         return None
 
-
-
-    
 
 class PatientRecordSerializer(serializers.ModelSerializer):
     pat_details = PatientSerializer(source='pat_id', read_only=True)
