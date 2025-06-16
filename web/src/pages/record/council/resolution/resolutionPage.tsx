@@ -484,11 +484,13 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router';
 import { DataTable } from "@/components/ui/table/data-table"
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { ArrowUpDown } from "lucide-react"
 import { ColumnDef } from "@tanstack/react-table"
 import AddResolution from './addResolution';
 import EditResolution from './editResolution';
 import { useResolution, type ResolutionData } from './queries/resolution-fetch-queries';
+import { useDeleteResolution } from './queries/resolution-delete-queries';
 
 
 
@@ -500,6 +502,12 @@ function ResolutionPage() {
 
     // Use the resolution query
     const { data: resolutionData, isLoading, isError } = useResolution();
+
+    const { mutate: deleteRes } = useDeleteResolution();
+
+    const handleDelete = (res_num: number) => {
+        deleteRes(res_num);
+    };
 
     const columns: ColumnDef<ResolutionData>[] = 
     [
@@ -600,17 +608,15 @@ function ResolutionPage() {
                     />
                     <TooltipLayout
                         trigger={
-                            <DialogLayout
-                                trigger={
-                                    <div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-3 py-2 rounded cursor-pointer flex items-center justify-center h-8.5">
-                                        <Trash size={16} />
-                                    </div>
-                                }
-                                className="max-w-[50%] h-2/3 flex flex-col"
-                                title="Delete Resolution"
-                                description="Are you sure you want to delete this resolution?"
-                                mainContent={<div>Delete confirmation would go here</div>}
-                            />
+                            <div>
+                                <ConfirmationModal
+                                    trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white px-4 py-2 rounded cursor-pointer"><Trash size={16}/></div>}
+                                    title="Confirm Delete"
+                                    description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
+                                    actionLabel="confirm"
+                                    onClick={() => handleDelete(row.original.res_num)}
+                                />
+                            </div>
                         }
                         content="Delete"
                     />

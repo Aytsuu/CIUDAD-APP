@@ -35,6 +35,7 @@ export const resolution_create = async (resolutionInfo: Record<string, any>) => 
 }
 
 
+
 export const resolution_file_create = async (data: {
     res_num: number;
     file_data: {

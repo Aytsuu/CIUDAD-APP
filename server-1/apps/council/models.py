@@ -115,15 +115,18 @@ class ResolutionFile(models.Model):
     rf_type = models.CharField(max_length=500)
     rf_path = models.CharField(max_length=500)
     rf_url = models.CharField(max_length=500)
+ 
 
     res_num = models.ForeignKey(
         Resolution,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='resolution_files',
         db_column='res_num'
-    )    
+    )   
+
+    
 
     class Meta:
         db_table = 'resolution_file'
