@@ -3,7 +3,16 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, Search, ChevronLeft } from "lucide-react";
+import {
+  ArrowUpDown,
+  Eye,
+  Search,
+  ChevronLeft,
+  Plus,
+  UserRound,
+  Pill,
+  MapPin,
+} from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -17,12 +26,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import { UserRound, Pill, MapPin } from "lucide-react";
-import { calculateAge } from "@/helpers/ageCalculator";
 import { api } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
-type filter = "all" | "requested" | "recorded";
+type filter = "all" | "requested" | "recorded" | "archived";
 
 export interface MedicineRecord {
   medrec_id: number;
@@ -70,8 +77,8 @@ export interface MedicineRecord {
 
 export default function IndivMedicineRecords() {
   const location = useLocation();
-  const { params } = location.state || {};
-  const { patientData } = params || {};
+  const patientData = location.state?.params?.patientData;
+
   const navigate = useNavigate();
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
@@ -80,15 +87,32 @@ export default function IndivMedicineRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState<filter>("all");
-  const [medicineCount, setMedicineCount] = useState(0);
 
   // Guard clause for missing patientData
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
 
+
+  const { data: medicineCountData } = useQuery({
+    queryKey: ["medicineRecordCount", patientData.pat_id],
+    queryFn: async () => {
+      const response = await api.get(`/medicine/medrec-count/${patientData.pat_id}/`);
+      return response.data;
+    },
+    refetchOnMount: true,
+    staleTime: 0,
+  });
+  
+  const medicineCount = medicineCountData?.medicinerecord_count;
+
+
   // Fetch medicine records
-  const { data: medicineRecords, isLoading } = useQuery({
+  const {
+    data: medicineRecords,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["patientMedicineDetails", patientData.pat_id],
     queryFn: async () => {
       const response = await api.get(
@@ -99,22 +123,6 @@ export default function IndivMedicineRecords() {
     refetchOnMount: true,
     staleTime: 0,
   });
-
-  // Fetch medicine count
-  useEffect(() => {
-    const fetchMedicineCount = async () => {
-      try {
-        const response = await api.get(
-          `/medicine-records/medicine-count/${patientData.pat_id}/`
-        );
-        setMedicineCount(response.data.count || 0);
-      } catch (error) {
-        console.error("Error fetching medicine count:", error);
-      }
-    };
-
-    fetchMedicineCount();
-  }, [patientData.pat_id]);
 
   const formatMedicineData = React.useCallback((): MedicineRecord[] => {
     if (!medicineRecords) return [];
@@ -139,13 +147,19 @@ export default function IndivMedicineRecords() {
   const filteredData = React.useMemo(() => {
     return formatMedicineData().filter((record) => {
       const searchText =
-        `${record.medrec_id} ${record.minv_details?.med_detail?.med_name} ${record.status} ${record.req_type}`.toLowerCase();
+        `${record.medrec_id} ${record.minv_details?.med_detail?.med_name} ${record.minv_details?.med_detail?.catlist} ${record.status} ${record.req_type}`.toLowerCase();
       const matchesSearch = searchText.includes(searchQuery.toLowerCase());
       let matchesFilter = true;
-      if (filter !== "all") {
+
+      if (filter === "archived") {
+        matchesFilter = record.is_archived;
+      } else if (filter !== "all") {
         const status = record.status.toLowerCase();
-        matchesFilter = status === filter.toLowerCase();
+        matchesFilter = status === filter.toLowerCase() && !record.is_archived;
+      } else {
+        matchesFilter = !record.is_archived;
       }
+
       return matchesSearch && matchesFilter;
     });
   }, [searchQuery, formatMedicineData, filter]);
@@ -161,6 +175,7 @@ export default function IndivMedicineRecords() {
       try {
         await api.patch(`/medicine-records/${recordToArchive}/archive/`);
         toast.success("Medicine record archived successfully!");
+        refetch();
       } catch (error) {
         toast.error("Failed to archive the record.");
       } finally {
@@ -204,29 +219,34 @@ export default function IndivMedicineRecords() {
               <span className="font-medium">Form: </span>
               {row.original.minv_details?.minv_form}
             </div>
+            <div className="text-sm">
+              <span className="font-medium">Quantity: </span>
+              {row.original.medrec_qty}{" "}
+              {row.original.minv_details?.minv_qty_unit}
+            </div>
           </div>
         </div>
       ),
     },
-    {
-      accessorKey: "details",
-      header: "Quantity",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[200px] px-2">
-          {row.original.medrec_qty}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "signature",
-      header: "Signature",
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[200px] px-2">
-          {row.original.signature || "N/A"}
-        </div>
-      ),
-    },
 
+    {
+      accessorKey: "request_info",
+      header: "Request Info",
+      cell: ({ row }) => (
+        <div className="flex flex-col text-sm">
+          <div>
+            <span className="font-medium">Type: </span>
+            {row.original.req_type}
+          </div>
+          {row.original.reason && (
+            <div>
+              <span className="font-medium">Reason: </span>
+              {row.original.reason}
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       accessorKey: "dates",
       header: "Dates",
@@ -241,11 +261,23 @@ export default function IndivMedicineRecords() {
             <div>
               <span className="font-medium">Requested: </span>
               {requestedAt.toLocaleDateString()}
+              <span className="text-gray-500 ml-1">
+                {requestedAt.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
             {fulfilledAt && (
               <div>
                 <span className="font-medium">Fulfilled: </span>
                 {fulfilledAt.toLocaleDateString()}
+                <span className="text-gray-500 ml-1">
+                  {fulfilledAt.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
               </div>
             )}
           </div>
@@ -257,25 +289,7 @@ export default function IndivMedicineRecords() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
-          <Link
-            to="/medicineView"
-            state={{ params: { Medicine: row.original, patientData } }}
-          >
-            <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
-              View
-            </Button>
-          </Link>
-          {row.original.status.toLowerCase() === "requested" && (
-            <Link
-              to="/updateMedicineForm"
-              state={{ params: { Medicine: row.original, patientData } }}
-            >
-              <Button variant="destructive" size="sm" className="h-8 p-2">
-                Update
-              </Button>
-            </Link>
-          )}
-          {!row.original.is_archived && (
+          {!row.original.is_archived ? (
             <Button
               variant="outline"
               size="sm"
@@ -286,6 +300,10 @@ export default function IndivMedicineRecords() {
               }}
             >
               Archive
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" className="h-8" disabled>
+              Archived
             </Button>
           )}
         </div>
@@ -306,11 +324,10 @@ export default function IndivMedicineRecords() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <Button
-            className="text-black p-2 mb-2 self-center"
+            className="text-black p-2 mb-2 self-start"
             variant={"outline"}
             onClick={() => navigate(-1)}
           >
@@ -318,15 +335,14 @@ export default function IndivMedicineRecords() {
           </Button>
           <div className="flex-col items-center mb-4">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Medicine Records
+              Individual Medicine Records
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
+              Manage and view patient's vaccination records
             </p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
-
         <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
           <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
             <UserRound className="h-5 w-5" />
@@ -334,21 +350,19 @@ export default function IndivMedicineRecords() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Full Name */}
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Full Name</p>
               <p className="font-medium">
-                {`${patientData.lname}, ${patientData.fname} ${
-                  patientData.mname || ""
+                {`${patientData.personal_info.per_lname}, ${patientData.personal_info.per_fname} ${
+                  patientData.personal_info.per_mname || ""
                 }`.trim() || "N/A"}
               </p>
             </div>
 
-            {/* Date of Birth & Age */}
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Date of Birth</p>
               <p className="font-medium">
-                {patientData.dob
+                {patientData.personal_info.per_dob
                   ? new Date(patientData.dob).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
@@ -358,27 +372,27 @@ export default function IndivMedicineRecords() {
               </p>
             </div>
 
-            {/* Age */}
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Age</p>
               <p className="font-medium">{patientData.age}</p>
             </div>
 
-            {/* Address */}
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Address</p>
               <p className="font-medium">
-                {patientData.address || "Not provided"}
+                {patientData.addressFull || "Not provided"}
               </p>
             </div>
 
-            {/* Total Medicine Records */}
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Total Medicine Records</p>
-              <p className="font-medium">{medicineCount}</p>
+              <p className="font-medium">  
+              <p className="font-medium">                
+  {medicineCount !== undefined ? medicineCount : "Loading..."}
+</p>              </p>
+
             </div>
 
-            {/* Patient Type */}
             <div className="space-y-1">
               <p className="text-sm text-gray-500">Patient Type</p>
               <p className="font-medium">
@@ -397,7 +411,7 @@ export default function IndivMedicineRecords() {
                   size={17}
                 />
                 <Input
-                  placeholder="Search records..."
+                  placeholder="Search by medicine name, category, status..."
                   className="pl-10 bg-white w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -405,13 +419,14 @@ export default function IndivMedicineRecords() {
               </div>
               <div>
                 <SelectLayout
-                  placeholder="Filter"
+                  placeholder="Filter by status"
                   label=""
                   className="bg-white w-48"
                   options={[
-                    { id: "all", name: "All" },
+                    { id: "all", name: "All Records" },
                     { id: "requested", name: "Requested" },
                     { id: "recorded", name: "Recorded" },
+                    { id: "archived", name: "Archived" },
                   ]}
                   value={filter}
                   onChange={(value) => setFilter(value as filter)}
@@ -421,7 +436,11 @@ export default function IndivMedicineRecords() {
           </div>
           <div>
             <Button className="w-full sm:w-auto">
-              <Link to="/medicineForm" state={{ params: { patientData } }}>
+              <Link
+                to="/IndivPatNewMedRecForm"
+                state={{ params: { patientData } }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
                 New Medicine Record
               </Link>
             </Button>

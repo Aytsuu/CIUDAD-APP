@@ -32,3 +32,5 @@ export const getMedicineStocks = async () => {
     throw error;
   }
 }
+
+

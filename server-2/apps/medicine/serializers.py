@@ -25,8 +25,10 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_medicine_count(self, obj):
-        count = MedicineRecord.objects.filter(patrec_id__pat_id=obj.pat_id).count()
-        print(f"medicine count for patient {obj.pat_id}: {count}")
+        count = MedicineRecord.objects.filter(
+            patrec_id__pat_id=obj.pat_id, status__iexact='RECORDED'
+        ).count()
+        print(f"medicine count for patient {obj.pat_id} with status RECORDED: {count}")
         return count
 
   

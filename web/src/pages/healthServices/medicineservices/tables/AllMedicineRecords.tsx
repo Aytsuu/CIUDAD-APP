@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArrowUpDown, Eye, Search, Plus, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, ChevronLeft, FileInput } from "lucide-react";
 import { Link } from "react-router";
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { getMedicineRecords } from "../restful-api/getAPI";
-
+import { useNavigate } from "react-router";
 export interface MedicineRecord {
   pat_id: string;
   fname: string;
@@ -45,17 +45,14 @@ export default function AllMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
- 
- 
+  const navigate = useNavigate();
   // Fetch medicine records from API
-  const { data: medicineRecords, isLoading } = useQuery<MedicineRecord[]>(
-    {
-      queryKey: ["medicineRecords"],
-      queryFn: getMedicineRecords,
-      refetchOnMount: true,
-      staleTime: 0,
-    }
-  );
+  const { data: medicineRecords, isLoading } = useQuery<MedicineRecord[]>({
+    queryKey: ["medicineRecords"],
+    queryFn: getMedicineRecords,
+    refetchOnMount: true,
+    staleTime: 0,
+  });
 
   const formatMedicineData = React.useCallback((): MedicineRecord[] => {
     if (!medicineRecords) return [];
@@ -72,23 +69,15 @@ export default function AllMedicineRecords() {
         sex: info.per_sex,
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob,
-        householdno: record.patient_details?.households?.[0]?.hh_id || "N/A",
+        householdno: record.patient_details?.households?.[0]?.hh_id,
         street: address.add_street,
         sitio: address.sitio,
         barangay: address.add_barangay,
         city: address.add_city,
         province: address.add_province,
         pat_type: record.patient_details.pat_type,
-        address: [
-          address.add_street,
-          address.sitio,
-          address.add_barangay,
-          address.add_city,
-          address.add_province,
-        ]
-          .filter(Boolean)
-          .join(", "),
         medicine_count: record.medicine_count || 0,
+        address: `${address.add_street}, ${address.add_barangay}, ${address.add_city}, ${address.add_province}`,
       };
     });
   }, [medicineRecords]);
@@ -193,16 +182,38 @@ export default function AllMedicineRecords() {
       cell: ({ row }) => (
         <div className="flex justify-center gap-2">
           <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
-            <Link
-              to="/IndivMedicineRecord"
-              state={{
-                params: {
-                  patientData: row.original,
-                },
-              }}
-            >
-              View
-            </Link>
+            <Button>
+              <Link
+                to="/IndivMedicineRecord"
+                state={{
+                  params: {
+                    patientData: {
+                      pat_id: row.original.pat_id,
+                      pat_type: row.original.pat_type,
+                      age: row.original.age,
+                      addressFull: row.original.address,
+                      address: {
+                        add_street: row.original.street,
+                        add_barangay: row.original.barangay,
+                        add_city: row.original.city,
+                        add_province: row.original.province,
+                        add_external_sitio: row.original.sitio,
+                      },
+                      households: [{ hh_id: row.original.householdno }],
+                      personal_info: {
+                        per_fname: row.original.fname,
+                        per_mname: row.original.mname,
+                        per_lname: row.original.lname,
+                        per_dob: row.original.dob,
+                        per_sex: row.original.sex,
+                      },
+                    },
+                  },
+                }}
+              >
+                View
+              </Link>
+            </Button>
           </div>
         </div>
       ),
@@ -223,7 +234,18 @@ export default function AllMedicineRecords() {
   return (
     <>
       <div className="w-full h-full flex flex-col">
-       
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex-col items-center ">
+            <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
+              Medicine Records
+            </h1>
+            <p className="text-xs sm:text-sm text-darkGray">
+              Manage and view patient's medicine records
+            </p>
+          </div>
+        </div>
+        <hr className="border-gray-300 mb-4" />
+
         <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
           <div className="w-full flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">

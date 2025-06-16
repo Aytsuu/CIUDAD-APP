@@ -7,7 +7,7 @@ class MedicineRecord(models.Model):
     STATUS_CHOICES = [
         ('REQUESTED', 'Requested'),
         ('REFERRED', 'Referred'),
-        ('RECORED', 'Recorded'), 
+        ('RECORDED', 'Recorded'), 
         ('PENDING', 'Pending'),
     ]
 

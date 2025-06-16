@@ -52,16 +52,17 @@ export default function PatNewVacRecForm() {
   const handlePatientSelection = (id: string) => {
     setSelectedPatientId(id);
     const selectedPatient = patients.default.find(
-      (patient) => patient.pat_id.toString() === id
+      (patient) => patient.pat_id.toString() === id.split(",")[0].trim()
     );
 
     if (selectedPatient) {
       setSelectedPatientData(selectedPatient);
-      const personalInfo = selectedPatient.personal_info;
 
       // Update form values
       form.setValue("pat_id", selectedPatient.pat_id);
     }
+    console.log("Selected Patient ID:", id);
+    console.log("Selected Patient Data:", selectedPatient);
   };
 
   const form = useForm<VaccineSchemaType>({

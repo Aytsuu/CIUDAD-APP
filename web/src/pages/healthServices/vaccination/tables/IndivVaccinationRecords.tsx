@@ -455,7 +455,6 @@ export default function IndivVaccinationRecords() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <Button
