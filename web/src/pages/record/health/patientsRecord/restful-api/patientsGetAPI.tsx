@@ -1,5 +1,6 @@
 import { api2 } from "@/api/api"
 
+// fetch residents
 export const getResident = async () => {
 	 try {
 		  const res = await api2.get("/patientrecords/residents-available/")
@@ -13,4 +14,14 @@ export const getResident = async () => {
 			// console.error("Response data:", err.response.data);
 		}
 	 }
+}
+
+// fetch patients
+export const getPatients = async () => {
+    try {
+        const res = await api2.get("patientrecords/patient/")
+        return res.data;
+    } catch (error) {
+        console.error("Error:", error);
+    }
 }

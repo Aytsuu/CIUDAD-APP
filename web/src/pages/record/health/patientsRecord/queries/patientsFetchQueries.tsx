@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getResident} from "../restful-api/patientsGetAPI";
+import { getResident, getPatients } from "../restful-api/patientsGetAPI";
 
-// query keys
+// resident query keys
 export const residentQueryKey = {
 	allResidents: ["residents"],
 	lists: () => [...residentQueryKey.allResidents, "list"],
@@ -19,4 +19,24 @@ export const useResidents = (options = {}) => {
 		  retry: 2,
 		  ...options
 	 })
+}
+
+// patient query keys
+export const patientQueryKey = {
+	allPatients: ["patients"],
+	lists: () => [...patientQueryKey.allPatients, "list"],
+	list: (filters: any) => [...patientQueryKey.lists(), { filters }],
+	details: () => [...patientQueryKey.allPatients, "detail"],
+	detail: (id:any) => [patientQueryKey.details(), id],
+	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
+}
+
+export const usePatients = (options = {}) => {
+	return useQuery({
+		queryKey: patientQueryKey.lists(),
+		queryFn: getPatients,
+		staleTime: 60 * 30,
+		retry: 2,
+		...options
+	})
 }

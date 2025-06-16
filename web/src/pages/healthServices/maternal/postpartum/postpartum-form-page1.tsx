@@ -86,9 +86,11 @@ export default function PostpartumFormFirstPg(
         formatted: 
             patientData?.map((patient: any) => ({
                 id: patient.pat_id.toString(),
+                // id: `${patient.pat_id.toString()}, ${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim(),
                 name: `${patient.personal_info?.per_lname || ""}, ${patient.personal_info?.per_fname || ""} ${patient.personal_info?.per_mname || ""}`.trim()
             })) || []
     };
+    // console.log("pat_id = ", selectedPatientId)
 
      const handlePatientSelection = (id: string) => {
         setSelectedPatientId(id)

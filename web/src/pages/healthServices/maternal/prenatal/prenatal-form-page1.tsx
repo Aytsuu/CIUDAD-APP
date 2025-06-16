@@ -27,7 +27,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-// import { toast } from "sonner";
+import { toast } from "sonner";
 import { usePatients } from "../queries/maternalFetchQueries";
 // import { set } from "date-fns";
 
@@ -83,7 +83,7 @@ interface PrenatalFirstFormProps {
 }
 
 export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
-    const { control, trigger, setValue, getValues, watch, formState: { errors } } = useFormContext<z.infer<typeof PrenatalFormSchema>>(); // useFormContext to access the form methods
+    const { control, trigger, setValue, getValues, watch } = useFormContext<z.infer<typeof PrenatalFormSchema>>(); // useFormContext to access the form methods
 
     const submit = () => {
         window.scroll({
@@ -113,42 +113,44 @@ export default function PrenatalFormFirstPg({onSubmit}: PrenatalFirstFormProps){
             })) || []
     };
 
-    const handlePatientSelection = (id: string) => {
-        setSelectedPatientId(id)
-        const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
+	const handlePatientSelection = (id: string) => {
+		setSelectedPatientId(id)
+		const selectedPatient: PatientRecord | undefined = patients.default.find((p: PatientRecord) => p.pat_id.toString() === id)
+		toast("Patients loaded successfully");
 
-        if (selectedPatient && selectedPatient.personal_info) {
-          console.log("Selected Patient:", selectedPatient)
-          setSelectedPatientId(selectedPatient.pat_id.toString());
+		if (selectedPatient && selectedPatient.personal_info) {
+			
+			console.log("Selected Patient:", selectedPatient)
+			setSelectedPatientId(selectedPatient.pat_id.toString());
 
-          const personalInfo = selectedPatient.personal_info;
-          const address = selectedPatient.address
-          const spouse = selectedPatient.spouse;
+			const personalInfo = selectedPatient.personal_info;
+			const address = selectedPatient.address
+			const spouse = selectedPatient.spouse;
 
-            setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
-            setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname) 
-            setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
-            setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
-            setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
-            setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
+			setValue("motherPersonalInfo.familyNo", selectedPatient.pat_id)
+			setValue("motherPersonalInfo.motherLName", personalInfo?.per_lname) 
+			setValue("motherPersonalInfo.motherFName", personalInfo?.per_fname)
+			setValue("motherPersonalInfo.motherMName", personalInfo?.per_mname)
+			setValue("motherPersonalInfo.motherAge", calculateAge(personalInfo?.per_dob))
+			setValue("motherPersonalInfo.motherDOB", personalInfo?.per_dob)
 
-            if(address){
-                setValue("motherPersonalInfo.address.street", address.add_street)
-                setValue("motherPersonalInfo.address.sitio", address.sitio || "")
-                setValue("motherPersonalInfo.address.barangay", address.add_barangay)
-                setValue("motherPersonalInfo.address.city", address.add_city)
-                setValue("motherPersonalInfo.address.province", address.add_province)
-            }
+			if(address){
+					setValue("motherPersonalInfo.address.street", address.add_street)
+					setValue("motherPersonalInfo.address.sitio", address.sitio || "")
+					setValue("motherPersonalInfo.address.barangay", address.add_barangay)
+					setValue("motherPersonalInfo.address.city", address.add_city)
+					setValue("motherPersonalInfo.address.province", address.add_province)
+			}
 
-            if(spouse){
-                setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
-                setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
-                setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
-                setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
-                setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
-            }
-        }
-    }
+			if(spouse){
+					setValue("motherPersonalInfo.husbandLName", spouse.spouse_lname || "")
+					setValue("motherPersonalInfo.husbandFName", spouse.spouse_fname || "")
+					setValue("motherPersonalInfo.husbandMName", spouse.spouse_mname || "")
+					setValue("motherPersonalInfo.husbandDob", spouse.spouse_dob || "")
+					setValue("motherPersonalInfo.occupation", spouse.spouse_occupation || "")
+			}
+		}
+	}
 
 
     // previous illness and previous hospitalization data 
