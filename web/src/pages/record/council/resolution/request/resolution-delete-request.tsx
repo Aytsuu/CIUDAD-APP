@@ -12,3 +12,24 @@ export const deleteResolution = async (res_num: number) => {
         throw err; // Rethrow the error to handle it in the component
     }
 };
+
+
+export const archiveOrRestoreRes = async (res_num: number, resolutionInfo: Record<string, any>) => {
+
+    try{
+
+        console.log({
+            res_is_archive: resolutionInfo.res_is_archive
+
+        })
+
+        const res = await api.put(`council/update-resolution/${res_num}/`,{
+            res_is_archive: resolutionInfo.res_is_archive
+        })
+
+        return res.data;
+    }
+    catch (err){
+        console.error(err);
+    }
+}
