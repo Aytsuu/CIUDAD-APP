@@ -10,6 +10,7 @@ export type MinutesOfMeetingRecords = {
     file_url: string;
     file_id: string;
     areas_of_focus: string[];
+    supporting_docs: string[];
 }
 
 export const useGetMinutesOfMeetingRecords = () => {

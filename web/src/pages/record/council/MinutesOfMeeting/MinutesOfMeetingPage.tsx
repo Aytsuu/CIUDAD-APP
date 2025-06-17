@@ -46,7 +46,7 @@ function MinutesOfMeetingPage() {
   const getAreaFocusColor = (focus: string): string => {
     switch (focus) {
       case "gad":
-        return "bg-blue-100 text-blue-800"
+        return "bg-primary/10 text-primary"
       case "finance":
         return "bg-green-100 text-green-800"
       case "council":
@@ -96,6 +96,7 @@ function MinutesOfMeetingPage() {
     deleteMOM(mom_id)
   }
 
+  // CARD LAYOUT
   const MeetingCard = ({ record, isArchived = false }: { record: MinutesOfMeetingRecords; isArchived?: boolean }) => (
     <Card className="hover:shadow-xl transition-all duration-300 border-0 shadow-md">
       <CardHeader className="pb-4 border-b border-gray-100">
@@ -243,28 +244,21 @@ function MinutesOfMeetingPage() {
         </div>
 
         <div className="pt-4 border-t border-gray-100">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start gap-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-            onClick={() => {
-              // Placeholder for future functionality
-              console.log("Supporting documents clicked for:", record.mom_id)
-            }}
-          >
+          <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
             <FileInput size={16} />
             View Supporting Documents
-            {/* {record.supporting_docs && ( */}
+            {record.supporting_docs && (
               <Badge variant="secondary" className="ml-auto bg-blue-100 text-blue-800">
                 Available
               </Badge>
-            {/* )} */}
+            )} 
           </Button>
         </div>
       </CardContent>
     </Card>
   )
 
+  // LOADING SCREEN
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -300,10 +294,7 @@ function MinutesOfMeetingPage() {
             {/* Search Input */}
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-full bg-white"
-                value={searchQuery}
+              <Input placeholder="Search..." className="pl-10 w-full bg-white" value={searchQuery} 
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
                 }}

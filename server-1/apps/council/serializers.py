@@ -53,11 +53,16 @@ class StaffSerializer(serializers.ModelSerializer):
         except AttributeError:
             return "Unknown"
 
-
+class MOMSuppDocSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = MOMSuppDoc
+        fields = '__all__'
+        
 class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     file_id = serializers.SerializerMethodField()
     areas_of_focus = serializers.SerializerMethodField()
+    supporting_docs = MOMSuppDocSerializer(source='momsuppdoc_set', many=True, read_only=True)
 
     class Meta:
         model = MinutesOfMeeting
@@ -65,7 +70,8 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
         extra_fields = [
             'file_url',
             'file_id',
-            'areas_of_focus'
+            'areas_of_focus',
+            'supporting_docs'
         ]
 
     def get_file_url(self, obj):
@@ -95,7 +101,3 @@ class MOMFileSerialzer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class MOMSuppDocSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = MOMSuppDoc
-        fields = '__all__'
