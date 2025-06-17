@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { useForm } from "react-hook-form"
 import SignatureCanvas from "react-signature-canvas"
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page5Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 type FamilyPlanningMethod =
   | "COC"
@@ -119,6 +120,7 @@ export default function FamilyPlanningForm5({
   const form = useForm({
     defaultValues,
     mode: "onChange",
+    resolver: zodResolver(page5Schema),
   })
 
   const [clientSignature, setClientSignature] = useState<string>(formData?.acknowledgement?.clientSignature || "")

@@ -14,6 +14,9 @@ import { Combobox } from "@/components/ui/combobox"
 import { toast } from "sonner"
 import { api2 } from "@/api/api"
 import { page1Schema } from "@/form-schema/FamilyPlanningSchema"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+
 
 type Page1Props = {
   onNext2: () => void
@@ -61,7 +64,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     },
 
     // Children and Income
-    numOfLivingChildren: data.numOfLivingChildren || 0,
+    numOfLivingChildren: data.numOfLivingChildren,
     planToHaveMoreChildren: data.planToHaveMoreChildren || false,
     averageMonthlyIncome: data.averageMonthlyIncome || "",
 
@@ -88,7 +91,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
   })
 
   const form = useForm<FormData>({
-    // resolver: zodResolver(page1Schema),
+    resolver: zodResolver(page1Schema),
     defaultValues: getDefaultValues(formData),
     values: getDefaultValues(formData), 
     mode: "onBlur",
@@ -234,7 +237,6 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
       s_age: selectedSpouse?.spouse_dob ? calculateAge(selectedSpouse.spouse_dob) : 0,
       s_occupation: selectedSpouse?.spouse_occupation || "",
     },
-    numOfLivingChildren: obsPatient?.obs_living_ch || 0,
   };
 
   form.reset({
@@ -526,7 +528,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
                 />
               </div>
 
-              <div className="flex justify-end w-full sm:w-auto sm:ml-auto">
+              {/* <div className="flex justify-end w-full sm:w-auto sm:ml-auto">
                 <FormField
                   control={form.control}
                   name="isTransient"
@@ -544,7 +546,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
                     </FormItem>
                   )}
                 />
-              </div>
+              </div> */}
             </div>
 
             {/* Personal Information Section */}

@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('administration', '0003_alter_position_staff'),
-        ('healthProfiling', '0007_address_household_add_personaladdress'),
+        # ('healthProfiling', '0007_address_household_add_personaladdress'),
     ]
 
     operations = [

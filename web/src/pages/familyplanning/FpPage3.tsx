@@ -1,12 +1,13 @@
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
-import FamilyPlanningSchema, { type FormData } from "@/form-schema/FamilyPlanningSchema"
+import FamilyPlanningSchema, { page3Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { Form, FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
 import { useRiskStiData } from "./queries/fpFetchQuery"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 // // Extract only the fields needed for this page
 // const page3Schema = FamilyPlanningSchema.pick({
@@ -30,7 +31,7 @@ const referralOptions = {
 
 const FamilyPlanningForm3 = ({ onPrevious2, onNext4, updateFormData, formData }: Page3Props) => {
   const form = useForm<FormData>({
-    //  resolver: zodResolver(page3Schema),
+     resolver: zodResolver(page3Schema),
     defaultValues: formData,
     values: formData,
   })

@@ -1,5 +1,32 @@
-import { api2 } from "@/api/api"
-import axios from "axios"
+// PostRequest.tsx
+import { api2 } from "@/api/api";
+import axios from "axios";
+
+// This function will be called by the new composite serializer on the backend.
+// On the frontend, we will consolidate all data and send it in one go.
+export const createCompleteFPRecord = async (data: Record<string, any>) => {
+  try {
+    console.log("🔄 Sending complete FP record for creation:", data);
+    // Assuming a new composite endpoint on your backend that handles all sub-records
+    const res = await api2.post("familyplanning/complete_record/", data); // This is the recommended new endpoint
+    console.log("✅ Complete FP record created successfully:", res.data);
+    return res.data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      console.error("❌ Complete FP Record API Error:", err.response?.data || err.message);
+      // More specific error handling could be added here based on backend response
+      throw new Error(`Complete FP Record API Error: ${err.response?.data?.detail || err.message}`);
+    } else {
+      console.error("❌ Unexpected Error:", err);
+      throw err;
+    }
+  }
+};
+
+
+// The following individual functions are primarily for update operations
+// or if you choose not to use a single transactional endpoint.
+// For new record creation, the `createCompleteFPRecord` is preferred.
 
 export const fp_record = async (data: Record<string, any>) => {
   try {
@@ -16,6 +43,7 @@ export const fp_record = async (data: Record<string, any>) => {
     console.log("✅ Patient record created:", patientRecordRes.data)
 
     const patrec_id = patientRecordRes.data.patrec_id
+    const pat_id = patientRecordRes.data.pat_id
 
     // Step 2: Create FP Record with the patient record ID
     const requestData = {
@@ -25,6 +53,10 @@ export const fp_record = async (data: Record<string, any>) => {
       plan_more_children: data.planToHaveMoreChildren || false,
       avg_monthly_income: data.averageMonthlyIncome || "0",
       patrec_id: patrec_id, // Link to the PatientRecord
+      patrec: patrec_id,
+      pat: pat_id,
+      hrd: "",
+      spouse: "",
     }
 
     console.log("📌 Creating FP record:", requestData)
@@ -71,40 +103,40 @@ export const fp_type = async (data: Record<string, any>, fprecord_id?: number) =
   }
 }
 
-export const medical_history = async (data: Record<string, any>, fprecord_id?: number) => {
-  try {
-    const recordId = fprecord_id || data.fprecord_id
+// export const medical_history = async (data: Record<string, any>, fprecord_id?: number) => {
+//   try {
+//     const recordId = fprecord_id || data.fprecord_id
 
-    if (!recordId) {
-      throw new Error("FP Record ID is required for creating Medical History")
-    }
+//     if (!recordId) {
+//       throw new Error("FP Record ID is required for creating Medical History")
+//     }
 
-    const requestData = {
-      severeHeadaches: data.medicalHistory?.severeHeadaches || false,
-      strokeHeartAttackHypertension: data.medicalHistory?.strokeHeartAttackHypertension || false,
-      hematomaBruisingBleeding: data.medicalHistory?.hematomaBruisingBleeding || false,
-      breastCancerHistory: data.medicalHistory?.breastCancerHistory || false,
-      severeChestPain: data.medicalHistory?.severeChestPain || false,
-      coughMoreThan14Days: data.medicalHistory?.coughMoreThan14Days || false,
-      jaundice: data.medicalHistory?.jaundice || false,
-      unexplainedVaginalBleeding: data.medicalHistory?.unexplainedVaginalBleeding || false,
-      abnormalVaginalDischarge: data.medicalHistory?.abnormalVaginalDischarge || false,
-      phenobarbitalOrRifampicin: data.medicalHistory?.phenobarbitalOrRifampicin || false,
-      smoker: data.medicalHistory?.smoker || false,
-      disability: data.medicalHistory?.disability || false,
-      disabilityDetails: data.medicalHistory?.disabilityDetails || "",
-      fprecord_id: recordId,
-    }
+//     const requestData = {
+//       severeHeadaches: data.medicalHistory?.severeHeadaches || false,
+//       strokeHeartAttackHypertension: data.medicalHistory?.strokeHeartAttackHypertension || false,
+//       hematomaBruisingBleeding: data.medicalHistory?.hematomaBruisingBleeding || false,
+//       breastCancerHistory: data.medicalHistory?.breastCancerHistory || false,
+//       severeChestPain: data.medicalHistory?.severeChestPain || false,
+//       coughMoreThan14Days: data.medicalHistory?.coughMoreThan14Days || false,
+//       jaundice: data.medicalHistory?.jaundice || false,
+//       unexplainedVaginalBleeding: data.medicalHistory?.unexplainedVaginalBleeding || false,
+//       abnormalVaginalDischarge: data.medicalHistory?.abnormalVaginalDischarge || false,
+//       phenobarbitalOrRifampicin: data.medicalHistory?.phenobarbitalOrRifampicin || false,
+//       smoker: data.medicalHistory?.smoker || false,
+//       disability: data.medicalHistory?.disability || false,
+//       disabilityDetails: data.medicalHistory?.disabilityDetails || "",
+//       fprecord_id: recordId,
+//     }
 
-    console.log("Sending medical history data:", requestData)
-    const res = await api2.post("familyplanning/medical_history/", requestData)
-    console.log("Medical history created successfully:", res.data)
-    return res.data.fp_medhistory_id
-  } catch (err) {
-    console.error("Failed to create medical history:", err)
-    throw err
-  }
-}
+//     console.log("Sending medical history data:", requestData)
+//     const res = await api2.post("familyplanning/medical_history/", requestData)
+//     console.log("Medical history created successfully:", res.data)
+//     return res.data.fp_medhistory_id
+//   } catch (err) {
+//     console.error("Failed to create medical history:", err)
+//     throw err
+//   }
+// }
 
 export const risk_sti = async (data: Record<string, any>, fprecord_id?: number) => {
   try {
@@ -213,6 +245,7 @@ export const physical_exam = async (data: Record<string, any>, fpRecordId?: numb
       abdomenExamination: data.abdomenExamination || "normal",
       extremitiesExamination: data.extremitiesExamination || "normal",
       fprecord_id: recordId,
+      bm_id: 1, // Assuming bm_id is a fixed or derived value
     }
 
     console.log("Sending physical exam data:", requestData)
@@ -259,13 +292,18 @@ export const pelvic_exam = async (data: Record<string, any>, fprecord_id?: numbe
   }
 }
 
-export const acknowledgement = async (data: Record<string, any>, fprecord_id?: number) => {
+export const acknowledgement = async (data: Record<string, any>, fprecord_id_arg?: number, fpt_id_arg?: number) => {
   try {
-    const recordId = fprecord_id || data.fprecord_id
+    const recordId = fprecord_id_arg || data.fprecord_id;
+    const fptId = fpt_id_arg || data.fpt_id; // Corrected: Use the argument first
 
     if (!recordId) {
-      throw new Error("FP Record ID is required for creating Acknowledgement")
+      throw new Error("FP Record ID is required for creating Acknowledgement");
     }
+    // Optional: Add a check for fptId if it's strictly required by your backend
+    // if (!fptId) {
+    //   throw new Error("FP Type ID is required for creating Acknowledgement");
+    // }
 
     const requestData = {
       ack_clientSignature: data.acknowledgement?.clientSignature || "",
@@ -274,17 +312,18 @@ export const acknowledgement = async (data: Record<string, any>, fprecord_id?: n
       guardian_signature: data.acknowledgement?.guardianSignature || "",
       guardian_signature_date: data.acknowledgement?.guardianSignatureDate || null,
       fprecord_id: recordId,
-    }
+      type: fptId, // Use the corrected fptId
+    };
 
-    console.log("Sending acknowledgement data:", requestData)
-    const res = await api2.post("familyplanning/acknowledgement/", requestData)
-    console.log("Acknowledgement created successfully:", res.data)
-    return res.data.ack_id
+    console.log("Sending acknowledgement data:", requestData);
+    const res = await api2.post("familyplanning/acknowledgement/", requestData);
+    console.log("Acknowledgement created successfully:", res.data);
+    return res.data.ack_id;
   } catch (err) {
-    console.error("Failed to create acknowledgement:", err)
-    throw err
+    console.error("Failed to create acknowledgement:", err);
+    throw err;
   }
-}
+};
 
 export const pregnancy_check = async (data: Record<string, any>, fpRecordId?: number) => {
   try {
@@ -319,7 +358,7 @@ export const pregnancy_check = async (data: Record<string, any>, fpRecordId?: nu
   }
 }
 
-// UPDATE OPERATIONS
+// UPDATE OPERATIONS - These remain largely the same, as they update individual records
 export const updateFPRecord = async (fprecord_id: number, data: Record<string, any>) => {
   try {
     const requestData = {

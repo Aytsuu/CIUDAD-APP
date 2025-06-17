@@ -179,7 +179,7 @@ class Spouse(models.Model):
     spouse_mnane = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouse', db_column='pat_id')
+    # rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='spouse', db_column='rp_id')
 
     class Meta:
         db_table = 'spouse'

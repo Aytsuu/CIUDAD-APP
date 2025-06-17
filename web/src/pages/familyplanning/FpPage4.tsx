@@ -4,8 +4,9 @@ import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Button } from "@/components/ui/button/button"
-import type { FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page4Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
 import { useEffect } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 // Add props type to the component
 type Page4Props = {
@@ -21,7 +22,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
   // Initialize form with formData values
   const form = useForm<FormData>({
-    // resolver: zodResolver(page4Schema),
+    resolver: zodResolver(page4Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",

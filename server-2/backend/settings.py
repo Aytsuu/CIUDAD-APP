@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'apps.administration',
     # 'apps.account',
     # 'apps.waste',
-    # 'apps.profiling',
     'apps.familyplanning',
     'apps.animalbites',
     'apps.patientrecords',

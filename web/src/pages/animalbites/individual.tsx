@@ -318,11 +318,6 @@ const IndividualPatientHistory: React.FC = () => {
       enableHiding: false,
     },
     {
-      accessorKey: "referral_date",
-      header: "Referral Date",
-      cell: ({ row }) => new Date(row.original.referral_date).toLocaleDateString(),
-    },
-    {
       accessorKey: "patient_type", // New column for patient type
       header: "Patient Type",
       cell: ({ row }) => row.original.patient_type,
