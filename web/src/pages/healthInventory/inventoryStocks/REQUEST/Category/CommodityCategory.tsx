@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
@@ -29,7 +29,7 @@ export const useCategoriesCommodity = () => {
   // ADD CATEGORY
   const addCategory = async (CategoryInfo: Record<string, string>) => {
     try {
-      const res = await api.post("inventory/category/", {
+      const res = await api2.post("inventory/category/", {
         cat_type: CategoryInfo.cat_type,
         cat_name: toTitleCase(CategoryInfo.cat_name.trim()),
       });
@@ -45,7 +45,7 @@ export const useCategoriesCommodity = () => {
   const getCategories = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await api.get("inventory/category/", {
+      const { data } = await api2.get("inventory/category/", {
         params: { cat_type: "Commodity" },
       });
 
@@ -158,7 +158,7 @@ export const useCategoriesCommodity = () => {
   // DELETE CATEGORY
   const handleDeleteCategory = async (categoryId: number) => {
     try {
-      const response = await api.delete(`inventory/category/${categoryId}/`);
+      const response = await api2.delete(`inventory/category/${categoryId}/`);
 
       if (response.status === 200 || response.status === 204) {
         setCategories((prev) =>

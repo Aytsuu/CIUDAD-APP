@@ -27,4 +27,6 @@ urlpatterns = [
     path('residents/unvaccinated/', GetAllResidentsNotVaccinated.as_view(), name='unvaccinated-residents'),
     path('count-vaccinated/', CountVaccinatedByPatientTypeView.as_view(), name='count-vaccinated'),
 
+
+
 ]

@@ -1,10 +1,10 @@
 import { toTitleCase } from "@/helpers/ToTitleCase";
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 
 export const addFirstAid = async (data : Record<string,string>) => {
     try {
-      const res = await api.post("inventory/firstaidlist/", {
+      const res = await api2.post("inventory/firstaidlist/", {
         fa_name: toTitleCase(data.fa_name),
         cat: data.cat_id ? parseInt(data.cat_id, 10) : null,
         created_at: new Date().toISOString(),

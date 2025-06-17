@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export interface VaccineType {
   vaccineName: string;
@@ -27,7 +27,7 @@ export const addVaccine = async (data: {
   specify_age: string;
 }): Promise<VaccineResponse> => {
   try {
-    const res = await api.post("inventory/vac_list/", data);
+    const res = await api2.post("inventory/vac_list/", data);
     if (!res.data?.vac_id) {
       throw new Error("Invalid vaccine response format");
     }
@@ -47,7 +47,7 @@ export const addVaccineIntervals = async (data: {
   
 }): Promise<any> => {
   try {
-    const res = await api.post("inventory/vac_intervals/", data);
+    const res = await api2.post("inventory/vac_intervals/", data);
     return res.data;
   } catch (err) {
     console.error("Error adding vaccine intervals:", err);
@@ -62,7 +62,7 @@ export const addRoutineFrequency = async (data: {
   time_unit: string;
 }): Promise<any> => {
   try {
-    const res = await api.post("inventory/routine_freq/", data);
+    const res = await api2.post("inventory/routine_freq/", data);
     return res.data;
   } catch (err) {
     console.error("Error adding routine frequency:", err);

@@ -21,14 +21,14 @@ def get_unvaccinated_vaccines_for_patient(pat_id):
     # Get all vaccine IDs already given to the patient
     vaccinated_vac_ids = VaccinationHistory.objects.filter(
         vacrec__patrec_id__pat_id=pat_id
-    ).values_list('vacStck__vac_id', flat=True).distinct()
+    ).values_list('vacStck_id__vac_id', flat=True).distinct()
 
     # Get overdue follow-up vaccines of type "routine"
     overdue_vac_ids = VaccinationHistory.objects.filter(
         vacrec__patrec_id__pat_id=pat_id,
-        vacStck__vac_id__vac_type_choices="routine",
+        vacStck_id__vac_id__vac_type_choices="routine",
         followv__followv_date__lt=today,
-    ).values_list('vacStck__vac_id', flat=True).distinct()
+    ).values_list('vacStck_id__vac_id', flat=True).distinct()
 
     # Combine: all vaccines EXCEPT vaccinated ones MINUS those with overdue routine followups
     unvaccinated_vaccines = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids).union(
@@ -40,14 +40,15 @@ def get_unvaccinated_vaccines_for_patient(pat_id):
 def has_existing_vaccine_history(pat_id, vac_id):
     return VaccinationHistory.objects.filter(
         vacrec__patrec_id__pat_id=pat_id,
-        vacStck__vac_id=vac_id
+        vacStck_id__vac_id=vac_id
     ).exists()
+    
     
 def get_patient_vaccines_with_followups(pat_id):
     history_records = VaccinationHistory.objects.filter(
         vacrec__patrec_id__pat_id=pat_id,
         followv__followv_status="pending"  # ✅ only pending follow-up visits
-    ).select_related('vacStck__vac_id', 'followv')
+    ).select_related('vacStck_id__vac_id', 'followv')
 
     if not history_records.exists():
         return [{"message": "No vaccine or pending follow-up visit data found for this patient."}]
@@ -55,7 +56,7 @@ def get_patient_vaccines_with_followups(pat_id):
     results = []
 
     for record in history_records:
-        vacStck = getattr(record, 'vacStck', None)
+        vacStck = getattr(record, 'vacStck_id', None)
         vac = getattr(vacStck, 'vac_id', None)
 
         vac_name = getattr(vac, 'vac_name', None)
@@ -95,40 +96,6 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
 def get_vaccination_record_count(pat_id):
    
     return VaccinationRecord.objects.filter(patrec_id__pat_id=pat_id).count()
-# def get_unvaccinated_vaccines_for_patient(pat_id):
-#     today = timezone.now().date()
-
-#     # 1. Vaccines already received (any status)
-#     vaccinated_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     # 2. Partially vaccinated vaccines
-#     partial_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id,
-#         vachist_status__iexact="Partially Vaccinated"
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     # 3. Overdue routine vaccines
-#     overdue_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id,
-#         vacStck__vac_id__vac_type_choices="routine",
-#         followv__followv_date__lt=today,
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     # 4. Vaccines never received
-#     never_received = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids)
-
-#     # 5. Union all: never received + partial + overdue
-#     unvaccinated_vac_ids = set(never_received.values_list('vac_id', flat=True)) \
-#         | set(partial_vac_ids) \
-#         | set(overdue_vac_ids)
-
-#     # 6. Get the VaccineList entries for those
-#     unvaccinated_vaccines = VaccineList.objects.filter(vac_id__in=unvaccinated_vac_ids)
-
-#     return 
-
 
 
 def get_all_residents_not_vaccinated():
@@ -149,7 +116,7 @@ def get_all_residents_not_vaccinated():
     for vaccine in all_vaccines:
         # 🧪 Get pat_id of patients who already got this vaccine
         vaccinated_ids = VaccinationHistory.objects.filter(
-            vacStck__vac_id=vaccine.vac_id
+            vacStck_id__vac_id=vaccine.vac_id
         ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
 
         for resident in all_residents:

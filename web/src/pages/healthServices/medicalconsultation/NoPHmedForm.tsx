@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { fetchPatientRecords } from "@/pages/healthServices/vaccination//restful-api/FetchPatient";
+import { fetchPatientRecords } from "@/pages/healthServices/restful-api-patient/FetchPatient";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { Combobox } from "@/components/ui/combobox";
 import { create } from "domain";

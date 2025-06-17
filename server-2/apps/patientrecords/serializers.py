@@ -6,11 +6,7 @@ from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSeria
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 # serializers.py
-from apps.healthProfiling.serializers.minimal import (
-    ResidentProfileMinimalSerializer,
-    FCWithProfileDataSerializer,
-    HouseholdMinimalSerializer
-)
+from apps.healthProfiling.serializers.minimal import *
 
 class PartialUpdateMixin:  
     def to_internal_value(self, data):

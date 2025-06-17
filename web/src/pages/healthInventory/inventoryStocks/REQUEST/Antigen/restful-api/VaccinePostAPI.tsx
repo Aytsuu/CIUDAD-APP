@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
  
 export const addVaccineStock = async (data: Record<string,any>, vac_id: number, inv_id: number) => {
@@ -23,7 +23,7 @@ export const addVaccineStock = async (data: Record<string,any>, vac_id: number, 
       updated_at: new Date().toISOString(),
     };
 
-    const res = await api.post("inventory/vaccine_stocks/", payload);
+    const res = await api2.post("inventory/vaccine_stocks/", payload);
     return res.data;
   } catch (err) {
     console.error(err);
@@ -34,7 +34,7 @@ export const addVaccineStock = async (data: Record<string,any>, vac_id: number, 
 
 export const AntigenTransaction = async ( vacStck_id: number, string_qty: string, action: string, staffId: number) => {
   try {
-    const res = await api.post("inventory/antigens_stocks/", {
+    const res = await api2.post("inventory/antigens_stocks/", {
     antt_qty: string_qty,
     antt_action: action,
     vacStck_id: vacStck_id,

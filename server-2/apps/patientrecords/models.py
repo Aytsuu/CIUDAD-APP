@@ -3,7 +3,6 @@ from django.db.models import Max
 from django.utils import timezone
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
-from django.utils import timezone
 
 # Create your models here.
 class TransientAddress(models.Model):
@@ -166,8 +165,9 @@ class FollowUpVisit(models.Model):
     followv_id = models.BigAutoField(primary_key=True)
     followv_date = models.DateField()
     followv_status = models.CharField(max_length=100)
+    followv_description = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    updated_at = models.DateTimeField(auto_now=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='follow_up_visits')
     class Meta:
         db_table = 'follow_up_visit'

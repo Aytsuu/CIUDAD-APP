@@ -1,7 +1,7 @@
 
 
 
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 
 // export interface VaccinationPatientRecord {
@@ -24,7 +24,7 @@ import {api} from "@/api/api";
 
 export const getPatient =  async () => {
   try {
-    const response = await api.get(`/patient`);
+    const response = await api2.get(`/patient`);
     return response.data;
   } catch (err) {
     console.error(err);
@@ -34,7 +34,7 @@ export const getPatient =  async () => {
 
 export const getMedicalRecord =  async () => {
   try {
-    const response = await api.get(`/medical-consultation/all-medical-consultation-record/`);
+    const response = await api2.get(`/medical-consultation/all-medical-consultation-record/`);
     return response.data;
   } catch (err) {
     console.error(err); 
@@ -45,7 +45,7 @@ export const getMedicalRecord =  async () => {
 
 export const getMedconRecordById = async (id: number) => {
   try {
-    const response = await api.get(`/medical-consultation/view-medcon-record/${id}/`);
+    const response = await api2.get(`/medical-consultation/view-medcon-record/${id}/`);
     return response.data;
   } catch (err) {
     console.error(err);

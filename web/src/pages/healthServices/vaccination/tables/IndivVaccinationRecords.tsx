@@ -3,7 +3,14 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, Search, ChevronLeft } from "lucide-react";
+import {
+  ArrowUpDown,
+  Eye,
+  Search,
+  ChevronLeft,
+  AlertCircle,
+  Calendar,
+} from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
@@ -17,14 +24,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   getVaccinationRecordById,
   getVaccinationCount,
-} from "../restful-api/Vaccination/GetVaccination";
+} from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { UserRound, Syringe, MapPin } from "lucide-react";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { PatientInfoCard } from "@/components/ui//patientInfoCard";
+import { Label } from "@/components/ui/label";
+import { useVaccinationCount } from "../queries/VacCount";
 
 type filter = "all" | "partially_vaccinated" | "completed";
 
@@ -106,11 +116,18 @@ export interface VaccinationRecord {
     followv_status: string;
   };
 }
+export interface Patient {
+  pat_id: number;
+  name: string;
+  pat_type: string;
+  [key: string]: any;
+}
 
 export default function IndivVaccinationRecords() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
+
   const navigate = useNavigate();
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
@@ -130,6 +147,16 @@ export default function IndivVaccinationRecords() {
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
+
+  useEffect(() => {
+    // Get patient data from route state
+    if (location.state?.params?.patientData) {
+      const patientData = location.state.params.patientData;
+      setSelectedPatientData(patientData);
+    }
+  }, [location.state]);
 
   const { data: vaccinationRecords, isLoading: isVaccinationRecordsLoading } =
     useQuery({
@@ -139,20 +166,26 @@ export default function IndivVaccinationRecords() {
       staleTime: 0,
     });
 
-  // Fetch vaccination count
-  const { data: vaccinationCount, isLoading: isVaccinationCountLoading } =
-    useQuery({
-      queryKey: ["vaccinationCount", patientData.pat_id],
-      queryFn: async () => {
-        const count = await getVaccinationCount(patientData.pat_id);
-        console.log("Vaccination count:", count);
-        return count;
-      },
-      enabled: !!patientData.pat_id,
-      refetchOnMount: true,
-      staleTime: 0,
-    });
+  // // Fetch vaccination count
+  // const { data: vaccinationCount, isLoading: isVaccinationCountLoading } =
+  //   useQuery({
+  //     queryKey: ["vaccinationCount", patientData.pat_id],
+  //     queryFn: async () => {
+  //       const count = await getVaccinationCount(patientData.pat_id);
+  //       console.log("Vaccination count:", count);
+  //       return count;
+  //     },
+  //     enabled: !!patientData.pat_id,
+  //     refetchOnMount: true,
+  //     staleTime: 0,
+  //   });
 
+
+   const { data: vaccinationCountData } = useVaccinationCount(patientData.pat_id);
+    const vaccinationCount = vaccinationCountData?.vaccination_count;
+    
+    
+  
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
     return vaccinationRecords.map((record: any) => {
@@ -205,7 +238,7 @@ export default function IndivVaccinationRecords() {
     const fetchUnvaccinatedVaccines = async () => {
       try {
         setIsUnvaccinatedLoading(true);
-        const res = await api.get(
+        const res = await api2.get(
           `/vaccination/unvaccinated-vaccines/${patientData.pat_id}/`
         );
         console.log("Unvaccinated vaccines:", res.data);
@@ -231,7 +264,7 @@ export default function IndivVaccinationRecords() {
   useEffect(() => {
     const fetchFollowupVaccines = async () => {
       try {
-        const res = await api.get(
+        const res = await api2.get(
           `/vaccination/patient-vaccine-followups/${patientData.pat_id}/`
         );
         setFollowupVaccines(res.data);
@@ -440,8 +473,7 @@ export default function IndivVaccinationRecords() {
 
   if (
     isVaccinationRecordsLoading ||
-    isUnvaccinatedLoading ||
-    isVaccinationCountLoading
+    isUnvaccinatedLoading
   ) {
     return (
       <div className="w-full h-full">
@@ -455,7 +487,6 @@ export default function IndivVaccinationRecords() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <div className="w-full h-full flex flex-col">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <Button
@@ -476,143 +507,169 @@ export default function IndivVaccinationRecords() {
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
-            <UserRound className="h-5 w-5" />
-            Patient Information
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Full Name */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Full Name</p>
-              <p className="font-medium">
-                {`${patientData.lname}, ${patientData.fname} ${
-                  patientData.mname || ""
-                }`.trim() || "N/A"}
+        <div className=" bg-white  border-gray-200 p-4 mb-4">
+          {selectedPatientData ? (
+            <div className="mb-4">
+              <PatientInfoCard patient={selectedPatientData} />
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                <Label className="text-base font-semibold text-yellow-500">
+                  No patient selected
+                </Label>
+              </div>
+              <p className="text-sm text-gray-700">
+                Please select a patient from the medicine records page first.
               </p>
             </div>
+          )}
 
-            {/* Date of Birth & Age */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Date of Birth</p>
-              <p className="font-medium">
-                {patientData.dob
-                  ? new Date(patientData.dob).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                  : "N/A"}
-              </p>
-            </div>
-
-            {/* Age */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Age</p>
-              <p className="font-medium">{patientData.age}</p>
-            </div>
-
-            {/* Address */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Address</p>
-              <p className="font-medium">
-                {patientData.address || "Not provided"}
-              </p>
-            </div>
-
+          <div className="bg-white rounded-sm shadow-md border border-gray-300 p-6 mb-6">
             {/* Total Vaccinations */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Total Vaccinations</p>
-              <p className="font-medium">{vaccinationCount ?? 0}</p>
+            <div className="bg-gray-100 rounded-xl p-5 mb-6 border border-gray-300 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 border  rounded-md flex items-center justify-center shadow-sm">
+                  <Syringe className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    Total Vaccinations
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {vaccinationCount ?? 0}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Patient Type */}
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Patient Type</p>
-              <p className="font-medium">
-                {patientData.pat_type || "Not specified"}
-              </p>
+            <div className="flex flex-col lg:flex-row gap-6 mb-4">
+              <div className="bg-gray-100 rounded-xl p-6 flex-1 border border-gray-300 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-md shadow-sm">
+                    <Syringe
+                      className="h-5 w-5 text-red-600"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  Unvaccinated Vaccines
+                </h2>
+                {unvaccinatedVaccines.length > 0 ? (
+                  <ul className="space-y-3" role="list">
+                    {unvaccinatedVaccines.map((vaccine, index) => (
+                      <li
+                        key={index}
+                        className="bg-white rounded-xl p-2 border border-gray-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                        role="listitem"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-4 h-4 bg-red-400 rounded-full flex-shrink-0 shadow-sm"></div>
+                          <span className="font-semibold text-gray-800">
+                            {vaccine.vac_name}
+                          </span>
+                          <span
+                            className={`text-xs px-3 py-1 rounded-full font-medium shadow-sm ${
+                              vaccine.vac_type_choices.toLowerCase() ===
+                              "routine"
+                                ? "bg-gray-200 text-gray-700 border border-gray-300"
+                                : "bg-gray-100 text-gray-600 border border-gray-200"
+                            }`}
+                            aria-label={`Vaccine type: ${vaccine.vac_type_choices}`}
+                          >
+                            {vaccine.vac_type_choices}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <Syringe className="h-8 w-8 text-gray-700" />
+                    </div>
+                    <p className="text-gray-800 font-bold text-lg">
+                      All vaccines completed!
+                    </p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      All available vaccines have been administered
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gray-100 rounded-xl p-6 flex-1 border border-gray-300 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-3">
+                  <div className="p-2 bg-sky-100 rounded-md shadow-sm">
+                    <Calendar
+                      className="h-5 w-5 text-blue"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  Follow-up Visit Schedules
+                </h2>
+                {followupVaccines.length > 0 ? (
+                  <ul className="space-y-3" role="list">
+                    {followupVaccines.map((vaccine, index) => (
+                      <li
+                        key={index}
+                        className="bg-white rounded-xl p-2 shadow-sm border border-gray-300  flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                        role="listitem"
+                      >
+                        {vaccine.followup_date &&
+                          !isNaN(new Date(vaccine.followup_date).getTime()) && (
+                            <div className="flex items-center gap-3">
+                              <div className="w-4 h-4 bg-gray-400 rounded-full flex-shrink-0 shadow-sm"></div>
+                              <span className="font-semibold text-gray-800">
+                                {vaccine.vac_name}
+                              </span>
+                              <span className="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full border border-gray-300 shadow-sm">
+                                ({vaccine.vac_type_choices})
+                              </span>
+                            </div>
+                          )}
+                        {vaccine.followup_date &&
+                        !isNaN(new Date(vaccine.followup_date).getTime()) ? (
+                          <div className="flex items-center gap-2 bg-gray-200 px-4  ">
+                            <span className="text-sm font-semibold text-gray-800">
+                              📅 Follow-up:{" "}
+                              {new Date(
+                                vaccine.followup_date
+                              ).toLocaleDateString("en-US", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
+                        ) : (
+                          <span
+                            className="text-xs text-gray-600 italic bg-gray-100 px-3 py-1 rounded-full border border-gray-200 shadow-sm"
+                            aria-label="No follow-up visit scheduled"
+                          >
+                            No follow-up visit scheduled
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8" role="status">
+                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <Syringe className="h-8 w-8 text-gray-700" />
+                    </div>
+                    <p className="text-gray-800 font-bold text-lg">
+                      No follow-ups scheduled
+                    </p>
+                    <p className="text-sm text-gray-700 mt-1">
+                      No follow-up vaccines or visit data found for this
+                      patient.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6 mb-4">
-          <div className="bg-white rounded-xl shadow-md p-6 flex-1 ">
-            <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
-              <Syringe className="h-5 w-5 text-darkBlue2" aria-hidden="true" />
-              Unvaccinated Vaccines
-            </h2>
-            {unvaccinatedVaccines.length > 0 ? (
-              <ul className="list-disc pl-6 space-y-3" role="list">
-                {unvaccinatedVaccines.map((vaccine, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 hover:bg-gray-50 p-2 rounded-md transition-colors duration-150"
-                    role="listitem"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{vaccine.vac_name}</span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          vaccine.vac_type_choices.toLowerCase() === "routine"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                        aria-label={`Vaccine type: ${vaccine.vac_type_choices}`}
-                      >
-                        {vaccine.vac_type_choices}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-500 italic">
-                All available vaccines have been administered
-              </p>
-            )}
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 flex-1 ">
-            <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center ">
-              <Syringe className="h-5 w-5 text-darkBlue2" aria-hidden="true" />
-              Follow-up Visit Schedules
-            </h2>
-            {followupVaccines.length > 0 ? (
-              <ul className="list-disc pl-6 space-y-1" role="list">
-                {followupVaccines.map((vaccine, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 hover:bg-gray-50  rounded-md transition-colors duration-150"
-                    role="listitem"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{vaccine.vac_name}</span>
-                      <span>({vaccine.vac_type_choices})</span>
-                    </div>
-                    {vaccine.followup_date &&
-                    !isNaN(new Date(vaccine.followup_date).getTime()) ? (
-                      <span className="font-medium">
-                        Follow-up Date:{" "}
-                        {new Date(vaccine.followup_date).toLocaleDateString()}
-                      </span>
-                    ) : (
-                      <span
-                        className="text-xs text-gray-500 italic"
-                        aria-label="No follow-up date scheduled"
-                      >
-                        No follow-up scheduled
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-500 italic" role="status">
-                No follow-up vaccines or visit data found for this patient.
-              </p>
-            )}
           </div>
         </div>
 

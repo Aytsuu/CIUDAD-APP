@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect,useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
@@ -16,10 +16,10 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStock } from "./restful-api/Vaccination/FetchVaccination";
+import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { fetchPatientRecords } from "./restful-api/FetchPatient";
+import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 
 export default function PatNewVacRecForm() {
@@ -48,21 +48,22 @@ export default function PatNewVacRecForm() {
     loadPatients();
   }, []);
 
-  // Handle patient selection
-  const handlePatientSelection = (id: string) => {
-    setSelectedPatientId(id);
+ 
+  const handlePatientSelection = useCallback((id: string) => {
+    // Extract just the ID part (before comma)
+    const patientId = id.split(",")[0].trim();
+    setSelectedPatientId(patientId);
+    
+    // Find patient by ID
     const selectedPatient = patients.default.find(
-      (patient) => patient.pat_id.toString() === id
+      patient => patient.pat_id.toString() === patientId
     );
-
+  
     if (selectedPatient) {
       setSelectedPatientData(selectedPatient);
-      const personalInfo = selectedPatient.personal_info;
-
-      // Update form values
-      form.setValue("pat_id", selectedPatient.pat_id);
+      form.setValue("pat_id", patientId);
     }
-  };
+  }, [patients.default]);
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),

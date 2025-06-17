@@ -33,6 +33,8 @@ urlpatterns = [
     path('family-planning/', include("apps.familyplanning.urls")),
     path('patientrecords/', include("apps.patientrecords.urls")),
     path('medical-consultation/', include("apps.medicalConsultation.urls")),
+    path('medicine/', include("apps.medicine.urls")),
+
     
     # path('user/', include('apps.account.urls')),
     # path('waste/', include('apps.waste.urls')),

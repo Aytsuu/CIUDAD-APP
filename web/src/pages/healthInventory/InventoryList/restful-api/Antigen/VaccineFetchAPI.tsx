@@ -1,7 +1,7 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 export const getVaccineList = async () => {
     try {
-      const res = await api.get("inventory/vac_list/");
+      const res = await api2.get("inventory/vac_list/");
       if (res.status !== 200) {
         console.error("Failed to fetch vaccine data");
         return [];
@@ -18,10 +18,10 @@ export const getAntigen = async () => {
   try {
     // Fetch all data in parallel including immunization supplies
     const [vaccines, intervals, frequencies, supplies] = await Promise.all([
-      api.get("inventory/vac_list/"),
-      api.get("inventory/vac_intervals/"),
-      api.get("inventory/routine_freq/"),
-      api.get("inventory/imz_supplies/"), // Add immunization supplies endpoint
+      api2.get("inventory/vac_list/"),
+      api2.get("inventory/vac_intervals/"),
+      api2.get("inventory/routine_freq/"),
+      api2.get("inventory/imz_supplies/"), // Add immunization supplies endpoint
     ]);
 
     if (

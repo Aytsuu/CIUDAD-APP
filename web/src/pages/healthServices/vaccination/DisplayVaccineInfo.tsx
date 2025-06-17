@@ -21,7 +21,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { DataTable } from "@/components/ui/table/history-table-col";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -80,7 +80,7 @@ export default function VaccinationView() {
       setLoading(true);
       setError(null);
 
-      const response = await api.get(
+      const response = await api2.get(
         `vaccination/indiv-patient-record/${patientId}/`
       );
       const responseData = response.data;

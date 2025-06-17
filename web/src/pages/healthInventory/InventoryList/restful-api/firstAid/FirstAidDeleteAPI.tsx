@@ -1,9 +1,9 @@
 
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const handleDeleteFirstAidList = async (id: string, callback?: () => void) => {
     try {
-      await api.delete(`inventory/firstaidlist/${id}/`); // API call
+      await api2.delete(`inventory/firstaidlist/${id}/`); // API call
       if (callback) callback(); // Call the function to refetch data
     } catch (error) {
       console.error("Error deleting firstAid:", error);

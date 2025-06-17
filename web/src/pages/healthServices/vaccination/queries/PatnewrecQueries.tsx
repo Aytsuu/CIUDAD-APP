@@ -13,9 +13,9 @@ import {
   deletePatientRecord,
   deleteVitalSigns,
   deleteFollowUpVisit,
-} from "../restful-api/Vaccination/PostAPI";
-import { api } from "@/api/api";
-import { getVaccinationHistory, getVaccinationRecords } from "../restful-api/Vaccination/GetVaccination";
+} from "../restful-api/PostAPI";
+import { api2 } from "@/api/api";
+import { getVaccinationHistory, getVaccinationRecords } from "../restful-api/GetVaccination";
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../Calculatenextvisit";
@@ -228,7 +228,7 @@ export const useSubmitStep2 = () => {
         const vitalSigns = await createVitalSigns(data);
         vital_id = vitalSigns.vital_id;
 
-        await api.put(`inventory/vaccine_stocks/${parseInt(vacStck, 10)}/`, {
+        await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck, 10)}/`, {
           vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
           vacStck_used: vaccineData.vacStck_used + 1,
         });

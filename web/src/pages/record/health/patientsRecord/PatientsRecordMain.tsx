@@ -54,6 +54,7 @@ interface Patients {
 
   address: {
     sitio?: string;
+    
   }
 }
 

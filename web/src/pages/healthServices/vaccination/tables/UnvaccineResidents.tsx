@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { Link } from "react-router";
 
 // Interfaces remain the same
@@ -43,9 +43,7 @@ interface Resident {
   vaccine_not_received: string;
 }
 
-interface VaccineData {
-  [vaccine_name: string]: Resident[];
-}
+
 
 export interface UnvaccinatedResident {
   vaccine_name: string;
@@ -61,9 +59,9 @@ export interface UnvaccinatedResident {
   pat_type: string;
 }
 
-export const getUnvaccinatedResidents = async (): Promise<VaccineData> => {
+export const getUnvaccinatedResidents = async () => {
   try {
-    const response = await api.get("/vaccination/residents/unvaccinated/");
+    const response = await api2.get("/vaccination/residents/unvaccinated/");
     console.log("API response:", response.data);
     return response.data;
   } catch (error) {
@@ -77,7 +75,7 @@ export default function AllVaccinationRecords() {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: unvaccinated, isLoading } = useQuery<VaccineData>({
+  const { data: unvaccinated, isLoading } = useQuery<any>({
     queryKey: ["unvaccinatedResidents"],
     queryFn: getUnvaccinatedResidents,
     refetchOnMount: true,
