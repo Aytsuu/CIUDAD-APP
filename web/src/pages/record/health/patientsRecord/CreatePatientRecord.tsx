@@ -52,7 +52,25 @@ interface ResidentProfile {
 
 interface PatientCreationData {
   pat_type: string;
-  rp_id: string; 
+  rp_id?: string;
+  transient_data?: {
+    tran_lname: string;
+    tran_fname: string;
+    tran_mname?: string;
+    tran_dob: string;
+    tran_sex: string;
+    tran_contact: string;
+    tran_ed_attainment?: string;
+    tran_religion?: string;
+    tran_status?: string;
+    address?: {
+      tradd_street?: string;
+      tradd_sitio?: string;
+      tradd_barangay?: string;
+      tradd_city?: string;
+      tradd_province?: string;
+    }
+  } 
 }
 
 export default function CreatePatientRecord() {
@@ -69,6 +87,7 @@ export default function CreatePatientRecord() {
     defaultValues,
   });
 
+
   const [selectedResidentId, setSelectedResidentId] = useState<string>("")
   const { data: residentsData, isLoading: residentLoading } = useResidents();
 
@@ -80,6 +99,7 @@ export default function CreatePatientRecord() {
         name: `${personal.personal_info?.per_lname || ""}, ${personal.personal_info?.per_fname || ""} ${personal.personal_info?.per_mname || ""}`.trim()
       })) || []
   };
+
 
   const handlePatientSelection = (id: string) => {
     setSelectedResidentId(id);
@@ -147,29 +167,58 @@ export default function CreatePatientRecord() {
   }
 
   const submit = async () => {
-    if (!selectedResidentId) {
+    const formData = form.getValues();
+
+    if (formData.patientType ==="resident" && !selectedResidentId){
       toast("Please select a resident first");
       return;
     }
 
+
+    if(formData.patientType === "transient"){
+      const requiredFields = ['lastName', 'firstName', 'dateOfBirth', 'sex', 'contact'];
+      const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
+
+      if(missingFields.length > 0){
+        toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      const formData = form.getValues();
+      const patientType = formData.patientType === "resident" ? "Resident" : formData.patientType === "transient" ? "Transient" : "Resident" 
+      const sexType = formData.sex === "female" ? "Female" : "Male";
       
-      const patientType =
-        formData.patientType === "resident"
-          ? "Resident"
-          : formData.patientType === "transient"
-            ? "Transient"
-            : "Resident" //
-      const patientData: PatientCreationData = {
-        pat_type: patientType,
-        rp_id: selectedResidentId
-      };
+      let patientData: PatientCreationData;
 
-      if (patientType === 'Resident' && !patientData.rp_id) {
-        toast.error("Resident ID is missing");
-        return;
+      if (patientType === 'Resident') {
+         patientData = {
+          pat_type: patientType,
+          rp_id: selectedResidentId
+        };
+      } else {
+        patientData = {
+          pat_type: patientType,
+          transient_data: {
+            tran_lname: formData.lastName,
+            tran_fname: formData.firstName,
+            tran_mname: formData.middleName,
+            tran_dob: formData.dateOfBirth,
+            tran_sex: sexType,
+            tran_contact: formData.contact,
+            tran_status: "Active",
+            tran_ed_attainment: "Not Specified",
+            tran_religion: "Not Specified",
+            address: {
+              tradd_street: formData.address?.street || "",
+              tradd_sitio: formData.address?.sitio || "",
+              tradd_barangay: formData.address?.barangay || "",
+              tradd_city: formData.address?.city || "",
+              tradd_province: formData.address?.province || "",
+            }
+          }
+        }
       }
       
       console.log("Creating patient with data:", patientData);

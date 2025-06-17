@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu"
-import { Link as RouterLink } from "react-router"
+import { Link, Link as RouterLink } from "react-router"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/ui/table/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -392,7 +392,11 @@ export default function PatientsRecord() {
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{residents}</span>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {/* <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> */}
+                  {residentPercentage > transientPercentage ? (
+                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  )}
                   <span>{residentPercentage}% of total</span>
                 </div>
               </div>
@@ -414,7 +418,11 @@ export default function PatientsRecord() {
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{transients}</span>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {/* <ArrowDown className="h-3 w-3 mr-1 text-amber-500" /> */}
+                  {transientPercentage > residentPercentage ? (
+                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  )}
                   <span>{transientPercentage}% of total</span>
                 </div>
               </div>
@@ -459,11 +467,11 @@ export default function PatientsRecord() {
         </div>
         <div>
           <div className="flex gap-2">
-            <RouterLink to="/create-patients-record">
+            <Link to="/create-patients-record">
               <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
                 <Plus size={15} /> Create
               </Button>
-            </RouterLink>
+            </Link>
           </div>
         </div>
       </div>

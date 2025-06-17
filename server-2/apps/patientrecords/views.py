@@ -23,6 +23,16 @@ def get_resident_profile_list(request):
     return Response(serializer.data)
  
 
+# class TransientListView(generics.ListAPIView):
+#     serializer_class = TransientSerializer
+
+#     def get_queryset(self):
+#         return Transient.objects.filter(
+#             patients__isnull=True
+#         ).select_related('tradd_id').prefetch_related('tradd_id__sitio')
+
+
+
 class PatientView(generics.ListCreateAPIView):
     serializer_class = PatientSerializer
     queryset = Patient.objects.all()
@@ -95,8 +105,21 @@ class PatientView(generics.ListCreateAPIView):
                             {'error': f'{field} is required for transient patients'}, 
                             status=status.HTTP_400_BAD_REQUEST
                         )
+                    
+                try:    
+                    dob_str = transient_data['tran_dob']
+                    if isinstance(dob_str, str):
+                        tran_dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                        transient_data['tran_dob'] = tran_dob
+                    else:
+                        tran_dob = dob_str  
+                except ValueError as e:
+                    return Response(
+                        {'error': f'Invalid date format for tran_dob. Expected YYYY-MM-DD: {str(e)}'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 
-                # Create TransientAddress if address data is provided
+                # create TransientAddress if address data is provided
                 transient_address = None
                 address_data = transient_data.get('address')
                 if address_data:

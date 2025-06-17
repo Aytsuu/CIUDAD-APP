@@ -11,21 +11,6 @@ export const patientQueryKey = {
 	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
 }
 
-// export const useAddPatient = () => {
-// 	const queryClient = useQueryClient();
-
-// 	return useMutation({
-// 		mutationFn: createPatients,
-// 		onSuccess: (data) => {
-// 			queryClient.invalidateQueries({ queryKey: patientQueryKey.lists() });
-// 			queryClient.setQueryData(patientQueryKey.detail(data.pat_id), data)
-// 		},
-// 		onError: (error) => {
-// 			console.error("Error adding patient: ", error)
-// 		}
-// 	})
-// }
-
 export const useAddPatient = () => {
 	const queryClient = useQueryClient();
 
