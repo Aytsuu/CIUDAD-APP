@@ -750,7 +750,7 @@ import { useState } from 'react';
 import React from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
-import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, CircleAlert } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -887,7 +887,52 @@ function ResolutionPage() {
                     ))}
                 </div>
             )
-        }
+        },
+        {
+            accessorKey: "resolution_supp",
+            header: "Supporting Documents",
+            cell: ({row}) => {
+                const files = row.original.resolution_supp;
+                const hasFiles = files && files.length > 0;
+                
+                return (
+                    <div className="flex justify-center">
+                        {hasFiles ? (
+                            <DialogLayout
+                                trigger={<div className="bg-white hover:bg-[#f3f2f2] cursor-pointer text-[#1273B8] text-[12px] underline"> 
+                                    View ({files.length})
+                                </div>}
+                                className="max-w-md max-h-[60%] overflow-auto p-6 flex flex-col"
+                                title="Attached Documents"
+                                description="Documents associated with this resolution."
+                                mainContent={
+                                    <div className="flex flex-col gap-4 p-5">
+                                        {files.map((file) => (
+                                            <div key={file.rsd_id} className="border p-3 rounded-md">
+                                                <a 
+                                                    href={file.rsd_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                                                >
+                                                    <FileInput size={16} />
+                                                    Image {file.rsd_name}
+                                                </a>
+                                            </div>
+                                        ))}
+                                    </div>
+                                }
+                            />
+                        ) : (
+                            <div className="text-red-500 flex items-center gap-1">
+                                <CircleAlert  size={16} />
+                                <span className="text-xs">no document</span>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+        }      
     ];
 
     const activeColumns: ColumnDef<ResolutionData>[] = [

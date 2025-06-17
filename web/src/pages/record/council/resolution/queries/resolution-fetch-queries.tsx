@@ -11,6 +11,11 @@ export interface ResolutionData{
         rf_id: number;
         rf_url: string;
     }[];
+    resolution_supp: {
+        rsd_id: number;
+        rsd_url: string;
+        rsd_name: string;
+    }[];    
 }
 
 export const useResolution = () => {

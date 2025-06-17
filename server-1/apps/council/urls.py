@@ -24,4 +24,7 @@ urlpatterns=[
     # RESOLUTION FILE
     path("resolution-file/", ResolutionFileView.as_view(), name="council-resolution-file"),
     path('resolution-file-delete/<int:rf_id>/', ResolutionFileDetailView.as_view(), name='council-file-detail'),
+    # RESOLUTION SUPP DOCS
+    path("resolution-supp/", ResolutionSupDocsView.as_view(), name="council-supp-docs"),
+    path('resolution-supp-delete/<int:rsd_id>/', ResolutionSupDocsDetailView.as_view(), name='council-supp-detail'), 
 ]

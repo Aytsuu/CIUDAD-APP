@@ -241,3 +241,22 @@ class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
     queryset = ResolutionFile.objects.all()
     serializer_class = ResolutionFileSerializer
     lookup_field = 'rf_id' 
+
+
+ # Resolution Supp Docs
+class ResolutionSupDocsView(generics.ListCreateAPIView):
+    serializer_class = ResolutionSupDocsSerializer
+    queryset = ResolutionSupDocs.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        res_num = self.request.query_params.get('res_num')
+        if res_num:
+            queryset = queryset.filter(res_num=res_num)
+        return queryset
+
+
+class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
+    queryset = ResolutionSupDocs.objects.all()
+    serializer_class = ResolutionSupDocsSerializer
+    lookup_field = 'rsd_id' 

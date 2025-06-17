@@ -59,8 +59,14 @@ class ResolutionFileSerializer(serializers.ModelSerializer):
         model = ResolutionFile
         fields = '__all__'
 
+class ResolutionSupDocsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResolutionSupDocs
+        fields = '__all__'
+
 class ResolutionSerializer(serializers.ModelSerializer):
     resolution_files = ResolutionFileSerializer(many=True, read_only=True)
+    resolution_supp = ResolutionSupDocsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Resolution

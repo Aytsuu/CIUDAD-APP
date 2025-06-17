@@ -130,3 +130,23 @@ class ResolutionFile(models.Model):
 
     class Meta:
         db_table = 'resolution_file'
+
+class ResolutionSupDocs(models.Model):
+    rsd_id = models.BigAutoField(primary_key=True)
+    rsfd_name = models.CharField(max_length=500)
+    rsfd_type = models.CharField(max_length=500)
+    rsd_path = models.CharField(max_length=500)
+    rsd_url = models.CharField(max_length=500)
+
+    res_num = models.ForeignKey(
+        Resolution,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='resolution_supp',
+        db_column='res_num'
+    )   
+
+    class Meta:
+        db_table = 'resolution_supp_doc'
+    
