@@ -244,15 +244,43 @@ function MinutesOfMeetingPage() {
         </div>
 
         <div className="pt-4 border-t border-gray-100">
-          <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
-            <FileInput size={16} />
-            View Supporting Documents
-            {record.supporting_docs && (
-              <Badge variant="secondary" className="ml-auto bg-blue-100 text-blue-800">
-                Available
-              </Badge>
-            )} 
-          </Button>
+            {record.supporting_docs && record.supporting_docs.length > 0 ? (
+              <DialogLayout
+                trigger={
+                  <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                      <FileInput size={16} />
+                      View Supporting Documents
+                      {record.supporting_docs && (
+                        <Badge variant="secondary" className="ml-auto bg-blue-100 text-blue-800">
+                          Available
+                        </Badge>
+                      )} 
+                  </Button>
+                }
+                className="max-w-md max-h-[60%] overflow-auto p-6 flex flex-col"
+                title="Supporting Documents"
+                description="These are files attached to this meeting record"
+                mainContent={
+                  <div className="flex flex-col gap-4 p-5">
+                    {record.supporting_docs.map((file) => (
+                      <div key={file.momsp_id} className="border p-3 rounded-md">
+                        <a 
+                          href={file.momsp_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                        >
+                          <FileInput size={16} />
+                          Image {file.momsp_name}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                }
+              />
+            ) : (
+              <div className="text-gray-400 text-sm">No supporting documents</div>
+            )}
         </div>
       </CardContent>
     </Card>
@@ -321,12 +349,7 @@ function MinutesOfMeetingPage() {
         </div>
 
         {/* Sub Tabs for Active/Archive */}
-        <Tabs
-          value={activeSubTab}
-          onValueChange={(value) => {
-            setActiveSubTab(value)
-          }}
-        >
+        <Tabs value={activeSubTab} onValueChange={(value) => { setActiveSubTab(value) }}>
           <div className="ml-5">
             <TabsList className="grid w-full grid-cols-2 max-w-xs">
               <TabsTrigger value="active">Records</TabsTrigger>
