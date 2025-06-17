@@ -13,7 +13,7 @@ import { Label } from "@radix-ui/react-dropdown-menu"
 import { Combobox } from "@/components/ui/combobox"
 import { toast } from "sonner"
 import { api2 } from "@/api/api"
-import { page1Schema } from "@/form-schema/FamilyPlanningSchema"
+import { page1Schema,FamilyPlanningSchema } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 
@@ -33,9 +33,9 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     // Personal Information
     clientID: data.clientID || "",
     philhealthNo: data.philhealthNo || "",
-    nhts_status: data.nhts_status || false,
+    nhts_status: data.nhts_status || false, // Default to false
     pantawid_4ps: data.pantawid_4ps || false,
-    isTransient: data.isTransient || "resident",
+    isTransient: (data as any).isTransient || "resident",
     lastName: data.lastName || "",
     givenName: data.givenName || "",
     middleInitial: data.middleInitial || "",
@@ -68,35 +68,40 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     planToHaveMoreChildren: data.planToHaveMoreChildren || false,
     averageMonthlyIncome: data.averageMonthlyIncome || "",
 
-    // Client Type and Methods - CRITICAL: Initialize as empty strings
+    // Client Type and Methods - CRITICAL: Initialize as empty strings for correct conditional validation
     typeOfClient: data.typeOfClient || "",
     subTypeOfClient: data.subTypeOfClient || "",
     reasonForFP: data.reasonForFP || "",
     otherReasonForFP: data.otherReasonForFP || "",
-    reason: data.reason || "",
-    otherReason: data.otherReason || "",
+    reason: data.reason || "", // For current user reasons
+    fpt_other_reason_fp: data.fpt_other_reason_fp || "", // For current user reason specify
     methodCurrentlyUsed: data.methodCurrentlyUsed || "",
     otherMethod: data.otherMethod || "",
 
-    // Acknowledgement
+    // Acknowledgement (ensure nested objects are initialized)
     acknowledgement: {
       clientName: data.acknowledgement?.clientName || "",
+      clientSignature: data.acknowledgement?.clientSignature || "",
+      clientSignatureDate: data.acknowledgement?.clientSignatureDate || "",
+      guardianName: data.acknowledgement?.guardianName || "",
+      guardianSignature: data.acknowledgement?.guardianSignature || "",
+      guardianSignatureDate: data.acknowledgement?.guardianSignatureDate || "",
     },
 
-    // Other fields
+    // Other fields (ensure numerical fields are properly defaulted)
     pat_id: data.pat_id || "",
-    weight: data.weight || "",
-    height: data.height || "",
-
+    weight: data.weight || 0, // Default number to 0, not empty string
+    height: data.height || 0, // Default number to 0, not empty string
   })
 
   const form = useForm<FormData>({
     resolver: zodResolver(page1Schema),
     defaultValues: getDefaultValues(formData),
-    values: getDefaultValues(formData), 
-    mode: "onBlur",
+    values: getDefaultValues(formData), // Use values to keep form in sync with external formData
+    mode: "onBlur", // Validate on blur for better UX
   })
 
+  // Patient data types (keeping as is from your provided file)
   interface PatientRecord {
     personal_info:
       | {
@@ -122,13 +127,16 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     patrec_id: string
     per_fname: string
     per_lname: string
-    per_mname: string
+    per_mname: string // This will come from backend, may be full middle name
     per_dob: string
     per_age: string
     per_sex: string
     per_address: string
     per_edAttainment: string
     per_religion: string
+    // Add the new fields here to your PatientRecord interface
+    nhts_status_from_household?: boolean;
+    philhealth_id_from_hrd?: string;
   }
 
   interface FormattedPatient {
@@ -199,32 +207,44 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
   const selectedSpouse = spouse.find((s) => s.pat_id?.toString() === id);
   const patientMeasurements = bodyMeasurements.find((m) => m.pat?.toString() === id);
 
-  const obsPatient = obstetricalHistory.find((obs: any, selectedPatient: any) => obs.patrec_id === selectedPatient.patrec_id) || null;
+  // Corrected: Finding obstetrical history linked to the selected PatientRecord's patrec_id
+  const obsPatient = obstetricalHistory.find((obs: any) => 
+      selectedPatient && obs.patrec_id === selectedPatient.patrec_id
+  ) || null;
 
-  if (!selectedPatient?.personal_info) return;
+  if (!selectedPatient?.personal_info) {
+        // Reset form to default if no patient info is found
+        form.reset(getDefaultValues(formData));
+        updateFormData(getDefaultValues(formData));
+        return;
+  }
 
   const info = selectedPatient.personal_info;
 
   const patientData = {
     pat_id: selectedPatient.pat_id,
     clientID: selectedPatient.clientID || "",
+    // Use the new fields from the selectedPatient object for NHTS and PhilHealth
+    nhts_status: selectedPatient.nhts_status_from_household || false, 
+    philhealthNo: selectedPatient.philhealth_id_from_hrd || "",
+    
     lastName: info.per_lname || "",
     givenName: info.per_fname || "",
-    middleInitial: info.per_mname || "",
+    middleInitial: (info.per_mname ? info.per_mname.charAt(0) : "") || "", // <<<--- MODIFIED LINE
     dateOfBirth: info.per_dob || "",
     age: info.per_dob ? calculateAge(info.per_dob) : 0,
     educationalAttainment: mapEducationValue(info.per_edAttainment || "") || "",
     address: {
-      houseNumber: formData.address?.houseNumber || "",
-      street: info.per_address || "",
+      houseNumber: formData.address?.houseNumber || "", // Use existing if available
+      street: info.per_address || "", // This might need parsing if it's a combined string
       barangay: formData.address?.barangay || "",
       municipality: info.per_city || "",
       province: info.per_province || "",
     },
     occupation: info.per_occupation || "",
-    weight: patientMeasurements?.weight || "",
-    height: patientMeasurements?.height || "",
-    bmi: patientMeasurements?.bmi || "",
+    weight: patientMeasurements?.weight || 0, // Default to 0 for numbers
+    height: patientMeasurements?.height || 0, // Default to 0 for numbers
+    bmi: patientMeasurements?.bmi || 0,
     bmi_category: patientMeasurements?.bmi_category || "",
     acknowledgement: {
       clientName: `${info.per_lname || ""}, ${info.per_fname || ""} ${info.per_mname || ""}`.trim(),
@@ -245,22 +265,35 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
   });
 
   if (obsPatient) {
-    form.setValue("obstetricalHistory.g_pregnancies", obsPatient.obs_gravida?.toString() || "");
-    form.setValue("obstetricalHistory.p_pregnancies", obsPatient.obs_para?.toString() || "");
-    form.setValue("obstetricalHistory.fullTerm", obsPatient.obs_fullterm?.toString() || "");
-    form.setValue("obstetricalHistory.premature", obsPatient.obs_preterm?.toString() || "");
-    form.setValue("obstetricalHistory.abortion", obsPatient.obs_abortion?.toString() || "");
-    form.setValue("obstetricalHistory.livingChildren", obsPatient.obs_living_ch?.toString() || "");
+    form.setValue("obstetricalHistory.g_pregnancies", obsPatient.obs_gravida || 0);
+    form.setValue("obstetricalHistory.p_pregnancies", obsPatient.obs_para || 0);
+    form.setValue("obstetricalHistory.fullTerm", obsPatient.obs_fullterm || 0);
+    form.setValue("obstetricalHistory.premature", obsPatient.obs_preterm || 0);
+    form.setValue("obstetricalHistory.abortion", obsPatient.obs_abortion || 0);
+    form.setValue("obstetricalHistory.livingChildren", obsPatient.obs_living_ch || 0);
+    // You might also need to set other fields from obstetrical history here if they exist
+    form.setValue("obstetricalHistory.lastDeliveryDate", obsPatient.obs_last_delivery || "");
+    form.setValue("obstetricalHistory.typeOfLastDelivery", obsPatient.obs_type_last_delivery || "");
+    form.setValue("obstetricalHistory.lastMenstrualPeriod", obsPatient.obs_last_period || "");
+    form.setValue("obstetricalHistory.previousMenstrualPeriod", obsPatient.obs_previous_period || "");
+    form.setValue("obstetricalHistory.menstrualFlow", obsPatient.obs_mens_flow || "Scanty"); // Default if needed
+    form.setValue("obstetricalHistory.dysmenorrhea", obsPatient.obs_dysme || false);
+    form.setValue("obstetricalHistory.hydatidiformMole", obsPatient.obs_hydatidiform || false);
+    form.setValue("obstetricalHistory.ectopicPregnancyHistory", obsPatient.obs_ectopic_pregnancy || false);
+  } else {
+      // If no obstetrical history, ensure it's reset to defaults for `obstetricalHistory` object
+      form.setValue("obstetricalHistory", getDefaultValues(formData).obstetricalHistory);
   }
 
+  // Update the parent formData
   updateFormData({
     ...formData,
     ...patientData,
+    obstetricalHistory: form.getValues("obstetricalHistory"), // Ensure updated obstetrical history is passed
   });
 
-  console.log("✅ Form auto-filled with patient and obstetrical data:", patientData);
+  console.log("✅ Form auto-filled with patient, NHTS, PhilHealth, and obstetrical data:", patientData);
 };
-
 
 
   const CLIENT_TYPES = [
@@ -400,8 +433,10 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     const selectedPatient = patients.default.find((patient) => patient.pat_id?.toString() === selectedPatientId)
     const address = selectedPatient?.address
     const selectedSpouse = spouse.find((s) => s.pat_id?.toString() === selectedPatientId)
-    const obstetricalpatient = obstetricalHistory.find((obs) => obs.patrec_id === selectedPatientId)
-
+    // Corrected: Finding obstetrical history linked to the selected PatientRecord's patrec_id
+    const obstetricalpatient = obstetricalHistory.find((obs) => 
+        selectedPatient && obs.patrec_id === selectedPatient.patrec_id
+    ) || null; // Ensure it's null if not found, not undefined
 
     if (address) {
       form.setValue("address.street", address.add_street || "")
@@ -410,10 +445,7 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
       form.setValue("address.municipality", address.add_city || "")
       form.setValue("address.province", address.add_province || "")
     }
-    // if (obstetricalpatient) {
-    //   form.setValue("obstetricalHistory.g_pregnancies", obstetricalpatient.gravida || "")
-    //   form.setValue("obstetricalHistory.p_pregrancies", obstetricalpatient.para || "")
-    // }
+    
     if (selectedPatient?.personal_info?.per_edAttainment) {
       const mapped = mapEducationValue(selectedPatient.personal_info?.per_edAttainment)
       if (mapped) {
@@ -442,32 +474,51 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
         setSpouseAge(age)
       }
     }
-  }, [selectedPatientId, patients.default, spouse, form])
+  }, [selectedPatientId, patients.default, spouse, form, obstetricalHistory]) // Added obstetricalHistory to dependencies
 
-  // CRITICAL FIX: Ensure all form values are strings, never undefined
+  // CRITICAL FIX: Ensure all non-applicable form values are cleared
   useEffect(() => {
-    if (isNewAcceptor) {
-      form.setValue("reason", "")
-      form.setValue("methodCurrentlyUsed", "")
-      form.setValue("otherMethod", "")
-      form.setValue("otherReason", "")
-      form.setValue("subTypeOfClient", "") // Clear sub type for new acceptor
-    } else if (isCurrentUser) {
-      form.setValue("reasonForFP", "")
-      form.setValue("otherReasonForFP", "")
+    if (typeOfClient === "newacceptor") {
+      // Clear fields relevant only to "Current User" paths
+      form.setValue("subTypeOfClient", "");
+      form.setValue("reason", ""); // "Reason (Current User)"
+      form.setValue("fpt_other_reason_fp", ""); // "Specify Side Effects" for current user
+      // No need to clear methodCurrentlyUsed or reasonForFP, as they ARE required for newacceptor
+    } else if (typeOfClient === "currentuser") {
+      // Clear fields relevant only to "New Acceptor" path
+      form.setValue("reasonForFP", ""); // "Reason for Family Planning"
+      form.setValue("otherReasonForFP", ""); // "Specify Reason" for new acceptor
 
-      if (!isChangingMethod) {
-        form.setValue("reason", "")
-        form.setValue("methodCurrentlyUsed", "")
-        form.setValue("otherMethod", "")
-        form.setValue("otherReason", "")
+      if (subTypeOfClient === "changingclinic" || subTypeOfClient === "dropoutrestart") {
+        // Clear fields relevant only to "Changing Method"
+        form.setValue("reason", "");
+        form.setValue("fpt_other_reason_fp", "");
+        form.setValue("methodCurrentlyUsed", ""); // Clear method for these specific subtypes
+        form.setValue("otherMethod", "");
+      } else if (subTypeOfClient === "changingmethod") {
+        // MethodCurrentlyUsed, reason, fpt_other_reason_fp are conditionally required here, so don't clear them.
+        // Ensure otherMethod is cleared if "others" is not selected for method.
+        if (form.getValues("methodCurrentlyUsed") !== "others") {
+            form.setValue("otherMethod", "");
+        }
       }
+    } else { // When no typeOfClient is selected
+        form.setValue("subTypeOfClient", "");
+        form.setValue("reasonForFP", "");
+        form.setValue("otherReasonForFP", "");
+        form.setValue("reason", "");
+        form.setValue("fpt_other_reason_fp", "");
+        form.setValue("methodCurrentlyUsed", "");
+        form.setValue("otherMethod", "");
     }
-  }, [typeOfClient, subTypeOfClient, form, isNewAcceptor, isCurrentUser, isChangingMethod])
+    // Also trigger validation to reflect changes immediately
+    form.trigger(); 
+  }, [typeOfClient, subTypeOfClient, form]);
+
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Validate the form data
+      // Validate the form data based on page1Schema
       const validatedData = page1Schema.parse(data)
       console.log("✅ Page 1 validation passed:", validatedData)
 
@@ -475,7 +526,13 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
       onNext2()
     } catch (error) {
       console.error("❌ Page 1 validation failed:", error)
-      toast.error("Please fill in all required fields correctly")
+      let errorMessage = "Please fill in all required fields correctly.";
+      if (error instanceof z.ZodError) {
+          const fieldErrors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join('\n');
+          errorMessage = `Validation failed:\n${fieldErrors}`;
+          console.error("Zod Validation Errors:", error.errors);
+      }
+      toast.error(errorMessage);
     }
   }
 

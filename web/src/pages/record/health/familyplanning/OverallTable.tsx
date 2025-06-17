@@ -625,7 +625,6 @@ export default function FamPlanningTable() {
         <div className="flex justify-end">
           <Link to={`/FamPlanning_main/`}>
             <Button variant="default" className="flex items-center gap-2">
-              <Plus size={16} />
               New Record
             </Button>
           </Link>

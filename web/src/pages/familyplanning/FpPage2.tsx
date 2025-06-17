@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { page2Schema, type FormData } from "@/form-schema/FamilyPlanningSchema"
+import { page2Schema,  FormData } from "@/form-schema/FamilyPlanningSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 
 // Fix the props type to use FormData from the schema
@@ -189,7 +189,7 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             type="number"
-                            className=" w-[90px]"
+                            className=" w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                             readOnly={isReadOnly}
@@ -210,7 +210,7 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             type="number"
-                            className=" w-[90px]"
+                            className=" w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                             readOnly={isReadOnly}
@@ -231,7 +231,7 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             type="number"
-                            className="w-[90px]"
+                            className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                             readOnly={isReadOnly}
@@ -252,7 +252,7 @@ export default function FamilyPlanningForm2({
                           <Input
                             {...field}
                             type="number"
-                            className="w-[90px]"
+                            className="w-[80px]"
                             onChange={(e) => field.onChange(Number(e.target.value))}
                             value={field.value || ""}
                             readOnly={isReadOnly}
