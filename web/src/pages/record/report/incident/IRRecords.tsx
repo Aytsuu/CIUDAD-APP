@@ -29,9 +29,9 @@ export default function IRRecords() {
 
   // Fetch archived reports
   const { data: archiveIRs, isLoading: isLoadingArchiveIR } = useGetArchiveIR();
-  const archiveIRList = React.useMemo(() => archiveIRs?.results || [], [archiveIRs]);
-  const archiveTotalCount = React.useMemo(() => archiveIRs?.count || 0, [archiveIRs]);
-  const archiveTotalPages = React.useMemo(() => Math.ceil(archiveTotalCount / archivePageSize), [archiveTotalCount, archivePageSize]);
+  const archiveIRList = archiveIRs?.results || [];
+  const archiveTotalCount = archiveIRs?.count || 0;
+  const archiveTotalPages = Math.ceil(archiveTotalCount / archivePageSize);
 
   const renderTableSection = (
     data: any[],

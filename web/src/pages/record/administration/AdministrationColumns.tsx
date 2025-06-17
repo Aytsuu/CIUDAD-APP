@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button/button"
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
     {
-        accessorKey: 'id',
+        accessorKey: 'staff_id',
         header: ({column}) => (
             <div
                 className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
@@ -76,10 +76,6 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         )
     },
     {
-        accessorKey: 'dateOfBirth',
-        header: 'Date of Birth'
-    },
-    {
         accessorKey: 'contact',
         header: 'Contact'
     },
@@ -88,7 +84,7 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
         header: 'Position'
     },
     {
-        accessorKey: 'dateAssigned',
+        accessorKey: 'staff_assign_date',
         header: 'Date Assigned'
     },
     {

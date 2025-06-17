@@ -7,6 +7,7 @@ from .views.family_composition_views import *
 from .views.household_views import *
 from .views.sitio_views import *
 from .views.address_views import *
+from .views.request_registration_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -56,7 +57,7 @@ urlpatterns = [
     path("resident/fam/<str:fam>/list/", ResidentProfileFamSpecificListView.as_view(), name="resident-list-fam"),
 
     # Request Urls
-    # path("request/", RequestRegistrationView.as_view(), name="request-details"),
+    path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
     # path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
     # path("request/file/", RequestFileView.as_view(), name="request-files"),
 

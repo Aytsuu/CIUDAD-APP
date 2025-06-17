@@ -181,17 +181,23 @@ export const getSitioList = async () => {
   }
 };
 
-// Fetch registration requests
-export const getRequests = async () => {
+// ==================== FETCH REGISTRATION REQUEST ==================== (Status: Optimizing....)
+export const getRequests = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/request/");
+    const res = await api.get("profiling/request/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;
   }
 };
 
-// Fetch businesses
+// ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
 export const getBusinesses = async () => {
   try {
     const res = await api.get("profiling/business/");

@@ -144,6 +144,7 @@ export default function WeeklyAR() {
                               <AccordionContent className="pt-2 pb-3">
                                 <div className="space-y-2">
                                   {data.map((war, arIndex) => (
+                                    <>
                                     <div
                                       key={`${month}-week-${weekNo}-ar-${arIndex}`}
                                       className="space-y-1"
@@ -157,7 +158,7 @@ export default function WeeklyAR() {
                                             <div className="flex items-center gap-2">
                                               <div className="w-2 h-2 bg-primary rounded-full" />
                                               <span className="font-mono text-sm">
-                                                {comp.ar.ar_id}
+                                                {comp.ar.id}
                                               </span>
                                               {comp.ar.ar_title && (
                                                 <span className="text-sm text-muted-foreground">
@@ -165,22 +166,23 @@ export default function WeeklyAR() {
                                                 </span>
                                               )}
                                             </div>
-                                            {comp.ar.ar_status && (
+                                            {comp.ar.status && (
                                               <Badge
                                                 variant={
-                                                  comp.ar.ar_status === "Signed"
+                                                  comp.ar.status === "Signed"
                                                     ? "default"
                                                     : "secondary"
                                                 }
                                                 className="text-xs"
                                               >
-                                                {comp.ar.ar_status}
+                                                {comp.ar.status}
                                               </Badge>
                                             )}
                                           </div>
                                         )
-                                      )}
-                                      <div className="w-full flex justify-end">
+                                      )} 
+                                    </div>
+                                    {(arIndex + 1) == data.length && <div className="w-full flex justify-end">
                                         <label className="flex gap-2 cursor-pointer"
                                           onClick={() => {
                                             navigate('/report/acknowledgement/document', {
@@ -197,7 +199,8 @@ export default function WeeklyAR() {
                                           <MoveRight />
                                         </label>
                                       </div>
-                                    </div>
+                                    }
+                                    </>
                                   ))}
                                 </div>
                               </AccordionContent>
@@ -225,16 +228,13 @@ export default function WeeklyAR() {
                 {recentReports.length > 0 ? (
                   recentReports.map((report, index) => (
                     <div
-                      key={`recent-${report.war_id}-${index}`}
+                      key={`recent-${report.id}-${index}`}
                       className="p-3 bg-muted/20 rounded-lg border hover:bg-muted/40 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-3 w-3 text-primary" />
-                          <span className="text-sm font-medium">
-                            Week {getWeekNumber(report.date)}
-                          </span>
-                        </div>
+                        <span className="text-sm font-medium">
+                          Week {getWeekNumber(report.date)}
+                        </span>
                         <Badge variant="outline" className="text-xs">
                           {report.war_composition.length}
                         </Badge>
@@ -252,18 +252,18 @@ export default function WeeklyAR() {
                               className="text-xs"
                             >
                               <span className="font-mono text-primary">
-                                {comp.ar.ar_id}
+                                {comp.ar.id}
                               </span>
                               {comp.ar.ar_status && (
                                 <Badge
                                   variant={
-                                    comp.ar.ar_status === "Signed"
+                                    comp.ar.status === "Signed"
                                       ? "default"
                                       : "secondary"
                                   }
                                   className="text-xs ml-2 h-4"
                                 >
-                                  {comp.ar.ar_status}
+                                  {comp.ar.status}
                                 </Badge>
                               )}
                             </div>

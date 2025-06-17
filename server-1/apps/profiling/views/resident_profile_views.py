@@ -40,7 +40,7 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
                 Q(per__per_fname__icontains=search_query) |
                 Q(per__per_mname__icontains=search_query) |
                 Q(rp_id__icontains=search_query) |
-                Q(family_compositions__fam__hh__hh_id__icontains=search_query)            ).distinct()
+                Q(family_compositions__fam__hh__hh_id__icontains=search_query)).distinct()
 
         return queryset
     

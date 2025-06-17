@@ -60,10 +60,10 @@ export const useResidentsFamSpecificList = (familyId: string) => {
   })
 }
 
-export const useRequests = () => {
+export const useRequests = (page: number, pageSize: number, searchQuery: string) => {
   return useQuery({
-    queryKey: ["requests"],
-    queryFn: getRequests,
+    queryKey: ["requests", page, pageSize, searchQuery],
+    queryFn: () => getRequests(page, pageSize, searchQuery),
     staleTime: 5000,
   });
 }

@@ -50,7 +50,7 @@ export default function ARForm({
         <FormDateTimeInput control={form.control} name="ar_time_completed" label="Time Completed" type="time" />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <FormTextArea control={form.control} name="ar_action_taken" label="Action Taken"/>
+        <FormTextArea control={form.control} name="ar_action_taken" label="Activities Undertaken"/>
         <FormTextArea control={form.control} name="ar_result" label="Result"/>
       </div>
 

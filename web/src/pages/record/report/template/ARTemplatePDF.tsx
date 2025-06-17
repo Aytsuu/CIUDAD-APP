@@ -161,10 +161,18 @@ export const ARTemplatePDF: React.FC<ARTemplatePDFProps> = ({
       <Text style={styles.title}>ACTION PHOTO REPORTS</Text>
 
       <View style={styles.detailsContainer}>
-        <Text style={styles.detailRow}>NAME OF INCIDENT OR ACTIVITY: {incidentName}</Text>
-        <Text style={styles.detailRow}>DATE & TIME: {dateTime}</Text>
-        <Text style={styles.detailRow}>LOCATION: {location}</Text>
-        <Text style={styles.detailRow}>ACTIONS TAKEN: {actionsTaken}</Text>
+        <Text style={styles.detailRow}>NAME OF INCIDENT OR ACTIVITY: 
+          <Text style={{fontWeight: 400}}> {incidentName}</Text>
+        </Text>
+        <Text style={styles.detailRow}>DATE & TIME: 
+          <Text style={{fontWeight: 400}}> {dateTime}</Text>
+        </Text>
+        <Text style={styles.detailRow}>LOCATION: 
+          <Text style={{fontWeight: 400}}> {location}</Text>
+        </Text>
+        <Text style={styles.detailRow}>ACTIONS TAKEN: 
+          <Text style={{fontWeight: 400}}> {actionsTaken}</Text>
+        </Text>
       </View>
 
       <View style={styles.imagesContainer}>

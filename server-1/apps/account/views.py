@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 import uuid
 import os
 from utils.supabase_client import supabase
-from apps.administration.serializers.full import StaffFullSerializer
+from apps.administration.serializers.staff_serializers import StaffFullSerializer
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.models import Staff
 

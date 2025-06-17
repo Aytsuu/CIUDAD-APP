@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 // Define the colums for the data table
 export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
   {
-    accessorKey: "id",
+    accessorKey: "req_id",
     header: ({ column }) => (
       <div
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -58,15 +58,7 @@ export const requestColumns = (requests: any[]): ColumnDef<RequestRecord>[] => [
     header: "Middle Name",
   },
   {
-    accessorKey: "suffix",
-    header: "Suffix",
-  },
-  {
-    accessorKey: "address",
-    header: "Address",
-  },
-  {
-    accessorKey: "requestDate",
+    accessorKey: "req_date",
     header: "Date Requested",
   },
   {

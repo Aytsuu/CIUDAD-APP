@@ -12,6 +12,15 @@ export const verificationSchema = z.object({
   dob: z.string().date()
 });
 
+export const addressSchema = z.object({
+  add_province: z.string().min(1),
+  add_city: z.string().min(1),
+  add_barangay: z.string().min(1),
+  add_external_sitio: z.string().min(1),
+  sitio: z.string().min(1),
+  add_street: z.string().min(1)
+})
+
 export const personalInfoSchema = z.object({
   per_id: z.string(),
   per_lname: z.string().min(1, "Last Name is required"),
@@ -24,11 +33,15 @@ export const personalInfoSchema = z.object({
   per_edAttainment: z.string(),
   per_religion: z.string().min(1, "Religion is required"),
   per_contact: z.string().min(1, "Contact is required"),
-  per_occupation: z.string()
+  per_occupation: z.string(),
+  per_addresses: z.object({
+    list: z.array(addressSchema).default([]),
+    new: addressSchema
+  })
 })  
 
 export const uploadIdSchema = z.object({
-  selected: z.string().min(1, "ID selection is required"),
+  selected: z.string().min(1, "ID type selection is required"),
   imageURI: z.string()
 
 })

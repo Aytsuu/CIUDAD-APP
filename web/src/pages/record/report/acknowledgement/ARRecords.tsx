@@ -44,7 +44,7 @@ export default function ARRecords() {
   const now = new Date()
   const warThisMonth = React.useMemo(() => (
     weeklyAR?.filter((w: any) => {
-      const date = new Date(w.war_created_at);
+      const date = new Date(w.date);
       if(date.getFullYear() == now.getFullYear()) {
         if (date.getMonth() + 1 == now.getMonth() + 1) {
           return w;
@@ -56,7 +56,7 @@ export default function ARRecords() {
   React.useEffect(() => {
     if(warThisMonth) {
       setIsCreatable(warThisMonth?.every((war: any) => 
-        getWeekNumber(war.war_created_at) !== getWeekNumber(formatDate(now)
+        getWeekNumber(war.date) !== getWeekNumber(formatDate(now)
       )));
     }
   }, [warThisMonth]);
@@ -88,7 +88,7 @@ export default function ARRecords() {
       addWAR(user?.staff.staff_id, {
         onSuccess: (data) => {
           const compositions = selectedRows.map((row) => ({
-            ar: row.ar_id,
+            ar: row.id,
             war: data.war_id,
           }))
 
@@ -283,7 +283,7 @@ export default function ARRecords() {
                   </div>
                 ) : (
                   `Showing ${totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0}-${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`
-                )}
+                )}  
               </div>
             </div>
           </CardHeader>
