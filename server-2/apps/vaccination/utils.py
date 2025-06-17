@@ -5,15 +5,7 @@ from apps.patientrecords.models import *
 from django.db.models import Q
 from collections import defaultdict
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
-# def get_unvaccinated_vaccines_for_patient(pat_id):
-#     vaccinated_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     unvaccinated_vaccines = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids)
-#     return unvaccinated_vaccines
-
-
+from .serializers import *
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
     today = timezone.now().date()
@@ -80,11 +72,7 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
             patrec_id__pat_id=patrec_pat_id
         )
 
-        # Get the patient details from the linked PatientRecord
         patient = vac_record.patrec_id
-
-        # Serialize patient details using PatientSerializer
-
         patient_serializer = PatientSerializer(patient)
         patient_info = patient_serializer.data
 
@@ -92,6 +80,7 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
 
     except VaccinationRecord.DoesNotExist:
         return {"message": "No vaccination record found for this patient."}
+    
 
 def get_vaccination_record_count(pat_id):
    
@@ -162,3 +151,5 @@ def count_vaccinated_by_patient_type():
         "resident_vaccinated": resident_count,
         "transient_vaccinated": transient_count
     }
+
+

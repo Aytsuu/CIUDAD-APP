@@ -365,7 +365,7 @@ export default function IndivMedicineRecords() {
               Manage and view patient's vaccination records
             </p>
           </div>
-        </div>
+        </div> 
         <hr className="border-gray mb-5 sm:mb-8" />
 
         {selectedPatientData ? (

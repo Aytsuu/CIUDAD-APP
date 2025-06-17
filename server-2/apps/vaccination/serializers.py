@@ -23,12 +23,20 @@ class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
 
 class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
-    vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
+    vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
     vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
+    patient = serializers.SerializerMethodField()
+  
     class Meta:
         model = VaccinationHistory
         fields = '__all__'
+        
+    def get_patient(self, obj):
+        try:
+            return PatientSerializer(obj.vacrec.patrec_id.pat_id).data
+        except Exception:
+            return None
 
 class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
