@@ -6,20 +6,6 @@ from apps.healthProfiling.models import Personal, ResidentProfile
 from django.utils import timezone
 
 # Create your models here.
-
-# class Patient(models.Model):
-#     pat_id = models.BigAutoField(primary_key=True)
-#     pat_type = models.CharField(max_length=100, default="Resident")
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     pat_status = models.CharField(max_length=100, default="Active")
-#     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='patients', db_column='rp_id', null=True)
-#     class Meta:
-#         db_table = 'patient'
-#         ordering = ['-created_at']
-
-
-
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
     tradd_province = models.CharField(max_length=50)

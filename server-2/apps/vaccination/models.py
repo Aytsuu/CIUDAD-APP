@@ -26,7 +26,7 @@ class VaccinationHistory(models.Model):
     staff_id = models.PositiveIntegerField(default=1)    
     vital= models.ForeignKey( VitalSigns,  on_delete=models.CASCADE,  null=True,   blank=True,  related_name='vaccination_histories')
     vacrec = models.ForeignKey( VaccinationRecord,  on_delete=models.CASCADE, related_name='vaccination_histories' )
-    vacStck_id = models.ForeignKey( VaccineStock,  on_delete=models.CASCADE, related_name='vaccination_histories')
+    vacStck_id = models.ForeignKey( VaccineStock,  on_delete=models.CASCADE, related_name='vaccination_histories', db_column="vacStck_id")
     followv = models.ForeignKey( FollowUpVisit,  on_delete=models.CASCADE, related_name='vaccination_histories', null=True, blank=True)
     class Meta:
         db_table = 'vaccination_history'
