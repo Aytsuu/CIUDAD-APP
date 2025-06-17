@@ -1,9 +1,9 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 
 export const getFirstAidInventoryList = async () => {
     try {
-      const res = await api.get("inventory/firstaidinventorylist/");
+      const res = await api2.get("inventory/firstaidinventorylist/");
       return res.data || [];
     } catch (err) {
       console.error(err)
@@ -16,7 +16,7 @@ export const getFirstAidInventoryList = async () => {
   
   export const  getFirstAidStocks = async()=>{
     try{
-      const res= await api.get("inventory/firstaidinventorylist/")
+      const res= await api2.get("inventory/firstaidinventorylist/")
       if(res.status==200){
         return res.data;
       }

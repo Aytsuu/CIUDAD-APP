@@ -1,9 +1,9 @@
 // restful-api/Medicine/GetMedicine.js
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const getMedicineRecords = async () => {
   try {
-    const response = await api.get("/medicine/all-medicine-records/");
+    const response = await api2.get("/medicine/all-medicine-records/");
     return response.data;
   } catch (error) {
     console.error("Error fetching medicine records:", error);
@@ -23,7 +23,7 @@ export const getMedicineRecords = async () => {
 
 export const getMedicineStocks = async () => {
   try {
-    const response = await api.get("/inventory/medicineinventorylist/");
+    const response = await api2.get("/inventory/medicineinventorylist/");
     console.log(response.data)
 
     return response.data;

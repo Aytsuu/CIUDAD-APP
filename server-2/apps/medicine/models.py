@@ -1,4 +1,5 @@
 from django.db import models
+from django.apps import apps
 from apps.patientrecords.models import *
 from apps.inventory.models import *
 

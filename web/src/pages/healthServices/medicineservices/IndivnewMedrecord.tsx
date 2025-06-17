@@ -13,6 +13,7 @@ import {
   Package,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
@@ -37,16 +38,11 @@ interface Patient {
 
 export default function IndivPatNewMedRecForm() {
   const navigate = useNavigate();
-
   const location = useLocation();
-  const patientData = location.state?.params?.patientData;
-
-  const [loading, setLoading] = useState(false);
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } =
-    fetchMedicinesWithStock();
+  const [isConfirming, setIsConfirming] = useState(false);
+  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
   const [selectedMedicines, setSelectedMedicines] = useState<
     { minv_id: string; medrec_qty: number; reason: string }[]
   >([]);
@@ -107,6 +103,7 @@ export default function IndivPatNewMedRecForm() {
 
   const onSubmit = useCallback(
     async (data: MedicineRequestArrayType) => {
+      setIsConfirming(true);
       try {
         const requestData = {
           pat_id: data.pat_id,
@@ -120,6 +117,9 @@ export default function IndivPatNewMedRecForm() {
         await submitMedicineRequest(requestData);
       } catch (error) {
         console.error("Error in onSubmit handler:", error);
+        toast.error("Failed to submit request");
+      } finally {
+        setIsConfirming(false);
       }
     },
     [selectedMedicines, submitMedicineRequest]
@@ -155,153 +155,159 @@ export default function IndivPatNewMedRecForm() {
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
-        <div className="bg-white rounded-sm">
-          {selectedPatientData ? (
-            <div className="mb-4">
-              <PatientInfoCard patient={selectedPatientData} />
+        {selectedPatientData ? (
+          <div className="mb-4">
+            <PatientInfoCard patient={selectedPatientData} />
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <Label className="text-base font-semibold text-red-500">
+                No patient selected
+              </Label>
+            </div>
+            <p className="text-sm text-gray-600">
+              Please select a patient from the medicine records page first.
+            </p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-md pt-10 pb-5">
+          {isMedicinesLoading ? (
+            <div className="p-4 flex justify-center items-center space-y-4">
+              <p className="text-center text-red-600">Loading medicines...</p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <Label className="text-base font-semibold text-red-500">
-                  No patient selected
-                </Label>
-              </div>
-              <p className="text-sm text-gray-600">
-                Please select a patient from the medicine records page first.
-              </p>
+            <div className="w-full">
+              {showSummary ? (
+                <div className="w-full overflow-x-auto">
+                  <RequestSummary
+                    selectedMedicines={selectedMedicines}
+                    medicineStocksOptions={medicineStocksOptions}
+                    totalSelectedQuantity={totalSelectedQuantity}
+                  />
+                </div>
+              ) : (
+                <div className="w-full overflow-x-auto">
+                  <MedicineDisplay
+                    medicines={medicineStocksOptions}
+                    initialSelectedMedicines={selectedMedicines}
+                    onSelectedMedicinesChange={handleSelectedMedicinesChange}
+                    itemsPerPage={itemsPerPage}
+                    currentPage={currentPage}
+                    onPageChange={handlePageChange}
+                  />
+                  {medicineStocksOptions.length === 0 && (
+                    <div className="text-center py-12 mx-3">
+                      <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                      <h3 className="text-base font-medium text-gray-900 mb-2">
+                        No medicines available
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        There are currently no medicines in stock.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
-          <div className="bg-white rounded-md pb-5">
-            {isMedicinesLoading ? (
-              <div className="p-4 flex justify-center items-center space-y-4">
-                <p className="text-center text-red-600">Loading medicines...</p>
+          {selectedMedicines.length > 0 && !showSummary && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mt-5 mr-5">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">
+                    {selectedMedicines.length} medicine
+                    {selectedMedicines.length > 1 ? "s" : ""} selected
+                  </p>
+                  <p className="text-xs text-emerald-700">
+                    Total quantity: {totalSelectedQuantity} items
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="w-full">
-                {showSummary ? (
-                  <div className="w-full overflow-x-auto">
-                    <RequestSummary
-                      selectedMedicines={selectedMedicines}
-                      medicineStocksOptions={medicineStocksOptions}
-                      totalSelectedQuantity={totalSelectedQuantity}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full overflow-x-auto">
-                    <MedicineDisplay
-                      medicines={medicineStocksOptions}
-                      initialSelectedMedicines={selectedMedicines}
-                      onSelectedMedicinesChange={handleSelectedMedicinesChange}
-                      itemsPerPage={itemsPerPage}
-                      currentPage={currentPage}
-                      onPageChange={handlePageChange}
-                    />
-                    {medicineStocksOptions.length === 0 && (
-                      <div className="text-center py-12 mx-3">
-                        <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-base font-medium text-gray-900 mb-2">
-                          No medicines available
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          There are currently no medicines in stock.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+            </div>
+          )}
 
-            {selectedMedicines.length > 0 && !showSummary && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mt-5 mr-5">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  </div>
+          {(!selectedPatientData ||
+            selectedMedicines.length === 0 ||
+            hasInvalidQuantities) && (
+            <div className="mx-3 mb-4 mt-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-emerald-900">
-                      {selectedMedicines.length} medicine
-                      {selectedMedicines.length > 1 ? "s" : ""} selected
+                    <p className="text-sm font-medium text-amber-900">
+                      {!selectedPatientData
+                        ? "Patient Required"
+                        : selectedMedicines.length === 0
+                        ? "Medicines Required"
+                        : "Invalid Quantities"}
                     </p>
-                    <p className="text-xs text-emerald-700">
-                      Total quantity: {totalSelectedQuantity} items
+                    <p className="text-xs text-amber-700 mt-1">
+                      {!selectedPatientData
+                        ? "Please select a patient first from the medicine records page."
+                        : selectedMedicines.length === 0
+                        ? "Please select at least one medicine to submit the request."
+                        : "Please ensure all medicine quantities are at least 1."}
                     </p>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {(!selectedPatientData ||
-              selectedMedicines.length === 0 ||
-              hasInvalidQuantities) && (
-              <div className="mx-3 mb-4 mt-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-900">
-                        {!selectedPatientData
-                          ? "Patient Required"
-                          : selectedMedicines.length === 0
-                          ? "Medicines Required"
-                          : "Invalid Quantities"}
-                      </p>
-                      <p className="text-xs text-amber-700 mt-1">
-                        {!selectedPatientData
-                          ? "Please select a patient first from the medicine records page."
-                          : selectedMedicines.length === 0
-                          ? "Please select at least one medicine to submit the request."
-                          : "Please ensure all medicine quantities are at least 1."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="px-3 pb-4 mt-5">
-              <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+          <div className="px-3 pb-4 mt-5">
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => navigate(-1)}
+                className="w-full sm:w-auto px-6 order-2 sm:order-1"
+              >
+                Cancel
+              </Button>
+              {!showSummary ? (
                 <Button
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  className="w-full sm:w-auto px-6 order-2 sm:order-1"
+                  onClick={handlePreview}
+                  disabled={
+                    !selectedPatientData ||
+                    selectedMedicines.length === 0 ||
+                    hasInvalidQuantities ||
+                    isMedicinesLoading
+                  }
+                  className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
                 >
-                  Cancel
+                  {isMedicinesLoading ? "Loading..." : "Preview Request"}
                 </Button>
-                {!showSummary ? (
+              ) : (
+                <>
                   <Button
-                    onClick={handlePreview}
-                    disabled={
-                      !selectedPatientData ||
-                      selectedMedicines.length === 0 ||
-                      hasInvalidQuantities ||
-                      isMedicinesLoading
-                    }
-                    className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
+                    variant="outline"
+                    onClick={() => setShowSummary(false)}
+                    className="w-full sm:w-auto px-6 order-1 sm:order-2"
                   >
-                    {isMedicinesLoading ? "Loading..." : "Preview Request"}
+                    Back to Edit
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowSummary(false)}
-                      className="w-full sm:w-auto px-6 order-1 sm:order-2"
-                    >
-                      Back to Edit
-                    </Button>
-                    <Button
-                      onClick={form.handleSubmit(onSubmit)}
-                      className="w-full sm:w-auto px-6 text-white order-1 sm:order-2 bg-green-600 hover:bg-green-700"
-                    >
-                      Confirm and Submit
-                    </Button>
-                  </>
-                )}
-              </div>
+                  <Button
+                    onClick={form.handleSubmit(onSubmit)}
+                    disabled={isConfirming}
+                    className="w-full sm:w-auto px-6 text-white order-1 sm:order-2 bg-green-600 hover:bg-green-700"
+                  >
+                    {isConfirming ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Confirm and Submit"
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

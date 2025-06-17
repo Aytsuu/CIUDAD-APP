@@ -1,153 +1,138 @@
-import { format } from "date-fns";
-import { Calendar, MapPin, User, UserCheck } from "lucide-react";
-import { calculateAge } from "@/helpers/ageCalculator";
+import { format } from "date-fns"
+import { Calendar, MapPin, User, Heart, Shield } from "lucide-react"
+import { calculateAge } from "@/helpers/ageCalculator"
 
 // Define Patient interface for type safety
 interface Patient {
-  pat_id: number;
-  pat_type: string;
+  pat_id: number
+  pat_type: string
   personal_info?: {
-    per_fname?: string;
-    per_mname?: string;
-    per_lname?: string;
-    per_dob?: string;
-    per_sex?: string;
-  };
-  households?: { hh_id: string }[];
+    per_fname?: string
+    per_mname?: string
+    per_lname?: string
+    per_dob?: string
+    per_sex?: string
+  }
+  households?: { hh_id: string }[]
   address?: {
-    add_street?: string;
-    add_barangay?: string;
-    add_city?: string;
-    add_province?: string;
-    add_external_sitio?: string;
-  };
+    add_street?: string
+    add_barangay?: string
+    add_city?: string
+    add_province?: string
+    add_external_sitio?: string
+  }
 }
 
 interface PatientInfoCardProps {
-  patient: Patient | null;
+  patient: Patient | null
 }
 
-export const PatientInfoCard = ({ patient }: PatientInfoCardProps) => {
-  if (!patient) {
-    return (
-      <div className="rounded-xl p-4 text-center">
-        <User className="mx-auto h-8 w-8 text-gray-400 mb-4" />
-        <h3 className="text-base font-medium text-gray-900 mb-2">
-          No Patient Selected
-        </h3>
-        <p className="text-sm text-gray-500">
-          Please select a patient to view their information
-        </p>
-      </div>
-    );
-  }
+// Helper functions
+const formatFullName = (personalInfo?: Patient["personal_info"]) => {
+  if (!personalInfo) return "Not provided"
+  const { per_fname = "", per_mname = "", per_lname = "" } = personalInfo
+  const fullName = `${per_fname} ${per_mname} ${per_lname}`.trim()
+  return fullName || "Not provided"
+}
 
-  const fullName = `${patient.personal_info?.per_fname || ""} ${
-    patient.personal_info?.per_mname || ""
-  } ${patient.personal_info?.per_lname || ""}`.trim();
-  const fullAddress = [
+const formatAddress = (patient: Patient) => {
+  const addressParts = [
     patient.households?.[0]?.hh_id,
     patient.address?.add_street,
     patient.address?.add_barangay,
     patient.address?.add_city,
     patient.address?.add_province,
     patient.address?.add_external_sitio,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  ].filter(Boolean)
+  return addressParts.length > 0 ? addressParts.join(", ") : "Not provided"
+}
+
+const formatDateOfBirth = (dob?: string) => {
+  if (!dob) return "Not provided"
+  try {
+    return format(new Date(dob), "MMM dd, yyyy")
+  } catch {
+    return "Invalid date"
+  }
+}
+
+const formatAge = (dob?: string) => {
+  if (!dob) return "N/A"
+  try {
+    return calculateAge(new Date(dob).toISOString())
+  } catch {
+    return "N/A"
+  }
+}
+
+const getGenderIcon = (gender?: string) => {
+  if (!gender) return User
+  return gender.toLowerCase() === 'female' ? Heart : Shield
+}
+
+// Empty state
+const EmptyPatientState = () => (
+  <div className="bg-gray-50 rounded-2xl p-8 text-center border-2 border-dashed border-gray-200">
+    <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Patient Selected</h3>
+    <p className="text-gray-600">Select a patient to view their information</p>
+  </div>
+)
+
+export const PatientInfoCard = ({ patient }: PatientInfoCardProps) => {
+  if (!patient) {
+    return <EmptyPatientState />
+  }
+
+  const fullName = formatFullName(patient.personal_info)
+  const age = formatAge(patient.personal_info?.per_dob)
+  const dob = formatDateOfBirth(patient.personal_info?.per_dob)
+  const address = formatAddress(patient)
+  const GenderIcon = getGenderIcon(patient.personal_info?.per_sex)
 
   return (
-    <div className="p-4">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <User className="h-4 w-4 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">
-              Patient Information
-            </h2>
-            <p className="text-sm text-gray-600">Current patient details</p>
-          </div>
+    <div className="p-6 bg-white rounded-sm shadow-md border border-gray-200">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-12 h-12 bg-slate-400 rounded-xl flex items-center justify-center text-white text-lg font-bold">
+          {fullName.charAt(0).toUpperCase()}
         </div>
-        <div className="sm:ml-auto">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <Calendar className="h-3 w-3" />
-            {format(new Date(), "MMM dd, yyyy")}
-          </div>
+        <div className="flex-1">
+          <h2 className="text-xl font-bold text-gray-900">{fullName}</h2>
+          <p className="text-sm text-gray-600">ID: {patient.pat_id} • {patient.pat_type}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <User className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-gray-700">Full Name</p>
-              <p className="text-sm text-gray-900 break-words">
-                {fullName || "Not provided"}
-              </p>
+            <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">{dob}</p>
+              <p className="text-xs text-gray-500">{age} </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <MapPin className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-gray-700">Address</p>
-              <p className="text-sm text-gray-900 break-words">
-                {fullAddress || "Not provided"}
-              </p>
+            <GenderIcon className="w-5 h-5 text-purple-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">{patient.personal_info?.per_sex || "Not specified"}</p>
+              <p className="text-xs text-gray-500">Gender</p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div>
           <div className="flex items-start gap-3">
-            <Calendar className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-gray-700">Date of Birth</p>
-              <p className="text-sm text-gray-900">
-                {patient.personal_info?.per_dob
-                  ? format(
-                      new Date(patient.personal_info.per_dob),
-                      "MMM dd, yyyy"
-                    )
-                  : "Not provided"}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <UserCheck className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Age</p>
-                  <p className="text-sm text-gray-900">
-                    {patient.personal_info?.per_dob
-                      ? calculateAge(
-                          new Date(patient.personal_info.per_dob).toISOString()
-                        )
-                      : "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Gender</p>
-                  <p className="text-sm text-gray-900">
-                    {patient.personal_info?.per_sex || "Not specified"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Type</p>
-                  <p className="text-sm text-gray-900">
-                    {patient.pat_type || "Standard"}
-                  </p>
-                </div>
-              </div>
+            <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 leading-relaxed">{address}</p>
+              <p className="text-xs text-gray-500">Address</p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

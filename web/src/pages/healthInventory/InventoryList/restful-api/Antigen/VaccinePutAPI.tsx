@@ -1,5 +1,5 @@
 // vaccineService.ts
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
 // Update main vaccine details
@@ -15,7 +15,7 @@ export const updateVaccineDetails = async (vaccineId: number, formData: any) => 
         updated_at: new Date().toISOString(),
       };
   
-      const res = await api.put(`inventory/vac_list/${vaccineId}/`, updatePayload);
+      const res = await api2.put(`inventory/vac_list/${vaccineId}/`, updatePayload);
       return res.data;
     } catch (err) {
       console.log(err);
@@ -26,12 +26,12 @@ export const updateVaccineDetails = async (vaccineId: number, formData: any) => 
 // Delete all routine frequencies for a vaccine
 export const deleteRoutineFrequencies = async (vaccineId: number) => {
   try {
-    const routines = await api.get(`inventory/routine_freq/`, {
+    const routines = await api2.get(`inventory/routine_freq/`, {
       params: { vac_id: vaccineId },
     });
     await Promise.all(
       routines.data.map((routine: { routineF_id: number }) =>
-        api.delete(`inventory/routine_freq/${routine.routineF_id}/`)
+        api2.delete(`inventory/routine_freq/${routine.routineF_id}/`)
       )
     );
   } catch (err) {
@@ -43,12 +43,12 @@ export const deleteRoutineFrequencies = async (vaccineId: number) => {
 // Delete all vaccine intervals for a vaccine
 export const deleteVaccineIntervals = async (vaccineId: number) => {
   try {
-    const intervals = await api.get(`inventory/vac_intervals/`, {
+    const intervals = await api2.get(`inventory/vac_intervals/`, {
       params: { vac_id: vaccineId },
     });
     await Promise.all(
       intervals.data.map((interval: { vacInt_id: number }) =>
-        api.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
+        api2.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)
       )
     );
   } catch (err) {
@@ -60,7 +60,7 @@ export const deleteVaccineIntervals = async (vaccineId: number) => {
 // Update or create routine frequency
 export const updateRoutineFrequency = async (vaccineId: number, formData: any) => {
   try {
-    const routineResponse = await api.get(`inventory/routine_freq/`, {
+    const routineResponse = await api2.get(`inventory/routine_freq/`, {
       params: { vac_id: vaccineId },
     });
 
@@ -73,13 +73,13 @@ export const updateRoutineFrequency = async (vaccineId: number, formData: any) =
     };
 
     if (routineResponse.data.length > 0) {
-      const res = await api.put(
+      const res = await api2.put(
         `inventory/routine_freq/${routineResponse.data[0].routineF_id}/`,
         routineData
       );
       return res.data;
     } else {
-      const res = await api.post("inventory/routine_freq/", routineData);
+      const res = await api2.post("inventory/routine_freq/", routineData);
       return res.data;
     }
   } catch (err) {
@@ -95,13 +95,13 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
     const intervals = Array.isArray(formData.intervals) ? formData.intervals : [];
     const timeUnits = Array.isArray(formData.timeUnits) ? formData.timeUnits : [];
 
-    const existingIntervals = await api.get(`inventory/vac_intervals/`, {
+    const existingIntervals = await api2.get(`inventory/vac_intervals/`, {
       params: { vac_id: vaccineId },
     });
 
     // Handle first dose interval
     if (existingIntervals.data[0]) {
-      await api.put(
+      await api2.put(
         `inventory/vac_intervals/${existingIntervals.data[0].vacInt_id}/`,
         {
           interval: formData.ageGroup === "0-5" ? Number(formData.specifyAge) || 0 : 0,
@@ -112,7 +112,7 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
         }
       );
     } else {
-      await api.post("inventory/vac_intervals/", {
+      await api2.post("inventory/vac_intervals/", {
         interval: formData.ageGroup === "0-5" ? Number(formData.specifyAge) || 0 : 0,
         time_unit: formData.ageGroup === "0-5" ? "months" : "NA",
         dose_number: 1,
@@ -127,7 +127,7 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
         (d: any) => d.dose_number === i + 1
       );
       if (existingDose) {
-        await api.put(
+        await api2.put(
           `inventory/vac_intervals/${existingDose.vacInt_id}/`,
           {
             interval: Number(intervals[i - 1]) || 0,
@@ -138,7 +138,7 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
           }
         );
       } else {
-        await api.post("inventory/vac_intervals/", {
+        await api2.post("inventory/vac_intervals/", {
           interval: Number(intervals[i - 1]) || 0,
           time_unit: timeUnits[i - 1] || "months",
           dose_number: i + 1,

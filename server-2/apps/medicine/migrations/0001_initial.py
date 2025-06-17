@@ -10,24 +10,24 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('inventory', '0005_remove_immunizationstock_wasted_items_and_more'),
-        ('patientrecords', '0005_rename_resident_profile_patient_rp_id'),
+        # ('patientrecords', '0005_rename_resident_profile_patient_rp_id'),
     ]
 
-    operations = [
-        migrations.CreateModel(
-            name='MedicineRecord',
-            fields=[
-                ('medrec_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('medrec_qty', models.PositiveIntegerField(default=0)),
-                ('status', models.CharField(choices=[('REQUESTED', 'Requested'), ('REFERRED', 'Referred'), ('RECORED', 'Recored'), ('PENDING', 'Pending')], max_length=10)),
-                ('req_type', models.CharField(choices=[('WALK IN', 'Walk In'), ('APP', 'App')], max_length=10)),
-                ('reason', models.TextField(blank=True, null=True)),
-                ('is_archived', models.BooleanField(default=False)),
-                ('requested_at', models.DateTimeField(auto_now_add=True)),
-                ('fulfilled_at', models.DateTimeField(blank=True, null=True)),
-                ('signature', models.TextField(blank=True, null=True)),
-                ('minv_id', models.ForeignKey(db_column='minv_id', on_delete=django.db.models.deletion.CASCADE, to='inventory.medicineinventory')),
-                ('patrec_id', models.ForeignKey(db_column='patrec_id', on_delete=django.db.models.deletion.CASCADE, to='patientrecords.patientrecord')),
-            ],
-        ),
-    ]
+    # operations = [
+    #     migrations.CreateModel(
+    #         name='MedicineRecord',
+    #         fields=[
+    #             ('medrec_id', models.BigAutoField(primary_key=True, serialize=False)),
+    #             ('medrec_qty', models.PositiveIntegerField(default=0)),
+    #             ('status', models.CharField(choices=[('REQUESTED', 'Requested'), ('REFERRED', 'Referred'), ('RECORED', 'Recored'), ('PENDING', 'Pending')], max_length=10)),
+    #             ('req_type', models.CharField(choices=[('WALK IN', 'Walk In'), ('APP', 'App')], max_length=10)),
+    #             ('reason', models.TextField(blank=True, null=True)),
+    #             ('is_archived', models.BooleanField(default=False)),
+    #             ('requested_at', models.DateTimeField(auto_now_add=True)),
+    #             ('fulfilled_at', models.DateTimeField(blank=True, null=True)),
+    #             ('signature', models.TextField(blank=True, null=True)),
+    #             ('minv_id', models.ForeignKey(db_column='minv_id', on_delete=django.db.models.deletion.CASCADE, to='inventory.medicineinventory')),
+    #             ('patrec_id', models.ForeignKey(db_column='patrec_id', on_delete=django.db.models.deletion.CASCADE, to='patientrecords.Patientrecord')),
+    #         ],
+    #     ),
+    # ]

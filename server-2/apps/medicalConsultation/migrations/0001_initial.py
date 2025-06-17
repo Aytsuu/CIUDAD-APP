@@ -12,19 +12,19 @@ class Migration(migrations.Migration):
         # ('patientrecords', '0029_finding_illness_physicalexamlist_bodymeasurement_and_more'),
     ]
 
-    operations = [
-        migrations.CreateModel(
-            name='MedicalConsultation_Record',
-            fields=[
-                ('medrec_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('medrec_chief_complaint', models.CharField(max_length=250)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('bhw_assignment', models.IntegerField()),
-                ('doc_id', models.IntegerField()),
-                ('bm', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.bodymeasurement')),
-                ('find', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.finding')),
-                ('patrec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.patientrecord')),
-                ('vital', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.vitalsigns')),
-            ],
-        ),
-    ]
+    # operations = [
+    #     migrations.CreateModel(
+    #         name='MedicalConsultation_Record',
+    #         fields=[
+    #             ('medrec_id', models.BigAutoField(primary_key=True, serialize=False)),
+    #             ('medrec_chief_complaint', models.CharField(max_length=250)),
+    #             ('created_at', models.DateTimeField(auto_now_add=True)),
+    #             ('bhw_assignment', models.IntegerField()),
+    #             ('doc_id', models.IntegerField()),
+    #             ('bm', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.bodymeasurement')),
+    #             ('find', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.finding')),
+    #             ('patrec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.patientrecord')),
+    #             ('vital', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='medical_consultation_record', to='patientrecords.vitalsigns')),
+    #         ],
+    #     ),
+    # ]

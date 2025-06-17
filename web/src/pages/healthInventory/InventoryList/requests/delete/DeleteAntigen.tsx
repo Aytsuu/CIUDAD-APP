@@ -1,12 +1,12 @@
 
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const handleDeleteVaccine = async (
     id: number,
     onSuccess: () => void
   ) => {
     try {
-      const res = await api.delete(`inventory/vac_list/${id}`);
+      const res = await api2.delete(`inventory/vac_list/${id}`);
       if (res.status === 200) {
         onSuccess();
       }
@@ -28,7 +28,7 @@ export const handleDeleteVaccine = async (
         ? `inventory/vac_list/${id}/`
         : `inventory/imz_supplies/${id}/`;
   
-      const res = await api.delete(endpoint);
+      const res = await api2.delete(endpoint);
   
       if (res.status === 200 || res.status === 204) {
         console.log(`✅ deleted successfully!`);

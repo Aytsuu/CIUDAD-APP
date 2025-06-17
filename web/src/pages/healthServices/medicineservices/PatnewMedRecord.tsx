@@ -13,6 +13,7 @@ import {
   Package,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
@@ -26,15 +27,6 @@ import {
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
-// import { api } from "@/api/api";
-// import axios from "axios";
-// import { getMedicineInventory } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicineGetAPI";
-// import {
-//   updateMedicineStocks,
-//   updateInventoryTimestamp,
-// } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicinePutAPI";
-// import { addMedicineTransaction } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/restful-api/MedicinePostAPI";
-// import { createMedicineRecord } from "./restful-api/postAPI";
 import { useMedicineRequestMutation } from "./queries/postQueries";
 
 interface Patient {
@@ -55,6 +47,7 @@ export default function PatNewMedRecForm() {
   const [selectedPatientData, setSelectedPatientData] =
     useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const { medicineStocksOptions, isLoading: isMedicinesLoading } =
     fetchMedicinesWithStock();
   const [selectedMedicines, setSelectedMedicines] = useState<
@@ -141,8 +134,8 @@ export default function PatNewMedRecForm() {
 
   const onSubmit = useCallback(
     async (data: MedicineRequestArrayType) => {
+      setIsConfirming(true);
       try {
-        // Prepare the data in the format expected by processMedicineRequest
         const requestData = {
           pat_id: data.pat_id,
           medicines: selectedMedicines.map((med) => ({
@@ -154,9 +147,10 @@ export default function PatNewMedRecForm() {
 
         await submitMedicineRequest(requestData);
       } catch (error) {
-        // Error handling is already done in the mutation's onError
-        // You can add additional component-specific error handling here if needed
         console.error("Error in onSubmit handler:", error);
+        toast.error("Failed to submit request");
+      } finally {
+        setIsConfirming(false);
       }
     },
     [selectedMedicines, submitMedicineRequest]
@@ -223,16 +217,17 @@ export default function PatNewMedRecForm() {
           />
         </div>
 
-        <div className="bg-white rounded-md pb-5">
-          <div className="mb-4">
-            <PatientInfoCard patient={selectedPatientData} />
-          </div>
+        <div className="mb-4 bg-white">
+          <PatientInfoCard patient={selectedPatientData} />
+        </div>
+
+        <div className="bg-white rounded-md pt-5">
           {isMedicinesLoading ? (
             <div className="p-4 flex justify-center items-center space-y-4">
               <p className="text-center text-red-600">Loading medicines...</p>
             </div>
           ) : (
-            <div className="w-full">
+            <div className="w-full ">
               {showSummary ? (
                 <div className="w-full overflow-x-auto">
                   <RequestSummary
@@ -314,7 +309,7 @@ export default function PatNewMedRecForm() {
             </div>
           )}
 
-          <div className="px-3 pb-4 mt-5">
+          <div className="px-3 pb-4 mt-5 ">
             <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
               <Button
                 variant="outline"
@@ -347,9 +342,17 @@ export default function PatNewMedRecForm() {
                   </Button>
                   <Button
                     onClick={form.handleSubmit(onSubmit)}
+                    disabled={isConfirming}
                     className="w-full sm:w-auto px-6 text-white order-1 sm:order-2 bg-green-600 hover:bg-green-700"
                   >
-                    Confirm and Submit
+                    {isConfirming ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Confirm and Submit"
+                    )}
                   </Button>
                 </>
               )}

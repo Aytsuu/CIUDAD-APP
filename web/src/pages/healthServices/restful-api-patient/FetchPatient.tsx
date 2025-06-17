@@ -1,7 +1,7 @@
 
 // src/restful-api/FetchPatientInfo.ts
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { toast } from "sonner";
 
 interface PatientInfo {
@@ -17,7 +17,7 @@ interface PatientInfo {
 
 export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
   try {
-    const response = await api.get(`/patient-info/${patId}/`);
+    const response = await api2.get(`/patient-info/${patId}/`);
     return response.data;
   } catch (error) {
     console.error("Error fetching patient info:", error);
@@ -38,7 +38,7 @@ export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
 
 export const fetchPatientRecords = async () => {
   try {
-    const response = await api.get("patientrecords/patient/");
+    const response = await api2.get("patientrecords/patient/");
     const patientData = response.data;
 
     return {

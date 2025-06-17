@@ -1,10 +1,10 @@
 
 
-  import {api} from "@/api/api";
+  import {api2} from "@/api/api";
   
   export const  getVaccineStocks = async()=>{
       try{
-        const res= await api.get("inventory/vaccine_stocks/")
+        const res= await api2.get("inventory/vaccine_stocks/")
         if(res.status==200){
           return res.data;
         }
@@ -19,7 +19,7 @@
 
   export const getVaccine = async () => {
     try {
-      const res = await api.get("inventory/vac_list/");
+      const res = await api2.get("inventory/vac_list/");
       if (res.status === 200) {
         // Transform the data to match your SelectLayout options format
         return res.data.map((vaccine: any) => ({

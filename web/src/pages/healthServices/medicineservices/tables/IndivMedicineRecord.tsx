@@ -12,6 +12,7 @@ import {
   UserRound,
   Pill,
   MapPin,
+  AlertCircle,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -24,9 +25,10 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Toaster } from "sonner";
+import { PatientInfoCard } from "@/components/ui//patientInfoCard";
+import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 
 type filter = "all" | "requested" | "recorded" | "archived";
@@ -75,6 +77,13 @@ export interface MedicineRecord {
   };
 }
 
+export interface Patient {
+  pat_id: number;
+  name: string;
+  pat_type: string;
+  [key: string]: any;
+}
+
 export default function IndivMedicineRecords() {
   const location = useLocation();
   const patientData = location.state?.params?.patientData;
@@ -92,20 +101,30 @@ export default function IndivMedicineRecords() {
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
 
+  useEffect(() => {
+    // Get patient data from route state
+    if (location.state?.params?.patientData) {
+      const patientData = location.state.params.patientData;
+      setSelectedPatientData(patientData);
+    }
+  }, [location.state]);
 
   const { data: medicineCountData } = useQuery({
     queryKey: ["medicineRecordCount", patientData.pat_id],
     queryFn: async () => {
-      const response = await api.get(`/medicine/medrec-count/${patientData.pat_id}/`);
+      const response = await api2.get(
+        `/medicine/medrec-count/${patientData.pat_id}/`
+      );
       return response.data;
     },
     refetchOnMount: true,
     staleTime: 0,
   });
-  
-  const medicineCount = medicineCountData?.medicinerecord_count;
 
+  const medicineCount = medicineCountData?.medicinerecord_count;
 
   // Fetch medicine records
   const {
@@ -115,7 +134,7 @@ export default function IndivMedicineRecords() {
   } = useQuery({
     queryKey: ["patientMedicineDetails", patientData.pat_id],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api2.get(
         `/medicine/indiv-medicine-record/${patientData.pat_id}/`
       );
       return response.data;
@@ -173,7 +192,7 @@ export default function IndivMedicineRecords() {
   const confirmArchiveRecord = async () => {
     if (recordToArchive !== null) {
       try {
-        await api.patch(`/medicine-records/${recordToArchive}/archive/`);
+        await api2.patch(`/medicine-records/${recordToArchive}/archive/`);
         toast.success("Medicine record archived successfully!");
         refetch();
       } catch (error) {
@@ -343,64 +362,44 @@ export default function IndivMedicineRecords() {
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
-        <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-darkBlue2 mb-4 flex items-center gap-2">
-            <UserRound className="h-5 w-5" />
-            Patient Information
-          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Full Name</p>
-              <p className="font-medium">
-                {`${patientData.personal_info.per_lname}, ${patientData.personal_info.per_fname} ${
-                  patientData.personal_info.per_mname || ""
-                }`.trim() || "N/A"}
+          {selectedPatientData ? (
+            <div className="mb-4">
+              <PatientInfoCard patient={selectedPatientData} />
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                <Label className="text-base font-semibold text-yellow-500">
+                  No patient selected
+                </Label>
+              </div>
+              <p className="text-sm text-gray-700">
+                Please select a patient from the medicine records page first.
               </p>
             </div>
+          )}
 
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Date of Birth</p>
-              <p className="font-medium">
-                {patientData.personal_info.per_dob
-                  ? new Date(patientData.dob).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                  : "N/A"}
-              </p>
+            {/* Total Me */}
+            <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm ">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 border  rounded-md flex items-center justify-center shadow-sm">
+                  <Pill className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    Total Medicine Records
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900">
+                  {medicineCount !== undefined ? medicineCount : "0"}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Age</p>
-              <p className="font-medium">{patientData.age}</p>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Address</p>
-              <p className="font-medium">
-                {patientData.addressFull || "Not provided"}
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Total Medicine Records</p>
-              <p className="font-medium">  
-              <p className="font-medium">                
-  {medicineCount !== undefined ? medicineCount : "Loading..."}
-</p>              </p>
-
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Patient Type</p>
-              <p className="font-medium">
-                {patientData.pat_type || "Not specified"}
-              </p>
-            </div>
-          </div>
-        </div>
+    
+        
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
           <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -440,7 +439,6 @@ export default function IndivMedicineRecords() {
                 to="/IndivPatNewMedRecForm"
                 state={{ params: { patientData } }}
               >
-                <Plus className="mr-2 h-4 w-4" />
                 New Medicine Record
               </Link>
             </Button>

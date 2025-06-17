@@ -3,7 +3,6 @@ from django.db.models import Max
 from django.utils import timezone
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
-from django.utils import timezone
 
 # Create your models here.
 

@@ -38,6 +38,8 @@ ALLOWED_HOSTS = ['localhost', '*']
 ALLOWED_HOSTS = ['localhost', '*']
 
 
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -68,6 +70,9 @@ INSTALLED_APPS = [
     'apps.medicine',
 
 ]
+
+print("INSTALLED_APPS:", INSTALLED_APPS)
+
 
 MIDDLEWARE = [
    'corsheaders.middleware.CorsMiddleware', 

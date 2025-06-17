@@ -1,7 +1,7 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const fetchCommodityStock = async (cinv_id: number) => {
-  const res = await api.get(`inventory/commodityinventorylist/`);
+  const res = await api2.get(`inventory/commodityinventorylist/`);
   const existingCommodity = res.data.find(
     (item: any) => item.cinv_id === cinv_id
   );
@@ -19,7 +19,7 @@ export const updateCommodityStockQuantity = async (
   qty: number,
   qty_avail: number
 ) => {
-  return await api.put(
+  return await api2.put(
     `inventory/update_commoditystocks/${cinv_id}/`,
     {
       cinv_qty: qty,
@@ -29,7 +29,7 @@ export const updateCommodityStockQuantity = async (
 };
 
 export const updateInventoryTimestamp = async (inv_id: number) => {
-  return await api.put(`inventory/update_inventorylist/${inv_id}/`, {
+  return await api2.put(`inventory/update_inventorylist/${inv_id}/`, {
     updated_at: new Date().toISOString(),
   });
 };
