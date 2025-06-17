@@ -12,33 +12,33 @@ class Migration(migrations.Migration):
         ('healthProfiling', '0002_solid_waste_mgmt_remove_household_hh_barangay_and_more'),
     ]
 
-    operations = [
-        migrations.CreateModel(
-            name='Patients',
-            fields=[
-                ('pat_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pat_type', models.CharField(default='Resident', max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('pat_status', models.CharField(default='Active', max_length=100)),
-                ('per_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='patients', to='healthProfiling.personal')),
-            ],
-            options={
-                'db_table': 'patients',
-                'ordering': ['-created_at'],
-            },
-        ),
-        migrations.CreateModel(
-            name='PatientRecord',
-            fields=[
-                ('patrec_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('patrec_type', models.CharField(max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('pat_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='patient_records', to='patientrecords.patients')),
-            ],
-            options={
-                'db_table': 'patient_record',
-                'ordering': ['-patrec_id'],
-            },
-        ),
-    ]
+    # operations = [
+    #     migrations.CreateModel(
+    #         name='Patients',
+    #         fields=[
+    #             ('pat_id', models.BigAutoField(primary_key=True, serialize=False)),
+    #             ('pat_type', models.CharField(default='Resident', max_length=100)),
+    #             ('created_at', models.DateTimeField(auto_now_add=True)),
+    #             ('updated_at', models.DateTimeField(auto_now=True)),
+    #             ('pat_status', models.CharField(default='Active', max_length=100)),
+    #             ('per_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='patients', to='healthProfiling.personal')),
+    #         ],
+    #         options={
+    #             'db_table': 'patients',
+    #             'ordering': ['-created_at'],
+    #         },
+    #     ),
+    #     migrations.CreateModel(
+    #         name='PatientRecord',
+    #         fields=[
+    #             ('patrec_id', models.BigAutoField(primary_key=True, serialize=False)),
+    #             ('patrec_type', models.CharField(max_length=100)),
+    #             ('created_at', models.DateTimeField(auto_now_add=True)),
+    #             ('pat_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='patient_records', to='patientrecords.patients')),
+    #         ],
+    #         options={
+    #             'db_table': 'patient_record',
+    #             'ordering': ['-patrec_id'],
+    #         },
+    #     ),
+    # ]

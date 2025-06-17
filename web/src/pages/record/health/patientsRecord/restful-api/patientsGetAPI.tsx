@@ -26,3 +26,23 @@ export const getPatients = async () => {
         return []; // Always return a defined value
     }
 };
+
+
+
+// fetch patient details
+export const getPatientDetails = async (patientId: string) => {
+	try {
+		const res = await api2.get(`patientrecords/patient/${patientId}/`)
+		return res.data;
+	} catch (error) {
+		console.error("Error fetching patient:", error)
+
+		if (typeof error === "object" && error !== null && "response" in error) {
+			const err = error as { response: { status: number; data: any } }
+			if (err.response.status === 404) {
+			throw new Error("Patient not found")
+			}
+		}
+		throw error
+	}
+}
