@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from .serializers import *
 from datetime import datetime
 from django.db.models import Count, Prefetch
+from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
@@ -194,6 +195,14 @@ class PatientDetailView(generics.RetrieveAPIView):
             'rp_id__household_set'
         )
     
+    def get_object(self):
+        """
+        Override to add better error handling
+        """
+        try:
+            return super().get_object()
+        except Patient.DoesNotExist:
+            raise Http404("Patient not found")
 
 class PatientRecordView(generics.ListCreateAPIView):
     serializer_class = PatientRecordSerializer

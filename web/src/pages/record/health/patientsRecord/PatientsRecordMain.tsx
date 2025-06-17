@@ -124,7 +124,8 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <RouterLink to={`/view-patients-record`}>
+      <RouterLink to={`/view-patients-record/${row.getValue("id")}`} state={{ patientId: row.getValue("id") }}
+      >
         <Button variant="outline">View</Button>
       </RouterLink>
     ),
@@ -132,70 +133,6 @@ export const columns: ColumnDef<Report>[] = [
     enableHiding: false,
   },
 ]
-
-// Sample data
-// export const reports: Report[] = [
-//   {
-//     id: "001",
-//     sitio: "Sitio A",
-//     lastName: "Smith",
-//     firstName: "John",
-//     mi: "D",
-//     type: "Resident",
-//   },
-//   {
-//     id: "002",
-//     sitio: "Sitio A",
-//     lastName: "Smith",
-//     firstName: "Jane",
-//     mi: "L",
-//     type: "Resident",
-//   },
-//   {
-//     id: "003",
-//     sitio: "Sitio B",
-//     lastName: "Johnson",
-//     firstName: "Robert",
-//     mi: "K",
-//     type: "Transient",
-//   },
-//   {
-//     id: "004",
-//     sitio: "Sitio B",
-//     lastName: "Johnson",
-//     firstName: "Mary",
-//     mi: "J",
-//     type: "Resident",
-//   },
-//   {
-//     id: "005",
-//     sitio: "Sitio C",
-//     lastName: "Williams",
-//     firstName: "David",
-//     mi: "R",
-//     type: "Transient",
-//   },
-//   // Add more sample data as needed
-// ]
-
-// // Generate additional sample data for testing pagination
-// const generateMoreData = (): Report[] => {
-//   const moreData: Report[] = []
-//   for (let i = 6; i <= 150; i++) {
-//     moreData.push({
-//       id: `${i.toString().padStart(3, "0")}`,
-//       sitio: `Sitio ${String.fromCharCode(67 + Math.floor((i - 1) / 2))}`,
-//       lastName: `LastName${i}`,
-//       firstName: `FirstName${i}`,
-//       mi: String.fromCharCode(65 + (i % 26)),
-//       type: i % 5 === 0 ? "Transient" : "Resident",
-//     })
-//   }
-//   return moreData
-// }
-
-// // Complete dataset combining initial and generated data
-// const fullDataset: Report[] = [...reports, ...generateMoreData()]
 
 // Custom pagination component to replace PaginationLayout
 const CustomPagination = ({
@@ -369,7 +306,7 @@ export default function PatientsRecord() {
 
     setFilteredData(filteredDataTemp)
     setTotalPages(Math.ceil(filteredDataTemp.length / pageSize))
-    setCurrentPage(1) // Reset to first page when search changes
+    setCurrentPage(1) 
   }, [searchQuery, pageSize, filterBy, patientDataset])
 
   // Update data based on page and page size
@@ -455,7 +392,7 @@ export default function PatientsRecord() {
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{residents}</span>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                  {/* <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> */}
                   <span>{residentPercentage}% of total</span>
                 </div>
               </div>
@@ -477,7 +414,7 @@ export default function PatientsRecord() {
               <div className="flex flex-col">
                 <span className="text-2xl font-bold">{transients}</span>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                  {/* <ArrowDown className="h-3 w-3 mr-1 text-amber-500" /> */}
                   <span>{transientPercentage}% of total</span>
                 </div>
               </div>
@@ -496,7 +433,7 @@ export default function PatientsRecord() {
       <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
         <div className="flex gap-x-2">
           <div className="relative flex-1 bg-white">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
             <Input
               placeholder="Search..."
               className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
@@ -504,18 +441,21 @@ export default function PatientsRecord() {
               onChange={handleSearchChange}
             />
           </div>
-          <SelectLayout
-            placeholder="Filter by"
-            label=""
-            className="bg-white"
-            options={[
-              { id: "1", name: "" },
-              { id: "2", name: "By date" },
-              { id: "3", name: "By location" },
-            ]}
-            value=""
-            onChange={() => {}}
-          />
+          <div>
+            <SelectLayout
+              placeholder="Filter by"
+              label=""
+              className="bg-white"
+              options={[
+                { id: "1", name: "" },
+                { id: "2", name: "By date" },
+                { id: "3", name: "By location" },
+              ]}
+              value=""
+              onChange={() => {}}
+            />
+          </div>
+          
         </div>
         <div>
           <div className="flex gap-2">
@@ -572,4 +512,3 @@ export default function PatientsRecord() {
     </div>
   )
 }
-
