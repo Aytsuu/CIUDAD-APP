@@ -2,7 +2,6 @@ from django.urls import path
 from .views import *
 from . import views
 
-
 urlpatterns = [
     path('residents-available/', views.get_resident_profile_list, name='residents-available-list'),
 
@@ -34,5 +33,13 @@ urlpatterns = [
     path('physial-examination/<int:pe_id>/', DeleteUpdatePhysicalExaminationView.as_view(), name='physical-examination-detail'),
     path("physical-exam-list/", PhysicalExamListView.as_view(), name="physical-examination-list"),
     path('physical-exam-list/<int:pel_id>/', DeleteUpdatePhysicalExamListView.as_view(), name='physical-examination-list-detail'),
+    
+    
+    
+    
+    path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
+    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='physical-examination-list-detail'),
+
+
 
 ]

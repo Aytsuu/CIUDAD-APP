@@ -96,40 +96,6 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
 def get_vaccination_record_count(pat_id):
    
     return VaccinationRecord.objects.filter(patrec_id__pat_id=pat_id).count()
-# def get_unvaccinated_vaccines_for_patient(pat_id):
-#     today = timezone.now().date()
-
-#     # 1. Vaccines already received (any status)
-#     vaccinated_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     # 2. Partially vaccinated vaccines
-#     partial_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id,
-#         vachist_status__iexact="Partially Vaccinated"
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     # 3. Overdue routine vaccines
-#     overdue_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id,
-#         vacStck__vac_id__vac_type_choices="routine",
-#         followv__followv_date__lt=today,
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     # 4. Vaccines never received
-#     never_received = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids)
-
-#     # 5. Union all: never received + partial + overdue
-#     unvaccinated_vac_ids = set(never_received.values_list('vac_id', flat=True)) \
-#         | set(partial_vac_ids) \
-#         | set(overdue_vac_ids)
-
-#     # 6. Get the VaccineList entries for those
-#     unvaccinated_vaccines = VaccineList.objects.filter(vac_id__in=unvaccinated_vac_ids)
-
-#     return 
-
 
 
 def get_all_residents_not_vaccinated():

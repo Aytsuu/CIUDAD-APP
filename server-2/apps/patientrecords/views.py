@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
@@ -11,7 +12,7 @@ from django.http import Http404
 from apps.healthProfiling.models import PersonalAddress
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentProfileListSerializer
-
+from .utils import *
 
 @api_view(['GET'])
 def get_resident_profile_list(request):
@@ -424,3 +425,69 @@ class  DeleteUpdateDiagnosisView(generics.RetrieveUpdateDestroyAPIView):
             return super().get_object()
         except NotFound:
             return Response({"error": "Diagnosis record not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+class GetCompletedFollowUpVisits(APIView):
+    """
+    API endpoint to get all completed follow-up visits for a specific patient
+    """
+    def get(self, request, pat_id):
+        try:
+            # Get completed visits using the utility function
+            visits = get_completed_followup_visits(pat_id)
+            
+            # Serialize the data
+            serialized_visits = [{
+                'id': visit.followv_id,
+                'date': visit.followv_date.isoformat(),
+                'description': visit.followv_description,
+                'status': visit.followv_status,
+                'patrec_id': visit.patrec_id,
+                'created_at': visit.created_at.isoformat() if visit.created_at else None,
+                'updated_at': visit.updated_at.isoformat() if visit.updated_at else None
+            } for visit in visits]
+            
+            response_data = {
+                'count': visits.count(),
+                'results': serialized_visits
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+
+
+class GetPendingFollowUpVisits(APIView):
+    """
+    API endpoint to get all completed follow-up visits for a specific patient
+    """
+    def get(self, request, pat_id):
+        try:
+            # Get completed visits using the utility function
+            visits = get_pending_followup_visits(pat_id)
+            
+            # Serialize the data
+            serialized_visits = [{
+                'id': visit.followv_id,
+                'date': visit.followv_date.isoformat(),
+                'description': visit.followv_description,
+                'status': visit.followv_status,
+                'patrec_id': visit.patrec_id,
+                'created_at': visit.created_at.isoformat() if visit.created_at else None
+            } for visit in visits]
+            
+            response_data = {
+                'count': visits.count(),
+                'results': serialized_visits
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+  

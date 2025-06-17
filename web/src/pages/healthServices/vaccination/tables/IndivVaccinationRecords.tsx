@@ -34,6 +34,7 @@ import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { PatientInfoCard } from "@/components/ui//patientInfoCard";
 import { Label } from "@/components/ui/label";
+import { useVaccinationCount } from "../queries/VacCount";
 
 type filter = "all" | "partially_vaccinated" | "completed";
 
@@ -165,20 +166,26 @@ export default function IndivVaccinationRecords() {
       staleTime: 0,
     });
 
-  // Fetch vaccination count
-  const { data: vaccinationCount, isLoading: isVaccinationCountLoading } =
-    useQuery({
-      queryKey: ["vaccinationCount", patientData.pat_id],
-      queryFn: async () => {
-        const count = await getVaccinationCount(patientData.pat_id);
-        console.log("Vaccination count:", count);
-        return count;
-      },
-      enabled: !!patientData.pat_id,
-      refetchOnMount: true,
-      staleTime: 0,
-    });
+  // // Fetch vaccination count
+  // const { data: vaccinationCount, isLoading: isVaccinationCountLoading } =
+  //   useQuery({
+  //     queryKey: ["vaccinationCount", patientData.pat_id],
+  //     queryFn: async () => {
+  //       const count = await getVaccinationCount(patientData.pat_id);
+  //       console.log("Vaccination count:", count);
+  //       return count;
+  //     },
+  //     enabled: !!patientData.pat_id,
+  //     refetchOnMount: true,
+  //     staleTime: 0,
+  //   });
 
+
+   const { data: vaccinationCountData } = useVaccinationCount(patientData.pat_id);
+    const vaccinationCount = vaccinationCountData?.vaccination_count;
+    
+    
+  
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
     return vaccinationRecords.map((record: any) => {
@@ -466,8 +473,7 @@ export default function IndivVaccinationRecords() {
 
   if (
     isVaccinationRecordsLoading ||
-    isUnvaccinatedLoading ||
-    isVaccinationCountLoading
+    isUnvaccinatedLoading
   ) {
     return (
       <div className="w-full h-full">

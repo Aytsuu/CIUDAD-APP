@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { useMedicineCount } from "../queries/MedCountQueries";
 
 type filter = "all" | "requested" | "recorded" | "archived";
 
@@ -112,21 +113,25 @@ export default function IndivMedicineRecords() {
     }
   }, [location.state]);
 
-  const { data: medicineCountData } = useQuery({
-    queryKey: ["medicineRecordCount", patientData.pat_id],
-    queryFn: async () => {
-      const response = await api2.get(
-        `/medicine/medrec-count/${patientData.pat_id}/`
-      );
-      return response.data;
-    },
-    refetchOnMount: true,
-    staleTime: 0,
-  });
+  // const { data: medicineCountData } = useQuery({
+  //   queryKey: ["medicineRecordCount", patientData.pat_id],
+  //   queryFn: async () => {
+  //     const response = await api2.get(
+  //       `/medicine/medrec-count/${patientData.pat_id}/`
+  //     );
+  //     return response.data;
+  //   },
+  //   refetchOnMount: true,
+  //   staleTime: 0,
+  // });
 
-  const medicineCount = medicineCountData?.medicinerecord_count;
+  // const medicineCount = medicineCountData?.medicinerecord_count;
 
   // Fetch medicine records
+  const { data: medicineCountData } = useMedicineCount(patientData.pat_id);
+  const medicineCount = medicineCountData?.medicinerecord_count;
+  
+  
   const {
     data: medicineRecords,
     isLoading,
@@ -363,43 +368,40 @@ export default function IndivMedicineRecords() {
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-          {selectedPatientData ? (
-            <div className="mb-4">
-              <PatientInfoCard patient={selectedPatientData} />
+        {selectedPatientData ? (
+          <div className="mb-4">
+            <PatientInfoCard patient={selectedPatientData} />
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <Label className="text-base font-semibold text-yellow-500">
+                No patient selected
+              </Label>
             </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="h-4 w-4 text-yellow-500" />
-                <Label className="text-base font-semibold text-yellow-500">
-                  No patient selected
-                </Label>
-              </div>
-              <p className="text-sm text-gray-700">
-                Please select a patient from the medicine records page first.
+            <p className="text-sm text-gray-700">
+              Please select a patient from the medicine records page first.
+            </p>
+          </div>
+        )}
+
+        {/* Total Me */}
+        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm ">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 border  rounded-md flex items-center justify-center shadow-sm">
+              <Pill className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-800">
+                Total Medicine Records
+              </p>
+              <p className="text-3xl font-bold text-gray-900">
+                {medicineCount !== undefined ? medicineCount : "0"}
               </p>
             </div>
-          )}
-
-            {/* Total Me */}
-            <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm ">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 border  rounded-md flex items-center justify-center shadow-sm">
-                  <Pill className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Total Medicine Records
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900">
-                  {medicineCount !== undefined ? medicineCount : "0"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-    
-        
+          </div>
+        </div>
 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
           <div className="flex flex-col md:flex-row gap-4 w-full">
