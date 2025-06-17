@@ -16,6 +16,17 @@ class PartialUpdateMixin:
                     self.fields[field].required = False
         return super().to_internal_value(data)
     
+class TransientAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransientAddress
+        fields = '__all__'
+
+class TransientSerializer(serializers.ModelSerializer):
+    tradd_id = TransientAddressSerializer(read_only=True)
+    
+    class Meta:
+        model = Transient
+        fields = '__all__'
 
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()
@@ -121,10 +132,21 @@ class PatientSerializer(serializers.ModelSerializer):
 
         print("❓ Address not found for any type.")
         return None
-
-
-
     
+    
+    # def get_spouse(self, obj):
+    #     try:
+    #         spouse = obj.spouse.get()
+    #         return {
+    #             'spouse_type': spouse.spouse_type,
+    #             'spouse_lname': spouse.spouse_lname,
+    #             'spouse_fname': spouse.spouse_fname,
+    #             'spouse_mnane': spouse.spouse_mnane,
+    #             'spouse_occupation': spouse.spouse_occupation,
+    #             'spouse_dob': spouse.spouse_dob.strftime('%Y-%m-%d') if spouse.spouse_dob else None,
+    #         }
+    #     except Spouse.DoesNotExist:
+    #         return None
 
 
 class PatientRecordSerializer(serializers.ModelSerializer):

@@ -26,12 +26,12 @@ class Prenatal_Form(models.Model):
             prefix = f'PF{month}{year}'
             count = Prenatal_Form.objects.filter(pf_id__startswith=prefix).count() + 1
             self.pf_id = f'{prefix}{str(count).zfill(4)}'
-
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'prenatal_form'
+        ordering = ['created_at']
 
-# next: illness
 
 class Previous_Hospitalization(models.Model):
     pfph_id = models.BigAutoField(primary_key=True)
@@ -141,6 +141,7 @@ class PostpartumRecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, null=True, related_name='postpartum_record', db_column='pf_id')
+    patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
     # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
 
     def save(self, *args, **kwargs):
@@ -152,6 +153,7 @@ class PostpartumRecord(models.Model):
 
     class Meta:
         db_table = 'postpartum_record'  
+        ordering = ['created_at']
 
 
 class PostpartumDeliveryRecord(models.Model):

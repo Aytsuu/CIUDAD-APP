@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPrenatalRecord, addSpouse } from "../restful-api/prenatalPOST";
+import { addPrenatalRecord, addSpouse } from "../restful-api/maternalPOST";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 

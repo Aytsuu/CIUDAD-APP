@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getPatients} from "../restful-api/prenatalGetAPI";
+import { getPatients} from "../restful-api/maternalGetAPI";
 
 export const usePatients = () => {
     return useQuery({

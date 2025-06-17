@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   Plus,
   FileInput,
@@ -30,6 +30,8 @@ import { Separator } from "@/components/ui/separator"
 import CardLayout from "@/components/ui/card/card-layout"
 import { Button } from "@/components/ui/button/button"
 
+import { usePatients } from "./queries/patientsFetchQueries"
+
 type Report = {
   id: string
   sitio: string
@@ -37,6 +39,22 @@ type Report = {
   firstName: string
   mi: string
   type: string
+}
+
+
+interface Patients {
+  pat_id: string;
+  pat_type: string;
+
+  personal_info: {
+    per_fname: string;
+    per_lname: string;
+    per_mname: string;
+  };
+
+  address: {
+    sitio?: string;
+  }
 }
 
 // Define the columns for the data table
@@ -48,7 +66,7 @@ export const columns: ColumnDef<Report>[] = [
         className="flex w-full justify-center items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Resident No.
+        Patient No.
         <ArrowUpDown size={14} />
       </div>
     ),
@@ -94,7 +112,7 @@ export const columns: ColumnDef<Report>[] = [
   },
   {
     accessorKey: "mi",
-    header: "M.I",
+    header: "Middle Name",
     cell: ({ row }) => <div className="hidden xl:block">{row.getValue("mi")}</div>,
   },
   {
@@ -116,68 +134,68 @@ export const columns: ColumnDef<Report>[] = [
 ]
 
 // Sample data
-export const reports: Report[] = [
-  {
-    id: "001",
-    sitio: "Sitio A",
-    lastName: "Smith",
-    firstName: "John",
-    mi: "D",
-    type: "Resident",
-  },
-  {
-    id: "002",
-    sitio: "Sitio A",
-    lastName: "Smith",
-    firstName: "Jane",
-    mi: "L",
-    type: "Resident",
-  },
-  {
-    id: "003",
-    sitio: "Sitio B",
-    lastName: "Johnson",
-    firstName: "Robert",
-    mi: "K",
-    type: "Transient",
-  },
-  {
-    id: "004",
-    sitio: "Sitio B",
-    lastName: "Johnson",
-    firstName: "Mary",
-    mi: "J",
-    type: "Resident",
-  },
-  {
-    id: "005",
-    sitio: "Sitio C",
-    lastName: "Williams",
-    firstName: "David",
-    mi: "R",
-    type: "Transient",
-  },
-  // Add more sample data as needed
-]
+// export const reports: Report[] = [
+//   {
+//     id: "001",
+//     sitio: "Sitio A",
+//     lastName: "Smith",
+//     firstName: "John",
+//     mi: "D",
+//     type: "Resident",
+//   },
+//   {
+//     id: "002",
+//     sitio: "Sitio A",
+//     lastName: "Smith",
+//     firstName: "Jane",
+//     mi: "L",
+//     type: "Resident",
+//   },
+//   {
+//     id: "003",
+//     sitio: "Sitio B",
+//     lastName: "Johnson",
+//     firstName: "Robert",
+//     mi: "K",
+//     type: "Transient",
+//   },
+//   {
+//     id: "004",
+//     sitio: "Sitio B",
+//     lastName: "Johnson",
+//     firstName: "Mary",
+//     mi: "J",
+//     type: "Resident",
+//   },
+//   {
+//     id: "005",
+//     sitio: "Sitio C",
+//     lastName: "Williams",
+//     firstName: "David",
+//     mi: "R",
+//     type: "Transient",
+//   },
+//   // Add more sample data as needed
+// ]
 
-// Generate additional sample data for testing pagination
-const generateMoreData = (): Report[] => {
-  const moreData: Report[] = []
-  for (let i = 6; i <= 150; i++) {
-    moreData.push({
-      id: `${i.toString().padStart(3, "0")}`,
-      sitio: `Sitio ${String.fromCharCode(67 + Math.floor((i - 1) / 2))}`,
-      lastName: `LastName${i}`,
-      firstName: `FirstName${i}`,
-      mi: String.fromCharCode(65 + (i % 26)),
-      type: i % 5 === 0 ? "Transient" : "Resident",
-    })
-  }
-  return moreData
-}
+// // Generate additional sample data for testing pagination
+// const generateMoreData = (): Report[] => {
+//   const moreData: Report[] = []
+//   for (let i = 6; i <= 150; i++) {
+//     moreData.push({
+//       id: `${i.toString().padStart(3, "0")}`,
+//       sitio: `Sitio ${String.fromCharCode(67 + Math.floor((i - 1) / 2))}`,
+//       lastName: `LastName${i}`,
+//       firstName: `FirstName${i}`,
+//       mi: String.fromCharCode(65 + (i % 26)),
+//       type: i % 5 === 0 ? "Transient" : "Resident",
+//     })
+//   }
+//   return moreData
+// }
 
-// Complete dataset combining initial and generated data
-const fullDataset: Report[] = [...reports, ...generateMoreData()]
+// // Complete dataset combining initial and generated data
+// const fullDataset: Report[] = [...reports, ...generateMoreData()]
 
 // Custom pagination component to replace PaginationLayout
 const CustomPagination = ({
@@ -292,25 +310,50 @@ const CustomPagination = ({
   )
 }
 
+const transformPatientsToReports = (patients: Patients[]): Report[] => {
+  return patients.map((patient) => ({
+    id: patient.pat_id.toString(),
+    sitio: patient.address?.sitio || "N/A",
+    lastName: patient.personal_info?.per_lname || "",
+    firstName: patient.personal_info?.per_fname || "",
+    mi: patient.personal_info?.per_mname || "",
+    type: patient.pat_type || "Resident", // assuming pat_type maps to resident/transient
+  }));
+};
+
 export default function PatientsRecord() {
   const [searchQuery, setSearchQuery] = useState("")
   const [pageSize, setPageSize] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
-  const [filteredData, setFilteredData] = useState<Report[]>(fullDataset)
+  const [filteredData, setFilteredData] = useState<Report[]>([])
   const [currentData, setCurrentData] = useState<Report[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [filterBy, setFilterBy] = useState("")
 
-  // Calculate statistics
-  const totalPatients = fullDataset.length
-  const residents = fullDataset.filter((patient) => patient.type.includes("Resident")).length
-  const transients = fullDataset.filter((patient) => patient.type.includes("Transient")).length
-  const residentPercentage = Math.round((residents / totalPatients) * 100)
-  const transientPercentage = Math.round((transients / totalPatients) * 100)
+  const { data: patientData, isLoading: patientLoading } = usePatients();
+
+  const transformedPatients = useMemo(() => {
+    if(!patientData) return [];
+    return transformPatientsToReports(patientData);
+  }, [patientData])
+
+  const patientDataset = transformedPatients;
+
+  const totalPatients = patientDataset.length
+  const residents = patientDataset.filter((patient) => patient.type.includes("Resident")).length
+  const transients = patientDataset.filter((patient) => patient.type.includes("Transient")).length
+  const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0
+  const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0
 
   // Filter data based on search query
   useEffect(() => {
-    const filtered = fullDataset.filter((report) => {
+    if (!patientDataset.length) {
+      setFilteredData([]);
+      setTotalPages(0);
+      return;
+    }
+
+    const filtered = patientDataset.filter((report) => {
       const searchText =
         `${report.id} ${report.sitio} ${report.lastName} ${report.firstName} ${report.mi} ${report.type}`.toLowerCase()
       return searchText.includes(searchQuery.toLowerCase())
@@ -325,9 +368,9 @@ export default function PatientsRecord() {
     }
 
     setFilteredData(filteredDataTemp)
-    setTotalPages(Math.ceil(filtered.length / pageSize))
+    setTotalPages(Math.ceil(filteredDataTemp.length / pageSize))
     setCurrentPage(1) // Reset to first page when search changes
-  }, [searchQuery, pageSize, filterBy])
+  }, [searchQuery, pageSize, filterBy, patientDataset])
 
   // Update data based on page and page size
   useEffect(() => {
@@ -335,6 +378,24 @@ export default function PatientsRecord() {
     const endIndex = startIndex + pageSize
     setCurrentData(filteredData.slice(startIndex, endIndex))
   }, [currentPage, pageSize, filteredData])
+
+  // Show loading state
+  if (patientLoading) {
+    return (
+      <div className="w-full flex justify-center items-center h-64">
+        <div className="text-lg">Loading patients...</div>
+      </div>
+    );
+  }
+
+  // Show empty state if no data
+  if (!patientData || patientData.length === 0) {
+    return (
+      <div className="w-full flex justify-center items-center h-64">
+        <div className="text-lg text-gray-500">No patients found</div>
+      </div>
+    );
+  }
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)

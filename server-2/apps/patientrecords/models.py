@@ -1,4 +1,6 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models import Max
+from django.utils import timezone
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
 from django.utils import timezone
@@ -107,8 +109,22 @@ class Patient(models.Model):
             year = dob.year if dob else timezone.now().year
             type_code = 'R' if self.pat_type == 'Resident' else 'T'
             prefix = f'P{type_code}{year}'
-            count = Patient.objects.filter(pat_id__startswith=prefix).count() + 1
-            self.pat_id = f'{prefix}{str(count).zfill(4)}'
+            
+            existing_patients = Patient.objects.filter(
+                pat_id__startswith=prefix
+            ).values_list('pat_id', flat=True)
+            
+            existing_numbers = []
+            for pat_id in existing_patients:
+                try:
+                    number_part = pat_id[len(prefix):]
+                    existing_numbers.append(int(number_part))
+                except (ValueError, IndexError):
+                    continue
+            
+            # Get the next available number
+            next_number = max(existing_numbers, default=0) + 1
+            self.pat_id = f'{prefix}{str(next_number).zfill(4)}'
 
         super().save(*args, **kwargs)
 
@@ -176,10 +192,10 @@ class Spouse(models.Model):
     spouse_type = models.CharField(max_length=10)
     spouse_lname = models.CharField(max_length=50, default="")
     spouse_fname = models.CharField(max_length=50, default="")
-    spouse_mnane = models.CharField(max_length=50, default="")
+    spouse_mname = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='spouse', db_column='pat_id')
+    rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='spouse', db_column='rp_id', null=True)
 
     class Meta:
         db_table = 'spouse'
