@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card/card";
 import { Pill, Syringe, Package, Bandage } from "lucide-react";
-import VaccinationList from "./VaccineList";
 import FirstAidList from "./FirstAidList";
 import MedicineList from "./MedicineList";
 import CommodityList from "./CommodityList";
+import AntigenList from "./AntigenList";
 
 export default function MainInventoryList() {
   // Retrieve the selected view from local storage, default to "medicine"
@@ -105,7 +105,7 @@ export default function MainInventoryList() {
                 <MedicineList />
               </TabsContent>
               <TabsContent value="vaccine" className="mt-0">
-                <VaccinationList />
+                <AntigenList />
               </TabsContent>
               <TabsContent value="commodity" className="mt-0">
                 <CommodityList />

@@ -74,4 +74,3 @@ urlpatterns = [
 
     path('fp-records-by-patient/<str:patient_id>/', get_fp_records_for_patient, name='fp_records_by_patient'),
 ]
-

@@ -120,7 +120,7 @@ class FP_Pelvic_Exam(models.Model):
     pelvic_id = models.AutoField(primary_key=True)
     PELVIC_EXAM_CHOICES = [("normal", "Normal"),("mass", "Mass"),("abnormal_discharge", "Abnormal Discharge"),("cervical_abnormalities", "Cervical Abnormalities"),("warts", "Warts"),("polyp_or_cyst", "Polyp or Cyst"),("inflammation_or_erosion", "Inflammation or Erosion"),("bloody_discharge", "Bloody Discharge")]
     
-    pelvicExamination = models.CharField(max_length=30, choices=PELVIC_EXAM_CHOICES)
+#     pelvicExamination = models.CharField(max_length=30, choices=PELVIC_EXAM_CHOICES)
     
     CERVICAL_CONSISTENCY_CHOICES = [("firm", "Firm"),("soft", "Soft")]
     cervicalConsistency = models.CharField(max_length=20, choices=CERVICAL_CONSISTENCY_CHOICES)

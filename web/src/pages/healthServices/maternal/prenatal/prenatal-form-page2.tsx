@@ -1,6 +1,8 @@
 import { UseFormReturn } from "react-hook-form"
+import { useState } from "react";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form/form";
 import { z } from "zod"
+import { IoDocumentTextOutline } from "react-icons/io5";
 
 import { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
@@ -12,51 +14,87 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { useState } from "react";
+import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
+import LaboratoryResults, { createInitialLabResults, getLabResultsSummary, type LabResults } from "@/components/ui/lab-result";
 
-export default function PrenatalFormSecPg(
-    {form, onSubmit, back}: {
+
+export default function PrenatalFormSecPg({form, onSubmit, back}: {
         form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>,
         onSubmit: () => void,
         back: () => void,
     }
 ){
     const submit = () => {
+        const labSummary = getLabResultsSummary(labResults);
+        console.log("Laboratory Results Summary: ", labSummary);
+
         form.trigger(["previousPregnancy","prenatalVaccineInfo", "presentPregnancy", "labResults"]).then((isValid) => {
             if(isValid){
+                console.log("Form is valid: ", isValid);
+                console.log("Lab Results: ", labSummary);
                 onSubmit();
             }
         })
         window.scrollTo(0, 0);
     }
 
-	 //tt type
-	 type TetanusToxoidType = {
-		ttOrtd: string;
-		ttStatus: string;
-		ttDateGiven: string;
-	 }
+    //tt type
+    type TetanusToxoidType = {
+        ttOrtd: string;
+        ttStatus: string;
+        ttDateGiven: string;
+    }
 
-	 const [ttRecords, setTTRecords] = useState<TetanusToxoidType[]>([]);
-
-	 const addTTRecord = () => {
+    // tetanus toxoid history
+    const [ttRecords, setTTRecords] = useState<TetanusToxoidType[]>([]);
+    const addTTRecord = () => {
         const ttstatus = form.getValues("prenatalVaccineInfo.ttStatus")
 
-		const newTTData: TetanusToxoidType = {
-			ttOrtd: form.getValues("prenatalVaccineInfo.ttOrtd"),
-			ttStatus: `TT${ttstatus}`,
-			ttDateGiven: form.getValues("prenatalVaccineInfo.ttDateGiven")
-		}
+        const newTTData: TetanusToxoidType = {
+            ttOrtd: form.getValues("prenatalVaccineInfo.ttOrtd"),
+            ttStatus: `TT${ttstatus}`,
+            ttDateGiven: form.getValues("prenatalVaccineInfo.ttDateGiven")
+        }
 
-		setTTRecords(prev => {
-			const upd = [...prev, newTTData]
-			console.log("Updated TT Records:", upd);
-			return upd;
-		});
+        setTTRecords(prev => {
+            const upd = [...prev, newTTData]
+            console.log("Updated TT Records:", upd);
+            return upd;
+        });
 
-		form.setValue("prenatalVaccineInfo.ttStatus", "");
-		form.setValue("prenatalVaccineInfo.ttDateGiven", "");
-	 }
+        form.setValue("prenatalVaccineInfo.ttStatus", "");
+        form.setValue("prenatalVaccineInfo.ttDateGiven", "");
+    }
+
+    // lab result
+    const [urinalysisFiles, setUrinalysisFiles] = useState<MediaUploadType>([]);
+    const [cbcFiles, setCbcFiles] = useState<MediaUploadType>([]);
+    const [sgotSgptFiles, setSgotSgptFiles] = useState<MediaUploadType>([]);
+    const [creatinineFiles, setCreatinineFiles] = useState<MediaUploadType>([]);
+    const [buaBunFiles, setBuaBunFiles] = useState<MediaUploadType>([]);
+    const [syphillisFiles, setSyphillisFiles] = useState<MediaUploadType>([]);
+    const [hivTestFiles, setHivTestFiles] = useState<MediaUploadType>([]);
+    const [hepaBFiles, setHepaBFiles] = useState<MediaUploadType>([]);
+    const [bloodTypingFiles, setBloodTypingFiles] = useState<MediaUploadType>([]);
+    const [ogct50Files, setOgct50Files] = useState<MediaUploadType>([]);
+    const [ogct100Files, setOgct100Files] = useState<MediaUploadType>([]);
+    const [activeVideoId, setActiveVideoId] = useState<string>("");
+
+    const [ labResults, setLabResults ] = useState<LabResults>(createInitialLabResults());
+    // const [labResults, setLabResults] = useState({
+    //     urinalysis: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     cbc: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     sgotSgpt: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     creatinineSerum: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     buaBun: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     syphilis: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     hivTest: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     hepaB: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     bloodTyping: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     ogct50: {checked: false, date: "", files: null, toBeFollowed: false},
+    //     ogct100: {checked: false, date: "", files: null, toBeFollowed: false},
+    // })
+
      
     return(
         <div className="bg-white flex flex-col min-h-0 h-auto md:p-10 rounded-lg overflow-auto">
@@ -337,80 +375,13 @@ export default function PrenatalFormSecPg(
                     </div>
 
                     {/* laboratory exam */}
-                    <Separator className="mt-10"/>
-                    <h3 className="text-md font-bold mt-8">LABORATORY RESULTS: (DATE AND RESULT)</h3>
-                    <div className="flex justify-end">
-                        <Button>Upload Lab Result</Button>
-                    </div>
-                    <Label>PRE-ECLAMPSIA PANEL:</Label>
-                    <div className="grid grid-cols-6 gap-4 mt-2">
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.urinalysisDate"
-                            label="URINALYSIS"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.cbcDate"
-                            label="CBC"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.sgotSgptDate"
-                            label="SGOT/SGPT"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.creatinineDate"
-                            label="CREATININE SERUM"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.buaBunDate"
-                            label="BUA/BUN"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.syphillisDate"
-                            label="SYPHILLIS"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.hivTestDate"
-                            label="HIV TEST"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.hepaBDate"
-                            label="HEPA B"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.bloodTypingDate"
-                            label="BLOOD TYPING"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.ogct50Date"
-                            label="OGCT: 50 GMS"
-                            type="date"
-                        />
-                        <FormDateTimeInput
-                            control={form.control}
-                            name="labResults.ogct50Date"
-                            label="100 GMS"
-                            type="date"
+                    <div>
+                        <LaboratoryResults
+                            labResults={labResults}
+                            onLabResultsChange={setLabResults}
                         />
                     </div>
+                    
 
                     <div className="mt-8">
                         <FormInput

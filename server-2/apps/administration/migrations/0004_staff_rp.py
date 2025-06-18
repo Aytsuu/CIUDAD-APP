@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('administration', '0003_alter_position_staff'),
+        # ('administration', '0003_alter_position_staff'),
         # ('healthProfiling', '0007_address_household_add_personaladdress'),
     ]
 

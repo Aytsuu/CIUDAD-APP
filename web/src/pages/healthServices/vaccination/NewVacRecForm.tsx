@@ -23,11 +23,11 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
+import { fetchVaccinesWithStock } from "./restful-api/Vaccination/FetchVaccination";
 import { format } from "date-fns";
-import { patient } from "@/pages/animalbites/postrequest";
-import { calculateNextVisitDate } from "./FunctionHelpers";
-
+import { calculateNextVisitDate } from "./Calculatenextvisit";
+import { useSubmitStep1, useSubmitStep2 } from "./queries/NewVacRecordQueries";
+import { calculateAge } from "@/helpers/ageCalculator";
 export default function VaccinationForm() {
   const navigate = useNavigate();
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
@@ -44,20 +44,19 @@ export default function VaccinationForm() {
       pat_id: patientData.pat_id || "",
       vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
-      lname: patientData.lname || "",
-      fname: patientData.fname || "",
-      mname: patientData.mname || "",
-      age: patientData.age || "",
-      sex: patientData.sex || "",
-      dob: patientData.dob || "",
-      householdno: patientData.householdno || "",
-      street: patientData.street || "",
-      sitio: patientData.sitio || "",
-      barangay: patientData.barangay || "",
-      city: patientData.city || "",
-      province: patientData.province || "",
+      // lname: patientData.lname || "",
+      // fname: patientData.fname || "",
+      // mname: patientData.mname || "",
+      // age: patientData.age || "",
+      // sex: patientData.sex || "",
+      age: patientData.age,
+      // householdno: patientData.householdno || "",
+      // street: patientData.street || "",
+      // sitio: patientData.sitio || "",
+      // barangay: patientData.barangay || "",
+      // city: patientData.city || "",
+      // province: patientData.province || "",
       assignto: "",
-      patientType: patientData.patientType || "Resident",
     },
   });
 
@@ -67,8 +66,8 @@ export default function VaccinationForm() {
       pr: "",
       temp: "",
       o2: "",
-      bpsystolic: undefined,
-      bpdiastolic: undefined,
+      bpsystolic: "",
+      bpdiastolic: "",
     },
   });
 
@@ -76,456 +75,46 @@ export default function VaccinationForm() {
     console.log("Form errors:", form.formState.errors);
   }, [form.formState.errors]);
 
-  const deductVaccineStock = async (vaccineId: number) => {
-    try {
-      // Get current vaccine stock
-      const inventoryList = await api.get("inventory/vaccine_stocks/");
+  const submitStep1 = useSubmitStep1();
+  const submitStep2 = useSubmitStep2();
 
-      const existingItem = inventoryList.data.find(
-        (item: any) => item.vacStck_id === vaccineId
-      );
-      if (!existingItem) {
-        throw new Error("Vaccine item not found. Please check the ID.");
-      }
-
-      const currentQtyAvail = existingItem.vacStck_qty_avail;
-      const existingUsedItem = existingItem.vacStck_used;
-
-      if (currentQtyAvail < 1) {
-        throw new Error("Insufficient vaccine stock available.");
-      }
-
-      const updatePayload = {
-        vacStck_qty_avail: currentQtyAvail - 1,
-        vacStck_used: existingUsedItem + 1,
-      };
-
-      await api.put(`inventory/vaccine_stocks/${vaccineId}/`, updatePayload);
-
-      // Record the transaction
-      const transactionPayload = {
-        antt_qty: "1 dose",
-        antt_action: "Used from TT",
-        staff: 1, // Replace with actual staff ID
-        vacStck_id: vaccineId,
-      };
-
-      await api.post("inventory/antigens_stocks/", transactionPayload);
-      return true;
-    } catch (error) {
-      console.error("Vaccine stock update failed:", error);
-      throw error;
-    }
+  const onSubmitStep1 = (data: VaccineSchemaType) => {
+    submitStep1.mutate({
+      data,
+      assignmentOption,
+      form: { reset: form.reset },
+    });
   };
 
-  const onSubmitStep1 = async (data: VaccineSchemaType) => {
-    try {
-      if (assignmentOption === "other") {
-        let patrec_id: string | null = null;
-        let vacrec_id: string | null = null;
-
-        try {
-          // Step 1: Create patient record
-          const serviceResponse = await api.post(
-            "patientrecords/patient-record/",
-            {
-              patrec_type: "Vaccination",
-              pat_id: data.pat_id,
-              created_at: new Date().toISOString(),
-            }
-          );
-          patrec_id = serviceResponse.data.patrec_id;
-
-          // Step 2: Create vaccination record
-          const vaccinationRecordResponse = await api.post(
-            "vaccination/vaccination-record/",
-            {
-              patrec_id: patrec_id,
-              vacrec_status: "forwarded",
-              varec_total_doses: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }
-          );
-          vacrec_id = vaccinationRecordResponse.data.vacrec_id;
-
-          // Step 4: Create vaccination history
-          await api.post("vaccination/vaccination-history/", {
-            vachist_doseNo: 0,
-            vachist_status: "forwarded",
-            vachist_age: data.age,
-
-            staff_id: 1,
-            vacrec: vacrec_id,
-            vital: null,
-            created_at: new Date().toISOString(),
-            vacStck: data.vaccinetype,
-            assigned_to: parseInt(data.assignto, 10),
-          });
-
-          toast.success(
-            `Form assigned to others for Step 2 completion!`
-          );
-          form.reset();
-        } catch (error) {
-          console.error("Error during submission:", error);
-
-          // Rollback in reverse order of creation
-          try {
-            if (vacrec_id) {
-              await api.delete(`vaccination/vaccination-record/${vacrec_id}/`);
-            }
-          } catch (deleteError) {
-            console.error(
-              "Error rolling back vaccination record:",
-              deleteError
-            );
-          }
-
-          try {
-            if (patrec_id) {
-              await api.delete(`patientrecords/patient-record/${patrec_id}/`);
-            }
-          } catch (deleteError) {
-            console.error("Error rolling back patient record:", deleteError);
-          }
-
-          throw error;
-        }
-      }
-    } catch (error) {
-      console.error("Form submission error:", error);
-      toast.error("Form submission failed. Please check the fields.", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
-    }
-  };
-
-  const onSubmitStep2 = async (data: VitalSignsType) => {
-    // First check if form2 (Step 2) is valid
-    const vaccineType = form.getValues("vaccinetype");
-
-    // Check if vaccine type is selected
-    if (!vaccineType) {
-      form.setError("vaccinetype", {
-        type: "manual",
-        message: "Please select a vaccine type",
-      });
-      toast.error("Please select a vaccine type");
-      return;
-    }
-
-    let patrec_id: string | null = null;
-    let vacrec_id: string | null = null;
-    let vital_id: string | null = null;
-    let vachist_id: string | null = null;
-    let followv_id: string | null = null;
-
-    try {
-      // Step 1: Create patient record
-      const vacStck = form.getValues("vaccinetype");
-      const vacStck_id = parseInt(vacStck, 10);
-      const vacStckResponse = await api.get(
-        `inventory/vaccine_stocks/${vacStck_id}/`
-      );
-      const vaccineData = vacStckResponse.data;
-
-      const { no_of_doses: maxDoses } = vacStckResponse.data.vaccinelist;
-      console.log("Max doses allowed:", maxDoses);
-
-      // Step 1: Create patient record
-      const serviceResponse = await api.post("patientrecords/patient-record/", {
-        patrec_type: "Vaccination",
-        pat_id: patientData.pat_id,
-        created_at: new Date().toISOString(),
-      });
-      patrec_id = serviceResponse.data.patrec_id;
-      
-      let vaccinationRecordResponse;
-
-      // // Step 2: Create vaccination record
-      // ;const vaccinationRecordResponse = await api.post(
-      //   "vaccination/vaccination-record/",
-      //   { patrec_id: patrec_id }
-      // );
-      // vacrec_id = vaccinationRecordResponse.data.vacrec_id
-
-
-
-      if (maxDoses === 1) {
-        vaccinationRecordResponse = await api.post(
-          "vaccination/vaccination-record/",
-          {
-            patrec_id: patrec_id,
-            vacrec_status: "completed",
-            varec_total_doses: maxDoses,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        );
-        vacrec_id = vaccinationRecordResponse.data.vacrec_id;
-      } else {
-        vaccinationRecordResponse = await api.post(
-          "vaccination/vaccination-record/",
-          {
-            patrec_id: patrec_id,
-            vacrec_status: "partially vaccinated",
-            varec_total_doses: maxDoses,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        );
-        vacrec_id = vaccinationRecordResponse.data.vacrec_id;
-      }
-
-
-
-      // Step 3: Create vital signs record
-      const vitalSignsResponse = await api.post("patientrecords/vital-signs/", {
-        vital_bp_systolic: data.bpsystolic?.toString() || "",
-        vital_bp_diastolic: data.bpdiastolic?.toString() || "",
-        vital_temp: data.temp?.toString() || "",
-        vital_RR: "N/A",
-        vital_o2: data.o2?.toString() || "",
-        vital_pulse: data.pr?.toString() || "",
-
-        created_at: new Date().toISOString(),
-      });
-      vital_id = vitalSignsResponse.data.vital_id;
-
-      // Step 4: Deduct vaccine from stock
-      await deductVaccineStock(vacStck_id);
-
-      // // Step 5: Create vaccination history with partial status
-      // const vaccinationhistResponse = await api.post(
-      //   "vaccination/vaccination-history/",
-      //   {
-      //     vachist_doseNo: 0,
-      //     vachist_status: "processing",
-      //     vachist_age: form.getValues("age"),
-      //     staff_id: 1,
-      //     serv_id: patrec_id,
-      //     vacrec: vacrec_id,
-      //     vital: vital_id,
-      //     vacStck: vacStck_id,
-      //     updated_at: new Date().toISOString(),
-      //     created_at: new Date().toISOString(),
-      //     assigned_to: null,
-      //   }
-      // );
-
-      // if (vaccineData.vaccinelist.no_of_doses >= 2) {
-      //   const dose2Interval = vaccineData.vaccinelist.intervals.find(
-      //     (interval: {
-      //       dose_number: number;
-      //       interval: number;
-      //       time_unit: string;
-      //     }) => interval.dose_number === 2
-      //   );
-
-      //   if (dose2Interval) {
-      //     const nextVisitDate = calculateNextVisitDate(
-      //       dose2Interval.interval,
-      //       dose2Interval.time_unit,
-      //       new Date().toISOString()
-      //     );
-
-      //     console.log("Next visit should be on:", nextVisitDate.toISOString());
-      //     const followUpVisitResponse = await api.post(
-      //       "patientrecords/follow-up-visit/",
-      //       {
-      //         followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
-      //         patrec: patrec_id,
-      //         followv_status: "pending",
-      //         created_at: new Date().toISOString(),
-      //       }
-      //     );
-      //     followv_id = followUpVisitResponse.data.followv_id;
-      //   }
-      // }
-
-      // vachist_id = vaccinationhistResponse.data.vachist_id;
-      // console.log("Vaccination history ID:", vachist_id);
-
-      // //  Step 4: Get previous dose number for this vaccine and patient
-      // const previousDoses = await api.get(
-      //   `vaccination/vaccination-history/${vachist_id}/`
-      // );
-      // const doseCount = Array.isArray(previousDoses.data)
-      //   ? previousDoses.data.length
-      //   : 0;
-      // const doseNumber = doseCount + 1;
-
-      // if (maxDoses === 1) {
-      //   await api.put(`vaccination/vaccination-history/${vachist_id}/`, {
-      //     vachist_doseNo: doseNumber,
-      //     vachist_status: "completed",
-      //   });
-      //   console.log("Vaccination max dose 1 updated successfully");
-      //   toast.success(`Vaccination record created successfully! `);
-      //   return;
-      // } else if (maxDoses > doseNumber) {
-      //   await api.put(`vaccination/vaccination-history/${vachist_id}/`, {
-      //     vachist_doseNo: doseNumber,
-      //     vachist_status: "Partially Vaccinated",
-      //     followv: followv_id,
-      //   });
-      //   toast.success(`Vaccination record created successfully! `);
-
-      //   return;
-      // }
-
-
-      
-      let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
-
-      if (vac_type_choices === "routine") {
-        
-          let interval = vaccineData.vaccinelist.routine_frequency.interval
-          let time_unit = vaccineData.vaccinelist.routine_frequency.time_unit
-
-          console.log("Interval:", interval);
-          console.log("Time unit:", time_unit);
-          const nextVisitDate = calculateNextVisitDate(
-            interval,
-            time_unit,
-            new Date().toISOString()
-          );
-          
-
-            console.log( "Next visit should be on:",nextVisitDate.toISOString() );
-            const followUpVisitResponse = await api.post(
-              "patientrecords/follow-up-visit/",
-              {
-                followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
-                patrec: patrec_id,
-                followv_status: "pending",
-                created_at: new Date().toISOString(),
-              }
-            );
-            followv_id = followUpVisitResponse.data.followv_id;
-          
-        
-      } else {
-        if (vaccineData.vaccinelist.no_of_doses >= 2) {
-          const dose2Interval = vaccineData.vaccinelist.intervals.find(
-            (interval: {
-              dose_number: number;
-              interval: number;
-              time_unit: string;
-            }) => interval.dose_number === 2
-          );
-
-          if (dose2Interval) {
-            const nextVisitDate = calculateNextVisitDate(
-              dose2Interval.interval,
-              dose2Interval.time_unit,
-              new Date().toISOString()
-            );
-
-            console.log(
-              "Next visit should be on:",
-              nextVisitDate.toISOString()
-            );
-            const followUpVisitResponse = await api.post(
-              "patientrecords/follow-up-visit/",
-              {
-                followv_date: nextVisitDate.toISOString().split("T")[0], // Ensure date format matches 'datefield'
-                patrec: patrec_id,
-                followv_status: "pending",
-                created_at: new Date().toISOString(),
-              }
-            );
-            followv_id = followUpVisitResponse.data.followv_id;
-          }
-        }
-      }
-
-
-      if (maxDoses === 1) {
-        // Step 5: Create vaccination history with partial status
-        await api.post("vaccination/vaccination-history/", {
-          vachist_doseNo: 1,
-          vachist_age: form.getValues("age"),
-          vachist_status: "completed",
-
-          created_at: new Date().toISOString(),
-          staff_id: 1,
-          vital: vital_id,
-          vacStck: vacStck_id,
-          assigned_to: null,
-          vacrec: vacrec_id,
-          followv: followv_id,
-        });
-      }
-      else{
-         // Step 5: Create vaccination history with partial status
-         await api.post("vaccination/vaccination-history/", {
-          vachist_doseNo: 1,
-          vachist_age: form.getValues("age"),
-          vachist_status: "partially vaccinated",
-
-          created_at: new Date().toISOString(),
-          staff_id: 1,
-          vital: vital_id,
-          vacStck: vacStck_id,
-          assigned_to: null,
-          vacrec: vacrec_id,
-          followv: followv_id,
-        });
-      }
-
-      toast.success(`Vaccination record created successfully!`);
-
-
-      form.reset();
-      form2.reset();
-      setAssignmentOption("self");
-    } catch (error) {
-      console.error("Form submission error:", error);
-
-      // Rollback in reverse order of creation
-      try {
-        if (vital_id) {
-          await api.delete(`patientrecords/vital-signs/${vital_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back vital signs:", deleteError);
-      }
-
-      try {
-        if (vacrec_id) {
-          await api.delete(`vaccination/vaccination-record/${vacrec_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back vaccination record:", deleteError);
-      }
-
-      try {
-        if (patrec_id) {
-          await api.delete(`patientrecords/patient-record/${patrec_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back patient record:", deleteError);
-      }
-
-      try {
-        if (vachist_id) {
-          await api.delete(`vaccination/vaccination-history/${vachist_id}/`);
-        }
-      } catch (deleteError) {
-        console.error("Error rolling back vaccination history:", deleteError);
-      }
-      toast.error("Form submission failed. Please check the form for errors.", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
-    }
+  const onSubmitStep2 = (data: VitalSignsType) => {
+    submitStep2.mutate({
+      data,
+      patientId: patientData?.pat_id || "",
+      form: {
+        setError: form.setError,
+        getValues: form.getValues,
+        reset: form.reset,
+      },
+      form2: { getValues: form.getValues, reset: form2.reset },
+    });
+    
   };
 
   const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock();
   useEffect(() => {
     form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
   }, [form]);
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "vaccinetype") {
+        const selectedVaccine = vaccineStocksOptions.find(
+          (vaccine) => vaccine.id === value.vaccinetype
+        );
+        console.log("Selected Vaccine ID:", selectedVaccine?.id);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, vaccineStocksOptions]);
 
   return (
     <div>
@@ -541,7 +130,7 @@ export default function VaccinationForm() {
         </Button>
         <div className="flex-col items-center mb-4">
           <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-           Vaccination Form
+            Vaccination Form
           </h1>
           <p className="text-xs sm:text-sm text-darkGray">
             Manage and view patients information
@@ -591,64 +180,51 @@ export default function VaccinationForm() {
               Basic Information
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormSelect
-                control={form.control}
-                name="patientType"
-                label="Patient Type"
-                options={[
-                  { id: "Resident", name: "Resident" },
-                  { id: "Transient", name: "Transient" },
-                  { id: "Regular", name: "Regular" },
-                ]}
-                readOnly
-              />
-
-              <FormInput
-                control={form.control}
-                name="lname"
-                label="Last Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="fname"
-                label="First Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="mname"
-                label="Middle Name"
-                readOnly
-              />
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormDateTimeInput
-                control={form.control}
-                name="dob"
-                label="Date of Birth"
-                type="date"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="age"
-                label="Age"
-                type="number"
-                readOnly
-              />
-              <FormSelect
-                control={form.control}
-                name="sex"
-                label="Sex"
-                options={[
-                  { id: "female", name: "Female" },
-                  { id: "male", name: "Male" },
-                ]}
-                readOnly
-              />
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Last Name.
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.lname || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  First Name
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.fname || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Middle Name
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.mname || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Date of Birth
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.dob || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Age</Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.age || ""}{" "}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">Sex</Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.sex || "N/A"}
+                </div>
+              </div>
             </div>
 
             <h2 className="font-semibold text-blue py-2 bg-blue-50 rounded-md mb-3">
@@ -656,42 +232,54 @@ export default function VaccinationForm() {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="householdno"
-                label="Household No."
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="street"
-                label="Street"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="sitio"
-                label="Sitio"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="barangay"
-                label="Barangay"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="city"
-                label="City"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="province"
-                label="Province"
-                readOnly
-              />
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Household No.
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.householdno || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Street
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.street || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Sitio
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.sitio || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Barangay
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.barangay || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  City
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.city || "N/A"}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-sm font-medium text-gray-700">
+                  Province
+                </Label>
+                <div className="border rounded-md p-2 bg-gray-100 text-gray-700">
+                  {patientData.province || "N/A"}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
@@ -738,7 +326,7 @@ export default function VaccinationForm() {
                   variant="outline"
                   className="w-[120px] border-gray-300 hover:bg-gray-50"
                   type="button"
-                  onClick={() => form.reset()}
+                  onClick={() => navigate(-1)}
                 >
                   Cancel
                 </Button>
@@ -815,9 +403,9 @@ export default function VaccinationForm() {
                   type="button"
                   variant="outline"
                   className="w-[120px] border-gray-300 hover:bg-gray-50"
-                  onClick={() => setAssignmentOption("other")}
+                  onClick={() => navigate(-1)}
                 >
-                  Back
+                  Cancel
                 </Button>
                 <Button type="submit" className="w-[120px]">
                   Complete

@@ -22,7 +22,7 @@ import {api} from "@/api/api";
 // }
 
 
-export const getPatientRecord =  async () => {
+export const getPatient =  async () => {
   try {
     const response = await api.get(`/patient`);
     return response.data;
@@ -41,3 +41,13 @@ export const getMedicalRecord =  async () => {
   }
 };
 
+
+
+export const getMedconRecordById = async (id: number) => {
+  try {
+    const response = await api.get(`/medical-consultation/view-medcon-record/${id}/`);
+    return response.data;
+  } catch (err) {
+    console.error(err);
+  }
+}

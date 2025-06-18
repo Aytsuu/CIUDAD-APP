@@ -7,6 +7,7 @@ from apps.patientrecords.models import PatientRecord,VitalSigns,BodyMeasurement,
 
 class MedicalConsultation_Record(models.Model):
      medrec_id = models.BigAutoField(primary_key=True)
+     medrec_status = models.CharField(max_length=100, default="pending")
      medrec_chief_complaint = models.CharField(max_length=250)
      created_at =   models.DateTimeField(auto_now_add=True)
      bhw_assignment = models.IntegerField()

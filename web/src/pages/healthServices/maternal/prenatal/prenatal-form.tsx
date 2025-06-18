@@ -12,9 +12,6 @@ import PrenatalFormSecPg from "./prenatal-form-page2"
 import PrenatalFormThirdPg from "./prenatal-form-page3"
 import PrenatalFormFourthPq from "./prenatal-form-page4"
 
-import { Card } from "@/components/ui/card/card"
-
-// import { Button } from "@/components/ui/button"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 
 
@@ -29,61 +26,41 @@ export default function PrenatalForm(){
     })
 
     // set to next page
-    const nextPage = () => {
-        setCurrentPage((prev) => prev + 1);
-        // window.scrollTo(0, 0);
-    }
+    const nextPage = () => { setCurrentPage((prev) => prev + 1); }
+    // set to prev page
+    const prevPage = () => { setCurrentPage((prev) => prev -1); }
 
-    const prevPage = () => {
-        setCurrentPage((prev) => prev -1);
-    }
-
-    // interface FormData {
-    //     [key: string]: any; // Replace with specific fields if known
-    // }
-
-    // const onSubmit = async (data: FormData): Promise<void> => {
-    //     if (currentPage < 4) {
-    //         nextPage();
-    //     } else {
-    //         console.log("Final Form Data: ", data);
-    //     }
-    // }
 
     return(
         <div>
-            {/* <Card className="w-full border-none shadow-none rounded-b-lg rounded-t-none"> */}
-                <FormProvider {...form}>
-                    {currentPage === 1 && (
-                        <PrenatalFormFirstPg 
-                            form={form}
-                            onSubmit={()=>nextPage()}
-                        />
-                    )}
-                    {currentPage === 2 && (
-                        <PrenatalFormSecPg 
-                            form={form}
-                            onSubmit={()=>nextPage()}
-                            back={()=>prevPage()}
-                        />
-                    )}
-                    {currentPage === 3 && (
-                        <PrenatalFormThirdPg
-                            form={form}
-                            onSubmit={()=>nextPage()}
-                            back={()=>prevPage()}
-                        />
-                    )}
-                    {currentPage === 4 && (
-                        <PrenatalFormFourthPq
-                            form={form}
-                            onSubmit={() => nextPage()}
-                            back={() => prevPage()}
-                        />
-                    )}
-                </FormProvider>
-                
-            {/* </Card> */}
+            <FormProvider {...form}>
+                {currentPage === 1 && (
+                    <PrenatalFormFirstPg 
+                        onSubmit={()=>nextPage()}
+                    />
+                )}
+                {currentPage === 2 && (
+                    <PrenatalFormSecPg 
+                        form={form}
+                        onSubmit={()=>nextPage()}
+                        back={()=>prevPage()}
+                    />
+                )}
+                {currentPage === 3 && (
+                    <PrenatalFormThirdPg
+                        form={form}
+                        onSubmit={()=>nextPage()}
+                        back={()=>prevPage()}
+                    />
+                )}
+                {currentPage === 4 && (
+                    <PrenatalFormFourthPq
+                        form={form}
+                        onSubmit={() => nextPage()}
+                        back={() => prevPage()}
+                    />
+                )}
+            </FormProvider>
         </div>
     )
 }

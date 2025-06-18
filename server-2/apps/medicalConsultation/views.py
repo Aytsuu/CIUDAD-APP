@@ -24,6 +24,19 @@ class PatientMedConsultationRecordView(generics.ListAPIView):
         
         
     
-class MedicalConsultationRecordView(generics.ListCreateAPIView):
+class MedicalConsultationRecordView(generics.CreateAPIView):
     serializer_class = MedicalConsultationRecordSerializer
     queryset  =MedicalConsultation_Record.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+
+class ViewMedicalConsultationRecordView(generics.ListAPIView):
+    serializer_class = MedicalConsultationRecordSerializer
+    
+    def get_queryset(self):
+        pat_id = self.kwargs['pat_id']
+        return MedicalConsultation_Record.objects.filter(
+            patrec__pat_id=pat_id
+        ).order_by('-created_at')

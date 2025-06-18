@@ -5,7 +5,14 @@ from apps.healthProfiling.serializers.base import PersonalSerializer
 from apps.healthProfiling.serializers.minimal import ResidentProfileMinimalSerializer,HouseholdMinimalSerializer
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
+from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
+from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 # serializers.py
+from apps.healthProfiling.serializers.minimal import (
+    ResidentProfileMinimalSerializer,
+    FCWithProfileDataSerializer,
+    HouseholdMinimalSerializer
+)
 from apps.healthProfiling.serializers.minimal import (
     ResidentProfileMinimalSerializer,
     FCWithProfileDataSerializer,
@@ -20,6 +27,17 @@ class PartialUpdateMixin:
                     self.fields[field].required = False
         return super().to_internal_value(data)
     
+class TransientAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TransientAddress
+        fields = '__all__'
+
+class TransientSerializer(serializers.ModelSerializer):
+    tradd_id = TransientAddressSerializer(read_only=True)
+    
+    class Meta:
+        model = Transient
+        fields = '__all__'
 
 class PatientSerializer(serializers.ModelSerializer):
     personal_info = serializers.SerializerMethodField()

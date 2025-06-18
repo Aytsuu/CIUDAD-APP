@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const handleDeleteFirstAidList = async (
     fa_id: number,

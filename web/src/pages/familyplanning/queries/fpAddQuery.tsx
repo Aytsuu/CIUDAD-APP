@@ -1,20 +1,35 @@
-// import { useMutation, useQueryClient } from "@tanstack/react-query"
-// import { string } from "zod";
-// import { risk_vaw } from "../request-db/PostRequest";
+import { api2 } from "@/api/api"
 
-// export const useAddRiskVaw = () => {
-//     const queryClient = useQueryClient();
-//     return useMutation({
-//         mutationFn: ({riskvaw_data}: (
-//         riskvaw_data: Record<string, string>;
-//     }) => risk_vaw(riskvaw_data),
-//         onSuccess: async (newData) => {
-//             queryClient.setQueryData({"famplanning"}, (old: any) => {
-//             ...old,
-//             newData,
-//         });
+export interface InventoryItem {
+  id: number
+  name: string
+  type: "commodity" | "medicine" | "vaccine"
+  current_stock: number
+  unit: string
+  method_compatibility?: string[]
+}
 
-//         queryClient.invalidateQueries({ queryKey: ["famplanning"] });
-//         }
-//     })
-// }
+export const getInventoryByMethod = async (method: string): Promise<InventoryItem[]> => {
+  try {
+    const response = await api2.get(`inventory/by-method/${method}/`)
+    return response.data
+  } catch (error) {
+    console.error("Error fetching inventory for method:", error)
+    return []
+  }
+}
+
+export const deductInventory = async (itemId: number, quantity: number, itemType: string) => {
+  try {
+    const response = await api2.post(`inventory/deduct/`, {
+      item_id: itemId,
+      quantity: quantity,
+      item_type: itemType,
+      reason: "Family Planning Service",
+    })
+    return response.data
+  } catch (error) {
+    console.error("Error deducting inventory:", error)
+    throw error
+  }
+}

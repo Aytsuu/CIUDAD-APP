@@ -1,5 +1,5 @@
 import { toTitleCase } from "../case";
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 
 export const addFirstAid = async (firstAidName: string) => {

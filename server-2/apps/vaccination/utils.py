@@ -1,7 +1,10 @@
 from .models import *
 from apps.inventory.models import *
 from apps.patientrecords.serializers import PatientSerializer
-
+from apps.patientrecords.models import *
+from django.db.models import Q
+from collections import defaultdict
+from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 # def get_unvaccinated_vaccines_for_patient(pat_id):
 #     vaccinated_vac_ids = VaccinationHistory.objects.filter(
 #         vacrec__patrec_id__pat_id=pat_id
@@ -123,4 +126,71 @@ def get_vaccination_record_count(pat_id):
 #     # 6. Get the VaccineList entries for those
 #     unvaccinated_vaccines = VaccineList.objects.filter(vac_id__in=unvaccinated_vac_ids)
 
-#     return unvaccinated_vaccines
+#     return 
+
+
+
+def get_all_residents_not_vaccinated():
+    result = defaultdict(list)
+
+    # 🧍 All ResidentProfiles
+    all_residents = ResidentProfile.objects.select_related('per').all()
+
+    # 📋 All Resident-type, Active Patients
+    patients = Patient.objects.filter(pat_type="Resident", pat_status="Active").select_related('rp_id', 'rp_id__per')
+
+    # Map rp_id -> patient
+    patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
+
+    # 📦 All vaccines
+    all_vaccines = VaccineList.objects.all()
+
+    for vaccine in all_vaccines:
+        # 🧪 Get pat_id of patients who already got this vaccine
+        vaccinated_ids = VaccinationHistory.objects.filter(
+            vacStck__vac_id=vaccine.vac_id
+        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
+
+        for resident in all_residents:
+            rp_id = resident.rp_id
+            personal_info = ResidentPersonalInfoSerializer(resident).data
+
+            patient = patient_map.get(rp_id)
+
+            if patient:
+                # Has patient — check if vaccinated
+                if patient.pat_id not in vaccinated_ids:
+                    result[vaccine.vac_name].append({
+                        "status": "Has patient, not vaccinated for this vaccine",
+                        "pat_id": patient.pat_id,
+                        "rp_id": rp_id,
+                        "personal_info": personal_info,
+                        "vaccine_not_received": vaccine.vac_name
+                    })
+            else:
+                # No patient — definitely not vaccinated for this vaccine
+                result[vaccine.vac_name].append({
+                    "status": "No patient record",
+                    "pat_id": None,
+                    "rp_id": rp_id,
+                    "personal_info": personal_info,
+                    "vaccine_not_received": vaccine.vac_name
+                })
+
+    return result
+
+
+def count_vaccinated_by_patient_type():
+    vaccinated_pat_ids = VaccinationHistory.objects.values_list(
+        'vacrec__patrec_id__pat_id', flat=True
+    ).distinct()
+
+    vaccinated_patients = Patient.objects.filter(pat_id__in=vaccinated_pat_ids)
+
+    resident_count = vaccinated_patients.filter(pat_type="Resident").count()
+    transient_count = vaccinated_patients.filter(pat_type="Transient").count()
+
+    return {
+        "resident_vaccinated": resident_count,
+        "transient_vaccinated": transient_count
+    }

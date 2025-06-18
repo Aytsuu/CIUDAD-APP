@@ -160,15 +160,15 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
     const fetchPatientsAndSpouses = async () => {
       setLoading(true)
       try {
-        const [patientsRes, spousesRes, measurementsRes,obstetricalRes] = await Promise.all([
+        const [patientsRes, measurementsRes,obstetricalRes] = await Promise.all([
           api2.get("patientrecords/patient/"),
-          api2.get("patientrecords/spouse/"),
+          // api2.get("patientrecords/spouse/"),
           api2.get("patientrecords/body-measurements/"),
           api2.get("patientrecords/obstetrical_history")
         ])
 
         const patientData = patientsRes.data
-        const spouseData = spousesRes.data
+        // const spouseData = spousesRes.data
         const measurementsData = measurementsRes.data
         const obstetricalData = obstetricalRes.data
 
@@ -178,12 +178,12 @@ export default function FamilyPlanningForm({ onNext2, updateFormData, formData, 
         }))
 
         setPatients({ default: patientData, formatted })
-        setSpouse(spouseData)
+        // setSpouse(spouseData)
         setBodyMeasurements(measurementsData)
         setObstetricalHistory(obstetricalData)
 
         console.log("✅ Patients fetched:", patientData)
-        console.log("✅ Spouses fetched:", spouseData)
+        // console.log("✅ Spouses fetched:", spouseData)
         console.log("✅ Body Measurements fetched:", measurementsData)
         console.log("✅ Obstetrical History fetched:", obstetricalData)
 

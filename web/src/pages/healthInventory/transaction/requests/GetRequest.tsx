@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 // Fetches the list of medicines from the API
 export const getTransactionMedicines = async () => {

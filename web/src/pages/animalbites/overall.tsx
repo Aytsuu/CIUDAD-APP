@@ -231,7 +231,9 @@ const Overall: React.FC = () => {
               content="View Details"
             />
           </TooltipProvider> */}
-          <TooltipProvider>
+        
+            {/* Delete button */}
+          {/* <TooltipProvider>
             <TooltipLayout
               trigger={
                 <div
@@ -243,7 +245,7 @@ const Overall: React.FC = () => {
               }
               content="Delete All Records"
             />
-          </TooltipProvider>
+          </TooltipProvider> */}
         </div>
       ),
     },

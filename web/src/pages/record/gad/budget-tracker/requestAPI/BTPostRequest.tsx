@@ -1,4 +1,4 @@
-// // import api from '@/pages/api/api';
+// // import { api } from '@/api/api';
 // // import { formatDate } from '@/helpers/dateFormatter';
 
 // // export const postbudgettrackreq= async (budgetTrackInfo: Record<string, any>) => {
@@ -36,7 +36,6 @@
 // //     }
 // // };
 
-// import api from '@/pages/api/api';
 // import { formatDate } from '@/helpers/dateFormatter';
 
 // interface BudgetTrackInfo {
@@ -91,7 +90,7 @@
 //     }
 // };
 
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 // export const postbudgettrackreq = async (budgetInfo: Record<string, any>) => {
 //     try {

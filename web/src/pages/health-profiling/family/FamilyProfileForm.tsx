@@ -1,8 +1,14 @@
 import React from "react";
 import { Card } from "@/components/ui/card/card";
+<<<<<<< HEAD
 import ParentsFormLayout from "./parent/ParentsFormLayout";
 import DependentsInfoLayout from "./dependent/DependentsInfoLayout";
 import DemographicForm from "./demographic/DemographicForm";
+=======
+import ParentsFormLayout from "@/pages/health-profiling/family/parent/ParentsFormLayout";
+// import DependentsInfoLayout from "@/pages/health-profiling/family/dependent/DependentsInfoLayout";
+import DemographicForm from "@/pages/health-profiling/family/demographic/DemographicForm";
+>>>>>>> frontend/feature/maternal-services
 
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
 import { BsChevronLeft } from "react-icons/bs";
@@ -13,8 +19,13 @@ import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+<<<<<<< HEAD
 import { formatHouseholds, formatResidents } from "../profilingFormats";
 import { DependentRecord } from "../profilingTypes";
+=======
+import { formatHouseholds, formatResidents } from "@/pages/record/health-family-profiling/profilingFormats";
+import { DependentRecord } from "@/pages/record/health-family-profiling/profilingTypes";
+>>>>>>> frontend/feature/maternal-services
 
 export default function FamilyProfileForm() {
 
@@ -121,7 +132,11 @@ export default function FamilyProfileForm() {
               back={()=>prevStep()}
             />
           )}
+<<<<<<< HEAD
           {currentStep === 3 && (
+=======
+          {/* {currentStep === 3 && (
+>>>>>>> frontend/feature/maternal-services
             <DependentsInfoLayout
               form={form}
               residents={{default: params.residents, formatted: formattedResidents}}
@@ -131,9 +146,17 @@ export default function FamilyProfileForm() {
               defaultValues={defaultValues}
               back={()=>prevStep()}
             />
+<<<<<<< HEAD
           )}
+=======
+          )} */}
+>>>>>>> frontend/feature/maternal-services
         </Card>
       </div>
     </>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> frontend/feature/maternal-services

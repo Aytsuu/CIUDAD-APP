@@ -1,23 +1,11 @@
-from django.db import models
+from django.db import models, transaction
+from django.db.models import Max
+from django.utils import timezone
 from apps.healthProfiling.models import ResidentProfile
 from apps.healthProfiling.models import Personal, ResidentProfile
 from django.utils import timezone
 
 # Create your models here.
-
-# class Patient(models.Model):
-#     pat_id = models.BigAutoField(primary_key=True)
-#     pat_type = models.CharField(max_length=100, default="Resident")
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     pat_status = models.CharField(max_length=100, default="Active")
-#     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='patients', db_column='rp_id', null=True)
-#     class Meta:
-#         db_table = 'patient'
-#         ordering = ['-created_at']
-
-
-
 class TransientAddress(models.Model):
     tradd_id = models.BigAutoField(primary_key=True)
     tradd_province = models.CharField(max_length=50)
@@ -87,28 +75,42 @@ class Patient(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        if self.pat_type == 'Resident' and not self.resident_profile:
-            raise ValidationError("Resident patients must have a resident_profile.")
+        if self.pat_type == 'Resident' and not self.rp_id:
+            raise ValidationError("Resident patients must have a rp_id.")
         if self.pat_type == 'Transient' and not self.trans_id:
             raise ValidationError("Transient patients must have a transient_profile.")
-        if self.resident_profile and self.trans_id:
-            raise ValidationError("Patient cannot have both resident_profile and trans_id.")
+        if self.rp_id and self.trans_id:
+            raise ValidationError("Patient cannot have both rp_id and trans_id.")
 
     def save(self, *args, **kwargs):
         # Auto-generate pat_id if not set
         if not self.pat_id:
             # Determine DOB source
             dob = None
-            if self.pat_type == 'Resident' and self.resident_profile and hasattr(self.resident_profile, 'per'):
-                dob = getattr(self.resident_profile.per, 'per_dob', None)
+            if self.pat_type == 'Resident' and self.rp_id and hasattr(self.rp_id, 'per'):
+                dob = getattr(self.rp_id.per, 'per_dob', None)
             elif self.pat_type == 'Transient' and self.trans_id:
                 dob = self.trans_id.tran_dob
 
             year = dob.year if dob else timezone.now().year
             type_code = 'R' if self.pat_type == 'Resident' else 'T'
             prefix = f'P{type_code}{year}'
-            count = Patient.objects.filter(pat_id__startswith=prefix).count() + 1
-            self.pat_id = f'{prefix}{str(count).zfill(4)}'
+            
+            existing_patients = Patient.objects.filter(
+                pat_id__startswith=prefix
+            ).values_list('pat_id', flat=True)
+            
+            existing_numbers = []
+            for pat_id in existing_patients:
+                try:
+                    number_part = pat_id[len(prefix):]
+                    existing_numbers.append(int(number_part))
+                except (ValueError, IndexError):
+                    continue
+            
+            # Get the next available number
+            next_number = max(existing_numbers, default=0) + 1
+            self.pat_id = f'{prefix}{str(next_number).zfill(4)}'
 
         super().save(*args, **kwargs)
 
@@ -176,10 +178,10 @@ class Spouse(models.Model):
     spouse_type = models.CharField(max_length=10)
     spouse_lname = models.CharField(max_length=50, default="")
     spouse_fname = models.CharField(max_length=50, default="")
-    spouse_mnane = models.CharField(max_length=50, default="")
+    spouse_mname = models.CharField(max_length=50, default="")
     spouse_occupation = models.CharField(max_length=50)
     spouse_dob = models.DateField()
-    # rp = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='spouse', db_column='rp_id')
+    rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, related_name='spouse', db_column='rp_id', null=True)
 
     class Meta:
         db_table = 'spouse'
