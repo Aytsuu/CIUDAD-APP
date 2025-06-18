@@ -91,6 +91,7 @@ export default function AllVaccinationRecords() {
     console.log(vaccinationRecords);
   }, []);
 
+  
   const formatVaccinationData = React.useCallback((): VaccinationRecord[] => {
     if (!vaccinationRecords) return [];
 

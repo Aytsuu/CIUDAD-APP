@@ -106,7 +106,7 @@ export const useSubmitStep1 = () => {
 
           const vaccinationRecord = await createVaccinationRecord(patrec_id,  0);
           vacrec_id = vaccinationRecord.vacrec_id;
-
+          
           if (vacrec_id) {
             await createVaccinationHistory(
               vacrec_id,

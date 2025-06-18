@@ -59,8 +59,9 @@ export const createVaccinationRecord = async (
   // status: "forwarded" | "completed" | "partially vaccinated",
   totalDoses: number
 ) => {
+  const parsedPatrecId = parseInt(patrec_id, 10);
   const response = await api2.post("vaccination/vaccination-record/", {
-    patrec_id: patrec_id,
+    patrec_id: parsedPatrecId,
     // vacrec_status: status,
     vacrec_totaldose: totalDoses,
     created_at: new Date().toISOString(),
@@ -71,22 +72,24 @@ export const createVaccinationRecord = async (
 export const createVaccinationHistory = async (
   vacrec_id: string,
   data: Record<string, any>,
-  vaccineType: string,
+  vacStck_id: string,
   doseNo: number,
   status: "forwarded" | "completed" | "partially Vaccinated",
+  age:string,
   vital_id: string | null = null,
-  followv_id: string | null = null
+  followv_id: string | null = null,
+  
 ) => {
   try {
     const response = await api2.post("vaccination/vaccination-history/", {
       vachist_doseNo: doseNo,
       vachist_status: status,
-      vachist_age: data.age,
+      vachist_age: age,
       staff_id: 1,
       vacrec: vacrec_id,
       vital: vital_id,
       created_at: new Date().toISOString(),
-      vacStck_id: vaccineType,
+      vacStck_id: parseInt(vacStck_id, 10),
       assigned_to: data.assignto ? parseInt(data.assignto, 10) : null,
       followv: followv_id,
     });
@@ -139,7 +142,7 @@ export const createFollowUpVisit = async (
 ) => {
   const response = await api2.post("patientrecords/follow-up-visit/", {
     followv_date: followv_date,
-    patrec: patrec_id,
+    patrec: parseInt(patrec_id, 10),
     followv_status: "pending",
     created_at: new Date().toISOString(),
   });
@@ -168,7 +171,8 @@ export const deleteVaccinationRecord = async (vacrec_id: string) => {
 };
 
 export const deletePatientRecord = async (patrec_id: string) => {
-  await api2.delete(`patientrecords/patient-record/${patrec_id}/`);
+  const parsedPatrecId = parseInt(patrec_id, 10);
+  await api2.delete(`patientrecords/patient-record/${parsedPatrecId}/`);
 };
 
 export const deleteVitalSigns = async (vital_id: string) => {

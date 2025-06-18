@@ -15,11 +15,14 @@ import {
   deleteFollowUpVisit,
 } from "../restful-api/PostAPI";
 import { api2 } from "@/api/api";
-import { getVaccinationHistory, getVaccinationRecords } from "../restful-api/GetVaccination";
+import {
+  getVaccinationHistory,
+  getVaccinationRecords,
+} from "../restful-api/GetVaccination";
 import { useNavigate } from "react-router";
 import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "../Calculatenextvisit";
-
+import {checkVaccineStatus} from "../restful-api/FetchVaccination";
 
 // export const useDeductVaccineStock = () => {
 //   const queryClient = useQueryClient();
@@ -66,43 +69,58 @@ export const useSubmitStep1 = () => {
   return useMutation({
     mutationFn: async ({
       data,
-      selectedPatientId,
       assignmentOption,
       form,
+      vacStck_id,
+      vac_id,
     }: {
       data: Record<string, any>;
-      selectedPatientId: string | null;
+      vacStck_id: any;
+      vac_id: any;
+      vac_name: string;
+      expiry_date: string;
       assignmentOption: string;
       form: { setError: any; getValues: any; reset: any };
     }) => {
-      if (!selectedPatientId) {
+      if (!data.pat_id) {
         throw new Error("Please select a patient first");
       }
 
-      const vacrecord = await getVaccinationRecords();
-      const vacrecPatient = vacrecord.find(
-        (record: any) => record.pat_id === selectedPatientId
-      );
-      if (vacrecPatient) {
-        throw new Error("Patient already has an existing record.");
+      // const vacrecord = await getVaccinationRecords();
+      // const vacrecPatient = vacrecord.find(
+      //   (record: any) => record.pat_id === data.pat_id
+      // );
+      // if (vacrecPatient) {
+      //   throw new Error("Patient already has an existing record.");
+      // }
+
+      try {
+        const response = await checkVaccineStatus(data.pat_id, parseInt(vac_id, 10));
+  
+        // Add proper type checking for the response
+        if (response?.data?.exists) {
+          throw new Error("Patient already has this vaccine in their record.");
+        }
+      } catch (error) {
+        console.error("Error checking vaccine status:", error);
+
       }
 
-      if (!data.vaccinetype) {
-        form.setError("vaccinetype", {
-          type: "manual",
-          message: "Please select a vaccine type",
-        });
-        throw new Error("Please select a vaccine type");
-      }
+
+      // if (!data.vaccinetype) {
+      //   form.setError("vaccinetype", {
+      //     type: "manual",
+      //     message: "Please select a vaccine type",
+      //   });
+      //   throw new Error("Please select a vaccine type");
+      // }
 
       if (assignmentOption === "other") {
         let patrec_id: string | null = null;
         let vacrec_id: string | null = null;
 
         try {
-          const vacStck = data.vaccinetype;
-
-          const patientRecord = await createPatientRecord(selectedPatientId);
+          const patientRecord = await createPatientRecord(data.pat_id);
           patrec_id = patientRecord.patrec_id;
 
           if (!patrec_id) {
@@ -111,19 +129,18 @@ export const useSubmitStep1 = () => {
             );
           }
 
-          const vaccinationRecord = await createVaccinationRecord(
-            patrec_id,
-            0
-          );
+          const vaccinationRecord = await createVaccinationRecord(patrec_id, 0);
           vacrec_id = vaccinationRecord.vacrec_id;
-
+          let age = data.age;
+          console.log("age", data.age);
           if (vacrec_id) {
             await createVaccinationHistory(
               vacrec_id,
               data,
-              vacStck,
-              0,
-              "forwarded"
+              vacStck_id,
+              1,
+              "forwarded",
+              age
             );
           } else {
             throw new Error(
@@ -155,7 +172,6 @@ export const useSubmitStep1 = () => {
   });
 };
 
-
 // Mutation for Step 2 submission
 export const useSubmitStep2 = () => {
   const queryClient = useQueryClient();
@@ -164,54 +180,58 @@ export const useSubmitStep2 = () => {
   return useMutation({
     mutationFn: async ({
       data,
-      selectedPatientId,
       form,
       form2,
-      // setAssignmentOption,
-      // calculateNextVisitDate,
+      vacStck_id,
+      vac_id,
+      vac_name,
+      expiry_date,
+      pat_id,
+      age,
     }: {
       data: Record<string, any>;
-      selectedPatientId: string;
       form: { setError: any; getValues: any; reset: any };
-      form2: { reset: any };
-      // setAssignmentOption: Dispatch<SetStateAction<"self" | "other">>;
-      // calculateNextVisitDate: (
-      //   interval: number,
-      //   timeUnit: string,
-      //   date: string
-      // ) => Date;
+      form2: { reset: any; getValues: any };
+      vacStck_id: string;
+      vac_id: string;
+      vac_name: string;
+      expiry_date: string;
+      pat_id: string ;
+      age: string
     }) => {
-      const vacrecord = await getVaccinationRecords();
-      const vacrecPatient = vacrecord.find(
-        (record: any) => record.pat_id === selectedPatientId
-      );
-      if (vacrecPatient) {
-        throw new Error("Patient already has an existing record.");
-      }
-
-      const vaccineType = form.getValues("vaccinetype");
-      if (!vaccineType) {
-        form.setError("vaccinetype", {
-          type: "manual",
-          message: "Please select a vaccine type",
-        });
-        throw new Error("Please select a vaccine type");
-      }
+     
 
       let patrec_id: string | null = null;
       let vacrec_id: string | null = null;
       let vital_id: string | null = null;
       let followv_id: string | null = null;
-
+     
       try {
-        const vacStck = vaccineType;
-        const vaccineData = await getVaccineStock(vacStck);
+        const vaccineData = await getVaccineStock(vacStck_id);
         const maxDoses = vaccineData.vaccinelist.no_of_doses;
 
-        const patientRecord = await createPatientRecord(selectedPatientId);
+        if (!vacStck_id) {
+          throw new Error(
+            "Vaccine ID is missing. Please select a valid vaccine type."
+          );
+        }
+
+         try {
+          const response = await checkVaccineStatus(pat_id, parseInt(vac_id, 10));
+    
+          // Add proper type checking for the response
+          if (response?.data?.exists) {
+            throw new Error("Patient already has this vaccine in their record.");
+          }
+        } catch (error) {
+          console.error("Error checking vaccine status:", error);
+
+        }
+
+        const patientRecord = await createPatientRecord(pat_id ?? "");
         patrec_id = patientRecord.patrec_id;
 
-        const status = maxDoses === 1 ? "completed" : "partially vaccinated";
+        // const status = maxDoses === 1 ? "completed" : "partially vaccinated";
         if (!patrec_id) {
           throw new Error(
             "Patient record ID is null. Cannot create vaccination record."
@@ -228,11 +248,11 @@ export const useSubmitStep2 = () => {
         const vitalSigns = await createVitalSigns(data);
         vital_id = vitalSigns.vital_id;
 
-        await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck, 10)}/`, {
+        await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {
           vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
           vacStck_used: vaccineData.vacStck_used + 1,
         });
-        await createAntigenStockTransaction(parseInt(vacStck, 10));
+        await createAntigenStockTransaction(parseInt(vacStck_id));
 
         let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
 
@@ -272,14 +292,16 @@ export const useSubmitStep2 = () => {
           }
         }
 
+        console.log("age", age);
         const historyStatus =
           maxDoses === 1 ? "completed" : "partially Vaccinated";
         await createVaccinationHistory(
           vacrec_id ?? "",
-          { ...data, age: form.getValues("age") },
-          vacStck,
+          { ...data },
+          vacStck_id,
           1,
           historyStatus,
+          age,
           vital_id,
           followv_id
         );

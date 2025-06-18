@@ -25,7 +25,7 @@ import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle } from "lucide-react";
-
+import { createVitalSigns,updateVacRecord } from "./restful-api/vitalsignsAPI";
 export interface Patient {
   pat_id: number;
   name: string;
@@ -38,7 +38,8 @@ export default function ForwardedVaccinationForm() {
 
   const location = useLocation();
   const { params } = location.state || {};
-  const { patientData, vaccineName, vaccineType, vaccineDose } = params || {};
+  const { patientData, vaccineName, vaccineType, vaccineDose, vachist_id } =
+    params || {};
 
   // Form for Step 2 (Vital Signs)
   const form = useForm<VitalSignsType>({
@@ -52,7 +53,6 @@ export default function ForwardedVaccinationForm() {
     },
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedPatientData, setSelectedPatientData] =
     useState<Patient | null>(null);
 
@@ -65,28 +65,27 @@ export default function ForwardedVaccinationForm() {
   }, [location.state]);
 
   // Submit handler for Step 1
-  const onSubmitStep1 = async (data: VaccineSchemaType) => {
-    try {
-      // Example API call to submit vaccine details
-      await api.post("/vaccination/create", {
-        ...data,
-        patient_id: patientData?.pat_id,
-      });
-      toast.success("Vaccine details saved successfully");
-      // Optionally, proceed to Step 2 or enable the second form
-    } catch (error) {
-      toast.error("Failed to save vaccine details");
-    }
-  };
 
   // Submit handler for Step 2
   const submit = async (data: VitalSignsType) => {
     try {
-      // Example API call to submit vital signs
-      await api.post("/vital-signs/create", {
-        ...data,
-        patient_id: patientData?.pat_id,
+      if (!vachist_id) {
+        throw new Error("No vaccination record ID provided");
+      }
+
+      // First create vital signs
+      const vitalSigns = await createVitalSigns({
+        vital_bp_systolic: data.bpsystolic,
+        vital_bp_diastolic: data.bpdiastolic,
+        vital_temp: data.temp,
+        vital_o2: data.o2,
+        vital_pulse: data.pr,
       });
+      
+
+      // Then update vaccination record with vitals reference
+      await updateVacRecord(vachist_id);
+
       toast.success("Vital signs saved successfully");
       navigate(-1); // Navigate back after successful submission
     } catch (error) {
@@ -118,34 +117,72 @@ export default function ForwardedVaccinationForm() {
       <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
         {/* Step 1: Vaccination Details */}
 
-        <div className="mb-6">{vaccineName}</div>
-        <div>{vaccineType}</div>
-        <div>{vaccineDose}</div>
-        {selectedPatientData ? (
-          <div className="mb-4">
-            <PatientInfoCard patient={selectedPatientData} />
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <Label className="text-base font-semibold text-yellow-500">
-                No patient selected
-              </Label>
+        <div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2 mb-4 pb-2">
+              <h1 className="font-bold text-xl text-darkBlue1">STEP</h1>
+              <div className="bg-darkBlue1 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                1
+              </div>
             </div>
-            <p className="text-sm text-gray-700">
-              Please select a patient from the medicine records page first.
-            </p>
           </div>
-        )}
+
+          {selectedPatientData ? (
+            <div className="mb-4">
+              <PatientInfoCard patient={selectedPatientData} />
+              <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
+                <h3 className="font-semibold text-blue-800 mb-3">
+                  Vaccine Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium">
+                      Vaccine Name
+                    </p>
+                    <p className="font-semibold text-gray-800">
+                      {vaccineName || "-"}
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium">
+                      Vaccine Type
+                    </p>
+                    <p className="font-semibold text-gray-800">
+                      {vaccineType || "-"}
+                    </p>
+                  </div>
+                  <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium">Dose</p>
+                    <p className="font-semibold text-gray-800">
+                      {vaccineDose
+                        ? `${vaccineDose}${
+                            ["st", "nd", "rd"][(vaccineDose % 10) - 1] || "th"
+                          } Dose`
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                <Label className="text-base font-semibold text-yellow-500">
+                  No patient selected
+                </Label>
+              </div>
+              <p className="text-sm text-gray-700">
+                Please select a patient from the medicine records page first.
+              </p>
+            </div>
+          )}
+        </div>
 
         <div className="border-t border-gray-200 my-8"></div>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(submit)}
-            className="space-y-6 mt-8"
-          >
+          <form onSubmit={form.handleSubmit(submit)} className="space-y-6 mt-8">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2 mb-4 pb-2">
                 <h1 className="font-bold text-xl text-darkBlue1">STEP</h1>

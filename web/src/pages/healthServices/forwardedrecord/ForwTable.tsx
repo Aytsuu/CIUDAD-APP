@@ -63,6 +63,7 @@ interface FormattedForwardedRecord {
   pat_type: string;
   dob: string; // Added dob property
   vac_type: string; // Added vac_type property
+  vital_id:number
 }
 
 export default function ForwardedVaccinationRecords() {
@@ -114,6 +115,7 @@ export default function ForwardedVaccinationRecords() {
         dateForwarded: record.created_at || "N/A",
         pat_id: record.patient_details?.pat_id || "",
         pat_type: record.patient_details?.pat_type || "",
+        vital_id: record.vital_id || 0, // Added vital_id property
       };
     });
   }, [forwardedRecords]);
@@ -279,6 +281,7 @@ export default function ForwardedVaccinationRecords() {
                   vaccineName: row.original.vaccineName,
                   vaccineType: row.original.vac_type,
                   vaccineDose: row.original.doseNo,
+                  vachist_id: row.original.id,
 
                 },
               }}

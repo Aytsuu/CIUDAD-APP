@@ -138,7 +138,9 @@ def get_all_residents_not_vaccinated():
 
 
 def count_vaccinated_by_patient_type():
-    vaccinated_pat_ids = VaccinationHistory.objects.values_list(
+    vaccinated_pat_ids = VaccinationHistory.objects.filter(
+        vachist_status="completed"
+    ).values_list(
         'vacrec__patrec_id__pat_id', flat=True
     ).distinct()
 
