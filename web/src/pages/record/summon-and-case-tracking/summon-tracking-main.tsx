@@ -1,8 +1,7 @@
 import CardLayout from "@/components/ui/card/card-layout";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
-import { Button } from "@/components/ui/button/button";
-import { ChevronLeft, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -51,12 +50,11 @@ function SummonTrackingMain(){
                 {/* Header */}
                 <div className="flex flex-col gap-3 mb-3">
                     <div className='flex flex-row gap-4'>
-                        <Button className="text-black p-2 self-start" variant={"outline"}><ChevronLeft /></Button>
                         <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2 flex flex-row items-center gap-2">
                         Summon & Case Tracker
                         </h1>
                     </div>
-                    <p className="text-xs sm:text-sm text-darkGray ml-[3.2rem]">
+                    <p className="text-xs sm:text-sm text-darkGray">
                     Manage summons, schedule hearings, and generate summon and file action documents.
                     </p>
                 </div>
