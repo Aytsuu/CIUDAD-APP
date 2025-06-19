@@ -27,6 +27,9 @@ import {
   useSubmitStep1,
   useSubmitStep2,
 } from "./queries/UpdateVaccinationQueries";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+
+
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();
@@ -78,13 +81,7 @@ export default function UpdateVaccinationForm() {
       pat_id: patientData.pat_id || "",
       vaccinetype: "", // Will be set dynamically in useEffect
       datevaccinated: new Date().toISOString().split("T")[0],
-      // lname: patientData.lname || "",
-      // fname: patientData.fname || "",
-      // mname: patientData.mname || "",
-      // age: patientData.age || "",
-      // sex: patientData.sex || "",
-      // dob: patientData.dob || "",
-      
+      age: patientData.age || "", // Ensure age is set correctly
       assignto: "",
     },
   });
@@ -271,111 +268,11 @@ export default function UpdateVaccinationForm() {
               />
             </div>
 
-            <h2 className="font-semibold text-blue bg-blue-50 rounded-md">
-              Basic Information
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormSelect
-                control={form.control}
-                name="patientType"
-                label="Patient Type"
-                options={[
-                  { id: "Resident", name: "Resident" },
-                  { id: "Transient", name: "Transient" },
-                  { id: "Regular", name: "Regular" },
-                ]}
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="lname"
-                label="Last Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="fname"
-                label="First Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="mname"
-                label="Middle Name"
-                readOnly
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormDateTimeInput
-                control={form.control}
-                name="dob"
-                label="Date of Birth"
-                type="date"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="age"
-                label="Age"
-                type="number"
-                readOnly
-              />
-              <FormSelect
-                control={form.control}
-                name="sex"
-                label="Sex"
-                options={[
-                  { id: "female", name: "Female" },
-                  { id: "male", name: "Male" },
-                ]}
-                readOnly
-              />
-            </div>
-
-            <h2 className="font-semibold text-blue py-2 bg-blue-50 rounded-md mb-3">
-              Address Information
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="householdno"
-                label="Household No."
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="street"
-                label="Street"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="sitio"
-                label="Sitio"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="barangay"
-                label="Barangay"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="city"
-                label="City"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="province"
-                label="Province"
-                readOnly
-              />
-            </div>
+            
+ {/* Patient Information Card */}
+        <div className="mb-4 bg-white">
+          <PatientInfoCard patient={patientData} />
+        </div>
 
             <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
               <h2 className="font-bold text-darkBlue1 mb-3">

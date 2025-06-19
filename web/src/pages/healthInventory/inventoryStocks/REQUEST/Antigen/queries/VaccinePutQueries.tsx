@@ -1,6 +1,6 @@
 
 import { useMutation,useQueryClient } from "@tanstack/react-query"; // or 'react-query' depending on your version
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import {updateVaccineStock} from "../restful-api/VaccinePutAPI"; // Adjust the path if needed
 import { AntigenTransaction } from "../restful-api/VaccinePostAPI";
 
@@ -41,7 +41,7 @@ export const useSubmitUpdateVaccineStock = () => {
       const inputDoseMl =
         Number(formData.dose_ml) || (isDiluent ? 1 : vaccine.item.dosage || 0);
 
-      const res = await api.get("inventory/vaccine_stocks/");
+      const res = await api2.get("inventory/vaccine_stocks/");
       const existingVaccine = res.data.find(
         (vac: any) => vac.vacStck_id === vaccine.id
       );

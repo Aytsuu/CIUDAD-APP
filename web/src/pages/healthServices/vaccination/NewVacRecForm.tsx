@@ -14,7 +14,7 @@ import {
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Combobox } from "@/components/ui/combobox";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -33,7 +33,9 @@ export default function VaccinationForm() {
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData } = params || {};
-  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">("self");
+  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
+    "self"
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<VaccineSchemaType>({
@@ -42,7 +44,7 @@ export default function VaccinationForm() {
       pat_id: patientData?.pat_id?.toString() || "",
       vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
-      age: patientData?.per_dob ? calculateAge(patientData.per_dob) : "",
+      age: patientData.age,
       assignto: "",
     },
   });
@@ -84,7 +86,9 @@ export default function VaccinationForm() {
 
       const vaccineParts = data.vaccinetype.split(",");
       if (vaccineParts.length !== 4) {
-        form.setError("vaccinetype", { message: "Invalid vaccine data format" });
+        form.setError("vaccinetype", {
+          message: "Invalid vaccine data format",
+        });
         toast.error("Invalid vaccine data format");
         return;
       }
@@ -100,7 +104,10 @@ export default function VaccinationForm() {
         expiry_date: expiry_date.trim(),
       });
     } catch (error) {
-      toast.error("Failed to submit Step 1: " + (error instanceof Error ? error.message : "Unknown error"));
+      toast.error(
+        "Failed to submit Step 1: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -110,21 +117,9 @@ export default function VaccinationForm() {
     setSubmitting(true);
     try {
       const formData = form.getValues();
+      const [vacStck_id, vac_id, vac_name, expiry_date] =
+        formData.vaccinetype.split(",");
 
-      if (!formData.vaccinetype) {
-        form.setError("vaccinetype", { message: "Please select a vaccine" });
-        toast.error("Vaccine type is required");
-        return;
-      }
-
-      const vaccineParts = formData.vaccinetype.split(",");
-      if (vaccineParts.length !== 4) {
-        form.setError("vaccinetype", { message: "Invalid vaccine data format" });
-        toast.error("Invalid vaccine data format");
-        return;
-      }
-
-      const [vacStck_id, vac_id, vac_name, expiry_date] = vaccineParts;
       await submitStep2.mutateAsync({
         data,
         vacStck_id: vacStck_id.trim(),
@@ -139,30 +134,20 @@ export default function VaccinationForm() {
         },
         form2: { reset: form2.reset, getValues: form2.getValues },
       });
-    } catch (error) {
-      toast.error("Failed to submit Step 2: " + (error instanceof Error ? error.message : "Unknown error"));
     } finally {
       setSubmitting(false);
     }
   };
 
   const { vaccineStocksOptions, isLoading } = fetchVaccinesWithStock();
-  useEffect(() => {
-    const formData = form.getValues();
-    const selectedVaccine = vaccineStocksOptions.find(
-      (vaccine) => vaccine.id === formData.vaccinetype
-    );
-    if (selectedVaccine) {
-      console.log(
-        selectedVaccine.id,
-        selectedVaccine.name,
-        selectedVaccine.expiry
-      );
-    }
-  }, [form, vaccineStocksOptions]);
+  const handleVaccineChange = (value: string) => {
+    form.setValue("vaccinetype", value);
+    console.log("Selected vaccine value:", value);
+  };
 
-  // Check for invalid conditions
-  const hasInvalidStep1Fields = !form.watch("vaccinetype") || (assignmentOption === "other" && !form.watch("assignto"));
+  const hasInvalidStep1Fields =
+    !form.watch("vaccinetype") ||
+    (assignmentOption === "other" && !form.watch("assignto"));
   const hasInvalidStep2Fields =
     assignmentOption === "self" &&
     (!form2.watch("pr") ||
@@ -182,8 +167,10 @@ export default function VaccinationForm() {
           >
             <ChevronLeft />
           </Button>
-          <div className="flex前期
-System: flex-col items-center">
+          <div
+            className="flex前期
+System: flex-col items-center"
+          >
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
               Vaccination Form
             </h1>
@@ -218,41 +205,33 @@ System: flex-col items-center">
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Combobox
-                  options={vaccineStocksOptions.map((vaccine) => ({
-                    id: vaccine.id,
-                    name: `${vaccine.name} (Expiry: ${vaccine.expiry || "N/A"})`,
-                  }))}
-                  value={form.watch("vaccinetype")}
-                  placeholder={
-                    isLoading ? "Loading vaccines..." : "Select a vaccine"
-                  }
-                  triggerClassName="font-normal w-full"
-                  emptyMessage={
-                    <div className="flex gap-2 justify-center items-center">
-                      <Label className="font-normal text-[13px]">
-                        {isLoading
-                          ? "Loading..."
-                          : "No available vaccines in stock."}
-                      </Label>
-                    </div>
-                  }
-                  onChange={(value) => {
-                    if (value) {
-                      const [vacStck_id, vac_id, vac_name, expiry_date] = value.split(",");
-                      console.log("Selected Vaccine:", {
-                        vacStck_id: vacStck_id?.trim(),
-                        vac_id: vac_id?.trim(),
-                        vac_name: vac_name?.trim(),
-                        expiry_date: expiry_date?.trim(),
-                      });
-                      form.setValue("vaccinetype", value);
-                    } else {
-                      console.log("No vaccine selected");
-                      form.setValue("vaccinetype", "");
+                <div className="flex flex-col mt-2">
+                  <Label className="mb-3 text-darkGray">Vaccine Name</Label>
+                  <Combobox
+                    options={vaccineStocksOptions.map((vaccine) => ({
+                      id: vaccine.id,
+                      name: `${vaccine.name} (Expiry: ${
+                        vaccine.expiry || "N/A"
+                      })`,
+                    }))}
+                    value={form.watch("vaccinetype")}
+                    placeholder={
+                      isLoading ? "Loading vaccines..." : "Select a vaccine"
                     }
-                  }}
-                />
+                    triggerClassName="font-normal w-full"
+                    emptyMessage={
+                      <div className="flex gap-2 justify-center items-center">
+                        <Label className="font-normal text-[13px]">
+                          {isLoading
+                            ? "Loading..."
+                            : "No available vaccines in stock."}
+                        </Label>
+                      </div>
+                    }
+                    onChange={handleVaccineChange}
+                  />{" "}
+                </div>
+
                 <FormDateTimeInput
                   control={form.control}
                   name="datevaccinated"
@@ -293,7 +272,9 @@ System: flex-col items-center">
                         { id: "3", name: "Nurse Johnson" },
                       ]}
                       value={form.watch("assignto") || ""}
-                      onChange={(value) => form.setValue("assignto", value || "")}
+                      onChange={(value) =>
+                        form.setValue("assignto", value || "")
+                      }
                       placeholder="Select a person to assign"
                       triggerClassName="font-normal w-full"
                       emptyMessage={
@@ -410,8 +391,7 @@ System: flex-col items-center">
                 <ValidationAlert
                   vaccineError={!form.watch("vaccinetype")}
                   vitalSignsError={
-                    !!form.watch("vaccinetype") &&
-                    hasInvalidStep2Fields
+                    !!form.watch("vaccinetype") && hasInvalidStep2Fields
                   }
                 />
 
@@ -427,7 +407,11 @@ System: flex-col items-center">
                   <Button
                     type="submit"
                     className="w-[120px]"
-                    disabled={hasInvalidStep1Fields || hasInvalidStep2Fields || submitting}
+                    disabled={
+                      hasInvalidStep1Fields ||
+                      hasInvalidStep2Fields ||
+                      submitting
+                    }
                   >
                     {submitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

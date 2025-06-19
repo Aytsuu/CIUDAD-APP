@@ -11,21 +11,34 @@ import {
   VitalSignsSchema,
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Combobox } from "@/components/ui/combobox";
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
-import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
-import { CircleAlert, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { AlertCircle } from "lucide-react";
-import { createVitalSigns,updateVacRecord } from "./restful-api/vitalsignsAPI";
+import { createVitalSigns, updateVacRecord } from "./restful-api/vitalsignsAPI";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getVaccineStock,
+  getVaccinationHistory,
+  createPatientRecord,
+  createVaccinationRecord,
+  createVaccinationHistory,
+  createFollowUpVisit,
+  deleteVaccinationRecord,
+  deletePatientRecord,
+  deleteVitalSigns,
+  deleteVaccinationHistory,
+  updateFollowUpVisit,
+} from "@/pages/healthServices/vaccination/restful-api/PostAPI";
+import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
+import { ChevronLeft } from "lucide-react";
+import { CircleAlert } from "lucide-react";
+
 export interface Patient {
   pat_id: number;
   name: string;
@@ -35,13 +48,22 @@ export interface Patient {
 
 export default function ForwardedVaccinationForm() {
   const navigate = useNavigate();
-
   const location = useLocation();
   const { params } = location.state || {};
-  const { patientData, vaccineName, vaccineType, vaccineDose, vachist_id } =
-    params || {};
+  const {
+    patientData,
+    vaccineName,
+    vaccineType,
+    vaccineDose,
+    vachist_id,
+    vacStck_id,
+    patrec_id,
+    vacStck_qty_avail,
+    vacrec_id,
+    maxDoses,
+    existing_followv_id,
+  } = params || {};
 
-  // Form for Step 2 (Vital Signs)
   const form = useForm<VitalSignsType>({
     resolver: zodResolver(VitalSignsSchema),
     defaultValues: {
@@ -53,43 +75,208 @@ export default function ForwardedVaccinationForm() {
     },
   });
 
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
 
   useEffect(() => {
-    // Get patient data from route state
     if (location.state?.params?.patientData) {
       const patientData = location.state.params.patientData;
       setSelectedPatientData(patientData);
     }
   }, [location.state]);
 
-  // Submit handler for Step 1
-
-  // Submit handler for Step 2
   const submit = async (data: VitalSignsType) => {
+    console.log("Submitting form with data:", data);
+    console.log("Current params:", params);
+
     try {
       if (!vachist_id) {
         throw new Error("No vaccination record ID provided");
       }
 
-      // First create vital signs
-      const vitalSigns = await createVitalSigns({
-        vital_bp_systolic: data.bpsystolic,
-        vital_bp_diastolic: data.bpdiastolic,
-        vital_temp: data.temp,
-        vital_o2: data.o2,
-        vital_pulse: data.pr,
-      });
-      
+      // Declare variables at the top level of the try block
+      let vital_id: number | null = null;
+      let followv_id: number | null = null;
 
-      // Then update vaccination record with vitals reference
-      await updateVacRecord(vachist_id);
+      try {
+        // Create vital signs
+        const vitalSigns = await createVitalSigns({
+          vital_bp_systolic: data.bpsystolic,
+          vital_bp_diastolic: data.bpdiastolic,
+          vital_temp: data.temp,
+          vital_o2: data.o2,
+          vital_pulse: data.pr,
+        });
 
-      toast.success("Vital signs saved successfully");
-      navigate(-1); // Navigate back after successful submission
+        vital_id = vitalSigns?.vital_id;
+        console.log("Created vital signs with ID:", vital_id);
+        if (!vital_id) {
+          throw new Error("Failed to retrieve vital signs ID from response");
+        }
+
+        // Get vaccine data
+        const vaccineData = await getVaccineStock(vacStck_id);
+        const maxDoses = vaccineData.vaccinelist.no_of_doses;
+
+        if (!vacStck_id) {
+          throw new Error(
+            "Vaccine ID is missing. Please select a valid vaccine type."
+          );
+        }
+
+        // Update vaccine stock
+        await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {
+          vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
+          // vacStck_used: vaccineData.vacStck_used + 1,
+        });
+
+     
+
+        // Handle routine vaccination
+        if (vaccineType === "routine") {
+          const { interval, time_unit } = vaccineData.vaccinelist.routine_frequency;
+          const nextVisitDateRoutine = calculateNextVisitDate(
+            interval,
+            time_unit,
+            new Date().toISOString()
+          );
+          console.log("Processing routine vaccination");
+          console.log("Existing follow-up ID:", existing_followv_id);
+
+          if (!existing_followv_id) {
+            console.log("Creating new follow-up visit");
+            const followUpVisit = await createFollowUpVisit(
+              patrec_id,
+              nextVisitDateRoutine.toISOString().split("T")[0],
+              "Routine Vaccination Follow-up"
+            );
+
+            followv_id = followUpVisit?.followv_id;
+            console.log("Created follow-up visit with ID:", followv_id);
+
+            if (!followv_id) {
+              throw new Error("Failed to retrieve follow-up visit ID from response");
+            }
+
+
+
+            const updateData = {
+              vachist_status: "completed",
+              vital: vital_id,
+              followv: followv_id,
+            };
+            console.log("Updating vaccination history with:", updateData);
+            const updatedVacHistory = await api2.patch(
+              `/vaccination/vaccination-history/${vachist_id}/`,
+              updateData
+            );
+
+            if (updatedVacHistory.status !== 200) {
+              throw new Error("Failed to update vaccination history");
+            }
+          } else {
+            console.log("Updating existing follow-up visit");
+            await updateFollowUpVisit(existing_followv_id, "completed");
+
+            const updateData = {
+              vachist_status: "completed",
+              vital: vital_id,
+            };
+            console.log("Updating vaccination history with:", updateData);
+
+            const updatedVacHistory = await api2.patch(
+              `/vaccination/vaccination-history/${vachist_id}/`,
+              updateData
+            );
+          }
+        } 
+        // Handle multi-dose vaccination
+        else if (vaccineData.vaccinelist.no_of_doses >= 2) {
+
+          console.log("Processing multi-dose vaccination");
+          const dose2Interval = vaccineData.vaccinelist.intervals.find(
+            (interval: { dose_number: number }) => interval.dose_number === 2
+          );
+
+          if (!existing_followv_id) {
+          
+            if (dose2Interval) {
+              const nextVisitDate = calculateNextVisitDate(
+                dose2Interval.interval,
+                dose2Interval.time_unit,
+                new Date().toISOString()
+              );
+
+              const followUpVisit = await createFollowUpVisit(
+                patrec_id,
+                nextVisitDate.toISOString().split("T")[0],
+                `Follow-up visit for ${vaccineName} scheduled on ${
+                  nextVisitDate.toISOString().split("T")[0]
+                }`
+              );
+
+              followv_id = followUpVisit.followv_id;
+              console.log("Created follow-up visit with ID:", followv_id);
+
+              const status = maxDoses != vaccineDose 
+                ? "partially vaccinated" 
+                : "completed";
+
+              const updateData = {
+                vachist_status: status,
+                vital: vital_id,
+                followv: followv_id,
+              };
+              console.log("Updating vaccination history with:", updateData);
+
+              const updatedVacHistory = await api2.patch(
+                `/vaccination/vaccination-history/${vachist_id}/`,
+                updateData
+              );
+
+              if (updatedVacHistory.status !== 200) {
+                throw new Error("Failed to update vaccination history");
+              }
+            }
+          } else {
+            const updateData = {
+              vachist_status: "completed",
+              vital: vital_id,
+            };
+            console.log("Updating vaccination history with:", updateData);
+
+            const updatedVacHistory = await api2.patch(
+              `/vaccination/vaccination-history/${vachist_id}/`,
+              updateData
+            );
+
+            if (updatedVacHistory.status !== 200) {
+              throw new Error("Failed to update vaccination history");
+            }
+
+            await updateFollowUpVisit(existing_followv_id, "completed");
+          }
+        }
+
+        toast.success("Vaccination record updated successfully");
+        navigate(-1);
+      } catch (error) {
+        console.error("Error during submission:", error);
+        
+        // Rollback operations
+        if (vital_id) {
+          console.log("Attempting to rollback vital signs with ID:", vital_id);
+          await deleteVitalSigns(String(vital_id));
+        }
+        if (followv_id) {
+          console.log("Attempting to rollback follow-up visit with ID:", followv_id);
+          // Note: You'll need to implement deleteFollowUpVisit if it doesn't exist
+        }
+        
+        throw error;
+      }
     } catch (error) {
-      toast.error("Failed to save vital signs");
+      console.error("Failed to save vital signs:", error);
+      toast.error("Failed to save vaccination record");
     }
   };
 
@@ -115,8 +302,6 @@ export default function ForwardedVaccinationForm() {
       <hr className="border-gray mb-5 sm:mb-8" />
 
       <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
-        {/* Step 1: Vaccination Details */}
-
         <div>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 mb-4 pb-2">

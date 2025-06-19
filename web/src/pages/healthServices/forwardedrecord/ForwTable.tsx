@@ -63,7 +63,13 @@ interface FormattedForwardedRecord {
   pat_type: string;
   dob: string; // Added dob property
   vac_type: string; // Added vac_type property
-  vital_id:number
+  vital_id:number,
+  vacStck_id: number; // Added vacStck_id property
+  patrec_id: string; // Optional property for patient record ID
+  maxDoses: number; // Optional property for maximum doses 
+  vacStck_qty_avail: number; // Optional property for available vaccine stock quantity
+  vacrec_id: number; // Added vacrec_id property
+  existing_followv_id: number | null; // Added follow-up visit ID
 }
 
 export default function ForwardedVaccinationRecords() {
@@ -96,7 +102,11 @@ export default function ForwardedVaccinationRecords() {
 
       return {
         id: record.vachist_id,
+        vacrec_id: record.vacrec,
+        patrec_id: record.vacrec_details?.patrec_id || "", // Optional property for patient record ID
+        vacStck_id:record.vacStck_id,
         vaccineName: vaccineInfo.vac_name || "Unknown Vaccine",
+        maxDoses: vaccineInfo.vaccinelist?.no_of_doses || 0, // Optional property for maximum doses
         patientName: `${personalInfo.per_lname || ""}, ${
           personalInfo.per_fname || ""
         } ${personalInfo.per_mname || ""}`.trim(),
@@ -112,10 +122,13 @@ export default function ForwardedVaccinationRecords() {
         doseNo: record.vachist_doseNo || 0,
         vac_type: vaccineInfo.vac_type_choices || "N/A",
         status: record.vachist_status || "unknown",
+        existing_followv_id: record.followv_id || null, // Added follow-up visit ID
         dateForwarded: record.created_at || "N/A",
         pat_id: record.patient_details?.pat_id || "",
         pat_type: record.patient_details?.pat_type || "",
         vital_id: record.vital_id || 0, // Added vital_id property
+        vacStck_qty_avail: vaccineInfo.vacStck_qty_avail || 0, // Added vacStck_qty_avail property
+      
       };
     });
   }, [forwardedRecords]);
@@ -282,7 +295,13 @@ export default function ForwardedVaccinationRecords() {
                   vaccineType: row.original.vac_type,
                   vaccineDose: row.original.doseNo,
                   vachist_id: row.original.id,
-
+                  vacStck_id: row.original.vacStck_id, 
+                  patrec_id: row.original.patrec_id, // Pass patient record ID
+                  maxDoses: row.original.maxDoses, // Pass maximum doses
+                  vacStck_qty_avail: row.original.vacStck_qty_avail, // Pass available vaccine stock quantity
+                  vacrec_id: row.original.vacrec_id, // Pass vacrec_id
+                  existing_followv_id: row.original.existing_followv_id, // Pass follow-up visit ID 
+                
                 },
               }}
             >

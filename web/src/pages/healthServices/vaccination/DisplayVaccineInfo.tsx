@@ -24,6 +24,8 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { api2 } from "@/api/api";
 import { DataTable } from "@/components/ui/table/history-table-col";
 import { ColumnDef } from "@tanstack/react-table";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+
 
 type VaccinationHistory = {
   vachist_id: string;
@@ -360,89 +362,12 @@ export default function VaccinationView() {
       {/* Single Comprehensive Card */}
       <Card className="shadow-lg border-2 border-gray-300">
         <CardContent className="p-6 sm:p-8">
-          {/* Patient Information Section */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <User className=" text-darkBlue3" size={18} />
-              <h2 className="font-bold text-lg text-darkBlue3">
-                Patient Information
-              </h2>
-            </div>
+         
 
-            <div className="bg-gray-50 p-6 rounded-xl border border-gray-300">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <span className="font-semibold text-lg text-gray-700 min-w-32">
-                      Patient ID:
-                    </span>
-                    <span className="text-lg text-gray-900 font-medium">
-                      {patientData.pat_id}
-                    </span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="font-semibold text-lg text-gray-700 min-w-32">
-                      Full Name:
-                    </span>
-                    <span className="text-lg text-gray-900 font-medium">
-                      {`${patientData.lname}, ${patientData.fname} ${
-                        patientData.mname || ""
-                      }`}
-                    </span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="font-semibold text-lg text-gray-700 min-w-32">
-                      Date of Birth:
-                    </span>
-                    <span className="text-lg text-gray-900 font-medium">
-                      {patientData.dob
-                        ? format(new Date(patientData.dob), "MMMM d, yyyy")
-                        : "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="font-semibold text-lg text-gray-700 min-w-32">
-                      Gender:
-                    </span>
-                    <span className="text-lg text-gray-900 font-medium">
-                      {patientData.sex
-                        ? patientData.sex.charAt(0).toUpperCase() +
-                          patientData.sex.slice(1)
-                        : "N/A"}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <span className="font-semibold text-lg text-gray-700 min-w-32">
-                      Patient Type:
-                    </span>
-                    <span className="text-lg text-gray-900 font-medium">
-                      {patientData.pat_type || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="font-semibold text-lg text-gray-700 min-w-32">
-                      Address:
-                    </span>
-                    <span className="text-lg text-gray-900 font-medium">
-                      {[
-                        patientData.householdno,
-                        patientData.street,
-                        patientData.sitio,
-                        patientData.barangay,
-                        patientData.city,
-                        patientData.province,
-                      ]
-                        .filter(Boolean)
-                        .join(", ") || "N/A"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+  {/* Patient Information Card */}
+        <div className="mb-4 bg-white">
+          <PatientInfoCard patient={patientData} />
+        </div>
           <Separator className="my-8" />
 
           {/* Current Vaccination Section */}

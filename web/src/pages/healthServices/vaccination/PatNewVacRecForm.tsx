@@ -28,7 +28,7 @@ import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ValidationAlert } from "./vac-required-alert";
-
+import { checkVaccineStatus } from "./restful-api/FetchVaccination";
 interface Patient {
   pat_id: number;
   pat_type: string;
@@ -93,12 +93,8 @@ export default function PatNewVacRecForm() {
       if (selectedPatient) {
         setSelectedPatientData(selectedPatient);
         form.setValue("pat_id", selectedPatient.pat_id.toString());
-        
-        // Calculate and set age immediately
         const age = calculateAge(selectedPatient.personal_info?.per_dob || "");
-        form.setValue("age", age);
-        console.log("Set age to:", age);
-  
+        form.setValue("age", age);  
         form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
       }
     },
@@ -143,19 +139,10 @@ export default function PatNewVacRecForm() {
     if (assignmentOption === "other" && !data.assignto) {
       return;
     }
-  
     setSubmitting(true);
     try {
-      const [vacStck_id, vac_id, vac_name, expiry_date] =
-        data.vaccinetype.split(",");
-  
-      console.log("Submitting vaccine data:", {
-        vacStck_id: vacStck_id.trim(),
-        vac_id: vac_id.trim(),
-        vac_name: vac_name.trim(),
-        expiry_date: expiry_date.trim(),
-      });
-  
+      const [vacStck_id, vac_id, vac_name, expiry_date] = data.vaccinetype.split(",");
+
       await submitStep1.mutateAsync({
         data,
         vacStck_id: vacStck_id.trim(),
@@ -166,13 +153,7 @@ export default function PatNewVacRecForm() {
         form: {
           setError: form.setError,
           getValues: form.getValues,
-          reset: (values:any) =>
-            form.reset({
-              ...values,
-              pat_id: form.getValues("pat_id"), // Preserve pat_id
-              age: form.getValues("age"), // Preserve age
-              datevaccinated: form.getValues("datevaccinated"), // Preserve date
-            }),
+          reset: form.reset
         },
       });
     } finally {
@@ -185,29 +166,9 @@ export default function PatNewVacRecForm() {
     setSubmitting(true);
     try {
       const formData = form.getValues();
-      if (!formData.vaccinetype) {
-        toast.error("Please select a vaccine first");
-        return;
-      }
-
       console.log("age", form.getValues("age"));
-  
-      const [vacStck_id, vac_id, vac_name, expiry_date] =
-        formData.vaccinetype.split(",");
-  
-      console.log("Submitting vital signs with vaccine:", {
-        vacStck_id: vacStck_id.trim(),
-        vac_id: vac_id.trim(),
-        vac_name: vac_name.trim(),
-        expiry_date: expiry_date.trim(),
-      });
-  
+      const [vacStck_id, vac_id, vac_name, expiry_date] = formData.vaccinetype.split(",");
       const ageValue = form.getValues("age");
-      if (!ageValue) {
-        toast.error("Age is missing. Please select a patient.");
-        return;
-      }
-  
       await submitStep2.mutateAsync({
         data,
         vacStck_id: vacStck_id.trim(),
@@ -215,18 +176,8 @@ export default function PatNewVacRecForm() {
         vac_name: vac_name.trim(),
         expiry_date: expiry_date.trim(),
         pat_id: form.getValues("pat_id"),
-        age: ageValue,
-        form: {
-          setError: form.setError,
-          getValues: form.getValues,
-          reset: (values:any) =>
-            form.reset({
-              ...values,
-              pat_id: form.getValues("pat_id"), // Preserve pat_id
-              age: form.getValues("age"), // Preserve age
-              datevaccinated: form.getValues("datevaccinated"), // Preserve date
-            }),
-        },
+        age: ageValue || "",
+        form: {setError: form.setError, getValues: form.getValues, reset: form.register },
         form2: { reset: form2.reset, getValues: form2.getValues },
       });
     } finally {
@@ -245,31 +196,6 @@ export default function PatNewVacRecForm() {
 
   const handleVaccineChange = (value: string) => {
     form.setValue("vaccinetype", value);
-
-    // Log the selected vaccine value
-    console.log("Selected vaccine value:", value);
-
-    // Find and log the full vaccine details
-    const selectedVaccine = vaccineStocksOptions.find(
-      (vaccine) => vaccine.id === value
-    );
-
-    if (selectedVaccine) {
-      console.log("Selected vaccine details:", {
-        id: selectedVaccine.id,
-        name: selectedVaccine.name,
-        expiry: selectedVaccine.expiry,
-      });
-
-      // If the value contains comma-separated values, log those too
-      const [vacStck_id, vac_id, vac_name, expiry_date] = value.split(",");
-      console.log("Parsed vaccine values:", {
-        vacStck_id: vacStck_id?.trim(),
-        vac_id: vac_id?.trim(),
-        vac_name: vac_name?.trim(),
-        expiry_date: expiry_date?.trim(),
-      });
-    }
   };
 
   // Check for invalid conditions
@@ -319,7 +245,7 @@ export default function PatNewVacRecForm() {
             value={selectedPatientId}
             onChange={handlePatientSelection}
             placeholder={loading ? "Loading patients..." : "Select a patient"}
-            triggerClassName="font-normal w-full"
+            triggerClassName="font-normal  w-full"
             emptyMessage={
               <div className="flex gap-2 justify-center items-center">
                 <Label className="font-normal text-[13px]">
@@ -359,7 +285,10 @@ export default function PatNewVacRecForm() {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Combobox
+                
+                <div className="flex flex-col mt-2">
+                <Label className="mb-3 text-darkGray">Vaccine Name</Label>
+              <Combobox
                   options={vaccineStocksOptions.map((vaccine) => ({
                     id: vaccine.id,
                     name: `${vaccine.name} (Expiry: ${
@@ -382,6 +311,8 @@ export default function PatNewVacRecForm() {
                   }
                   onChange={handleVaccineChange}
                 />
+                </div>
+             
                 <FormDateTimeInput
                   control={form.control}
                   name="datevaccinated"

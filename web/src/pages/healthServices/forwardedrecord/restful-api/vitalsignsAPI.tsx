@@ -18,13 +18,14 @@ export const updateVitalSigns = async (
 
 export const createVitalSigns = async (updatedData: Record<string, any>) => {
   try {
-    const response = await api2.patch(
-      `/patientrecords/vitals-signs/`,
+    const response = await api2.post(
+      `/patientrecords/vital-signs/`,
       updatedData
     );
     return response.data;
+    console.log("Vital signs created successfully:", response.data);
   } catch (error) {
-    console.error("Error updating vital signs:", error);
+    console.error("Error adding vital signs:", error);
     throw error;
   }
 };

@@ -46,14 +46,7 @@ export const VaccineSchema = z
     assignto: z.string().optional(),
     age: z.string().optional()
   })
-  .refine(
-    (data) => {
-      // Note: This requires passing assignmentOption to the schema or handling it externally
-      // For simplicity, we make assignto optional and validate in the form
-      return true;
-    },
-    { message: "Assignee is required when assigning to someone else", path: ["assignto"] }
-  );
+  
 
 export const VitalSignsSchema = z.object({
   pr: z.string().min(1, "Pulse rate is required"),

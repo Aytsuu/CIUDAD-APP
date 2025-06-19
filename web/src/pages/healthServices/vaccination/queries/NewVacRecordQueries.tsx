@@ -21,6 +21,8 @@ import { CircleCheck } from "lucide-react";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
 import { useNavigate } from "react-router";
 import {checkVaccineStatus} from "../restful-api/FetchVaccination";
+
+
 // Mutation for Step 1 submission
 export const useSubmitStep1 = () => {
   const queryClient = useQueryClient();
@@ -52,36 +54,15 @@ export const useSubmitStep1 = () => {
         let vacrec_id: string | null = null;
 
         try {
-          // const checkVaccinationHistory = await getVaccinationHistory();
-          // const existingVAccinationHistory = checkVaccinationHistory.find(
-          //   (record: { vacStck: { vac_id: string } }) =>
-          //     record.vacStck.vac_id === data.vaccinetype
-          // );
-          // if (existingVAccinationHistory) {
-          //   throw new Error("Vaccination already exists in the record.");
-          // }
-          const response = await checkVaccineStatus(
-            data.pat_id,parseInt(vac_id, 10)
-          );
-          if (response.data.exists) {
-            throw new Error("Patient already has this vaccine in their record.");
-          }
+          const response = await checkVaccineStatus(data.pat_id,parseInt(vac_id, 10));
+          if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
   
-
           const patientRecord = await createPatientRecord(data.pat_id);
           patrec_id = patientRecord.patrec_id;
 
-          if (!patrec_id) {
-            throw new Error(
-              "Patient record ID is null. Cannot create vaccination record."
-            );
-          }
+          if (!patrec_id) {throw new Error( "Patient record ID is null. Cannot create vaccination record.");}
 
-          const vaccinationRecord = await createVaccinationRecord(
-            patrec_id,
-            // "forwarded",
-            0
-          );
+          const vaccinationRecord = await createVaccinationRecord(patrec_id, 1);
           vacrec_id = vaccinationRecord.vacrec_id;
           let age = data.age
           if (vacrec_id) {
@@ -98,8 +79,7 @@ export const useSubmitStep1 = () => {
               "Vaccination record ID is null. Cannot create vaccination history."
             );
           }
-
-          queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
+          queryClient.invalidateQueries({queryKey: ["patientVaccinationDetails", "vaccinationRecords"], });
           return;
         } catch (error) {
           // Rollback
@@ -150,16 +130,7 @@ export const useSubmitStep2 = () => {
       vac_name: string;
       expiry_date: string;
     }) => {
-      // const vaccineType = form.getValues("vaccinetype");
-
-      // if (!vaccineType) {
-      //   form.setError("vaccinetype", {
-      //     type: "manual",
-      //     message: "Please select a vaccine type",
-      //   });
-      //   throw new Error("Please select a vaccine type");
-      // }
-
+     
       let patrec_id: string | null = null;
       let vacrec_id: string | null = null;
       let vital_id: string | null = null;
@@ -169,18 +140,14 @@ export const useSubmitStep2 = () => {
       try {
         const vaccineData = await getVaccineStock(vacStck_id);
         const maxDoses = vaccineData.vaccinelist.no_of_doses;
+        
+        const response = await checkVaccineStatus(pat_id,parseInt(vac_id, 10));
+        if (response?.exists) {throw new Error("Patient already has this vaccine in their record.");}
 
-        const response = await checkVaccineStatus(
-          pat_id,parseInt(vac_id, 10)
-        );
-        if (response.data.exists) {
-          throw new Error("Patient already has this vaccine in their record.");
-        }
 
         const patientRecord = await createPatientRecord(pat_id);
         patrec_id = patientRecord.patrec_id;
 
-        // const status = maxDoses === 1 ? "completed" : "partially vaccinated";
         if (!patrec_id) {
           throw new Error(
             "Patient record ID is null. Cannot create vaccination record."
@@ -189,11 +156,10 @@ export const useSubmitStep2 = () => {
 
         const vaccinationRecord = await createVaccinationRecord(
           patrec_id,
-          // status.toLowerCase() as "completed" | "partially vaccinated",
           maxDoses
         );
-        vacrec_id = vaccinationRecord.vacrec_id;
 
+        vacrec_id = vaccinationRecord.vacrec_id;
         const vitalSigns = await createVitalSigns(data);
         vital_id = vitalSigns.vital_id;
 
@@ -207,7 +173,6 @@ export const useSubmitStep2 = () => {
         await createAntigenStockTransaction(parseInt(vacStck_id, 10));
 
         let vac_type_choices = vaccineData.vaccinelist.vac_type_choices;
-
         if (vac_type_choices === "routine") {
           const { interval, time_unit } =
             vaccineData.vaccinelist.routine_frequency;
@@ -218,7 +183,8 @@ export const useSubmitStep2 = () => {
           );
           const followUpVisit = await createFollowUpVisit(
             patrec_id,
-            nextVisitDate.toISOString().split("T")[0]
+            nextVisitDate.toISOString().split("T")[0],
+            `Routine vaccination for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` // Added description
           );
           followv_id = followUpVisit.followv_id;
         } else if (vaccineData.vaccinelist.no_of_doses >= 2) {
@@ -238,15 +204,17 @@ export const useSubmitStep2 = () => {
             );
             const followUpVisit = await createFollowUpVisit(
               patrec_id,
-              nextVisitDate.toISOString().split("T")[0]
+              nextVisitDate.toISOString().split("T")[0],
+              `Follow-up visit for ${vac_name} scheduled on ${nextVisitDate.toISOString().split("T")[0]}` // Added description
             );
             followv_id = followUpVisit.followv_id;
           }
         }
 
-        let age = form2.getValues("age");
+
+        let age = form.getValues("age");
         const historyStatus =
-          maxDoses === 1 ? "completed" : "partially Vaccinated";
+          maxDoses === 1 ? "completed" : "partially vaccinated";
         const vaccinationHistory = await createVaccinationHistory(
           vacrec_id ?? "",
           { ...data },
@@ -259,8 +227,9 @@ export const useSubmitStep2 = () => {
         );
   
         vachist_id = vaccinationHistory.vachist_id;
-        queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
-        queryClient.invalidateQueries({ queryKey: ["invVaccinationRecord"] });
+        queryClient.invalidateQueries({queryKey: ["patientVaccinationDetails", "vaccinationRecords"], });
+
+        
         return;
       } catch (error) {
         // Rollback
