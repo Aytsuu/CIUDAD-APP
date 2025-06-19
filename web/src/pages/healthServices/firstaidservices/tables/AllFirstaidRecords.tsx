@@ -18,9 +18,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { getMedicineRecords } from "../restful-api/getAPI";
+import { getFirstaidRecords } from "../restful-api/getAPI";
 import { useNavigate } from "react-router";
-export interface MedicineRecord {
+
+export interface FirstAidRecord {
   pat_id: string;
   fname: string;
   lname: string;
@@ -35,29 +36,30 @@ export interface MedicineRecord {
   province: string;
   pat_type: string;
   address: string;
-  medicine_count: number;
+  firstaid_count: number;
   dob: string;
 }
 
-export default function AllMedicineRecords() {
+export default function AllFirstAidRecords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [patientTypeFilter, setPatientTypeFilter] = useState<string>("all");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  // Fetch medicine records from API
-  const { data: medicineRecords, isLoading } = useQuery<MedicineRecord[]>({
-    queryKey: ["medicineRecords"],
-    queryFn: getMedicineRecords,
+
+  // Fetch first aid records from API
+  const { data: firstAidRecords, isLoading } = useQuery<FirstAidRecord[]>({
+    queryKey: ["firstAidRecords"],
+    queryFn: getFirstaidRecords,
     refetchOnMount: true,
     staleTime: 0,
   });
 
-  const formatMedicineData = React.useCallback((): MedicineRecord[] => {
-    if (!medicineRecords) return [];
+  const formatFirstAidData = React.useCallback((): FirstAidRecord[] => {
+    if (!firstAidRecords) return [];
 
-    return medicineRecords.map((record: any) => {
+    return firstAidRecords.map((record: any) => {
       const info = record.patient_details.personal_info || {};
       const address = record.patient_details.address || {};
 
@@ -69,22 +71,22 @@ export default function AllMedicineRecords() {
         sex: info.per_sex,
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob,
-        householdno: record.patient_details?.households?.[0]?.hh_id,
+        householdno: record.patient_details?.households?.[0]?.hh_id || "",
         street: address.add_street,
         sitio: address.sitio,
         barangay: address.add_barangay,
         city: address.add_city,
         province: address.add_province,
         pat_type: record.patient_details.pat_type,
-        medicine_count: record.medicine_count || 0,
+        firstaid_count: record.firstaid_count || 0,
         address: `${address.add_street}, ${address.add_barangay}, ${address.add_city}, ${address.add_province}`,
       };
     });
-  }, [medicineRecords]);
+  }, [firstAidRecords]);
 
   // Filter data based on search query and patient type
   const filteredData = React.useMemo(() => {
-    return formatMedicineData().filter((record) => {
+    return formatFirstAidData().filter((record) => {
       const searchText = `${record.pat_id} 
         ${record.lname} 
         ${record.fname} 
@@ -96,7 +98,7 @@ export default function AllMedicineRecords() {
 
       return searchText.includes(searchQuery.toLowerCase()) && typeMatches;
     });
-  }, [searchQuery, formatMedicineData, patientTypeFilter]);
+  }, [searchQuery, formatFirstAidData, patientTypeFilter]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / pageSize);
@@ -105,7 +107,7 @@ export default function AllMedicineRecords() {
     currentPage * pageSize
   );
 
-  const columns: ColumnDef<MedicineRecord>[] = [
+  const columns: ColumnDef<FirstAidRecord>[] = [
     {
       accessorKey: "patient",
       header: ({ column }) => (
@@ -166,12 +168,12 @@ export default function AllMedicineRecords() {
       ),
     },
     {
-      accessorKey: "medicine_count",
+      accessorKey: "firstaid_count",
       header: "No of Records",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
-            {row.original.medicine_count}
+            {row.original.firstaid_count}
           </div>
         </div>
       ),
@@ -183,7 +185,7 @@ export default function AllMedicineRecords() {
         <div className="flex justify-center gap-2">
           <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
             <Link
-              to="/IndivMedicineRecord"
+              to="/indiv-firstaid-records"
               state={{
                 params: {
                   patientData: {
@@ -235,10 +237,10 @@ export default function AllMedicineRecords() {
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-col items-center ">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Medicine Records
+              First Aid Records
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
+              Manage and view patient's first aid records
             </p>
           </div>
         </div>
@@ -274,7 +276,7 @@ export default function AllMedicineRecords() {
 
           <div className="w-full sm:w-auto">
             <Button className="w-full sm:w-auto">
-              <Link to={`/patNewMedRecForm`}>New Record</Link>
+              <Link to={`/patnew-firstaid-form`}>New Record</Link>
             </Button>
           </div>
         </div>

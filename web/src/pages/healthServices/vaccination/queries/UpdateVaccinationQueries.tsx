@@ -27,6 +27,7 @@ import { useNavigate } from 'react-router';
 // Mutation for deducting vaccine stock
 export const useDeductVaccineStock = () => {
   const queryClient = useQueryClient();
+  const navigate =useNavigate()
 
   return useMutation({
     mutationFn: async (vacStck_id: number) => {
@@ -55,7 +56,6 @@ export const useDeductVaccineStock = () => {
       const transaction = await createAntigenStockTransaction(vacStck_id);
       console.log("Vaccine stock updated successfully:", updatePayload);
       console.log("Antigen stock transaction created:", transaction);
-
       return true;
     },
     onSuccess: () => {
@@ -72,7 +72,7 @@ export const useDeductVaccineStock = () => {
 export const useSubmitStep1 = () => {
   const queryClient = useQueryClient();
   const deductVaccineStock = useDeductVaccineStock();
-
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: async ({
       data,
@@ -135,12 +135,11 @@ export const useSubmitStep1 = () => {
         }
       }
     },
-    onSuccess: (result, { form }) => {
-      if (result) {
-        toast.success(result.message);
-        form.reset();
+    onSuccess: () => {
+      navigate(-1)
+     toast.success("Form assigned to others for Step 2 completion!");
         queryClient.invalidateQueries({ queryKey: ['patientRecords', 'vaccinationRecords'] });
-      }
+      
     },
     onError: (error: Error) => {
       console.error("Form submission error:", error);
@@ -155,6 +154,7 @@ export const useSubmitStep1 = () => {
 export const useSubmitStep2 = () => {
   const queryClient = useQueryClient();
   const deductVaccineStock = useDeductVaccineStock();
+  const navigate = useNavigate();
 
   return useMutation({
     mutationFn: async ({
@@ -321,11 +321,10 @@ export const useSubmitStep2 = () => {
         throw error;
       }
     },
-    onSuccess: (result, { form, form2, setAssignmentOption }) => {
-      toast.success(result.message);
-      form.reset();
-      form2.reset();
-      setAssignmentOption("self");
+    onSuccess: () => {
+      navigate(-1);
+
+      toast.success("Vaccination record updated successfully!");
       queryClient.invalidateQueries({
         queryKey: ['patientRecords', 'vaccinationRecords', 'vaccineStocks', 'vitalSigns', 'followUpVisits'],
       });

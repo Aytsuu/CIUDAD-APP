@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'apps.account',
     'apps.medicalConsultation',
     'apps.medicine',
+    'apps.firstaid',
 
 ]
 

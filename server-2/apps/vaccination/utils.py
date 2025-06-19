@@ -6,6 +6,8 @@ from django.db.models import Q
 from collections import defaultdict
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
 from .serializers import *
+from django.db.models import Count, Q
+
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
     today = timezone.now().date()
@@ -136,22 +138,20 @@ def get_all_residents_not_vaccinated():
 
     return result
 
-
 def count_vaccinated_by_patient_type():
-    vaccinated_pat_ids = VaccinationHistory.objects.filter(
-        vachist_status="completed"
-    ).values_list(
-        'vacrec__patrec_id__pat_id', flat=True
-    ).distinct()
+    counts = (
+        Patient.objects.filter(
+            patient_records__vaccination_records__vaccination_histories__vachist_status="completed"
+        )
+        .values('pat_type')
+        .annotate(total=Count('pat_id'))
+    )
 
-    vaccinated_patients = Patient.objects.filter(pat_id__in=vaccinated_pat_ids)
+    result = {"resident_vaccinated": 0, "transient_vaccinated": 0}
+    for entry in counts:
+        if entry["pat_type"] == "Resident":
+            result["resident_vaccinated"] = entry["total"]
+        elif entry["pat_type"] == "Transient":
+            result["transient_vaccinated"] = entry["total"]
 
-    resident_count = vaccinated_patients.filter(pat_type="Resident").count()
-    transient_count = vaccinated_patients.filter(pat_type="Transient").count()
-
-    return {
-        "resident_vaccinated": resident_count,
-        "transient_vaccinated": transient_count
-    }
-
-
+    return result

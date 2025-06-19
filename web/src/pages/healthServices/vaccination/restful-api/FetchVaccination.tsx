@@ -160,7 +160,8 @@ export const fetchVaccinesWithStock = () => {
 //       error,
 //       hasAvailableStock: sortedVaccines.some(v => v.available && v.id !== "loading")
 //     };
-//   };
+
+
 
 export const fetchVaccinesWithStockVacID = (vac_id: number) => {
   const [vaccines, setVaccines] = useState<
@@ -170,8 +171,6 @@ export const fetchVaccinesWithStockVacID = (vac_id: number) => {
       vac_id: string;
       expiryDate: string | null;
       available: boolean;
-      isExpired: boolean;
-      isOutOfStock: boolean;
     }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -195,14 +194,11 @@ export const fetchVaccinesWithStockVacID = (vac_id: number) => {
           .filter(
             (stock: any) =>
               stock.vac_id === vac_id && // Match exact vac_id
-              !stock.inv_isArchive // Filter out archived vaccines
+              !stock.inv_isArchive && // Filter out archived vaccines
+              !(stock.inv_details?.expiry_date && new Date(stock.inv_details.expiry_date) < new Date()) // Filter out expired vaccines
           )
           .map((stock: any) => {
-            const isExpired =
-              stock.inv_details?.expiry_date &&
-              new Date(stock.inv_details.expiry_date) < new Date();
-            const isOutOfStock = stock.vacStck_qty_avail <= 0;
-            const isAvailable = !isExpired && !isOutOfStock;
+            const isAvailable = stock.vacStck_qty_avail > 0;
 
             return {
               id: String(stock.vacStck_id),
@@ -210,10 +206,9 @@ export const fetchVaccinesWithStockVacID = (vac_id: number) => {
               vac_id: String(stock.vac_id),
               expiryDate: stock.inv_details?.expiry_date || null,
               available: isAvailable,
-              isExpired,
-              isOutOfStock,
             };
-          });
+          })
+          .filter((vaccine) => vaccine.available); // Filter out unavailable vaccines
 
         // Validate if the provided vac_id exists
         if (transformedData.length === 0) {
@@ -246,16 +241,14 @@ export const fetchVaccinesWithStockVacID = (vac_id: number) => {
   };
 };
 
-
-
-export const checkVaccineStatus = async (pat_id:string, vac_id:number) => {
+export const checkVaccineStatus = async (pat_id: string, vac_id: number) => {
   try {
     const response = await api2.get(
       `/vaccination/check-vaccine/${pat_id}/${vac_id}`
     );
     return response.data; // Return the data from the response
-  } catch (error:unknown) {
+  } catch (error: unknown) {
     // Handle errors (you can customize this based on your needs)
-    console.error('Error checking vaccine status:', error);
+    console.error("Error checking vaccine status:", error);
   }
 };

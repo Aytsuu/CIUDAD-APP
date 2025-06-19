@@ -16,7 +16,6 @@ import {
   Clock,
   Calendar,
   MapPin,
-  
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,6 +50,10 @@ import {
   useCompletedFollowUpVisits,
   usePendingFollowUpVisits,
 } from "./queries/followv";
+import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
+
+
+
 interface PatientData {
   pat_id: string;
   pat_type: string;
@@ -137,8 +140,14 @@ export default function ViewPatientRecord() {
   const medicineCount = medicineCountData?.medicinerecord_count;
   const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
   const vaccinationCount = vaccinationCountData?.vaccination_count;
+   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
+    const firstAidCount = firstAidCountData?.firstaidrecord_count;
+  
+  
   const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
   const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+  
+  
   const form = useForm({
     resolver: zodResolver(patientRecordSchema),
     defaultValues: patientData ?? {
@@ -748,6 +757,45 @@ export default function ViewPatientRecord() {
                     </div>
                   </div>
                 )}{" "}
+                {firstAidCount !== 0 && (
+                  <div className="p-4 rounded-lg border border-purple-200 ">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 rounded-lg">
+                          <Pill className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            First Aid
+                          </h3>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <span className="text-sm text-gray-600 bg-purple-200 px-2 py-1 rounded-md">
+                            {firstAidCount !== undefined ? firstAidCount : "0"}
+
+                              Records
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              Last updated: June 2, 2023
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link
+                        to="/indiv-firstaid-records"
+                        state={{ params: { patientData: patientLinkData } }}
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-10 px-6 bg-white border-purple-300 text-purple-700  font-medium"
+                        >
+                          View Details
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}{" "}
               </div>
             }
             cardClassName="border shadow-sm rounded-md"
@@ -788,7 +836,7 @@ export default function ViewPatientRecord() {
                       <TabsContent value="pending">
                         <div className="space-y-3 mt-6">
                           {pendingData?.results?.length > 0 ? (
-                            pendingData.results.map((visit:any) => (
+                            pendingData.results.map((visit: any) => (
                               <div
                                 key={visit.id}
                                 className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
@@ -827,7 +875,7 @@ export default function ViewPatientRecord() {
                       <TabsContent value="completed">
                         <div className="space-y-3 mt-6">
                           {completedData?.results?.length > 0 ? (
-                            completedData.results.map((visit:any) => (
+                            completedData.results.map((visit: any) => (
                               <div
                                 key={visit.id}
                                 className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200"

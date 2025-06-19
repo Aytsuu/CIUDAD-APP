@@ -5,13 +5,9 @@ import { Input } from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowUpDown,
-  Eye,
   Search,
   ChevronLeft,
   Plus,
-  UserRound,
-  Pill,
-  MapPin,
   AlertCircle,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -25,29 +21,26 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { PatientInfoCard } from "@/components/ui//patientInfoCard";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { useMedicineCount } from "../queries/MedCountQueries";
+import { useFirstAidCount } from "../queries/FirstAidCountQueries";
+import {Heart} from "lucide-react"
 
-type filter = "all" | "requested" | "recorded" | "archived";
+type filter = "all" | "archived";
 
-export interface MedicineRecord {
-  medrec_id: number;
-  medrec_qty: string;
-  status: string;
-  req_type: string;
-  reason: string | null;
+export interface FirstAidRecord {
+  farec_id: number;
+  qty: string;
+  created_at: string;
   is_archived: boolean;
-  requested_at: string;
-  fulfilled_at: string | null;
-  signature: string | null;
-  patrec_id: number;
-  minv_id: number;
-  minv_details: {
-    minv_id: number;
+  reason: string | null;
+  finv: number;
+  patrec: number;
+  finv_details: {
+    finv_id: number;
     inv_detail: {
       inv_id: number;
       expiry_date: string;
@@ -56,25 +49,21 @@ export interface MedicineRecord {
       is_Archived: boolean;
       updated_at: string;
     };
-    med_detail: {
-      med_id: string;
+    fa_detail: {
+      fa_id: string;
       catlist: string;
-      med_name: string;
-      med_type: string;
+      fa_name: string;
       created_at: string;
       updated_at: string;
       cat: number;
     };
     inv_id: number;
-    med_id: string;
-    minv_dsg: number;
-    minv_dsg_unit: string;
-    minv_form: string;
-    minv_qty: number;
-    minv_qty_unit: string;
-    minv_pcs: number;
-    minv_distributed: number;
-    minv_qty_avail: number;
+    fa_id: string;
+    finv_qty: number;
+    finv_qty_unit: string;
+    finv_pcs: number;
+    finv_used: number;
+    finv_qty_avail: number;
   };
 }
 
@@ -85,108 +74,79 @@ export interface Patient {
   [key: string]: any;
 }
 
-export default function IndivMedicineRecords() {
+export default function IndivFirstAidRecords() {
   const location = useLocation();
   const patientData = location.state?.params?.patientData;
 
   const navigate = useNavigate();
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
-    useState(false);
+  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState<filter>("all");
 
-  // Guard clause for missing patientData
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
   }
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
 
   useEffect(() => {
-    // Get patient data from route state
     if (location.state?.params?.patientData) {
       const patientData = location.state.params.patientData;
       setSelectedPatientData(patientData);
     }
   }, [location.state]);
 
-  // const { data: medicineCountData } = useQuery({
-  //   queryKey: ["medicineRecordCount", patientData.pat_id],
-  //   queryFn: async () => {
-  //     const response = await api2.get(
-  //       `/medicine/medrec-count/${patientData.pat_id}/`
-  //     );
-  //     return response.data;
-  //   },
-  //   refetchOnMount: true,
-  //   staleTime: 0,
-  // });
+  const { data: firstAidCountData } = useFirstAidCount(patientData.pat_id);
+  const firstAidCount = firstAidCountData?.firstaidrecord_count;
 
-  // const medicineCount = medicineCountData?.medicinerecord_count;
-
-  // Fetch medicine records
-  const { data: medicineCountData } = useMedicineCount(patientData.pat_id);
-  const medicineCount = medicineCountData?.medicinerecord_count;
-  
-  
   const {
-    data: medicineRecords,
+    data: firstAidRecords,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["patientMedicineDetails", patientData.pat_id],
+    queryKey: ["patientFirstAidDetails"],
     queryFn: async () => {
-      const response = await api2.get(
-        `/medicine/indiv-medicine-record/${patientData.pat_id}/`
-      );
+      const response = await api2.get(`/firstaid/indiv-firstaid-record/${patientData.pat_id}/`);
       return response.data;
     },
     refetchOnMount: true,
     staleTime: 0,
   });
 
-  const formatMedicineData = React.useCallback((): MedicineRecord[] => {
-    if (!medicineRecords) return [];
-    return medicineRecords.map((record: any) => {
+  const formatFirstAidData = React.useCallback((): FirstAidRecord[] => {
+    if (!firstAidRecords) return [];
+    return firstAidRecords.map((record: any) => {
       return {
-        medrec_id: record.medrec_id,
-        medrec_qty: record.medrec_qty,
-        status: record.status,
-        req_type: record.req_type,
-        reason: record.reason,
+        farec_id: record.farec_id,
+        qty: record.qty,
+        created_at: record.created_at,
         is_archived: record.is_archived,
-        requested_at: record.requested_at,
-        fulfilled_at: record.fulfilled_at,
-        signature: record.signature,
-        patrec_id: record.patrec_id,
-        minv_id: record.minv_id,
-        minv_details: record.minv_details || null,
+        reason: record.reason,
+        finv: record.finv,
+        patrec: record.patrec,
+        finv_details: record.finv_details || null,
       };
     });
-  }, [medicineRecords]);
+  }, [firstAidRecords]);
 
   const filteredData = React.useMemo(() => {
-    return formatMedicineData().filter((record) => {
+    return formatFirstAidData().filter((record) => {
       const searchText =
-        `${record.medrec_id} ${record.minv_details?.med_detail?.med_name} ${record.minv_details?.med_detail?.catlist} ${record.status} ${record.req_type}`.toLowerCase();
+        `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
       const matchesSearch = searchText.includes(searchQuery.toLowerCase());
       let matchesFilter = true;
 
       if (filter === "archived") {
         matchesFilter = record.is_archived;
-      } else if (filter !== "all") {
-        const status = record.status.toLowerCase();
-        matchesFilter = status === filter.toLowerCase() && !record.is_archived;
       } else {
         matchesFilter = !record.is_archived;
       }
 
       return matchesSearch && matchesFilter;
     });
-  }, [searchQuery, formatMedicineData, filter]);
+  }, [searchQuery, formatFirstAidData, filter]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
@@ -197,11 +157,16 @@ export default function IndivMedicineRecords() {
   const confirmArchiveRecord = async () => {
     if (recordToArchive !== null) {
       try {
-        await api2.patch(`/medicine-records/${recordToArchive}/archive/`);
-        toast.success("Medicine record archived successfully!");
-        refetch();
+        const response = await api2.patch(`/firstaid/firstaid-records/${recordToArchive}/archive/`);
+        if (response.status === 200) {
+          toast.success("First aid record archived successfully!");
+          refetch();
+        } else {
+          throw new Error(response.data.error || "Failed to archive the record.");
+        }
       } catch (error) {
-        toast.error("Failed to archive the record.");
+        const errorMessage = error instanceof Error ? error.message : "Failed to archive the record.";
+        toast.error(errorMessage);
       } finally {
         setIsArchiveConfirmationOpen(false);
         setRecordToArchive(null);
@@ -209,101 +174,52 @@ export default function IndivMedicineRecords() {
     }
   };
 
-  const columns: ColumnDef<MedicineRecord>[] = [
+  const columns: ColumnDef<FirstAidRecord>[] = [
     {
-      accessorKey: "medicine",
-      header: "Medicine",
+      accessorKey: "firstaid_item",
+      header: "First Aid Item",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[200px] px-2">
           <div className="font-medium">
-            {row.original.minv_details?.med_detail?.med_name || "Unknown"}
+            {row.original.finv_details?.fa_detail?.fa_name || "Unknown"}
             <div className="text-xs text-gray-500">
-              Category:{" "}
-              {row.original.minv_details?.med_detail?.catlist || "N/A"}
+              Category: {row.original.finv_details?.fa_detail?.catlist || "N/A"}
             </div>
             <div className="text-xs text-gray-500">
-              Type: {row.original.minv_details?.med_detail?.med_type || "N/A"}
+              ID: {row.original.finv_details?.fa_detail?.fa_id || "N/A"}
             </div>
           </div>
         </div>
       ),
     },
     {
-      accessorKey: "details",
-      header: "Details",
+      accessorKey: "qty",
+      header: "Qty used",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[200px] px-2">
-          <div className="flex flex-col">
             <div className="text-sm">
-              <span className="font-medium">Dosage: </span>
-              {row.original.minv_details?.minv_dsg}{" "}
-              {row.original.minv_details?.minv_dsg_unit}
+              {row.original.qty}
             </div>
-            <div className="text-sm">
-              <span className="font-medium">Form: </span>
-              {row.original.minv_details?.minv_form}
-            </div>
-            <div className="text-sm">
-              <span className="font-medium">Quantity: </span>
-              {row.original.medrec_qty}{" "}
-              {row.original.minv_details?.minv_qty_unit}
-            </div>
-          </div>
         </div>
       ),
     },
-
     {
-      accessorKey: "request_info",
-      header: "Request Info",
+      accessorKey: "reason",
+      header: "Reason",
       cell: ({ row }) => (
         <div className="flex flex-col text-sm">
-          <div>
-            <span className="font-medium">Type: </span>
-            {row.original.req_type}
-          </div>
-          {row.original.reason && (
-            <div>
-              <span className="font-medium">Reason: </span>
-              {row.original.reason}
-            </div>
-          )}
+          <div>{row.original.reason || "No reason provided"}</div>
         </div>
       ),
     },
     {
       accessorKey: "dates",
-      header: "Dates",
+      header: "Date Used",
       cell: ({ row }) => {
-        const requestedAt = new Date(row.original.requested_at);
-        const fulfilledAt = row.original.fulfilled_at
-          ? new Date(row.original.fulfilled_at)
-          : null;
-
+        const usedAt = new Date(row.original.created_at);
         return (
           <div className="flex flex-col text-sm">
-            <div>
-              <span className="font-medium">Requested: </span>
-              {requestedAt.toLocaleDateString()}
-              <span className="text-gray-500 ml-1">
-                {requestedAt.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            {fulfilledAt && (
-              <div>
-                <span className="font-medium">Fulfilled: </span>
-                {fulfilledAt.toLocaleDateString()}
-                <span className="text-gray-500 ml-1">
-                  {fulfilledAt.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-            )}
+            <div>{usedAt.toLocaleDateString()}</div>
           </div>
         );
       },
@@ -319,7 +235,7 @@ export default function IndivMedicineRecords() {
               size="sm"
               className="h-8"
               onClick={() => {
-                setRecordToArchive(row.original.medrec_id);
+                setRecordToArchive(row.original.farec_id);
                 setIsArchiveConfirmationOpen(true);
               }}
             >
@@ -359,10 +275,10 @@ export default function IndivMedicineRecords() {
           </Button>
           <div className="flex-col items-center mb-4">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Individual Medicine Records
+              Individual First Aid Records
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's vaccination records
+              Manage and view patient's first aid records
             </p>
           </div>
         </div>
@@ -381,23 +297,22 @@ export default function IndivMedicineRecords() {
               </Label>
             </div>
             <p className="text-sm text-gray-700">
-              Please select a patient from the medicine records page first.
+              Please select a patient from the first aid records page first.
             </p>
           </div>
         )}
 
-        {/* Total Me */}
-        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm ">
+        <div className="bg-white rounded-md p-5 mb-6 border border-gray-300 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 border  rounded-md flex items-center justify-center shadow-sm">
-              <Pill className="h-5 w-5 text-green-600" />
+            <div className="w-10 h-10 bg-red-100 border rounded-md flex items-center justify-center shadow-sm">
+              <Heart className="h-5 w-5 text-red-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-800">
-                Total Medicine Records
+                Total First Aid Records
               </p>
               <p className="text-3xl font-bold text-gray-900">
-                {medicineCount !== undefined ? medicineCount : "0"}
+                {firstAidCount !== undefined ? firstAidCount : "0"}
               </p>
             </div>
           </div>
@@ -412,7 +327,7 @@ export default function IndivMedicineRecords() {
                   size={17}
                 />
                 <Input
-                  placeholder="Search by medicine name, category, status..."
+                  placeholder="Search by item name, category, reason..."
                   className="pl-10 bg-white w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -425,8 +340,6 @@ export default function IndivMedicineRecords() {
                   className="bg-white w-48"
                   options={[
                     { id: "all", name: "All Records" },
-                    { id: "requested", name: "Requested" },
-                    { id: "recorded", name: "Recorded" },
                     { id: "archived", name: "Archived" },
                   ]}
                   value={filter}
@@ -438,10 +351,10 @@ export default function IndivMedicineRecords() {
           <div>
             <Button className="w-full sm:w-auto">
               <Link
-                to="/IndivPatNewMedRecForm"
+                to="/indiv-firstaid-form"
                 state={{ params: { patientData } }}
               >
-                New Medicine Record
+                New First Aid Record
               </Link>
             </Button>
           </div>
@@ -504,7 +417,7 @@ export default function IndivMedicineRecords() {
         isOpen={isArchiveConfirmationOpen}
         onOpenChange={setIsArchiveConfirmationOpen}
         onConfirm={confirmArchiveRecord}
-        title="Archive Medicine Record"
+        title="Archive First Aid Record"
         description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
       />
     </>

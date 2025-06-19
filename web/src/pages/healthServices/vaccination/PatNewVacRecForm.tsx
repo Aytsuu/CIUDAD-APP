@@ -28,6 +28,7 @@ import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ValidationAlert } from "./vac-required-alert";
 import { PatientSearch } from "@/components/ui/patientSearch";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 
 interface Patient {
   pat_id: number;
@@ -56,6 +57,8 @@ export default function PatNewVacRecForm() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
+  const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -98,7 +101,6 @@ export default function PatNewVacRecForm() {
     if (assignmentOption === "other" && !data.assignto) {
       return;
     }
-    setSubmitting(true);
     try {
       const [vacStck_id, vac_id, vac_name, expiry_date] = data.vaccinetype.split(",");
 
@@ -117,22 +119,22 @@ export default function PatNewVacRecForm() {
       });
     } finally {
       setSubmitting(false);
+      setIsStep1ConfirmOpen(false);
     }
   };
 
   const submitStep2 = useSubmitStep2();
   const onSubmitStep2 = async (data: VitalSignsType) => {
-    setSubmitting(true);
     try {
       const formData = form.getValues();
-      const [vacStck_id, vac_id, vac_name, expiry_date] = formData.vaccinetype.split(",");
+      const [vacStck_id, vac_id, vac_name] = formData.vaccinetype.split(",");
       const ageValue = form.getValues("age");
       await submitStep2.mutateAsync({
         data,
         vacStck_id: vacStck_id.trim(),
         vac_id: vac_id.trim(),
         vac_name: vac_name.trim(),
-        expiry_date: expiry_date.trim(),
+        expiry_date: "",
         pat_id: form.getValues("pat_id"),
         age: ageValue || "",
         form: { setError: form.setError, getValues: form.getValues, reset: form.register },
@@ -140,7 +142,40 @@ export default function PatNewVacRecForm() {
       });
     } finally {
       setSubmitting(false);
+      setIsStep2ConfirmOpen(false);
     }
+  };
+
+  const handleStep1Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isValid = await form.trigger();
+    if (isValid && !hasInvalidStep1Fields) {
+      setIsStep1ConfirmOpen(true);
+    } else {
+      toast.error("Please complete all required fields correctly");
+    }
+  };
+
+  const handleStep2Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isValid = await form2.trigger();
+    if (isValid && !hasInvalidStep1Fields && !hasInvalidStep2Fields) {
+      setIsStep2ConfirmOpen(true);
+    } else {
+      toast.error("Please complete all required fields correctly");
+    }
+  };
+
+  const handleStep1Confirm = () => {
+    setIsStep1ConfirmOpen(false);
+    setSubmitting(true);
+    form.handleSubmit(onSubmitStep1)();
+  };
+
+  const handleStep2Confirm = () => {
+    setIsStep2ConfirmOpen(false);
+    setSubmitting(true);
+    form2.handleSubmit(onSubmitStep2)();
   };
 
   useEffect(() => {
@@ -202,7 +237,7 @@ export default function PatNewVacRecForm() {
         <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmitStep1)}
+              onSubmit={handleStep1Submit}
               className="space-y-6"
             >
               <div className="flex items-center gap-2 mb-4 pb-2">
@@ -212,7 +247,7 @@ export default function PatNewVacRecForm() {
                 </div>
               </div>
 
-              <h2 className="font-semibold text-blue bg-blue-50 rounded-md">
+              <h2 className="font-semibold text-blue bg-blue-50 rounded-md py-2 px-3">
                 Vaccination Details
               </h2>
 
@@ -317,7 +352,10 @@ export default function PatNewVacRecForm() {
                     disabled={hasInvalidStep1Fields || submitting}
                   >
                     {submitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
                     ) : (
                       "Save & Assign"
                     )}
@@ -332,7 +370,7 @@ export default function PatNewVacRecForm() {
           {assignmentOption === "self" && (
             <Form {...form2}>
               <form
-                onSubmit={form2.handleSubmit(onSubmitStep2)}
+                onSubmit={handleStep2Submit}
                 className="space-y-6 mt-8"
               >
                 <div className="flex justify-between items-center">
@@ -367,7 +405,7 @@ export default function PatNewVacRecForm() {
                     type="number"
                   />
                 </div>
-                <h2 className="font-semibold text-blue bg-blue-50 rounded-md">
+                <h2 className="font-semibold text-blue bg-blue-50 rounded-md py-2 px-3">
                   Blood Pressure
                 </h2>
                 <div className="flex gap-2">
@@ -412,7 +450,10 @@ export default function PatNewVacRecForm() {
                     disabled={hasInvalidStep1Fields || hasInvalidStep2Fields || submitting}
                   >
                     {submitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
                     ) : (
                       "Complete"
                     )}
@@ -421,6 +462,23 @@ export default function PatNewVacRecForm() {
               </form>
             </Form>
           )}
+
+          <ConfirmationDialog
+            isOpen={isStep1ConfirmOpen}
+            onOpenChange={setIsStep1ConfirmOpen}
+            onConfirm={handleStep1Confirm}
+            title="Confirm Save & Assign"
+            description="Are you sure you want to save this vaccination record and assign Step 2 to another person? This action will update the system and notify the assignee."
+          />
+
+          <ConfirmationDialog
+         
+            isOpen={isStep2ConfirmOpen}
+            onOpenChange={setIsStep2ConfirmOpen}
+            onConfirm={handleStep2Confirm}
+            title="Confirm Vaccination Submission"
+            description="Are you sure you want to submit this vaccination record? This action will update the inventory and patient records."
+          />
         </div>
       </div>
     </div>

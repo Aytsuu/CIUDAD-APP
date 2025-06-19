@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
@@ -14,18 +14,17 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchMedicinesWithStock } from "./restful-api/fetchAPI";
+import { fetchFirstaidsWithStock } from "./restful-api/fetchAPI";
 import { z } from "zod";
-import { MedicineTransactionType } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/queries/MedicinePostQueries";
 import {
-  MedicineRequestArraySchema,
-  MedicineRequestArrayType,
-} from "@/form-schema/medicineRequest";
+  FirstaidRequestArraySchema,
+  FirstaidRequestArrayType,
+} from "@/form-schema/firstaid-schema";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-import { MedicineDisplay } from "@/components/ui/medicine-display";
-import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
-import { useMedicineRequestMutation } from "./queries/postQueries";
-import { PatientSearch } from "@/components/ui/patientSearch";
+import { FirstAidDisplay } from "@/components/ui/first-aid-display";
+import { RequestSummary } from "@/components/ui/firstaid-summary";
+import { useFirstRequestMutation } from "./queries/postQueries";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal"; // Import the ConfirmationDialog
 
 interface Patient {
   pat_id: number;
@@ -48,39 +47,41 @@ interface Patient {
   };
 }
 
-export default function PatNewMedRecForm() {
+export default function IndivPatNewFirstAidRecForm() {
   const navigate = useNavigate();
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const location = useLocation();
+  const [selectedPatientData, setSelectedPatientData] =
+    useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
-  const [selectedMedicines, setSelectedMedicines] = useState<
-    { minv_id: string; medrec_qty: number; reason: string }[]
+  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false); // State for dialog
+  const { firstAidStocksOptions, isLoading: isFirstAidLoading } =
+    fetchFirstaidsWithStock();
+  const [selectedFirstAids, setSelectedFirstAids] = useState<
+    { finv_id: string; qty: number; reason: string }[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } = useMedicineRequestMutation();
+  const { mutateAsync: submitFirstaidRequest, isPending: isSubmitting } =
+    useFirstRequestMutation();
 
-  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
-    setSelectedPatientId(patientId);
-    setSelectedPatientData(patient);
-    if (patient) {
-      form.setValue("pat_id", patient.pat_id.toString());
-    } else {
-      form.setValue("pat_id", "");
+  useEffect(() => {
+    if (location.state?.params?.patientData) {
+      const patientData = location.state.params.patientData;
+      setSelectedPatientData(patientData);
+      form.setValue("pat_id", patientData.pat_id.toString());
     }
-  };
+  }, [location.state]);
 
-  const handleSelectedMedicinesChange = useCallback(
+  const handleSelectedFirstAidChange = useCallback(
     (
-      updatedMedicines: {
-        minv_id: string;
-        medrec_qty: number;
+      updatedFirstAids: {
+        finv_id: string;
+        qty: number;
         reason: string;
       }[]
     ) => {
-      setSelectedMedicines(updatedMedicines);
+      setSelectedFirstAids(updatedFirstAids);
     },
     []
   );
@@ -91,60 +92,64 @@ export default function PatNewMedRecForm() {
 
   const handlePreview = useCallback(() => {
     if (
-      !selectedPatientId ||
-      selectedMedicines.length === 0 ||
+      !selectedPatientData ||
+      selectedFirstAids.length === 0 ||
       hasInvalidQuantities
     ) {
       toast.error("Please complete all required fields");
       return;
     }
     setShowSummary(true);
-  }, [selectedPatientId, selectedMedicines]);
+  }, [selectedPatientData, selectedFirstAids]);
 
-  const form = useForm<MedicineRequestArrayType>({
-    resolver: zodResolver(MedicineRequestArraySchema),
+  const form = useForm<FirstaidRequestArrayType>({
+    resolver: zodResolver(FirstaidRequestArraySchema),
     defaultValues: {
       pat_id: "",
-      medicines: [],
+      firstaid: [],
     },
   });
 
   useEffect(() => {
-    form.setValue("medicines", selectedMedicines);
-  }, [selectedMedicines, form]);
+    form.setValue("firstaid", selectedFirstAids);
+  }, [selectedFirstAids, form]);
 
   const onSubmit = useCallback(
-    async (data: MedicineRequestArrayType) => {
+    async (data: FirstaidRequestArrayType) => {
       setIsConfirming(true);
-      try {
-        const requestData = {
-          pat_id: data.pat_id,
-          medicines: selectedMedicines.map((med) => ({
-            minv_id: med.minv_id,
-            medrec_qty: med.medrec_qty,
-            reason: med.reason || "No reason provided",
-          })),
-        };
 
-        await submitMedicineRequest(requestData);
+      const requestData = {
+        pat_id: data.pat_id,
+        firstaid: selectedFirstAids.map((fa) => ({
+          finv_id: fa.finv_id,
+          qty: fa.qty,
+          reason: fa.reason || "No reason provided",
+        })),
+      };
+
+      try {
+        await submitFirstaidRequest(requestData);
       } catch (error) {
-        console.error("Error in onSubmit handler:", error);
-        toast.error("Failed to submit request");
+        toast.error("Failed to submit first aid request");
       } finally {
         setIsConfirming(false);
+        setIsSubmitConfirmationOpen(false); // Close dialog
       }
     },
-    [selectedMedicines, submitMedicineRequest]
+    [selectedFirstAids, submitFirstaidRequest, navigate]
   );
 
-  const totalSelectedQuantity = selectedMedicines.reduce(
-    (sum, med) => sum + med.medrec_qty,
+  const totalSelectedQuantity = selectedFirstAids.reduce(
+    (sum, fa) => sum + fa.qty,
     0
   );
 
-  const hasInvalidQuantities = selectedMedicines.some(
-    (med) => med.medrec_qty < 1
-  );
+  const hasInvalidQuantities = selectedFirstAids.some((fa) => fa.qty < 1);
+
+  // Handler for opening the confirmation dialog
+  const handleConfirmSubmit = () => {
+    setIsSubmitConfirmationOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -157,58 +162,70 @@ export default function PatNewMedRecForm() {
           >
             <ChevronLeft />
           </Button>
-          <div className="flex-col items-center ">
+          <div className="flex-col items-center">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">
-              Medicine Request
+              First Aid Request
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's medicine records
+              Request first aid items for a patient
             </p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        {/* Patient Selection Section */}
-        <PatientSearch onPatientSelect={handlePatientSelect} className="mb-4" />
-
-        {/* Patient Information Card */}
-        <div className="mb-4 bg-white">
-          <PatientInfoCard patient={selectedPatientData} />
-        </div>
+        {selectedPatientData ? (
+          <div className="mb-4">
+            <PatientInfoCard patient={selectedPatientData} />
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <Label className="text-base font-semibold text-red-500">
+                No patient selected
+              </Label>
+            </div>
+            <p className="text-sm text-gray-600">
+              Please select a patient from the first aid records page first.
+            </p>
+          </div>
+        )}
 
         <div className="bg-white rounded-md pt-5">
-          {isMedicinesLoading ? (
+          {isFirstAidLoading ? (
             <div className="p-4 flex justify-center items-center space-y-4">
-              <p className="text-center text-red-600">Loading medicines...</p>
+              <p className="text-center text-red-600">
+                Loading first aid items...
+              </p>
             </div>
           ) : (
-            <div className="w-full ">
+            <div className="w-full">
               {showSummary ? (
                 <div className="w-full overflow-x-auto">
                   <RequestSummary
-                    selectedMedicines={selectedMedicines}
-                    medicineStocksOptions={medicineStocksOptions}
+                    selectedFirstAids={selectedFirstAids}
+                    firstAidStocksOptions={firstAidStocksOptions}
                     totalSelectedQuantity={totalSelectedQuantity}
                   />
                 </div>
               ) : (
                 <div className="w-full overflow-x-auto">
-                  <MedicineDisplay
-                    medicines={medicineStocksOptions}
-                    initialSelectedMedicines={selectedMedicines}
-                    onSelectedMedicinesChange={handleSelectedMedicinesChange}
+                  <FirstAidDisplay
+                    firstAids={firstAidStocksOptions}
+                    initialSelectedFirstAids={selectedFirstAids}
+                    onSelectedFirstAidChange={handleSelectedFirstAidChange}
                     itemsPerPage={itemsPerPage}
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                  {medicineStocksOptions.length === 0 && (
+                  {firstAidStocksOptions.length === 0 && (
                     <div className="text-center py-12 mx-3">
                       <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                       <h3 className="text-base font-medium text-gray-900 mb-2">
-                        No medicines available
+                        No first aid items available
                       </h3>
                       <p className="text-sm text-gray-500">
-                        There are currently no medicines in stock.
+                        There are currently no first aid items in stock.
                       </p>
                     </div>
                   )}
@@ -217,7 +234,7 @@ export default function PatNewMedRecForm() {
             </div>
           )}
 
-          {selectedMedicines.length > 0 && !showSummary && (
+          {selectedFirstAids.length > 0 && !showSummary && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mt-5 mr-5">
               <div className="flex items-center gap-3">
                 <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
@@ -225,8 +242,8 @@ export default function PatNewMedRecForm() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-emerald-900">
-                    {selectedMedicines.length} medicine
-                    {selectedMedicines.length > 1 ? "s" : ""} selected
+                    {selectedFirstAids.length} first aid item
+                    {selectedFirstAids.length > 1 ? "s" : ""} selected
                   </p>
                   <p className="text-xs text-emerald-700">
                     Total quantity: {totalSelectedQuantity} items
@@ -236,8 +253,8 @@ export default function PatNewMedRecForm() {
             </div>
           )}
 
-          {(!selectedPatientId ||
-            selectedMedicines.length === 0 ||
+          {(!selectedPatientData ||
+            selectedFirstAids.length === 0 ||
             hasInvalidQuantities) && (
             <div className="mx-3 mb-4 mt-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -245,18 +262,18 @@ export default function PatNewMedRecForm() {
                   <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-amber-900">
-                      {!selectedPatientId
+                      {!selectedPatientData
                         ? "Patient Required"
-                        : selectedMedicines.length === 0
-                        ? "Medicines Required"
+                        : selectedFirstAids.length === 0
+                        ? "First Aid Items Required"
                         : "Invalid Quantities"}
                     </p>
                     <p className="text-xs text-amber-700 mt-1">
-                      {!selectedPatientId
-                        ? "Please select a patient to continue with the medicine request."
-                        : selectedMedicines.length === 0
-                        ? "Please select at least one medicine to submit the request."
-                        : "Please ensure all medicine quantities are at least 1."}
+                      {!selectedPatientData
+                        ? "Please select a patient first from the first aid records page."
+                        : selectedFirstAids.length === 0
+                        ? "Please select at least one first aid item to submit the request."
+                        : "Please ensure all quantities are at least 1."}
                     </p>
                   </div>
                 </div>
@@ -264,7 +281,7 @@ export default function PatNewMedRecForm() {
             </div>
           )}
 
-          <div className="px-3 pb-4 mt-5 ">
+          <div className="px-3 pb-4 mt-5">
             <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
               <Button
                 variant="outline"
@@ -277,14 +294,14 @@ export default function PatNewMedRecForm() {
                 <Button
                   onClick={handlePreview}
                   disabled={
-                    !selectedPatientId ||
-                    selectedMedicines.length === 0 ||
+                    !selectedPatientData ||
+                    selectedFirstAids.length === 0 ||
                     hasInvalidQuantities ||
-                    isMedicinesLoading
+                    isFirstAidLoading
                   }
                   className="w-full sm:w-auto px-6 text-white order-1 sm:order-2"
                 >
-                  {isMedicinesLoading ? "Loading..." : "Preview Request"}
+                  {isFirstAidLoading ? "Loading..." : "Preview Request"}
                 </Button>
               ) : (
                 <>
@@ -296,7 +313,7 @@ export default function PatNewMedRecForm() {
                     Back to Edit
                   </Button>
                   <Button
-                    onClick={form.handleSubmit(onSubmit)}
+                    onClick={handleConfirmSubmit} // Open dialog instead of submitting
                     disabled={isConfirming}
                     className="w-full sm:w-auto px-6 text-white order-1 sm:order-2 bg-green-600 hover:bg-green-700"
                   >
@@ -313,6 +330,15 @@ export default function PatNewMedRecForm() {
               )}
             </div>
           </div>
+
+          {/* Add ConfirmationDialog */}
+          <ConfirmationDialog
+            isOpen={isSubmitConfirmationOpen}
+            onOpenChange={setIsSubmitConfirmationOpen}
+            onConfirm={form.handleSubmit(onSubmit)}
+            title="Submit First Aid Request"
+            description="Are you sure you want to submit this first aid request? This action will process the request and update the inventory."
+          />
         </div>
       </div>
     </div>

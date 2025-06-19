@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
 import { createVitalSigns, updateVacRecord } from "./restful-api/vitalsignsAPI";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,8 +36,7 @@ import {
   updateFollowUpVisit,
 } from "@/pages/healthServices/vaccination/restful-api/PostAPI";
 import { calculateNextVisitDate } from "@/pages/healthServices/vaccination/Calculatenextvisit";
-import { ChevronLeft } from "lucide-react";
-import { CircleAlert } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 
 export interface Patient {
   pat_id: number;
@@ -76,6 +75,8 @@ export default function ForwardedVaccinationForm() {
   });
 
   const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
+  const [isSubmitConfirmationOpen, setIsSubmitConfirmationOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (location.state?.params?.patientData) {
@@ -85,6 +86,7 @@ export default function ForwardedVaccinationForm() {
   }, [location.state]);
 
   const submit = async (data: VitalSignsType) => {
+    setIsSubmitting(true);
     console.log("Submitting form with data:", data);
     console.log("Current params:", params);
 
@@ -126,10 +128,7 @@ export default function ForwardedVaccinationForm() {
         // Update vaccine stock
         await api2.put(`inventory/vaccine_stocks/${parseInt(vacStck_id)}/`, {
           vacStck_qty_avail: vaccineData.vacStck_qty_avail - 1,
-          // vacStck_used: vaccineData.vacStck_used + 1,
         });
-
-     
 
         // Handle routine vaccination
         if (vaccineType === "routine") {
@@ -156,8 +155,6 @@ export default function ForwardedVaccinationForm() {
             if (!followv_id) {
               throw new Error("Failed to retrieve follow-up visit ID from response");
             }
-
-
 
             const updateData = {
               vachist_status: "completed",
@@ -191,14 +188,12 @@ export default function ForwardedVaccinationForm() {
         } 
         // Handle multi-dose vaccination
         else if (vaccineData.vaccinelist.no_of_doses >= 2) {
-
           console.log("Processing multi-dose vaccination");
           const dose2Interval = vaccineData.vaccinelist.intervals.find(
             (interval: { dose_number: number }) => interval.dose_number === 2
           );
 
           if (!existing_followv_id) {
-          
             if (dose2Interval) {
               const nextVisitDate = calculateNextVisitDate(
                 dose2Interval.interval,
@@ -277,7 +272,24 @@ export default function ForwardedVaccinationForm() {
     } catch (error) {
       console.error("Failed to save vital signs:", error);
       toast.error("Failed to save vaccination record");
+    } finally {
+      setIsSubmitting(false);
+      setIsSubmitConfirmationOpen(false);
     }
+  };
+
+  const handleConfirmSubmit = () => {
+    setIsSubmitConfirmationOpen(false); // Close the modal immediately
+    form.handleSubmit(submit)(); // Trigger the form submission
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Trigger validation and check if form is valid
+    const isValid = await form.trigger();
+    if (isValid) {
+      setIsSubmitConfirmationOpen(true);
+    } 
   };
 
   return (
@@ -367,7 +379,7 @@ export default function ForwardedVaccinationForm() {
         <div className="border-t border-gray-200 my-8"></div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(submit)} className="space-y-6 mt-8">
+          <form onSubmit={handleFormSubmit} className="space-y-6 mt-8">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2 mb-4 pb-2">
                 <h1 className="font-bold text-xl text-darkBlue1">STEP</h1>
@@ -429,12 +441,31 @@ export default function ForwardedVaccinationForm() {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="w-[120px]">
-                Complete
+              <Button
+                type="submit"
+                className="w-[120px]"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Complete"
+                )}
               </Button>
             </div>
           </form>
         </Form>
+
+        <ConfirmationDialog
+          isOpen={isSubmitConfirmationOpen}
+          onOpenChange={setIsSubmitConfirmationOpen}
+          onConfirm={handleConfirmSubmit}
+          title="Confirm Vaccination Submission"
+          description="Are you sure you want to submit this vaccination record? This action will update the inventory and schedule any necessary follow-up visits."
+        />
       </div>
     </div>
   );

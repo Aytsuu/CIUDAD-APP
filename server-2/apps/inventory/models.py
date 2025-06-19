@@ -150,8 +150,8 @@ class CommodityInventory(models.Model):
     cinv_dispensed = models.PositiveIntegerField(default=0)
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
-    com_id = models.ForeignKey('CommodityList', on_delete=models.CASCADE)
+    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')
+    com_id = models.ForeignKey('CommodityList', on_delete=models.CASCADE,db_column ='com_id')
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:
@@ -175,12 +175,12 @@ class CommodityTransaction(models.Model):
 class FirstAidInventory(models.Model):
     finv_id = models.BigAutoField(primary_key=True)
     finv_qty = models.PositiveIntegerField(default=0)
-    finv_qty_unit = models.CharField(max_length=100)
+    finv_qty_unit = models.CharField(max_length=100,default="N/A")
     finv_pcs = models.PositiveIntegerField(default=0)
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE)
-    fa_id = models.ForeignKey('FirstAidList', on_delete=models.CASCADE)
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id')
+    fa_id = models.ForeignKey(FirstAidList, on_delete=models.CASCADE, db_column='fa_id')
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:

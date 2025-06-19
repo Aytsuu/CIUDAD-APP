@@ -33,6 +33,8 @@ import { health_administration_router } from './administration-health-router';
 import { reports_router } from './reports-router';
 import {medicineRequest} from './medicine-request'
 import {forwardedhealthrecord_router} from './forwardedhealthrecords';
+import {firstaid_router} from './firstaid-router';
+
 
 export const main_router: RouteObject[] = [
     {
@@ -79,7 +81,8 @@ export const main_router: RouteObject[] = [
             ...patientsRecordRouter,
             ...health_administration_router,
             ...medicineRequest,
-            ...forwardedhealthrecord_router
+            ...forwardedhealthrecord_router,
+            ...firstaid_router,
             
         ]
     }

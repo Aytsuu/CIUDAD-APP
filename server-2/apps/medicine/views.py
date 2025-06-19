@@ -29,7 +29,7 @@ class CreateMedicineRecordView(generics.CreateAPIView):
     queryset = MedicineRecord.objects.all()
     
     
-
+    
 
 
 class GetMedRecordCountView(APIView):
