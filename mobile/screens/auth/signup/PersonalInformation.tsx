@@ -64,7 +64,6 @@ export default function PersonalInformation() {
       setAddressesError(true);
       return;
     }
-    console.log(getValues())
     router.push("/(auth)/upload-id")
   }
 

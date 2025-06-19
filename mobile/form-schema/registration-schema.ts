@@ -48,6 +48,10 @@ export const uploadIdSchema = z.object({
 export const photoSchema = z.object({
   imageURI: z.string()
 })
+
+export const fileSchema = z.object({
+  
+})
   
 export const RegistrationFormSchema = z.object({
   verificationSchema,

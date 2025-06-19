@@ -17,7 +17,6 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
   const [galleryVisible, setGalleryVisible] = React.useState<boolean>(false);
   const [cameraVisible, setCameraVisible] = React.useState<boolean>(false);
   const [galleryAssets, setGalleryAssets] = React.useState<MediaLibrary.Asset[]>([]);
-  const [locallySelectedImage, setLocallySelectedImage] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const cameraRef = React.useRef<Camera>(null);
   const device = useCameraDevice('back');
@@ -82,7 +81,7 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
   };
 
   const handleSelectedImage = async (imageUri: string) => {
-    setLocallySelectedImage(imageUri);
+    setSelectedImage(imageUri);
     setIsLoading(true);
     const compressedImage = await ImageManipulator.manipulateAsync(
       imageUri,
@@ -102,8 +101,10 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
       c.charCodeAt(0)
     );
 
-    const fileName = `${nanoid()}.jpg`;
+    const fileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
     const filePath = `uploads/${fileName}`;
+    console.log(fileName);
+    console.log(filePath);
     const { error } = await supabase.storage
       .from("image-bucket")
       .upload(filePath, arrayBuffer as Uint8Array, {
@@ -174,9 +175,9 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
         onPress={openGallery}
         disabled={isLoading}
       >
-        {locallySelectedImage ? (
+        {selectedImage ? (
           <Image 
-            source={{ uri: locallySelectedImage }} 
+            source={{ uri: selectedImage }} 
             className="w-full h-full" 
             resizeMode="cover"
           />

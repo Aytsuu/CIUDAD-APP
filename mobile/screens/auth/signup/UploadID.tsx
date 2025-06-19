@@ -28,11 +28,11 @@ export default function UploadID() {
   const router = useRouter();
   const { toast } = useToastContext();
   const {control, trigger, getValues, setValue} = useRegistrationFormContext();
-  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = React.useState<Record<string, any>>({});
 
   React.useEffect(() => {
     if(selectedImage) {
-      setValue("uploadIdSchema.imageURI", selectedImage)
+      setValue("uploadIdSchema.image", selectedImage)
     }
   }, [selectedImage])
 
