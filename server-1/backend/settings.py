@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.drr',
     'apps.donation',
+    'apps.clerk',
     # 'apps.useraccount',
     # 'apps.blotter',
     'apps.gad',
