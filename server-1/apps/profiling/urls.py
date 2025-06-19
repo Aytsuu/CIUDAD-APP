@@ -1,5 +1,4 @@
 from django.urls import path
-from .views import *
 from .views.resident_profile_views import *
 from .views.personal_views import *
 from .views.family_views import *

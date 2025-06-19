@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'apps.file',
     'apps.report',
     'apps.donation',
+    'detection'
 ]
 
 MIDDLEWARE = [

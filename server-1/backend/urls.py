@@ -33,4 +33,5 @@ urlpatterns = [
     path('treasurer/', include('apps.treasurer.urls')),
     path('report/', include('apps.report.urls')),
     path('donation/', include('apps.donation.urls')),
+    path('api/detection/', include('detection.urls'))
 ]

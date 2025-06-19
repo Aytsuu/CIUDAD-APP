@@ -219,6 +219,7 @@ export interface ScreenLayoutProps {
   onExitPress?: () => void
   customLeftAction?: ReactNode
   customRightAction?: ReactNode
+  headerBetweenAction?: ReactNode
   customNavigation?: ReactNode
 
   // Layout Configuration
@@ -288,6 +289,7 @@ export default function ScreenLayout({
   onExitPress,
   customLeftAction,
   customRightAction,
+  headerBetweenAction,
   customNavigation,
 
   // Layout Configuration
@@ -495,6 +497,10 @@ export default function ScreenLayout({
               <View />
             )}
 
+            {/* Right Action */}
+            {headerBetweenAction && (
+              headerBetweenAction
+            )}
             {/* Right Action */}
             {customRightAction ? (
               customRightAction

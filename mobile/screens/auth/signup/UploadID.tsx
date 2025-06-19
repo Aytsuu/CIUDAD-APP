@@ -1,14 +1,16 @@
 import "@/global.css";
 
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from "@/components/ui/button";
 import _ScreenLayout from "@/screens/_ScreenLayout";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import MediaPicker from "@/components/ui/media-picker";
-import { AlertCircle, CheckCircle, ChevronLeft, X } from "lucide-react-native";
+import { ChevronLeft } from "@/lib/icons/ChevronLeft"
+import { X } from "@/lib/icons/X"
+import { useToastContext } from "@/components/ui/toast";
 
 const idOptions: {label: string, value: string}[] = [
   {label: "Driver's License", value: "driverLicense"},
@@ -24,6 +26,7 @@ const idOptions: {label: string, value: string}[] = [
 
 export default function UploadID() {
   const router = useRouter();
+  const { toast } = useToastContext();
   const {control, trigger, getValues, setValue} = useRegistrationFormContext();
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
 
@@ -44,25 +47,26 @@ export default function UploadID() {
     }
 
     if(!selectedImage) {
+      toast.error("Upload a photo of your valid ID.")
       return;
     }
-  };
 
-  // Check if form is complete
-  const isFormComplete = () => {
-    const formData = getValues().uploadIdSchema;
-    return formData?.selected && selectedImage;
+    router.push("/(auth)/take-a-photo")
   };
 
   return (
     <_ScreenLayout
       customLeftAction={
-        <View className="flex-row items-center">
+        <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
-          <Text className="text-[13px]">Personal Information</Text>
-        </View>
+        </TouchableOpacity>
       }
-      customRightAction={<X className="text-black" />}
+      headerBetweenAction={<Text className="text-[13px]">ID Verification</Text>}
+      customRightAction={
+        <TouchableOpacity onPress={() => router.replace("/(auth)")}>
+          <X className="text-black" />
+        </TouchableOpacity>
+      }
     >
       <View className="flex-1 justify-between gap-6">
         <View className="flex-1 gap-6">
@@ -71,13 +75,9 @@ export default function UploadID() {
           <View className="gap-3">
             <View className="flex-row items-center gap-2">
               <View className="w-full mb-4 pb-2 border-b border-gray-200">
-                <Text className="text-lg font-PoppinsSemiBold text-gray-800">ID Validation</Text>
+                <Text className="text-lg font-PoppinsSemiBold text-gray-800">Upload ID</Text>
                 <Text className="text-sm text-gray-600 font-PoppinsRegular">It is required to upload a valid ID.</Text>
               </View>
-
-              {getValues().uploadIdSchema?.selected && (
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              )}
             </View>
             
             <FormSelect 
@@ -93,9 +93,6 @@ export default function UploadID() {
           <View className="gap-3">
             <View className="flex-row items-center gap-2">
               <Text className="text-lg font-semibold text-gray-900">Upload ID Photo</Text>
-              {selectedImage && (
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              )}
             </View>
             
             <View className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -117,19 +114,6 @@ export default function UploadID() {
               </View>
             </View>
           </View>
-
-          {/* Form Completion Status */}
-          {isFormComplete() && (
-            <View className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <View className="flex-row items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <Text className="font-medium text-green-900">Ready to proceed!</Text>
-              </View>
-              <Text className="text-green-700 text-sm mt-1">
-                Your ID information has been captured successfully.
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Fixed Bottom Button */}

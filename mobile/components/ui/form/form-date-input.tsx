@@ -31,7 +31,7 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
               onPress={() => setShowPicker(true)}
               className="bg-white border border-gray-300 native:h-[45px] items-start"
             >
-              <Text className="text-[16px]">
+              <Text className="text-[12px]">
                 {value ? new Date(value).toLocaleDateString() : "Select Date"}
               </Text>
             </Button>
@@ -53,7 +53,7 @@ export const FormDateInput = ({ control, name, label }: DatePickerProps) => {
             )}
             
             <View className="absolute right-5 top-1/2 transform -translate-y-1/2">
-              <Calendar className="text-gray-700" />
+              <Calendar size={20} className="text-gray-700" />
             </View>
           </View>
           

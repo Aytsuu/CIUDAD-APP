@@ -2,6 +2,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { View, Text, TouchableOpacity, Modal, FlatList, Dimensions, Animated } from "react-native"
 import { ChevronDown, Check } from "lucide-react-native"
+import { capitalize } from "@/helpers/capitalize"
 
 export interface DropdownOption {
   label: string
@@ -152,7 +153,7 @@ export const SelectLayout: React.FC<ModalSelectProps> = ({
           }`}
           numberOfLines={1}
         >
-          {selectedOption ? selectedOption.label : placeholder}
+          {selectedOption ? capitalize(selectedOption.label) : placeholder}
         </Text>
 
         <Animated.View

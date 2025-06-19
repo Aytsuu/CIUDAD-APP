@@ -8,6 +8,11 @@ class RequestBaseSerializer(serializers.ModelSerializer):
     model = RequestRegistration
     fields = '__all__'
 
+class RequestFileBaseSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = RequestFile
+    fields = "__all__"
+
 class RequestTableSerializer(serializers.ModelSerializer):
   lname = serializers.CharField(source="per.per_lname")
   fname = serializers.CharField(source="per.per_fname")
@@ -28,3 +33,4 @@ class RequestTableSerializer(serializers.ModelSerializer):
     ]
     
     return addresses
+  

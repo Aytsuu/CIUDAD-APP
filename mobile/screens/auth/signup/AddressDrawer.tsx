@@ -29,19 +29,28 @@ export const AddressDrawer = ({
   });
 
   React.useEffect(() => {
-  const subscription = watch((value, { name }) => {
-    if (name === 'personalInfoSchema.per_addresses.new.add_barangay') {
-      const barangay = value.personalInfoSchema?.per_addresses?.new?.add_barangay;
-      if (barangay && barangay.toLowerCase() === "san roque") {
-        setIsInternalAddress(true);
-      } else {
-        setIsInternalAddress(false);
+    const subscription = watch((value, { name }) => {
+      if (name === 'personalInfoSchema.per_addresses.new.add_barangay') {
+        const barangay = value.personalInfoSchema?.per_addresses?.new?.add_barangay;
+        if (barangay && barangay.toLowerCase() === "san roque") {
+          setIsInternalAddress(true);
+        } else {
+          setIsInternalAddress(false);
+        }
       }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  React.useEffect(() => {
+    const barangay = getValues('personalInfoSchema.per_addresses.new.add_barangay');
+    if (barangay && barangay.toLowerCase() === "san roque") {
+      setIsInternalAddress(true);
+    } else {
+      setIsInternalAddress(false);
     }
-  });
-  
-  return () => subscription.unsubscribe();
-}, [watch]);
+  }, [getValues('personalInfoSchema.per_addresses.new.add_barangay')])
 
   React.useEffect(() => {
     if (visible) {
@@ -94,7 +103,7 @@ export const AddressDrawer = ({
     }
 
     append(values);
-    toast.success("Success!");
+    toast.success("Added!");
     handleClose();
 
   }

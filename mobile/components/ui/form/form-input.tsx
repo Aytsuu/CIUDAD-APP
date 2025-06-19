@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Input } from '../input';
 import { Controller, Control, FieldError } from 'react-hook-form';
+import { capitalize } from '@/helpers/capitalize';
 
 interface FormInputProps {
   control: Control<any>;
@@ -35,7 +36,7 @@ export const FormInput = ({
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
-            value={value}
+            value={capitalize(value) || ""}
             onChangeText={onChange}
             onBlur={onBlur}
             secureTextEntry={secureTextEntry}

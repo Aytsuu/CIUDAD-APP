@@ -1,34 +1,57 @@
 import "@/global.css";
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, Modal, StyleSheet} from 'react-native';
-import { Camera, useCameraDevice } from 'react-native-vision-camera';
+import { View, Text, TouchableOpacity, Image, FlatList, Modal, StyleSheet, ActivityIndicator} from 'react-native';
+import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from "@/lib/supabase";
-import { v4 as uuid4 } from 'uuid';
+import { v4 } from 'uuid';
+import { nanoid } from "nanoid"
+import { Loader2 } from "@/lib/icons/Loader2";
 
 export default function MediaPicker({selectedImage, setSelectedImage} : {
   selectedImage: string | null;
   setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>
 }) {
-  const [galleryVisible, setGalleryVisible] = React.useState(false);
-  const [cameraVisible, setCameraVisible] = React.useState(false);
+  const [galleryVisible, setGalleryVisible] = React.useState<boolean>(false);
+  const [cameraVisible, setCameraVisible] = React.useState<boolean>(false);
   const [galleryAssets, setGalleryAssets] = React.useState<MediaLibrary.Asset[]>([]);
+  const [locallySelectedImage, setLocallySelectedImage] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const cameraRef = React.useRef<Camera>(null);
   const device = useCameraDevice('back');
+  const { hasPermission, requestPermission } = useCameraPermission();
 
   React.useEffect(() => {
-    (async () => {
-      // Request media library permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Permission to access media library is required!');
+    let isMounted = true;
+
+    const checkPermissions = async () => {
+      try {
+        // Request media library permission
+        const mediaLibraryStatus = await MediaLibrary.requestPermissionsAsync();
+        if (mediaLibraryStatus.status !== 'granted' && isMounted) {
+          console.warn('Permission to access media library was denied');
+        }
+
+        // Request camera permission
+        if (!hasPermission) {
+          const cameraPermission = await requestPermission();
+          if (!cameraPermission && isMounted) {
+            console.warn('Camera permission was denied');
+          }
+        }
+      } catch (error) {
+        console.error('Permission error:', error);
       }
-      // Request camera permission (for react-native-vision-camera)
-      await Camera.requestCameraPermission();
-    })();
-  }, []);
+    };
+
+    checkPermissions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasPermission, requestPermission]);
   
 
   const fetchGalleryAssets = async () => {
@@ -59,12 +82,13 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
   };
 
   const handleSelectedImage = async (imageUri: string) => {
-    setSelectedImage(imageUri);
+    setLocallySelectedImage(imageUri);
+    setIsLoading(true);
     const compressedImage = await ImageManipulator.manipulateAsync(
       imageUri,
       [{ resize: { width: 1080, height: 1200 } }],
       {
-        compress: 0.8, // 70% compression (0.7)
+        compress: 0.8, // 80% compression
         format: ImageManipulator.SaveFormat.JPEG,
         base64: true,
       }
@@ -78,7 +102,7 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
       c.charCodeAt(0)
     );
 
-    const fileName = `${uuid4()}.jpg`;
+    const fileName = `${nanoid()}.jpg`;
     const filePath = `uploads/${fileName}`;
     const { error } = await supabase.storage
       .from("image-bucket")
@@ -87,7 +111,11 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
         upsert: false,
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error uploading image:", error);
+      setIsLoading(false);
+      throw error
+    };
 
     // Get public URL
     const {
@@ -95,7 +123,7 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
     } = supabase.storage.from("image-bucket").getPublicUrl(filePath);
 
     console.log("Upload successful!", publicUrl);
-
+    setIsLoading(false);
     setSelectedImage(publicUrl);
   }
 
@@ -134,14 +162,24 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
   }
 
   return (
-    <View className="flex-1 justify-center items-center">
-      {/* Main touchable that opens the gallery */}
+    <View className="flex-1 justify-center items-center"> 
+      {isLoading && (
+        <View className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+          <ActivityIndicator size="large" color="#1778F2" />
+        </View>
+      )}
+
       <TouchableOpacity 
-        className="w-full h-[300px]  bg-[#f0f2f5] justify-center items-center overflow-hidden"
+        className="w-full h-[300px] bg-[#f0f2f5] justify-center items-center overflow-hidden"
         onPress={openGallery}
+        disabled={isLoading}
       >
-        {selectedImage ? (
-          <Image source={{ uri: selectedImage }} className="w-full h-full" />
+        {locallySelectedImage ? (
+          <Image 
+            source={{ uri: locallySelectedImage }} 
+            className="w-full h-full" 
+            resizeMode="cover"
+          />
         ) : (
           <View className="items-center">
             <Ionicons name="add" size={28} color="#1778F2" />
@@ -180,6 +218,7 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
                 <Image 
                   source={{ uri: item.uri }} 
                   className="w-full h-full rounded" 
+                  resizeMode="cover"
                 />
               </TouchableOpacity>
             )}
@@ -190,10 +229,10 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
             windowSize={5}
           />
 
-          {/* Camera button at the bottom */}
           <TouchableOpacity 
             className="flex-row bg-[#1778F2] p-4 rounded mx-4 my-4 justify-center items-center"
             onPress={takePhoto}
+            disabled={!hasPermission}
           >
             <Ionicons name="camera" size={24} color="white" />
             <Text className="text-white ml-2 font-semibold">Camera</Text>
@@ -209,13 +248,15 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
         onRequestClose={closeCamera}
       >
         <View className="flex-1 relative">
-          <Camera
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            device={device}
-            isActive={cameraVisible}
-            photo={true}
-          />
+          {device && (
+            <Camera
+              ref={cameraRef}
+              style={StyleSheet.absoluteFill}
+              device={device}
+              isActive={cameraVisible}
+              photo={true}
+            />
+          )}
           
           <View className="absolute w-full bottom-0 p-5 bg-[rgba(0,0,0,0.3)]">
             <TouchableOpacity 

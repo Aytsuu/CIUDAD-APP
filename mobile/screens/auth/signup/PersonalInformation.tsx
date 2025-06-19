@@ -64,20 +64,23 @@ export default function PersonalInformation() {
       setAddressesError(true);
       return;
     }
-
+    console.log(getValues())
     router.push("/(auth)/upload-id")
   }
 
-  console.log(addresses)
   return (
     <_ScreenLayout
       customLeftAction={
-        <View className="flex-row items-center">
+        <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
-          <Text className="text-[13px]">Personal Information</Text>
-        </View>
+        </TouchableOpacity>
       }
-      customRightAction={<X className="text-black" />}
+      headerBetweenAction={<Text className="text-[13px]">Personal Information</Text>}
+      customRightAction={
+        <TouchableOpacity onPress={() => router.replace("/(auth)")}>
+          <X className="text-black" />
+        </TouchableOpacity>
+      }
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Full Name Section */}
