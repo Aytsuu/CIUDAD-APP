@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
 import { useForm } from "react-hook-form";
@@ -14,7 +14,7 @@ import {
   type VitalSignsType,
 } from "@/form-schema/vaccineSchema";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Combobox } from "@/components/ui/combobox";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
@@ -24,11 +24,11 @@ import { toast } from "sonner";
 import { fetchVaccinesWithStock } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
-import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
 import { useSubmitStep1, useSubmitStep2 } from "./queries/PatnewrecQueries";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { ValidationAlert } from "./vac-required-alert";
-import { checkVaccineStatus } from "./restful-api/FetchVaccination";
+import { PatientSearch } from "@/components/ui/patientSearch";
+
 interface Patient {
   pat_id: number;
   pat_type: string;
@@ -52,55 +52,10 @@ interface Patient {
 
 export default function PatNewVacRecForm() {
   const navigate = useNavigate();
-  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
-    "self"
-  );
+  const [assignmentOption, setAssignmentOption] = useState<"self" | "other">("self");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
-  const [patients, setPatients] = useState<{
-    default: Patient[];
-    formatted: { id: string; name: string }[];
-  }>({ default: [], formatted: [] });
-
-  useEffect(() => {
-    const loadPatients = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchPatientRecords();
-        setPatients(data);
-      } catch (error) {
-        toast.error(
-          "Failed to load patients: " +
-            (error instanceof Error ? error.message : "Unknown error")
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPatients();
-  }, []);
-
-  const handlePatientSelection = useCallback(
-    (id: string) => {
-      setSelectedPatientId(id);
-      const selectedPatient = patients.default.find(
-        (patient) => patient.pat_id.toString() === id.split(",")[0].trim()
-      );
-  
-      if (selectedPatient) {
-        setSelectedPatientData(selectedPatient);
-        form.setValue("pat_id", selectedPatient.pat_id.toString());
-        const age = calculateAge(selectedPatient.personal_info?.per_dob || "");
-        form.setValue("age", age);  
-        form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
-      }
-    },
-    [patients.default]
-  
-  );
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
 
   const form = useForm<VaccineSchemaType>({
     resolver: zodResolver(VaccineSchema),
@@ -124,15 +79,19 @@ export default function PatNewVacRecForm() {
     },
   });
 
-  // useEffect(() => {
-  //   form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
-  //   form.setValue(
-  //     "age",
-  //     selectedPatientData
-  //       ? calculateAge(selectedPatientData.personal_info?.per_dob || "")
-  //       : ""
-  //   );
-  // }, [form, selectedPatientData]);
+  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientData(patient);
+    if (patient) {
+      form.setValue("pat_id", patient.pat_id.toString());
+      const age = calculateAge(patient.personal_info?.per_dob || "");
+      form.setValue("age", age);
+      form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
+    } else {
+      form.setValue("pat_id", "");
+      form.setValue("age", "");
+    }
+  };
 
   const submitStep1 = useSubmitStep1();
   const onSubmitStep1 = async (data: VaccineSchemaType) => {
@@ -153,7 +112,7 @@ export default function PatNewVacRecForm() {
         form: {
           setError: form.setError,
           getValues: form.getValues,
-          reset: form.reset
+          reset: form.reset,
         },
       });
     } finally {
@@ -166,7 +125,6 @@ export default function PatNewVacRecForm() {
     setSubmitting(true);
     try {
       const formData = form.getValues();
-      console.log("age", form.getValues("age"));
       const [vacStck_id, vac_id, vac_name, expiry_date] = formData.vaccinetype.split(",");
       const ageValue = form.getValues("age");
       await submitStep2.mutateAsync({
@@ -177,18 +135,18 @@ export default function PatNewVacRecForm() {
         expiry_date: expiry_date.trim(),
         pat_id: form.getValues("pat_id"),
         age: ageValue || "",
-        form: {setError: form.setError, getValues: form.getValues, reset: form.register },
+        form: { setError: form.setError, getValues: form.getValues, reset: form.register },
         form2: { reset: form2.reset, getValues: form2.getValues },
       });
     } finally {
       setSubmitting(false);
     }
   };
+
   useEffect(() => {
     if (selectedPatientData) {
       const age = calculateAge(selectedPatientData.personal_info?.per_dob || "");
       form.setValue("age", age);
-      console.log("Updated age in useEffect:", age);
     }
   }, [selectedPatientData, form]);
 
@@ -198,7 +156,6 @@ export default function PatNewVacRecForm() {
     form.setValue("vaccinetype", value);
   };
 
-  // Check for invalid conditions
   const hasInvalidStep1Fields =
     !selectedPatientId ||
     !form.watch("vaccinetype") ||
@@ -234,32 +191,7 @@ export default function PatNewVacRecForm() {
         <hr className="border-gray mb-5 sm:mb-8" />
 
         {/* Patient Selection Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="font-semibold text-base text-darkBlue3">
-              Select Patient
-            </h2>
-          </div>
-          <Combobox
-            options={patients.formatted}
-            value={selectedPatientId}
-            onChange={handlePatientSelection}
-            placeholder={loading ? "Loading patients..." : "Select a patient"}
-            triggerClassName="font-normal  w-full"
-            emptyMessage={
-              <div className="flex gap-2 justify-center items-center">
-                <Label className="font-normal text-[13px]">
-                  {loading ? "Loading..." : "No patient found."}
-                </Label>
-                <Link to="/patient-records/new">
-                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                    Register New Patient
-                  </Label>
-                </Link>
-              </div>
-            }
-          />
-        </div>
+        <PatientSearch onPatientSelect={handlePatientSelect} className="mb-4" />
 
         {/* Patient Information Card */}
         <div className="mb-4 bg-white">
@@ -285,34 +217,26 @@ export default function PatNewVacRecForm() {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                
                 <div className="flex flex-col mt-2">
-                <Label className="mb-3 text-darkGray">Vaccine Name</Label>
-              <Combobox
-                  options={vaccineStocksOptions.map((vaccine) => ({
-                    id: vaccine.id,
-                    name: `${vaccine.name} (Expiry: ${
-                      vaccine.expiry || "N/A"
-                    })`,
-                  }))}
-                  value={form.watch("vaccinetype")}
-                  placeholder={
-                    isLoading ? "Loading vaccines..." : "Select a vaccine"
-                  }
-                  triggerClassName="font-normal w-full"
-                  emptyMessage={
-                    <div className="flex gap-2 justify-center items-center">
-                      <Label className="font-normal text-[13px]">
-                        {isLoading
-                          ? "Loading..."
-                          : "No available vaccines in stock."}
-                      </Label>
-                    </div>
-                  }
-                  onChange={handleVaccineChange}
-                />
+                  <Label className="mb-3 text-darkGray">Vaccine Name</Label>
+                  <Combobox
+                    options={vaccineStocksOptions.map((vaccine) => ({
+                      id: vaccine.id,
+                      name: `${vaccine.name} (Expiry: ${vaccine.expiry || "N/A"})`,
+                    }))}
+                    value={form.watch("vaccinetype")}
+                    placeholder={isLoading ? "Loading vaccines..." : "Select a vaccine"}
+                    triggerClassName="font-normal w-full"
+                    emptyMessage={
+                      <div className="flex gap-2 justify-center items-center">
+                        <Label className="font-normal text-[13px]">
+                          {isLoading ? "Loading..." : "No available vaccines in stock."}
+                        </Label>
+                      </div>
+                    }
+                    onChange={handleVaccineChange}
+                  />
                 </div>
-             
                 <FormDateTimeInput
                   control={form.control}
                   name="datevaccinated"
@@ -323,15 +247,11 @@ export default function PatNewVacRecForm() {
               </div>
 
               <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
-                <h2 className="font-bold text-darkBlue1 mb-3">
-                  Step 2 Assignment
-                </h2>
+                <h2 className="font-bold text-darkBlue1 mb-3">Step 2 Assignment</h2>
                 <RadioGroup
                   defaultValue="self"
                   value={assignmentOption}
-                  onValueChange={(value) =>
-                    setAssignmentOption(value as "self" | "other")
-                  }
+                  onValueChange={(value) => setAssignmentOption(value as "self" | "other")}
                   className="space-y-2"
                 >
                   <div className="flex items-center space-x-2">
@@ -371,9 +291,7 @@ export default function PatNewVacRecForm() {
               {assignmentOption === "other" && (
                 <ValidationAlert
                   patientError={!selectedPatientId}
-                  vaccineError={
-                    !!selectedPatientId && !form.watch("vaccinetype")
-                  }
+                  vaccineError={!!selectedPatientId && !form.watch("vaccinetype")}
                   assigneeError={
                     !!selectedPatientId &&
                     !!form.watch("vaccinetype") &&
@@ -471,9 +389,7 @@ export default function PatNewVacRecForm() {
 
                 <ValidationAlert
                   patientError={!selectedPatientId}
-                  vaccineError={
-                    !!selectedPatientId && !form.watch("vaccinetype")
-                  }
+                  vaccineError={!!selectedPatientId && !form.watch("vaccinetype")}
                   vitalSignsError={
                     !!selectedPatientId &&
                     !!form.watch("vaccinetype") &&
@@ -493,11 +409,7 @@ export default function PatNewVacRecForm() {
                   <Button
                     type="submit"
                     className="w-[120px]"
-                    disabled={
-                      hasInvalidStep1Fields ||
-                      hasInvalidStep2Fields ||
-                      submitting
-                    }
+                    disabled={hasInvalidStep1Fields || hasInvalidStep2Fields || submitting}
                   >
                     {submitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

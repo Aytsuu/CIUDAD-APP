@@ -5,18 +5,15 @@ import { Button } from "@/components/ui/button/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
-  User,
   Package,
   AlertCircle,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchPatientRecords } from "../restful-api-patient/FetchPatient";
 import { fetchMedicinesWithStock } from "./restful-api/fetchAPI";
 import { z } from "zod";
 import { MedicineTransactionType } from "@/pages/healthInventory/inventoryStocks/REQUEST/Medicine/queries/MedicinePostQueries";
@@ -28,68 +25,52 @@ import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { MedicineDisplay } from "@/components/ui/medicine-display";
 import { RequestSummary } from "@/components/ui/medicine-sumdisplay";
 import { useMedicineRequestMutation } from "./queries/postQueries";
+import { PatientSearch } from "@/components/ui/patientSearch";
 
 interface Patient {
   pat_id: number;
-  name: string;
   pat_type: string;
-  [key: string]: any;
+  name?: string;
+  personal_info?: {
+    per_fname?: string;
+    per_mname?: string;
+    per_lname?: string;
+    per_dob?: string;
+    per_sex?: string;
+  };
+  households?: { hh_id: string }[];
+  address?: {
+    add_street?: string;
+    add_barangay?: string;
+    add_city?: string;
+    add_province?: string;
+    add_external_sitio?: string;
+  };
 }
 
 export default function PatNewMedRecForm() {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<{
-    default: Patient[];
-    formatted: { id: string; name: string }[];
-  }>({ default: [], formatted: [] });
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [selectedPatientData, setSelectedPatientData] =
-    useState<Patient | null>(null);
+  const [selectedPatientData, setSelectedPatientData] = useState<Patient | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { medicineStocksOptions, isLoading: isMedicinesLoading } =
-    fetchMedicinesWithStock();
+  const { medicineStocksOptions, isLoading: isMedicinesLoading } = fetchMedicinesWithStock();
   const [selectedMedicines, setSelectedMedicines] = useState<
     { minv_id: string; medrec_qty: number; reason: string }[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } =
-    useMedicineRequestMutation();
+  const { mutateAsync: submitMedicineRequest, isPending: isSubmitting } = useMedicineRequestMutation();
 
-  useEffect(() => {
-    const loadPatients = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchPatientRecords();
-        setPatients(data);
-      } catch (error) {
-        toast.error(
-          "Failed to load patients: " +
-            (error instanceof Error ? error.message : "Unknown error")
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPatients();
-  }, []);
-
-  const handlePatientSelection = useCallback(
-    (id: string) => {
-      setSelectedPatientId(id);
-      const selectedPatient = patients.default.find(
-        (patient) => patient.pat_id.toString() === id.split(",")[0].trim()
-      );
-
-      if (selectedPatient) {
-        setSelectedPatientData(selectedPatient);
-        form.setValue("pat_id", selectedPatient.pat_id.toString());
-      }
-    },
-    [patients.default]
-  );
+  const handlePatientSelect = (patient: Patient | null, patientId: string) => {
+    setSelectedPatientId(patientId);
+    setSelectedPatientData(patient);
+    if (patient) {
+      form.setValue("pat_id", patient.pat_id.toString());
+    } else {
+      form.setValue("pat_id", "");
+    }
+  };
 
   const handleSelectedMedicinesChange = useCallback(
     (
@@ -181,42 +162,16 @@ export default function PatNewMedRecForm() {
               Medicine Request
             </h1>
             <p className="text-xs sm:text-sm text-darkGray">
-              Manage and view patient's vaccination records
+              Manage and view patient's medicine records
             </p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="flex items-center gap-3 mb-4">
-            <User className="h-4 w-4 text-darkBlue3" />
-            <Label className="text-base font-semibold text-darkBlue3">
-              Select Patient
-            </Label>
-          </div>
-          <Combobox
-            options={patients.formatted}
-            value={selectedPatientId}
-            onChange={handlePatientSelection}
-            triggerClassName="font-normal w-full"
-            placeholder={
-              loading ? "Loading patients..." : "Search and select a patient"
-            }
-            emptyMessage={
-              <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
-                <Label className="font-normal text-xs">
-                  {loading ? "Loading..." : "No patient found."}
-                </Label>
-                <a href="/patient-records/new">
-                  <Label className="font-normal text-xs text-teal cursor-pointer hover:underline">
-                    Register New Patient
-                  </Label>
-                </a>
-              </div>
-            }
-          />
-        </div>
+        {/* Patient Selection Section */}
+        <PatientSearch onPatientSelect={handlePatientSelect} className="mb-4" />
 
+        {/* Patient Information Card */}
         <div className="mb-4 bg-white">
           <PatientInfoCard patient={selectedPatientData} />
         </div>
