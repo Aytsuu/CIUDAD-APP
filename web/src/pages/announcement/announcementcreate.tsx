@@ -58,20 +58,32 @@ const AnnouncementCreate = () => {
   });
 
   const annType = form.watch("ann_type");
-  const arType = form.watch("ar_type") ?? [];
+const arType = form.watch("ar_type") ?? [];
+
+// ✅ Clear schedule fields when type is set to "general"
 React.useEffect(() => {
-    const hasResident = arType.includes("resident");
-    const hasStaff = arType.includes("staff");
-    const hasEveryone = arType.includes("everyone");
+  if (annType === "general") {
+    form.setValue("ann_start_at", "");
+    form.setValue("ann_end_at", "");
+  }
+}, [annType, form]);
 
-    if (hasResident && hasStaff && !hasEveryone) {
-      form.setValue("ar_type", ["everyone"]);
-    }
+// ✅ Everyone logic
+React.useEffect(() => {
+  const hasResident = arType.includes("resident");
+  const hasStaff = arType.includes("staff");
+  const hasEveryone = arType.includes("everyone");
 
-    if (hasEveryone && (hasResident || hasStaff)) {
-      form.setValue("ar_type", ["everyone"]);
-    }
-  }, [arType, form]);
+  if (hasResident && hasStaff && !hasEveryone) {
+    form.setValue("ar_type", ["everyone"]);
+  }
+
+  if (hasEveryone && (hasResident || hasStaff)) {
+    form.setValue("ar_type", ["everyone"]);
+  }
+}, [arType, form]);
+
+
   const onSubmit = async () => {
   const formIsValid = await form.trigger();
   if (!formIsValid) return;
