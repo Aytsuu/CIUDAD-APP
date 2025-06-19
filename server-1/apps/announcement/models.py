@@ -6,8 +6,8 @@ class Announcement(models.Model):
     ann_title = models.TextField()
     ann_details = models.TextField(max_length=255)
     ann_created_at = models.DateField(auto_now_add=True) 
-    ann_start_at = models.DateTimeField()
-    ann_end_at = models.DateTimeField()
+    ann_start_at = models.DateTimeField(null=True, blank=True)
+    ann_end_at = models.DateTimeField(null=True, blank=True)
     ann_type = models.CharField(
         max_length=50,
         choices=[

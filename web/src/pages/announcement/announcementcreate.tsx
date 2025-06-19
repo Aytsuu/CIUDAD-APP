@@ -28,7 +28,6 @@ import {
   Calendar,
   Users,
   Mail,
-  User,
   Clock,
   Send,
 } from "lucide-react";
@@ -58,53 +57,71 @@ const AnnouncementCreate = () => {
     defaultValues,
   });
 
-  const onSubmit = async () => {
-    const formIsValid = await form.trigger();
-    if (!formIsValid) return;
+  const annType = form.watch("ann_type");
+  const arType = form.watch("ar_type") ?? [];
+React.useEffect(() => {
+    const hasResident = arType.includes("resident");
+    const hasStaff = arType.includes("staff");
+    const hasEveryone = arType.includes("everyone");
 
-    const values = form.getValues();
-
-    try {
-      const createdAnnouncement = await postAnnouncement({...values, staff: user?.staff.staff_id});
-
-      const recipients = values.ar_type.flatMap((type: string) =>
-        values.ar_mode.map((mode: string) => ({
-          ar_type: type,
-          ar_mode: mode,
-          ann: createdAnnouncement?.ann_id,
-        }))
-      );
-
-      recipients.forEach((recipient) =>
-        postAnnouncementRecipient(recipient, {
-
-          
-          onSuccess: () => {
-            console.log();
-            const files = mediaFiles.map((media) => ({
-              'af_name': media.file.name,
-              'af_type': media.file.type,
-              'af_path': media.storagePath,
-              'af_url': media.publicUrl,
-              'ann': createdAnnouncement?.ann_id,
-              'staff': user?.staff.staff_id 
-            }));
-
-            postAnnouncementFile(files, {
-              onSuccess: () => {
-                console.log('File Created!');
-              }
-            });
-          }
-        })
-      );
-
-    } catch (err) {
-      console.error("Error during announcement creation:", err);
+    if (hasResident && hasStaff && !hasEveryone) {
+      form.setValue("ar_type", ["everyone"]);
     }
+
+    if (hasEveryone && (hasResident || hasStaff)) {
+      form.setValue("ar_type", ["everyone"]);
+    }
+  }, [arType, form]);
+  const onSubmit = async () => {
+  const formIsValid = await form.trigger();
+  if (!formIsValid) return;
+
+  const values = form.getValues();
+
+  // Convert empty strings to null for datetime fields
+  const cleanedValues = {
+    ...values,
+    ann_start_at: values.ann_start_at || null,
+    ann_end_at: values.ann_end_at || null,
+    staff: user?.staff.staff_id,
   };
 
+  try {
+    const createdAnnouncement = await postAnnouncement(cleanedValues);
 
+    const recipients = values.ar_type.flatMap((type: string) =>
+      values.ar_mode.map((mode: string) => ({
+        ar_type: type,
+        ar_mode: mode,
+        ann: createdAnnouncement?.ann_id,
+      }))
+    );
+
+    recipients.forEach((recipient) =>
+      postAnnouncementRecipient(recipient, {
+        onSuccess: () => {
+          const files = mediaFiles.map((media) => ({
+            af_name: media.file.name,
+            af_type: media.file.type,
+            af_path: media.storagePath,
+            af_url: media.publicUrl,
+            ann: createdAnnouncement?.ann_id,
+            staff: user?.staff.staff_id,
+          }));
+
+          postAnnouncementFile(files, {
+            onSuccess: () => {
+              console.log("File Created!");
+            },
+          });
+        },
+      })
+    );
+
+  } catch (err) {
+    console.error("Error during announcement creation:", err);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -170,30 +187,57 @@ const AnnouncementCreate = () => {
 
             {/* Schedule */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Schedule</CardTitle>
-                </div>
-                <CardDescription>Set when your announcement will be active</CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Start Date & Time
-                  </div>
-                  <FormDateTimeInput control={form.control} name="ann_start_at" label="" type="datetime-local" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    End Date & Time
-                  </div>
-                  <FormDateTimeInput control={form.control} name="ann_end_at" label="" type="datetime-local" />
-                </div>
-              </CardContent>
-            </Card>
+  <CardHeader className="pb-4">
+    <div className="flex items-center gap-2">
+      <Calendar className="h-5 w-5 text-gray-600" />
+      <CardTitle className="text-lg">Schedule</CardTitle>
+    </div>
+    <CardDescription>Set when your announcement will be active</CardDescription>
+  </CardHeader>
+  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Start Date & Time */}
+    <div
+      className={`space-y-2 transition-all duration-300 ${
+        !["event", "urgent"].includes(annType)
+          ? "grayscale opacity-60 pointer-events-none"
+          : ""
+      }`}
+    >
+      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <Clock className="h-4 w-4" />
+        Start Date & Time
+      </div>
+      <FormDateTimeInput
+        control={form.control}
+        name="ann_start_at"
+        label=""
+        type="datetime-local"
+        disabled={!["event", "urgent"].includes(annType)}
+      />
+    </div>
+
+    {/* End Date & Time */}
+    <div
+      className={`space-y-2 transition-all duration-300 ${
+        !["event", "urgent"].includes(annType)
+          ? "grayscale opacity-60 pointer-events-none"
+          : ""
+      }`}
+    >
+      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <Clock className="h-4 w-4" />
+        End Date & Time
+      </div>
+      <FormDateTimeInput
+        control={form.control}
+        name="ann_end_at"
+        label=""
+        type="datetime-local"
+        disabled={!["event", "urgent"].includes(annType)}
+      />
+    </div>
+  </CardContent>
+</Card>
 
             {/* Recipients & Delivery */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
@@ -218,8 +262,8 @@ const AnnouncementCreate = () => {
                       name="ar_type"
                       options={[
                         { id: "everyone", name: "Everyone" },
-                        { id: "resident", name: "All Residents" },
-                        { id: "staff", name: "All Staff" },
+                        { id: "resident", name: "All Residents", disabled: arType.includes("everyone") },
+                        { id: "staff", name: "All Staff", disabled: arType.includes("everyone") },
                       ]}
                     />
                   </div>
@@ -243,7 +287,6 @@ const AnnouncementCreate = () => {
                 </div>
 
                 <Separator />
-                
               </CardContent>
             </Card>
 

@@ -1,33 +1,19 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const generateDefaultValues = (schema: z.ZodObject<any>): Record<string, any> => {
-  const shape = schema.shape; // Get the shape of the schema
+export const generateDefaultValues = (schema: z.ZodTypeAny) => {
+  const shape = (schema as z.ZodObject<any>).shape;
   const defaults: Record<string, any> = {};
 
-  Object.keys(shape).forEach((key) => {
-    const fieldSchema = shape[key];
+  for (const key in shape) {
+    const field = shape[key];
 
-    // Handle nested Zod objects
-    if (fieldSchema instanceof z.ZodObject) {
-      defaults[key] = generateDefaultValues(fieldSchema);
-    }
-    // Handle arrays of Zod objects
-    else if (fieldSchema instanceof z.ZodArray) {
-      if (fieldSchema.element instanceof z.ZodObject) {
-        defaults[key] = [generateDefaultValues(fieldSchema.element)]; // Default to an array with one empty object
-      } else {
-        defaults[key] = []; // Default to an empty array
-      }
-    }
-    // Handle default values specified in the schema
-    else if (fieldSchema instanceof z.ZodDefault) {
-      defaults[key] = fieldSchema._def.defaultValue();
-    }
-    // Handle all other fields (strings, numbers, etc.)
-    else {
+    // Default to empty array for ZodArray, otherwise empty string
+    if (field instanceof z.ZodArray) {
+      defaults[key] = [];
+    } else {
       defaults[key] = "";
     }
-  });
+  }
 
   return defaults;
 };

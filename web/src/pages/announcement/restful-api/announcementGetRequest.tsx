@@ -26,3 +26,4 @@ export const getAnnouncementRecipientRequest = async () => {
     return [];
   }
 };
+

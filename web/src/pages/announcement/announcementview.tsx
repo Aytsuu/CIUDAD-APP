@@ -11,7 +11,7 @@ import { useGetAnnouncement, useGetAnnouncementRecipient } from "./queries/annou
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Megaphone, FileText, Calendar, Users, Mail, User, Clock, Eye } from "lucide-react"
+import { Megaphone, FileText, Calendar, Users, Mail, Clock, Eye } from "lucide-react"
 
 type AnnouncementViewProps = {
   ann_id: number
@@ -111,6 +111,37 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
               </CardContent>
             </Card>
 
+            {/* Attached Media Files */}
+{announcement.files && announcement.files.length > 0 && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Attached Files</CardTitle>
+      </div>
+      <CardDescription>Media attached to the announcement</CardDescription>
+    </CardHeader>
+    <CardContent className="flex flex-wrap gap-4">
+      {announcement.files.map((file, index) => (
+        <div key={index} className="w-40 h-40 border rounded overflow-hidden shadow-sm">
+          {file.af_type.startsWith("image/") ? (
+            <img
+              src={file.af_url}
+              alt={file.af_name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-sm text-gray-500">
+              {file.af_name}
+            </div>
+          )}
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+)}
+
+
             {/* Schedule Card */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
@@ -183,16 +214,6 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
                 </div>
 
                 <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      <User className="h-3 w-3 mr-1" />
-                      Creator Information
-                    </Badge>
-                  </div>
-                  <FormInput control={form.control} name="staff" label="Staff ID" readOnly={!isEditing} />
-                </div>
               </CardContent>
             </Card>
           </form>
