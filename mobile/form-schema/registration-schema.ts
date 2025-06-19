@@ -12,6 +12,15 @@ export const verificationSchema = z.object({
   dob: z.string().date()
 });
 
+export const fileSchema = z.object({
+  rf_name: z.string(),
+  rf_type: z.string(),
+  rf_path: z.string(),
+  rf_url: z.string(),
+  rf_is_id: z.boolean(),
+  rf_id_type: z.string(),
+})
+
 export const addressSchema = z.object({
   add_province: z.string().min(1).default("Cebu"),
   add_city: z.string().min(1).default("Cebu City"),
@@ -41,16 +50,10 @@ export const personalInfoSchema = z.object({
 
 export const uploadIdSchema = z.object({
   selected: z.string().min(1, "ID type selection is required"),
-  imageURI: z.string()
-
 })
 
 export const photoSchema = z.object({
-  imageURI: z.string()
-})
-
-export const fileSchema = z.object({
-  
+  list: z.array(fileSchema).default([]),
 })
   
 export const RegistrationFormSchema = z.object({

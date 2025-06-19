@@ -10,32 +10,32 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='requestfile',
-            name='file',
-        ),
-        migrations.AddField(
-            model_name='requestfile',
-            name='rf_name',
-            field=models.CharField(max_length=500),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='requestfile',
-            name='rf_path',
-            field=models.CharField(max_length=500),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='requestfile',
-            name='rf_type',
-            field=models.CharField(max_length=50),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='requestfile',
-            name='rf_url',
-            field=models.URLField(),
-            preserve_default=False,
-        ),
+        # migrations.RemoveField(
+        #     model_name='requestfile',
+        #     name='file',
+        # ),
+        # migrations.AddField(
+        #     model_name='requestfile',
+        #     name='rf_name',
+        #     field=models.CharField(max_length=500),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='requestfile',
+        #     name='rf_path',
+        #     field=models.CharField(max_length=500),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='requestfile',
+        #     name='rf_type',
+        #     field=models.CharField(max_length=50),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='requestfile',
+        #     name='rf_url',
+        #     field=models.URLField(),
+        #     preserve_default=False,
+        # ),
     ]

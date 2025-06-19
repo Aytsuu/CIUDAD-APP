@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiling', '0006_alter_address_add_external_sitio'),
+
         ('report', '0002_incidentreportfile'),
     ]
 
@@ -39,12 +39,12 @@ class Migration(migrations.Migration):
             model_name='incidentreport',
             name='sitio',
         ),
-        migrations.AddField(
-            model_name='incidentreport',
-            name='add',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.address'),
-            preserve_default=False,
-        ),
+        # migrations.AddField(
+        #     model_name='incidentreport',
+        #     name='add',
+        #     field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.address'),
+        #     preserve_default=False,
+        # ),
         migrations.AddField(
             model_name='acknowledgementreport',
             name='rt',

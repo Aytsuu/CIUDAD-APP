@@ -10,7 +10,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { postFaceData } from "./restful-api/signupPostAPI";
 
 export type FaceDetectionCamHandle = {
-  capturePhoto: () => Promise<Uint8Array | null | undefined>;
+  capturePhoto: () => Promise<Record<string, any> | null | undefined>;
 };
 
 export const FaceDetection = React.forwardRef<FaceDetectionCamHandle>(
@@ -87,7 +87,7 @@ export const FaceDetection = React.forwardRef<FaceDetectionCamHandle>(
 
             try {
               const result = await withTimeout(
-                new Promise<{ success: boolean; arrayBuffer?: Uint8Array }>(
+                new Promise<{ success: boolean; photo?: Record<string, any> }>(
                   async (resolve) => {
                     // Setup subscription first
                     subscription = supabase
@@ -100,19 +100,49 @@ export const FaceDetection = React.forwardRef<FaceDetectionCamHandle>(
                           table: "face_detection_request",
                           filter: `id=eq.${requestId}`,
                         },
-                        (payload) => {
+                        async (payload) => {
                           if (payload.new.status === "processed") {
                             subscription.unsubscribe();
                             if (payload.new.faces_detected > 0) {
                               if (!compressedImage.base64) {
                                 throw new Error("Compressed image base64 data is undefined");
                               }
+
+                              const arrayBuffer = Uint8Array.from(
+                                atob(compressedImage.base64),
+                                (c) => c.charCodeAt(0)
+                              )
+                              
+                              const fileName = `${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`;
+                              const filePath = `uploads/${fileName}`;
+                              console.log(fileName);
+                              console.log(filePath);
+                              const { error } = await supabase.storage
+                                .from("image-bucket")
+                                .upload(filePath, arrayBuffer as Uint8Array, {
+                                  contentType: "image/jpeg",
+                                  upsert: false,
+                                });
+                          
+                              if (error) {
+                                console.error("Error uploading image:", error);
+                                throw error
+                              };
+
+                              const {
+                                data: { publicUrl },
+                              } = supabase.storage.from("image-bucket").getPublicUrl(filePath);
+
                               resolve({
                                 success: true,
-                                arrayBuffer: Uint8Array.from(
-                                  atob(compressedImage.base64),
-                                  (c) => c.charCodeAt(0)
-                                ),
+                                photo: {
+                                  rf_name: fileName,
+                                  rf_type: "image/jpeg",
+                                  rf_path: filePath,
+                                  rf_url: publicUrl,
+                                  rf_is_id: false,
+                                  rf_id_type: "",
+                                },
                               });
                             } else {
                               resolve({ success: false });
@@ -139,7 +169,7 @@ export const FaceDetection = React.forwardRef<FaceDetectionCamHandle>(
               );
 
               console.log("Detection result:", result.success);
-              return result.success ? result.arrayBuffer : null;
+              return result.success ? result.photo : null;
             } catch (err) {
               console.log("Detection error:", err);
               return null;

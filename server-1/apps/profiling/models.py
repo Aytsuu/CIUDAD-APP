@@ -123,7 +123,7 @@ class FamilyComposition(models.Model):
     
 class RequestRegistration(models.Model):
     req_id = models.BigAutoField(primary_key=True)
-    req_date = models.DateField()
+    req_date = models.DateField(auto_now_add=True)
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
 
     class Meta: 
@@ -170,6 +170,9 @@ class RequestFile(models.Model):
     rf_type = models.CharField(max_length=50)
     rf_path = models.CharField(max_length=500)
     rf_url = models.URLField()
+    rf_is_id = models.BooleanField(default=False)
+    rf_id_type = models.CharField(max_length=50, null=True ,blank=True)
+    rf_created_at = models.DateTimeField(auto_now_add=True)
     req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name='files') 
  
     class Meta:

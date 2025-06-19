@@ -6,7 +6,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('administration', '0006_alter_position_pos_id'),
         ('report', '0013_acknowledgementreport_ir'),
     ]
 

@@ -6,13 +6,10 @@ import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from "@/lib/supabase";
-import { v4 } from 'uuid';
-import { nanoid } from "nanoid"
-import { Loader2 } from "@/lib/icons/Loader2";
 
 export default function MediaPicker({selectedImage, setSelectedImage} : {
-  selectedImage: string | null;
-  setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>
+  selectedImage: Record<string, any>;
+  setSelectedImage: React.Dispatch<React.SetStateAction<Record<string, any>>>
 }) {
   const [galleryVisible, setGalleryVisible] = React.useState<boolean>(false);
   const [cameraVisible, setCameraVisible] = React.useState<boolean>(false);
@@ -81,11 +78,13 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
   };
 
   const handleSelectedImage = async (imageUri: string) => {
-    setSelectedImage(imageUri);
+    setSelectedImage({
+      rf_url: imageUri,
+    });
     setIsLoading(true);
     const compressedImage = await ImageManipulator.manipulateAsync(
       imageUri,
-      [{ resize: { width: 1080, height: 1200 } }],
+      [{ resize: { width: 1080 } }],
       {
         compress: 0.8, // 80% compression
         format: ImageManipulator.SaveFormat.JPEG,
@@ -125,7 +124,14 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
 
     console.log("Upload successful!", publicUrl);
     setIsLoading(false);
-    setSelectedImage(publicUrl);
+    setSelectedImage({
+      rf_name: fileName,
+      rf_type: "image/jpeg",
+      rf_path: filePath,
+      rf_url: publicUrl,
+      rf_is_id: false,
+      rf_id_type: "",
+    });
   }
 
   // If Camera is selected
@@ -175,9 +181,9 @@ export default function MediaPicker({selectedImage, setSelectedImage} : {
         onPress={openGallery}
         disabled={isLoading}
       >
-        {selectedImage ? (
+        {selectedImage.rf_url ? (
           <Image 
-            source={{ uri: selectedImage }} 
+            source={{ uri: selectedImage.rf_url }} 
             className="w-full h-full" 
             resizeMode="cover"
           />

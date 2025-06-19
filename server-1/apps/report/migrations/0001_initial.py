@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('profiling', '0006_alter_address_add_external_sitio'),
+
     ]
 
     operations = [
@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                 ('ar_created_at', models.DateField(auto_now_add=True)),
                 ('ar_status', models.CharField(max_length=20)),
                 ('ar_is_archive', models.BooleanField(default=False)),
-                ('add', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.address')),
-                ('staff', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='administration.staff')),
+                # ('add', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.address')),
+                # ('staff', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='administration.staff')),
             ],
             options={
                 'db_table': 'acknowledgement_report',
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('ir_date', models.DateField(auto_now_add=True)),
                 ('ir_street', models.CharField(max_length=100)),
                 ('ir_is_archive', models.BooleanField(default=False)),
-                ('rp', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.residentprofile')),
+                # ('rp', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.residentprofile')),
                 ('sitio', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiling.sitio')),
             ],
             options={
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                 ('wr_id', models.BigAutoField(primary_key=True, serialize=False)),
                 ('wr_created_at', models.DateField()),
                 ('wr_is_archive', models.BooleanField()),
-                ('staff', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='administration.staff')),
+                # ('staff', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='administration.staff')),
             ],
             options={
                 'db_table': 'weekly_acknowledgement_report',

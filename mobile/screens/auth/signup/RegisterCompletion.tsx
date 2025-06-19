@@ -1,10 +1,7 @@
-import { supabase } from "@/lib/supabase";
-import { v4 as uuid4 } from "uuid";
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 import {
   useAddPersonal,
   useAddRequest,
-  useAddFile,
   useAddRequestFile,
   useAddAddress,
   useAddPerAddress,
@@ -28,8 +25,8 @@ import { useToastContext } from "@/components/ui/toast";
 const { width } = Dimensions.get('window');
 
 export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus }: {
-  photo: Uint8Array,
-  setPhoto: React.Dispatch<React.SetStateAction<Uint8Array | null>>
+  photo: string,
+  setPhoto: React.Dispatch<React.SetStateAction<Record<string, any>>>
   setDetectionStatus: React.Dispatch<React.SetStateAction<string>>
 }) {
   const { toast } = useToastContext();
@@ -44,45 +41,22 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
   const { mutateAsync: addAddress } = useAddAddress();
   const { mutateAsync: addPersonalAddress } = useAddPerAddress();
 
-  // Convert Uint8Array to base64 for display
-  const photoUri = React.useMemo(() => {
-    if (!photo) return null;
-    const base64 = btoa(String.fromCharCode(...photo));
-    return `data:image/jpeg;base64,${base64}`;
-  }, [photo]);
-
   const cancel = () => {
-    setPhoto(null);
+    setPhoto({});
     setDetectionStatus("");
   };
 
   const submit = async () => {
     setIsSubmitting(true);
     try {
-      const fileName = `4.jpg`;
-      const filePath = `uploads/${fileName}`;
-      console.log(fileName);
-      console.log(filePath)
-      const { error } = await supabase.storage
-        .from("image-bucket")
-        .upload(filePath, photo as Uint8Array, {
-          contentType: "image/jpeg",
-          upsert: false,
-        });
-      if (error) throw error;
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("image-bucket").getPublicUrl(filePath);
-      
-      console.log("Upload successful!", publicUrl);
       const {per_addresses, ...data} = getValues("personalInfoSchema");
+      const dob = getValues("verificationSchema.dob");
+      const photoList = getValues("photoSchema.list");
 
       console.log("Data:", data)
       console.log("Addresses:", per_addresses.list)
 
-      addPersonal(data, {
+      addPersonal({...data, per_dob: dob }, {
         onSuccess: (newData) => {
           addAddress(per_addresses.list, {
             onSuccess: (new_addresses) => {
@@ -90,22 +64,16 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
                 add: address.add_id,
                 per: newData.per_id,
               }));
-
               addPersonalAddress(per_address)
             }
           })
-
           addRequest(newData.per_id, {
             onSuccess: (request) => {
-              const file = [{
-                rf_name: fileName,
-                rf_type: "image/jpeg",
-                rf_path: filePath,
-                rf_url: publicUrl,
+              const data = photoList.map((photo: any) => ({
+                ...photo,
                 req: request.req_id,
-              }]
-
-              addRequestFile(file, {
+              }))
+              addRequestFile(data, {
                 onSuccess: () => {
                   setStatus("success");
                   setShowFeedback(true);
@@ -163,9 +131,9 @@ export default function RegisterCompletion({ photo, setPhoto, setDetectionStatus
             </Text>
             <View className="items-center">
               <View className="w-48 h-60 rounded-2xl overflow-hidden bg-gray-100 shadow-md">
-                {photoUri && (
+                {photo && (
                   <Image
-                    source={{ uri: photoUri }}
+                    source={{ uri: photo }}
                     className="w-full h-full"
                     resizeMode="cover"
                   />

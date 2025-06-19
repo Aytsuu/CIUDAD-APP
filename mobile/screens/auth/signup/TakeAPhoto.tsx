@@ -4,9 +4,12 @@ import { useRouter } from "expo-router";
 import RegisterCompletion from "./RegisterCompletion";
 import { FaceDetection, FaceDetectionCamHandle } from "./FaceDetection";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFieldArray } from "react-hook-form";
+import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext";
 
 export default function TakeAPhoto() {
-  const [photo, setPhoto] = React.useState<Uint8Array | null>(null);
+  const {control} = useRegistrationFormContext();
+  const [photo, setPhoto] = React.useState<Record<string, any>>();
   const [isDetecting, setIsDetecting] = React.useState(false);
   const [detectionStatus, setDetectionStatus] = React.useState<string>("");
   const [retryCount, setRetryCount] = React.useState(0);
@@ -15,6 +18,11 @@ export default function TakeAPhoto() {
   const cameraRef = React.useRef<FaceDetectionCamHandle>(null);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+
+  const { append } = useFieldArray({
+    control: control,
+    name: "photoSchema.list",
+  });
 
   // Cleanup timer on unmount
   React.useEffect(() => {
@@ -58,7 +66,7 @@ export default function TakeAPhoto() {
       
       if (photoData) {
         setPhoto(photoData);
-        setDetectionStatus("Face detected! ✓");
+        append(photoData as any)
         setRetryCount(0);
         // Clear timer if active
         if (timerRef.current) {
@@ -108,7 +116,7 @@ export default function TakeAPhoto() {
     <>
       {photo ? (
         <RegisterCompletion
-          photo={photo}
+          photo={photo.rf_url}
           setPhoto={setPhoto}
           setDetectionStatus={setDetectionStatus}
         />

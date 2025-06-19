@@ -21,22 +21,21 @@ export const addPersonalAddress = async (data: Record<string, any>[]) => {
 }
 
 
-export const addPersonal = async (values: Record<string, any>) => {
-  const personalInfo = values.personalInfoSchema;
-  const dob = values.verificationSchema.dob;
+export const addPersonal = async (data: Record<string, any>) => {
 
   try {
-    const res = await api.post("profiling/personal/create", {
-      per_lname: personalInfo.per_lname,
-        per_fname: personalInfo.per_fname,
-        per_mname: personalInfo.per_mname || null,
-        per_suffix: personalInfo.per_suffix || null,
-        per_dob: formatDate(personalInfo.per_dob),
-        per_sex: personalInfo.per_sex,
-        per_status: personalInfo.per_status,
-        per_edAttainment: personalInfo.per_edAttainment || null,
-        per_religion: personalInfo.per_religion,
-        per_contact: personalInfo.per_contact,
+    console.log(data)
+    const res = await api.post("profiling/personal/create/", {
+      per_lname: data.per_lname,
+        per_fname: data.per_fname,
+        per_mname: data.per_mname || null,
+        per_suffix: data.per_suffix || null,
+        per_dob: formatDate(data.per_dob),
+        per_sex: data.per_sex,
+        per_status: data.per_status,
+        per_edAttainment: data.per_edAttainment || null,
+        per_religion: data.per_religion,
+        per_contact: data.per_contact,
     });
 
     return res.data;
@@ -48,9 +47,8 @@ export const addPersonal = async (values: Record<string, any>) => {
 
 export const addRequest = async (personalId: string) => {
   try {
-    const res = await api.post("profiling/request/", {
-      req_date: formatDate(new Date()),
-      per_id: personalId,
+    const res = await api.post("profiling/request/create/", {
+      per: personalId,
     });
 
     return res.data
@@ -60,26 +58,10 @@ export const addRequest = async (personalId: string) => {
   }
 };
 
-export const addFile = async (name: string, type: string, path: string, url: string) => {
+export const addRequestFile = async (data: Record<string, any>[]) => {
   try {
-    const res = await api.post('file/upload/', {
-      file_name: name,
-      file_type: type,
-      file_path: path,
-      file_url: url
-    })
-
-    return res.data
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-}
-
-export const addRequestFile = async (data: Record<string, any>) => {
-  try {
-    const res = await api.post('profiling/request/file/', data)
-
+    console.log(data)
+    const res = await api.post('profiling/request/file/create/', data)
     return res.data
   } catch (err) {
     console.error(err);

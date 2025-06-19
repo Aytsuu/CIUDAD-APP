@@ -11,6 +11,7 @@ import MediaPicker from "@/components/ui/media-picker";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
 import { X } from "@/lib/icons/X"
 import { useToastContext } from "@/components/ui/toast";
+import { useFieldArray } from "react-hook-form";
 
 const idOptions: {label: string, value: string}[] = [
   {label: "Driver's License", value: "driverLicense"},
@@ -30,15 +31,26 @@ export default function UploadID() {
   const {control, trigger, getValues, setValue} = useRegistrationFormContext();
   const [selectedImage, setSelectedImage] = React.useState<Record<string, any>>({});
 
+  const { append } = useFieldArray({
+    control: control,
+    name: "photoSchema.list",
+  });
+
   React.useEffect(() => {
-    if(selectedImage) {
-      setValue("uploadIdSchema.image", selectedImage)
+    if(selectedImage.rf_type) {
+      append({
+        rf_name: selectedImage.rf_name,
+        rf_type: selectedImage.rf_type,
+        rf_path: selectedImage.rf_path,
+        rf_url: selectedImage.rf_url,
+        rf_is_id: true,
+        rf_id_type: getValues("uploadIdSchema.selected")
+      })
     }
   }, [selectedImage])
 
   const handleSubmit = async () => {
     const formIsValid = await trigger([
-      "uploadIdSchema.imageURI",
       "uploadIdSchema.selected"
     ]);
 
@@ -46,13 +58,15 @@ export default function UploadID() {
       return;
     }
 
-    if(!selectedImage) {
-      toast.error("Upload a photo of your valid ID.")
+    if(!selectedImage.rf_type) {
+      toast.error("Upload a photo of your valid ID")
       return;
     }
 
     router.push("/(auth)/take-a-photo")
   };
+
+  console.log("Selected Image:", selectedImage);
 
   return (
     <_ScreenLayout

@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { addAddress, addFile, addPersonal, addPersonalAddress, addRequest, addRequestFile } from "../restful-api/signupPostAPI";
+import { addAddress, addPersonal, addPersonalAddress, addRequest, addRequestFile } from "../restful-api/signupPostAPI";
 
 export const useAddAddress = () => {
   return useMutation({
@@ -27,21 +27,9 @@ export const useAddRequest = () => {
   })
 }
 
-export const useAddFile = () => {
-  return useMutation({
-    mutationFn: ({name, type, path,url} : {
-      name: string;
-      type: string;
-      path: string;
-      url: string;
-    }) => addFile(name, type, path, url),
-    onSuccess: () => {}
-  })
-}
-
 export const useAddRequestFile = () => {
   return useMutation({
-    mutationFn: (data: Record<string, any>) => addRequestFile(data),
+    mutationFn: (data: Record<string, any>[]) => addRequestFile(data),
     onSuccess: () => {}
   })
 }

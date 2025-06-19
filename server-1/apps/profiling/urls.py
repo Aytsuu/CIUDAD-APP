@@ -57,6 +57,8 @@ urlpatterns = [
 
     # Request Urls
     path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
+    path("request/create/", RequestCreateView.as_view(), name="request-create"),
+    path("request/file/create/", RequestFileCreateView.as_view(), name="request-file-create"),
     # path("request/delete/<int:req_id>/", RequestDeleteView.as_view(), name="request-deletion"),
     # path("request/file/", RequestFileView.as_view(), name="request-files"),
 
