@@ -16,7 +16,7 @@ export function NotFound() {
         {/* Possible Reasons Section */}
         <div className="bg-white rounded-lg p-6 shadow-sm max-w-md mx-auto text-left">
           <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-gray-500" />
+            📌
             Possible reasons:
           </h3>
           <ul className="text-gray-600 space-y-2">

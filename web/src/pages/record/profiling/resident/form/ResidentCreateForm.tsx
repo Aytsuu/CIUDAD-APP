@@ -124,7 +124,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
       
-      // Safely get staff_id with proper type checking
+      // // Safely get staff_id with proper type checking
       const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
       
       if (!staffId) {

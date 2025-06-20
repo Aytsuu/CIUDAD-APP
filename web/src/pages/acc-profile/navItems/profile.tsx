@@ -79,7 +79,7 @@ export default function Profile() {
       }
     } catch (error: any) {
       console.error("Password change error:", error);
-      
+
       if (error.response) {
         // Handle Django validation errors
         const errorData = error.response.data;
@@ -140,10 +140,10 @@ export default function Profile() {
         profile_image: urlData.publicUrl
       });
 
-      if (response.data.success) {
-        // Optionally, refresh user context here if needed
-        toast.success("Profile picture updated successfully!");
-      }
+     
+      
+      toast.success("Profile picture updated successfully!");
+      
     } catch (error: any) {
       console.error("Image upload error:", error);
       const errorMsg = error.message || "Failed to upload image";
@@ -154,13 +154,23 @@ export default function Profile() {
     }
   };
 
-  if (!user) {
+  if (!user?.djangoUser) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <p className="text-muted-foreground">Loading user profile...</p>
       </div>
     );
   }
+
+  // Helper function to get display name
+  const getDisplayName = () => {
+    return user.djangoUser?.username || user.username || user.email || "User";
+  };
+
+  // Helper function to get profile image
+  const getProfileImage = () => {
+    return user.djangoUser?.profile_image || user.profile_image || sanRoqueLogo;
+  };
 
   return (
     <div>
@@ -173,11 +183,11 @@ export default function Profile() {
               <div className="relative cursor-pointer block group">
                 <Avatar className="h-20 w-20 border-4 border-background">
                   <AvatarImage
-                    src={user.profile_image || sanRoqueLogo}
+                    src={getProfileImage()}
                     alt="Profile"
                   />
                   <AvatarFallback className="text-xl">
-                    {user.username?.charAt(0) || 'U'}
+                    {getDisplayName().charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <Button
@@ -216,11 +226,13 @@ export default function Profile() {
 
             <div className="text-center sm:text-left">
               <h2 className="text-xl font-bold">
-                {user.username || "User"}
+                {getDisplayName()}
               </h2>
-              {/* <p className="text-muted-foreground">
-                {user.djangoUser?.position || "Staff Position"}
-              </p> */}
+              {user.djangoUser?.resident_profile?.staff && (
+                <p className="text-muted-foreground">
+                  {user.djangoUser.resident_profile.staff.staff_type || "Staff Member"}
+                </p>
+              )}
             </div>
           </div>
           <CardContent className="p-0">
@@ -231,9 +243,20 @@ export default function Profile() {
                     <User size={14} /> Full Name
                   </Label>
                   <p className="font-medium">
-                    {user.username || "User"}
+                    {getDisplayName()}
                   </p>
                 </div>
+                
+                {user.djangoUser?.resident_profile?.staff && (
+                  <div>
+                    <Label className="text-muted-foreground flex items-center gap-2 mb-1">
+                      <Info size={14} /> Staff ID
+                    </Label>
+                    <p className="font-medium">
+                      {user.djangoUser.resident_profile.staff.staff_id || "N/A"}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">

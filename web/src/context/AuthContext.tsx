@@ -12,8 +12,8 @@ import { api } from "@/api/api";
 
 interface StaffProfile {
   staff_id: string;
-  staff_type?: 'Barangay Staff' | 'Health Staff' | string;
-  // Add other staff properties as needed
+  staff_type: 'Barangay Staff' | 'Health Staff' | string;
+  assignments: Record<string,any>[];
 }
 
 interface DjangoUser {
@@ -47,8 +47,8 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   refreshSession: () => Promise<void>;
   clearError: () => void;
-  // isBarangayStaff: () => boolean;
-  // isHealthStaff: () => boolean;
+  isBarangayStaff: () => boolean;
+  isHealthStaff: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,13 +61,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = () => setError(null);
 
-  // const isBarangayStaff = () => {
-  //   return user?.djangoUser?.resident_profile?.staff?.staff_type === 'Barangay Staff';
-  // };
+  const isBarangayStaff = () => {
+    return user?.djangoUser?.resident_profile?.staff?.staff_type === "Barangay Staff";
+  };
 
-  // const isHealthStaff = () => {
-  //   return user?.djangoUser?.resident_profile?.staff?.staff_type === 'Health Staff';
-  // };
+  const isHealthStaff = () => {
+    return user?.djangoUser?.resident_profile?.staff?.staff_type === "Health Staff";
+  };
 
   const syncWithDjango = async (session: Session | null): Promise<DjangoUser | null> => {
     if (!session?.user) return null;
@@ -133,36 +133,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [handleSessionChange]);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    clearError();
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+const login = async (email: string, password: string) => {
+  setIsLoading(true);
+  clearError();
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error) throw error;
-      if (!data?.session) throw new Error("No session returned");
+    if (error) throw error;
+    if (!data?.session) throw new Error("No session returned");
 
-      // Sync with Django and get user data
-      await handleSessionChange(data.session);
-
-      // Check staff type after successful login
-      // if (!isBarangayStaff() && !isHealthStaff()) {
-        await supabase.auth.signOut();
-        setUser(null);
-        setIsAuthenticated(false);
-        // throw new Error("Access to this system is restricted to authorized Staff only.");
-      // }
-
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
-      throw error;
-    } finally {
-      setIsLoading(false);
+    // Get full user data from Django
+    const djangoUser = await syncWithDjango(data.session);
+    
+    // Check staff permissions
+    const staffType = djangoUser?.resident_profile?.staff?.staff_type;
+    if (!staffType || !['Barangay Staff', 'Health Staff'].includes(staffType)) {
+      await supabase.auth.signOut();
+      throw new Error("Only authorized staff can access this system");
     }
-  };
+
+    setUser({
+      id: data.session.user.id,
+      email: data.session.user.email || "",
+      username: djangoUser?.username,
+      profile_image: djangoUser?.profile_image,
+      djangoUser
+    });
+    setIsAuthenticated(true);
+    
+  } catch (error) {
+    setError(error instanceof Error ? error.message : "Login failed");
+    throw error;
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const signUp = async (email: string, password: string, username?: string) => {
     setIsLoading(true);
@@ -264,8 +272,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signInWithGoogle,
         refreshSession,
         clearError,
-        // isBarangayStaff,
-        // isHealthStaff,
+        isBarangayStaff,
+        isHealthStaff,
       }}
     >
       {children}
