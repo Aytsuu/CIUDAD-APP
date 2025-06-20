@@ -10,7 +10,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { X } from "@/lib/icons/X";
 import { Calendar } from "@/lib/icons/Calendar";
 
-export default () => {
+export default function VerifyAge() {
   const router = useRouter();
   const { control, trigger, formState: { errors } } = useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,17 +30,13 @@ export default () => {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   const handleClose = () => {
     Alert.alert(
       "Exit Registration",
       "Are you sure you want to exit? Your progress will be lost.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Exit", style: "destructive", onPress: () => router.push("/") }
+        { text: "Exit", style: "destructive", onPress: () => router.push("/")}
       ]
     );
   };
@@ -77,7 +73,7 @@ export default () => {
               Age Verification
             </Text>
             
-            <Text className="text-[14px] font-PoppinsRegular text-gray-600 text-center leading-6">
+            <Text className="text-sm font-PoppinsRegular text-gray-600 text-center leading-6">
               We need to verify your age to ensure you meet the minimum requirements for our services.
             </Text>
           </View>

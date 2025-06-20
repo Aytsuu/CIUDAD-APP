@@ -20,7 +20,8 @@ export default () => {
     <FormProvider methods={methods}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="verification" options={{ headerShown: false }} />
+        <Stack.Screen name="verify-age" options={{ headerShown: false }} />
+        <Stack.Screen name="validate-resident-id" options={{ headerShown: false }} />
         <Stack.Screen name="personal-information" options={{ headerShown: false }} />
         <Stack.Screen name="upload-id" options={{ headerShown: false }} />
         <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />

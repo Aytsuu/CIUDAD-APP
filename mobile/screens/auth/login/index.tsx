@@ -14,12 +14,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { useToastContext } from "@/components/ui/toast";
+import { SignupOptions } from "./SignupOptions";
 
 type SignInForm = z.infer<typeof signInSchema>;
 
 export default () => {
   const { toast } = useToastContext();
   const defaultValues = generateDefaultValues(signInSchema);
+  const [showSignupOptions, setShowSignupOptions] = useState<boolean>(false);  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,10 +44,6 @@ export default () => {
       toast.error("Incorrect username or password");
       return;
     }
-  };
-
-  const handleSignUp = () => {
-    router.push("/verification");
   };
 
   return (
@@ -116,12 +114,17 @@ export default () => {
         <Text className="text-black font-PoppinsRegular text-[13px] ">
           Not registered yet?
         </Text>
-        <TouchableWithoutFeedback onPress={handleSignUp}>
+        <TouchableWithoutFeedback onPress={() => setShowSignupOptions(true)}>
           <Text className="text-black font-PoppinsMedium underline text-[13px]">
             Register
           </Text>
         </TouchableWithoutFeedback>
       </View>
+
+      <SignupOptions
+        visible={showSignupOptions}
+        onClose={() => setShowSignupOptions(false)}
+      />
     </ScreenLayout>
   );
 };
