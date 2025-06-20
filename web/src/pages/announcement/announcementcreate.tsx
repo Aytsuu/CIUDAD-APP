@@ -86,8 +86,10 @@ const AnnouncementCreate = () => {
       ...values,
       ann_start_at: values.ann_start_at || null,
       ann_end_at: values.ann_end_at || null,
-      staff: user?.staff.staff_id,
+      staff: user?.djangoUser?.resident_profile?.staff?.staff_id
     };
+
+      console.log("Submitting payload to API:", cleanedValues);
 
     try {
       const createdAnnouncement = await postAnnouncement(cleanedValues);
@@ -98,7 +100,7 @@ const AnnouncementCreate = () => {
             position: posId,
             ar_mode: mode,
             ann: createdAnnouncement?.ann_id,
-            staff: user?.staff.staff_id,
+            staff: user?.djangoUser?.resident_profile?.staff?.staff_id,
             ar_age: age,
           }))
         )
@@ -116,7 +118,7 @@ const AnnouncementCreate = () => {
                     af_path: media.storagePath,
                     af_url: media.publicUrl,
                     ann: createdAnnouncement?.ann_id,
-                    staff: user?.staff.staff_id,
+                    staff: user?.djangoUser?.resident_profile?.staff?.staff_id
                   }));
 
                   postAnnouncementFile(files, {
