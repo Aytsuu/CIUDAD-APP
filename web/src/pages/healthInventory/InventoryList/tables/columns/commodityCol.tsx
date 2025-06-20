@@ -10,8 +10,7 @@ import { Link
 export type CommodityRecords = {
   id: string;
   com_name: string;
-  cat_id: string;
-  cat_name: string; // Add this
+  user_type: string;
 };
 
 export const CommodityColumns = (
@@ -34,8 +33,8 @@ export const CommodityColumns = (
     header: "Commodity Name",
   },
   {
-    accessorKey: "cat_name",
-    header: "Category",
+    accessorKey: "user_type",
+    header: "User_type",
   },
   {
     accessorKey: "action",

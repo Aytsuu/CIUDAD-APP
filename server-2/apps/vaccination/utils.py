@@ -141,8 +141,9 @@ def get_all_residents_not_vaccinated():
 def count_vaccinated_by_patient_type():
     counts = (
         Patient.objects.filter(
-            patient_records__vaccination_records__vaccination_histories__vachist_status="completed"
+            Q(patient_records__vaccination_records__vaccination_histories__vachist_status="completed")
         )
+        .exclude(patient_records__vaccination_records__vaccination_histories__isnull=True)
         .values('pat_type')
         .annotate(total=Count('pat_id'))
     )

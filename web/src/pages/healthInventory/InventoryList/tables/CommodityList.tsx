@@ -31,8 +31,7 @@ export default function CommodityList() {
     return commodities.map((commodity: any) => ({
       id: commodity.com_id,
       com_name: commodity.com_name,
-      cat_id: commodity.cat,
-      cat_name: commodity.catlist,
+      user_type: commodity.user_type,
     }));
   }, [commodities]);
 

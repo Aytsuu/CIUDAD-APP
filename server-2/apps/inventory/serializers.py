@@ -28,7 +28,7 @@ class FirstAidListSerializers(serializers.ModelSerializer):
         fields = '__all__'
 
 class CommodityListSerializers(serializers.ModelSerializer):
-    catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
+    # catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
 
     class Meta:
         model = CommodityList

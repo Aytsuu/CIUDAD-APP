@@ -76,7 +76,6 @@ interface UpdateVaccineParams {
     formData: VaccineType;
     vaccineData: VaccineData;
   }
-  
   export const useUpdateVaccine = () => {
     const queryClient = useQueryClient();
     const updateDetailsMutation = useUpdateVaccineDetails();
@@ -87,59 +86,53 @@ interface UpdateVaccineParams {
   
     const updateVaccine = async ({ formData, vaccineData }: UpdateVaccineParams) => {
       try {
-        const hasTypeChanged = formData.type !== vaccineData.vaccineType.toLowerCase();
-        const hasDosesChanged = 
-          Number(formData.noOfDoses) !== 
-          Number(vaccineData.noOfDoses === "N/A" ? 1 : vaccineData.noOfDoses);
-        const hasSpecifyAgeChanged = formData.specifyAge !== vaccineData.specifyAge;
-        const hasRoutineIntervalChanged = 
-          formData.type === "routine" &&
-          (Number(formData.routineFrequency?.interval) !== vaccineData.doseDetails[0]?.interval ||
-           formData.routineFrequency?.unit !== vaccineData.doseDetails[0]?.unit);
+        console.log("Starting vaccine update with:", { formData, vaccineData });
   
-        const shouldUpdateIntervals = 
-          hasTypeChanged || 
-          hasDosesChanged || 
-          hasSpecifyAgeChanged || 
-          hasRoutineIntervalChanged;
+        const hasTypeChanged = formData.type !== vaccineData.vaccineType.toLowerCase();
+        const hasDosesChanged =
+          Number(formData.noOfDoses) !==
+          Number(vaccineData.noOfDoses === "N/A" ? 1 : vaccineData.noOfDoses);
+  
+        console.log("Change detection:", { hasTypeChanged, hasDosesChanged });
   
         // First update the main vaccine details
-        await updateDetailsMutation.mutateAsync({ 
-          vaccineId: vaccineData.id, 
-          formData 
+        await updateDetailsMutation.mutateAsync({
+          vaccineId: vaccineData.id,
+          formData,
         });
   
-        if (shouldUpdateIntervals) {
-          // If type changed, we need to clean up the old intervals
-          if (hasTypeChanged) {
-            if (vaccineData.vaccineType.toLowerCase() === "routine") {
-              // Delete all existing routine frequencies
-              await deleteRoutineMutation.mutateAsync(vaccineData.id);
-            } else {
-              // Delete all existing vaccine intervals
-              await deleteIntervalsMutation.mutateAsync(vaccineData.id);
-            }
-          }
+        // Handle interval updates based on type change or dose change
+        if (hasTypeChanged || hasDosesChanged) {
+          console.log("Type or doses changed - cleaning up old intervals");
   
-          // Now create/update the new intervals based on current type
-          if (formData.type === "routine") {
-            // For routine vaccines, update/create the single frequency
-            await updateRoutineMutation.mutateAsync({ 
-              vaccineId: vaccineData.id, 
-              formData 
-            });
+          // Clean up old intervals based on previous type
+          if (vaccineData.vaccineType.toLowerCase() === "routine") {
+            console.log(`Deleting routine frequencies for vaccineId=${vaccineData.id}`);
+            await deleteRoutineMutation.mutateAsync(vaccineData.id);
           } else {
-            // For non-routine vaccines, update/create all dose intervals
-            await updateIntervalsMutation.mutateAsync({ 
-              vaccineId: vaccineData.id, 
-              formData 
-            });
+            console.log(`Deleting vaccine intervals for vaccineId=${vaccineData.id}`);
+            await deleteIntervalsMutation.mutateAsync(vaccineData.id);
           }
+        }
+  
+        // Create/update intervals for current type
+        if (formData.type === "routine") {
+          console.log(`Updating routine frequency for vaccineId=${vaccineData.id}`);
+          await updateRoutineMutation.mutateAsync({
+            vaccineId: vaccineData.id,
+            formData,
+          });
+        } else {
+          console.log(`Updating vaccine intervals for vaccineId=${vaccineData.id}`);
+          await updateIntervalsMutation.mutateAsync({
+            vaccineId: vaccineData.id,
+            formData,
+          });
         }
   
         // Invalidate queries to refresh the data
         queryClient.invalidateQueries({ queryKey: ["vaccines"] });
-        
+  
         return { success: true };
       } catch (error: any) {
         console.error("Update error:", error);
@@ -149,11 +142,11 @@ interface UpdateVaccineParams {
   
     return {
       updateVaccine,
-      isUpdating: 
-        updateDetailsMutation.isPending || 
-        deleteRoutineMutation.isPending || 
-        deleteIntervalsMutation.isPending || 
-        updateRoutineMutation.isPending || 
-        updateIntervalsMutation.isPending
+      isUpdating:
+        updateDetailsMutation.isPending ||
+        deleteRoutineMutation.isPending ||
+        deleteIntervalsMutation.isPending ||
+        updateRoutineMutation.isPending ||
+        updateIntervalsMutation.isPending,
     };
   };

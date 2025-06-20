@@ -46,7 +46,12 @@ class CommodityList(models.Model):
     com_name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    cat = models.ForeignKey(Category, on_delete=models.PROTECT)
+    USER_TYPE_CHOICES = [
+        ('Current user', 'Current user'),
+        ('New acceptor', 'New acceptor'),
+        ('Both', 'Both'),
+    ]
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
 
     class Meta:
         db_table = 'commodity_list'
@@ -274,7 +279,14 @@ class RoutineFrequency(models.Model):
  
     class Meta:
         db_table = 'routine_frequencies'
-        
+    
+class ConditionalVaccine(models.Model):
+    condvac_id = models.BigAutoField(primary_key=True)
+    vac_id = models.ForeignKey('VaccineList', on_delete=models.CASCADE, db_column='vac_id', related_name='conditional_vaccines')
+    vac_conditional = models.CharField(max_length=255, default="N/A")
+    dose_number = models.PositiveIntegerField(default=0)
+    class Meta:
+        db_table = 'conditional_vaccines'    
           
 class VaccineStock(models.Model):
     vacStck_id =models.BigAutoField(primary_key=True)

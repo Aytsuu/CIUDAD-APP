@@ -175,6 +175,7 @@ export default function ViewPatientRecord() {
     }),
     [currentPatient, patientData, patientId]
   );
+  
 
   const handleEdit = () => {
     setIsEditable(true);

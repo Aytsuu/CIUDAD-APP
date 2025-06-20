@@ -65,6 +65,12 @@ export default function EditVaccineModal() {
   const { updateVaccine, isUpdating } = useUpdateVaccine();
   const navigate = useNavigate();
 
+
+  useEffect(() => {
+    console.log("Vaccine id", vaccineData.id);
+  }, [vaccineData.id]);
+
+
   // Initialize formData with default values
   const defaultFormData: VaccineType = {
     vaccineName: vaccineData.vaccineName,
@@ -111,21 +117,32 @@ export default function EditVaccineModal() {
     "specifyAge",
   ]);
 
+  
   useEffect(() => {
     const currentNoOfDoses = watch("noOfDoses");
     const currentType = watch("type");
-    const currentIntervals = watch("intervals");
-    const currentTimeUnits = watch("timeUnits");
+    const currentIntervals = watch("intervals") || [];
+    const currentTimeUnits = watch("timeUnits") || [];
 
     if (currentType === "routine") {
       setValue("noOfDoses", 1);
       setValue("intervals", []);
       setValue("timeUnits", []);
     } else {
-      // When reducing doses, trim the intervals and timeUnits arrays
-      if (currentIntervals.length > currentNoOfDoses - 1) {
-        setValue("intervals", currentIntervals.slice(0, currentNoOfDoses - 1));
-        setValue("timeUnits", currentTimeUnits.slice(0, currentNoOfDoses - 1));
+      // For primary vaccines, ensure intervals array matches dose count
+      const expectedIntervals = Math.max(0, currentNoOfDoses - 1);
+      
+      // Adjust intervals array size
+      if (currentIntervals.length !== expectedIntervals) {
+        const newIntervals = Array(expectedIntervals).fill(0).map((_, index) => 
+          currentIntervals[index] || 0
+        );
+        const newTimeUnits = Array(expectedIntervals).fill("months").map((_, index) => 
+          currentTimeUnits[index] || "months"
+        );
+        
+        setValue("intervals", newIntervals);
+        setValue("timeUnits", newTimeUnits);
       }
     }
   }, [noOfDoses, type, setValue, watch]);
@@ -153,7 +170,7 @@ export default function EditVaccineModal() {
           category: vaccineData.category
         }
       });
-      navigate("/mainInventoryList");
+      navigate(-1);
       toast.success("Updated successfully", {
         icon: (
           <CircleCheck size={18} className="fill-green-500 stroke-white" />

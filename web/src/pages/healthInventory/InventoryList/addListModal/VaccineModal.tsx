@@ -35,6 +35,7 @@ const ageGroups = [
 const vaccineTypes = [
   { id: "routine", name: "Routine" },
   { id: "primary", name: "Primary Series" },
+  {id: "conditional", name: "Conditional"}
 ];
 
 export default function AddVaccinationList() {

@@ -27,45 +27,38 @@ import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { user_type_options } from "../addListModal/CommodityModal";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { toTitleCase } from "@/helpers/ToTitleCase";
 
 export interface CommodityData {
   id: string;
   com_name: string;
-  cat_name: string;
-  cat_id: string;
+  user_type: string;
 }
-
 export default function CommodityListEdit() {
   const location = useLocation();
   const initialData = location.state?.params?.initialData as CommodityData;
-  const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
 
+  // Initialize form with default values
   const form = useForm<CommodityType>({
     resolver: zodResolver(CommodityListSchema),
     defaultValues: {
-      com_name: "",
-      cat_id: "",
-    }, 
+      com_name: '',
+      user_type: '',
+    },
   });
 
-  const queryClient = useQueryClient();
-  const {
-    categories,
-    handleDeleteConfirmation,
-    categoryHandleAdd,
-    ConfirmationDialogs,
-  } = useCategoriesCommodity();
-
+  // Reset form whenever initialData changes
   useEffect(() => {
-    if (initialData && categories.length > 0 && !isInitialized) {
+    if (initialData) {
       form.reset({
         com_name: initialData.com_name,
-        cat_id: initialData.cat_id,
+        user_type: initialData.user_type,
       });
-      setIsInitialized(true);
     }
-  }, [initialData, categories, form, isInitialized]);
+  }, [initialData, form]);
 
   const { mutate: updateCommodityMutation, isPending } = useUpdateCommodity();
   const [isUpdateConfirmationOpen, setIsUpdateConfirmationOpen] = useState(false);
@@ -74,43 +67,21 @@ export default function CommodityListEdit() {
   const confirmUpdate = () => {
     const formData = form.getValues();
     setIsUpdateConfirmationOpen(false);
-
-    updateCommodityMutation(
-      {
-        com_id: initialData.id,
-        data: formData,
-      },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["commodities"] });
-          toast.success("Commodity updated successfully", {
-            icon: (
-              <CircleCheck size={18} className="fill-green-500 stroke-white" />
-            ),
-            duration: 2000,
-          });
-          navigate("/mainInventoryList");
-        },
-        onError: (error) => {
-          console.error("Error updating commodity:", error);
-          toast.error("Failed to update commodity");
-        },
-      }
-    );
+    updateCommodityMutation({
+      com_id: initialData.id,
+      data: formData,
+    });
   };
 
   const isDuplicateCommodity = (
     commodities: any[],
     newCommodity: string,
-    catId: string,
     currentId?: string
   ) => {
     return commodities.some(
       (com) =>
         com.id !== currentId &&
-        com?.com_name?.trim()?.toLowerCase() ===
-          newCommodity?.trim()?.toLowerCase() &&
-        String(com?.cat) === String(catId)
+        toTitleCase(com?.com_name?.trim()) === toTitleCase(newCommodity?.trim())
     );
   };
 
@@ -123,33 +94,19 @@ export default function CommodityListEdit() {
         throw new Error("Invalid API response - expected an array");
       }
 
-      if (!data.cat_id) {
-        toast.error("Please select a category");
-        form.setError("cat_id", {
-          type: "manual",
-          message: "Category is required",
-        });
-        return;
-      }
-
       const isNameChanged =
-        data.com_name.trim().toLowerCase() !==
-        initialData.com_name.trim().toLowerCase();
+        toTitleCase(data.com_name.trim()) !==
+        toTitleCase(initialData.com_name.trim());
       const isCategoryChanged =
-        String(data.cat_id) !== String(initialData.cat_id);
+        String(data.user_type) !== String(initialData.user_type);
 
       if (
-        (isNameChanged || isCategoryChanged) &&
-        isDuplicateCommodity(
-          existingCommodities,
-          data.com_name,
-          data.cat_id,
-          initialData.id
-        )
+        isNameChanged &&
+        isDuplicateCommodity(existingCommodities, data.com_name, initialData.id)
       ) {
         form.setError("com_name", {
           type: "manual",
-          message: "Commodity name already exists in this category",
+          message: "Commodity name already exists",
         });
         return;
       }
@@ -164,13 +121,6 @@ export default function CommodityListEdit() {
       console.error("Error validating input:", err);
       toast.error("Failed to verify commodity uniqueness. Please try again.");
     }
-  };
-
-  const getCurrentCategoryName = () => {
-    const currentId = form.watch("cat_id");
-    if (!currentId) return "Select category";
-    const foundCategory = categories.find((cat) => cat.id === currentId);
-    return foundCategory?.name || initialData?.cat_name || "Select category";
   };
 
   if (!initialData) {
@@ -190,7 +140,7 @@ export default function CommodityListEdit() {
     <div className="w-full flex items-center justify-center p-2 sm:p-4">
       <Form {...form}>
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={form.handleSubmit(onSubmit)}
           className="bg-white p-4 w-full max-w-[500px] rounded-sm"
         >
           <div className="flex flex-col gap-3">
@@ -206,37 +156,11 @@ export default function CommodityListEdit() {
               placeholder="Enter commodity name"
             />
 
-            <FormField
+            <FormSelect
               control={form.control}
-              name="cat_id"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel className="text-darkGray">Category</FormLabel>
-                    <FormControl>
-                      <SelectLayoutWithAdd
-                        className="w-full"
-                        placeholder={getCurrentCategoryName()}
-                        label="Select a Category"
-                        options={
-                          categories.length > 0
-                            ? categories
-                            : [{ id: "loading", name: "Loading..." }]
-                        }
-                        value={field.value}
-                        onChange={(value) => field.onChange(value)}
-                        onAdd={(newCategoryName) => {
-                          categoryHandleAdd(newCategoryName, (newId) => {
-                            field.onChange(newId);
-                          });
-                        }}
-                        onDelete={(id) => handleDeleteConfirmation(Number(id))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
+              name="user_type"
+              label="User type"
+              options={user_type_options}
             />
           </div>
 
@@ -245,11 +169,11 @@ export default function CommodityListEdit() {
               <Link to="/mainInventoryList">Cancel</Link>
             </Button>
             <Button
+              type="submit"
               className="bg-blue text-white px-4 py-2 rounded w-full sm:w-auto"
               disabled={isPending}
-              onClick={form.handleSubmit(onSubmit)}
             >
-
+              Submit
             </Button>
           </div>
         </form>
@@ -262,8 +186,6 @@ export default function CommodityListEdit() {
         description={`Are you sure you want to update the commodity "${newCommodityName}"?`}
         onConfirm={confirmUpdate}
       />
-
-      <ConfirmationDialogs />
     </div>
   );
 }
