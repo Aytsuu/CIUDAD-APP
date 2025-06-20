@@ -28,7 +28,7 @@ type StockFilter =
 export default function MedicineStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const [medicineToArchive, setMedicineToArchive] = useState<number | null>(
+  const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
     null
   );
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,7 +98,7 @@ export default function MedicineStocks() {
     });
   }, [searchQuery, formatMedicineStocksData, stockFilter]);
 
-  const handleArchiveInventory = (inv_id: number) => {
+  const handleArchiveInventory = (inv_id: string) => {
     setMedicineToArchive(inv_id);
     setIsArchiveConfirmationOpen(true);
   };

@@ -72,7 +72,7 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 export default function CommodityStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const [commodityToArchive, setCommodityToArchive] = useState<number | null>(
+  const [commodityToArchive, setCommodityToArchive] = useState<string | null>(
     null
   );
   const [searchQuery, setSearchQuery] = useState("");

@@ -8,7 +8,7 @@ import { isNearExpiry, isExpired, isLowStock } from "./Alert";
 import { Plus } from "lucide-react";
 
 export const CommodityStocksColumns = (
-  setCommodityToArchive: (id: number | null) => void,
+  setCommodityToArchive: (id: string | null) => void,
   setIsArchiveConfirmationOpen: (value: boolean) => void 
 ): ColumnDef<CommodityStocksRecord>[] => [
   {

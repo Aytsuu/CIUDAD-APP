@@ -17,7 +17,7 @@ export const useAddFirstAidInventory = () => {
       fa_id,
     }: {
       data: Record<string, any>;
-      inv_id: number;
+      inv_id: string;
       fa_id: string;
     }) => addFirstAidInventory(data, inv_id, fa_id),
     onError: (error: Error) => {
@@ -61,7 +61,7 @@ export const useSubmitFirstAidStock = () => {
         throw new Error("Failed to generate inventory ID.");
       }
 
-      const inv_id = parseInt(inventoryResponse.inv_id, 10);
+      const inv_id = inventoryResponse.inv_id;
       const fa_id = data.fa_id;
 
       if (!data.fa_id) {

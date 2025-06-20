@@ -8,7 +8,6 @@ export const createMedicineRecord = async (data: Record<string, any>) => {
         "/medicine/create-medicine-record/",
         data
       );
-      console.log("Medicine Record Response:", response.data); // Debugging log
     return response.data;
   } catch (error) {
     console.error('Error creating medicine record:', error);
@@ -23,7 +22,6 @@ export const createPatientRecord = async (pat_id: string) => {
       pat_id: pat_id,
       created_at: new Date().toISOString(),
     });
-    console.log("Patient Record Response:", response.data); // Debugging log
     return response.data;
   };
   

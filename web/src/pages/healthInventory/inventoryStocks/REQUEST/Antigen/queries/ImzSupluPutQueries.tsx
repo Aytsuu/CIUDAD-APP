@@ -15,7 +15,7 @@ export const useUpdateImmunizationStock = () => {
             imzStck_avail,
         }: {
             imzStck_id: number;
-            inv_id: number;
+            inv_id: string;
             imzStck_qty: number;
             imzStck_pcs: number;
             imzStck_avail: number;

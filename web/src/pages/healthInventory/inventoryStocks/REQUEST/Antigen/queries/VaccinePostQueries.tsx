@@ -11,7 +11,7 @@ export const useAddVaccineStock = () => {
     }: {
       data: Record<string, any>;
       vac_id: number;
-      inv_id: number;
+      inv_id: string;
     }) => addVaccineStock(data, vac_id, inv_id),
     onError: (error: Error) => {
       console.error("Error adding vaccine stock:", error.message);
@@ -50,7 +50,7 @@ export const useSubmitVaccineStock = () => {
         if (!inventoryResponse?.inv_id) {
           throw new Error("Failed to generate inventory ID.");
         }
-        const inv_id = parseInt(inventoryResponse.inv_id, 10);
+        const inv_id = inventoryResponse.inv_id;
   
         // 2) Add Vaccine Stock
         const vac_id = Number(data.vac_id);

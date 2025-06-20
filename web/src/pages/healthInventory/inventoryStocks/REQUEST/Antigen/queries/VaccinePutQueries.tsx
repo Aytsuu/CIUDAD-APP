@@ -8,7 +8,7 @@ export const useUpdateVaccineStock = () => {
     return useMutation({
       mutationFn: (data: {
         vacStck_id: number;
-        inv_id: number;
+        inv_id: string;
         qty: number;
         vacStck_qty_avail: number;
       }) => updateVaccineStock(data.vacStck_id, data.inv_id, data.qty, data.vacStck_qty_avail),

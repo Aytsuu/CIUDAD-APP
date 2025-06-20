@@ -10,8 +10,9 @@ class PatientMedicineRecordsView(generics.ListAPIView):
     serializer_class = PatientMedicineRecordSerializer
     
     def get_queryset(self):
+        pat_id = self.kwargs.get('pat_id')
         return Patient.objects.filter(
-        Q(patient_records__patrec_type__iexact='Medicine Request') ,
+            Q(patient_records__medicine_records__patrec_id__isnull=False) 
         ).distinct()
 
 class IndividualMedicineRecordView(generics.ListCreateAPIView):

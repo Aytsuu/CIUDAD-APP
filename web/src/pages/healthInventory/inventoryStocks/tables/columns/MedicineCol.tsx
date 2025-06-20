@@ -6,7 +6,7 @@ import { MedicineStocksRecord } from "../type";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert";
 
 export const getColumns = (
-  handleArchiveInventory: (inv_id: number) => void
+  handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<MedicineStocksRecord>[] => [
   {
     accessorKey: "medicineInfo",

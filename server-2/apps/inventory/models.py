@@ -100,13 +100,40 @@ class FirstAidList(models.Model):
         super().save(*args, **kwargs)
 
 class Inventory(models.Model):
-    inv_id =models.BigAutoField(primary_key=True)
+    inv_id = models.CharField(max_length=20, primary_key=True)
     expiry_date = models.DateField()
     inv_type = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     is_Archived = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        if not self.inv_id:
+            today = timezone.now()
+            # Map inv_type to prefix
+            type_prefixes = {
+                'First Aid': 'INVFA',
+                'Medicine': 'INVMED',
+                'Commodity': 'INVCOM',
+                'Antigen': 'INVANT'
+            }
+            prefix = type_prefixes.get(self.inv_type, 'INV')
+            # Format: PREFIX + YY + MM
+            full_prefix = f"{prefix}{today.year % 100:02d}{today.month:02d}"
+            
+            # Get the maximum existing ID with this prefix
+            max_id = Inventory.objects.filter(
+                inv_id__startswith=full_prefix
+            ).order_by('-inv_id').first()
+            
+            if max_id:
+                last_num = int(max_id.inv_id[len(full_prefix):]) + 1
+            else:
+                last_num = 1
+                
+            self.inv_id = f"{full_prefix}{last_num:03d}"
+        
+        super().save(*args, **kwargs)
     class Meta:
         db_table = 'inventory'  # Sets the table name explicitlyt
 

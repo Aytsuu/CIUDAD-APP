@@ -46,6 +46,7 @@ class InventorySerializers(serializers.ModelSerializer):
     class Meta:
         model = Inventory
         fields = '__all__'  # Automatically includes all model fields
+        read_only_fields = ['inv_id']  # <- ✅ this allows Django to auto-generate it
 
     def validate(self, data):
         """Custom validation for Inventory data"""

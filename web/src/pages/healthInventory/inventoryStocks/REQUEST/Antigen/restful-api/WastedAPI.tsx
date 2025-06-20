@@ -78,6 +78,7 @@ export const updateImmunizationStockQuantity = async (
   return response.data;
 };
 
+
 export const createImmunizationWasteTransaction = async (
   imzStck_id: number,
   wastedAmount: number,

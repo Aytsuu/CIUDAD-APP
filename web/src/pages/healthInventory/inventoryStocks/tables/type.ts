@@ -13,7 +13,7 @@ export type CommodityStocksRecord = {
     availQty: string;
     dispensed: string;
     recevFrom: string;
-    inv_id: number;
+    inv_id: string;
   };
   
 
@@ -35,7 +35,7 @@ export type CommodityStocksRecord = {
     minv_qty_unit: string;
     availQty: string;
     distributed: string;
-    inv_id: number;
+    inv_id: string;
   };
 
 
@@ -53,7 +53,7 @@ export type CommodityStocksRecord = {
   finv_qty_unit: string;
   availQty: string;
   used: string;
-  inv_id: number;
+  inv_id: string;
 };
 
 
@@ -72,7 +72,7 @@ export type StockRecords = {
   availableStock: number;
   expiryDate: string;
   type: "vaccine" | "supply";
-  inv_id: number;
+  inv_id: string;
   vac_id: number;
   imz_id: number;
   vacStck_id: number;

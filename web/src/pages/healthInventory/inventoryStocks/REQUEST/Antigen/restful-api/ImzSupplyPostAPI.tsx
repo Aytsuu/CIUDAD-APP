@@ -4,7 +4,7 @@ import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/invento
 
 export const addImmunizationStock = async (
   data: Record<string, any>,
-  inv_id: number
+  inv_id: string
 ) => {
   try {
     // Update the quantity calculation in useSubmitImmunizationStock:

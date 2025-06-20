@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         # ('vaccination', '0001_initial'),
     ]
 
-    # operations = [
+    operations = [
     #     migrations.CreateModel(
     #         name='VaccinationRecord',
     #         fields=[
@@ -46,4 +46,4 @@ class Migration(migrations.Migration):
     #             'db_table': 'vaccination_history',
     #         },
     #     ),
-    # ]
+    ]

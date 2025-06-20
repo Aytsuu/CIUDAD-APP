@@ -9,37 +9,37 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('patientrecords', '0002_initial'),
+        # ('patientrecords', '0002_initial'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='AnimalBite_Referral',
-            fields=[
-                ('referral_id', models.AutoField(primary_key=True, serialize=False)),
-                ('receiver', models.CharField(max_length=50)),
-                ('sender', models.CharField(max_length=50)),
-                ('date', models.DateField(auto_now=True)),
-                ('transient', models.BooleanField(default=False)),
-                ('patrec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='referrals', to='patientrecords.patientrecord')),
-            ],
-            options={
-                'db_table': 'animalbite_referral',
-            },
-        ),
-        migrations.CreateModel(
-            name='AnimalBite_Details',
-            fields=[
-                ('bite_id', models.AutoField(primary_key=True, serialize=False)),
-                ('exposure_type', models.CharField(max_length=50)),
-                ('exposure_site', models.CharField(default='Not specified', max_length=50)),
-                ('biting_animal', models.CharField(max_length=50)),
-                ('actions_taken', models.CharField(max_length=50)),
-                ('referredby', models.CharField(max_length=50)),
-                ('referral', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bite_details', to='animalbites.animalbite_referral')),
-            ],
-            options={
-                'db_table': 'animalbite_detail',
-            },
-        ),
+        # migrations.CreateModel(
+        #     name='AnimalBite_Referral',
+        #     fields=[
+        #         ('referral_id', models.AutoField(primary_key=True, serialize=False)),
+        #         ('receiver', models.CharField(max_length=50)),
+        #         ('sender', models.CharField(max_length=50)),
+        #         ('date', models.DateField(auto_now=True)),
+        #         ('transient', models.BooleanField(default=False)),
+        #         ('patrec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='referrals', to='patientrecords.patientrecord')),
+        #     ],
+        #     options={
+        #         'db_table': 'animalbite_referral',
+        #     },
+        # ),
+        # migrations.CreateModel(
+        #     name='AnimalBite_Details',
+        #     fields=[
+        #         ('bite_id', models.AutoField(primary_key=True, serialize=False)),
+        #         ('exposure_type', models.CharField(max_length=50)),
+        #         ('exposure_site', models.CharField(default='Not specified', max_length=50)),
+        #         ('biting_animal', models.CharField(max_length=50)),
+        #         ('actions_taken', models.CharField(max_length=50)),
+        #         ('referredby', models.CharField(max_length=50)),
+        #         ('referral', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bite_details', to='animalbites.animalbite_referral')),
+        #     ],
+        #     options={
+        #         'db_table': 'animalbite_detail',
+        #     },
+        # ),
     ]

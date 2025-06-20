@@ -1,7 +1,7 @@
 import {api2} from "@/api/api";
 
  
-export const addVaccineStock = async (data: Record<string,any>, vac_id: number, inv_id: number) => {
+export const addVaccineStock = async (data: Record<string,any>, vac_id: number, inv_id: string) => {
   // Calculate available quantity based on solvent type
   const availqty = data.solvent === 'doses' 
     ? data.qty * (data.volume || 0) 

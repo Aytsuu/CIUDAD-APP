@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert"; // Import the alert functions
 
 export const getStockColumns = (
-  handleArchiveInventory: (inv_id: number) => void
+  handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<StockRecords>[] => [
   {
     accessorKey: "batchNumber",

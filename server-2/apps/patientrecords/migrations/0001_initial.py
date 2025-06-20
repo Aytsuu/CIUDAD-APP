@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
         # ('healthProfiling', '0002_solid_waste_mgmt_remove_household_hh_barangay_and_more'),
     ]
 
-    # operations = [
+    operations = [
     #     migrations.CreateModel(
     #         name='Patients',
     #         fields=[
@@ -41,4 +41,4 @@ class Migration(migrations.Migration):
     #             'ordering': ['-patrec_id'],
     #         },
     #     ),
-    # ]
+    ]

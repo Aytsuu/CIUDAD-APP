@@ -62,7 +62,7 @@ const isLowStock = (availQty: number, unit: string, pcs: number) => {
 
 export default function FirstAidStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [firstAidToArchive, setFirstAidToArchive] = useState<number | null>(null);
+  const [firstAidToArchive, setFirstAidToArchive] = useState<string | null>(null);
   const [isDialog, setIsDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -139,7 +139,7 @@ export default function FirstAidStocks() {
     currentPage * pageSize
   );
 
-  const handleArchiveInventory = (inv_id: number) => {
+  const handleArchiveInventory = (inv_id: string) => {
     setFirstAidToArchive(inv_id);
     setIsArchiveConfirmationOpen(true);
   };

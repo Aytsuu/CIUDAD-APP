@@ -65,7 +65,7 @@ export default function CombinedStockTable() {
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const [inventoryToArchive, setInventoryToArchive] = useState<number | null>(
+  const [inventoryToArchive, setInventoryToArchive] = useState<string | null>(
     null
   );
   const queryClient = useQueryClient();
@@ -152,7 +152,7 @@ export default function CombinedStockTable() {
     currentPage * pageSize
   );
 
-  const handleArchiveInventory = (inv_id: number) => {
+  const handleArchiveInventory = (inv_id: string) => {
     setInventoryToArchive(inv_id);
     setIsArchiveConfirmationOpen(true);
   };
