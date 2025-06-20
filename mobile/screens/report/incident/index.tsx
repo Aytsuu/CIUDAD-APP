@@ -14,28 +14,54 @@ import { Button } from "@/components/ui/button"
 import MediaPicker from "@/components/ui/media-picker";
 import { useGetSitio } from "@/screens/_global_queries/Retrieve"
 import { formatSitio } from "@/helpers/formatSitio"
+import { Input } from "@/components/ui/input"
+import { useAddIncidentReport } from "../queries/reportAdd"
+import { useGetReportType } from "../queries/reportFetch"
+import { formatReportType } from "@/helpers/formatReportType"
+import { capitalizeAllFields } from "@/helpers/capitalize"
 
 type IncidentReport = z.infer<typeof IncidentReportSchema>
 
 export default () => {
   const defaultValues = generateDefaultValues(IncidentReportSchema);
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
-  const { data: sitioList, isLoading } = useGetSitio();
-  const { control, trigger, getValues } = useForm<IncidentReport>({
+  const [showMediaError, setShowMediaError] = React.useState<boolean>(false);
+  const [addReportType, setAddReportType] = React.useState<string>('');
+  const [isOtherType, setIsOtherType] = React.useState<boolean>(false);
+  const { mutateAsync: addIncidentReport } = useAddIncidentReport();
+  const { data: sitioList, isLoading: isLoadingSitioList } = useGetSitio();
+  const { data: irReportType, isLoading: isLoadingIRReportType} = useGetReportType();
+  const { control, trigger, getValues, watch } = useForm<IncidentReport>({
     resolver: zodResolver(IncidentReportSchema),
     defaultValues
   });
 
   const formattedSitio = React.useMemo(() => formatSitio(sitioList), [sitioList]);
+  const formattedRT = React.useMemo(() => formatReportType(irReportType), [irReportType]);
+  
+  React.useEffect(() => {
+    const type = watch('ir_type');
+    if(type) {
+      if(type === 'other') setIsOtherType(true);
+      else setIsOtherType(false);
+    } else {
+      setIsOtherType(false);
+    }
+
+  }, [watch('ir_type')])
 
   const submit = async () => {
     const formIsValid = await trigger([
       'ir_add_details',
       'ir_street',
-      'ir_time',
       'ir_type',
-      'sitio',
+      'ir_sitio',
     ]);
+
+    if (!selectedImage) {
+      setShowMediaError(true);
+      return;
+    }
 
     if (!formIsValid) {
       console.log(formIsValid);
@@ -44,15 +70,24 @@ export default () => {
 
     try {
       const values = getValues();
-      console.log(values)
+      addIncidentReport(capitalizeAllFields({
+        ...values,
+        'ir_other_type': addReportType,
+        'rp': "00003250609",
+      }), {
+        onSuccess: () => {
+          
+        }
+      })
     } catch (err) {
       throw err;
     }
     console.log(formIsValid);
   }
 
-  if(isLoading) return;
-
+  if(isLoadingSitioList || isLoadingIRReportType) {
+    return;
+  }
   return (
     <_ScreenLayout
       header={'Incident Report'}
@@ -69,18 +104,25 @@ export default () => {
             contentContainerStyle={{ paddingBottom: 120 }}
             keyboardShouldPersistTaps="handled"
           >
-            <FormSelect label="Type" control={control} name="ir_type" options={[]} />
-            <FormSelect label="Sitio" control={control} name="sitio" options={formattedSitio} />
+            <FormSelect label="Type" control={control} name="ir_type" options={[
+              ...formattedRT,
+              {label: 'Other', value: 'other'}
+            ]} />
+            {isOtherType && 
+              <View>
+                <Input value={addReportType} onChangeText={(text) => setAddReportType(text)} />
+              </View>
+            }
+            <FormSelect label="Sitio" control={control} name="ir_sitio" options={formattedSitio} />
             <FormInput label="Street" control={control} name="ir_street" />
-            <FormTimeInput label="Time " control={control} name='ir_time' mode="12h" />
             <FormTextArea 
               label="Additional Details" 
               control={control} 
               name="ir_add_details" 
             />
-            <View className="mt-8 border border-dashed border-gray-300 p-5 rounded-lg bg-white flex-1 gap-7">
+            <View className={`mt-8 border border-dashed ${showMediaError ? 'border-red-500' : 'border-gray-300'} p-5 rounded-lg bg-white flex-1 gap-7`}>
               <Text>Please provide an image to support your report</Text>
-              <MediaPicker 
+              <MediaPicker
                 selectedImage={selectedImage}
                 setSelectedImage={setSelectedImage}
               />

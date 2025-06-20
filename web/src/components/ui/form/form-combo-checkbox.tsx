@@ -199,13 +199,8 @@ import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 
-type OptionType = {
-  id: string
-  name: string
-  disabled?: boolean
-}
-
-export const FormComboCheckbox = React.memo(
+// Reusable Form Select Component with Checkbox support
+export const FormComboCheckbox   = React.memo(
   ({
     control,
     name,

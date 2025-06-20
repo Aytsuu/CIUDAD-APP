@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='address',
-            name='add_external_sitio',
-            field=models.CharField(max_length=50, null=True),
-        ),
+        # migrations.AlterField(
+        #     model_name='address',
+        #     name='add_external_sitio',
+        #     field=models.CharField(max_length=50, null=True),
+        # ),
     ]

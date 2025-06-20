@@ -2,68 +2,79 @@ import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateFormatter";
 import { capitalize } from "@/helpers/capitalize";
 
-export const addPersonal = async (values: Record<string, any>) => {
-  const personalInfo = values.personalInfoSchema;
-  const dob = values.verificationSchema.dob;
+export const addAddress =  async (data: Record<string, any>[]) => {
+  try {
+    const res = await api.post("profiling/address/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export const addPersonalAddress = async (data: Record<string, any>[]) => {
+  try {
+    const res = await api.post("profiling/per_address/create/", data);
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+
+export const addPersonal = async (data: Record<string, any>) => {
 
   try {
-    const res = await api.post("profiling/personal/", {
-      per_lname: capitalize(personalInfo.per_lname),
-      per_fname: capitalize(personalInfo.per_fname),
-      per_mname: capitalize(personalInfo.per_mname) || null,
-      per_suffix: capitalize(personalInfo.per_suffix) || null,
-      per_dob: formatDate(dob),
-      per_sex: capitalize(personalInfo.per_sex),
-      per_status: capitalize(personalInfo.per_status),
-      per_address: capitalize(personalInfo.per_address),
-      per_edAttainment: capitalize(personalInfo.per_edAttainment) || null,
-      per_religion: capitalize(personalInfo.per_religion),
-      per_contact: capitalize(personalInfo.per_contact),
+    console.log(data)
+    const res = await api.post("profiling/personal/create/", {
+      per_lname: data.per_lname,
+        per_fname: data.per_fname,
+        per_mname: data.per_mname || null,
+        per_suffix: data.per_suffix || null,
+        per_dob: formatDate(data.per_dob),
+        per_sex: data.per_sex,
+        per_status: data.per_status,
+        per_edAttainment: data.per_edAttainment || null,
+        per_religion: data.per_religion,
+        per_contact: data.per_contact,
     });
 
     return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
 export const addRequest = async (personalId: string) => {
   try {
-    const res = await api.post("profiling/request/", {
-      req_date: formatDate(new Date()),
-      per_id: personalId,
+    const res = await api.post("profiling/request/create/", {
+      per: personalId,
     });
 
     return res.data
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
-export const addFile = async (name: string, type: string, path: string, url: string) => {
+export const addRequestFile = async (data: Record<string, any>[]) => {
   try {
-    const res = await api.post('file/upload/', {
-      file_name: name,
-      file_type: type,
-      file_path: path,
-      file_url: url
-    })
-
+    console.log(data)
+    const res = await api.post('profiling/request/file/create/', data)
     return res.data
   } catch (err) {
     console.error(err);
+    throw err;
   }
 }
 
-export const addRequestFile = async (requestId: string, fileId: string) => {
+export const postFaceData = async (data: Record<string, any>) => {
   try {
-    const res = await api.post('profiling/request/file/', {
-      req: requestId,
-      file_id: fileId
-    })
-
-    return res.data
+    const res = await api.post("api/detection/face/", data);
+    return res.data;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 }

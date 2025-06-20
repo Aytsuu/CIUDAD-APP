@@ -70,9 +70,9 @@ export const FormTimeInput = ({
       rules={{ validate: validateTime }}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className="mb-4">
-          {label && <Text className="text-base font-normal mb-2 font-['PoppinsRegular']">{label}</Text>}
+          {label && <Text className="text-[12px] font-normal mb-2 font-['PoppinsRegular']">{label}</Text>}
           <Input
-            className={`h-[57px] border rounded px-3 text-[15px] font-['PoppinsRegular'] ${error ? 'border-red-500' : 'border-gray-300'}`}
+            className={`h-[45px] border rounded px-3 text-[15px] font-['PoppinsRegular'] ${error ? 'border-red-500' : 'border-gray-300'}`}
             placeholder={mode === '24h' ? 'HH:MM' : 'HH:MM AM/PM'}
             value={value}
             onChangeText={(text) => onChange(formatTime(text))}

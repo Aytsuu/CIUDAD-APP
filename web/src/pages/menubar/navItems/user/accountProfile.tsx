@@ -23,7 +23,6 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
 
-
 export default function AccountProfile(): JSX.Element {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -32,7 +31,6 @@ export default function AccountProfile(): JSX.Element {
 
   const handleLogout = () => {
     logout()
-    // Redirect to login page
     navigate("/home");
     setShowLogoutAlert(false);
   };

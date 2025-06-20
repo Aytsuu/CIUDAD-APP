@@ -36,4 +36,6 @@ urlpatterns = [
     path('donation/', include('apps.donation.urls')),
     path('notification/', include('apps.notification.urls')),
     path('announcement/', include('apps.announcement.urls')),
+    path('authentication/', include('apps.authentication.urls')),
+    path('api/detection/', include('detection.urls'))
 ]

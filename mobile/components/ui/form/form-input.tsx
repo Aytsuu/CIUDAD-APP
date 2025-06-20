@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Input } from '../input';
 import { Controller, Control, FieldError } from 'react-hook-form';
+import { capitalize } from '@/helpers/capitalize';
 
 interface FormInputProps {
   control: Control<any>;
@@ -29,13 +30,13 @@ export const FormInput = ({
       name={name}
       render={({ field: { onChange, onBlur, value } ,  fieldState: { error } }) => (
         <View className="mb-4">
-          <Text className="text-[16px] font-PoppinsRegular">{label}</Text>
+          <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
           <Input
-            className={`h-[57px] font-PoppinsRegular text-[15px] ${
+            className={`h-[45px] font-PoppinsRegular bg-white ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
-            value={value}
+            value={capitalize(value) || ""}
             onChangeText={onChange}
             onBlur={onBlur}
             secureTextEntry={secureTextEntry}
@@ -44,7 +45,7 @@ export const FormInput = ({
             submitBehavior={submitBehavior}
           />
           {error && (
-            <Text className="text-red-500 text-sm mt-1">{error.message}</Text>
+            <Text className="text-red-500 text-xs mt-1">{error.message}</Text>
           )}
         </View>
       )}

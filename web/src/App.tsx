@@ -48,10 +48,7 @@ import { user_account } from "./routers/profile-router";
 import { LoadingProvider } from "./context/LoadingContext";
 import { LinearLoader } from "./components/ui/linear-loader";
 
-// Simple not found component
-function NotFound() {
-  return <div>Page not found</div>;
-}
+import { NotFound } from "./not-found";
 
 const router = createBrowserRouter([
   ...main_router,         

@@ -3,7 +3,7 @@ import { View, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { ChevronLeft, Bell, Calendar } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
-import SelectLayout from '@/components/ui/select/select-layout';
+import SelectLayout from '@/components/ui/select-layout';
 import { router } from 'expo-router';
 
 export default function Records() {

@@ -4,7 +4,7 @@ import supabase from "@/supabase/supabase";
 export const updatePassword = async(old_password: string, new_password: string, token: string) => {
     try {
         console.log('Sending password update request...');
-        const response = await api.post("/user/change-password/", {
+        const response = await api.post("/authentication/change-password/", {
             old_password: old_password,
             new_password: new_password,
         }, {
@@ -79,7 +79,7 @@ export const updateProfilePicture = async(file: File, token: string) => {
         console.log('Generated public URL:', urlData.publicUrl);
         
         // Send URL to backend
-        const response = await api.post("/user/upload-image/", {
+        const response = await api.post("/authentication/upload-image/", {
             image_url: urlData.publicUrl
         }, {
             headers: {

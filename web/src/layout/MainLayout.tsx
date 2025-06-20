@@ -23,7 +23,8 @@ export default function MainLayout() {
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-shrink-0 h-full relative z-0">
           <SidebarProvider>
-            <AppSidebar assignedFeatures={user?.staff.assignments}/>
+            {/* <AppSidebar assignedFeatures={user?.staff.assignments}/> */}
+            <AppSidebar assignedFeatures={user?.staff.assignments || "staff"}/>
             <div className="bg-snow">
               <TooltipLayout
                 trigger={<SidebarTrigger onClick={() => setIsOpen(!isOpen)} />}
@@ -34,7 +35,7 @@ export default function MainLayout() {
         </div>
         <main className="py-10 pl-8 pr-14 overflow-y-auto flex-1 bg-[#F3F4F8]">
           <Outlet />
-          <Toaster />
+          <Toaster visibleToasts={5} />
         </main>
       </div>
     </div>

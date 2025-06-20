@@ -48,6 +48,12 @@ export default function SoloFormLayout() {
         setInvalidHousehold(true);
         toast("Please fill out all required fields", {
           icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+          style: {
+            border: '1px solid rgb(225, 193, 193)',
+            padding: '16px',
+            color: '#b91c1c',
+            background: '#fef2f2',
+          },
         });
         return;
       }
