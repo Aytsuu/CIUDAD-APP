@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button/button";
@@ -50,6 +50,9 @@ import {
   useCompletedFollowUpVisits,
   usePendingFollowUpVisits,
 } from "./queries/followv";
+import { toast } from "sonner";
+import { useUpdatePatient } from "./queries/patientsUpdateQueries";
+
 import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/queries/FirstAidCountQueries";
 
 
@@ -57,6 +60,7 @@ import { useFirstAidCount } from "@/pages/healthServices/firstaidservices/querie
 interface PatientData {
   pat_id: string;
   pat_type: string;
+  trans_id?: string;
   households: { hh_id: string }[];
   personal_info: {
     per_fname: string;
@@ -84,13 +88,23 @@ export default function ViewPatientRecord() {
   const [activeTab, setActiveTab] = useState<"personal" | "medical" | "visits">(
     "personal"
   );
+
+  const [isEditable, setIsEditable] = useState(false);
+  // const [isPrintMode, setIsPrintMode] = useState(false);
   const { patientId } = useParams<{ patientId: string }>();
-  const {
-    data: patientsData,
-    isLoading,
-    error,
-    isError,
-  } = usePatientDetails(patientId ?? "");
+  const { data: patientsData, isLoading, error, isError } = usePatientDetails(patientId ?? "");
+
+  const { data: medicineCountData } = useMedicineCount(patientId ?? "");
+  const medicineCount = medicineCountData?.medicinerecord_count;
+  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
+  const vaccinationCount = vaccinationCountData?.vaccination_count;
+  const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
+  const firstAidCount = firstAidCountData?.firstaidrecord_count;
+  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
+  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+
+  const updatePatientData = useUpdatePatient();
+
 
   const currentPatient = useMemo(() => {
     if (!patientsData || !patientId) return null;
@@ -120,7 +134,7 @@ export default function ViewPatientRecord() {
       contact: currentPatient.personal_info.per_contact,
       dateOfBirth: currentPatient.personal_info.per_dob,
       patientType: currentPatient.pat_type,
-      houseNo: currentPatient.households[0]?.hh_id ?? "",
+      houseNo: currentPatient.households[0]?.hh_id ?? "N/A",
       address: {
         street: currentPatient.address.add_street || "",
         sitio: currentPatient.address.sitio,
@@ -136,16 +150,16 @@ export default function ViewPatientRecord() {
     };
   }, [currentPatient]);
 
-  const { data: medicineCountData } = useMedicineCount(patientId ?? "");
-  const medicineCount = medicineCountData?.medicinerecord_count;
-  const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
-  const vaccinationCount = vaccinationCountData?.vaccination_count;
-   const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
-    const firstAidCount = firstAidCountData?.firstaidrecord_count;
+  // const { data: medicineCountData } = useMedicineCount(patientId ?? "");
+  // const medicineCount = medicineCountData?.medicinerecord_count;
+  // const { data: vaccinationCountData } = useVaccinationCount(patientId ?? "");
+  // const vaccinationCount = vaccinationCountData?.vaccination_count;
+  // const { data: firstAidCountData } = useFirstAidCount(patientId ?? "");
+  // const firstAidCount = firstAidCountData?.firstaidrecord_count;
   
   
-  const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
-  const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
+  // const { data: completedData } = useCompletedFollowUpVisits(patientId ?? "");
+  // const { data: pendingData } = usePendingFollowUpVisits(patientId ?? "");
   
   
   const form = useForm({
@@ -163,15 +177,18 @@ export default function ViewPatientRecord() {
     },
   });
 
-  useMemo(() => {
+  // reset form when data changes
+  useEffect(() => {
     if (patientData) form.reset(patientData);
   }, [patientData, form]);
 
+  // get initials for avatar
   const getInitials = () =>
     patientData
       ? `${patientData.firstName[0] ?? ""}${patientData.lastName[0] ?? ""}`
       : "";
 
+  // age calculation
   const calculateAge = (dob: string) => {
     const today = new Date();
     const birthDate = new Date(dob);
@@ -181,6 +198,7 @@ export default function ViewPatientRecord() {
     return age;
   };
 
+  // get full address
   const getFullAddress = () =>
     patientData
       ? [
@@ -237,13 +255,74 @@ export default function ViewPatientRecord() {
     [currentPatient, patientData, patientId]
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg">Loading patient details...</p>
-      </div>
-    );
+
+  const handleEdit = () => {
+    setIsEditable(true);
   }
+
+  // save edited patient data
+  const handleSaveEdit = async () => {
+    try {
+      const formData = form.getValues();
+      console.log("Saving patient data;", formData);
+
+      if(!currentPatient?.trans_id) {
+        toast.error("Cannot update: Missing transient ID.");
+        return;
+      }
+
+      // data to be updated
+      const updatedData = {
+        pat_type: formData.patientType,
+        transient_data: {
+          trans_id: currentPatient?.trans_id,
+          tran_lname: formData.lastName,
+          tran_fname: formData.firstName,
+          tran_mname: formData.middleName,
+          tran_dob: formData.dateOfBirth,
+          tran_sex: formData.sex,
+          tran_contact: formData.contact,
+          tran_status: "Active",
+          tran_ed_attainment: "N/A",
+          tran_religion: "N/A",
+          address: {
+            tradd_street: formData.address.street,
+            tradd_sitio: formData.address.sitio,
+            tradd_barangay: formData.address.barangay,
+            tradd_city: formData.address.city,
+            tradd_province: formData.address.province,
+          }
+        }
+      }
+
+      await updatePatientData.mutateAsync(updatedData);
+      console.log("Patient data updated successfully:", updatedData);
+
+      setIsEditable(false);
+      toast.success("Patient data updated successfully!");
+    } catch (error) {
+      console.error("Error saving patient daata: ", error);
+      toast.error("Failed to update patient data. Please try again.");
+    }
+  }
+
+  const handleCancelEdit = () => {
+    if(patientData) {
+      form.reset(patientData);
+    }
+    setIsEditable(false);
+    toast("Edit cancelled. No changes were made.");
+  }
+
+
+
+  if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg">Loading patient details...</p>
+        </div>
+      );
+    }
 
   if (isError) {
     return (
@@ -280,6 +359,8 @@ export default function ViewPatientRecord() {
     );
   }
 
+  const isTransient = patientData?.patientType?.toLowerCase() === "transient";
+
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
@@ -295,18 +376,20 @@ export default function ViewPatientRecord() {
           </p>
         </div>
         <div className="flex gap-2 sm:ml-auto">
-          <Button variant="outline" size="sm" className="gap-1">
+          {/* <Button variant="outline" size="sm" className="gap-1">
             <Printer className="h-4 w-4" />
             <span className="hidden sm:inline">Print</span>
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1">
+          </Button> */}
+          {/* <Button variant="outline" size="sm" className="gap-1">
             <Share2 className="h-4 w-4" />
             <span className="hidden sm:inline">Share</span>
-          </Button>
-          <Button className="gap- personally bg-buttonBlue hover:bg-buttonBlue/90">
-            <Edit className="h-4 w-4" />
-            <span className="hidden sm:inline">Edit</span>
-          </Button>
+          </Button> */}
+          {isTransient && (activeTab === "personal") && (
+            <Button onClick={handleEdit} className="gap- personally bg-buttonBlue hover:bg-buttonBlue/90">
+              <Edit className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </Button>
+          )}
         </div>
       </div>
       <Separator className="bg-gray mb-4 sm:mb-6" />
@@ -372,18 +455,23 @@ export default function ViewPatientRecord() {
         }
       >
         <TabsList className="mb-4 bg-background border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
+          {/* personal active tab */}
           <TabsTrigger
             value="personal"
             className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent ml-6"
           >
             Personal Information
           </TabsTrigger>
+
+          {/* medical active tab */}
           <TabsTrigger
             value="medical"
             className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
           >
             Records
           </TabsTrigger>
+          
+          {/* visits active tab */}
           <TabsTrigger
             value="visits"
             className="py-3 px-0 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none bg-transparent"
@@ -413,8 +501,8 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  disabled
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -431,8 +519,8 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  disabled
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -449,8 +537,8 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  disabled
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -467,9 +555,9 @@ export default function ViewPatientRecord() {
                               <FormLabel className="text-sm font-medium">
                                 Sex
                               </FormLabel>
-                              <Select disabled defaultValue={field.value}>
+                              <Select disabled={!isEditable} defaultValue={field.value} onValueChange={field.onChange}>
                                 <FormControl>
-                                  <SelectTrigger className="bg-muted/30">
+                                  <SelectTrigger className={!isEditable ? "bg-muted/30" : ""}>
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
@@ -492,8 +580,8 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  disabled
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -511,8 +599,8 @@ export default function ViewPatientRecord() {
                                 <Input
                                   type="date"
                                   {...field}
-                                  disabled
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -550,7 +638,7 @@ export default function ViewPatientRecord() {
                         Address Information
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <FormField
+                        {/* <FormField
                           control={form.control}
                           name="houseNo"
                           render={({ field }) => (
@@ -561,13 +649,13 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  readOnly
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
                           )}
-                        />
+                        /> */}
                         <FormField
                           control={form.control}
                           name="address.street"
@@ -579,8 +667,8 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  readOnly
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -597,8 +685,8 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  readOnly
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
@@ -615,49 +703,53 @@ export default function ViewPatientRecord() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  readOnly
-                                  className="bg-muted/30"
+                                  disabled={!isEditable}
+                                  className={!isEditable ? "bg-muted/30" : ""}
                                 />
                               </FormControl>
                             </FormItem>
                           )}
                         />
-                        <FormField
-                          control={form.control}
-                          name="address.city"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                City
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  readOnly
-                                  className="bg-muted/30"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="address.province"
-                          render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="text-sm font-medium">
-                                Province
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  readOnly
-                                  className="bg-muted/30"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
+                      </div>
+
+                      {/* city and province */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="address.city"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-sm font-medium">
+                                  City
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    disabled={!isEditable}
+                                    className={!isEditable ? "bg-muted/30" : ""}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="address.province"
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="text-sm font-medium">
+                                  Province
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    disabled={!isEditable}
+                                    className={!isEditable ? "bg-muted/30" : ""}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
                       </div>
                     </form>
                   </Form>
@@ -668,6 +760,26 @@ export default function ViewPatientRecord() {
             headerClassName="pb-2"
             contentClassName="pt-0"
           />
+
+          {isTransient && isEditable && (
+            <div className="flex justify-end mt-6 space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelEdit}
+                className="bg-white text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="bg-buttonBlue hover:bg-buttonBlue/90 text-white"
+                onClick={handleSaveEdit}
+              >
+                Save Changes
+              </Button>
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="medical" className="mt-0 ">
           <CardLayout

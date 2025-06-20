@@ -31,6 +31,7 @@ import CardLayout from "@/components/ui/card/card-layout"
 import { Button } from "@/components/ui/button/button"
 
 import { usePatients } from "./queries/patientsFetchQueries"
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 
 type Report = {
   id: string
@@ -356,168 +357,166 @@ export default function PatientsRecord() {
   }
 
   return (
-    <div className="w-full">
-      {/* Header Section */}
-      <div className="flex flex-col justify-center mb-4">
-        <h1 className="font-semibold text-xl sm:text-2xl text-black">Patients Records</h1>
-        <p className="text-xs sm:text-sm text-darkGray">Manage and view patients information</p>
-      </div>
-      <Separator className="bg-gray mb-6 sm:mb-8" />
-
-      {/* Stats Cards with simplified design */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <CardLayout
-          title='Total Patients'
-          description="All registered patients"
-          content={
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold">{totalPatients}</span>
-                <span className="text-xs text-muted-foreground">Total records</span>
-              </div>
-              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                <Users className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </div>
-          }
-          cardClassName="border shadow-sm rounded-lg"
-          headerClassName="pb-2"
-          contentClassName="pt-0"
-        />
-
-        <CardLayout
-          title="Residents"
-          description="Permanent patients"
-          content={
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold">{residents}</span>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  {residentPercentage > transientPercentage ? (
-                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-                  ) : (
-                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
-                  )}
-                  <span>{residentPercentage}% of total</span>
+    <LayoutWithBack
+      title="Patients Records"
+      description="Manage and view patients information"
+    >
+      <div className="w-full">
+        {/* Stats Cards with simplified design */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <CardLayout
+            title='Total Patients'
+            description="All registered patients"
+            content={
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold">{totalPatients}</span>
+                  <span className="text-xs text-muted-foreground">Total records</span>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                  <Users className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
-              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                <Home className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </div>
-          }
-          cardClassName="border shadow-sm rounded-lg"
-          headerClassName="pb-2"
-          contentClassName="pt-0"
-        />
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
 
-        <CardLayout
-          title="Transients"
-          description="Temporary patients"
-          content={
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold">{transients}</span>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  {transientPercentage > residentPercentage ? (
-                    <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
-                  ) : (
-                    <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
-                  )}
-                  <span>{transientPercentage}% of total</span>
+          <CardLayout
+            title="Residents"
+            description="Permanent patients"
+            content={
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold">{residents}</span>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    {residentPercentage > transientPercentage ? (
+                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                    )}
+                    <span>{residentPercentage}% of total</span>
+                  </div>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                  <Home className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
-              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                <UserCog className="h-5 w-5 text-muted-foreground" />
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <CardLayout
+            title="Transients"
+            description="Temporary patients"
+            content={
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold">{transients}</span>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    {transientPercentage > residentPercentage ? (
+                      <ArrowUp className="h-3 w-3 mr-1 text-green-500" />
+                    ) : (
+                      <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />
+                    )}
+                    <span>{transientPercentage}% of total</span>
+                  </div>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                  <UserCog className="h-5 w-5 text-muted-foreground" />
+                </div>
               </div>
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+        </div>
+
+        {/* The Header is hidden on small screens */}
+        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+          <div className="flex gap-x-2">
+            <div className="relative flex-1 bg-white">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
             </div>
-          }
-          cardClassName="border shadow-sm rounded-lg"
-          headerClassName="pb-2"
-          contentClassName="pt-0"
-        />
-      </div>
-
-      {/* The Header is hidden on small screens */}
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="flex gap-x-2">
-          <div className="relative flex-1 bg-white">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
-            <Input
-              placeholder="Search..."
-              className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
+            <div>
+              <SelectLayout
+                placeholder="Filter by"
+                label=""
+                className="bg-white"
+                options={[
+                  { id: "1", name: "" },
+                  { id: "2", name: "By date" },
+                  { id: "3", name: "By location" },
+                ]}
+                value=""
+                onChange={() => {}}
+              />
+            </div>
+            
           </div>
           <div>
-            <SelectLayout
-              placeholder="Filter by"
-              label=""
-              className="bg-white"
-              options={[
-                { id: "1", name: "" },
-                { id: "2", name: "By date" },
-                { id: "3", name: "By location" },
-              ]}
-              value=""
-              onChange={() => {}}
-            />
-          </div>
-          
-        </div>
-        <div>
-          <div className="flex gap-2">
-            <Link to="/create-patients-record">
-              <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
-                <Plus size={15} /> Create
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Container */}
-      <div className="h-full w-full rounded-md">
-        <div className="w-full bg-white flex flex-row justify-between p-3">
-          <div className="flex gap-x-2 items-center">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input type="number" className="w-14 h-6" value={pageSize} onChange={handlePageSizeChange} min="1" />
-            <p className="text-xs sm:text-sm">Entries</p>
-          </div>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <FileInput />
-                  Export
+            <div className="flex gap-2">
+              <Link to="/create-patients-record">
+                <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                  <Plus size={15} /> Create
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+            </div>
           </div>
         </div>
-        <div className="bg-white w-full overflow-x-auto">
-          {/* Table Placement */}
-          <DataTable columns={columns} data={currentData} />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-          {/* Showing Rows Info */}
-          <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
-          </p>
 
-          {/* Custom Pagination component instead of PaginationLayout */}
-          <div className="w-full sm:w-auto flex justify-center">
-            <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        {/* Table Container */}
+        <div className="h-full w-full rounded-md">
+          <div className="w-full bg-white flex flex-row justify-between p-3">
+            <div className="flex gap-x-2 items-center">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input type="number" className="w-14 h-6" value={pageSize} onChange={handlePageSizeChange} min="1" />
+              <p className="text-xs sm:text-sm">Entries</p>
+            </div>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <FileInput />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="bg-white w-full overflow-x-auto">
+            {/* Table Placement */}
+            <DataTable columns={columns} data={currentData} />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+            {/* Showing Rows Info */}
+            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+              Showing {filteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+              {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} rows
+            </p>
+
+            {/* Custom Pagination component instead of PaginationLayout */}
+            <div className="w-full sm:w-auto flex justify-center">
+              <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </LayoutWithBack>
   )
 }

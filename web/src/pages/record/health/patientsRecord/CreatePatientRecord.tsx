@@ -189,6 +189,7 @@ export default function CreatePatientRecord() {
     try {
       const patientType = formData.patientType === "resident" ? "Resident" : formData.patientType === "transient" ? "Transient" : "Resident" 
       const sexType = formData.sex === "female" ? "Female" : "Male";
+      form.setValue("houseNo", "N/A")
       
       let patientData: PatientCreationData;
 
@@ -229,7 +230,7 @@ export default function CreatePatientRecord() {
         form.reset(defaultValues);
         setSelectedResidentId("");
 
-        navigate("/patients-record-main")
+        navigate(-1)
       }
     } catch (error) {
       toast("Failed to create patient record. Please try again.");

@@ -29,6 +29,8 @@ class Transient(models.Model):
     tran_ed_attainment = models.CharField(max_length=100)
     tran_religion = models.CharField(max_length=100)
     tran_contact = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     tradd_id = models.ForeignKey(TransientAddress, on_delete=models.CASCADE, related_name='transients', db_column='tradd_id', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
@@ -36,8 +38,21 @@ class Transient(models.Model):
 
     class Meta:
         db_table = 'transient'
+
+
+# class TransientSpouse(models.Model):
+#     trs_id = models.BigAutoField(primary_key=True)
+#     trs_type = models.CharField(max_length=100, null=True)
+#     trs_lname = models.CharField(max_length=100, null=True, blank=True)
+#     trs_fname = models.CharField(max_length=100, null=True, blank=True)
+#     trs_mname = models.CharField(max_length=100, null=True, blank=True)
+#     trs_occupation = models.CharField(max_length=100, null=True, blank=True)
+#     trans_id = models.ForeignKey(Transient, on_delete=models.CASCADE, related_name='transient_spouses', db_column='trans_id', null=True)
+    
+#     class Meta:
+#         db_table = "transient_spouse"
       
-      
+
 class Patient(models.Model):
     PATIENT_TYPES = [
         ("Resident", "Resident"),
