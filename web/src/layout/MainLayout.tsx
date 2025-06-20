@@ -35,7 +35,7 @@ export default function MainLayout() {
         </div>
         <main className="py-10 pl-8 pr-14 overflow-y-auto flex-1 bg-[#F3F4F8]">
           <Outlet />
-          <Toaster />
+          <Toaster visibleToasts={5} />
         </main>
       </div>
     </div>

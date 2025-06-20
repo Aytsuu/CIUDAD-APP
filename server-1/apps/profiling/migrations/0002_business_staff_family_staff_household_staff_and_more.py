@@ -12,27 +12,27 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='business',
-            name='staff',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='businesses', to='administration.staff'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='family',
-            name='staff',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='families', to='administration.staff'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='household',
-            name='staff',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='households', to='administration.staff'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='residentprofile',
-            name='staff',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='resident_profiles', to='administration.staff'),
-        ),
+        # migrations.AddField(
+        #     model_name='business',
+        #     name='staff',
+        #     field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='businesses', to='administration.staff'),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='family',
+        #     name='staff',
+        #     field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='families', to='administration.staff'),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='household',
+        #     name='staff',
+        #     field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='households', to='administration.staff'),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='residentprofile',
+        #     name='staff',
+        #     field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='resident_profiles', to='administration.staff'),
+        # ),
     ]

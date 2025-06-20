@@ -28,10 +28,10 @@ export const FormTextArea = ({
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className="mb-4">
           {label && (
-            <Text className="text-[16px] font-PoppinsRegular">{label}</Text>
+            <Text className="text-[12px] font-PoppinsRegular">{label}</Text>
           )}
           <Textarea
-            className={`h-[200px] font-PoppinsRegular text-[15px] bg-white text-black ${
+            className={`h-[200px] font-PoppinsRegular text-sm bg-white text-black ${
               error ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder={placeholder}
@@ -42,7 +42,7 @@ export const FormTextArea = ({
             aria-labelledby='textareaLabel'
           />
           {error && (
-            <Text className="text-red-500 text-sm mt-1">{error.message}</Text>
+            <Text className="text-red-500 text-xs mt-1">{error.message}</Text>
           )}
         </View>
       )}

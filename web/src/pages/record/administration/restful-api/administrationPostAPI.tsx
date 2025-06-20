@@ -40,8 +40,8 @@ export const assignFeature = async (
   staffId: string
 ) => {
   try {
-    const res = await api.post(`administration/assignment/`, {
-      feat_id: featureId,
+    const res = await api.post(`administration/assignment/create/`, {
+      feat: featureId,
       pos: selectedPositionId,
       assi_date: formatDate(new Date()),
       staff: staffId

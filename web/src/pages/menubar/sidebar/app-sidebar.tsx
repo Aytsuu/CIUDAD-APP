@@ -42,17 +42,13 @@ const items: MenuItem[] = [
     url: "/blotter-record",
   },
   {
-    title: "Report",
-    subItems: true,
-    url: "/",
-    items: [
-      { title: "Incident", url: "/incident/report" },
-      { title: "Activity", url: "/incident/report" },
-      { title: "Acknowledgement", url: "/drr/acknowledgement-report" },
-      { title: "Weekly Acknowledgement", url: "/drr/monthly-report" },
-    ],
+    title: "Team",
+    url: "/report",
   },
-
+  {
+    title: "Report",
+    url: "/report",
+  },
   {
     title: "GAD",
     subItems: true,
@@ -287,7 +283,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   );
 };
 
-export function AppSidebar({assignedFeatures}: { assignedFeatures: any[] }) {
+export function AppSidebar({ assignedFeatures }: { assignedFeatures: any[] }) {
   const [activeItem, setActiveItem] = useState<string>("");
 
   // const items: MenuItem[] = assignedFeatures.map((item) => {

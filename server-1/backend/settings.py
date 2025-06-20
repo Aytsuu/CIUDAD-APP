@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'apps.authentication',
     
     'backend.firebase.notifications',
+    'detection'
 ]
 
 MIDDLEWARE = [

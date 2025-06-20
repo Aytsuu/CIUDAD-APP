@@ -10,10 +10,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='address',
-            name='add_external_sitio',
-            field=models.CharField(default=1, max_length=50),
-            preserve_default=False,
-        ),
+        # migrations.AddField(
+        #     model_name='address',
+        #     name='add_external_sitio',
+        #     field=models.CharField(default=1, max_length=50),
+        #     preserve_default=False,
+        # ),
     ]
