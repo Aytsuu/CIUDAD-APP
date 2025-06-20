@@ -39,10 +39,10 @@ export default function UploadID() {
   React.useEffect(() => {
     if(selectedImage.rf_type) {
       append({
-        rf_name: selectedImage.rf_name,
-        rf_type: selectedImage.rf_type,
-        rf_path: selectedImage.rf_path,
-        rf_url: selectedImage.rf_url,
+        rf_name: selectedImage.name,
+        rf_type: selectedImage.type,
+        rf_path: selectedImage.path,
+        rf_url: selectedImage.url,
         rf_is_id: true,
         rf_id_type: getValues("uploadIdSchema.selected")
       })

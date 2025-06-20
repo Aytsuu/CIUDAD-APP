@@ -3,6 +3,10 @@ from django.db.models import Q
 from ..serializers.staff_serializers import *
 from pagination import *
 
+class StaffCreateView(generics.CreateAPIView):
+  serializer_class = StaffBaseSerializer
+  queryset = Staff.objects.all()
+
 class StaffTableView(generics.ListCreateAPIView):
   serializer_class = StaffTableSerializer
   pagination_class = StandardResultsPagination

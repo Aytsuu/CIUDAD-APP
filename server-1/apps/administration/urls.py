@@ -8,6 +8,7 @@ from .views.staff_views import *
 urlpatterns = [
     # Staff Urls
     path('staff/list/table/', StaffTableView.as_view(), name='staff-list'),
+    path('staff/', StaffCreateView.as_view()),
     path('position/', PositionView.as_view(), name="positions-list"),
     path('position/delete/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
     path('position/update/<int:pos_id>/', PositionUpdateView.as_view(), name='position-update'),

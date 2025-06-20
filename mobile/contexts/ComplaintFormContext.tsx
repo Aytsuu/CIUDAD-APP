@@ -1,17 +1,17 @@
 import { createContext, useContext } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { RegistrationFormSchema } from '@/form-schema/registration-schema';
+import { complaintFormSchema } from '@/form-schema/complaint-schema';
 import { z } from 'zod';
 
-type RegistrationForm = z.infer<typeof RegistrationFormSchema>;
-const FormContext = createContext<UseFormReturn<RegistrationForm> | null>(null);
+type ComplaintForm = z.infer<typeof complaintFormSchema>;
+const FormContext = createContext<UseFormReturn<ComplaintForm> | null>(null);
 
-export const RegistationFormProvider = ({
+export const ComplaintFormProvider = ({
   children,
   methods,
 }: {
   children: React.ReactNode;
-  methods: UseFormReturn<RegistrationForm>;
+  methods: UseFormReturn<ComplaintForm>;
 }) => {
   return (
     <FormContext.Provider value={methods}>
@@ -20,7 +20,7 @@ export const RegistationFormProvider = ({
   );
 };
 
-export const useRegistrationFormContext = () => {
+export const useComplaintFormContext = () => {
   const context = useContext(FormContext);
   if (!context) {
     throw new Error('useFormContext must be used within a FormProvider');

@@ -39,10 +39,11 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={LIGHT_THEME}>
-      <StatusBar backgroundColor="#ECF8FF" style="dark" />
+      <StatusBar backgroundColor="white" style="dark" />
       <ToastProvider>
         <QueryClientProvider client={queryClient}>
-          <Stack initialRouteName='(auth)'>
+          <Stack initialRouteName='(complaint)'>
+            <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="(health)" options={{ headerShown: false }} />
