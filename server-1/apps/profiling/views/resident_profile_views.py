@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from ..serializers.resident_profile_serializers import *
 from django.db.models import Prefetch, Q
-from pagination import *
+from apps.pagination import *
 from apps.account.models import *
 
 class ResidentProfileCreateView(generics.CreateAPIView):

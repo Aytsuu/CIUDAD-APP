@@ -69,7 +69,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     } else {
       hideLoading();
     }
-  }, [origin, isLoadingResidents, isLoadingSitio]);
+  }, [isLoadingResidents, isLoadingSitio]);
 
   React.useEffect(() => {
     const subscription = form.watch((value) => {
@@ -123,10 +123,18 @@ export default function ResidentCreateForm({ params }: { params: any }) {
 
     try {
       const personalInfo = capitalizeAllFields(form.getValues());
+      
+      // // Safely get staff_id with proper type checking
+      const staffId = user?.djangoUser?.resident_profile?.staff?.staff_id;
+      
+      if (!staffId) {
+        throw new Error("Staff information not available");
+      }
+
       addResidentAndPersonal(
         {
           personalInfo: personalInfo,
-          staffId: user?.staff.staff_id,
+          staffId: staffId,
         },
         {
           onSuccess: (resident) => {
@@ -159,12 +167,12 @@ export default function ResidentCreateForm({ params }: { params: any }) {
         }
       );
     } catch (err) {
-      throw err;
+      setIsSubmitting(false);
+      handleSubmitError(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
   return (
-    // ==================== RENDER ====================
     <LayoutWithBack title={params.title} description={params.description}>
       <Card className="w-full p-10">
         <div className="pb-4">

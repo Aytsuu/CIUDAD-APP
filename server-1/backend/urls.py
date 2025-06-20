@@ -30,8 +30,12 @@ urlpatterns = [
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
     path('file/', include('apps.file.urls')),
+    path('complaint/', include("apps.complaint.urls")),
     path('treasurer/', include('apps.treasurer.urls')),
     path('report/', include('apps.report.urls')),
     path('donation/', include('apps.donation.urls')),
+    path('notification/', include('apps.notification.urls')),
+    path('announcement/', include('apps.announcement.urls')),
+    path('authentication/', include('apps.authentication.urls')),
     path('api/detection/', include('detection.urls'))
 ]

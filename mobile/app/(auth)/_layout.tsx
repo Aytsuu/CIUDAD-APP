@@ -26,7 +26,7 @@ export default () => {
         <Stack.Screen name="upload-id" options={{ headerShown: false }} />
         <Stack.Screen name="take-a-photo" options={{ headerShown: false }} />
         <Stack.Screen name="account-details" options={{ headerShown: false }} />
-        <Stack.Screen name="forgetpassword" options={{ headerShown: false }}  />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }}  />
         <Stack.Screen name="verifyemail" options={{ headerShown: false }}  />
       </Stack>
     </RegistationFormProvider>

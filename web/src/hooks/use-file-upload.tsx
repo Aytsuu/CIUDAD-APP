@@ -1,5 +1,5 @@
 import React from 'react';
-import supabase from '@/utils/supabase';
+import supabase from '@/supabase/supabase';
 import { MediaUploadType } from '@/components/ui/media-upload';
 
 export const useInstantFileUpload = ({

@@ -1,3 +1,4 @@
+
 import "@/global.css";
 import React, { useState } from "react";
 import { View, Text, TouchableWithoutFeedback, Image } from "react-native";
@@ -25,7 +26,7 @@ export default () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isInitializing } = useAuth();
   const router = useRouter();
 
   const { control, trigger, getValues } = useForm<SignInForm>({

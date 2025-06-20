@@ -107,7 +107,7 @@ export default function FeatureSelection({
           const assignment = await assignFeature({
             positionId: selectedPosition,
             featureId: feature.feat_id,
-            staffId: user?.staff.staff_id,
+            staffId: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
           })
 
           const permission = await setPermissions({
