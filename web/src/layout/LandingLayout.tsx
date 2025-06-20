@@ -80,7 +80,7 @@ export default function LandingLayout() {
       <div className="h-[120px]"></div>
 
       {/* Scrollable Page Content */}
-      <main className="flex-1 overflow-y-auto w-full flex justify-center p-8">
+      <main className="flex-1 overflow-y-auto w-full flex justify-center">
         <Outlet />
       </main>
     </div>
