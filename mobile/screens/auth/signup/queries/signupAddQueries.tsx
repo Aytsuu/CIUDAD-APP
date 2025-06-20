@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { addAddress, addPersonal, addPersonalAddress, addRequest, addRequestFile } from "../restful-api/signupPostAPI";
+import { api } from "@/api/api";
 
 export const useAddAddress = () => {
   return useMutation({
@@ -31,5 +32,20 @@ export const useAddRequestFile = () => {
   return useMutation({
     mutationFn: (data: Record<string, any>[]) => addRequestFile(data),
     onSuccess: () => {}
+  })
+}
+
+export const useValidateResidentId = () => {
+  return useMutation({
+    mutationFn: async (residentId: string) => {
+      try {
+        const res = await api.post('profiling/request/link/registration/', {
+          resident_id: residentId
+        });
+        return res;
+      } catch (err) {
+        throw err;
+      }
+    }
   })
 }

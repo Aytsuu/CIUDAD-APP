@@ -71,14 +71,20 @@ export default function UploadID() {
   return (
     <_ScreenLayout
       customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">ID Verification</Text>}
+      headerBetweenAction={<Text className="text-[13px]">Valid ID</Text>}
       customRightAction={
-        <TouchableOpacity onPress={() => router.replace("/(auth)")}>
-          <X className="text-black" />
+        <TouchableOpacity
+          onPress={() => router.replace("/(auth)")}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <X size={20} className="text-gray-700" />
         </TouchableOpacity>
       }
     >

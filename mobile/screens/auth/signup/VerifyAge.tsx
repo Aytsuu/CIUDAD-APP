@@ -44,14 +44,20 @@ export default function VerifyAge() {
   return (
     <_ScreenLayout
       customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Verifying Age</Text>}
       customRightAction={
-        <TouchableOpacity onPress={() => router.replace("/(auth)")}>
-          <X className="text-black" />
+        <TouchableOpacity
+          onPress={() => router.replace("/(auth)")}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <X size={20} className="text-gray-700" />
         </TouchableOpacity>
       }
     >
@@ -102,7 +108,7 @@ export default function VerifyAge() {
             </Button>
             
             <Text className="text-xs font-PoppinsRegular text-gray-500 text-center mt-4 leading-5">
-              By continuing, you confirm that the information provided is accurate and you agree to our Terms of Service.
+              By continuing, you confirm that the information provided is accurate.
             </Text>
           </View>
         </View>

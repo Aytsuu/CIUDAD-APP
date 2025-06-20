@@ -8,5 +8,5 @@ import AccountDetails from "@/screens/auth/signup/AccountDetails";
 import ValidateResidentID from "@/screens/auth/signup/ValidateResidentID";
 
 export default () => {
-    return <ValidateResidentID/>
+    return <LoginScreen/>
 }

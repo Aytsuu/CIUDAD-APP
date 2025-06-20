@@ -10,20 +10,40 @@ import { X } from "@/lib/icons/X";
 import { UserSearch } from "@/lib/icons/UserSearch";
 import { FormInput } from "@/components/ui/form/form-input";
 import { Ionicons } from '@expo/vector-icons';
+import { useValidateResidentId } from "./queries/signupAddQueries";
+import { useToastContext } from "@/components/ui/toast";
 
 export default () => {
+  const { toast } = useToastContext();
   const router = useRouter();
-  const { control, trigger, formState: { errors } } = useRegistrationFormContext();
+  const { control, trigger, getValues } = useRegistrationFormContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutateAsync: validateResidentID } = useValidateResidentId();
 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      const formIsValid = await trigger(["verificationSchema.dob"]);
+      const formIsValid = await trigger(["residentId"]);
 
-      if (formIsValid) {
-        router.push("/(auth)/personal-information");
+      if (!formIsValid) {
+        return;
       }
+
+      const residentId = getValues("residentId");
+      validateResidentID(residentId, {
+        onSuccess: (data) => {
+          router.push("/account-details");
+        },
+        onError: (error: any) => {
+          if(error?.response?.status === 404) {
+            toast.error("Resident ID not found.");
+          }
+
+          if(error?.response?.status === 403) {
+            toast.error("Your age is not eligible for registration.");
+          }
+        }
+      })
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
@@ -45,14 +65,20 @@ export default () => {
   return (
     <_ScreenLayout
       customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-black" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
       headerBetweenAction={<Text className="text-[13px]">Verifying Profile</Text>}
       customRightAction={
-        <TouchableOpacity onPress={() => router.replace("/(auth)")}>
-          <X className="text-black" />
+        <TouchableOpacity
+          onPress={() => router.replace("/(auth)")}
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <X size={20} className="text-gray-700" />
         </TouchableOpacity>
       }
     >
@@ -86,6 +112,7 @@ export default () => {
               name="residentId"
               label="Resident ID"
               placeholder="Enter your Resident ID"
+              keyboardType="numeric"
             />
 
             {/* Additional Info */}
