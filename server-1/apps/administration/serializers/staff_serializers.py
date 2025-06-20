@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from ..models import *
 from ..serializers.position_serializers import PositionBaseSerializer
-from ..serializers.assignment_serializers import AssignmentBaseSerializer
+from ..serializers.assignment_serializers import AssignmentMinimalSerializer
 from apps.profiling.models import ResidentProfile
 
 class StaffBaseSerializer(serializers.ModelSerializer):
@@ -39,7 +39,7 @@ class StaffFullSerializer(serializers.ModelSerializer):
   rp = serializers.SerializerMethodField()
   rp_id = serializers.PrimaryKeyRelatedField(queryset=ResidentProfile.objects.all(), write_only=True, source="rp")
   pos_id = serializers.PrimaryKeyRelatedField(queryset=Position.objects.all(), write_only=True, source="pos")
-  assignments = AssignmentBaseSerializer(many=True, read_only=True)
+  assignments = AssignmentMinimalSerializer(many=True, read_only=True)
 
   class Meta:
       model = Staff

@@ -283,7 +283,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   );
 };
 
-export function AppSidebar({ assignedFeatures }: { assignedFeatures: any[] }) {
+export function AppSidebar({ assignedFeatures }: { assignedFeatures: any }) {
   const [activeItem, setActiveItem] = useState<string>("");
 
   // const items: MenuItem[] = assignedFeatures.map((item) => {
@@ -293,7 +293,6 @@ export function AppSidebar({ assignedFeatures }: { assignedFeatures: any[] }) {
   //     url: feature.feat_url,
   //   }
   // });
-  
   return (
     <Sidebar className="border-none">
       <SidebarContent>

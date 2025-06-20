@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
 from apps.account.models import Account
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
 from apps.administration.serializers.staff_serializers import StaffFullSerializer
@@ -24,29 +22,27 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
     def get_staff_profile(self, obj):
         """
-        Safely get staff profile information through the resident profile.
-        Uses the actual staff relationship field name from your model.
+        Get staff profile information through the resident profile.
+        This assumes your ResidentProfile model has a ForeignKey or OneToOneField to Staff.
         """
-        # First check if the account has a resident profile
+        # Check if account has a resident profile
         if not hasattr(obj, 'rp') or not obj.rp:
             return None
             
-        # Now check for staff relationship - using the correct field name
+        # Check if resident profile has staff relationship
         if hasattr(obj.rp, 'staff') and obj.rp.staff:
             return StaffFullSerializer(obj.rp.staff).data
             
-        # Alternative lookup if staff is not directly related
-        try:
+        # If using a direct staff_id field (alternative approach)
+        if hasattr(obj.rp, 'staff_id') and obj.rp.staff_id:
             from apps.administration.models import Staff
-            # Use the correct lookup field - change 'staff_id' to your actual field name
-            staff = Staff.objects.filter(id=obj.rp.staff_id).first()
-            if staff:
+            try:
+                staff = Staff.objects.get(id=obj.rp.staff_id)
                 return StaffFullSerializer(staff).data
-        except Exception:
-            pass
-            
+            except Staff.DoesNotExist:
+                pass
+                
         return None
-
 class AuthResponseSerializer(serializers.Serializer):
     acc_id = serializers.IntegerField()
     supabase_id = serializers.CharField()

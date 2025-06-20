@@ -7,8 +7,8 @@ export const addStaff = async (residentId: string, positionId: string, staffId: 
     const res = await api.post("administration/staff/", {
       staff_id: residentId,
       staff_assign_date: formatDate(new Date()),
-      rp_id: residentId,
-      pos_id: positionId,
+      rp: residentId,
+      pos: positionId,
       manager: staffId,
     });
 

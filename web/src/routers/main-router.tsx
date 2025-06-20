@@ -6,7 +6,7 @@ import { RouteObject } from 'react-router';
 import { Navigate } from 'react-router';
 import { administration_router } from './administration-router';
 import { profiling_router } from './profiling-router';
-// import { report_router } from "../pages/record/report/acknowledgement/report-router";
+import { report_router } from './report-router';
 import { complaint_router } from './complaint-router';
 import { ord_router } from './ordinancePage-router';
 import { res_router } from './resolutionPage-router';
@@ -47,7 +47,7 @@ export const main_router: RouteObject[] = [
             },
             ...administration_router,
             ...profiling_router,
-            // ...report_router,
+            ...report_router,
             ...complaint_router,
             ...ord_router,
             ...res_router,
