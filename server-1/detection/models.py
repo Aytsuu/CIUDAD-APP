@@ -1,5 +1,4 @@
 from django.db import models
-from utils.supabase_client import supabase
 
 class FaceDetectionRequest(models.Model):
     id = models.BigAutoField(primary_key=True)

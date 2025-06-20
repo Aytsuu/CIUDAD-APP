@@ -20,7 +20,7 @@ import supabase from "@/supabase/supabase";
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
 export default function Profile() {
-  const { user, updateUser, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -141,7 +141,7 @@ export default function Profile() {
       });
 
       if (response.data.success) {
-        updateUser({ profile_image: urlData.publicUrl });
+        // Optionally, refresh user context here if needed
         toast.success("Profile picture updated successfully!");
       }
     } catch (error: any) {
@@ -218,9 +218,9 @@ export default function Profile() {
               <h2 className="text-xl font-bold">
                 {user.username || "User"}
               </h2>
-              <p className="text-muted-foreground">
-                {user.staff?.position || "Staff Position"}
-              </p>
+              {/* <p className="text-muted-foreground">
+                {user.djangoUser?.position || "Staff Position"}
+              </p> */}
             </div>
           </div>
           <CardContent className="p-0">

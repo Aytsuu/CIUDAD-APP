@@ -3,7 +3,8 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from utils.supabase_client import supabase
+from django.conf import settings
+from supabase import create_client
 from rest_framework.views import APIView
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
@@ -16,7 +17,10 @@ import numpy as np
 @method_decorator(csrf_exempt, name='dispatch')
 class FaceDetectionView(APIView):
     def __init__(self):
-        self.supabase = supabase
+        self.supabase = create_client(
+            settings.SUPABASE_URL,
+            settings.SUPABASE_ANON_KEY
+        )
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.mtcnn = MTCNN(keep_all=True, device=self.device)
         self.resnet = InceptionResnetV1(pretrained='vggface2').eval().to(self.device)

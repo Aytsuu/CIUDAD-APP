@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from apps.account.models import Account
 from apps.profiling.serializers.full import ResidentProfileFullSerializer
-from apps.administration.serializers.full import StaffFullSerializer
+from apps.administration.serializers.staff_serializers import StaffFullSerializer
 
 class UserAccountSerializer(serializers.ModelSerializer):
     resident_profile = ResidentProfileFullSerializer(source='rp', read_only=True)
