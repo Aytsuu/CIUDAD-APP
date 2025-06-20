@@ -48,9 +48,5 @@ urlpatterns = [
     path('permission/update/<int:assi>/', PermissionUpdateView.as_view(), name='permission-update'),
 
     # Staff Urls
-
     path('staff/', StaffView.as_view(), name='staff-list'),
-    
-    
-
 ]   

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {User, Mail, Calendar, Lock, KeyRound, CheckCircle, AlertCircle, Camera, Eye, EyeOff, Info} from "lucide-react";
+import { User, Mail, Lock, KeyRound, CheckCircle, AlertCircle, Camera, Eye, EyeOff, Info } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Card, CardContent } from "@/components/ui/card/card";
 import { Input } from "@/components/ui/input";
@@ -11,22 +11,21 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { updatePassword, updateProfilePicture } from "../restful-api/accountApi";
-import { passwordFormSchema } from "@/form-schema/account-schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import sanRoqueLogo  from "@/assets/images/sanRoqueLogo.svg"
+import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
+import { api } from "@/api/api";
+import { passwordFormSchema } from "@/form-schema/account-schema";
+import supabase from "@/supabase/supabase";
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
 export default function Profile() {
-  const { user, updateUser, getAccessToken } = useAuth();
+  const { user, updateUser, isAuthenticated } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // Profile image upload states
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,21 +48,54 @@ export default function Profile() {
     resolver: zodResolver(passwordFormSchema),
   });
 
-  // Watch the new password to validate requirements in real-time
   const newPassword = watch("new_password");
 
   const onSubmit = async (data: PasswordFormData) => {
-    const token = getAccessToken() ?? "";
+    if (!isAuthenticated || !user) {
+      toast.error("You must be logged in to change your password");
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      await updatePassword(data.old_password, data.new_password, token);
-      toast.success("✅ Your password has been updated successfully!");
-      reset();
-      setIsChangingPassword(false);
+      // First change password in Supabase
+      const { error: supabaseError } = await supabase.auth.updateUser({
+        password: data.new_password,
+      });
+
+      if (supabaseError) throw supabaseError;
+
+      // Then update in Django
+      const response = await api.post('/api/account/change-password/', {
+        old_password: data.old_password,
+        new_password: data.new_password
+      });
+
+      if (response.status === 200) {
+        toast.success("✅ Your password has been updated successfully!");
+        reset();
+        setIsChangingPassword(false);
+      }
     } catch (error: any) {
-      toast.error(error);
+      console.error("Password change error:", error);
+      
+      if (error.response) {
+        // Handle Django validation errors
+        const errorData = error.response.data;
+        if (errorData.old_password) {
+          toast.error(errorData.old_password[0]);
+        } else if (errorData.new_password) {
+          toast.error(errorData.new_password[0]);
+        } else {
+          toast.error("Failed to update password in our system");
+        }
+      } else if (error.message) {
+        // Supabase errors
+        toast.error(error.message);
+      } else {
+        toast.error("An error occurred while updating password");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -73,22 +105,62 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    const token = getAccessToken() ?? "";
-
     setIsUploading(true);
     setUploadError("");
 
     try {
-      const imageUrl = await updateProfilePicture(file, token);
-      updateUser({ profile_image: imageUrl });
-      toast.success("Profile picture updated successfully!");
+      // First upload to Supabase storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `profile-images/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(filePath);
+
+      // Update user profile in Supabase
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: urlData.publicUrl }
+      });
+
+      if (updateError) throw updateError;
+
+      // Update in Django
+      const response = await api.post('/api/account/upload-image/', {
+        profile_image: urlData.publicUrl
+      });
+
+      if (response.data.success) {
+        updateUser({ profile_image: urlData.publicUrl });
+        toast.success("Profile picture updated successfully!");
+      }
     } catch (error: any) {
-      setUploadError(error);
-      toast.error(error);
+      console.error("Image upload error:", error);
+      const errorMsg = error.message || "Failed to upload image";
+      setUploadError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsUploading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <p className="text-muted-foreground">Loading user profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -98,16 +170,15 @@ export default function Profile() {
         <div className="px-6 pb-6 relative z-10 -mt-20">
           <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-end pt-10 mb-6">
             <div className="relative">
-              {/* Updated Avatar with image upload functionality */}
               <div className="relative cursor-pointer block group">
                 <Avatar className="h-20 w-20 border-4 border-background">
                   <AvatarImage
-                    src={
-                      user?.profile_image || sanRoqueLogo
-                    }
+                    src={user.profile_image || sanRoqueLogo}
                     alt="Profile"
                   />
-                  <AvatarFallback className="text-xl">SR</AvatarFallback>
+                  <AvatarFallback className="text-xl">
+                    {user.username?.charAt(0) || 'U'}
+                  </AvatarFallback>
                 </Avatar>
                 <Button
                   size="icon"
@@ -122,7 +193,6 @@ export default function Profile() {
                 </Button>
               </div>
 
-              {/* Hidden file input for image upload */}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -132,7 +202,6 @@ export default function Profile() {
                 id="profile-image-upload"
               />
 
-              {/* Image upload status messages */}
               {isUploading && (
                 <p className="text-blue-500 text-xs mt-1 text-center">
                   Uploading...
@@ -147,10 +216,10 @@ export default function Profile() {
 
             <div className="text-center sm:text-left">
               <h2 className="text-xl font-bold">
-                {user?.username || "Roque, San"}
+                {user.username || "User"}
               </h2>
               <p className="text-muted-foreground">
-                {user?.staff?.position || "Staff Position"}
+                {user.staff?.position || "Staff Position"}
               </p>
             </div>
           </div>
@@ -162,7 +231,7 @@ export default function Profile() {
                     <User size={14} /> Full Name
                   </Label>
                   <p className="font-medium">
-                    {user?.username || "Roque, San"}
+                    {user.username || "User"}
                   </p>
                 </div>
               </div>
@@ -173,7 +242,7 @@ export default function Profile() {
                     <Mail size={14} /> Email Address
                   </Label>
                   <p className="font-medium">
-                    {user?.email || "sanroque@gmail.com"}
+                    {user.email || "No email provided"}
                   </p>
                 </div>
 
@@ -361,7 +430,6 @@ export default function Profile() {
         </div>
       </Card>
 
-      {/* Footer Info */}
       <Alert
         variant="default"
         className="bg-blue-50 border-blue-200 text-blue-800"

@@ -184,7 +184,7 @@ class ComplaintListView(generics.ListAPIView):
 
 class ComplaintDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ComplaintSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'comp_id'
     
     def get_queryset(self):

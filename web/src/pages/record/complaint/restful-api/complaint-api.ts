@@ -1,10 +1,12 @@
 import { api } from "@/api/api";
 import {ComplaintPayload } from "../complaint-type";
+import supabase from "@/supabase/supabase";
 
 export const postComplaint = async (data: ComplaintPayload) => {
   try {
-     const formData = new FormData();
+    const formData = new FormData();
 
+    // Append objects as JSON strings
     formData.append('complainant', JSON.stringify(data.complainant));
     formData.append('accused', JSON.stringify(data.accused));
     
@@ -14,20 +16,23 @@ export const postComplaint = async (data: ComplaintPayload) => {
     formData.append('category', data.category || 'Normal');
     formData.append('allegation', data.allegation);
     
-    if (data.media_files && Array.isArray(data.media_files)) {
+    if (data.media_files) {
       data.media_files.forEach((file: File | string) => {
         if (typeof file === "string") {
           formData.append('media_urls', file);
-        } else if (file instanceof File) {
+        } else {
           formData.append('media_files', file);
         }
       });
     }
 
-    console.log(data.media_files)
+    // Get session first to ensure we have a token
+    const { data: { session } } = await supabase.auth.getSession();
+    
     return api.post('/complaint/create/', formData, {
       headers: { 
         "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${session?.access_token}` // Explicitly add token
       },
     });
 

@@ -318,7 +318,7 @@ const IncidentDetailsSection = ({ form }: { form: any }) => {
                     <SelectLayout
                       label="Select Incident Type"
                       placeholder="Select Options"
-                      options={INCIDENT_TYPES}
+                      options={Array.from(INCIDENT_TYPES)}
                       value={field.value}
                       onChange={field.onChange}
                     />

@@ -55,9 +55,7 @@ export default function LandingLayout() {
                         ))}
                         <DialogLayout
                             trigger={<Label className="pt-2.5 pb-2.5 pl-4 pr-4 bg-[#2563EB] text-white rounded-lg cursor-pointer hover:bg-[#2563EB]/90">Sign in</Label>}
-                            className='w-1/4 h-1/2 flex flex-col'
-                            title='Sign In'
-                            description="Authorized personnel only. Sign in to manage records, oversee programs, and access tools essential for barangay operations."
+                            className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
                             mainContent={
                                 <SignIn/>
                             }

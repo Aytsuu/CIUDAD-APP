@@ -1,4 +1,4 @@
-import api from "@/pages/api/api";
+import { api } from "@/api/api";
 
 export const postAnnouncement = async (announcement: Record<string, any>) => {
   try {
