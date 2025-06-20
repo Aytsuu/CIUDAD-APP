@@ -1,125 +1,3 @@
-// import { useState } from "react";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { useForm } from "react-hook-form";
-// import { z } from "zod";
-// import { Form } from "@/components/ui/form/form";
-// import { FormInput } from "@/components/ui/form/form-input";
-// import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
-// import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
-// import {
-//   useGetAnnouncement,
-//   useGetAnnouncementRecipient,
-// } from "./queries/announcementFetchQueries";
-
-// type AnnouncementViewProps = {
-//   ann_id: number;
-// };
-
-// function AnnouncementView({ ann_id }: AnnouncementViewProps) {
-//   const [isEditing] = useState(false);
-//   const { data: announcements } = useGetAnnouncement();
-//   const { data: recipients } = useGetAnnouncementRecipient();
-
-//   const announcement = announcements?.find((a) => a.ann_id === ann_id);
-//   const matchingRecipients = recipients?.filter((r) => r.ann === ann_id) || [];
-
-//   // Use first matching recipient (or blank if none)
-//   const firstRecipient = matchingRecipients.length > 0 ? matchingRecipients[0] : null;
-
-//   const formatDateTimeLocal = (value: string | Date) => {
-//     const date = new Date(value);
-//     return date.toISOString().slice(0, 16);
-//   };
-
-//   const form = useForm<z.infer<typeof AnnouncementSchema>>({
-//     resolver: zodResolver(AnnouncementSchema),
-//     defaultValues: {
-//       ann_title: announcement?.ann_title || "",
-//       ann_details: announcement?.ann_details || "",
-//       ann_start_at: announcement?.ann_start_at
-//         ? formatDateTimeLocal(announcement.ann_start_at)
-//         : formatDateTimeLocal(new Date()),
-//       ann_end_at: announcement?.ann_end_at
-//         ? formatDateTimeLocal(announcement.ann_end_at)
-//         : formatDateTimeLocal(new Date()),
-//       ann_type: announcement?.ann_type || "General",
-//       staff: announcement?.staff?.toString() || "0",
-//       ar_type: [firstRecipient?.ar_type || ""],
-//       ar_mode: [firstRecipient?.ar_mode || ""],
-//     },
-//   });
-
-//   if (!announcement) {
-//     return <div className="text-center py-8">Loading announcement details...</div>;
-//   }
-
-//   return (
-//     <div className="flex flex-col min-h-0 h-auto p-6 max-w-4xl mx-auto rounded-lg overflow-auto">
-//       <div className="pb-4">
-//         <h2 className="text-lg font-semibold">ANNOUNCEMENT DETAILS</h2>
-//         <p className="text-xs text-black/50">View or edit announcement details</p>
-//       </div>
-//       <Form {...form}>
-//         <form className="flex flex-col gap-4">
-//           <FormInput
-//             control={form.control}
-//             name="ann_title"
-//             label="Announcement Title"
-//             readOnly={!isEditing}
-//           />
-//           <FormInput
-//             control={form.control}
-//             name="ann_details"
-//             label="Announcement Details"
-//             readOnly={!isEditing}
-//           />
-//           <FormDateTimeInput
-//             control={form.control}
-//             name="ann_start_at"
-//             label="Start Date"
-//             readOnly={!isEditing}
-//             type="datetime-local"
-//           />
-//           <FormDateTimeInput
-//             control={form.control}
-//             name="ann_end_at"
-//             label="End Date"
-//             readOnly={!isEditing}
-//             type="datetime-local"
-//           />
-//           <FormInput
-//             control={form.control}
-//             name="ann_type"
-//             label="Type"
-//             readOnly={!isEditing}
-//           />
-//           <FormInput
-//             control={form.control}
-//             name="staff"
-//             label="Staff ID"
-//             readOnly={!isEditing}
-//           />
-//           <FormInput
-//             control={form.control}
-//             name="ar_type"
-//             label="Recipient Type"
-//             readOnly={!isEditing}
-//           />
-//           <FormInput
-//             control={form.control}
-//             name="ar_mode"
-//             label="Delivery Mode"
-//             readOnly={!isEditing}
-//           />
-//         </form>
-//       </Form>
-//     </div>
-//   );
-// }
-
-// export default AnnouncementView;
-
-
 
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -133,7 +11,7 @@ import { useGetAnnouncement, useGetAnnouncementRecipient } from "./queries/annou
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Megaphone, FileText, Calendar, Users, Mail, User, Clock, Eye } from "lucide-react"
+import { Megaphone, FileText, Calendar, Users, Mail, Clock, Eye } from "lucide-react"
 
 type AnnouncementViewProps = {
   ann_id: number
@@ -233,6 +111,37 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
               </CardContent>
             </Card>
 
+            {/* Attached Media Files */}
+{announcement.files && announcement.files.length > 0 && (
+  <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+    <CardHeader className="pb-4">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-gray-600" />
+        <CardTitle className="text-lg">Attached Files</CardTitle>
+      </div>
+      <CardDescription>Media attached to the announcement</CardDescription>
+    </CardHeader>
+    <CardContent className="flex flex-wrap gap-4">
+      {announcement.files.map((file, index) => (
+        <div key={index} className="w-40 h-40 border rounded overflow-hidden shadow-sm">
+          {file.af_type.startsWith("image/") ? (
+            <img
+              src={file.af_url}
+              alt={file.af_name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-sm text-gray-500">
+              {file.af_name}
+            </div>
+          )}
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+)}
+
+
             {/* Schedule Card */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
               <CardHeader className="pb-4">
@@ -305,16 +214,6 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
                 </div>
 
                 <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      <User className="h-3 w-3 mr-1" />
-                      Creator Information
-                    </Badge>
-                  </div>
-                  <FormInput control={form.control} name="staff" label="Staff ID" readOnly={!isEditing} />
-                </div>
               </CardContent>
             </Card>
           </form>

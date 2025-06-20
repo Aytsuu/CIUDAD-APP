@@ -1,4 +1,5 @@
-import { api } from "@/api/api";
+import api from "@/pages/api/api";
+import { useMutation } from "@tanstack/react-query";
 
 export const postAnnouncement = async (announcement: Record<string, any>) => {
   try {
@@ -20,22 +21,17 @@ export const postAnnouncementRecipient = async (recipient: Record<string, any>) 
   }
 };
 
-export const postAnnouncementFile = async (
-  name: string,
-  type: string,
-  path: string,
-  url: string
-) => {
-  try {
-    const res = await api.post("announcement/upload-files", {
-      af_name: name,
-      af_type: type,
-      af_path: path,
-      af_url: url,
-    });
 
-    return res.data;
-  } catch (err) {
-    throw err;
-  }
-};
+export const postAnnouncementFile = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>[]) => {
+      try {
+        const res = await api.post('announcement/upload-files/', data);
+        return res.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  })
+}

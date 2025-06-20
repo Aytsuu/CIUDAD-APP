@@ -1,19 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
-import { z } from "zod";
+
 import {
   postAnnouncement,
-  postAnnouncementFile,
   postAnnouncementRecipient,
 } from "../restful-api/announcementPostRequest";
-import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
 
 export const usePostAnnouncement = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: z.infer<typeof AnnouncementSchema>) =>
+    mutationFn: (values:  Record<string, any>) =>
       postAnnouncement(values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
@@ -48,26 +46,4 @@ export const usePostAnnouncementRecipient = () => {
   });
 };
 
-export const usePostAnnouncementFile = () => {
-  const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (file: {
-      af_name: string;
-      af_type: string;
-      af_path: string;
-      af_url: string;
-      ann: number;
-    }) => postAnnouncementFile(file.af_name, file.af_type, file.af_path, file.af_url),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcement_files"] });
-      toast.success("Announcement File Uploaded", { duration: 1500 });
-    },
-
-    onError: (err) => {
-      console.error("Error uploading file:", err);
-      toast.error("Failed to upload announcement file.", { duration: 2000 });
-    },
-  });
-};

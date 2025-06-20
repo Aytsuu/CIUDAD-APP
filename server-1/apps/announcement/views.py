@@ -1,8 +1,10 @@
-from rest_framework import generics
+from rest_framework import generics,status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Announcement, AnnouncementRecipient, AnnouncementFile
+from .models import *
 from .serializers import *
+from django.db import transaction
+
 
 
 class AnnouncementView(generics.ListCreateAPIView):
@@ -16,15 +18,29 @@ class AnnouncementDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'ann_id'
 
 
-class AnnouncementFileView(generics.ListCreateAPIView):
+class AnnouncementFileCreateView(generics.CreateAPIView):
     queryset = AnnouncementFile.objects.all()
     serializer_class = AnnouncementFileSerializer
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+      serializer = self.get_serializer(data=request.data, many=True)
+      serializer.is_valid(raise_exception=True)
 
+      # Prepare model instances
+      instances = [
+          AnnouncementFile(**item)
+          for item in serializer.validated_data
+      ]
+      created_instances = AnnouncementFile.objects.bulk_create(instances)
+
+      if len(created_instances) > 0 and created_instances[0].pk is not None:
+          return Response(status=status.HTTP_201_CREATED)
+
+      return Response(status=status.HTTP_201_CREATED) 
 
 class AnnouncementFileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = AnnouncementFile.objects.all()
     serializer_class = AnnouncementFileSerializer
-    lookup_field = 'af_id'
 
 
 class AnnouncementRecipientView(generics.ListCreateAPIView):

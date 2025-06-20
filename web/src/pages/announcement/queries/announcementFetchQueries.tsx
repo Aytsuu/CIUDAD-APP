@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getAnnouncementRequest,
   getAnnouncementRecipientRequest,
+  // useGetAnnouncementFiles,
 } from "../restful-api/announcementGetRequest";
 
 export type Announcement = {
@@ -9,11 +10,18 @@ export type Announcement = {
   ann_title: string;
   ann_details: string;
   ann_created_at: Date | string;
-  ann_start_at: Date | string;
-  ann_end_at: Date | string;
+  ann_start_at?: Date | string;
+  ann_end_at?: Date | string;
   ann_type: string;
   staff: string;
+  files?: {
+    af_id: number;
+    af_name: string;
+    af_type: string;
+    af_url: string;
+  }[];
 };
+
 
 export type AnnouncementRecipient = {
   ar_id: number;
@@ -21,6 +29,7 @@ export type AnnouncementRecipient = {
   ar_mode: string;
   ann: number;
 };
+
 
 
 export const useGetAnnouncement = () => {
