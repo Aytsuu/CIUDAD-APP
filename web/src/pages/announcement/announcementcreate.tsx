@@ -20,14 +20,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   Megaphone,
   FileText,
   Calendar,
   Users,
-  Mail,
   Clock,
   Send,
 } from "lucide-react";
@@ -38,9 +36,11 @@ import {
 import React from "react";
 import { postAnnouncementFile as postAnnouncementFileApi } from "./restful-api/announcementPostRequest";
 import { useAuth } from "@/context/AuthContext";
-
+import { usePositions } from "../record/administration/queries/administrationFetchQueries";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AnnouncementCreate = () => {
+  const queryClient = useQueryClient();
   const { mutateAsync: postAnnouncement } = usePostAnnouncement();
   const { mutate: postAnnouncementRecipient } = usePostAnnouncementRecipient();
   const { mutate: postAnnouncementFile } = postAnnouncementFileApi();
@@ -48,8 +48,13 @@ const AnnouncementCreate = () => {
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const { user } = useAuth();
+  const { data: positions = [] } = usePositions();
 
-  type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema>;
+  type AnnouncementCreateFormValues = z.infer<typeof AnnouncementSchema> & {
+    positions?: string[];
+    ar_age?: string[];
+  };
+
   const defaultValues = generateDefaultValues(AnnouncementSchema);
 
   const form = useForm<AnnouncementCreateFormValues>({
@@ -58,82 +63,84 @@ const AnnouncementCreate = () => {
   });
 
   const annType = form.watch("ann_type");
-const arType = form.watch("ar_type") ?? [];
 
-// ✅ Clear schedule fields when type is set to "general"
-React.useEffect(() => {
-  if (annType === "general") {
-    form.setValue("ann_start_at", "");
-    form.setValue("ann_end_at", "");
-  }
-}, [annType, form]);
-
-// ✅ Everyone logic
-React.useEffect(() => {
-  const hasResident = arType.includes("resident");
-  const hasStaff = arType.includes("staff");
-  const hasEveryone = arType.includes("everyone");
-
-  if (hasResident && hasStaff && !hasEveryone) {
-    form.setValue("ar_type", ["everyone"]);
-  }
-
-  if (hasEveryone && (hasResident || hasStaff)) {
-    form.setValue("ar_type", ["everyone"]);
-  }
-}, [arType, form]);
-
+  React.useEffect(() => {
+    if (annType === "general") {
+      form.setValue("ann_start_at", "");
+      form.setValue("ann_end_at", "");
+    }
+  }, [annType, form]);
 
   const onSubmit = async () => {
-  const formIsValid = await form.trigger();
-  if (!formIsValid) return;
+    const formIsValid = await form.trigger();
 
-  const values = form.getValues();
+    if (!formIsValid) {
+      console.error("Form validation failed");
+      console.log(form.formState.errors);
+      return;
+    }
 
-  // Convert empty strings to null for datetime fields
-  const cleanedValues = {
-    ...values,
-    ann_start_at: values.ann_start_at || null,
-    ann_end_at: values.ann_end_at || null,
-    staff: user?.staff.staff_id,
-  };
+    const values = form.getValues();
 
-  try {
-    const createdAnnouncement = await postAnnouncement(cleanedValues);
+    const cleanedValues = {
+      ...values,
+      ann_start_at: values.ann_start_at || null,
+      ann_end_at: values.ann_end_at || null,
+      staff: user?.staff.staff_id,
+    };
 
-    const recipients = values.ar_type.flatMap((type: string) =>
-      values.ar_mode.map((mode: string) => ({
-        ar_type: type,
-        ar_mode: mode,
-        ann: createdAnnouncement?.ann_id,
-      }))
-    );
+    try {
+      const createdAnnouncement = await postAnnouncement(cleanedValues);
 
-    recipients.forEach((recipient) =>
-      postAnnouncementRecipient(recipient, {
-        onSuccess: () => {
-          const files = mediaFiles.map((media) => ({
-            af_name: media.file.name,
-            af_type: media.file.type,
-            af_path: media.storagePath,
-            af_url: media.publicUrl,
+      const positionRecipients = (values.positions ?? []).flatMap((posId: string) =>
+        values.ar_mode.flatMap((mode: string) =>
+          (values.ar_age?.length ? values.ar_age : [null]).map((age) => ({
+            position: posId,
+            ar_mode: mode,
             ann: createdAnnouncement?.ann_id,
             staff: user?.staff.staff_id,
-          }));
+            ar_age: age,
+          }))
+        )
+      );
 
-          postAnnouncementFile(files, {
-            onSuccess: () => {
-              console.log("File Created!");
-            },
-          });
-        },
-      })
-    );
+      await Promise.all(
+        positionRecipients.map(
+          (recipient) =>
+            new Promise((resolve) => {
+              postAnnouncementRecipient(recipient, {
+                onSuccess: () => {
+                  const files = mediaFiles.map((media) => ({
+                    af_name: media.file.name,
+                    af_type: media.file.type,
+                    af_path: media.storagePath,
+                    af_url: media.publicUrl,
+                    ann: createdAnnouncement?.ann_id,
+                    staff: user?.staff.staff_id,
+                  }));
 
-  } catch (err) {
-    console.error("Error during announcement creation:", err);
-  }
-};
+                  postAnnouncementFile(files, {
+                    onSuccess: async () => {
+                      await queryClient.invalidateQueries({ queryKey: ["announcements"] });
+                      await queryClient.invalidateQueries({ queryKey: ["recipients"] });
+                      resolve(null);
+                    },
+                  });
+                },
+              });
+            })
+        )
+      );
+    } catch (err) {
+      console.error("Error during announcement creation:", err);
+    }
+  };
+
+  const positionOptions = positions.map((pos: any) => ({
+    id: pos.pos_id?.toString(),
+    name: pos.pos_title,
+  }));
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -199,108 +206,116 @@ React.useEffect(() => {
 
             {/* Schedule */}
             <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-lg">Schedule</CardTitle>
+                </div>
+                <CardDescription>Set when your announcement will be active</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Start Date & Time */}
+                <div
+                  className={`space-y-2 transition-all duration-300 ${
+                    !["event", "urgent"].includes(annType)
+                      ? "grayscale opacity-60 pointer-events-none"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    Start Date & Time
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_start_at"
+                    label=""
+                    type="datetime-local"
+                    disabled={!["event", "urgent"].includes(annType)}
+                  />
+                </div>
+
+                {/* End Date & Time */}
+                <div
+                  className={`space-y-2 transition-all duration-300 ${
+                    !["event", "urgent"].includes(annType)
+                      ? "grayscale opacity-60 pointer-events-none"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    End Date & Time
+                  </div>
+                  <FormDateTimeInput
+                    control={form.control}
+                    name="ann_end_at"
+                    label=""
+                    type="datetime-local"
+                    disabled={!["event", "urgent"].includes(annType)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recipients & Delivery */}
+<Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
   <CardHeader className="pb-4">
     <div className="flex items-center gap-2">
-      <Calendar className="h-5 w-5 text-gray-600" />
-      <CardTitle className="text-lg">Schedule</CardTitle>
+      <Users className="h-5 w-5 text-gray-600" />
+      <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
     </div>
-    <CardDescription>Set when your announcement will be active</CardDescription>
+    <CardDescription>Choose which positions and delivery modes</CardDescription>
   </CardHeader>
-  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {/* Start Date & Time */}
-    <div
-      className={`space-y-2 transition-all duration-300 ${
-        !["event", "urgent"].includes(annType)
-          ? "grayscale opacity-60 pointer-events-none"
-          : ""
-      }`}
-    >
-      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-        <Clock className="h-4 w-4" />
-        Start Date & Time
-      </div>
-      <FormDateTimeInput
-        control={form.control}
-        name="ann_start_at"
-        label=""
-        type="datetime-local"
-        disabled={!["event", "urgent"].includes(annType)}
-      />
-    </div>
 
-    {/* End Date & Time */}
-    <div
-      className={`space-y-2 transition-all duration-300 ${
-        !["event", "urgent"].includes(annType)
-          ? "grayscale opacity-60 pointer-events-none"
-          : ""
-      }`}
-    >
-      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-        <Clock className="h-4 w-4" />
-        End Date & Time
+  <CardContent className="space-y-6">
+    <div className="space-y-4">
+      {/* Target Positions */}
+      <div className="space-y-2">
+        <Badge variant="outline" className="text-xs">
+          Target Positions
+        </Badge>
+        <FormComboCheckbox
+          control={form.control}
+          name="positions"
+          options={positionOptions}
+        />
       </div>
-      <FormDateTimeInput
-        control={form.control}
-        name="ann_end_at"
-        label=""
-        type="datetime-local"
-        disabled={!["event", "urgent"].includes(annType)}
-      />
+
+      {/* Age Group */}
+      <div className="space-y-2">
+        <Badge variant="outline" className="text-xs">
+          Age Group
+        </Badge>
+        <FormComboCheckbox
+          control={form.control}
+          name="ar_age"
+          options={[
+            { id: "youth", name: "Youth" },
+            { id: "adult", name: "Adult" },
+            { id: "senior", name: "Senior Citizen" },
+          ]}
+        />
+      </div>
+
+      {/* Delivery Mode */}
+      <div className="space-y-2">
+        <Badge variant="outline" className="text-xs">
+          Delivery Mode
+        </Badge>
+        <FormComboCheckbox
+          control={form.control}
+          name="ar_mode"
+          options={[
+            { id: "sms", name: "SMS" },
+            { id: "email", name: "Email" },
+          ]}
+        />
+      </div>
     </div>
   </CardContent>
 </Card>
 
-            {/* Recipients & Delivery */}
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-                </div>
-                <CardDescription>Choose who will receive this announcement and how</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        <Users className="h-3 w-3 mr-1" />
-                        Target Audience
-                      </Badge>
-                    </div>
-                    <FormComboCheckbox
-                      control={form.control}
-                      name="ar_type"
-                      options={[
-                        { id: "everyone", name: "Everyone" },
-                        { id: "resident", name: "All Residents", disabled: arType.includes("everyone") },
-                        { id: "staff", name: "All Staff", disabled: arType.includes("everyone") },
-                      ]}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        <Mail className="h-3 w-3 mr-1" />
-                        Delivery Method
-                      </Badge>
-                    </div>
-                    <FormComboCheckbox
-                      control={form.control}
-                      name="ar_mode"
-                      options={[
-                        { id: "email", name: "Email" },
-                        { id: "sms", name: "SMS" },
-                      ]}
-                    />
-                  </div>
-                </div>
-
-                <Separator />
-              </CardContent>
-            </Card>
 
             {/* Media Upload */}
             <MediaUpload

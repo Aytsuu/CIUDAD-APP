@@ -26,9 +26,16 @@ class AnnouncementFileSerializer(serializers.ModelSerializer):
 
 
 class AnnouncementRecipientSerializer(serializers.ModelSerializer):
+    position_title = serializers.SerializerMethodField()
+
     class Meta:
         model = AnnouncementRecipient
-        fields = ['ar_mode', 'ar_type', 'ann', 'rp', 'staff']
+        fields = ['ar_id', 'ar_mode', 'ann', 'position', 'ar_age', 'position_title']
+
+    def get_position_title(self, obj):
+        return obj.position.pos_title if obj.position else ""
+
+
 
 
 class BulkAnnouncementRecipientSerializer(serializers.Serializer):
@@ -43,4 +50,4 @@ class BulkAnnouncementRecipientSerializer(serializers.Serializer):
 class AnnouncementRecipientFilteredSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementRecipient
-        fields = ['ar_mode', 'ar_type', 'ann', 'rp']
+        fields = ['ar_mode', 'ann', 'rp']

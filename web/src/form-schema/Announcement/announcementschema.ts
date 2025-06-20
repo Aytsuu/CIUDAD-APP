@@ -18,8 +18,9 @@ ann_end_at: z
     message: "Invalid datetime format",
   }),
   ann_type: z.string().nonempty({ message: "Type is required" }),
-  ar_type: z.array(z.string()).nonempty({ message: "Recipient type is required" }),
   ar_mode: z.array(z.string()).nonempty({ message: "Announcement mode is required" }), 
+  positions: z.array(z.string()).optional(),
+  ar_age: z.array(z.enum(["youth", "adult", "senior"])).optional(),
 });
 
 export default AnnouncementSchema;

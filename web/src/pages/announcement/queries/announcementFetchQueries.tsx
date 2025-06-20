@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getAnnouncementRequest,
   getAnnouncementRecipientRequest,
-  // useGetAnnouncementFiles,
 } from "../restful-api/announcementGetRequest";
 
 export type Announcement = {
@@ -24,13 +23,13 @@ export type Announcement = {
 
 
 export type AnnouncementRecipient = {
+  position_title: any;
   ar_id: number;
-  ar_type: string;
   ar_mode: string;
   ann: number;
+  position: string;
+  ar_age: string;
 };
-
-
 
 export const useGetAnnouncement = () => {
   return useQuery<Announcement[], Error>({
@@ -44,12 +43,7 @@ export const useGetAnnouncementRecipient = () => {
   return useQuery<AnnouncementRecipient[], Error>({
     queryKey: ["recipients"],
     queryFn: getAnnouncementRecipientRequest,
+    staleTime: 1000 * 60 * 5,
   });
 };
 
-// export const useGetAnnouncementFiles = () => {
-//    return useQuery<AnnouncementFiles[], Error>({
-//     queryKey: ["files"],
-//     queryFn: getAnnouncementRecipientRequest,
-//   });
-// };
