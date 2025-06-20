@@ -1,10 +1,10 @@
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 
 
 export const handleDeleteMedicineList = async (id: number, callback?: () => void) => {
   try {
-    await api.delete(`inventory/medicinelist/${id}/`); // API call
+    await api2.delete(`inventory/medicinelist/${id}/`); // API call
     if (callback) callback(); // Call the function to refetch data
   } catch (error) {
     console.error("Error deleting medicine:", error);
@@ -17,7 +17,7 @@ export const handleDeleteFirstAidList = async (
   setData: React.Dispatch<React.SetStateAction<any[]>>
 ) => {
   try {
-    const res = await api.delete(`inventory/firstaidlist/${fa_id}/`);
+    const res = await api2.delete(`inventory/firstaidlist/${fa_id}/`);
 
     if (res.status === 200 || res.status === 204) {
       console.log("✅ Medicine deleted successfully!");
@@ -37,7 +37,7 @@ export const handleDeleteCommodityList = async (
   setData: React.Dispatch<React.SetStateAction<any[]>>
 ) => {
   try {
-    const res = await api.delete(`inventory/commoditylist/${com_id}/`);
+    const res = await api2.delete(`inventory/commoditylist/${com_id}/`);
 
     if (res.status === 200 || res.status === 204) {
       console.log("✅ Medicine deleted successfully!");

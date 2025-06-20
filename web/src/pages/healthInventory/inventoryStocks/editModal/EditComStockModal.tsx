@@ -103,7 +103,7 @@ export default function EditCommodityStock() {
               </span>
                 {initialData.cinv_qty_unit.toLowerCase() === "boxes" && initialData.qty?.cinv_pcs > 0 ? (
                 <>
-                  {Math.ceil(Number(initialData.availQty) / Number(initialData.qty.cinv_pcs))} boxes ({Number(initialData.availQty)} pieces)
+                  {Math.ceil(Number(initialData.availQty) / Number(initialData.qty.cinv_pcs))} boxe/s ({Number(initialData.availQty)} pc/s)
                 </>
                 ) : (
                 `${initialData.availQty} ${initialData.cinv_qty_unit}`
@@ -168,9 +168,9 @@ export default function EditCommodityStock() {
                   Total Pieces
                 </label>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
+                  {totalPieces.toLocaleString()} pc/s
                   <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
+                    ({qty} boxes × {pcs} pc/s)
                   </span>
                 </div>
               </div>

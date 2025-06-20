@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { Form } from "@/components/ui/form/form";
@@ -18,7 +17,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
-import { CircleAlert, ChevronLeft } from "lucide-react";
+import { CircleAlert, ChevronLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchVaccinesWithStockVacID } from "./restful-api/FetchVaccination";
 import { format } from "date-fns";
@@ -27,16 +26,21 @@ import {
   useSubmitStep1,
   useSubmitStep2,
 } from "./queries/UpdateVaccinationQueries";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 
 export default function UpdateVaccinationForm() {
   const navigate = useNavigate();
   const [assignmentOption, setAssignmentOption] = useState<"self" | "other">(
     "self"
   );
+  const [isStep1ConfirmOpen, setIsStep1ConfirmOpen] = useState(false);
+  const [isStep2ConfirmOpen, setIsStep2ConfirmOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const location = useLocation();
   const { params } = location.state || {};
   const { patientData, Vaccination } = params || {};
-  const vacId = Number(Vaccination?.vaccine_stock?.vaccinelist?.vac_id); // Convert to number
+  const vacId = Number(Vaccination?.vaccine_stock?.vaccinelist?.vac_id);
 
   console.log("Vac_id:", vacId);
 
@@ -76,15 +80,9 @@ export default function UpdateVaccinationForm() {
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
       pat_id: patientData.pat_id || "",
-      vaccinetype: "", // Will be set dynamically in useEffect
+      vaccinetype: "",
       datevaccinated: new Date().toISOString().split("T")[0],
-      // lname: patientData.lname || "",
-      // fname: patientData.fname || "",
-      // mname: patientData.mname || "",
-      // age: patientData.age || "",
-      // sex: patientData.sex || "",
-      // dob: patientData.dob || "",
-      
+      age: patientData.age || "",
       assignto: "",
     },
   });
@@ -108,107 +106,87 @@ export default function UpdateVaccinationForm() {
     form.setValue("datevaccinated", format(new Date(), "yyyy-MM-dd"));
   }, [form]);
 
-  // Set default vaccinetype based on vacId
   useEffect(() => {
     if (vacId && !isLoading && vaccineStocksOptions.length > 0) {
-      const selectedVaccine = vaccineStocksOptions[0]; // Only one vaccine expected
-      if (selectedVaccine && selectedVaccine.available) {
+      const selectedVaccine = vaccineStocksOptions[0];
+      if (selectedVaccine) {
         form.setValue("vaccinetype", selectedVaccine.id);
-      } else {
-        console.warn(`Vaccine with vac_id ${vacId} is not available.`);
-        form.setValue("vaccinetype", "");
-        let errorMessage = "Selected vaccine is unavailable";
-        if (selectedVaccine.isExpired && selectedVaccine.expiryDate) {
-          errorMessage += ` (expired on ${format(new Date(selectedVaccine.expiryDate), "MMM dd, yyyy")}).`;
-        } else if (selectedVaccine.isOutOfStock) {
-          errorMessage += " (out of stock).";
-        }
-        toast.error(errorMessage, {
-          icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-        });
       }
-    } else if (vacId && !isLoading && vaccineStocksOptions.length === 0) {
-      console.warn(`Vaccine with vac_id ${vacId} not found or archived.`);
-      form.setValue("vaccinetype", "");
-      toast.error("Vaccine not found or archived.", {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
-      });
     }
   }, [vacId, vaccineStocksOptions, isLoading, form]);
 
-  // Check if the selected vaccine is available
   const selectedVaccineId = form.watch("vaccinetype");
   const selectedVaccine = vaccineStocksOptions.find(
     (vaccine) => vaccine.id === selectedVaccineId
   );
   const isVaccineAvailable = selectedVaccine?.available ?? false;
 
-  // Format option label with name, expiration date, and stock status
   const formatOptionLabel = (vaccine: typeof vaccineStocksOptions[0]) => {
     let label = vaccine.name;
-    if (vaccine.isOutOfStock) {
-      label += " (Out of Stock)";
-    } else if (vaccine.isExpired && vaccine.expiryDate) {
-      label += ` (Expired: ${format(new Date(vaccine.expiryDate), "MMM dd, yyyy")})`;
-    } else if (vaccine.expiryDate) {
+    if (vaccine.expiryDate) {
       label += ` (Expires: ${format(new Date(vaccine.expiryDate), "MMM dd, yyyy")})`;
     }
     return label;
   };
 
-  
   const submitStep1 = useSubmitStep1();
   const submitStep2 = useSubmitStep2();
-  const onSubmitStep1 = (data: VaccineSchemaType) => {
-    if (!isVaccineAvailable) {
-      let errorMessage = "Cannot submit: Selected vaccine is unavailable";
-      if (selectedVaccine?.isExpired && selectedVaccine?.expiryDate) {
-        errorMessage += ` (expired on ${format(new Date(selectedVaccine.expiryDate), "MMM dd, yyyy")}).`;
-      } else if (selectedVaccine?.isOutOfStock) {
-        errorMessage += " (out of stock).";
-      }
-      toast.error(errorMessage, {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+
+  const onSubmitStep1 = async (data: VaccineSchemaType) => {
+      await submitStep1.mutateAsync({
+        data,
+        assignmentOption,
+        form: {
+          setError: form.setError,
+          getValues: form.getValues,
+          reset: form.reset,
+        },
       });
-      return;
-    }
-    submitStep1.mutate({
-      data,
-      assignmentOption,
-      form: {
-        setError: form.setError,
-        getValues: form.getValues,
-        reset: form.reset,
-      },
-    });
   };
 
-  const onSubmitStep2 = (data: VitalSignsType) => {
-    if (!isVaccineAvailable) {
-      let errorMessage = "Cannot submit: Selected vaccine is unavailable";
-      if (selectedVaccine?.isExpired && selectedVaccine?.expiryDate) {
-        errorMessage += ` (expired on ${format(new Date(selectedVaccine.expiryDate), "MMM dd, yyyy")}).`;
-      } else if (selectedVaccine?.isOutOfStock) {
-        errorMessage += " (out of stock).";
-      }
-      toast.error(errorMessage, {
-        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+  const onSubmitStep2 = async (data: VitalSignsType) => {
+      await submitStep2.mutateAsync({
+        data,
+        patientId: patientData.pat_id,
+        vaccinationData: Vaccination,
+        form: {
+          setError: form.setError,
+          getValues: form.getValues,
+          reset: form.reset,
+        },
+        form2: { reset: form2.reset },
+        setAssignmentOption,
+        calculateNextVisitDate,
+      
       });
-      return;
-    }
-    submitStep2.mutate({
-      data,
-      patientId: patientData.pat_id,
-      vaccinationData: Vaccination,
-      form: {
-        setError: form.setError,
-        getValues: form.getValues,
-        reset: form.reset,
-      },
-      form2: { reset: form2.reset },
-      setAssignmentOption,
-      calculateNextVisitDate,
-    });
+  };
+
+  const handleStep1Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isValid = await form.trigger();
+    if (isValid) {
+      setIsStep1ConfirmOpen(true);
+    } 
+  };
+
+  const handleStep2Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isValid = await form2.trigger();
+    if (isValid) {
+      setIsStep2ConfirmOpen(true);
+    } 
+  };
+
+  const handleStep1Confirm = () => {
+    setSubmitting(true);
+    setIsStep1ConfirmOpen(false);
+    form.handleSubmit(onSubmitStep1)();
+  };
+
+  const handleStep2Confirm = () => {
+    setSubmitting(true);
+    setIsStep2ConfirmOpen(false);
+    form2.handleSubmit(onSubmitStep2)();
   };
 
   return (
@@ -235,7 +213,7 @@ export default function UpdateVaccinationForm() {
       <div className="bg-white p-6 sm:p-8 rounded-sm shadow-sm border-gray-100">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmitStep1)}
+            onSubmit={handleStep1Submit}
             className="space-y-6"
           >
             <div className="flex items-center gap-2 mb-4 pb-2">
@@ -256,8 +234,8 @@ export default function UpdateVaccinationForm() {
                   label="Vaccine Type"
                   options={vaccineStocksOptions.map((vaccine) => ({
                     id: vaccine.id,
-                    name: formatOptionLabel(vaccine), // Include expiry and stock status
-                    disabled: !vaccine.available, // Disable unavailable vaccines
+                    name: formatOptionLabel(vaccine),
+                    disabled: !vaccine.available,
                   }))}
                   emptyMessage={isLoading ? "Loading..." : "Vaccine unavailable or not found"}
                 />
@@ -271,110 +249,8 @@ export default function UpdateVaccinationForm() {
               />
             </div>
 
-            <h2 className="font-semibold text-blue bg-blue-50 rounded-md">
-              Basic Information
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <FormSelect
-                control={form.control}
-                name="patientType"
-                label="Patient Type"
-                options={[
-                  { id: "Resident", name: "Resident" },
-                  { id: "Transient", name: "Transient" },
-                  { id: "Regular", name: "Regular" },
-                ]}
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="lname"
-                label="Last Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="fname"
-                label="First Name"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="mname"
-                label="Middle Name"
-                readOnly
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormDateTimeInput
-                control={form.control}
-                name="dob"
-                label="Date of Birth"
-                type="date"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="age"
-                label="Age"
-                type="number"
-                readOnly
-              />
-              <FormSelect
-                control={form.control}
-                name="sex"
-                label="Sex"
-                options={[
-                  { id: "female", name: "Female" },
-                  { id: "male", name: "Male" },
-                ]}
-                readOnly
-              />
-            </div>
-
-            <h2 className="font-semibold text-blue py-2 bg-blue-50 rounded-md mb-3">
-              Address Information
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormInput
-                control={form.control}
-                name="householdno"
-                label="Household No."
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="street"
-                label="Street"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="sitio"
-                label="Sitio"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="barangay"
-                label="Barangay"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="city"
-                label="City"
-                readOnly
-              />
-              <FormInput
-                control={form.control}
-                name="province"
-                label="Province"
-                readOnly
-              />
+            <div className="mb-4 bg-white">
+              <PatientInfoCard patient={patientData} />
             </div>
 
             <div className="space-y-4 border p-5 rounded-md bg-gray-50 shadow-sm">
@@ -428,9 +304,16 @@ export default function UpdateVaccinationForm() {
                 <Button
                   type="submit"
                   className="w-[120px]"
-                  disabled={submitStep1.isPending || !isVaccineAvailable}
+                  disabled={submitStep1.isPending || !isVaccineAvailable || submitting}
                 >
-                  {submitStep1.isPending ? "Submitting..." : "Save & Assign"}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Save & Assign"
+                  )}
                 </Button>
               </div>
             )}
@@ -442,7 +325,7 @@ export default function UpdateVaccinationForm() {
         {assignmentOption === "self" && (
           <Form {...form2}>
             <form
-              onSubmit={form2.handleSubmit(onSubmitStep2)}
+              onSubmit={handleStep2Submit}
               className="space-y-6 mt-8"
             >
               <div className="flex justify-between items-center">
@@ -509,14 +392,37 @@ export default function UpdateVaccinationForm() {
                 <Button
                   type="submit"
                   className="w-[120px]"
-                  disabled={submitStep2.isPending || !isVaccineAvailable}
+                  disabled={submitStep2.isPending || !isVaccineAvailable || submitting}
                 >
-                  {submitStep2.isPending ? "Submitting..." : "Complete"}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Complete"
+                  )}
                 </Button>
               </div>
             </form>
           </Form>
         )}
+
+        <ConfirmationDialog
+          isOpen={isStep1ConfirmOpen}
+          onOpenChange={setIsStep1ConfirmOpen}
+          onConfirm={handleStep1Confirm}
+          title="Confirm Save & Assign"
+          description="Are you sure you want to save this vaccination record and assign Step 2 to another person? This action will update the system and notify the assignee."
+        />
+
+        <ConfirmationDialog
+          isOpen={isStep2ConfirmOpen}
+          onOpenChange={setIsStep2ConfirmOpen}
+          onConfirm={handleStep2Confirm}
+          title="Confirm Vaccination Submission"
+          description="Are you sure you want to submit this vaccination record? This action will update the inventory and patient records."
+        />
       </div>
     </div>
   );

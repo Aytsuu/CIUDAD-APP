@@ -1,14 +1,14 @@
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 
 export const getCombinedStock = async () => {
   try {
     const [vaccineStocks, supplyStocks, vaccines, supplies, inventory] =
       await Promise.all([
-        api.get("inventory/vaccine_stocks/"),
-        api.get("inventory/immunization_stock/"),
-        api.get("inventory/vac_list/"),
-        api.get("inventory/imz_supplies/"),
-        api.get("inventory/inventorylist/"),
+        api2.get("inventory/vaccine_stocks/"),
+        api2.get("inventory/immunization_stock/"),
+        api2.get("inventory/vac_list/"),
+        api2.get("inventory/imz_supplies/"),
+        api2.get("inventory/inventorylist/"),
       ]);
 
     const vaccineData = vaccineStocks.data.map((stock: any) => {

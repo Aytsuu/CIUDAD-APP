@@ -166,23 +166,9 @@ export default function IndivVaccinationRecords() {
       staleTime: 0,
     });
 
-  // // Fetch vaccination count
-  // const { data: vaccinationCount, isLoading: isVaccinationCountLoading } =
-  //   useQuery({
-  //     queryKey: ["vaccinationCount", patientData.pat_id],
-  //     queryFn: async () => {
-  //       const count = await getVaccinationCount(patientData.pat_id);
-  //       console.log("Vaccination count:", count);
-  //       return count;
-  //     },
-  //     enabled: !!patientData.pat_id,
-  //     refetchOnMount: true,
-  //     staleTime: 0,
-  //   });
-
-
+ 
    const { data: vaccinationCountData } = useVaccinationCount(patientData.pat_id);
-    const vaccinationCount = vaccinationCountData?.vaccination_count;
+   const vaccinationCount = vaccinationCountData?.vaccination_count;
     
     
   
@@ -241,7 +227,6 @@ export default function IndivVaccinationRecords() {
         const res = await api2.get(
           `/vaccination/unvaccinated-vaccines/${patientData.pat_id}/`
         );
-        console.log("Unvaccinated vaccines:", res.data);
         setUnvaccinatedVaccines(
           res.data.map(
             (vaccine: { vac_name: string; vac_type_choices: string }) => ({
@@ -278,6 +263,7 @@ export default function IndivVaccinationRecords() {
       fetchFollowupVaccines();
     }
   }, [patientData.pat_id]);
+  
 
   const filteredData = React.useMemo(() => {
     return formatVaccinationData().filter((record) => {
@@ -623,16 +609,16 @@ export default function IndivVaccinationRecords() {
                               <span className="font-semibold text-gray-800">
                                 {vaccine.vac_name}
                               </span>
-                              <span className="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full border border-gray-300 shadow-sm">
+                              {/* <span className="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-full border border-gray-300 shadow-sm">
                                 ({vaccine.vac_type_choices})
-                              </span>
+                              </span> */}
                             </div>
                           )}
                         {vaccine.followup_date &&
                         !isNaN(new Date(vaccine.followup_date).getTime()) ? (
                           <div className="flex items-center gap-2 bg-gray-200 px-4  ">
-                            <span className="text-sm font-semibold text-gray-800">
-                              📅 Follow-up:{" "}
+                            <span className="text-sm font-semibold text-blue">
+                              Follow-up:{" "}
                               {new Date(
                                 vaccine.followup_date
                               ).toLocaleDateString("en-US", {

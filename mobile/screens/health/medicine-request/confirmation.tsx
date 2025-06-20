@@ -52,7 +52,7 @@ export default function Confirmation() {
 
           {/* Order Items */}
           <ScrollView className="max-h-48">
-            {orderItems.map((item) => (
+            {orderItems.map((item:any) => (
               <View key={item.id} className="flex-row justify-between items-center py-2 border-b border-gray-100">
                 <Text className="text-[#263D67] font-PoppinsMedium w-1/2">{item.name}</Text>
                 <Text className="text-[#263D67] font-PoppinsRegular w-1/4 text-center">{item.quantity || 1}</Text>

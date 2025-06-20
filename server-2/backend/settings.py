@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'apps.account',
     'apps.medicalConsultation',
     'apps.medicine',
+    'apps.firstaid',
 
 ]
 
@@ -204,5 +205,5 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE","PATCH"]
 CORS_ALLOW_HEADERS = ["*"]

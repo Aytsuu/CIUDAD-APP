@@ -5,14 +5,8 @@ from apps.patientrecords.models import *
 from django.db.models import Q
 from collections import defaultdict
 from apps.healthProfiling.serializers.resident_profile_serializers import ResidentPersonalInfoSerializer
-# def get_unvaccinated_vaccines_for_patient(pat_id):
-#     vaccinated_vac_ids = VaccinationHistory.objects.filter(
-#         vacrec__patrec_id__pat_id=pat_id
-#     ).values_list('vacStck__vac_id', flat=True).distinct()
-
-#     unvaccinated_vaccines = VaccineList.objects.exclude(vac_id__in=vaccinated_vac_ids)
-#     return unvaccinated_vaccines
-
+from .serializers import *
+from django.db.models import Count, Q
 
 
 def get_unvaccinated_vaccines_for_patient(pat_id):
@@ -80,11 +74,7 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
             patrec_id__pat_id=patrec_pat_id
         )
 
-        # Get the patient details from the linked PatientRecord
         patient = vac_record.patrec_id
-
-        # Serialize patient details using PatientSerializer
-
         patient_serializer = PatientSerializer(patient)
         patient_info = patient_serializer.data
 
@@ -92,6 +82,7 @@ def get_patient_info_from_vaccination_record(patrec_pat_id):
 
     except VaccinationRecord.DoesNotExist:
         return {"message": "No vaccination record found for this patient."}
+    
 
 def get_vaccination_record_count(pat_id):
    
@@ -147,18 +138,20 @@ def get_all_residents_not_vaccinated():
 
     return result
 
-
 def count_vaccinated_by_patient_type():
-    vaccinated_pat_ids = VaccinationHistory.objects.values_list(
-        'vacrec__patrec_id__pat_id', flat=True
-    ).distinct()
+    counts = (
+        Patient.objects.filter(
+            patient_records__vaccination_records__vaccination_histories__vachist_status="completed"
+        )
+        .values('pat_type')
+        .annotate(total=Count('pat_id'))
+    )
 
-    vaccinated_patients = Patient.objects.filter(pat_id__in=vaccinated_pat_ids)
+    result = {"resident_vaccinated": 0, "transient_vaccinated": 0}
+    for entry in counts:
+        if entry["pat_type"] == "Resident":
+            result["resident_vaccinated"] = entry["total"]
+        elif entry["pat_type"] == "Transient":
+            result["transient_vaccinated"] = entry["total"]
 
-    resident_count = vaccinated_patients.filter(pat_type="Resident").count()
-    transient_count = vaccinated_patients.filter(pat_type="Transient").count()
-
-    return {
-        "resident_vaccinated": resident_count,
-        "transient_vaccinated": transient_count
-    }
+    return result

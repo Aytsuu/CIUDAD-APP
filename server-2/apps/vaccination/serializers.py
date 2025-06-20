@@ -23,12 +23,20 @@ class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
 
 class VaccinationHistorySerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vital_signs = VitalSignsSerializer(source='vital', read_only=True)
-    vaccine_stock = VaccineStockSerializer(source='vacStck', read_only=True)
+    vaccine_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
     vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
+    patient = serializers.SerializerMethodField()
+  
     class Meta:
         model = VaccinationHistory
         fields = '__all__'
+        
+    def get_patient(self, obj):
+        try:
+            return PatientSerializer(obj.vacrec.patrec_id.pat_id).data
+        except Exception:
+            return None
 
 class VaccinationRecordSerializer(PartialUpdateMixin,serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
@@ -46,8 +54,11 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_vaccination_count(self, obj):
-        count = VaccinationRecord.objects.filter(patrec_id__pat_id=obj.pat_id).count()
-        print(f"Vaccination count for patient {obj.pat_id}: {count}")
+        count = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=obj.pat_id,
+            vachist_status__in=['completed', 'partially vaccinated']
+        ).count()
+        print(f"Completed vaccination history count for patient {obj.pat_id}: {count}")
         return count
 
     # def get_vaccination_records(self, obj):

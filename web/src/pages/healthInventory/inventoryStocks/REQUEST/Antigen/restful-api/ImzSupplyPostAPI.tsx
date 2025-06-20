@@ -1,7 +1,6 @@
 // REQUEST/InventoryStock.ts
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { ImmunizationSuppliesType } from "@/form-schema/inventory/stocks/inventoryStocksSchema";
-import { ImmunizationStockTransaction } from "../../Payload";
 
 export const addImmunizationStock = async (
   data: Record<string, any>,
@@ -27,7 +26,7 @@ export const addImmunizationStock = async (
 
 
     
-    const response = await api.post("inventory/immunization_stock/", {
+    const response = await api2.post("inventory/immunization_stock/", {
       ...data,
       imzStck_qty,
       imzStck_per_pcs,
@@ -54,7 +53,7 @@ export const addImzTransaction = async (
       throw new Error("Immunization stock ID is required.");
     }
 
-    const res = await api.post("inventory/imz_transaction/", {
+    const res = await api2.post("inventory/imz_transaction/", {
       imzt_qty: string_qty,
       imzt_action: action,
       staff: staffId,

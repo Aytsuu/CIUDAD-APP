@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateImmunizationStock } from "../restful-api/ImzSupplyPut.API"; // Adjust the path as needed
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { useAddImzTransaction } from "../queries/ImzSupplyPostQueries";
 
 export const useUpdateImmunizationStock = () => {
@@ -51,7 +51,7 @@ export const useSubmitUpdateImmunizationStock = () => {
       if (!formData) throw new Error("Form data is missing");
 
       // Get existing supply data
-      const res = await api.get(`inventory/immunization_stock/${supply.id}/`);
+      const res = await api2.get(`inventory/immunization_stock/${supply.id}/`);
       const existingSupply = res.data;
 
       // Calculate quantities and unit to store

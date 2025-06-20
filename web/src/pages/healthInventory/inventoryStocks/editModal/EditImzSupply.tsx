@@ -131,11 +131,11 @@ export default function EditImzSupplyStock() {
                   Available Qty:
                 </span>
                 {supply.imzStck_unit === "pcs"
-                  ? `${supply.availableStock} pieces`
+                  ? `${supply.availableStock} pc/s`
                   : `${Math.floor(
                       supply.availableStock / supply.imzStck_pcs
                     )} boxes / ${supply.availableStock}
-                        pieces`}
+                        pc/s`}
               </div>
 
               {/* Expiry Date */}

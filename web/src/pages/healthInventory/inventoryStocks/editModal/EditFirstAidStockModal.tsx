@@ -144,9 +144,9 @@ export default function EditFirstAidStock() {
               <div className="sm:col-span-2">
                 <FormLabel>Total Pieces</FormLabel>
                 <div className="flex items-center h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-                  {totalPieces.toLocaleString()} pieces
+                  {totalPieces.toLocaleString()} pc/s
                   <span className="ml-2 text-muted-foreground text-xs">
-                    ({qty} boxes × {pcs} pieces/box)
+                    ({qty} boxes × {pcs} pc/s)
                   </span>
                 </div>
               </div>

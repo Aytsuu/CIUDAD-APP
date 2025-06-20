@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api2 } from "@/api/api";
 import { updateInventoryTimestamp } from "../../InventoryAPIQueries"; // Adjust the path if needed
 
 export const updateVaccineStock = async (
@@ -7,7 +7,7 @@ export const updateVaccineStock = async (
   qty: number,
   vacStck_qty_avail: number
 ) => {
-  const response = await api.put(`inventory/vaccine_stocks/${vacStck_id}/`, {
+  const response = await api2.put(`inventory/vaccine_stocks/${vacStck_id}/`, {
     qty,
     vacStck_qty_avail,
   });
