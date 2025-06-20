@@ -11,7 +11,7 @@ import { useGetAnnouncement, useGetAnnouncementRecipient } from "./queries/annou
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Megaphone, FileText, Calendar, Users, Mail, Clock, Eye } from "lucide-react"
+import { Megaphone, FileText, Calendar, Users, Clock, Eye } from "lucide-react"
 
 type AnnouncementViewProps = {
   ann_id: number
@@ -46,7 +46,6 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
         : formatDateTimeLocal(new Date()),
       ann_type: announcement?.ann_type || "General",
       staff: announcement?.staff?.toString() || "0",
-      ar_type: [firstRecipient?.ar_type || ""],
       ar_mode: [firstRecipient?.ar_mode || ""],
     },
   })
@@ -182,40 +181,64 @@ function AnnouncementView({ ann_id }: AnnouncementViewProps) {
             </Card>
 
             {/* Recipients & Delivery Card */}
-            <Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
-                </div>
-                <CardDescription>Who received this announcement and how</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        <Users className="h-3 w-3 mr-1" />
-                        Target Audience
-                      </Badge>
-                    </div>
-                    <FormInput control={form.control} name="ar_type" label="Recipient Type" readOnly={!isEditing} />
-                  </div>
+<Card className="shadow-sm border-0 bg-white/70 backdrop-blur-sm">
+  <CardHeader className="pb-4">
+    <div className="flex items-center gap-2">
+      <Users className="h-5 w-5 text-gray-600" />
+      <CardTitle className="text-lg">Recipients & Delivery</CardTitle>
+    </div>
+    <CardDescription>Who received this announcement and how</CardDescription>
+  </CardHeader>
+  <CardContent className="space-y-6">
 
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        <Mail className="h-3 w-3 mr-1" />
-                        Delivery Method
-                      </Badge>
-                    </div>
-                    <FormInput control={form.control} name="ar_mode" label="Delivery Mode" readOnly={!isEditing} />
-                  </div>
-                </div>
+    {/* Position List */}
+    <div>
+      <p className="text-sm font-medium text-gray-700 mb-1">Target Positions</p>
+      <div className="flex flex-wrap gap-2">
+        {Array.from(new Set(matchingRecipients.map((r) => r.position_title)))
+          .slice(0, 5)
+          .map((title, i) => (
+            <Badge key={i} variant="secondary" className="text-xs px-2 py-1">
+              {title}
+            </Badge>
+        ))}
+        {matchingRecipients.length > 5 && (
+          <Badge variant="outline" className="text-xs px-2 py-1">
+            +{matchingRecipients.length - 5} more
+          </Badge>
+        )}
+      </div>
+    </div>
 
-                <Separator />
-              </CardContent>
-            </Card>
+    {/* Age Group List */}
+    <div>
+      <p className="text-sm font-medium text-gray-700 mb-1">Target Age Group</p>
+      <div className="flex flex-wrap gap-2">
+        {Array.from(new Set(matchingRecipients.map((r) => r.ar_age))).map((age, i) => (
+          <Badge key={i} variant="secondary" className="text-xs px-2 py-1 capitalize">
+            {age}
+          </Badge>
+        ))}
+      </div>
+    </div>
+
+    {/* Delivery Mode List */}
+    <div>
+      <p className="text-sm font-medium text-gray-700 mb-1">Delivery Mode</p>
+      <div className="flex flex-wrap gap-2">
+        {Array.from(new Set(matchingRecipients.map((r) => r.ar_mode))).map((mode, i) => (
+          <Badge key={i} variant="secondary" className="text-xs px-2 py-1 capitalize">
+            {mode}
+          </Badge>
+        ))}
+      </div>
+    </div>
+
+    <Separator />
+  </CardContent>
+</Card>
+
+
           </form>
         </Form>
       </div>
