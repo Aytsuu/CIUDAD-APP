@@ -1,5 +1,5 @@
 
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 // POST request for firstaidinventorylist model
 export const addFirstAidInventory = async (
@@ -13,7 +13,7 @@ export const addFirstAidInventory = async (
     const pcs = Number(data.finv_pcs) || 0;
     const finv_qty_avail = data.finv_qty_unit === "boxes" ? qty * pcs : qty;
 
-    const res = await api.post("inventory/firstaidinventorylist/", {
+    const res = await api2.post("inventory/firstaidinventorylist/", {
       fa_id: fa_id,
       category: data.category,
       finv_qty: qty,
@@ -34,7 +34,7 @@ export const addFirstAidInventory = async (
 // POST request for firstaidtransaction model
 export const addFirstAidTransaction = async ( finv_id: number, string_qty: string, action: string, staffId: number) => {
   try {
-    const res = await api.post("inventory/firstaidtransaction/", {
+    const res = await api2.post("inventory/firstaidtransaction/", {
       fat_qty: string_qty,
       fat_action: action,
       finv_id: finv_id,

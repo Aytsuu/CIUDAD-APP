@@ -1,4 +1,4 @@
-import {api}  from "@/api/api";
+import {api2}  from "@/api/api";
 
 export const addMedicineInventory = async (data: Record<string, any>, inv_id: number) => {
   try {
@@ -10,7 +10,7 @@ export const addMedicineInventory = async (data: Record<string, any>, inv_id: nu
     const pcs = Number(data.pcs) || 0;
     const minv_qty_avail = data.unit === "boxes" ? qty * pcs : qty;
 
-    const res = await api.post("inventory/medicineinventorylist/", {
+    const res = await api2.post("inventory/medicineinventorylist/", {
       minv_dsg: Number(data.dosage) || 0,
       minv_dsg_unit: data.dsgUnit,
       minv_form: data.form,
@@ -48,7 +48,7 @@ export const addMedicineInventory = async (data: Record<string, any>, inv_id: nu
 
 
 export const addMedicineTransaction = async (data: Record<string, any>) => {try {
-      const res = await api.post("inventory/medicinetransaction/", data);
+      const res = await api2.post("inventory/medicinetransaction/", data);
       return res.data;
     } catch (err) {
       console.error(err);

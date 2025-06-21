@@ -8,16 +8,7 @@ from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 from apps.healthProfiling.models import FamilyComposition,Household, ResidentProfile, Personal, PersonalAddress, Address
 from apps.healthProfiling.serializers.minimal import FCWithProfileDataSerializer
 # serializers.py
-from apps.healthProfiling.serializers.minimal import (
-    ResidentProfileMinimalSerializer,
-    FCWithProfileDataSerializer,
-    HouseholdMinimalSerializer
-)
-from apps.healthProfiling.serializers.minimal import (
-    ResidentProfileMinimalSerializer,
-    FCWithProfileDataSerializer,
-    HouseholdMinimalSerializer
-)
+from apps.healthProfiling.serializers.minimal import *
 
 class PartialUpdateMixin:  
     def to_internal_value(self, data):
@@ -70,6 +61,7 @@ class PatientSerializer(serializers.ModelSerializer):
                 'per_edAttainment': trans.tran_ed_attainment,
                 'per_religion': trans.tran_religion,
                 'per_contact': trans.tran_contact,
+                'per_id': trans.trans_id
             }
         return None
 

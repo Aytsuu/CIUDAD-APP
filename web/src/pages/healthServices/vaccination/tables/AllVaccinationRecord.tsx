@@ -18,7 +18,10 @@ import {
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getVaccinationRecords, getVaccinatedCount } from "../restful-api/Vaccination/GetVaccination";
+import {
+  getVaccinationRecords,
+  getVaccinatedCount,
+} from "../restful-api/GetVaccination";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { CircleCheck, Loader2 } from "lucide-react";
@@ -56,7 +59,7 @@ export default function AllVaccinationRecords() {
   const queryClient = useQueryClient();
   const [vaccinationCounts, setVaccinationCounts] = useState({
     resident_vaccinated: 0,
-    transient_vaccinated: 0
+    transient_vaccinated: 0,
   });
 
   useEffect(() => {
@@ -69,7 +72,9 @@ export default function AllVaccinationRecords() {
       }
     };
 
-    fetchData();
+    const timeoutId = setTimeout(fetchData, 0); // Trigger fetch immediately with minimal delay
+
+    return () => clearTimeout(timeoutId); // Cleanup timeout
   }, []);
 
   // Fetch vaccination records from API
@@ -101,22 +106,15 @@ export default function AllVaccinationRecords() {
         sex: info.per_sex,
         age: calculateAge(info.per_dob).toString(),
         dob: info.per_dob,
-        householdno: record.patient_details?.households?.[0]?.hh_id || "N/A",
+        householdno: record.patient_details?.households?.[0]?.hh_id,
         street: address.add_street,
         sitio: address.sitio,
         barangay: address.add_barangay,
         city: address.add_city,
         province: address.add_province,
         pat_type: record.patient_details.pat_type,
-        address: [
-          address.add_street,
-          address.sitio,
-          address.add_barangay,
-          address.add_city,
-          address.add_province,
-        ]
-          .filter(Boolean)
-          .join(", "),
+        address: `${address.add_street}, ${address.add_barangay}, ${address.add_city}, ${address.add_province}`,
+
         vaccination_count: record.vaccination_count || 0,
       };
     });
@@ -241,7 +239,27 @@ export default function AllVaccinationRecords() {
               to="/invVaccinationRecord"
               state={{
                 params: {
-                  patientData: row.original,
+                  patientData: {
+                    pat_id: row.original.pat_id,
+                    pat_type: row.original.pat_type,
+                    age: row.original.age,
+                    addressFull: row.original.address,
+                    address: {
+                      add_street: row.original.street,
+                      add_barangay: row.original.barangay,
+                      add_city: row.original.city,
+                      add_province: row.original.province,
+                      add_external_sitio: row.original.sitio,
+                    },
+                    households: [{ hh_id: row.original.householdno }],
+                    personal_info: {
+                      per_fname: row.original.fname,
+                      per_mname: row.original.mname,
+                      per_lname: row.original.lname,
+                      per_dob: row.original.dob,
+                      per_sex: row.original.sex,
+                    },
+                  },
                 },
               }}
             >
@@ -270,17 +288,28 @@ export default function AllVaccinationRecords() {
         {/* Vaccination Counts Cards */}
         <div className="flex gap-4 mb-4">
           <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Residents Vaccinated</h3>
-            <p className="text-2xl font-bold">{vaccinationCounts.resident_vaccinated}</p>
-          </div>
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Transients Vaccinated</h3>
-            <p className="text-2xl font-bold">{vaccinationCounts.transient_vaccinated}</p>
-          </div>
-          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
-            <h3 className="text-sm font-medium text-gray-500">Total Vaccinated</h3>
+            <h3 className="text-sm font-medium text-gray-500">
+              Residents Vaccinated
+            </h3>
             <p className="text-2xl font-bold">
-              {vaccinationCounts.resident_vaccinated + vaccinationCounts.transient_vaccinated}
+              {vaccinationCounts.resident_vaccinated}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
+            <h3 className="text-sm font-medium text-gray-500">
+              Transients Vaccinated
+            </h3>
+            <p className="text-2xl font-bold">
+              {vaccinationCounts.transient_vaccinated}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-md shadow-sm flex-1 text-center">
+            <h3 className="text-sm font-medium text-gray-500">
+              Total Vaccinated
+            </h3>
+            <p className="text-2xl font-bold">
+              {vaccinationCounts.resident_vaccinated +
+                vaccinationCounts.transient_vaccinated}
             </p>
           </div>
         </div>

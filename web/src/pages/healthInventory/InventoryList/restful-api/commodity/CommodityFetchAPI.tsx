@@ -1,9 +1,9 @@
 
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const getCommodity = async() =>{
     try{
-      const res= await api.get("inventory/commoditylist/");
+      const res= await api2.get("inventory/commoditylist/");
 
       if(res.status==200){
         return res.data;

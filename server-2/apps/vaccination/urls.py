@@ -26,5 +26,11 @@ urlpatterns = [
     path('vacrec-count/<str:pat_id>/', GetVaccinationCountView.as_view(), name='get-vaccination-count'),
     path('residents/unvaccinated/', GetAllResidentsNotVaccinated.as_view(), name='unvaccinated-residents'),
     path('count-vaccinated/', CountVaccinatedByPatientTypeView.as_view(), name='count-vaccinated'),
+    path('forwarded-vaccination-records/', ForwardedVaccinationHistoryView.as_view(), name='forwarded-vaccination-records'),
+    
+    
+    
+
+
 
 ]

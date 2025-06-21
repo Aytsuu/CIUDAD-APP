@@ -1,8 +1,8 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const getTransactionMedicines = async () => {
   try {
-    const res = await api.get("inventory/medicinetransaction/");
+    const res = await api2.get("inventory/medicinetransaction/");
     if (res.status === 200) { 
       return res.data;
     }
@@ -16,7 +16,7 @@ export const getTransactionMedicines = async () => {
 
 export const getTransactionFirstAid = async () => {
   try {
-    const res= await api.get("inventory/firstaidtransaction/");
+    const res= await api2.get("inventory/firstaidtransaction/");
     if (res.status === 200) {
       return res.data;
     }
@@ -30,7 +30,7 @@ export const getTransactionFirstAid = async () => {
 
 export const getTransactionCommodity = async() =>{
   try{
-    const res = await api.get("inventory/commoditytransaction/");
+    const res = await api2.get("inventory/commoditytransaction/");
     if(res.status==200){ return res.data;}
     console.error(res.status)
     return[]
@@ -46,7 +46,7 @@ export const getTransactionCommodity = async() =>{
 
 export const getVaccineTransactions = async() =>{
   try{
-    const res = await api.get("inventory/antigens_stocks/");
+    const res = await api2.get("inventory/antigens_stocks/");
     if(res.status==200){return res.data;}
     console.error(res.status)
     return[]
@@ -60,7 +60,7 @@ export const getVaccineTransactions = async() =>{
 
 export const getImmunizationTransactions = async() =>{
   try{
-    const res = await api.get("inventory/imz_transaction/");
+    const res = await api2.get("inventory/imz_transaction/");
     if(res.status==200){ return res.data; }
     console.error(res.status)
     return[]

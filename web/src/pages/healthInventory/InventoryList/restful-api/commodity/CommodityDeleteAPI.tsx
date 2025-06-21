@@ -1,9 +1,9 @@
 
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const handleDeleteCommodityList = async (id: string, callback?: () => void) => {
     try {
-      await api.delete(`inventory/commoditylist/${id}/`); // API call
+      await api2.delete(`inventory/commoditylist/${id}/`); // API call
       if (callback) callback(); // Call the function to refetch data
     } catch (error) {
       console.error("Error deleting medicine:", error);
@@ -12,7 +12,7 @@ export const handleDeleteCommodityList = async (id: string, callback?: () => voi
   
 
   
-// import {api} from "@/api/api";
+// import {api2} from "@/api/api";
 
 // export const handleDeleteCommodityList = async (
 //     com_id: number,

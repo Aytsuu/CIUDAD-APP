@@ -1,4 +1,4 @@
-import {api} from "@/api/api";
+import {api2} from "@/api/api";
 
 export const addCommodityInventory = async (
   data: Record<string, any>
@@ -7,7 +7,7 @@ export const addCommodityInventory = async (
     if (!data.com_id) {
       throw new Error("Commodity ID is required.");
     }
-    const res = await api.post("inventory/commodityinventorylist/", data);
+    const res = await api2.post("inventory/commodityinventorylist/", data);
 
     if (res.data.error) {
       throw new Error(res.data.error);
@@ -32,7 +32,7 @@ export const addCommodityTransaction = async (
       throw new Error("Commodity inventory ID is required.");
     }
 
-    const res = await api.post("inventory/commoditytransaction/", {
+    const res = await api2.post("inventory/commoditytransaction/", {
       comt_qty: string_qty,
       comt_action: action,
       staff: staffId,

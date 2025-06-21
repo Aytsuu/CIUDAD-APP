@@ -16,16 +16,18 @@ export const getResident = async () => {
 		}
 	 }
 }
-
-// fetch patients
+// patientsGetAPI.tsx
 export const getPatients = async () => {
     try {
-        const res = await api2.get("patientrecords/patient/")
-        return res.data;
+        const res = await api2.get("patientrecords/patient/");
+        return res.data || []; // Fallback if undefined
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Network Error:", error);
+        return []; // Always return a defined value
     }
-}
+};
+
+
 
 // fetch patient details
 export const getPatientDetails = async (patientId: string) => {
