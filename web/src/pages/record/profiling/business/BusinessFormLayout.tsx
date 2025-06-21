@@ -14,19 +14,23 @@ import { CircleAlert, CircleCheck } from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { Type } from "../profilingEnums";
 import { useAuth } from "@/context/AuthContext";
-import { useAddBusiness, useAddBusinessFile, useAddFile } from "../queries/profilingAddQueries";
+import { useAddBusiness } from "../queries/profilingAddQueries";
 import { MediaUploadType } from "@/components/ui/media-upload";
+import { useSitioList } from "../queries/profilingFetchQueries";
+import { useLoading } from "@/context/LoadingContext";
+import { useInstantFileUpload } from "@/hooks/use-file-upload";
+import { useUpdateBusiness } from "../queries/profilingUpdateQueries";
+import { capitalize } from "@/helpers/capitalize";
 
 export default function BusinessFormLayout() {
-  // Initializing states
-  const navigate = useNavigate();
+  // --------------------- STATE INITIALIZATION -----------------------
   const location = useLocation();
   const params = React.useMemo(
     () => location.state?.params || {},
     [location.state]
   );
   const { user } = useAuth();
-  const sitio = React.useRef(formatSitio(params.sitio));
+  const { showLoading, hideLoading } = useLoading();
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -38,18 +42,34 @@ export default function BusinessFormLayout() {
     defaultValues: defaultValues.current,
   });
   const { mutateAsync: addBusiness } = useAddBusiness();
-  const { mutateAsync: addBusinessFile } = useAddBusinessFile();
-  const { mutateAsync: addFile } = useAddFile();
+  const { mutateAsync: updateBusiness } = useUpdateBusiness();
+  const { data: sitioList, isLoading: isLoadingSitio } = useSitioList();
+  const formattedSitio = React.useMemo(() => formatSitio(sitioList) || [], [sitioList]);
+  const { deleteFile } = useInstantFileUpload({mediaFiles});
+  
+  // --------------------- SIDE EFFECTS -----------------------
+  React.useEffect(() => {
+    if(isLoadingSitio) showLoading();
+    else hideLoading();
+  }, [isLoadingSitio])
 
   React.useEffect(() => {
     if(formType === Type.Viewing){
       setIsReadOnly(true)
       populateFields()
+      setMediaFiles(params?.business?.files);
     } else {
       setIsReadOnly(false)
     }
   }, [formType])
 
+  React.useEffect(() => {
+    if(params?.business?.files) {
+      setMediaFiles(params?.business?.files);
+    }
+  }, [params?.business?.files])
+
+  // --------------------- HANDLERS -----------------------
   const populateFields = React.useCallback(() => {
     const businessInfo = params.business
     if(!businessInfo) return;
@@ -60,13 +80,15 @@ export default function BusinessFormLayout() {
       {key: "bus_respondentMname" , value: businessInfo.bus_respondentMname},
       {key: "bus_respondentSex" , value: businessInfo.bus_respondentSex},
       {key: "bus_respondentDob" , value: businessInfo.bus_respondentDob},
+      {key: "bus_respondentContact" , value: businessInfo.bus_respondentContact},
+      {key: "bus_respondentAddress" , value: businessInfo.bus_respondentAddress},
       {key: "bus_name" , value: businessInfo.bus_name},
       {key: "bus_gross_sales" , value: String(businessInfo.bus_gross_sales)},
       {key: "bus_province" , value: businessInfo.bus_province},
       {key: "bus_city" , value: businessInfo.bus_city},
       {key: "bus_barangay" , value: businessInfo.bus_barangay},
       {key: "bus_street" , value: businessInfo.bus_street},
-      {key: "sitio" , value: businessInfo.sitio.sitio_name},
+      {key: "sitio" , value: businessInfo.sitio},
     ]
 
     fields.forEach(({key, value}) => {
@@ -96,38 +118,65 @@ export default function BusinessFormLayout() {
       return;
     }
 
-    // Submit POST request
     const businessInfo = form.getValues();
-    const business = await addBusiness({
-      businessInfo: businessInfo,
-      staffId: user?.staff.staff_id
+    const files = mediaFiles.map((media) => {
+      return {
+        bf_name: media.file.name,
+        bf_type: media.type,
+        bf_path: media.storagePath,
+        bf_url: media.publicUrl,
+      }
     });
 
-    mediaFiles.map(async (media) => {
-      const file = await addFile({
-        name: media.file.name,
-        type: media.type,
-        path: media.storagePath || '',
-        url: media.publicUrl || ''
+    if(formType === Type.Create) {
+      addBusiness({
+        ...businessInfo,
+        staff: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+        files: files 
+      }, {
+        onSuccess: () => {
+          toast("New record created successfully", {
+            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
+          });
+
+          setIsSubmitting(false);
+          setMediaFiles([])
+          form.reset(defaultValues.current);
+        },
+        onError: (error) => {
+          mediaFiles.map((media) => {
+            if(media.storagePath) deleteFile(media.storagePath);
+          })
+          throw error;
+        }
       });
+    } else {
+      updateBusiness({
+        data: {
+          ...businessInfo,
+          sitio: businessInfo.sitio.toLowerCase(),
+          files: files,
+          staff: user?.djangoUser?.resident_profile?.staff?.staff_id || "",
+        },
+        businessId: params?.business?.bus_id
+      }, {
+        onSuccess: () => {
+          toast("Record updated successfully", {
+            icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
+          });
 
-      await addBusinessFile({
-        businessId: business.bus_id,
-        fileId: file.file_id
-      });
-    })
+          params.business = {
+            ...businessInfo,
+            bus_id: params?.business?.bus_id,
+            sitio: capitalize(businessInfo.sitio)
+          }
+          params.business.files = mediaFiles
 
-    toast("New record created successfully", {
-      icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      action: {
-        label: "View",
-        onClick: () => navigate(-1),
-      },
-    });
-
-    setIsSubmitting(false);
-    setMediaFiles([])
-    form.reset(defaultValues.current);
+          setIsSubmitting(false);
+          setFormType(Type.Viewing);
+        }
+      })
+    }
   };
 
   const errorFeedback = React.useCallback((message: string) => {
@@ -138,6 +187,7 @@ export default function BusinessFormLayout() {
   }, []);
 
   return (
+    // --------------------- RENDER -----------------------
     <LayoutWithBack
       title="Business Form"
       description="Register a new business by filling in essential details such as name, location, 
@@ -154,7 +204,7 @@ export default function BusinessFormLayout() {
           >
             <BusinessProfileForm
               formType={formType}
-              sitio={sitio.current}
+              sitio={formattedSitio}
               control={form.control}
               isSubmitting={isSubmitting}
               isReadOnly={isReadOnly}

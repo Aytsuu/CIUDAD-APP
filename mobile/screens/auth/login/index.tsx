@@ -16,6 +16,7 @@ import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import ScreenLayout from "@/screens/_ScreenLayout";
 import { useToastContext } from "@/components/ui/toast";
 import { SignupOptions } from "./SignupOptions";
+import { useAuth } from "@/contexts/AuthContext";
 
 type SignInForm = z.infer<typeof signInSchema>;
 
@@ -26,7 +27,7 @@ export default () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isInitializing } = useAuth();
+  // const { login, isInitializing } = useAuth();
   const router = useRouter();
 
   const { control, trigger, getValues } = useForm<SignInForm>({
@@ -102,10 +103,9 @@ export default () => {
             className="bg-primaryBlue"
             size={"lg"}
             onPress={handleLogin}
-            disabled={isLoading}
           >
             <Text className="text-white font-PoppinsSemiBold text-[14px]">
-              {isLoading ? "Logging in..." : "Log in"}
+              Log in
             </Text>
           </Button>
         </View>

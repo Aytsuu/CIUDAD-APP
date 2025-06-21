@@ -81,7 +81,7 @@ class SignUpView(AuthBaseView):
         try:
             supabase_id, email = self.validate_request_data(request.data)
             username = request.data.get('username')
-            rp_id = request.data.get('rp')
+            rp_id = request.data.get('rp')  # This should be the ResidentProfile ID
 
             with transaction.atomic():
                 # Check for existing account
@@ -91,27 +91,36 @@ class SignUpView(AuthBaseView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Create new account
-                account = Account.objects.create(
-                    supabase_id=supabase_id,
-                    email=email,
-                    username=username or email.split('@')[0]
-                )
-                
-                # Handle resident profile association
+                # Handle resident profile association FIRST
+                resident = None
                 if rp_id:
                     try:
-                        # Use select_for_update to lock the row during transaction
-                        resident = ResidentProfile.objects.select_for_update().get(rp_id=rp_id)
-                        resident.account = account
-                        resident.save()
+                        resident = ResidentProfile.objects.select_for_update().get(pk=rp_id)
+                        
+                        # Check if resident already has an account
+                        if hasattr(resident, 'account'):
+                            return Response(
+                                {'error': 'Resident profile already linked to another account'},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
                     except ResidentProfile.DoesNotExist:
-                        # Create new resident profile if it doesn't exist
-                        resident = ResidentProfile.objects.create(
-                            rp_id=rp_id,
-                            account=account
+                        return Response(
+                            {'error': 'Specified resident profile does not exist'},
+                            status=status.HTTP_400_BAD_REQUEST
                         )
-                        logger.info(f"Created new resident profile with rp_id: {rp_id}")
+
+                # Create new account
+                account_data = {
+                    'supabase_id': supabase_id,
+                    'email': email,
+                    'username': username or email.split('@')[0]
+                }
+                
+                # Only include rp if resident exists
+                if resident:
+                    account_data['rp'] = resident
+                
+                account = Account.objects.create(**account_data)
 
                 serializer = UserAccountSerializer(account)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)

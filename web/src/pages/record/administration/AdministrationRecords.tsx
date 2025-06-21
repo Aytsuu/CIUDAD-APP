@@ -47,56 +47,13 @@ export default function AdministrationRecords() {
     }
   }
 
-  const totalStaff = staffList.length;
-
   return (
     <MainLayoutComponent
       title="Administrative Records"
       description="Manage and view staff information"
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Residents</p>
-                  <p className="text-2xl font-bold">{totalStaff}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <ClockArrowUp className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Active
-                </Badge>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold">+{Math.max(0, totalStaff - 50)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        
-
+      
         <Card>
           {/* Search and Actions Bar */}
           <div className="bg-white rounded-xl p-6">
@@ -252,7 +209,7 @@ export default function AdministrationRecords() {
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                  Showing <span className="font-medium">{(currentPage - 1) * (pageSize + 1)}</span> -{" "}
+                  Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
                   <span className="font-medium">{totalCount}</span> staffs
                 </p>

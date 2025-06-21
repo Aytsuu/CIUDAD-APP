@@ -78,13 +78,16 @@ export type RequestRecord = {
 }
 
 export type BusinessRecord = {
-  id: string;
-  name: string;
-  grossSales: string;
+  bus_id: string;
+  bus_name: string;
+  bus_gross_sales: string;
   sitio: string;
-  street: string;
-  respondent: string;
-  dateRegistered: string;
-  registeredBy: string;
+  bus_street: string;
+  bus_respondentLname: string;
+  bus_respondentFname: string;
+  bus_respondentMname: string;
+  bus_date_registered: string;
+  bus_registered_by: string;
+  files: Record<string, any>[];
 }
 

@@ -15,8 +15,8 @@ class IncidentReport(models.Model):
   ir_date = models.DateField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
-  # rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
-  # add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
+  rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
+  add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'incident_report'
@@ -35,8 +35,8 @@ class AcknowledgementReport(models.Model):
   ar_is_archive = models.BooleanField(default=False)
   ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
-  # add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
-  # staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+  add = models.ForeignKey('profiling.Address', on_delete=models.CASCADE)
+  staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'acknowledgement_report'
@@ -57,7 +57,7 @@ class WeeklyAccomplishmentReport(models.Model):
   war_created_at = models.DateField(auto_now_add=True)
   war_status = models.CharField(max_length=50, default='Unsigned')
   war_is_archive = models.BooleanField(default=False)
-  # staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
+  staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'weekly_acknowledgement_report'

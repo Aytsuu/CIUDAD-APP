@@ -7,6 +7,7 @@ from .views.household_views import *
 from .views.sitio_views import *
 from .views.address_views import *
 from .views.request_registration_views import *
+from .views.business_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -64,7 +65,10 @@ urlpatterns = [
     # path("request/file/", RequestFileView.as_view(), name="request-files"),
 
     # # Business Urls
-    # path("business/", BusinessView.as_view(), name="business-details"),
+    path("business/list/table/", BusinessTableView.as_view(), name="business-list-table"),
+    path("business/create/", BusinessCreateView.as_view(), name="business-create"),
+    path("business/<int:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),
+    path("business/file/create/", BusinessFileCreateView.as_view(), name="business-file-create"),
     # path("business/file/", BusinessFileView.as_view(), name="business-files"),
 
 ]

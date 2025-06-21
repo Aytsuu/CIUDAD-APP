@@ -127,7 +127,7 @@ const PersonalInfoForm = ({
       </div>
       <div className="grid grid-cols-1 gap-4">
         {
-          addresses.map((address, idx) => (
+          addresses?.map((address, idx) => (
             <div className="grid gap-3" key={idx}>
               <Label className="text-black/70">Address {idx + 1}</Label>
               <div className="flex items-center gap-3">

@@ -54,47 +54,6 @@ export default function ResidentRecords() {
   return (
     <MainLayoutComponent title="Resident Profiling" description="Manage and view all residents in your community">
       <div className="space-y-6">
-        {/* Header Section with Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Residents</p>
-                  <p className="text-2xl font-bold">{totalCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <ClockArrowUp className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Active
-                </Badge>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold">+{Math.max(0, totalCount - 50)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Search and Actions */}
         <Card>
           <CardHeader className="pb-4">
@@ -235,7 +194,7 @@ export default function ResidentRecords() {
             {!isLoading && residents.length > 0 && (
               <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                  Showing <span className="font-medium">{(currentPage - 1) * (pageSize + 1)}</span> -{" "}
+                  Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
                   <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
                   <span className="font-medium">{totalCount}</span> residents
                 </p>

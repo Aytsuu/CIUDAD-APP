@@ -198,9 +198,15 @@ export const getRequests = async (page: number, pageSize: number, searchQuery: s
 };
 
 // ==================== FETCH BUSINESS ==================== (Status: Optimizing....)
-export const getBusinesses = async () => {
+export const getBusinesses = async (page: number, pageSize: number, searchQuery: string) => {
   try {
-    const res = await api.get("profiling/business/");
+    const res = await api.get("profiling/business/list/table/", {
+      params: {
+        page,
+        page_size: pageSize,
+        search: searchQuery
+      }
+    });
     return res.data;
   } catch (err) {
     throw err;

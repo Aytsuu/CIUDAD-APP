@@ -3,7 +3,7 @@ import { Form } from "@/components/ui/form/form";
 import PersonalInfoForm from "./PersonalInfoForm";
 import { useResidentForm } from "./useResidentForm";
 import { useAuth } from "@/context/AuthContext";
-import { Type } from "../../profilingEnums";
+import { Origin, Type } from "../../profilingEnums";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Card } from "@/components/ui/card/card";
 import { capitalizeAllFields } from "@/helpers/capitalize";
@@ -104,6 +104,7 @@ export default function ResidentCreateForm({ params }: { params: any }) {
     );
 
     populateFields(data?.personal_info);
+    setAddresses(data?.personal_info.per_addresses)
   }, [form.watch("per_id")]);
 
   const submit = async () => {
@@ -197,7 +198,9 @@ export default function ResidentCreateForm({ params }: { params: any }) {
               isSubmitting={isSubmitting}
               submit={submit}
               origin={params.origin ? params.origin : ""}
-              isReadOnly={false}
+              isReadOnly={form.watch("per_id") && params.origin == Origin.Administration 
+                ? true : false
+              }
               isAllowSubmit={isAllowSubmit}
               setAddresses={setAddresses}
               setValidAddresses={setValidAddresses}
