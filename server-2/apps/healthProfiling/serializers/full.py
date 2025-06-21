@@ -41,7 +41,7 @@ class HouseholdFullSerializer(serializers.ModelSerializer):
     def get_staff(self, obj):
         from apps.administration.serializers.minimal import StaffMinimalSerializer
         return StaffMinimalSerializer(obj.staff, context=self.context).data
-    
+     
     def get_family(self, obj):
         return FamilyFullSerializer(obj.family_set.all(), many=True).data
     

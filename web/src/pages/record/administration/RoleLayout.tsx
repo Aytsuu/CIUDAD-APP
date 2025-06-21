@@ -41,7 +41,7 @@ export default function RoleLayout() {
     if (!selectedPosition) return [];
     return positionFeaturesMap.get(+selectedPosition) || [];
   }, [selectedPosition, positionFeaturesMap]);
-
+  
   // Handle position selection
   const handlePositionSelect = React.useCallback((position: string) => {
     setSelectedPosition(position);

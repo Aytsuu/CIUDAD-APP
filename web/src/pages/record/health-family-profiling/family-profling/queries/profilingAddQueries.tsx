@@ -45,7 +45,7 @@ export const useAddResidentAndPersonalHealth = () => { // For registration from 
     }) => addResidentAndPersonalHealth(personalInfo, staffId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['residentsTableData'],
+        queryKey: ['residentsTableDataHealth'],
       });
     }
   })

@@ -25,7 +25,7 @@ import { formatResidents } from "../profilingFormats";
 import { Form } from "@/components/ui/form/form";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
 import { useAuth } from "@/context/AuthContext";
-import { useAddPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
+import { useAddResidentAndPersonalHealth, useAddResidentProfileHealth } from "../../health-family-profiling/family-profling/queries/profilingAddQueries";
 import { useAddResidentProfile } from "../queries/profilingAddQueries";
 import { useUpdateProfile } from "../queries/profilingUpdateQueries";
 
@@ -51,8 +51,8 @@ export default function ResidentFormLayout() {
   const formattedResidents = React.useMemo(() => {
     return formatResidents(params);
   }, [params.residents]);
-  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile(params);
-  const { mutateAsync: addPersonal } = useAddPersonal();
+  const { mutateAsync: addResidentProfile, isPending: isSubmittingProfile } = useAddResidentProfile();
+  const { mutateAsync: addResidentAndPersonalHealth } = useAddResidentAndPersonalHealth();
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
 
   React.useEffect(() => {

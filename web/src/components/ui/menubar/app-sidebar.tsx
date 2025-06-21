@@ -135,7 +135,7 @@ const items: MenuItem[] = [
     subItems: true,
     url: "/",
     items: [
-      { title: "Administration", url: "/health-administration" },
+      { title: "Administrations", url: "/health-administration" },
       { title: "Doctor", url: "/mainMedicalForm" },
       { title: "Animal Bites", url: "/Animalbite_viewing" },
       { title: "Child Services", url: "/allChildHRTable" },

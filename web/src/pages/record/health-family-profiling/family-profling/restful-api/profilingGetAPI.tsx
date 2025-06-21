@@ -10,7 +10,7 @@ export const getPerAddressesList = async () => {
   }
 }
 
-export const getResidentsList = async () => {
+export const getResidentsListHealth = async () => {
   try {
     const res = await api2.get("health-profiling/resident/");
     return res.data;
@@ -37,7 +37,7 @@ export const getResidentsFamSpecificList = async (familyId: string) => {
   }
 }
 
-export const getResidentsTable = async (page: number, pageSize: number, searchQuery?: string) => {
+export const getResidentsTableHealth = async (page: number, pageSize: number, searchQuery?: string) => {
   try {
     const res = await api2.get("health-profiling/resident/list/table/", {
       params: { 
@@ -152,7 +152,7 @@ export const getHouseholdTable = async (page: number, pageSize: number, searchQu
   }
 }
 
-export const getHouseholdList = async () => {
+export const getHouseholdListHealth = async () => {
   try {
     const res = await api2.get("health-profiling/household/list/");
     return res.data;
@@ -161,7 +161,7 @@ export const getHouseholdList = async () => {
   }
 };
 
-export const getHouseholdData = async (householdId: string) => {
+export const getHouseholdDataHealth = async (householdId: string) => {
   try {
     const res = await api2.get(`health-profiling/household/${householdId}/data/`);
     return res.data

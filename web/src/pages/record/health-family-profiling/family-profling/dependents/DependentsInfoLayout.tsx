@@ -2,19 +2,19 @@ import React from "react";
 import { z } from "zod";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
-import { familyFormSchema } from "@/form-schema/family-form-schema";
+import { familyFormSchema } from "@/form-schema/profiling-schema";
 import DependentForm from "./DependentForm";
 import { DataTable } from "@/components/ui/table/data-table";
 import { DependentRecord } from "../../profilingTypes";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { CircleAlert, CircleCheck, Trash } from "lucide-react";
+import { CircleAlert, Trash } from "lucide-react";
 import { toast } from "sonner";
-import { replace, useNavigate } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useAuth } from "@/context/AuthContext";
-import { useAddFamily, useAddFamilyComposition } from "@/pages/record/profiling/queries/profilingAddQueries"; 
+import { useAddFamilyHealth, useAddFamilyCompositionHealth } from "../queries/profilingAddQueries";
 import { LoadButton } from "@/components/ui/button/load-button";
+import { useSafeNavigate } from "@/hooks/use-safe-navigate";
 
 export default function DependentsInfoLayout({
   form,
@@ -22,8 +22,7 @@ export default function DependentsInfoLayout({
   selectedParents,
   dependentsList,
   setDependentsList,
-  defaultValues,
-
+  back,
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -31,14 +30,14 @@ export default function DependentsInfoLayout({
   dependentsList: DependentRecord[];
   setDependentsList: React.Dispatch<React.SetStateAction<DependentRecord[]>>
   defaultValues: Record<string, any>;
-
+  back: () => void;
 }) {
 
   const PARENT_ROLES = ["Mother", "Father", "Guardian"];
-  const navigate = useNavigate();
-  const { user } = React.useRef(useAuth()).current;
-  const { mutateAsync: addFamily } = useAddFamily();
-  const { mutateAsync: addFamilyComposition } = useAddFamilyComposition();
+  const { user } = useAuth();
+  const { safeNavigate } = useSafeNavigate(); 
+  const { mutateAsync: addFamilyHealth } = useAddFamilyHealth();
+  const { mutateAsync: addFamilyCompositionHealth } = useAddFamilyCompositionHealth();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -57,7 +56,9 @@ export default function DependentsInfoLayout({
       }));
 
       // Update the state with the transformed data
-      setDependentsList(transformedData);
+      if(transformedData.length > 0) {
+        setDependentsList(transformedData);
+      }
     }
   }, [form.watch("dependentsInfo.list")]); // Watch for changes in dependentsInfo.list
 
@@ -111,60 +112,73 @@ export default function DependentsInfoLayout({
     });
   };
 
-  // const submit = async () => { 
-  //   setIsSubmitting(true);
+  const submit = async () => { 
+    setIsSubmitting(true);
 
-  //   if(dependentsList.length === 0){
-  //     toast('Family Registration', {
-  //       description: "Must have atleast one dependent.",
-  //       icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />
-  //     });
-  //     return;
-  //   }
+    if(dependentsList.length === 0){
+      setIsSubmitting(false);
+      toast('Family Registration', {
+        description: "Must have atleast one dependent.",
+        icon: <CircleAlert size={24} className="fill-red-500 stroke-white" />,
+        style: {
+          border: '1px solid rgb(225, 193, 193)',
+          padding: '16px',
+          color: '#b91c1c',
+          background: '#fef2f2',
+        },
+      });
+      return;
+    }
 
-  //   // Get form values
-  //   const demographicInfo = form.getValues().demographicInfo;
-  //   const dependentsInfo = form.getValues().dependentsInfo.list;
+    // Get form values
+    const demographicInfo = form.getValues().demographicInfo;
+    const dependentsInfo = form.getValues().dependentsInfo.list;
 
-  //   // Store information to the database
-  //   const family = await addFamily({
-  //     demographicInfo: demographicInfo, 
-  //     staffId: user?.staff.staff_id
-  //   });
+    // Store information to the database
+    const family = await addFamilyHealth({
+      demographicInfo: demographicInfo, 
+      staffId: user?.staff.staff_id
+    });
 
-  //   await Promise.all(selectedParents.map( async (parentId, index) => {
-  //     if(parentId) {
-  //       await addFamilyComposition({
-  //         familyId: family.fam_id,
-  //         role: PARENT_ROLES[index],
-  //         residentId: parentId
-  //       })
-  //     }
-  //   }))
+    let bulk_composition: {
+      fam: string, 
+      fc_role: string, 
+      rp: string}[] = [];
 
-  //   await Promise.all(dependentsInfo.map( async (dependent) => {
-  //     await addFamilyComposition({
-  //       familyId: family.fam_id,
-  //       role: "Dependent",
-  //       residentId: dependent.id.split(" ")[0]
-  //     })
-  //   }))
+    selectedParents.map((parentId, index) => {
+      if(!parentId) return;
+      bulk_composition = [
+        ...bulk_composition,
+        {
+          fam: family.fam_id,
+          fc_role: PARENT_ROLES[index],
+          rp: parentId
+        }
+      ]
+    });
 
-  //   // Provide feedback to the user
-  //   toast("Record added successfully", {
-  //     icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />
-  //   });
+    dependentsInfo.map((dependent) => {
+      bulk_composition = [
+        ...bulk_composition,
+        {
+          fam: family.fam_id,
+          fc_role: 'Dependent',
+          rp: dependent.id.split(" ")[0]
+        }
+      ]
+    })
 
-  //   navigate(-1);
-  //   setIsSubmitting(false);
-  //   form.reset(defaultValues);
-  // }
+    addFamilyCompositionHealth(bulk_composition,{
+      onSuccess: () => {
+        safeNavigate.back();
+      }
+    });
+  }
 
   return (
     <div className="flex flex-col min-h-0 h-auto gap-10 md:p-10 rounded-lg overflow-auto">
       <div className="mt-8 flex flex-col justify-end gap-2 sm:gap-3">
         <DependentForm
-          title="Dependents Information"
           form={form}
           residents={residents}
           selectedParents={selectedParents}
@@ -172,7 +186,26 @@ export default function DependentsInfoLayout({
         />
         <DataTable data={dependentsList} columns={dependentColumns} />
       </div>
-      
+      <div className="flex justify-end gap-3">
+        {!isSubmitting ? (<>
+          <Button variant="outline" className="w-full sm:w-32" onClick={back}>
+            Prev
+          </Button>
+          <ConfirmationModal 
+          trigger={
+            <Button className="w-full sm:w-32">
+              Register
+            </Button>
+          }
+          title="Confirm Registration"
+          description="Do you wish to proceed with the registration?"
+          actionLabel="Confirm"
+          onClick={submit}
+          />
+        </>) : (
+          <LoadButton>Registering...</LoadButton>
+        )}
+      </div>
     </div>
   );
 }

@@ -47,7 +47,7 @@ export const useSetPermission = () => {
   })
 }
 
-export const useAddStaff = () => {
+export const useAddStaffHealth = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({

@@ -6,15 +6,17 @@ import {
   getFamilyComposition,
   getFamilyData,
   getFamilyMembers,
-  getHouseholdList,
+  getHouseholdListHealth,
   getHouseholdTable,
   getPerAddressesList,
   getRequests,
   getResidentsFamSpecificList,
-  getResidentsList,
-  getResidentsTable,
+  getResidentsListHealth,
+  getResidentsTableHealth,
   getResidentsWithFamExclusion,
   getSitioList,
+  getPersonalInfo, // Add this import
+  getHouseholdDataHealth, // Add this import
 } from "../restful-api/profilingGetAPI";
 
 // ================ RESIDENTS ================ (Status: Optmizing....)
@@ -31,15 +33,34 @@ export const usePerAddressesListHealth = () => {
 export const useResidentsListHealth = () => {
   return useQuery({
     queryKey: ['residentsList'],
-    queryFn: getResidentsList,
+    queryFn: getResidentsListHealth,
     staleTime: 5000,
   })
 }
+export const usePersonalInfo = (residentId: string | null) => {
+  return useQuery({
+    queryKey: ['personal-info', residentId],
+    queryFn: () => getPersonalInfo(residentId!),
+    enabled: !!residentId, // Only run when residentId exists
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (changed from cacheTime to gcTime)
+  });
+}
+
+export const useHouseholdData = (householdId: string | null) => {
+  return useQuery({
+    queryKey: ['household-data', householdId],
+    queryFn: () => getHouseholdDataHealth(householdId!),
+    enabled: !!householdId, // Only run when householdId exists
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (changed from cacheTime to gcTime)
+  });
+};
 
 export const useResidentsTableHealth = (page: number, pageSize: number, searchQuery?: string) => {
   return useQuery({
-    queryKey: ['residentsTableData', page, pageSize, searchQuery],
-    queryFn: () => getResidentsTable(page, pageSize, searchQuery),
+    queryKey: ['residentsTableHealthData', page, pageSize, searchQuery],
+    queryFn: () => getResidentsTableHealth(page, pageSize, searchQuery),
     staleTime: 5000,
   })
 }
@@ -120,8 +141,8 @@ export const useFamilyCompositionHealth = () => {
 
 export const useHouseholdsListHealth = () => {
   return useQuery({
-    queryKey: ['householdsList'],
-    queryFn: getHouseholdList,
+    queryKey: ['householdsListHealth'],
+    queryFn: getHouseholdListHealth,
     staleTime: 5000,
   })
 }

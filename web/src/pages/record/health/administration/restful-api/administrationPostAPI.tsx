@@ -24,9 +24,10 @@ export const addPositionHealth = async (data: any, staffId: string) => {
     const res = await api2.post("administration/position/", {
       pos_id: data.pos_title.toLowerCase(),
       pos_title: capitalize(data.pos_title),
-      pos_max: data.pos_max,
+      pos_max: parseInt(data.pos_max),
       staff: staffId,
     });
+    
 
     return res.data;
   } catch (err) {

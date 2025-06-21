@@ -11,11 +11,13 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { useResidentsTable } from "../queries/profilingFetchQueries";
 import { useResidentsTableHealth } from "../../health-family-profiling/family-profling/queries/profilingFetchQueries";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [activeTab, setActiveTab] = React.useState<"profile" | "health">("profile");
   const debouncedSearchQuery = useDebounce(searchQuery, 100);
   const debouncedPageSize = useDebounce(pageSize, 100);
   
@@ -30,24 +32,20 @@ export default function ResidentRecords() {
     debouncedSearchQuery
   );
   
-  // Combined loading state
-  const isLoadingCombined = isLoading || isLoadingHealth;
-  
   // Reset to page 1 when search changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, activeTab]);
 
   const residents = residentsTableData?.results || [];
   const residentsHealth = residentsTableHealthData?.results || [];
-  const totalCount = residentsTableData?.count || 0;
+  const totalCount = activeTab === "profile" 
+    ? residentsTableData?.count || 0 
+    : residentsTableHealthData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Combine residents with their health data
-  const combinedResidentsData = residents.map((resident: any) => ({
-    ...resident,
-    healthData: residentsHealth.find((health: any) => health.resident_id === resident.id)
-  }));
+  console.log('Main data:', residentsTableData);
+  console.log('Health data:', residentsTableHealthData);
 
   return (
     <MainLayoutComponent
@@ -91,42 +89,60 @@ export default function ResidentRecords() {
       </div>
 
       <div className="bg-white rounded-md">
-        <div className="flex justify-between p-3">
-          <div className="flex items-center gap-2">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-6"
-              value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                if (value >= 1) {
-                  setPageSize(value);
-                } else {
-                  setPageSize(1); // Reset to 1 if invalid
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "profile" | "health")}>
+          <div className="flex justify-between p-3">
+            <TabsList>
+              <TabsTrigger value="profile">Profile Data</TabsTrigger>
+              <TabsTrigger value="health">Health Data</TabsTrigger>
+            </TabsList>
+            <div className="flex items-center gap-2">
+              <p className="text-xs sm:text-sm">Show</p>
+              <Input
+                type="number"
+                className="w-14 h-6"
+                value={pageSize}
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  if (value >= 1) {
+                    setPageSize(value);
+                  } else {
+                    setPageSize(1); // Reset to 1 if invalid
+                  }
+                }}
+              />
+              <p className="text-xs sm:text-sm">Entries</p>
+              <DropdownLayout
+                trigger={
+                  <Button variant="outline" className="h-[2rem]">
+                    <FileInput /> Export
+                  </Button>
                 }
-              }}
-            />
-            <p className="text-xs sm:text-sm">Entries</p>
+                options={[
+                  { id: "", name: "Export as CSV" },
+                  { id: "", name: "Export as Excel" },
+                  { id: "", name: "Export as PDF" },
+                ]}
+              />
+            </div>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" },
-            ]}
-          />
-        </div>
-        <DataTable
-          columns={residentColumns}
-          data={combinedResidentsData}
-          isLoading={isLoadingCombined}
-        />
+
+          <TabsContent value="profile">
+            <DataTable
+              columns={residentColumns}
+              data={residents}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+          
+          <TabsContent value="health">
+            <DataTable
+              columns={residentColumns} // You might want different columns for health data
+              data={residentsHealth}
+              isLoading={isLoadingHealth}
+            />
+          </TabsContent>
+        </Tabs>
+
         <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
           <p className="text-xs sm:text-sm text-darkGray">
             Showing {(currentPage - 1) * pageSize + 1}-
