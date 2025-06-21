@@ -8,8 +8,8 @@ export type ServiceChargeRequest = {
     incident_type: string;
     allegation: string;
     status: string;
+    decision_date: string;
 }
-
 
 export const useGetServiceChargeRequest = () => {
     return useQuery<ServiceChargeRequest[]>({
@@ -36,6 +36,7 @@ export type CaseActivity = {
 export type CaseDetails = {
     sr_id: string;
     sr_status: string;
+    sr_decision_date: string;
     complainant: {
         cpnt_id: string;
         cpnt_name: string;

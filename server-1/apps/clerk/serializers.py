@@ -13,6 +13,7 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
     incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
     allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
     status = serializers.CharField(source='sr_status')
+    decision_date = serializers.DateTimeField(source = 'sr_decision_date')
 
     class Meta:
         model = ServiceChargeRequest
@@ -22,7 +23,8 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
                 'accused_names', 
                 'incident_type', 
                 'allegation', 
-                'status'
+                'status',
+                'decision_date',
                 ]
 
     def get_complainant_name(self, obj):
@@ -94,6 +96,7 @@ class ServiceChargeRequestDetailSerializer(serializers.ModelSerializer):
         fields = [
             'sr_id',
             'sr_status',
+            'sr_decision_date',
             'complainant',
             'complaint',
             'case_activities'

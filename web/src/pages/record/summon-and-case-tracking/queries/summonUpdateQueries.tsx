@@ -13,6 +13,7 @@ export const useResolveCase = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['caseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             toast.success('Case marked as resolved', {
                 id: "resolveCase",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
@@ -41,6 +42,7 @@ export const useEscalateCase = (onSuccess?: () => void) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['caseDetails'] })
+            queryClient.invalidateQueries({ queryKey: ['summonCases'] })
             toast.success('Case marked as escalated', {
                 id: "escalateCase",
                 icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
