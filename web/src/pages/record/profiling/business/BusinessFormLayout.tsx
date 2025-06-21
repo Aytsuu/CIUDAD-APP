@@ -2,7 +2,7 @@ import React from "react";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import BusinessProfileForm from "./BusinessProfileForm";
 import { Card } from "@/components/ui/card/card";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation } from "react-router";
 import { formatSitio } from "../profilingFormats";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -174,6 +174,14 @@ export default function BusinessFormLayout() {
 
           setIsSubmitting(false);
           setFormType(Type.Viewing);
+        },
+        onError: (error) => {
+          mediaFiles.map((media) => {
+            if(!media.storagePath) return;
+            if(params?.business?.files.find((file: any) => file.storagePath == media.storagePath)) return;
+            deleteFile(media.storagePath);
+          })
+          throw error;
         }
       })
     }
