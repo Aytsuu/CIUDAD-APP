@@ -3,4 +3,5 @@ from .views import *
 
 urlpatterns = [
     path('service-charge-request/', ServiceChargeRequestView.as_view(), name='service-charge-request'),
+    path('case-details/<int:sr_id>/', ServiceChargeRequestDetailView.as_view(), name='case-details'),
 ]

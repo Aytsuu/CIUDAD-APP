@@ -103,7 +103,7 @@ function SummonTrackingMain(){
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4 pb-6"> 
                         {fetchedData.map((item: ServiceChargeRequest) => (
-                            <Link to='/summon-and-case-view' className="hover:shadow-lg transition-shadow" >
+                            <Link to='/summon-and-case-view'  state={{sr_id: item.sr_id }} className="hover:shadow-lg transition-shadow" >
                             <CardLayout
                                 title={
                                     <div className="flex flex-row">

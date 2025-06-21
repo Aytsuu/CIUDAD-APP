@@ -8,3 +8,13 @@ export const getServiceChargeRequest = async () => {
         console.error(err)
     }
 }
+
+
+export const getCaseDetails = async (srId: string) => {
+    try{
+        const res = await api.get(`clerk/case-details/${srId}/`)
+        return res.data
+    } catch(err){
+        console.error(err)
+    }
+}
