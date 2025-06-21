@@ -120,7 +120,7 @@ export default function FamilyPlanningForm5({
   const form = useForm({
     defaultValues,
     mode: "onChange",
-    resolver: zodResolver(page5Schema),
+    // resolver: zodResolver(page5Schema),
   })
 
   const [clientSignature, setClientSignature] = useState<string>(formData?.acknowledgement?.clientSignature || "")

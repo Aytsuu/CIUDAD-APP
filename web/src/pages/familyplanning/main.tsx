@@ -1,4 +1,4 @@
-import { fp_obstetrical,fp_record,physical_exam,fp_type,risk_sti,risk_vaw,acknowledgement,pelvic_exam,pregnancy_check,updateFPRecord,updateFPType,updateMedicalHistory,updateObstetricalHistory,updateRiskSti,updateRiskVaw,updatePhysicalExam,updatePelvicExam,updateAcknowledgement,updatePregnancyCheck} from "./request-db/PostRequest"
+import { fp_obstetrical,fp_record,physical_exam,fp_type,risk_sti,risk_vaw,acknowledgement,pelvic_exam,pregnancy_check,updateFPRecord,updateFPType,updateMedicalHistory,updateObstetricalHistory,updateRiskSti,updateRiskVaw,updatePhysicalExam,updatePelvicExam,updateAcknowledgement,updatePregnancyCheck, assessment} from "./request-db/PostRequest"
 import { getFPCompleteRecord } from "./request-db/GetRequest"
 import { useState, useEffect } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -125,6 +125,7 @@ const initialFormData: FormData = {
     guardianSignatureDate: new Date().toISOString().split("T")[0],
   },
   serviceProvisionRecords: [],
+  
   pregnancyCheck: {
     breastfeeding: false,
     abstained: false,
@@ -271,7 +272,6 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         disability: apiData.medical_history?.disability || false,
         disabilityDetails: apiData.medical_history?.disabilityDetails || "",
       },
-
       // Obstetrical History
       obstetricalHistory: {
         g_pregnancies: apiData.obstetrical?.g_pregnancies || 0,
@@ -289,7 +289,6 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         hydatidiformMole: apiData.obstetrical?.fpob_hydatidiform || false,
         ectopicPregnancyHistory: apiData.obstetrical?.fpob_ectopic_pregnancy || false,
       },
-
       // STI Risk
       sexuallyTransmittedInfections: {
         abnormalDischarge: apiData.risk_sti?.abnormalDischarge || false,
@@ -299,7 +298,6 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         history: apiData.risk_sti?.history || false,
         hiv: apiData.risk_sti?.hiv || false,
       },
-
       // VAW Risk
       violenceAgainstWomen: {
         unpleasantRelationship: apiData.risk_vaw?.unpleasant_relationship || false,
@@ -308,7 +306,6 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         referredTo: apiData.risk_vaw?.referredTo || undefined,
         otherReferral: "",
       },
-
       // Physical Exam
       weight: apiData.physical_exam?.weight || "",
       height: apiData.physical_exam?.height || "",
@@ -320,7 +317,6 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
       breastExamination: apiData.physical_exam?.breastExamination || "normal",
       abdomenExamination: apiData.physical_exam?.abdomenExamination || "normal",
       extremitiesExamination: apiData.physical_exam?.extremitiesExamination || "normal",
-
       // Pelvic Exam
       pelvicExamination: apiData.pelvic_exam?.pelvicExamination || "normal",
       cervicalConsistency: apiData.pelvic_exam?.cervicalConsistency || "firm",
@@ -328,17 +324,15 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
       cervicalAdnexalMassTenderness: apiData.pelvic_exam?.cervicalAdnexal || false,
       uterinePosition: apiData.pelvic_exam?.uterinePosition || "mid",
       uterineDepth: apiData.pelvic_exam?.uterineDepth || "",
-
       // Acknowledgement
       acknowledgement: {
-        selectedMethod: mapMethodToAcknowledgement(apiData.fp_type?.fpt_method_used) || "coc",
+        selectedMethod: mapMethodToAcknowledgement(apiData.fp_type?.fpt_method_used),
         clientSignature: apiData.acknowledgement?.ack_clientSignature || "",
         clientSignatureDate: apiData.acknowledgement?.ack_clientSignatureDate || new Date().toISOString().split("T")[0],
-        guardianName: apiData.acknowledgement?.client_name || "",
+        guardianName: apiData.acknowledgement?.guardian_name || "",
         guardianSignature: apiData.acknowledgement?.guardian_signature || "",
-        guardianSignatureDate: apiData.acknowledgement?.guardian_signature_date || "",
+        guardianSignatureDate: apiData.acknowledgement?.guardian_signature_date || new Date().toISOString().split("T")[0],
       },
-
       // Pregnancy Check
       pregnancyCheck: {
         breastfeeding: apiData.pregnancy_check?.breastfeeding || false,
@@ -348,268 +342,313 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         recent_abortion: apiData.pregnancy_check?.recent_abortion || false,
         using_contraceptive: apiData.pregnancy_check?.using_contraceptive || false,
       },
-
-      // Service provision records (if any)
-      serviceProvisionRecords: apiData.service_records || [],
-    }
-  }
-
-  // Helper function to map method to acknowledgement format
-  const mapMethodToAcknowledgement = (method: string) => {
-    const methodMap: { [key: string]: string } = {
-      COC: "coc",
-      "IUD-Interval": "iud-interval",
-      "IUD-Post Partum": "iud-postpartum",
-      Injectable: "injectable",
-      Implant: "implant",
-      Condom: "condom",
-      POP: "pop",
-      LAM: "lam",
-      Others: "others",
-    }
-    return methodMap[method] || "coc"
-  }
+    };
+  };
 
   const handleNext = () => {
-    console.log("Moving to next page, current data:", formData)
-    setCurrentPage((prev) => prev + 1)
-  }
+    setCurrentPage((prev) => prev + 1);
+    console.log("Current formData:", JSON.stringify(formData, null, 2));
+  };
 
   const handlePrevious = () => {
-    setCurrentPage((prev) => prev - 1)
-  }
+    setCurrentPage((prev) => prev - 1);
+  };
 
-  const updateFormData = (data: Partial<FormData>) => {
-    setFormData((prev) => ({ ...prev, ...data }))
-  }
+  const updateFormData = (newData: Partial<FormData>) => {
+    setFormData((prev) => ({ ...prev, ...newData }));
+  };
 
   const handleSubmit = async () => {
-    console.log("Starting form submission with data:", formData)
-    setIsSubmitting(true)
-
+    setIsSubmitting(true);
     try {
-      if (currentMode === "edit" && fpRecordId) {
-        await updateExistingRecord()
-        toast.success("Family Planning record updated successfully!")
-      } else {
-        await createNewRecord()
-        toast.success("Family Planning record created successfully!")
+      if (currentMode === "create") {
+        await createNewRecord();
+      } else if (currentMode === "edit") {
+        await updateExistingRecord();
       }
-
-      console.log("🎉 All data submitted successfully!")
-      navigate("/family-planning/records")
-    } catch (err) {
-      console.error("❌ Error submitting form:", err)
-      toast.error("Something went wrong while submitting the form. Please check the console for details.")
+      toast.success("Family Planning Record saved successfully!");
+      navigate("/family-planning");
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error(`Failed to save record: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const createNewRecord = async () => {
-    // Step 1: Create FP Record
-    console.log("📌 Step 1: Creating FP Record...")
-    const fprecord_id = await fp_record(formData)
-    console.log("✅ FP Record created with ID:", fprecord_id)
+    try {
+      // Step 1: Create FP Record and Patient Record
+      console.log("📌 Step 1: Creating FP Record and Patient Record...");
+      const fpRecordResponse = await fp_record(formData);
+      console.log("✅ FP Record and Patient Record created:", fpRecordResponse);
 
-    // Step 2: Create FP Type
-    console.log("📌 Step 2: Creating FP Type...")
-    const fpt_id = await fp_type(formData, fprecord_id)
-    console.log("✅ FP Type created with ID:", fpt_id)
+      // MODIFIED: Destructure the object returned by fp_record
+      const { fprecord_id: familyPlanningRecordId, patrec_id: patientRecordId, pat_id } = fpRecordResponse;
 
-    // Update form data with the IDs
-    setFormData((prev) => ({ ...prev, fprecord_id, fpt_id }))
+      // Ensure these IDs are valid before proceeding
+      if (!familyPlanningRecordId) {
+        throw new Error("Family Planning Record ID not returned from API. Please check API response structure.");
+      }
+      if (!patientRecordId) {
+        throw new Error("Patient Record ID not returned from FP Record creation. Ensure fp_record API returns it.");
+      }
 
-    // Step 3-10: Create all other records
-    // await medical_history(formData, fprecord_id)
-    await fp_obstetrical(formData, fprecord_id)
-    await risk_sti(formData, fprecord_id)
-    await risk_vaw(formData, fprecord_id)
-    await physical_exam(formData, fprecord_id)
-    await pelvic_exam(formData, fprecord_id)
-    await pregnancy_check(formData, fprecord_id)
-    await acknowledgement(formData, fprecord_id,fpt_id)
-  }
+      // Step 2: Create FP Type
+      console.log("📌 Step 2: Creating FP Type...");
+      const fptResponse = await fp_type(formData, familyPlanningRecordId);
+      console.log("✅ FP Type created:", fptResponse);
+
+      // MODIFIED: fp_type directly returns the ID
+      const fptId = fptResponse;
+
+      if (!fptId) {
+        throw new Error("FP Type ID not returned from API. Please check API response structure for FP Type.");
+      }
+
+      // Update form data with the IDs (for potential use in subsequent steps or state)
+      setFormData((prev) => ({
+        ...prev,
+        fprecord_id: familyPlanningRecordId,
+        fpt_id: fptId,
+        patrec_id: patientRecordId,
+        pat_id: pat_id, // Also store pat_id if needed
+      }));
+
+      // Now call other functions, passing the correctly extracted IDs
+      console.log("📌 Step 3: Creating Obstetrical History...");
+      await fp_obstetrical(formData, familyPlanningRecordId);
+
+      console.log("📌 Step 4: Creating Risk STI...");
+      await risk_sti(formData, familyPlanningRecordId);
+
+      console.log("📌 Step 5: Creating Risk VAW...");
+      await risk_vaw(formData, familyPlanningRecordId);
+
+      console.log("📌 Step 6: Creating Physical Exam...");
+      await physical_exam(formData, familyPlanningRecordId);
+
+      console.log("📌 Step 7: Creating Pelvic Exam...");
+      await pelvic_exam(formData, familyPlanningRecordId);
+
+      console.log("📌 Step 8: Creating Pregnancy Check...");
+      await pregnancy_check(formData, familyPlanningRecordId);
+
+      // Call assessment with correctly extracted IDs
+      console.log("📌 Step 9: Creating Assessment and Follow-up Visit...");
+      await assessment(formData, familyPlanningRecordId, patientRecordId, fptId);
+
+      console.log("📌 Step 10: Creating Acknowledgement...");
+      await acknowledgement(formData, familyPlanningRecordId, fptId);
+
+      console.log("🎉 All records created successfully!");
+    } catch (error) {
+      console.error("❌ Error creating new record flow:", error);
+      throw error; // Re-throw to be caught by handleSubmit's catch block
+    }
+  };
 
   const updateExistingRecord = async () => {
-    console.log("📌 Updating existing record with ID:", fpRecordId)
+    try {
+      if (!fpRecordId) {
+        throw new Error("No Family Planning Record ID found for update.");
+      }
 
-    // Only update records that have changed
-    const changedFields = getChangedFields(originalData, formData)
-    console.log("🔄 Changed fields:", changedFields)
+      console.log("🔄 Starting update for FP Record ID:", fpRecordId);
 
-    // Update FP Record if changed
-    if (
-      recordIds.fprecord_id &&
-      hasChangedFields(changedFields, [
-        "clientID",
-        "nhts_status",
-        "pantawid_4ps",
-        "planToHaveMoreChildren",
-        "averageMonthlyIncome",
-      ])
-    ) {
-      await updateFPRecord(recordIds.fprecord_id, formData)
-      console.log("✅ FP Record updated")
-    }
+      // Utility to check if data for a sub-record has changed
+      const hasChanged = (current: any, original: any) => {
+        if (!current && !original) return false;
+        if (!current || !original) return true; // One exists, other doesn't
+        return JSON.stringify(current) !== JSON.stringify(original);
+      };
 
-    // Update FP Type if changed
-    if (
-      recordIds.fpt_id &&
-      hasChangedFields(changedFields, [
-        "typeOfClient",
-        "subTypeOfClient",
-        "reasonForFP",
-        "reason",
-        "methodCurrentlyUsed",
-      ])
-    ) {
-      await updateFPType(recordIds.fpt_id, formData)
-      console.log("✅ FP Type updated")
-    }
+      // 1. Update FP Record (main record)
+      if (hasChanged(formData.clientID, originalData?.clientID) ||
+          hasChanged(formData.nhts_status, originalData?.nhts_status) ||
+          hasChanged(formData.pantawid_4ps, originalData?.pantawid_4ps) ||
+          hasChanged(formData.planToHaveMoreChildren, originalData?.planToHaveMoreChildren) ||
+          hasChanged(formData.averageMonthlyIncome, originalData?.averageMonthlyIncome)
+      ) {
+        console.log("📌 Updating FP Record...");
+        await updateFPRecord(fpRecordId, formData);
+        console.log("✅ FP Record updated.");
+      }
 
-    // Update Medical History if changed
-    if (recordIds.medhistory_id && changedFields.some((field) => field.startsWith("medicalHistory"))) {
-      await updateMedicalHistory(recordIds.medhistory_id, formData)
-      console.log("✅ Medical History updated")
-    }
-
-    // Update Obstetrical History if changed
-    if (recordIds.obstetrical_id && changedFields.some((field) => field.startsWith("obstetricalHistory"))) {
-      await updateObstetricalHistory(recordIds.obstetrical_id, formData)
-      console.log("✅ Obstetrical History updated")
-    }
-
-    // Update Risk STI if changed
-    if (recordIds.sti_id && changedFields.some((field) => field.startsWith("sexuallyTransmittedInfections"))) {
-      await updateRiskSti(recordIds.sti_id, formData)
-      console.log("✅ Risk STI updated")
-    }
-
-    // Update Risk VAW if changed
-    if (recordIds.vaw_id && changedFields.some((field) => field.startsWith("violenceAgainstWomen"))) {
-      await updateRiskVaw(recordIds.vaw_id, formData)
-      console.log("✅ Risk VAW updated")
-    }
-
-    // Update Physical Exam if changed
-    if (
-      recordIds.physical_id &&
-      hasChangedFields(changedFields, [
-        "weight",
-        "height",
-        "bloodPressure",
-        "pulseRate",
-        "skinExamination",
-        "conjunctivaExamination",
-        "neckExamination",
-        "breastExamination",
-        "abdomenExamination",
-        "extremitiesExamination",
-      ])
-    ) {
-      await updatePhysicalExam(recordIds.physical_id, formData)
-      console.log("✅ Physical Exam updated")
-    }
-
-    // Update Pelvic Exam if changed
-    if (
-      recordIds.pelvic_id &&
-      hasChangedFields(changedFields, [
-        "pelvicExamination",
-        "cervicalConsistency",
-        "cervicalTenderness",
-        "cervicalAdnexalMassTenderness",
-        "uterinePosition",
-        "uterineDepth",
-      ])
-    ) {
-      await updatePelvicExam(recordIds.pelvic_id, formData)
-      console.log("✅ Pelvic Exam updated")
-    }
-
-    // Update Acknowledgement if changed
-    if (recordIds.ack_id && changedFields.some((field) => field.startsWith("acknowledgement"))) {
-      await updateAcknowledgement(recordIds.ack_id, formData)
-      console.log("✅ Acknowledgement updated")
-    }
-
-    // Update Pregnancy Check if changed
-    if (recordIds.pregnancy_id && changedFields.some((field) => field.startsWith("pregnancyCheck"))) {
-      await updatePregnancyCheck(recordIds.pregnancy_id, formData)
-      console.log("✅ Pregnancy Check updated")
-    }
-  }
-
-  // Helper function to detect changed fields
-  const getChangedFields = (original: FormData | null, current: FormData): string[] => {
-    if (!original) return []
-
-    const changes: string[] = []
-
-    const compareObjects = (obj1: any, obj2: any, prefix = "") => {
-      for (const key in obj2) {
-        const fullKey = prefix ? `${prefix}.${key}` : key
-
-        if (typeof obj2[key] === "object" && obj2[key] !== null && !Array.isArray(obj2[key])) {
-          compareObjects(obj1[key] || {}, obj2[key], fullKey)
-        } else if (obj1[key] !== obj2[key]) {
-          changes.push(fullKey)
+      // 2. Update FP Type
+      if (hasChanged(formData.typeOfClient, originalData?.typeOfClient) ||
+          hasChanged(formData.subTypeOfClient, originalData?.subTypeOfClient) ||
+          hasChanged(formData.reasonForFP, originalData?.reasonForFP) ||
+          hasChanged(formData.reason, originalData?.reason) ||
+          hasChanged(formData.methodCurrentlyUsed, originalData?.methodCurrentlyUsed)
+      ) {
+        if (recordIds.fpt_id) {
+          console.log("📌 Updating FP Type:", recordIds.fpt_id);
+          await updateFPType(recordIds.fpt_id, formData);
+          console.log("✅ FP Type updated.");
+        } else {
+          console.warn("FP Type ID not found for update, skipping FP Type update.");
+          // Optionally, create new FP Type if it didn't exist before
+          // await fp_type(formData, fpRecordId);
         }
       }
+
+      // 3. Update Medical History
+      if (hasChanged(formData.medicalHistory, originalData?.medicalHistory)) {
+        if (recordIds.medhistory_id) {
+          console.log("📌 Updating Medical History:", recordIds.medhistory_id);
+          // await updateMedicalHistory(recordIds.medhistory_id, formData); // Uncomment if medical_history update function exists
+          console.log("✅ Medical History updated.");
+        } else {
+          console.warn("Medical History ID not found for update, skipping Medical History update.");
+          // Optionally, create new Medical History if it didn't exist before
+          // await medical_history(formData, fpRecordId);
+        }
+      }
+
+      // 4. Update Obstetrical History
+      if (hasChanged(formData.obstetricalHistory, originalData?.obstetricalHistory)) {
+        if (recordIds.obstetrical_id) {
+          console.log("📌 Updating Obstetrical History:", recordIds.obstetrical_id);
+          await updateObstetricalHistory(recordIds.obstetrical_id, formData);
+          console.log("✅ Obstetrical History updated.");
+        } else {
+          console.warn("Obstetrical History ID not found for update, skipping Obstetrical History update.");
+          // Optionally, create new Obstetrical History if it didn't exist before
+          // await fp_obstetrical(formData, fpRecordId);
+        }
+      }
+
+      // 5. Update Risk STI
+      if (hasChanged(formData.sexuallyTransmittedInfections, originalData?.sexuallyTransmittedInfections)) {
+        if (recordIds.sti_id) {
+          console.log("📌 Updating Risk STI:", recordIds.sti_id);
+          await updateRiskSti(recordIds.sti_id, formData);
+          console.log("✅ Risk STI updated.");
+        } else {
+          console.warn("Risk STI ID not found for update, skipping Risk STI update.");
+          // Optionally, create new Risk STI if it didn't exist before
+          // await risk_sti(formData, fpRecordId);
+        }
+      }
+
+      // 6. Update Risk VAW
+      if (hasChanged(formData.violenceAgainstWomen, originalData?.violenceAgainstWomen)) {
+        if (recordIds.vaw_id) {
+          console.log("📌 Updating Risk VAW:", recordIds.vaw_id);
+          await updateRiskVaw(recordIds.vaw_id, formData);
+          console.log("✅ Risk VAW updated.");
+        } else {
+          console.warn("Risk VAW ID not found for update, skipping Risk VAW update.");
+          // Optionally, create new Risk VAW if it didn't exist before
+          // await risk_vaw(formData, fpRecordId);
+        }
+      }
+
+      // 7. Update Physical Exam
+      if (hasChanged(formData.weight, originalData?.weight) ||
+          hasChanged(formData.height, originalData?.height) ||
+          hasChanged(formData.bloodPressure, originalData?.bloodPressure) ||
+          hasChanged(formData.pulseRate, originalData?.pulseRate) ||
+          hasChanged(formData.skinExamination, originalData?.skinExamination) ||
+          hasChanged(formData.conjunctivaExamination, originalData?.conjunctivaExamination) ||
+          hasChanged(formData.neckExamination, originalData?.neckExamination) ||
+          hasChanged(formData.breastExamination, originalData?.breastExamination) ||
+          hasChanged(formData.abdomenExamination, originalData?.abdomenExamination) ||
+          hasChanged(formData.extremitiesExamination, originalData?.extremitiesExamination)
+      ) {
+        if (recordIds.physical_id) {
+          console.log("📌 Updating Physical Exam:", recordIds.physical_id);
+          await updatePhysicalExam(recordIds.physical_id, formData);
+          console.log("✅ Physical Exam updated.");
+        } else {
+          console.warn("Physical Exam ID not found for update, skipping Physical Exam update.");
+          // Optionally, create new Physical Exam if it didn't exist before
+          // await physical_exam(formData, fpRecordId);
+        }
+      }
+
+      // 8. Update Pelvic Exam
+      if (hasChanged(formData.pelvicExamination, originalData?.pelvicExamination) ||
+          hasChanged(formData.cervicalConsistency, originalData?.cervicalConsistency) ||
+          hasChanged(formData.cervicalTenderness, originalData?.cervicalTenderness) ||
+          hasChanged(formData.cervicalAdnexalMassTenderness, originalData?.cervicalAdnexalMassTenderness) ||
+          hasChanged(formData.uterinePosition, originalData?.uterinePosition) ||
+          hasChanged(formData.uterineDepth, originalData?.uterineDepth)
+      ) {
+        if (recordIds.pelvic_id) {
+          console.log("📌 Updating Pelvic Exam:", recordIds.pelvic_id);
+          await updatePelvicExam(recordIds.pelvic_id, formData);
+          console.log("✅ Pelvic Exam updated.");
+        } else {
+          console.warn("Pelvic Exam ID not found for update, skipping Pelvic Exam update.");
+          // Optionally, create new Pelvic Exam if it didn't exist before
+          // await pelvic_exam(formData, fpRecordId);
+        }
+      }
+
+      // 9. Update Pregnancy Check
+      if (hasChanged(formData.pregnancyCheck, originalData?.pregnancyCheck)) {
+        if (recordIds.pregnancy_id) {
+          console.log("📌 Updating Pregnancy Check:", recordIds.pregnancy_id);
+          await updatePregnancyCheck(recordIds.pregnancy_id, formData);
+          console.log("✅ Pregnancy Check updated.");
+        } else {
+          console.warn("Pregnancy Check ID not found for update, skipping Pregnancy Check update.");
+          // Optionally, create new Pregnancy Check if it didn't exist before
+          // await pregnancy_check(formData, fpRecordId);
+        }
+      }
+
+      // 10. Update Acknowledgement
+      if (hasChanged(formData.acknowledgement, originalData?.acknowledgement)) {
+        if (recordIds.ack_id) {
+          console.log("📌 Updating Acknowledgement:", recordIds.ack_id);
+          await updateAcknowledgement(recordIds.ack_id, formData);
+          console.log("✅ Acknowledgement updated.");
+        } else {
+          console.warn("Acknowledgement ID not found for update, skipping Acknowledgement update.");
+          // Optionally, create new Acknowledgement if it didn't exist before
+          // await acknowledgement(formData, fpRecordId);
+        }
+      }
+
+      console.log("🎉 All relevant records updated successfully!");
+    } catch (error) {
+      console.error("❌ Error updating existing record flow:", error);
+      throw error; // Re-throw to be caught by handleSubmit's catch block
     }
+  };
 
-    compareObjects(original, current)
-    return changes
-  }
+  const mapMethodToAcknowledgement = (method: string | undefined): string => {
+    switch (method) {
+      case "coc":
+        return "Combined Oral Contraceptives (COC)";
+      case "pop":
+        return "Progestin Only Pills (POP)";
+      case "injectable":
+        return "Injectable";
+      case "implant":
+        return "Implant";
+      case "iud":
+        return "Intrauterine Device (IUD)";
+      case "bcm":
+        return "Bilateral Tubal Ligation (BTL)"; // Assuming BCM maps to BTL
+      case "nfp":
+        return "Natural Family Planning"; // Add if applicable
+      case "vasectomy":
+        return "Vasectomy";
+      case "others":
+        return formData.otherMethod || "Other Method";
+      default:
+        return "Unknown Method";
+    }
+  };
 
-  // Helper function to check if any of the specified fields have changed
-  const hasChangedFields = (changedFields: string[], fieldsToCheck: string[]): boolean => {
-    return changedFields.some((field) => fieldsToCheck.includes(field))
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading record...</div>
-      </div>
-    )
-  }
-
+  const isReadOnly = currentMode === "view";
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with mode indicator */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Family Planning Form</h1>
-              <p className="text-sm text-gray-600">
-                {currentMode === "create" && "Create new family planning record"}
-                {currentMode === "edit" && `Edit record #${fpRecordId} - Fields are auto-populated`}
-                {currentMode === "view" && `View record #${fpRecordId} - Read only`}
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  currentMode === "create"
-                    ? "bg-green-100 text-green-800"
-                    : currentMode === "edit"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {currentMode.toUpperCase()}
-              </span>
-              <span className="text-sm text-gray-500">Page {currentPage} of 6</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Form Pages */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="flex flex-col h-screen">
+      <div className="flex-1 overflow-auto p-4">
         {currentPage === 1 && (
           <FamilyPlanningForm
             onNext2={handleNext}
@@ -666,5 +705,5 @@ export default function FamilyPlanningMain({ mode = "create" }: FamilyPlanningMa
         )}
       </div>
     </div>
-  )
+  );
 }

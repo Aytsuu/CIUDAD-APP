@@ -27,7 +27,7 @@ export default function FamilyPlanningForm2({
   const isReadOnly = mode === "view"
 
   const form = useForm<FormData>({
-    resolver: zodResolver(page2Schema),
+    // resolver: zodResolver(page2Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",
@@ -437,16 +437,11 @@ export default function FamilyPlanningForm2({
               <Button
                 type="button"
                 onClick={async () => {
-                  // Validate the form
-                  const isValid = await form.trigger()
-                  if (isValid) {
                     const currentValues = form.getValues()
                     updateFormData(currentValues)
                     onNext3()
-                  } else {
-                    console.error("Please fill in all required fields")
-                  }
-                }}
+                  } 
+                }
                 disabled={isReadOnly}
               >
                 Next{" "}

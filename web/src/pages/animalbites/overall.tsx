@@ -159,7 +159,9 @@ const Overall: React.FC = () => {
       const matchesFilter =
         filterValue === "All" ||
         (filterValue === "Bite" && p.exposure === "Bite") ||
-        (filterValue === "Non-bite" && p.exposure === "Non-bite")
+        (filterValue === "Non-bite" && p.exposure === "Non-bite") ||
+        (filterValue === "Transient" && p.patientType=== "Transient") ||
+         (filterValue === "Resident" && p.patientType=== "Resident")
       return matchesSearch && matchesFilter
     })
   }, [patients, searchQuery, filterValue])
@@ -280,6 +282,8 @@ const Overall: React.FC = () => {
               { id: "All", name: "All" },
               { id: "Bite", name: "Bite" },
               { id: "Non-bite", name: "Non-bite" },
+              { id: "Transient", name: "Transient" },   
+              { id: "Resident", name: "Resident" },            
             ]}
             value={filterValue}
             onChange={(value) => setFilterValue(value)}

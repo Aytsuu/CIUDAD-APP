@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -81,6 +79,15 @@ const pregnancyQuestions = [
   { id: "using_contraceptive", q: "Have you been using a reliable contraceptive method consistently and correctly?" },
 ]
 
+const parseBloodPressure = (bp: string | undefined) => {
+  if (!bp) return { systolic: 0, diastolic: 0 };
+  const [systolic, diastolic] = bp.split('/').map(Number);
+  return {
+    systolic: isNaN(systolic) ? 0 : systolic,
+    diastolic: isNaN(diastolic) ? 0 : diastolic,
+  };
+};
+
 type Props = {
   onPrevious5: () => void
   onSubmitFinal: () => void
@@ -118,9 +125,9 @@ export default function FamilyPlanningForm6({
     methodUnit: "",
     serviceProviderSignature: "",
     medicalFindings: "",
-    weight: 0,
-    bp_systolic: 0,
-    bp_diastolic: 0,
+    weight: formData?.weight || 0,
+    bp_systolic: parseBloodPressure(formData?.bloodPressure).systolic, // Parse systolic
+    bp_diastolic: parseBloodPressure(formData?.bloodPressure).diastolic, // Parse diastolic
   })
 
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -130,7 +137,7 @@ export default function FamilyPlanningForm6({
   const navigate = useNavigate()
 
   const form = useForm<FormData>({
-    resolver: zodResolver(page6Schema),
+    // resolver: zodResolver(page6Schema),
     defaultValues: {
       serviceProvisionRecords: formData?.serviceProvisionRecords || [],
       pregnancyCheck: formData?.pregnancyCheck || Object.fromEntries(pregnancyQuestions.map((q) => [q.id, false])),
@@ -160,12 +167,7 @@ export default function FamilyPlanningForm6({
   }
 
   const addRecord = () => {
-    const required = ["dateOfVisit", "methodAccepted", "nameOfServiceProvider", "dateOfFollowUp", "methodQuantity"]
-    for (const field of required) {
-      if (!record[field as keyof ServiceProvisionRecord]) {
-        return setValidationError(`${field} is required`)
-      }
-    }
+  
     setRecords((prev) => [...prev, record])
     setRecord({
       dateOfVisit: new Date().toISOString().split("T")[0],
@@ -190,12 +192,17 @@ export default function FamilyPlanningForm6({
   const onConfirmSubmit = form.handleSubmit((data) => {
     const complete = record.methodAccepted && record.nameOfServiceProvider
     const finalRecords = complete ? [...records, record] : records
+    
+    const latestFollowUpDate = finalRecords.length > 0 
+    ? finalRecords[finalRecords.length - 1].dateOfFollowUp 
+    : "";
 
     updateFormData({
       serviceProvisionRecords: finalRecords,
       pregnancyCheck: data.pregnancyCheck,
+      latestFollowUpDate: latestFollowUpDate
     })
-
+    
     onSubmitFinal()
     navigate("/FamPlanning_table")
   })

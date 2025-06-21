@@ -2,10 +2,10 @@ import { z } from "zod";
 
 const ServiceProvisionRecordSchema = z.object({
   dateOfVisit: z.string().nonempty("Date of visit is required"),
-  methodAccepted: z.string().nonempty("Method accepted is required"),
+  methodAccepted: z.string().optional(),
   nameOfServiceProvider: z.string().nonempty("Service provider name is required"),
   dateOfFollowUp: z.string().nonempty("Follow-up date is required"),
-  methodQuantity: z.string().nonempty("Method quantity is required"),
+  methodQuantity: z.string().optional(),
   methodUnit: z.string().nonempty("Method unit is required"),
   serviceProviderSignature: z.string().optional(),
   medicalFindings: z.string().optional(),
@@ -48,11 +48,11 @@ const FamilyPlanningBaseSchema = z.object({
   }),
 
   spouse: z.object({
-    s_lastName: z.string().nonempty("Last name is required"),
-    s_givenName: z.string().nonempty("Given name is required"),
+    s_lastName: z.string().optional(),
+    s_givenName: z.string().optional(),
     s_middleInitial: z.string().max(1).optional(),
-    s_dateOfBirth: z.string().nonempty("Birthdate is required"),
-    s_age: z.coerce.number().min(1, "Age is required and must be a positive number"),
+    s_dateOfBirth: z.string().optional(),
+    s_age: z.coerce.number().optional(),
     s_occupation: z.string().optional(),
   }),
 
@@ -78,7 +78,7 @@ const FamilyPlanningBaseSchema = z.object({
     hematomaBruisingBleeding: z.boolean(),
     breastCancerHistory: z.boolean(),
     severeChestPain: z.boolean(),
-    coughMoreThan14Days: z.boolean(),
+    cough: z.boolean(),
     jaundice: z.boolean(),
     unexplainedVaginalBleeding: z.boolean(),
     abnormalVaginalDischarge: z.boolean(),
@@ -221,7 +221,7 @@ export const page4Schema = FamilyPlanningBaseSchema.pick({
 });
 
 export const page5Schema = FamilyPlanningBaseSchema.pick({
-  acknowledgement: true,
+    acknowledgement: true,
 });
 
 export const page6Schema = FamilyPlanningBaseSchema.pick({

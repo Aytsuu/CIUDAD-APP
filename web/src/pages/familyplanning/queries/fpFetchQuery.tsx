@@ -13,3 +13,21 @@ export const useRiskStiData = (patientId: string | number | undefined) => {
         staleTime: 60 * 30
     });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -22,7 +22,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
 
   // Initialize form with formData values
   const form = useForm<FormData>({
-    resolver: zodResolver(page4Schema),
+    // resolver: zodResolver(page4Schema),
     defaultValues: formData,
     values: formData,
     mode: "onChange",
@@ -131,7 +131,7 @@ const FamilyPlanningForm4 = ({ onPrevious3, onNext5, updateFormData, formData, m
                   <FormItem>
                     <FormLabel>Blood Pressure (mmHg)</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="Enter BP" {...field} readOnly={isReadOnly} />
+                      <Input type="text" placeholder="Enter BP e.g. 120/80" {...field} readOnly={isReadOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
