@@ -43,23 +43,11 @@ class CaseActivityFileSerializer(serializers.ModelSerializer):
         fields = ['caf_id', 'caf_name', 'caf_type', 'caf_url']
 
 class CaseActivitySerializer(serializers.ModelSerializer):
-    caf = CaseActivityFileSerializer()
-    ca_issuance_date = serializers.DateTimeField(source='ca_date_of_issuance', format="%B %d, %Y %I:%M%p")
-    ca_hearing_datetime = serializers.SerializerMethodField()
+    caf = CaseActivityFileSerializer(required=False, allow_null=True)  
     
     class Meta:
         model = CaseActivity
-        fields = [
-            'ca_id',
-            'ca_reason',
-            'ca_hearing_date',
-            'ca_hearing_time',
-            'ca_issuance_date',
-            'caf'
-        ]
-    
-    def get_ca_hearing_datetime(self, obj):
-        return f"{obj.ca_hearing_date.strftime('%B %d, %Y')} {obj.ca_hearing_time.strftime('%I:%M%p')}"
+        fields = '__all__'  
 
 class AccusedNameSerializer(serializers.ModelSerializer):
     class Meta:

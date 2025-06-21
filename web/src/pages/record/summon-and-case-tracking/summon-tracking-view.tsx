@@ -6,15 +6,19 @@ import { ChevronLeft, Check, AlertTriangle } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { FileInput } from "lucide-react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import { Link } from "react-router";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import CreateNewSummon from "./summon-create";
 import { useGetCaseDetails } from "./queries/summonFetchQueries";
 import { useLocation } from 'react-router';
+import { useState } from "react";
+import { formatTime } from "@/helpers/timeFormatter";
+import { formatTimestamp } from "@/helpers/timestampformatter";
 
 function SummonTrackingView() {
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
     const navigate = useNavigate();
     const location = useLocation();
     const { sr_id } = location.state || {};
@@ -22,16 +26,18 @@ function SummonTrackingView() {
 
     const columns: ColumnDef<any>[] = [
         { 
-            accessorKey: "ca_hearing_datetime",
-            header: "Hearing Date & Time",
-            cell: ({ row }) => {
-                const activity = row.original;
-                return `${activity.ca_hearing_date} ${activity.ca_hearing_time}`;
-            }
+            accessorKey: "ca_hearing_date",
+            header: "Hearing Date",
+        },
+        {
+            accessorKey: "ca_hearing_time",
+            header: "Hearing Time",
+            cell: ({ row }) => formatTime(row.original.ca_hearing_time)
         },
         { 
-            accessorKey: "ca_issuance_date", 
-            header: "Date of Issuance" 
+            accessorKey: "ca_date_of_issuance", 
+            header: "Date of Issuance",
+            cell: ({ row }) => formatTimestamp(row.original.ca_date_of_issuance)
         },
         { accessorKey: "ca_reason", header: "Reason" },
         { 
@@ -180,7 +186,14 @@ function SummonTrackingView() {
                                 trigger={<Button>+ Create New Schedule</Button>}
                                 title="Create New Schedule"
                                 description="Schedule a new summon."
-                                mainContent={<CreateNewSummon />}
+                                mainContent={
+                                    <CreateNewSummon 
+                                    sr_id = {sr_id}
+                                    onSuccess ={() => setIsDialogOpen(false)}
+                                    />
+                                }
+                                isOpen = {isDialogOpen}
+                                onOpenChange={setIsDialogOpen}
                             />
                         </div>
 

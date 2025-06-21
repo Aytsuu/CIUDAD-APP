@@ -36,3 +36,8 @@ class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
             return super().get_object()
         except ServiceChargeRequest.DoesNotExist:
             raise NotFound("Service charge request not found")
+        
+
+class CaseActivityView(generics.ListCreateAPIView):
+    serializer_class = CaseActivitySerializer
+    queryset = CaseActivity.objects.all()

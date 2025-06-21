@@ -25,7 +25,7 @@ export type CaseActivity = {
     ca_reason: string;
     ca_hearing_date: string;
     ca_hearing_time: string;
-    ca_issuance_date: string;
+    ca_date_of_issuance: string;
     file: {
         caf_id: string;
         caf_name: string;

@@ -105,7 +105,7 @@ class CaseActivity(models.Model):
     ca_hearing_time = models.TimeField(null=False)
     ca_date_of_issuance = models.DateTimeField(default=datetime.now)
     sr = models.ForeignKey('ServiceChargeRequest', on_delete=models.CASCADE, related_name='case')
-    caf = models.ForeignKey('CaseActivityFile', on_delete=models.CASCADE, related_name='case_file')
+    caf = models.ForeignKey('CaseActivityFile', on_delete=models.CASCADE, null=True, related_name='case_file')
 
     class Meta:
         db_table = 'case_activity'
