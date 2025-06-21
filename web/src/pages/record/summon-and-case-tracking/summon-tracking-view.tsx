@@ -16,6 +16,7 @@ import { useLocation } from 'react-router';
 import { useState } from "react";
 import { formatTime } from "@/helpers/timeFormatter";
 import { formatTimestamp } from "@/helpers/timestampformatter";
+import { useResolveCase, useEscalateCase } from "./queries/summonUpdateQueries";
 
 function SummonTrackingView() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -23,6 +24,8 @@ function SummonTrackingView() {
     const location = useLocation();
     const { sr_id } = location.state || {};
     const { data: caseDetails, isLoading } = useGetCaseDetails(sr_id || '');
+    const {mutate: markResolve} = useResolveCase();
+    const {mutate: markEscalate} = useEscalateCase();
 
     const columns: ColumnDef<any>[] = [
         { 
@@ -60,6 +63,14 @@ function SummonTrackingView() {
 
     if (!caseDetails) {
         return <div className="flex justify-center items-center h-64">Case not found</div>;
+    }
+
+    const handleResolve = (srId: string) => {
+        markResolve(srId)
+    }
+
+    const handleEscalate = (srId: string) => {
+        markEscalate(srId)
     }
 
     return (
@@ -144,6 +155,7 @@ function SummonTrackingView() {
                             title="Confirm Resolution"
                             description="Are you sure you want to mark this case as resolved?"
                             actionLabel="Confirm"
+                            onClick={() => handleResolve(sr_id)}
                         />
 
                         <ConfirmationModal
@@ -155,6 +167,7 @@ function SummonTrackingView() {
                             title="Confirm Escalation"
                             description="Are you sure you want to escalate this case?"
                             actionLabel="Confirm"
+                            onClick={() => handleEscalate(sr_id)}
                         />
                     </div>
                 </Card>

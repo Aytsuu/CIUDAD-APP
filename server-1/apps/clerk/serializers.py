@@ -12,7 +12,7 @@ class ServiceChargeRequestSerializer(serializers.ModelSerializer):
     accused_names = serializers.SerializerMethodField()
     incident_type = serializers.CharField(source='comp.comp_incident_type', read_only=True)
     allegation = serializers.CharField(source='comp.comp_allegation', read_only=True)
-    status = serializers.CharField(source='sr_status', read_only=True)
+    status = serializers.CharField(source='sr_status')
 
     class Meta:
         model = ServiceChargeRequest
