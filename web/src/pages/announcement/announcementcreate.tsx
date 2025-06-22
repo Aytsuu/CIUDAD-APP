@@ -90,6 +90,7 @@ const AnnouncementCreate = () => {
     };
 
       console.log("Submitting payload to API:", cleanedValues);
+      console.log("User object:", user);
 
     try {
       const createdAnnouncement = await postAnnouncement(cleanedValues);
@@ -106,33 +107,30 @@ const AnnouncementCreate = () => {
         )
       );
 
-      await Promise.all(
-        positionRecipients.map(
-          (recipient) =>
-            new Promise((resolve) => {
-              postAnnouncementRecipient(recipient, {
-                onSuccess: () => {
-                  const files = mediaFiles.map((media) => ({
-                    af_name: media.file.name,
-                    af_type: media.file.type,
-                    af_path: media.storagePath,
-                    af_url: media.publicUrl,
-                    ann: createdAnnouncement?.ann_id,
-                    staff: user?.djangoUser?.resident_profile?.staff?.staff_id
-                  }));
+      console.log("Recipients payload being sent:", positionRecipients);
+      await postAnnouncementRecipient({
+  recipients: positionRecipients,
+});
 
-                  postAnnouncementFile(files, {
-                    onSuccess: async () => {
-                      await queryClient.invalidateQueries({ queryKey: ["announcements"] });
-                      await queryClient.invalidateQueries({ queryKey: ["recipients"] });
-                      resolve(null);
-                    },
-                  });
-                },
-              });
-            })
-        )
-      );
+const files = mediaFiles.map((media) => ({
+  af_name: media.file.name,
+  af_type: media.file.type,
+  af_path: media.storagePath,
+  af_url: media.publicUrl,
+  ann: createdAnnouncement?.ann_id,
+  staff: user?.djangoUser?.resident_profile?.staff?.staff_id
+}));
+
+postAnnouncementFile(files, {
+  onSuccess: async () => {
+    await queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    await queryClient.invalidateQueries({ queryKey: ["recipients"] });
+  },
+  onError: (error) => {
+    console.error("File upload failed", error);
+  }
+});
+
     } catch (err) {
       console.error("Error during announcement creation:", err);
     }
