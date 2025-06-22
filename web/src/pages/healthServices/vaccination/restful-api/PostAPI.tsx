@@ -223,7 +223,7 @@ export const deleteVaccinationHistory = async (vachist_id: string) => {
 export const createAntigenStockTransaction = async (
   vacStck_id: number,
   qty: string = "1 dose",
-  action: string = "Used from TT",
+  action: string = "Administered",
   staffId: number = 1
 ) => {
   const transactionPayload = {
@@ -233,5 +233,5 @@ export const createAntigenStockTransaction = async (
     vacStck_id: vacStck_id,
   };
 
-  await api2.post("inventory/antigens_stocks/", transactionPayload);
+  await api2.post("inventory/antigens_stocks/transaction/", transactionPayload);
 };

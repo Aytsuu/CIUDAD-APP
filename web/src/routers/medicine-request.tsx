@@ -26,7 +26,7 @@ export const medicineRequest = [
     element: <IndivPatNewMedRecForm />,
   },
   {
-    path: "/MonthlyMedicineRecords",
+    path: "/monthly-medicine-records",
     element: <MonthlyMedicineRecords />,
   },
   { path: "/monthly-medicine-details", element: <MonthlyMedicineDetails /> },

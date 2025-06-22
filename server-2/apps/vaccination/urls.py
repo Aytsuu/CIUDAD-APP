@@ -30,7 +30,7 @@ urlpatterns = [
     
     
     
-
+ path('vaccination-records/monthly/', MonthlyVaccinationRecordsAPIView.as_view(), name='monthly_vaccination_records'),
 
 
 ]
