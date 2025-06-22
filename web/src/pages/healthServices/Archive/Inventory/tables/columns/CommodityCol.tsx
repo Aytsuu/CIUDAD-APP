@@ -15,7 +15,7 @@ export const CommodityStocksColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <span className={`font-medium ${expired ? "line-through" : ""}`}>
+          <span className={`font-medium`}>
             {commodity.com_name}
             {expired && " (Expired)"}
           </span>
@@ -30,7 +30,7 @@ export const CommodityStocksColumns = (
     cell: ({ row }) => {
       const expired = isExpired(row.original.expiryDate);
       return (
-        <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
+        <div className={`text-center ${expired ? "text-red-600" : ""}`}>
           {row.original.recevFrom.toUpperCase()}
         </div>
       );
@@ -48,7 +48,7 @@ export const CommodityStocksColumns = (
         <div className={`text-center ${expired ? "text-red-600" : ""}`}>
           {unit.toLowerCase() === 'boxes' && cinv_pcs > 0 ? (
             <div className="flex flex-col">
-              <span className={`${expired ? "line-through" : ""}`}>
+              <span>
                 {cinv_qty} box/es
                 {expired && " (Expired)"}
               </span>
@@ -57,7 +57,7 @@ export const CommodityStocksColumns = (
               </span>
             </div>
           ) : (
-            <span className={`${expired ? "line-through" : ""}`}>
+            <span>
               {cinv_qty} {unit}
               {expired && " (Expired)"}
             </span>
@@ -74,7 +74,7 @@ export const CommodityStocksColumns = (
       return (
         <div
           className={`${
-            expired ? "text-red-600 line-through" : "text-red-700"
+            expired ? "text-red-600" : "text-red-700"
           }`}
         >
           {row.original.dispensed}
@@ -102,7 +102,7 @@ export const CommodityStocksColumns = (
             <span
               className={`${
                 expired
-                  ? "line-through"
+                  ? ""
                   : isOutOfStock
                   ? "text-red-600 font-bold"
                   : isLow
@@ -125,7 +125,7 @@ export const CommodityStocksColumns = (
           <div
             className={`text-center ${
               expired
-                ? "text-red-600 line-through"
+                ? "text-red-600"
                 : isOutOfStock
                 ? "text-red-600 font-bold"
                 : isLow
@@ -159,7 +159,7 @@ export const CommodityStocksColumns = (
           <div
             className={`text-center w-full ${
               expired
-                ? "font-bold line-through"
+                ? "font-bold"
                 : isNear
                 ? "text-orange-500 font-medium"
                 : ""
@@ -172,6 +172,4 @@ export const CommodityStocksColumns = (
       );
     },
   },
- 
-  
 ];

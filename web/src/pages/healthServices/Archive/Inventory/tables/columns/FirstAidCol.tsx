@@ -12,7 +12,7 @@ export const getColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <span className={`font-medium ${expired ? "line-through" : ""}`}>
+          <span className={`font-medium`}>
             {firstAid.fa_name}
             {expired && " (Expired)"}
           </span>
@@ -31,9 +31,7 @@ export const getColumns = (
             expired ? "text-red-600" : ""
           }`}
         >
-          <div
-            className={`text-center w-full ${expired ? "line-through" : ""}`}
-          >
+          <div className={`text-center w-full`}>
             {row.original.category}
           </div>
         </div>
@@ -52,7 +50,7 @@ export const getColumns = (
         <div className={`text-center ${expired ? "text-red-600" : ""}`}>
           {unit.toLowerCase() === "boxes" && finv_pcs > 0 ? (
             <div className="flex flex-col">
-              <span className={`${expired ? "line-through" : ""}`}>
+              <span>
                 {finv_qty} box/es
                 {expired && " (Expired)"}
               </span>
@@ -61,7 +59,7 @@ export const getColumns = (
               </span>
             </div>
           ) : (
-            <span className={`${expired ? "line-through" : ""}`}>
+            <span>
               {finv_qty} {unit}
               {expired && " (Expired)"}
             </span>
@@ -70,7 +68,6 @@ export const getColumns = (
       );
     },
   },
-
   {
     accessorKey: "availQty",
     header: "Available",
@@ -91,7 +88,7 @@ export const getColumns = (
             <span
               className={`${
                 expired
-                  ? "line-through"
+                  ? ""
                   : isOutOfStock
                   ? "text-red-600 font-bold"
                   : isLow
@@ -114,7 +111,7 @@ export const getColumns = (
           <div
             className={`text-center ${
               expired
-                ? "text-red-600 line-through"
+                ? "text-red-600"
                 : isOutOfStock
                 ? "text-red-600 font-bold"
                 : isLow
@@ -139,7 +136,7 @@ export const getColumns = (
       return (
         <div
           className={`flex items-center justify-center gap-2 ${
-            expired ? "text-red-600 line-through" : "text-red-700"
+            expired ? "text-red-600" : "text-red-700"
           }`}
         >
           <span className="text-sm">{row.original.used || 0}</span>
@@ -164,7 +161,7 @@ export const getColumns = (
           <div
             className={`text-center w-full ${
               expired
-                ? "font-bold line-through"
+                ? "font-bold"
                 : isNear
                 ? "text-orange-500 font-medium"
                 : ""
@@ -177,5 +174,4 @@ export const getColumns = (
       );
     },
   },
-
 ];

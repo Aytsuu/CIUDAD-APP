@@ -80,7 +80,7 @@ class FirstAidList(models.Model):
     fa_name = models.CharField(max_length=100,default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    cat = models.ForeignKey(Category, on_delete=models.PROTECT)
+    cat = models.ForeignKey(Category, on_delete=models.PROTECT , related_name='firstaid_category')
 
     class Meta:
         db_table = 'firstaid_list'
@@ -216,8 +216,8 @@ class FirstAidInventory(models.Model):
     finv_pcs = models.PositiveIntegerField(default=0)
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id')
-    fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id')
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id',related_name='inventory_firstaid')
+    fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id', related_name='firstaid_inventory')
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:

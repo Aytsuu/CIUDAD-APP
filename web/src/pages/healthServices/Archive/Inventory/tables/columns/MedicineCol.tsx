@@ -12,7 +12,7 @@ export const getColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <span className={`font-medium ${expired ? "line-through" : ""}`}>
+          <span className={`font-medium`}>
             {medicine.medicineName}
             {expired && " (Expired)"}
           </span>
@@ -40,9 +40,7 @@ export const getColumns = (
             expired ? "text-red-600" : ""
           }`}
         >
-          <div
-            className={`text-center w-full ${expired ? "line-through" : ""}`}
-          >
+          <div className={`text-center w-full`}>
             {row.original.category}
           </div>
         </div>
@@ -51,7 +49,7 @@ export const getColumns = (
   },
   {
     accessorKey: "qty",
-    header: "Stocks",
+    header: "Total Qty",
     cell: ({ row }) => {
       const { qty, pcs } = row.original.qty;
       const unit = row.original.minv_qty_unit;
@@ -61,7 +59,7 @@ export const getColumns = (
         <div className={`text-center ${expired ? "text-red-600" : ""}`}>
           {unit.toLowerCase() === "boxes" && pcs > 0 ? (
             <div className="flex flex-col">
-              <span className={`${expired ? "line-through" : ""}`}>
+              <span>
                 {qty} box/es
                 {expired && " (Expired)"}
               </span>
@@ -70,7 +68,7 @@ export const getColumns = (
               </span>
             </div>
           ) : (
-            <span className={`${expired ? "line-through" : ""}`}>
+            <span>
               {qty} {unit}
               {expired && " (Expired)"}
             </span>
@@ -85,11 +83,7 @@ export const getColumns = (
     cell: ({ row }) => {
       const expired = isExpired(row.original.expiryDate);
       return (
-        <div
-          className={`${
-            expired ? "text-red-600 line-through" : "text-red-700"
-          }`}
-        >
+        <div className={`${expired ? "text-red-600" : "text-red-700"}`}>
           {row.original.distributed}
         </div>
       );
@@ -97,7 +91,7 @@ export const getColumns = (
   },
   {
     accessorKey: "availQty",
-    header: "Available",
+    header: "Available Qty",
     cell: ({ row }) => {
       const { pcs } = row.original.qty;
       const unit = row.original.minv_qty_unit;
@@ -115,7 +109,7 @@ export const getColumns = (
             <span
               className={`${
                 expired
-                  ? "line-through"
+                  ? ""
                   : isOutOfStock
                   ? "text-red-600 font-bold"
                   : isLow
@@ -138,7 +132,7 @@ export const getColumns = (
           <div
             className={`text-center ${
               expired
-                ? "text-red-600 line-through"
+                ? "text-red-600"
                 : isOutOfStock
                 ? "text-red-600 font-bold"
                 : isLow
@@ -172,7 +166,7 @@ export const getColumns = (
           <div
             className={`text-center w-full ${
               expired
-                ? "font-bold line-through"
+                ? "font-bold"
                 : isNear
                 ? "text-orange-500 font-medium"
                 : ""
@@ -185,5 +179,4 @@ export const getColumns = (
       );
     },
   },
- 
 ];

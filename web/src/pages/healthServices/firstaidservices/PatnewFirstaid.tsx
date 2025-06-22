@@ -26,7 +26,7 @@ import { FirstAidDisplay } from "@/components/ui/first-aid-display";
 import { RequestSummary } from "@/components/ui/firstaid-summary";
 import { useFirstRequestMutation } from "./queries/postQueries";
 import { PatientSearch } from "@/components/ui/patientSearch";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 
 interface Patient {
   pat_id: number;

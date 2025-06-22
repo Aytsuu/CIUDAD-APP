@@ -8,5 +8,5 @@ urlpatterns = [
   path('create-firstaid-record/', CreateFirstaidRecordView.as_view(), name='create-firstaid-record'),
   path('firstaid-records/<int:farec_id>/archive/', ArchiveFirstaidRecordView.as_view(), name='archive-firstaid-record'),
   path('firstaid-records-count/<str:pat_id>/', GetFirstaidRecordCountView.as_view(), name='firstaid-records-count'),
-
+path('firstaid-records/monthly/', MonthlyFirstAidRecordsAPIView.as_view(), name='monthly_firstaid_records'),
 ]
