@@ -10,7 +10,7 @@ export const MedicineListSchema = z.object({
 
 export const CommodityListSchema = z.object({
   com_name: z.string().min(1, "Enter Commodity Name").default(""),
-  cat_id: z.string().min(1, "Category is required"),
+  user_type: z.string().min(1, "User type is required"),
 
 });
 
@@ -66,28 +66,27 @@ export const ImmunizationSchema = z.object({
  
 });
 
+
+// Fixed VaccineSchema with conditional dose handling
 export const VaccineSchema = z.object({
   vaccineName: z.string().min(1, "Vaccine name is required"),
   noOfDoses: z.union([
     z.string()
-      .min(1, "Dose count is required")
-      .refine(val => !isNaN(Number(val)), "Must be a number")
-      .transform(val => parseInt(val, 10)),
-    z.number().min(1, "At least 1 dose is required")
+      .refine(val => val === "" || !isNaN(Number(val)), "Must be a number or empty")
+      .transform(val => val === "" ? 0 : parseInt(val, 10)),
+    z.number().min(0, "Dose count must be 0 or greater")
   ]),
   ageGroup: z.string().min(1, "Age group is required"),
-  specifyAge: z.string().optional().default("N/A"),
   type: z.string().min(1, "Vaccine type is required").default("routine"),
   intervals: z.array(
     z.union([
       z.string()
-        .min(1, "Interval is required")
-        .refine(val => !isNaN(Number(val)), "Must be a number")
-        .transform(val => parseInt(val, 10)),
-      z.number().min(1, "Interval must be at least 1")
+        .refine(val => val === "" || !isNaN(Number(val)), "Must be a number or empty")
+        .transform(val => val === "" ? 0 : parseInt(val, 10)),
+      z.number().min(0, "Interval must be at least 0")
     ])
   ).optional().default([]),
-  timeUnits: z.array(z.string().min(1, "Time unit is required")).optional().default([]),
+  timeUnits: z.array(z.string()).optional().default([]),
   routineFrequency: z.object({
     interval: z.union([
       z.string()
@@ -99,10 +98,20 @@ export const VaccineSchema = z.object({
     unit: z.string().min(1, "Unit is required"),
   }).optional(),
 }).superRefine((data, ctx) => {
+  // Add validation based on vaccine type
   if (data.type === "primary") {
+    // Primary vaccines must have at least 1 dose
+    if (data.noOfDoses < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least 1 dose is required for primary vaccines",
+        path: ["noOfDoses"],
+      });
+    }
+
     const expectedIntervals = Math.max(0, data.noOfDoses - 1);
     
-    // Only validate length if intervals array exists
+    // Ensure intervals array has the correct length
     if (data.intervals && data.intervals.length !== expectedIntervals) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -111,29 +120,38 @@ export const VaccineSchema = z.object({
       });
     }
     
-    // Validate each interval only if it exists
-    data.intervals?.forEach((interval, index) => {
-      if (interval === undefined || interval === null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Interval is required",
-          path: ["intervals", index],
-        });
-      } else if (isNaN(Number(interval))) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Interval must be a valid number",
-          path: ["intervals", index],
-        });
-      } else if (Number(interval) <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Interval must be greater than 0",
-          path: ["intervals", index],
-        });
-      }
-    });
+    // Validate each interval
+    if (data.intervals) {
+      data.intervals.forEach((interval, index) => {
+        if (interval === undefined || interval === null || interval <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Interval must be greater than 0",
+            path: ["intervals", index],
+          });
+        }
+      });
+    }
+
+    // Validate timeUnits length matches intervals length
+    if (data.timeUnits && data.intervals && data.timeUnits.length !== data.intervals.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Each interval must have a corresponding time unit",
+        path: ["timeUnits"],
+      });
+    }
   } else if (data.type === "routine") {
+    // Routine vaccines must have at least 1 dose
+    if (data.noOfDoses < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least 1 dose is required for routine vaccines",
+        path: ["noOfDoses"],
+      });
+    }
+    
+    // Routine vaccines should have exactly 1 dose (you can adjust this if needed)
     if (data.noOfDoses !== 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -149,10 +167,13 @@ export const VaccineSchema = z.object({
         path: ["routineFrequency"],
       });
     }
-  }
+  } 
+  // else if (data.type === "conditional") {
+  //   // Conditional vaccines can have 0 doses (optional)
+  //   // No specific dose validation needed for conditional vaccines
+  //   // They will be administered based on healthcare provider assessment
+  // }
 });
-
-
   
 export type VaccineType = z.infer<typeof VaccineSchema>;
 export type MedicineType = z.infer<typeof MedicineListSchema>;

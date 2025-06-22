@@ -1,23 +1,25 @@
-import {api2} from "@/api/api";
+import { api2 } from "@/api/api";
 
- 
-export const addVaccineStock = async (data: Record<string,any>, vac_id: number, inv_id: number) => {
+export const addVaccineStock = async (
+  data: Record<string, any>,
+  vac_id: number,
+  inv_id: string
+) => {
   // Calculate available quantity based on solvent type
-  const availqty = data.solvent === 'doses' 
-    ? data.qty * (data.volume || 0) 
-    : data.qty;
+  const availqty =
+    data.solvent === "doses" ? data.qty * (data.volume || 0) : data.qty;
 
   try {
     const payload = {
       inv_id: inv_id,
       vac_id: vac_id,
-      batch_number: data.batchNumber,
+      batch_number: data.batchNumber.toUpperCase(),
       solvent: data.solvent,
       volume: data.volume || 0,
       qty: data.qty,
       dose_ml: data.volume || 0,
-      vacStck_qty_avail: availqty,  // Use the calculated available quantity
-      wasted_dose: 0,  // Initialize wasted doses to 0
+      vacStck_qty_avail: availqty, // Use the calculated available quantity
+      wasted_dose: 0, // Initialize wasted doses to 0
       expiry_date: data.expiryDate,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -31,13 +33,17 @@ export const addVaccineStock = async (data: Record<string,any>, vac_id: number, 
   }
 };
 
-
-export const AntigenTransaction = async ( vacStck_id: number, string_qty: string, action: string, staffId: number) => {
+export const AntigenTransaction = async (
+  vacStck_id: number,
+  string_qty: string,
+  action: string,
+  staffId: number
+) => {
   try {
-    const res = await api2.post("inventory/antigens_stocks/", {
-    antt_qty: string_qty,
-    antt_action: action,
-    vacStck_id: vacStck_id,
+    const res = await api2.post("inventory/antigens_stocks/transaction/", {
+      antt_qty: string_qty,
+      antt_action: action,
+      vacStck_id: vacStck_id,
       staff: staffId,
     });
     return res.data;
@@ -46,4 +52,3 @@ export const AntigenTransaction = async ( vacStck_id: number, string_qty: string
     throw err;
   }
 };
-

@@ -2,16 +2,15 @@ import React, { useState } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, CircleCheck } from "lucide-react";
+import { Search, Plus, FileInput } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import VaccineModal from "../addListModal/VaccineModal";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { VaccineColumns } from "./columns/AntigenCol";
-import { handleDeleteAntigen } from "../requests/delete/DeleteAntigen";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,17 +18,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/dropdown-menu";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
-import { useAntigen } from "../queries/Antigen/VaccineFetchQueries"; // Import the custom hook
-
+import { useAntigen } from "../queries/Antigen/VaccineFetchQueries";
+import { useDeleteAntigen } from "../queries/Antigen/AntigenDeleteQueries";
 export type VaccineRecords = {
   id: number;
   vaccineName: string;
   vaccineType: string;
   ageGroup: string;
   doses: number | string;
-  specifyAge: string;
   schedule: string;
+  agegrp_id: string; // Optional field for age group ID
   category: string;
   noOfDoses?: number | string;
   doseDetails: {
@@ -50,9 +48,8 @@ export default function AntigenList() {
   const [selectedOption, setSelectedOption] = useState<"vaccine" | "supplies">(
     "vaccine"
   );
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  
+
   // Use the custom hook here
   const { data: vaccineData, isLoading: isLoadingVaccines } = useAntigen();
 
@@ -63,7 +60,13 @@ export default function AntigenList() {
       .map((item: any) => {
         // Handle Vaccine items
         if (item.vac_name) {
-          const specifyAge = item.specify_age || item.age_group || "birth";
+          const ageGroupDisplay = item.age_group
+            ? `${item.age_group.agegroup_name} (${item.age_group.min_age}-${item.age_group.max_age} ${item.age_group.time_unit})`
+            : "N/A";
+
+          const ageGroupId =
+            item.ageGroup ||
+            (item.age_group ? item.age_group.agegrp_id : "N/A");
 
           const baseData: VaccineRecords = {
             id: item.vac_id,
@@ -73,10 +76,10 @@ export default function AntigenList() {
                 ? "Routine"
                 : item.vac_type_choices === "primary"
                 ? "Primary Series"
-                : "N/A",
-            ageGroup: item.age_group || "N/A",
+                : "Conditional",
+            ageGroup: ageGroupDisplay || "N/A",
+            agegrp_id: ageGroupId || "N/A", // Use ageGroup ID if available
             doses: item.no_of_doses || "N/A",
-            specifyAge: specifyAge,
             category: item.category,
             noOfDoses: item.no_of_doses || "N/A",
             schedule: item.schedule || "N/A",
@@ -114,7 +117,6 @@ export default function AntigenList() {
             vaccineType: "N/A",
             ageGroup: "N/A",
             doses: "N/A",
-            specifyAge: "N/A",
             category: item.category,
             noOfDoses: "N/A",
             schedule: "N/A",
@@ -143,31 +145,25 @@ export default function AntigenList() {
     currentPage * pageSize
   );
 
-  const handleDelete = async () => {
-    if (vaccineToDelete !== null) {
-      const recordToDelete: VaccineRecords | undefined = filteredVaccines.find(
-        (record: VaccineRecords) => record.id === vaccineToDelete
-      );
-      if (recordToDelete) {
-        try {
-          await handleDeleteAntigen(vaccineToDelete, recordToDelete.category);
-          queryClient.invalidateQueries({ queryKey: ['antigen'] });
-          toast.success("Deleted successfully", {
-            icon: (
-              <CircleCheck size={18} className="fill-green-500 stroke-white" />
-            ),
-            duration: 2000,
-          });
-          setIsDeleteConfirmationOpen(false);
-          setVaccineToDelete(null);
-        } catch (error) {
-          console.error("Delete error:", error);
-          // Show error to user if needed
-        }
-      }
-    }
-  };
+  const deleteVaccineMutation = useDeleteAntigen();
 
+  const handleDelete = () => {
+    if (vaccineToDelete === null) return;
+
+    const recordToDelete = filteredVaccines.find(
+      (record: VaccineRecords) => record.id === vaccineToDelete
+    );
+
+    if (recordToDelete) {
+      deleteVaccineMutation.mutate({
+        vaccineId: vaccineToDelete,
+        category: recordToDelete.category,
+      });
+    }
+
+    setIsDeleteConfirmationOpen(false);
+    setVaccineToDelete(null);
+  };
   const columns = VaccineColumns(
     setVaccineToDelete,
     setIsDeleteConfirmationOpen
@@ -209,11 +205,8 @@ export default function AntigenList() {
                 <Plus size={15} /> New
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              className="min-w-[200px]"
-              align="end"
-            >
-              <DropdownMenuItem 
+            <DropdownMenuContent className="min-w-[200px]" align="end">
+              <DropdownMenuItem
                 onSelect={() => navigate("/addVaccinationList")}
                 className="cursor-pointer hover:bg-gray-100 px-4 py-2"
               >
@@ -229,8 +222,6 @@ export default function AntigenList() {
           </DropdownMenu>
         </div>
       </div>
-
-      
 
       <div className="bg-white rounded-md">
         <div className="flex justify-between p-3">

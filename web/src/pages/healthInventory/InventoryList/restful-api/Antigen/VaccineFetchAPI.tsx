@@ -12,8 +12,6 @@ export const getVaccineList = async () => {
       return [];
     }
   };
-
-  
 export const getAntigen = async () => {
   try {
     // Fetch all data in parallel including immunization supplies
@@ -44,8 +42,14 @@ export const getAntigen = async () => {
         (freq: any) => freq.vac_id === vaccine.vac_id
       );
 
+      // Extract age group information
+      const ageGroup = vaccine.age_group || null;
+      const ageGroupId = vaccine.ageGroup || (ageGroup ? ageGroup.agegrp_id : null);
+
       return {
         ...vaccine,
+        ageGroup: ageGroupId, // Keep the ID for reference
+        age_group: ageGroup, // Keep the full object
         intervals: vaccineIntervals,
         routineFrequency: routineFrequency || null,
       };
@@ -56,13 +60,13 @@ export const getAntigen = async () => {
       type: "supply", // Add type identifier
       imz_id: supply.imz_id,
       imz_name: supply.imz_name,
-      category:supply.category,
+      category: supply.category,
       created_at: supply.created_at,
       updated_at: supply.updated_at,
       // Add empty/default fields to match vaccine structure
       vac_type_choices: "N/A",
-      age_group: "N/A",
-      specify_age: "N/A",
+      age_group: null,
+      ageGroup: null,
       no_of_doses: 0,
       intervals: [],
       routineFrequency: null,

@@ -28,12 +28,13 @@ export default function EditMedicineStock() {
   const location = useLocation();
   const initialData = location.state?.params
     ?.initialData as MedicineStocksRecord;
+  
   const form = useForm<addMedicineStocksType>({
     resolver: zodResolver(AddMedicineStocksSchema),
     defaultValues: {
-      minv_qty: undefined,
-      minv_qty_unit: initialData.minv_qty_unit,
-      minv_pcs: initialData.qty.pcs || 0,
+      minv_qty:  0, // Fixed: Use 0 instead of undefined
+      minv_qty_unit: initialData?.minv_qty_unit || "", // Added fallback
+      minv_pcs: initialData?.qty?.pcs || 0,
     },
   });
 
@@ -46,12 +47,12 @@ export default function EditMedicineStock() {
   const pcs = form.watch("minv_pcs") || 0;
   const totalPieces = currentUnit === "boxes" ? qty * pcs : qty;
 
-  const confirmAdd =  () => {
-    if (!formData ) return;
+  const confirmAdd = async () => { // Added async
+    if (!formData) return;
     setIsAddConfirmationOpen(false);
 
     try {
-      submit({ initialData: { id: initialData.id }, data: formData },);
+      await submit({ initialData: { id: initialData.id }, data: formData }); // Added await
       navigate("/mainInventoryStocks");
       toast.success("Medicine stock updated successfully!", {
         icon: <CircleCheck size={20} className="text-green-500" />,
@@ -65,23 +66,21 @@ export default function EditMedicineStock() {
     }
   };
 
-  const onSubmit = () => {
-    setFormData(formData);
+  const onSubmit = (data: addMedicineStocksType) => { // Fixed: Accept form data
+    setFormData(data);
     setIsAddConfirmationOpen(true);
   };
-
-
 
   return (
     <div className="w-full flex items-center justify-center p-4 sm:p-4">
       <Form {...form}>
         <form
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={form.handleSubmit(onSubmit)} // Fixed: Use proper form submission
           className="bg-white p-5 w-full max-w-[500px] rounded-sm space-y-2"
         >
           <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
             <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-            Add Medicine Stocks
+            Edit Medicine Stocks {/* Changed title */}
           </Label>
           <div className="flex flex-col gap-4 pb-8">
             <FormInput
@@ -89,15 +88,13 @@ export default function EditMedicineStock() {
               name="minv_qty"
               label={currentUnit === "boxes" ? "Enter Number of Boxes" : "Quantity"}
               type="number"
-              placeholder="Number of Boxes or Quantity" 
+              placeholder="Quantity" 
             />
 
             <FormInput
               control={form.control}
               name="minv_qty_unit"
               label="Unit"
-              
-              
             />
           </div>
 
@@ -135,7 +132,6 @@ export default function EditMedicineStock() {
               type="submit"
               className="w-full"
               disabled={isPending}
-              onClick={form.handleSubmit(onSubmit)}
             >
               {isPending ? (
                 <>

@@ -14,7 +14,7 @@ export const fetchCommodity = () => {
         const transformedData = commodity.map((commodity: any) => ({
           id: String(commodity.com_id), // Force id to be a string
           name: commodity.com_name,
-          category:commodity.catlist,
+          user_type:commodity.user_type,
         }));
         console.log("Transformed Data:", transformedData); // Debugging log
         setCommodity(transformedData); // No default option

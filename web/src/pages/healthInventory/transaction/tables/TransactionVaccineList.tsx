@@ -68,7 +68,7 @@ export default function VaccinationList() {
       ),
     },
     {
-      accessorKey: "vaccineName",
+      accessorKey: "Item ",
       header: "Vaccine Name",
     },
 

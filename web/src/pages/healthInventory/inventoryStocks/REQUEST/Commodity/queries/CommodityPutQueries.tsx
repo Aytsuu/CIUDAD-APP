@@ -35,7 +35,7 @@ export const useUpdateCommodityStockQuantity = () => {
 
 export const useUpdateInventoryTimestamp = () => {
   return useMutation({
-    mutationFn: (inv_id: number) => updateInventoryTimestamp(inv_id),
+    mutationFn: (inv_id: string) => updateInventoryTimestamp(inv_id),
     onError: (error: Error) => {
       console.error(error.message);
     },

@@ -12,9 +12,9 @@ export type VaccineRecords = {
   vaccineType: string;
   ageGroup: string;
   doses: number | string;
-  specifyAge: string;
   schedule: string;
   category: string;
+  agegrp_id:string,
   noOfDoses?: number | string;
   doseDetails: {
     doseNumber: number;
@@ -103,7 +103,7 @@ export const VaccineColumns = (
           ) : (
             <>
               <div className="text-sm">
-                Dose 1: Starts at {vaccine.specifyAge}
+                Dose 1: Starts at {vaccine.ageGroup}
               </div>
               {doseDetails
                 .filter((dose) => dose.doseNumber > 1)

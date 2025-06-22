@@ -6,7 +6,7 @@ import { Search, Plus, FileInput } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { FirstAidColumns, FirstAidRecords } from "./columns/FirstAidCol";
@@ -15,14 +15,13 @@ import { handleDeleteFirstAidList } from "../restful-api/firstAid/FirstAidDelete
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { Link } from "react-router";
-
+import {useDeleteFirstAid} from "../queries/firstAid/FirstAidDeleteQueries";
 export default function FirstAidList() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = React.useState(false);
   const [faToDelete, setFaToDelete] = React.useState<string | null>(null);
-  const queryClient = useQueryClient();
   const { data: firstAidData, isLoading: isLoadingFirstAid } = useFirstAid();
 
   const formatFirstAidData = useCallback((): FirstAidRecords[] => {
@@ -44,28 +43,16 @@ export default function FirstAidList() {
     );
   }, [searchQuery, formatFirstAidData]);
 
-  const handleDelete = async () => {
+  const deleteFirstAidMutation = useDeleteFirstAid();
+
+  const handleDelete = () => {
     if (faToDelete === null) return;
-
-    try {
-      await handleDeleteFirstAidList(faToDelete);
-      queryClient.invalidateQueries({ queryKey: ["firstAid"] });
-      toast.success('First aid item deleted successfully', {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
-    } catch (error) {
-      toast.error('Failed to delete first aid item', {
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000,
-      });
-      console.error("Delete error:", error);
-    } finally {
-      setIsDeleteConfirmationOpen(false);
-      setFaToDelete(null);
-    }
+    
+    deleteFirstAidMutation.mutate(faToDelete);
+    setIsDeleteConfirmationOpen(false);
+    setFaToDelete(null);
   };
-
+  
   const totalPages = Math.ceil(filteredFirstAid.length / pageSize);
   const paginatedFirstAid = filteredFirstAid.slice(
     (currentPage - 1) * pageSize,

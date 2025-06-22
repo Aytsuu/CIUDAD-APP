@@ -4,7 +4,7 @@ import { MedicineRecords } from "../type";
 
 
 export const Medcolumns = (): ColumnDef<MedicineRecords>[] => [
-  { accessorKey: "mdt_id", header: "Medicine ID" },
+  // { accessorKey: "mdt_id", header: "Medicine ID" },
   {
     accessorKey: "med_name",
     header: "Medicine Name",

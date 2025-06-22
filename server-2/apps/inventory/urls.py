@@ -27,7 +27,7 @@ urlpatterns = [
      
     # INVENTORY  
     path("inventorylist/", InventoryView.as_view(), name="inventorylist"),
-    path("update_inventorylist/<int:inv_id>/",InventoryUpdateView.as_view(), name="update_inventorylist"),
+    path("update_inventorylist/<str:inv_id>/",InventoryUpdateView.as_view(), name="update_inventorylist"),
 
     # INVENTORY POST
     path("medicineinventorylist/", MedicineInventoryView.as_view(), name="medicine-inventory"),
@@ -66,7 +66,7 @@ urlpatterns = [
     
     # VACCINE STOCKS 
     path("vaccine_stocks/", VaccineStocksView.as_view(), name="vaccine_stocks"),
-    path("antigens_stocks/", AntigenTransactionView.as_view(), name="antigens_stocks"), 
+    path("antigens_stocks/transaction/", AntigenTransactionView.as_view(), name="antigens_stocks"), 
     
     path("immunization_stock/", ImmunizationStockSuppliesView.as_view(), name="immunization_stocksn"),
     path("imz_transaction/", ImmunizationTransactionView.as_view(), name="imz_transaction"),
@@ -74,5 +74,17 @@ urlpatterns = [
 
     path("vaccine_stocks/<int:vacStck_id>/", VaccineStockRetrieveUpdateDestroyView.as_view(), name="vaccine_stocks-detail"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
+   
+   path('conditional_vaccine/', ConditionalVaccineListView.as_view(), name='conditional-vaccine'),
+   path('conditional_vaccine/<int:vac_id>/', ConditionRetrieveUpdateDestroyView.as_view(), name='conditional-vaccine-detail'),
+   
+   
+    path("age_group/", AgeGroupView.as_view(), name="age_group-detail"),
+    path("age_group/<int:agegrp_id>/", DeleteUpdateAgeGroupView.as_view(), name="age_group-detail"),
     
+    path('archive/immunization-supplies/', ArchiveImmunizationSuppliesStockListView.as_view(), name='archive-immunization-supplies'),
+    path('archive/vaccine-stocks/', ArchiveVaccineStocksView.as_view(), name='archive-vaccine-stocks'),
+    path('archive/medicine-inventory/', ArchiveMedicineInventoryView.as_view(), name='archive-medicine-inventory'),
+    path('archive/commodity-inventory/', ArhiveCommodityInventoryVIew.as_view(), name='archive-commodity-inventory'),
+    path('archive/first-aid-inventory/', ArchiveFirstAidInventoryVIew.as_view(), name='archive-first-aid-inventory'),
 ] 

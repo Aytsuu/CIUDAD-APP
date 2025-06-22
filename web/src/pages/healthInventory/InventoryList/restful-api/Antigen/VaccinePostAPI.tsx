@@ -6,7 +6,7 @@ export interface VaccineType {
   timeUnits: string[];
   noOfDoses: number;
   ageGroup: string;
-  specifyAge: string;
+  // specifyAge: string;
   type: string;
   routineFrequency?: {
     interval: number;
@@ -23,8 +23,8 @@ export const addVaccine = async (data: {
   vac_type_choices: string;
   vac_name: string;
   no_of_doses: number;
-  age_group: string;
-  specify_age: string;
+  ageGroup: number;
+  // specify_age: string;
 }): Promise<VaccineResponse> => {
   try {
     const res = await api2.post("inventory/vac_list/", data);
@@ -79,8 +79,8 @@ export const handlePrimaryVaccine = async (data: VaccineType, vaccineId: number)
   await addVaccineIntervals({
     vac_id: vaccineId,
     dose_number: 1,
-    interval: data.ageGroup === "0-5" ? Number(data.specifyAge || 0) : 0,
-    time_unit: data.ageGroup === "0-5" ? "months" : "NA"
+    interval: 0,
+    time_unit: "NA"
   });
 
   // Additional doses if needed
@@ -133,3 +133,16 @@ export const handleSubmissionError = (error: unknown): void => {
   
   alert(errorMessage);
 };
+
+
+export const addconvaccine = async (vac_id: number) =>{
+  try{
+    const res = await api2.post("inventory/conditional_vaccine/", { 
+      vac_id: vac_id}
+    )
+    return res.data
+
+  }catch (error) {
+    console.error("Error adding vaccine:", error);
+  }
+}

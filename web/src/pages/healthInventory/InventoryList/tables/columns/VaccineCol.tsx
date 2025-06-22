@@ -139,12 +139,10 @@ export const VaccineColumns = (
               isVaccine ? (
                 <EditVaccineListModal
                   vaccineData={vaccine}
-                  setIsDialog={setIsDialog}
                 />
               ) : (
                 <EditImmunizationSupplies
                   initialData={vaccine}
-                  setIsDialog={setIsDialog}
                 />
               )
             }

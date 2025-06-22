@@ -8,7 +8,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import CommodityModal from "../addListModal/CommodityModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleDeleteCommodityList } from "../restful-api/commodity/CommodityDeleteAPI";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { CommodityRecords, CommodityColumns } from "./columns/commodityCol";
@@ -16,6 +16,8 @@ import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
 import { toast } from "sonner";
 import { CircleCheck, CircleX } from "lucide-react";
 import { Link } from "react-router";
+import { useDeleteCommodity } from "../queries/commodity/CommodityDeleteQueries";
+
 
 export default function CommodityList() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,8 +33,7 @@ export default function CommodityList() {
     return commodities.map((commodity: any) => ({
       id: commodity.com_id,
       com_name: commodity.com_name,
-      cat_id: commodity.cat,
-      cat_name: commodity.catlist,
+      user_type: commodity.user_type,
     }));
   }, [commodities]);
 
@@ -45,28 +46,15 @@ export default function CommodityList() {
     );
   }, [searchQuery, formatCommodityData]);
 
-  const handleDelete = async () => {
+  const deleteCommodityMutation = useDeleteCommodity();
+
+  const handleDelete = () => {
     if (comToDelete === null) return;
-
-    try {
-      await handleDeleteCommodityList(comToDelete);
-      queryClient.invalidateQueries({ queryKey: ["commodities"] });
-      toast.success('Commodity deleted successfully', {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
-    } catch (error) {
-      toast.error('Failed to delete commodity', {
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000,
-      });
-      console.error("Delete error:", error);
-    } finally {
-      setIsDeleteConfirmationOpen(false);
-      setComToDelete(null);
-    }
+    
+    deleteCommodityMutation.mutate(comToDelete);
+    setIsDeleteConfirmationOpen(false);
+    setComToDelete(null);
   };
-
   if (isLoadingCommodities) {
     return (
       <div className="w-full h-full">

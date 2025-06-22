@@ -1,6 +1,6 @@
 import {api2} from "@/api/api";
 
-export const updateInventoryTimestamp = async (inv_id: number) => {
+export const updateInventoryTimestamp = async (inv_id: string) => {
     try {
       const res = await api2.patch(`inventory/update_inventorylist/${inv_id}/`, {
         updated_at: new Date().toISOString(),

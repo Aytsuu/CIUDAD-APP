@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, FileInput, CircleCheck, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/confirmModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getColumns } from "./columns/MedicineCol";
@@ -28,7 +28,7 @@ type StockFilter =
 export default function MedicineStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] =
     useState(false);
-  const [medicineToArchive, setMedicineToArchive] = useState<number | null>(
+  const [medicineToArchive, setMedicineToArchive] = useState<string | null>(
     null
   );
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,26 +42,46 @@ export default function MedicineStocks() {
 
   const formatMedicineStocksData = useCallback((): MedicineStocksRecord[] => {
     if (!medicineStocks) return [];
-    return medicineStocks.map((medicineStock: any) => ({
-      id: medicineStock.minv_id,
-      minv_id: medicineStock.minv_id,
-      medicineInfo: {
-        medicineName: medicineStock.med_detail?.med_name,
-        dosage: medicineStock.minv_dsg,
-        dsgUnit: medicineStock.minv_dsg_unit,
-        form: medicineStock.minv_form,
-      },
-      expiryDate: medicineStock.inv_detail?.expiry_date,
-      category: medicineStock.med_detail?.catlist,
-      qty: {
-        qty: medicineStock.minv_qty,
-        pcs: medicineStock.minv_pcs,
-      },
-      minv_qty_unit: medicineStock.minv_qty_unit,
-      availQty: medicineStock.minv_qty_avail,
-      distributed: medicineStock.minv_distributed,
-      inv_id: medicineStock.inv_id,
-    }));
+    
+    return medicineStocks.map((medicineStock: any) => {
+      let availQty = medicineStock.minv_qty_avail;
+      let unit = medicineStock.minv_qty_unit;
+      let qty = medicineStock.minv_qty;
+      let pcs= medicineStock.minv_pcs * medicineStock.minv_qty;
+      let qty_use = 0
+
+      if (unit=== "boxes") {
+         pcs -= availQty;
+         unit = "pcs";
+        qty_use = pcs
+      } else {
+        qty -= availQty;
+        qty_use = qty
+      }
+
+      const total_qty_used = `${qty_use} ${unit}`;
+
+      return {
+        id: medicineStock.minv_id,
+        minv_id: medicineStock.minv_id,
+        medicineInfo: {
+          medicineName: medicineStock.med_detail?.med_name,
+          dosage: medicineStock.minv_dsg,
+          dsgUnit: medicineStock.minv_dsg_unit,
+          form: medicineStock.minv_form,
+        },
+        expiryDate: medicineStock.inv_detail?.expiry_date,
+        category: medicineStock.med_detail?.catlist,
+        qty: {
+          qty: medicineStock.minv_qty,
+          pcs: medicineStock.minv_pcs,
+        },
+        minv_qty_unit: medicineStock.minv_qty_unit,
+        availQty: medicineStock.minv_qty_avail,
+        distributed: total_qty_used,
+        inv_id: medicineStock.inv_id,
+      };
+    });
   }, [medicineStocks]);
 
   const filteredData = useMemo(() => {
@@ -98,7 +118,7 @@ export default function MedicineStocks() {
     });
   }, [searchQuery, formatMedicineStocksData, stockFilter]);
 
-  const handleArchiveInventory = (inv_id: number) => {
+  const handleArchiveInventory = (inv_id: string) => {
     setMedicineToArchive(inv_id);
     setIsArchiveConfirmationOpen(true);
   };
