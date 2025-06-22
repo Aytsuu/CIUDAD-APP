@@ -3,13 +3,13 @@ import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { Form } from "@/components/ui/form/form";
-import { FormSelect } from "@/components/ui/form/form-select";
 import { Button } from "@/components/ui/button/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
+import { FormSelect } from "@/components/ui/form/form-select";
 
 export default function DemographicForm({
   form,
@@ -26,7 +26,6 @@ export default function DemographicForm({
   const submit = async () => {
     const formIsValid = await form.trigger("demographicInfo");
     const householdId = form.watch("demographicInfo.householdNo");
-
     if (formIsValid && householdId) {
       onSubmit();
     } else {

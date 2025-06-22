@@ -1,17 +1,43 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Ellipsis } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowUpDown,
+  CircleCheck,
+  Ellipsis,
+  Info,
+  Loader2,
+  Lock,
+  Pen,
+  Trash,
+  UserRoundCheck,
+} from "lucide-react";
 import { AdministrationRecord } from "./administrationTypes";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
-import { IdCard } from "lucide-react";
+import { Action } from "./administrationEnums";
+import { useUpdateStaff } from "./queries/administrationUpdateQueries";
+import { useDeleteStaff } from "./queries/administrationDeleteQueries";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import React from "react";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { positionAssignmentSchema } from "@/form-schema/administration-schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { generateDefaultValues } from "@/helpers/generateDefaultValues";
+import { Form } from "@/components/ui/form/form";
+import { LoadButton } from "@/components/ui/button/load-button";
+import { usePositions } from "./queries/administrationFetchQueries";
+import { formatPositions } from "./AdministrationFormats";
+import { toast } from "sonner";
 
 export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
   {
     accessorKey: "icon",
     header: "",
     cell: () => (
-      <IdCard size={24} className="text-green-600 w-full text-center"/>
+      <UserRoundCheck size={20} className="text-green-600 w-full text-center" />
     ),
   },
   {
@@ -82,15 +108,269 @@ export const administrationColumns: ColumnDef<AdministrationRecord>[] = [
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => (
-      <DropdownLayout
-        trigger={
-          <Button variant={"outline"} className="border">
-            <Ellipsis />
-          </Button>
+    cell: ({ row }) => {
+      const [isEditModalOpen, setIsEditModalOpen] =
+        React.useState<boolean>(false);
+      const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+      const { mutateAsync: updateStaff } = useUpdateStaff();
+      const { mutateAsync: deleteStaff } = useDeleteStaff();
+      const { data: positions, isLoading: isLoadingPositions } = usePositions();
+
+      const defaultValues = generateDefaultValues(positionAssignmentSchema);
+      const form = useForm<z.infer<typeof positionAssignmentSchema>>({
+        resolver: zodResolver(positionAssignmentSchema),
+        defaultValues,
+      });
+
+      // Initialize form with current staff position
+      React.useEffect(() => {
+        if (positions && isEditModalOpen) {
+          const currentPosition = positions?.find(
+            (pos: any) => pos.pos_title === row.original.position
+          );
+          if (currentPosition) {
+            form.setValue("assignPosition", String(currentPosition.pos_id));
+          }
         }
-        options={[]}
-      />
-    ),
+      }, [positions, isEditModalOpen, row.original.position, form]);
+
+      const handleAction = (action: string) => {
+        if (action === Action.Edit) {
+          handleEdit();
+        } else {
+          handleDelete();
+        }
+      };
+
+      const handleEdit = () => {
+        setIsEditModalOpen(true);
+        // Reset form state when opening
+        setIsSubmitting(false);
+        form.clearErrors();
+      };
+
+      const handleCloseModal = () => {
+        setIsEditModalOpen(false);
+        setIsSubmitting(false);
+        // Reset form to original values
+        const currentPosition = positions?.find(
+          (pos: any) => pos.pos_title === row.original.position
+        );
+        if (currentPosition) {
+          form.setValue("assignPosition", String(currentPosition.pos_id));
+        }
+        form.clearErrors();
+      };
+
+      const handleSaveEdit = async () => {
+        setIsSubmitting(true);
+
+        try {
+          const formIsValid = await form.trigger();
+          if (!formIsValid) {
+            setIsSubmitting(false);
+            return;
+          }
+
+          const values = form.getValues();
+          const selectedPosition = positions?.find(
+            (pos: any) => pos.pos_id === parseInt(values.assignPosition)
+          );
+
+          // Check if position actually changed
+          if (selectedPosition?.pos_title === row.original.position) {
+            toast("No changes were made to the staff position", {
+              icon: <Info size={24} className="fill-blue-500 stroke-white" />,
+            });
+            setIsSubmitting(false);
+            setIsEditModalOpen(false);
+            return;
+          }
+
+          await updateStaff({
+            data: {
+              pos: values.assignPosition,
+            },
+            staffId: row.original.staff_id,
+          });
+
+          toast(`Staff position updated to ${selectedPosition?.pos_title}`, {
+            icon: (
+              <CircleCheck size={24} className="fill-green-500 stroke-white" />
+            ),
+          });
+
+          setIsEditModalOpen(false);
+          setIsSubmitting(false);
+        } catch (error) {
+          console.error("Failed to update staff:", error);
+          toast("Failed to update staff position. Please try again.", {
+            icon: (
+              <AlertCircle size={24} className="fill-red-500 stroke-white" />
+            ),
+          });
+          setIsSubmitting(false);
+        }
+      };
+
+      const handleDelete = () => {
+        deleteStaff(row.original.staff_id, {
+          onSuccess: () => {
+            toast("Staff has been removed", {
+              icon: (
+                <CircleCheck
+                  size={24}
+                  className="fill-green-500 stroke-white"
+                />
+              ),
+            });
+          },
+        });
+      };
+
+      const getCurrentPositionName = () => {
+        return row.original.position || "No position assigned";
+      };
+
+      const getSelectedPositionName = () => {
+        const selectedPosId = form.watch("assignPosition");
+        const selectedPosition = positions?.find(
+          (pos: any) => pos.pos_id === parseInt(selectedPosId)
+        );
+        return selectedPosition?.pos_title || "";
+      };
+
+      if(row.original.position.toLowerCase() === "admin") {
+        return (
+          <div className="w-full flex justify-center py-2">
+            <Button variant={"outline"} className="border-none"
+              onClick={() => {
+                toast("Cannot modify protected admin", {
+                  icon: (
+                    <Lock size={16} className="text-orange-500" />
+                  ),
+                });
+              }}
+            >
+              <Lock className="text-black/70 cursor-not-allowed"/>
+            </Button>
+          </div>
+        )
+      }
+
+      return (
+        <div className="py-2">
+          <DropdownLayout
+            trigger={
+              <Button variant={"outline"} className="border">
+                <Ellipsis />
+              </Button>
+            }
+            options={[
+              {
+                id: "edit",
+                name: "Change Role",
+                icon: <Pen className="w-4 h-4" />,
+                variant: "default",
+              },
+              {
+                id: "delete",
+                name: "Remove Staff",
+                icon: <Trash className="w-4 h-4" />,
+                variant: "delete",
+              },
+            ]}
+            onSelect={handleAction}
+          />
+
+          <DialogLayout
+            title="Update Staff Position"
+            description={
+              <div className="space-y-2">
+                <p>
+                  Change the position for{" "}
+                  <strong>
+                    {row.original.fname} {row.original.lname}
+                  </strong>
+                </p>
+                <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <span>Current Position:</span>
+                    <span className="font-medium">
+                      {getCurrentPositionName()}
+                    </span>
+                  </div>
+                  {form.watch("assignPosition") &&
+                    getSelectedPositionName() !== getCurrentPositionName() && (
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                        <span>New Position:</span>
+                        <span className="font-medium text-blue-600">
+                          {getSelectedPositionName()}
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </div>
+            }
+            mainContent={
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveEdit();
+                  }}
+                  className="space-y-6"
+                >
+                  <div className="space-y-4">
+                    <FormSelect
+                      control={form.control}
+                      name="assignPosition"
+                      label="Select New Position"
+                      options={formatPositions(positions)}
+                    />
+
+                    {isLoadingPositions && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 size={16} className="animate-spin" />
+                        Loading positions...
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCloseModal}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+
+                    {!isSubmitting ? (
+                      <Button
+                        type="submit"
+                        disabled={
+                          isLoadingPositions || !form.watch("assignPosition")
+                        }
+                      >
+                        <UserRoundCheck size={16} className="mr-2" />
+                        Update Position
+                      </Button>
+                    ) : (
+                      <LoadButton>
+                        Updating...
+                      </LoadButton>
+                    )}
+                  </div>
+                </form>
+              </Form>
+            }
+            isOpen={isEditModalOpen}
+            onOpenChange={handleCloseModal}
+          />
+        </div>
+      );
+    },
   },
 ];

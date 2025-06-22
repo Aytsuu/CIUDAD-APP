@@ -26,11 +26,11 @@ export const FormSelect = React.memo(({ control, name, label, options, readOnly 
                 placeholder="Select"
                 className="w-full"
                 options={options}
-                value={field.value.toLowerCase()}
+                value={field.value}
                 onChange={field.onChange}
               />
             ) : (
-              <Input {...field} value={capitalize(field.value) || ""} readOnly />
+              <Input {...field} readOnly />
             )}
           </FormControl>
           <FormMessage />

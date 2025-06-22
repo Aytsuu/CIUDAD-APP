@@ -31,12 +31,8 @@ export default function AssignPosition({
   const {mutateAsync: addResidentAndPersonal} = useAddResidentAndPersonal();
   const {mutateAsync: addStaff} = useAddStaff();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const personalDefaults = React.useRef(
-    generateDefaultValues(personalInfoSchema)
-  ).current;
-  const defaultValues = React.useRef(
-    generateDefaultValues(positionAssignmentSchema)
-  ).current;
+  const personalDefaults = generateDefaultValues(personalInfoSchema)
+  const defaultValues = generateDefaultValues(positionAssignmentSchema)
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
     defaultValues,

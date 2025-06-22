@@ -3,8 +3,8 @@ import { batchPermissionUpdate, updatePermission, updatePosition } from "../rest
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router";
+import { api } from "@/api/api";
 
-// Updating
 export const useEditPosition = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -14,7 +14,6 @@ export const useEditPosition = () => {
       values: Record<string, string>
     }) => updatePosition(positionId, values),
     onSuccess: (updatedPosition) => {
-      // Final update with actual server data
       queryClient.setQueryData(['positions'], (old: any[] = []) => 
         old.map(position => 
           position.pos_id === updatedPosition.pos_id 
@@ -54,3 +53,24 @@ export const useBatchPermissionUpdate = () => {
     onSuccess: () => queryClient.invalidateQueries({queryKey: ['allAssignedFeatures']})
   })
 }
+
+export const useUpdateStaff = () => {
+  const queryClient = useQueryClient();
+  return useMutation({ 
+    mutationFn: async ({data, staffId} : {
+      data: Record<string, any>;
+      staffId: string;
+    }) => {
+      try {
+        const res = await api.put(`administration/staff/${staffId}/update/`, data)
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['staffs']})
+    }
+  })
+}
+

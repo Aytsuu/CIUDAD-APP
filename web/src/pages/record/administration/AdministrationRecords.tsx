@@ -13,9 +13,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card, CardContent } from "@/components/ui/card/card";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function AdministrationRecords() {
-  // Initializing states
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -31,8 +33,15 @@ export default function AdministrationRecords() {
 
   const staffList = staffs?.results || [];
   const totalCount = staffs?.count || 0;
-  const totalPages = Math.ceil(totalCount.length / pageSize);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoadingStaffs) showLoading();
+    else hideLoading();
+  }, [isLoadingStaffs])
   
+  // ----------------- HANDLERS --------------------
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -48,6 +57,7 @@ export default function AdministrationRecords() {
   }
 
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Administrative Records"
       description="Manage and view staff information"

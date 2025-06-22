@@ -28,7 +28,7 @@ export type Permission = {
 }
 
 export type AdministrationRecord = {
-    id: string
+    staff_id: string
     lname: string
     fname: string
     mname: string

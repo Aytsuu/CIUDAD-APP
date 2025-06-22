@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const demographicInfoSchema = z.object({
-  id: z.string(), // For residents living independently
+  id: z.string().optional(), // For residents living independently
   building: z.string().min(1, "Building is required"),
   householdNo: z.string(),
   indigenous: z.string().min(1, "Indigenous is required"),
@@ -9,7 +9,7 @@ export const demographicInfoSchema = z.object({
 
 export const personalInfoSchema = z.object({
 
-  per_id: z.string(),
+  per_id: z.string().optional(),
   per_suffix: z.string(),
   per_sex: z.string().min(1, "Sex is required"),
   per_dob: z.string().min(1, "Date of Birth is required"),
@@ -46,8 +46,7 @@ export const personalInfoSchema = z.object({
 });
 
 export const parentInfoSchema = z.object({
-  // To be removed, use personal
-  id: z.string(),
+  id: z.string().optional(),
   lastName: z.string(),
   firstName: z.string(),
   middleName: z.string(),
@@ -60,7 +59,7 @@ export const parentInfoSchema = z.object({
 });
 
 export const dependentSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   lastName: z.string(),
   firstName: z.string(),
   middleName: z.string(),
