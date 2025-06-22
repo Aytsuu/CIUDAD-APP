@@ -77,17 +77,6 @@ class AttendeesDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CouncilAttendees.objects.all()
     lookup_field = 'atn_id'
 
-class AttendanceView(generics.ListCreateAPIView):
-    serializer_class = CouncilAttendanceSerializer
-    queryset = CouncilAttendance.objects.all()
-    def get_queryset(self):
-        queryset = CouncilAttendance.objects.all()
-        archived = self.request.query_params.get('archived')
-        if archived is not None:
-            archived = archived.lower() == 'true'
-            queryset = queryset.filter(att_is_archive=archived)
-        return queryset
-
 class AttendeesBulkView(generics.GenericAPIView):
     serializer_class = CouncilAttendeesSerializer
     queryset = CouncilAttendees.objects.all()
@@ -116,49 +105,55 @@ class AttendeesBulkView(generics.GenericAPIView):
         logger.error(f"Serializer errors: {serializer.errors}")
         return Response({"detail": "Invalid data", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)   
 
-class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+class AttendanceSheetListView(generics.ListCreateAPIView):
+    serializer_class = CouncilAttendanceSerializer
+    queryset = CouncilAttendance.objects.all()
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        ce_id = self.request.query_params.get('ce_id')
+        archive_status = self.request.query_params.get('archive')
+        
+        if ce_id:
+            queryset = queryset.filter(ce_id=ce_id)
+            
+        if archive_status == 'true':
+            queryset = queryset.filter(att_is_archive=True)
+        elif archive_status == 'false':
+            queryset = queryset.filter(att_is_archive=False)
+            
+        return queryset
+
+class AttendanceSheetDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CouncilAttendanceSerializer
     queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if not instance:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-            
         permanent = request.query_params.get('permanent', 'false').lower() == 'true'
         
         if permanent:
-            # Permanent delete
+            # Add file deletion logic if needed
             instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            # Soft delete (archive)
             instance.att_is_archive = True
             instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"message": "Attendance sheet archived"}, 
+                          status=status.HTTP_200_OK)
 
 class RestoreAttendanceView(generics.UpdateAPIView):
+    queryset = CouncilAttendance.objects.filter(att_is_archive=True)
     serializer_class = CouncilAttendanceSerializer
-    queryset = CouncilAttendance.objects.all()
     lookup_field = 'att_id'
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if not instance:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        
-        if not instance.att_is_archive:
-            return Response(
-                {"detail": "Attendance sheet is not archived."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
         instance.att_is_archive = False
         instance.save()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"message": "Attendance sheet restored"},
+                      status=status.HTTP_200_OK)
 
 Staff = apps.get_model('administration', 'Staff')
 class StaffListView(generics.ListAPIView):

@@ -54,10 +54,12 @@ export type AttendeeInput = {
 export type AttendanceSheet = {
   att_id: number;
   ce_id: number;
-  file_id: number | null;
-  staff_id: string | null;
-  file_url: string | null;
+  att_file_name: string;
+  att_file_path: string;
+  att_file_url: string;
+  att_file_type: string;
   att_is_archive: boolean;
+  staff_id: string | null;
 };
 
 export type AttendanceSheetInput = {

@@ -29,9 +29,17 @@ export const getAttendees = async (ceId?: number) => {
 
 
 export const getAttendanceSheets = async (isArchived?: boolean) => {
-  const params = isArchived !== undefined ? { archived: isArchived } : {};
-  const response = await api.get('council/attendance-sheet/', { params });
-  return response.data;
+  try {
+    const res = await api.get('council/attendance-sheets/', {
+      params: { 
+        archived: isArchived,
+      }
+    });
+    return res.data?.data ?? res.data ?? [];
+  } catch (err) {
+    console.error("Error fetching attendance sheets:", err);
+    return [];
+  }
 };
 
 // export const getStaffList = async () => {

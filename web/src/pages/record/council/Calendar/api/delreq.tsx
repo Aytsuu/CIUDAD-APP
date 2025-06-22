@@ -53,7 +53,7 @@ export const delAttendanceSheet = async (att_id: number, permanent: boolean = fa
 
     try {
         console.log("Deleting attendance sheet with att_id:", att_id, "Permanent:", permanent);
-        const res = await api.delete(`council/attendance-sheet/${att_id}/`, {
+        const res = await api.delete(`council/attendance-sheets/${att_id}/`, {
             params: { permanent }
         });
         console.log("Delete response:", res.data);
@@ -67,7 +67,7 @@ export const delAttendanceSheet = async (att_id: number, permanent: boolean = fa
 export const restoreAttendanceSheet = async (att_id: number) => {
     try {
         console.log("Restoring attendance sheet with att_id:", att_id);
-        const res = await api.put(`council/attendance-sheet/${att_id}/restore/`);
+        const res = await api.put(`council/attendance-sheets/${att_id}/restore/`);
         console.log("Restore response:", res.data);
         return res.data;
     } catch (err) {
