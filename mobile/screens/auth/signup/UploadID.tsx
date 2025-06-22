@@ -14,15 +14,15 @@ import { useToastContext } from "@/components/ui/toast";
 import { useFieldArray } from "react-hook-form";
 
 const idOptions: {label: string, value: string}[] = [
-  {label: "Driver's License", value: "driverLicense"},
-  {label: "UMID", value: "umid"},
-  {label: "Philhealth ID", value: "philhealthID"},
-  {label: "Passport", value: "passportID"},
-  {label: "SSS ID", value: "sssID"},
-  {label: "Voter's ID", value: "votersID"},
-  {label: "National ID", value: "nationalID"},
-  {label: "HDMF (Pag-ibig ID)", value: "pagibigID"},
-  {label: "Other", value: "other"}
+  {label: "Driver's License", value: "Driver's License"},
+  {label: "UMID", value: "UMID"},
+  {label: "Philhealth ID", value: "Philhealth ID"},
+  {label: "Passport", value: "Passport"},
+  {label: "SSS ID", value: "SSS ID"},
+  {label: "Voter's ID", value: "Voter's ID"},
+  {label: "National ID", value: "National ID"},
+  {label: "HDMF (Pag-ibig ID)", value: "HDMF (Pag-ibig ID)"},
+  {label: "Other", value: "Other"}
 ];
 
 export default function UploadID() {

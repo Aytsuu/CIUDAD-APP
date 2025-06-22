@@ -1,10 +1,13 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, FileText, AlertCircle, Clock, TrendingUp, MoveRight } from "lucide-react"
+import { Button } from "@/components/ui/button/button"
+import { Calendar, FileText, AlertCircle, MoveRight, AlertTriangle } from "lucide-react"
 import { useGetWeeklyAR } from "../queries/reportFetch"
-import { getMonthName, getMonths, getWeekNumber } from "@/helpers/dateFormatter"
+import { getAllWeeksInMonth, getMonthName, getMonths, getWeekNumber } from "@/helpers/dateFormatter"
 import { useNavigate } from "react-router"
+import RecentWeeklyAR from "./RecentWeeklyAR"
+import MissedWeeklyAR from "./MissedWeeklyAR"
 
 export default function WeeklyAR() {
   const navigate = useNavigate();
@@ -31,6 +34,11 @@ export default function WeeklyAR() {
         return acc;
       }, {});
 
+      // Get all possible weeks for this month
+      const allWeeksInMonth = getAllWeeksInMonth(month);
+      const existingWeeks = Object.keys(weekGroups).map(Number);
+      const missingWeeks = allWeeksInMonth.filter(week => !existingWeeks.includes(week));
+
       return {
         month,
         weeks: Object.entries(weekGroups)
@@ -39,10 +47,11 @@ export default function WeeklyAR() {
             data: ars as any[],
           }))
           .sort((a, b) => a.weekNo - b.weekNo),
+        missingWeeks: missingWeeks.sort((a, b) => a - b),
         hasData: monthData.length > 0,
       };
     })
-    .filter((monthData) => monthData.hasData);
+    .filter((monthData) => monthData.hasData || monthData.missingWeeks.length > 0);
 
   // Get recent reports (last 7 days or most recent 10 items)
   const recentReports = weeklyAR
@@ -105,7 +114,7 @@ export default function WeeklyAR() {
                       value={month}
                       className="border-b last:border-b-0"
                     >
-                      <AccordionTrigger className="px-6 py-4 hover:bg-muted/50">
+                      <AccordionTrigger className="px-6 py-4 hover:bg-muted/50 hover:no-underline ">
                         <div className="flex items-center gap-3">
                           <Calendar className="h-4 w-4" />
                           <span className="font-medium">{month}</span>
@@ -123,7 +132,7 @@ export default function WeeklyAR() {
                               value={`week-${weekNo}`}
                               className="border-b last:border-b-0"
                             >
-                              <AccordionTrigger className="py-3 hover:bg-muted/30">
+                              <AccordionTrigger className="py-3 hover:bg-muted/30 hover:no-underline">
                                 <div className="flex items-center justify-between w-full mr-4">
                                   <div className="flex items-center gap-2">
                                     <FileText className="h-4 w-4" />
@@ -131,14 +140,25 @@ export default function WeeklyAR() {
                                       Week {weekNo}
                                     </span>
                                   </div>
-                                  <Badge variant="secondary">
-                                    {data.reduce(
-                                      (total, war) =>
-                                        total + war.war_composition.length,
-                                      0
-                                    )}{" "}
-                                    Reports
-                                  </Badge>
+                                  <div className="flex items-center gap-2">
+                                    {data.map((war) => (
+                                      <Badge
+                                        variant={"outline"}
+                                        className={`text-white border-none ${war.status === "Signed" ? 
+                                          "bg-green-500" : "bg-orange-500"}`}
+                                      >
+                                        {war.status}
+                                      </Badge>
+                                    ))}
+                                    <Badge variant="secondary">
+                                      {data.reduce(
+                                        (total, war) =>
+                                          total + war.war_composition.length,
+                                        0
+                                      )}{" "}
+                                      Reports
+                                    </Badge>
+                                  </div>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="pt-2 pb-3">
@@ -158,7 +178,7 @@ export default function WeeklyAR() {
                                             <div className="flex items-center gap-2">
                                               <div className="w-2 h-2 bg-primary rounded-full" />
                                               <span className="font-mono text-sm">
-                                                {comp.ar.id}
+                                                Report No. {comp.ar.id}
                                               </span>
                                               {comp.ar.ar_title && (
                                                 <span className="text-sm text-muted-foreground">
@@ -166,18 +186,6 @@ export default function WeeklyAR() {
                                                 </span>
                                               )}
                                             </div>
-                                            {comp.ar.status && (
-                                              <Badge
-                                                variant={
-                                                  comp.ar.status === "Signed"
-                                                    ? "default"
-                                                    : "secondary"
-                                                }
-                                                className="text-xs"
-                                              >
-                                                {comp.ar.status}
-                                              </Badge>
-                                            )}
                                           </div>
                                         )
                                       )} 
@@ -215,77 +223,15 @@ export default function WeeklyAR() {
             </Card>
           </div>
 
-          {/* Recent Reports Sidebar */}
+          {/* Sidebar */}
           <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Recent Reports
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {recentReports.length > 0 ? (
-                  recentReports.map((report, index) => (
-                    <div
-                      key={`recent-${report.id}-${index}`}
-                      className="p-3 bg-muted/20 rounded-lg border hover:bg-muted/40 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">
-                          Week {getWeekNumber(report.date)}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {report.war_composition.length}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {getMonthName(report.date)} •{" "}
-                        {new Date(report.date).toLocaleDateString()}
-                      </div>
-                      <div className="space-y-1">
-                        {report.war_composition
-                          .slice(0, 2)
-                          .map((comp: any, compIndex: number) => (
-                            <div
-                              key={`recent-comp-${compIndex}`}
-                              className="text-xs"
-                            >
-                              <span className="font-mono text-primary">
-                                {comp.ar.id}
-                              </span>
-                              {comp.ar.ar_status && (
-                                <Badge
-                                  variant={
-                                    comp.ar.status === "Signed"
-                                      ? "default"
-                                      : "secondary"
-                                  }
-                                  className="text-xs ml-2 h-4"
-                                >
-                                  {comp.ar.status}
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
-                        {report.war_composition.length > 2 && (
-                          <div className="text-xs text-muted-foreground">
-                            +{report.war_composition.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-4">
-                    <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      No recent reports
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Recent Reports */}
+            <RecentWeeklyAR 
+              recentReports={recentReports}
+            />
+
+            {/* Missed Weekly Reports */}
+            <MissedWeeklyAR />
           </div>
         </div>
       </div>

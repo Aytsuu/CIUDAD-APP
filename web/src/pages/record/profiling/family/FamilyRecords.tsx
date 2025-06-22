@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
 
 export default function FamilyRecords() {
-  // Initialize states
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading()
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
@@ -27,7 +29,14 @@ export default function FamilyRecords() {
   const families = familiesTableData?.results || []
   const totalCount = familiesTableData?.count || 0
   const totalPages = Math.ceil(totalCount / pageSize)
+  
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading])
 
+  // ----------------- HANDLERS --------------------
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -43,6 +52,7 @@ export default function FamilyRecords() {
   }
 
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent title="Family Profiling" description="Manage and view all family records in your community">
       <div className="space-y-6">
         <Card>

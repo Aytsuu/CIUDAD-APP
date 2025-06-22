@@ -33,3 +33,24 @@ export const getDateTimeFormat = (dateString: string) => {
 export const getMonths = Array.from({ length: 12 }, (_, i) =>
   new Date(0, i).toLocaleString('default', { month: 'long' })
 );
+
+// Helper function to get all weeks in a month
+export const getAllWeeksInMonth = (monthName: string) => {
+  const currentYear = new Date().getFullYear();
+  const monthIndex = new Date(`${monthName} 1, ${currentYear}`).getMonth();
+  const weeks = [];
+  
+  // Get first day of month and last day of month
+  const firstDay = new Date(currentYear, monthIndex, 1);
+  const lastDay = new Date(currentYear, monthIndex + 1, 0);
+  
+  // Calculate weeks for the month
+  const firstWeek = getWeekNumber(firstDay.toISOString());
+  const lastWeek = getWeekNumber(lastDay.toISOString());
+  
+  for (let week = firstWeek; week <= lastWeek; week++) {
+    weeks.push(week);
+  }
+  
+  return weeks;
+};

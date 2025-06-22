@@ -14,8 +14,11 @@ import { residentColumns } from "./ResidentColumns"
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
 import { useResidentsTable } from "../queries/profilingFetchQueries"
 import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
 
 export default function ResidentRecords() {
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
@@ -28,15 +31,22 @@ export default function ResidentRecords() {
     debouncedSearchQuery,
   )
 
+  const residents = residentsTableData?.results || [];
+  const totalCount = residentsTableData?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
     setCurrentPage(1)
   }, [debouncedSearchQuery])
 
-  const residents = residentsTableData?.results || [];
-  const totalCount = residentsTableData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  React.useEffect(() => {
+    if(isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading])
 
+  // ----------------- HANDLERS --------------------
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -52,6 +62,7 @@ export default function ResidentRecords() {
   }
 
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent title="Resident Profiling" description="Manage and view all residents in your community">
       <div className="space-y-6">
         {/* Search and Actions */}
@@ -99,7 +110,7 @@ export default function ResidentRecords() {
                     <ClockArrowUp className="h-4 w-4 mr-2" />
                     Pending
                     <Badge variant="secondary" className="ml-2">
-                      12
+                      -
                     </Badge>
                   </Button>
                 </Link>

@@ -3,7 +3,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button";
 import { LoadButton } from "@/components/ui/button/load-button";
 import AssignPosition from "../administration/AssignPosition";
-import { Pen } from "lucide-react";
+import { Check, Pen, X } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Configuration Object
@@ -34,7 +34,10 @@ export const buttonConfig = (
         isOpen={isAssignmentOpen}
         onOpenChange={setIsAssignmentOpen}
       />) : (
-        <Button type="submit" className="px-12">Finish</Button>
+        <Button type="submit" className="px-12">
+          <Check />
+          Finish
+        </Button>
       )
     ),
   },
@@ -60,6 +63,7 @@ export const buttonConfig = (
           Cancel
         </Button>
         <Button className="w-full sm:w-32" type="submit">
+          <Check/>
           Save
         </Button>
       </div>
@@ -71,6 +75,7 @@ export const buttonConfig = (
               className="w-full sm:w-32 text-red-500 hover:text-red-500"
               variant={"outline"}
             >
+              <X />
               Reject
             </Button>
           }
@@ -81,7 +86,11 @@ export const buttonConfig = (
           variant="destructive"
         />
         <ConfirmationModal
-          trigger={<Button className="w-full sm:w-32"> Approve </Button>}
+          trigger={<Button className="w-full"> 
+            <Check/>
+            Approve & Create Record 
+          </Button>
+          }
           title="Confirm Approval"
           description="Do you wish to proceed approving this request?"
           actionLabel="Confirm"
@@ -91,7 +100,10 @@ export const buttonConfig = (
     ),
     default: (
       <ConfirmationModal
-        trigger={<Button className="w-full sm:w-32"> Register </Button>}
+        trigger={<Button className="w-full sm:w-32"> 
+          <Check/>
+          Register 
+        </Button>}
         title="Confirm Registration"
         description="Do you wish to proceed with the registration?"
         actionLabel="Confirm"

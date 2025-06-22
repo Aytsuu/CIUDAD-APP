@@ -42,7 +42,7 @@ export default function RootLayout() {
       <StatusBar backgroundColor="white" style="dark" />
       <ToastProvider>
         <QueryClientProvider client={queryClient}>
-          <Stack initialRouteName='(complaint)'>
+          <Stack initialRouteName='(auth)'>
             <Stack.Screen name="(complaint)" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

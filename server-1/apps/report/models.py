@@ -60,7 +60,7 @@ class WeeklyAccomplishmentReport(models.Model):
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
-    db_table = 'weekly_acknowledgement_report'
+    db_table = 'weekly_accomplishment_report'
 
 class WARFile(models.Model):
   warf_id = models.BigAutoField(primary_key=True)

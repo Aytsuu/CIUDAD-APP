@@ -12,9 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card/card"
 import { useDebounce } from "@/hooks/use-debounce"
+import { useLoading } from "@/context/LoadingContext"
 
 export default function BusinessRecords() {
-  // Initialize states
+  // ----------------- STATE INITIALIZATION --------------------
+  const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
@@ -30,7 +32,13 @@ export default function BusinessRecords() {
   const totalCount = businesses?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
   
+  // ----------------- SIDE EFFECTS --------------------
+  React.useEffect(() => {
+    if(isLoading) showLoading();
+    else hideLoading();
+  }, [isLoading])
 
+  // ----------------- HANDLERS --------------------
   const handleExport = (type: "csv" | "excel" | "pdf") => {
     switch (type) {
       case "csv":
@@ -46,6 +54,7 @@ export default function BusinessRecords() {
   }
 
   return (
+    // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Business Records"
       description="View and manage registered businesses, including their details, location, and registration information."
