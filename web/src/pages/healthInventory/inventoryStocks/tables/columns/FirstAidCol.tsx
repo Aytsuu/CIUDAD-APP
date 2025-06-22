@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button/button";
 import { ColumnDef } from "@tanstack/react-table";
-import { Search, Trash, Plus, FileInput, Minus, Edit } from "lucide-react";
+import { Search, Archive , Plus, FileInput, Minus, Edit } from "lucide-react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import UsedFAModal from "../../addstocksModal/UsedFAModal";
 import EditFirstAidStockForm from "../../editModal/EditFirstAidStockModal";
@@ -78,20 +78,7 @@ export const getColumns = (
       );
     },
   },
-  {
-    accessorKey: "used",
-    header: "Used",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div className={`flex items-center justify-center gap-2 ${
-          expired ? "text-red-600 line-through" : "text-red-700"
-        }`}>
-          <span className="text-sm">{row.original.used || 0}</span>
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: "availQty",
     header: "Available",
@@ -153,6 +140,22 @@ export const getColumns = (
     },
   },
   {
+    accessorKey: "used",
+    header: "Qty used",
+    cell: ({ row }) => {
+      const expired = isExpired(row.original.expiryDate);
+      return (
+        <div
+          className={`flex items-center justify-center gap-2 ${
+            expired ? "text-red-600 line-through" : "text-red-700"
+          }`}
+        >
+          <span className="text-sm">{row.original.used || 0}</span>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "expiryDate",
     header: "Expiry Date",
     cell: ({ row }) => {
@@ -189,9 +192,14 @@ export const getColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className="flex gap-2">
-          <Button variant="outline"   className={`${
-              expired || parseInt(row.original.availQty) <= 0 ? " bg-red-100  border border-red-300 pointer-events-none opacity-50" : "bg-red-100 border border-red-300 hover:bg-red-200"
-            }`}>
+          <Button
+            variant="outline"
+            className={`${
+              expired || parseInt(row.original.availQty) <= 0
+                ? " bg-red-100  border border-red-300 pointer-events-none opacity-50"
+                : "bg-red-100 border border-red-300 hover:bg-red-200"
+            }`}
+          >
             <Link
               to="/usedFirstAidStock"
               state={{
@@ -204,7 +212,7 @@ export const getColumns = (
             </Link>
           </Button>
 
-          <Button variant="outline" disabled={expired} >
+          <Button variant="outline" disabled={expired}>
             <Link
               to="/editFirstAidStock"
               state={{
@@ -221,7 +229,7 @@ export const getColumns = (
             size="sm"
             onClick={() => handleArchiveInventory(row.original.inv_id)}
           >
-            <Trash />
+            <Archive  />
           </Button>
         </div>
       );

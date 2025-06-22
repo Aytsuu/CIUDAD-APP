@@ -23,13 +23,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { PatientInfoCard } from "@/components/ui/patientInfoCard";
 import { Label } from "@/components/ui/label";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
 import { api2 } from "@/api/api";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useFirstAidCount } from "../queries/FirstAidCountQueries";
 import {Heart} from "lucide-react"
-
-type filter = "all" | "archived";
 
 export interface FirstAidRecord {
   farec_id: number;
@@ -79,12 +76,9 @@ export default function IndivFirstAidRecords() {
   const patientData = location.state?.params?.patientData;
 
   const navigate = useNavigate();
-  const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
-  const [recordToArchive, setRecordToArchive] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filter, setFilter] = useState<filter>("all");
 
   if (!patientData?.pat_id) {
     return <div>Error: Patient ID not provided</div>;
@@ -135,44 +129,15 @@ export default function IndivFirstAidRecords() {
     return formatFirstAidData().filter((record) => {
       const searchText =
         `${record.farec_id} ${record.finv_details?.fa_detail?.fa_name} ${record.finv_details?.fa_detail?.catlist} ${record.reason}`.toLowerCase();
-      const matchesSearch = searchText.includes(searchQuery.toLowerCase());
-      let matchesFilter = true;
-
-      if (filter === "archived") {
-        matchesFilter = record.is_archived;
-      } else {
-        matchesFilter = !record.is_archived;
-      }
-
-      return matchesSearch && matchesFilter;
+      return searchText.includes(searchQuery.toLowerCase());
     });
-  }, [searchQuery, formatFirstAidData, filter]);
+  }, [searchQuery, formatFirstAidData]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  const confirmArchiveRecord = async () => {
-    if (recordToArchive !== null) {
-      try {
-        const response = await api2.patch(`/firstaid/firstaid-records/${recordToArchive}/archive/`);
-        if (response.status === 200) {
-          toast.success("First aid record archived successfully!");
-          refetch();
-        } else {
-          throw new Error(response.data.error || "Failed to archive the record.");
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to archive the record.";
-        toast.error(errorMessage);
-      } finally {
-        setIsArchiveConfirmationOpen(false);
-        setRecordToArchive(null);
-      }
-    }
-  };
 
   const columns: ColumnDef<FirstAidRecord>[] = [
     {
@@ -223,31 +188,6 @@ export default function IndivFirstAidRecords() {
           </div>
         );
       },
-    },
-    {
-      accessorKey: "action",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          {!row.original.is_archived ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={() => {
-                setRecordToArchive(row.original.farec_id);
-                setIsArchiveConfirmationOpen(true);
-              }}
-            >
-              Archive
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" className="h-8" disabled>
-              Archived
-            </Button>
-          )}
-        </div>
-      ),
     },
   ];
 
@@ -333,19 +273,6 @@ export default function IndivFirstAidRecords() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div>
-                <SelectLayout
-                  placeholder="Filter by status"
-                  label=""
-                  className="bg-white w-48"
-                  options={[
-                    { id: "all", name: "All Records" },
-                    { id: "archived", name: "Archived" },
-                  ]}
-                  value={filter}
-                  onChange={(value) => setFilter(value as filter)}
-                />
-              </div>
             </div>
           </div>
           <div>
@@ -412,14 +339,6 @@ export default function IndivFirstAidRecords() {
           </div>
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={isArchiveConfirmationOpen}
-        onOpenChange={setIsArchiveConfirmationOpen}
-        onConfirm={confirmArchiveRecord}
-        title="Archive First Aid Record"
-        description="Are you sure you want to archive this record? It will be preserved in the system but removed from active records."
-      />
     </>
   );
 }

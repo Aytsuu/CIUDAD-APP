@@ -83,6 +83,9 @@ export type StockRecords = {
   imzStck_unit: string;
   imzStck_pcs: number;
   imzStck_used: number;
+  qty_number: number;
+  isArchived?: boolean; // Added property
+
   // wasted_items: number;
 
 };

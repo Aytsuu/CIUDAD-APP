@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useState } from "react";
 import { isVaccine, isSupply } from "../tables/VaccineStocks";
 import { StockRecords } from "../tables/type";
@@ -56,7 +56,7 @@ export default function WastedAntigen() {
 
   const handleConfirm = async () => {
     if (!formData) return;
-
+  
     try {
       setIsSubmitting(true);
       setIsConfirmationOpen(false);
@@ -72,7 +72,9 @@ export default function WastedAntigen() {
       });
     } catch (error: any) {
       console.error("Error recording wasted dose:", error);
-      toast.error("Failed to Add");
+      toast.error(error.message || "Failed to Add"); // Display the actual error message
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

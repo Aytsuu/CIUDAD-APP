@@ -4,15 +4,15 @@ import { CombinedTransactionRecords } from "../../tables/type";
 
 export const CombinedTransactionColumns = (): ColumnDef<CombinedTransactionRecords>[] => {
   return [
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => (
-        <div className="text-center">
-          {row.original.id}
-        </div>
-      ),
-    },
+    // {
+    //   accessorKey: "id",
+    //   header: "ID",
+    //   cell: ({ row }) => (
+    //     <div className="text-center">
+    //       {row.original.id}
+    //     </div>
+    //   ),
+    // },
   
     {
       accessorKey: "name",

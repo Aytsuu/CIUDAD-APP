@@ -16,7 +16,7 @@ import { Pill, CircleCheck,Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQueries";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useBatchNumbers } from "../REQUEST/Antigen/restful-api/VaccineFetchAPI";
 
 
@@ -65,10 +65,7 @@ export default function AddVaccineStock() {
     const [formData, setFormData] = useState<VaccineStockType | null>(null);
   
 
-    const isDuplicateBatchNumber = (
-      stocks: { batchNumber: string }[],
-      newBatchNumber: string
-    ) => {
+    const isDuplicateBatchNumber = (stocks: { batchNumber: string }[],newBatchNumber: string ) => {
       return stocks.some(
         (stock) =>
           stock.batchNumber.trim().toLowerCase() === newBatchNumber.trim().toLowerCase()
@@ -90,24 +87,10 @@ export default function AddVaccineStock() {
 
 
   const confirmAdd =async () => {
-
     if (!formData) return;
     setIsAddConfirmationOpen(false);
-
-    submit(formData, {
-      onSuccess: () => {
-        toast.success("Commodity item added successfully", {
-          icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-          duration: 2000,
-        });
-        form.reset();
-        navigate("/mainInventoryStocks");
-      },
-      onError: (error: Error) => {
-        console.error("Error in handleSubmit:", error);
-        toast.error("Failed to add commodity item");
-      },
-    });
+    submit(formData)
+     
   };
 
   return (
@@ -194,8 +177,8 @@ export default function AddVaccineStock() {
           </div>
 
           <div className="flex justify-end gap-3 bottom-0 bg-white pb-2 pt-8">
-            <Button variant="outline" className="w-full">
-              <Link to="/mainInventoryStocks">Cancel</Link>
+            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+             Cancel
             </Button>
             <Button type="submit" className="w-full" disabled={isPending}>
 

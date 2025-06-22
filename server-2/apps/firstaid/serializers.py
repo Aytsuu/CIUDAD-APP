@@ -4,6 +4,7 @@ from apps.inventory.serializers import *
 from apps.patientrecords.serializers import *
 
 
+
 class FirstaidRecordSerializer(serializers.ModelSerializer):
     finv_details = FirstAidInventorySerializer(source='finv', read_only=True)
     class Meta:

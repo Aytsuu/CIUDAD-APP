@@ -9,7 +9,7 @@ import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import MedicineModal from "../addListModal/MedicineModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { handleDeleteMedicineList } from "../restful-api/medicine/MedicineDeleteAPI";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { MedicineRecords } from "../tables/columns/MedicineCol";
@@ -17,7 +17,7 @@ import { Medcolumns } from "../tables/columns/MedicineCol";
 import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
 import { toast } from "sonner";
 import { Link } from "react-router";
-
+import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
 export default function MedicineList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -53,26 +53,14 @@ export default function MedicineList() {
     );
   }, [searchQuery, formatMedicineData]);
 
-  const handleDelete = async () => {
-    if (medToDelete === null) return;
+  const deleteMutation = useDeleteMedicine();
 
-    try {
-      await handleDeleteMedicineList(medToDelete);
-      queryClient.invalidateQueries({ queryKey: ["medicines"] });
-      toast.success("Medicine deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
-    } catch (error) {
-      toast.error("Failed to delete medicine", {
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-        duration: 2000,
-      });
-      console.error("Delete error:", error);
-    } finally {
-      setIsDeleteConfirmationOpen(false);
-      setMedToDelete(null);
-    }
+  const handleDelete = () => {
+    if (medToDelete === null) return;
+    
+    deleteMutation.mutate(medToDelete);
+    setIsDeleteConfirmationOpen(false);
+    setMedToDelete(null);
   };
 
   if (isLoadingMedicines) {

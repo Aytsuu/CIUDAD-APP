@@ -14,6 +14,10 @@ class PartialUpdateMixin:
         return super().to_internal_value(data)
 
 
+class AgegroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Agegroup
+        fields = '__all__'
 class MedicineListSerializers(serializers.ModelSerializer):
     catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
     class Meta: 
@@ -230,6 +234,7 @@ class FirstTransactionSerializer(serializers.ModelSerializer):
 #         fields = '__all__'
 
 class ImmunizationSuppliesSerializer(serializers.ModelSerializer):
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)
 
     class Meta:
         model = ImmunizationSupplies
@@ -246,15 +251,17 @@ class RoutineFrequencySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VacccinationListSerializer(serializers.ModelSerializer):
-    
-    # All intervals for this vaccine (using the related_name)
     intervals = VaccineIntervalSerializer(many=True, read_only=True)
-    
-    # Routine frequency for this vaccine (using the related_name)
     routine_frequency = RoutineFrequencySerializer(read_only=True)
-    
+    age_group = AgegroupSerializer(source='ageGroup', read_only=True)  # Read-only field for age group
     class Meta:
         model = VaccineList
+        fields = '__all__'
+        
+class CondtionaleVaccineSerializer(serializers.ModelSerializer): 
+    vac_detail = VacccinationListSerializer(source='vac_id', read_only=True)
+    class Meta:
+        model = ConditionalVaccine
         fields = '__all__'
         
 class VaccineStockSerializer(serializers.ModelSerializer):
@@ -263,11 +270,11 @@ class VaccineStockSerializer(serializers.ModelSerializer):
     # Foreign keys (required for creation but optional for updates)
     inv_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
     vac_id = serializers.PrimaryKeyRelatedField(queryset=VaccineList.objects.all())
+    # age_group = AgegroupSerializer(source='ageGroup', read_only=True)  # Read-only field for age group
 
     class Meta:
         model = VaccineStock
         fields = '__all__'
-        
         
     def to_internal_value(self, data):
         """Allow partial updates but require all fields for creation."""
@@ -279,12 +286,10 @@ class VaccineStockSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
         
 
-class AntigenTransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AntigenTransaction
-        fields = '__all__' 
         
 class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):
+    imz_detail = ImmunizationSuppliesSerializer(source='imz_id', read_only=True)
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)  
     class Meta:
         model = ImmunizationStock
         fields = '__all__'
@@ -303,3 +308,10 @@ class ImmunizationSuppliesTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImmunizationTransaction
         fields = '__all__'
+
+class AntigenTransactionSerializer(serializers.ModelSerializer):
+    vac_stock = VaccineStockSerializer(source='vacStck_id', read_only=True)
+    imz_stock = ImmnunizationStockSuppliesSerializer(source='imzStck_id', read_only=True)
+    class Meta:
+        model = AntigenTransaction
+        fields = '__all__' 

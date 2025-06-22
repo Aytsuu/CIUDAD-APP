@@ -3,13 +3,17 @@ import { StockRecords } from "../type";
 import { Minus, Plus } from "lucide-react";
 import WastedDoseForm from "../../addstocksModal/WastedDoseModal";
 import { Button } from "@/components/ui/button/button";
-import { Trash } from "lucide-react";
+import { Archive } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { isNearExpiry, isExpired, isLowStock } from "./Alert"; // Import the alert functions
 
 export const getStockColumns = (
   handleArchiveInventory: (inv_id: string) => void
 ): ColumnDef<StockRecords>[] => [
+  {
+    accessorKey: "inv_id",
+    header: "ID",
+  },
   {
     accessorKey: "batchNumber",
     header: "Batch Number",
@@ -45,7 +49,7 @@ export const getStockColumns = (
   },
   {
     accessorKey: "qty",
-    header: "Stock Quantity",
+    header: "Total Qty",
     cell: ({ row }) => {
       const expired = isExpired(row.original.expiryDate);
       return (
@@ -203,16 +207,42 @@ export const getStockColumns = (
 
   {
     accessorKey: "administered",
-    header: "Units Used",
+    header: "Qty Used",
     cell: ({ row }) => {
       const expired = isExpired(row.original.expiryDate);
+      const record = row.original;
+      let total_stocks = 0;
+      let unit = "";
+      let availQty = Number(record.availableStock) || 0;
+
+      if (record.type === "vaccine") {
+        if (record.solvent === "diluent") {
+          total_stocks = Number(record.qty_number) - availQty;
+          unit = "containers";
+        } else {
+          total_stocks =
+            Number(record.qty_number) * Number(record.dose_ml) - availQty;
+          unit = "doses";
+        }
+      } else if (record.type === "supply") {
+        if (record.imzStck_unit === "boxes") {
+          // Convert boxes to pieces by multiplying with pcs per box
+          total_stocks =
+            Number(record.qty_number) * Number(record.imzStck_pcs) - availQty;
+          unit = "pcs";
+        } else {
+          total_stocks = Number(record.qty_number) - availQty;
+          unit = "pcs";
+        }
+      }
+
       return (
         <div
           className={`text-center ${
             expired ? "text-red-600 line-through" : "text-red-600"
           }`}
         >
-          {row.original.administered}
+          {total_stocks} {unit}
         </div>
       );
     },
@@ -277,22 +307,24 @@ export const getStockColumns = (
 
       return (
         <div className="flex gap-2">
-            <Button
+          <Button
             variant="outline"
             className={`${
-              expired || row.original.availableStock <= 0 ? " bg-red-100  border border-red-300 pointer-events-none opacity-50" : "bg-red-100 border border-red-300 hover:bg-red-200"
+              expired || row.original.availableStock <= 0
+                ? " bg-red-100  border border-red-300 pointer-events-none opacity-50"
+                : "bg-red-100 border border-red-300 hover:bg-red-200"
             }`}
             asChild
-            >
+          >
             <Link
               to="/wastedAntigen"
               state={{ wasted: row.original.id, record: row.original }}
             >
               <Minus size={15} />
             </Link>
-            </Button>
+          </Button>
 
-          <Button variant="outline" disabled={expired}   asChild>
+          <Button variant="outline" disabled={expired} asChild>
             <Link
               to={isVaccine ? "/editVaccineStock" : "/editImzSupplyStock"}
               state={{ initialData: vaccine }}
@@ -306,7 +338,7 @@ export const getStockColumns = (
             size="sm"
             onClick={() => handleArchiveInventory(vaccine.inv_id)}
           >
-            <Trash />
+            <Archive />
           </Button>
         </div>
       );

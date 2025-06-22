@@ -82,7 +82,7 @@ export const useSubmitUpdateVaccineStock = () => {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vaccineStockList"] });
+      queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
     },
     onError: (error: any) => {
       console.error("Update vaccine stock error:", error.message || error);

@@ -13,10 +13,12 @@ export const useAddCommodity = () => {
       console.log("Adding commodity with data:", data);
       const response = await addCommodity(data); // actual post call
       console.log("Response from addCommodity:", response);
+      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["commodities"] });
+
       navigate(-1)
       toast.success("Commodity added successfully", {
         description: "The commodity has been added to the inventory list.",

@@ -1,27 +1,36 @@
 // vaccineService.ts
-import {api2} from "@/api/api";
+import { api2 } from "@/api/api";
 import { toTitleCase } from "@/helpers/ToTitleCase";
 
 // Update main vaccine details
-export const updateVaccineDetails = async (vaccineId: number, formData: any) => {
-    try {
-      const updatePayload = {
-        vac_name: toTitleCase(formData.vaccineName),
-        vac_type_choices: formData.type,
-        no_of_doses: Number(formData.noOfDoses),
-        age_group: formData.ageGroup,
-        specify_age: formData.ageGroup === "0-5" ? String(formData.specifyAge) : formData.ageGroup,
-        vaccat_id: 1,
-        updated_at: new Date().toISOString(),
-      };
-  
-      const res = await api2.put(`inventory/vac_list/${vaccineId}/`, updatePayload);
-      return res.data;
-    } catch (err) {
-      console.log(err);
-      throw err;
-    }
-  };
+export const updateVaccineDetails = async (
+  vaccineId: number,
+  formData: any
+) => {
+  try {
+    const updatePayload = {
+      vac_name: toTitleCase(formData.vaccineName),
+      vac_type_choices: formData.type,
+      no_of_doses: Number(formData.noOfDoses),
+      ageGroup: Number(formData.ageGroup.split(",")[0]) || 0, // Ensure ageGroup is a number
+      specify_age:
+        formData.ageGroup === "0-5"
+          ? String(formData.specifyAge)
+          : formData.ageGroup,
+      vaccat_id: 1,
+      updated_at: new Date().toISOString(),
+    };
+
+    const res = await api2.patch(
+      `inventory/vac_list/${vaccineId}/`,
+      updatePayload
+    );
+    return res.data;
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+};
 
 // vaccineService.ts
 
@@ -32,10 +41,15 @@ export const deleteRoutineFrequencies = async (vaccineId: number) => {
     });
     // Validate that all fetched records belong to the correct vaccineId
     const validRoutines = routines.data.filter(
-      (routine: { routineF_id: number; vac_id: number }) => routine.vac_id === vaccineId
+      (routine: { routineF_id: number; vac_id: number }) =>
+        routine.vac_id === vaccineId
     );
     if (validRoutines.length !== routines.data.length) {
-      console.warn(`Found ${routines.data.length - validRoutines.length} invalid routine frequencies for vac_id=${vaccineId}`);
+      console.warn(
+        `Found ${
+          routines.data.length - validRoutines.length
+        } invalid routine frequencies for vac_id=${vaccineId}`
+      );
     }
     await Promise.all(
       validRoutines.map((routine: { routineF_id: number }) =>
@@ -55,10 +69,15 @@ export const deleteVaccineIntervals = async (vaccineId: number) => {
     });
     // Validate that all fetched records belong to the correct vaccineId
     const validIntervals = intervals.data.filter(
-      (interval: { vacInt_id: number; vac_id: number }) => interval.vac_id === vaccineId
+      (interval: { vacInt_id: number; vac_id: number }) =>
+        interval.vac_id === vaccineId
     );
     if (validIntervals.length !== intervals.data.length) {
-      console.warn(`Found ${intervals.data.length - validIntervals.length} invalid intervals for vac_id=${vaccineId}`);
+      console.warn(
+        `Found ${
+          intervals.data.length - validIntervals.length
+        } invalid intervals for vac_id=${vaccineId}`
+      );
     }
     await Promise.all(
       validIntervals.map((interval: { vacInt_id: number }) =>
@@ -71,9 +90,35 @@ export const deleteVaccineIntervals = async (vaccineId: number) => {
   }
 };
 
+export const deleteConditionalVacinne = async (vaccineId: number) => {
+  try {
+    const response = await api2.delete(
+      `inventory/conditional_vaccine/${vaccineId}/`
+    );
+    return response.data;
+  } catch (err) {
+    console.error("Error deleting conditional vaccine:", err);
+    throw err;
+  }
+};
+
+// export const updateConditionalVaccine = async (vaccineId: number) => {
+//   try {
+//     const response = await api2.post(`inventory/conditional_vaccine/`, {
+//       vac_id: vaccineId,
+//     });
+//     return response.data;
+//   } catch (err) {
+//     console.error("Error updating conditional vaccine:", err);
+//     throw err;
+//   }
+// };
 
 // Update or create routine frequency
-export const updateRoutineFrequency = async (vaccineId: number, formData: any) => {
+export const updateRoutineFrequency = async (
+  vaccineId: number,
+  formData: any
+) => {
   try {
     const routineResponse = await api2.get(`inventory/routine_freq/`, {
       params: { vac_id: vaccineId },
@@ -88,7 +133,7 @@ export const updateRoutineFrequency = async (vaccineId: number, formData: any) =
     };
 
     if (routineResponse.data.length > 0) {
-      const res = await api2.put(
+      const res = await api2.patch(
         `inventory/routine_freq/${routineResponse.data[0].routineF_id}/`,
         routineData
       );
@@ -103,29 +148,41 @@ export const updateRoutineFrequency = async (vaccineId: number, formData: any) =
   }
 };
 
-
-
-
-export const updateVaccineIntervals = async (vaccineId: number, formData: any) => {
+export const updateVaccineIntervals = async (
+  vaccineId: number,
+  formData: any
+) => {
   try {
     console.log("Updating vaccine intervals for:", vaccineId, formData);
 
     const totalDoses = Number(formData.noOfDoses) || 1;
-    const intervals = Array.isArray(formData.intervals) ? formData.intervals : [];
-    const timeUnits = Array.isArray(formData.timeUnits) ? formData.timeUnits : [];
+    const intervals = Array.isArray(formData.intervals)
+      ? formData.intervals
+      : [];
+    const timeUnits = Array.isArray(formData.timeUnits)
+      ? formData.timeUnits
+      : [];
 
     // Get existing intervals
     const existingIntervals = await api2.get(`inventory/vac_intervals/`, {
       params: { vac_id: vaccineId },
     });
-    console.log(`Fetched intervals for vac_id=${vaccineId}:`, existingIntervals.data);
+    console.log(
+      `Fetched intervals for vac_id=${vaccineId}:`,
+      existingIntervals.data
+    );
 
     // Validate intervals belong to the correct vaccine
     const validIntervals = existingIntervals.data.filter(
-      (interval: { vacInt_id: number; vac_id: number }) => interval.vac_id === vaccineId
+      (interval: { vacInt_id: number; vac_id: number }) =>
+        interval.vac_id === vaccineId
     );
     if (validIntervals.length !== existingIntervals.data.length) {
-      console.warn(`Found ${existingIntervals.data.length - validIntervals.length} invalid intervals for vac_id=${vaccineId}`);
+      console.warn(
+        `Found ${
+          existingIntervals.data.length - validIntervals.length
+        } invalid intervals for vac_id=${vaccineId}`
+      );
     }
 
     // Delete all existing intervals
@@ -141,7 +198,8 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
     // Handle first dose interval
     intervalPromises.push(
       api2.post("inventory/vac_intervals/", {
-        interval: formData.ageGroup === "0-5" ? Number(formData.specifyAge) || 0 : 0,
+        interval:
+          formData.ageGroup === "0-5" ? Number(formData.specifyAge) || 0 : 0,
         time_unit: formData.ageGroup === "0-5" ? "months" : "NA",
         dose_number: 1,
         vac_id: vaccineId,

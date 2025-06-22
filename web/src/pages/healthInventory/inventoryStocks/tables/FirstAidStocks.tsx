@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ConfirmationDialog } from "../../../../components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFirstAidStocks } from "../REQUEST/FirstAid/restful-api/FirstAidGetAPI";
@@ -77,7 +77,7 @@ export default function FirstAidStocks() {
     staleTime: 0,
   });
 
-  const formatFirstAidStocksData = React.useCallback((): FirstAidStocksRecord[] => {
+  const formatFirstAidStocksData = useCallback((): FirstAidStocksRecord[] => {
     if (!firstAidStocks) return [];
     return firstAidStocks
       .filter((stock: any) => !stock.inv_detail?.is_Archived)
@@ -99,7 +99,36 @@ export default function FirstAidStocks() {
       }));
   }, [firstAidStocks]);
 
-  const filteredData = React.useMemo(() => {
+  // Auto-archive expired first aid items after 10 days
+  useEffect(() => {
+    if (!firstAidStocks) return;
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    formatFirstAidStocksData().forEach((firstAid) => {
+      if (!firstAid.expiryDate) return;
+
+      const expiryDate = new Date(firstAid.expiryDate);
+      expiryDate.setHours(0, 0, 0, 0);
+
+      const archiveDate = new Date(expiryDate);
+      archiveDate.setDate(expiryDate.getDate() + 10);
+      archiveDate.setHours(0, 0, 0, 0);
+
+      if (now >= archiveDate) {
+        archiveInventory(firstAid.inv_id)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
+          })
+          .catch((error) => {
+            console.error("Auto-archive failed:", error);
+          });
+      }
+    });
+  }, [firstAidStocks, formatFirstAidStocksData, queryClient]);
+
+  const filteredData = useMemo(() => {
     const data = formatFirstAidStocksData();
     
     // First filter by search query

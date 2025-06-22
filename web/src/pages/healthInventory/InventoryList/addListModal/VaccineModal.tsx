@@ -3,19 +3,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
-import { FormSelect } from "@/components/ui/form/form-select";
+import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button/button";
 import {
   VaccineSchema,
   VaccineType,
 } from "@/form-schema/inventory/lists/inventoryListSchema";
-import { ConfirmationDialog } from "@/components/ui/confirmationLayout/ConfirmModal";
+import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { Label } from "@/components/ui/label";
-import { Pill, CircleCheck } from "lucide-react";
+import { Pill, CircleCheck, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSubmitVaccine } from "../queries/Antigen/VaccinePostQueries";
 import { getVaccineList } from "../restful-api/Antigen/VaccineFetchAPI";
 import { toast } from "sonner";
+import { FormSelect } from "@/components/ui/form/form-select";
+import { getAgegroup } from "@/pages/healthServices/agegroup/restful-api/agepostAPI";
 
 const timeUnits = [
   { id: "years", name: "Years" },
@@ -24,26 +26,60 @@ const timeUnits = [
   { id: "days", name: "Days" },
 ];
 
-const ageGroups = [
-  { id: "0-5", name: "0-5 yrs old" },
-  { id: "6-8", name: "6-8 yrs old" },
-  { id: "9-15", name: "9-15 yrs old" },
-  { id: "16-20", name: "16-20 yrs old" },
-  { id: "21+", name: "21+ yrs old" },
-];
-
 const vaccineTypes = [
   { id: "routine", name: "Routine" },
   { id: "primary", name: "Primary Series" },
-  {id: "conditional", name: "Conditional"}
+  { id: "conditional", name: "Conditional" },
 ];
+
+export const fetchAgeGroups = async () => {
+  try {
+    const response = await getAgegroup();
+    const ageGroupData = Array.isArray(response) ? response : [];
+    return {
+      default: ageGroupData,
+      formatted: ageGroupData.map((ageGroup: any) => ({
+        id: `${ageGroup.agegrp_id},${ageGroup.agegroup_name},${ageGroup.min_age},${ageGroup.max_age},${ageGroup.time_unit}`,
+        name: `${ageGroup.agegroup_name} (${ageGroup.min_age}-${ageGroup.max_age} ${ageGroup.time_unit})`,
+        originalData: ageGroup,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching age groups:", error);
+    toast.error("Failed to load age groups");
+    throw error;
+  }
+};
 
 export default function AddVaccinationList() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [formData, setFormData] = useState<VaccineType | null>(null);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
   const { mutateAsync: submitVaccine, isPending: isSubmitting } =
     useSubmitVaccine();
   const navigate = useNavigate();
+
+  const [ageGroups, setAgeGroups] = useState<{
+    default: any[];
+    formatted: { id: string; name: string }[];
+  }>({ default: [], formatted: [] });
+  const [loadingAgeGroups, setLoadingAgeGroups] = useState(false);
+
+  useEffect(() => {
+    const loadAgeGroups = async () => {
+      setLoadingAgeGroups(true);
+      try {
+        const data = await fetchAgeGroups();
+        setAgeGroups(data);
+      } catch (error) {
+        toast.error("Failed to load age groups");
+      } finally {
+        setLoadingAgeGroups(false);
+      }
+    };
+    loadAgeGroups();
+  }, []);
+
   const form = useForm<VaccineType>({
     resolver: zodResolver(VaccineSchema),
     defaultValues: {
@@ -52,7 +88,6 @@ export default function AddVaccinationList() {
       timeUnits: [],
       noOfDoses: 1,
       ageGroup: "",
-      specifyAge: "",
       type: "routine",
       routineFrequency: {
         interval: 1,
@@ -61,13 +96,15 @@ export default function AddVaccinationList() {
     },
   });
 
-  const { watch, setValue, control, handleSubmit, reset } = form;
-  const [type, ageGroup, noOfDoses, specifyAge] = watch([
-    "type",
-    "ageGroup",
-    "noOfDoses",
-    "specifyAge",
-  ]);
+  const {
+    watch,
+    setValue,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = form;
+  const [type, ageGroup, noOfDoses] = watch(["type", "ageGroup", "noOfDoses"]);
 
   useEffect(() => {
     if (noOfDoses < watch("noOfDoses") || type !== watch("type")) {
@@ -76,6 +113,9 @@ export default function AddVaccinationList() {
     }
     if (type === "routine") {
       setValue("noOfDoses", 1);
+    }
+    if (type === "conditional") {
+      setValue("noOfDoses", 0);
     }
   }, [noOfDoses, type, setValue, watch]);
 
@@ -87,83 +127,61 @@ export default function AddVaccinationList() {
     return vaccinelist.some(
       (vac) =>
         vac.vac_name.trim().toLowerCase() ===
-          newVaccinelist.trim().toLowerCase() &&
-        String(vac.age_group) === String(age_group)
+        newVaccinelist.trim().toLowerCase()
     );
   };
 
   const handleFormSubmit = async (data: VaccineType) => {
-    console.log("Form data received:", data); // Debug log
-
+    const age_id = data.ageGroup.split(",")[0];
+    setIsCheckingDuplicate(true);
     try {
-      console.log("Checking for duplicates..."); // Debug log
+      if (!data.ageGroup) {
+        form.setError("ageGroup", {
+          type: "manual",
+          message: "Please select an age group",
+        });
+        return;
+      }
       const existingVaccineList = await getVaccineList();
-      console.log("Existing vaccine list:", existingVaccineList); // Debug log
-
       if (!Array.isArray(existingVaccineList)) {
-        console.error(
-          "Invalid API response - expected array, got:",
-          existingVaccineList
-        );
         throw new Error("Invalid API response - expected an array");
       }
-
       const isDuplicate = isDuplicateVaccineList(
         existingVaccineList,
         data.vaccineName,
-        data.ageGroup
+        age_id
       );
-
-      console.log("Is duplicate:", isDuplicate); // Debug log
-
       if (isDuplicate) {
-        console.log("Duplicate found, setting error"); // Debug log
         form.setError("vaccineName", {
           type: "manual",
-          message: "This vaccine already exists for the selected age group",
+          message: "This vaccine already exists",
         });
         return;
       }
       setFormData(data);
       setIsConfirmOpen(true);
     } catch (error) {
-      console.error("Error checking for duplicates:", error);
       toast.error("Failed to verify vaccine", {
         description:
           error instanceof Error ? error.message : "An unknown error occurred",
       });
+    } finally {
+      setIsCheckingDuplicate(false);
     }
   };
 
   const confirmSubmit = async () => {
     if (!formData) return;
     setIsConfirmOpen(false);
-
-    try {
-      await submitVaccine(formData);
-      reset();
-      navigate("/mainInventoryList");
-
-      toast.success("Vaccine added successfully", {
-        icon: <CircleCheck size={18} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
-    } catch (error) {
-      console.error("Submission error:", error);
-      toast.error("Failed to submit vaccine", {
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred",
-      });
-    }
+    submitVaccine(formData);
+ 
   };
 
   const renderDoseFields = () => {
     if (type === "routine") {
       return (
-        <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
-          <p className="text-sm text-blue-600 mb-2">
-            This vaccine will be repeated at the specified frequency:
-          </p>
+        <div className="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-600">Routine vaccine frequency</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput
               control={control}
@@ -183,35 +201,63 @@ export default function AddVaccinationList() {
       );
     }
 
+    if (type === "conditional") {
+      const selectedAgeGroup = ageGroups.default.find(
+        (group) => group.agegrp_id.toString() === ageGroup.split(",")[0]
+      );
+      return (
+        <div className="space-y-3 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+          <p className="text-sm text-yellow-700">Conditional vaccine details</p>
+          <div className="bg-white p-4 rounded-lg border">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Vaccine Name:</span>
+                <span className="text-sm font-medium">
+                  {watch("vaccineName") || "Not specified"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Age Group:</span>
+                <span className="text-sm font-medium">
+                  {selectedAgeGroup
+                    ? `${selectedAgeGroup.agegroup_name} (${selectedAgeGroup.min_age}-${selectedAgeGroup.max_age} ${selectedAgeGroup.time_unit})`
+                    : "Not selected"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Type:</span>
+                <span className="text-sm font-medium text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
+                  Conditional
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-yellow-800">
+            Note: Administered based on healthcare provider assessment.
+          </p>
+        </div>
+      );
+    }
+
     return Array.from({ length: noOfDoses }).map((_, doseIndex) => {
       const doseNumber = doseIndex + 1;
       const isFirstDose = doseIndex === 0;
-      const showInterval = doseIndex > 0;
-
-      const getDoseLabel = () => {
-        if (isFirstDose) {
-          return ageGroup === "0-5"
-            ? `First dose at ${specifyAge || "specified"} `
-            : `First dose for ${ageGroup}`;
-        }
-
-        const interval = watch(`intervals.${doseIndex - 1}`);
-        const timeUnit = watch(`timeUnits.${doseIndex - 1}`);
-        return interval && timeUnit
-          ? `Dose ${doseNumber} after ${interval} ${timeUnit}`
-          : `Dose ${doseNumber}`;
-      };
-
       return (
-        <div key={doseIndex} className="bg-gray-50 p-2 rounded-md">
-          <div className="flex justify-between items-center">
-            <h4 className="text-sm bg-blue-100 text-darkBlue3 px-2 py-1 rounded bg-snow">
-              {getDoseLabel()}
-            </h4>
-          </div>
-
-          {showInterval && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+        <div
+          key={doseIndex}
+          className="space-y-3 bg-gray-50 p-4 rounded-lg border"
+        >
+          <p className="text-sm font-medium text-gray-700">
+            {isFirstDose
+              ? `First dose for ${
+                  ageGroups.default.find(
+                    (g) => g.agegrp_id.toString() === ageGroup.split(",")[0]
+                  )?.agegroup_name || "selected age group"
+                }`
+              : `Dose ${doseNumber}`}
+          </p>
+          {!isFirstDose && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormInput
                 control={control}
                 name={`intervals.${doseIndex - 1}`}
@@ -233,90 +279,113 @@ export default function AddVaccinationList() {
   };
 
   return (
-    <div className="w-full flex items-center justify-center ">
-      <Form {...form}>
-        <form
-          onSubmit={handleSubmit(handleFormSubmit)}
-          className="bg-white p-4 w-full max-w-[500px] rounded-sm"
-        >
-          <div className="space-y-2 ">
-            <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
-              <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Add Vaccine List
-            </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className=" bg-gray-100 flex items-center justify-center ">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+        <div className="flex items-center justify-center mb-6">
+          <Pill className="h-6 w-6 text-darkBlue2 mr-2" />
+          <h1 className="text-2xl font-semibold text-gray-800 text-darkBlue2">
+            Add Vaccine
+          </h1>
+        </div>
+        <Form {...form}>
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <FormInput
                 control={control}
                 name="vaccineName"
                 label="Vaccine Name"
-                placeholder="Vaccine Name"
+                placeholder="Enter vaccine name"
               />
+              <div>
+                <Label className="text-darkGray ">Age Group</Label>
+                <Combobox
+                  options={ageGroups.formatted}
+                  value={ageGroup}
+                  onChange={(id) => form.setValue("ageGroup", id)}
+                  triggerClassName="w-full mt-2"
+                  placeholder={
+                    loadingAgeGroups ? "Loading..." : "Select age group"
+                  }
+                  emptyMessage={
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">
+                        No age groups found.
+                      </p>
+                      <Link
+                        to="/age-group-management"
+                        className="text-sm text-teal-600 hover:underline"
+                      >
+                        Add New Age Group
+                      </Link>
+                    </div>
+                  }
+                />
+                {errors.ageGroup && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.ageGroup.message}
+                  </p>
+                )}
+              </div>
               <FormSelect
                 control={control}
-                name="ageGroup"
-                label="Age Group"
-                options={ageGroups}
+                name="type"
+                label="Vaccine Type"
+                options={vaccineTypes}
               />
+              {type !== "conditional" && (
+                <FormInput
+                  control={control}
+                  name="noOfDoses"
+                  label="Required Doses"
+                  type="number"
+                  placeholder="e.g., 1"
+                />
+              )}
+              {type === "routine" && (
+                <p className="text-sm text-gray-500">
+                  Routine vaccines require 1 dose.
+                </p>
+              )}
             </div>
-
-            <FormSelect
-              control={control}
-              name="type"
-              label="Vaccine Type"
-              options={vaccineTypes}
-            />
-
-            <FormInput
-              control={control}
-              name="noOfDoses"
-              label="Required Dose/s"
-              type="number"
-            />
-            {type === "routine" && (
-              <p className="text-sm text-muted-foreground">
-                Routine vaccines always have 1 required dose
-              </p>
-            )}
-
-            {type === "primary" && ageGroup === "0-5" && (
-              <FormInput
-                control={control}
-                name="specifyAge"
-                label="Specify Age (months)"
-              />
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-darkBlue1">
-              Dose Schedule
-            </h3>
-            {renderDoseFields()}
-          </div>
-
-          <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Link to="/mainInventoryList">Cancel</Link>
-            </Button>
-
-            <Button
-              type="submit"
-              className="w-full sm:w-auto"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-
-      <ConfirmationDialog
-        isOpen={isConfirmOpen}
-        onOpenChange={setIsConfirmOpen}
-        onConfirm={confirmSubmit}
-        title="Add Vaccine"
-        description={`Are you sure you want to add the vaccine "${formData?.vaccineName}"?`}
-      />
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-700">
+                Dose Schedule
+              </h2>
+              {renderDoseFields()}
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" asChild>
+                <Link to="/mainInventoryList">Cancel</Link>
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || isCheckingDuplicate}
+              >
+                {isCheckingDuplicate ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Checking...
+                  </>
+                ) : isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+        <ConfirmationDialog
+          isOpen={isConfirmOpen}
+          onOpenChange={setIsConfirmOpen}
+          onConfirm={confirmSubmit}
+          title="Confirm Vaccine Addition"
+          description="Are you sure you want to add this vaccine?"
+        />
+      </div>
     </div>
   );
 }

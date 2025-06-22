@@ -1,6 +1,6 @@
 // columns/commodityStocksCol.ts
 import { ColumnDef } from "@tanstack/react-table";
-import { Trash } from "lucide-react";
+import { Archive  } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link } from "react-router";
 import { CommodityStocksRecord } from "../../tables/type";
@@ -27,26 +27,7 @@ export const CommodityStocksColumns = (
       );
     },
   },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const expired = isExpired(row.original.expiryDate);
-      return (
-        <div
-          className={`flex justify-center min-w-[100px] px-2 ${
-            expired ? "text-red-600" : ""
-          }`}
-        >
-          <div
-            className={`text-center w-full ${expired ? "line-through" : ""}`}
-          >
-            {row.original.category}
-          </div>
-        </div>
-      );
-    },
-  },
+  
   {
     accessorKey: "recevFrom",
     header: "Received From",
@@ -54,7 +35,7 @@ export const CommodityStocksColumns = (
       const expired = isExpired(row.original.expiryDate);
       return (
         <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
-          {row.original.recevFrom}
+          {row.original.recevFrom.toUpperCase()}
         </div>
       );
     },
@@ -222,7 +203,7 @@ export const CommodityStocksColumns = (
               setIsArchiveConfirmationOpen(true);
             }}
           >
-            <Trash />
+            <Archive  />
           </Button>
         </div>
       );

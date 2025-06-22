@@ -204,17 +204,7 @@ export default function PatNewFirstaidRecForm() {
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
                   />
-                  {firstAidStocksOptions.length === 0 && (
-                    <div className="text-center py-12 mx-3">
-                      <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                      <h3 className="text-base font-medium text-gray-900 mb-2">
-                        No first aid items available
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        There are currently no first aid items in stock.
-                      </p>
-                    </div>
-                  )}
+                  
                 </div>
               )}
             </div>

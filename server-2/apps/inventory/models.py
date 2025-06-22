@@ -114,7 +114,10 @@ class Inventory(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.inv_id:
-            today = timezone.now()
+            # Ensure expiry_date is provided
+            if not self.expiry_date:
+                raise ValueError("Expiry date is required to generate inv_id")
+            
             # Map inv_type to prefix
             type_prefixes = {
                 'First Aid': 'INVFA',
@@ -123,8 +126,9 @@ class Inventory(models.Model):
                 'Antigen': 'INVANT'
             }
             prefix = type_prefixes.get(self.inv_type, 'INV')
-            # Format: PREFIX + YY + MM
-            full_prefix = f"{prefix}{today.year % 100:02d}{today.month:02d}"
+            
+            # Format: PREFIX + Expiry YY + Expiry MM
+            full_prefix = f"{prefix}{self.expiry_date.year % 100:02d}{self.expiry_date.month:02d}"
             
             # Get the maximum existing ID with this prefix
             max_id = Inventory.objects.filter(
@@ -132,16 +136,17 @@ class Inventory(models.Model):
             ).order_by('-inv_id').first()
             
             if max_id:
+                # Extract the numeric part and increment
                 last_num = int(max_id.inv_id[len(full_prefix):]) + 1
             else:
                 last_num = 1
-                
+            
+            # Generate unique inv_id with auto-increment number
             self.inv_id = f"{full_prefix}{last_num:03d}"
         
         super().save(*args, **kwargs)
     class Meta:
-        db_table = 'inventory'  # Sets the table name explicitlyt
-
+        db_table = 'inventory'
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
     minv_dsg = models.PositiveIntegerField(default=0)
@@ -153,7 +158,7 @@ class MedicineInventory(models.Model):
     minv_distributed = models.PositiveIntegerField(default=0)
     minv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,  db_column='inv_id')
-    med_id = models.ForeignKey('Medicinelist', on_delete=models.CASCADE, db_column='med_id')
+    med_id = models.ForeignKey('Medicinelist', on_delete=models.PROTECT, db_column='med_id')
 
     class Meta: 
         db_table = 'medicine_inventory'
@@ -167,7 +172,7 @@ class MedicineTransactions(models.Model):
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.CASCADE,  db_column='minv_id')
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,  db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
@@ -183,7 +188,7 @@ class CommodityInventory(models.Model):
     cinv_recevFrom = models.CharField(max_length=100,default='OTHERS')
     cinv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE, db_column='inv_id')
-    com_id = models.ForeignKey('CommodityList', on_delete=models.CASCADE,db_column ='com_id')
+    com_id = models.ForeignKey('CommodityList', on_delete=models.PROTECT,db_column ='com_id')
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:
@@ -196,7 +201,7 @@ class CommodityTransaction(models.Model):
     comt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.CASCADE,  db_column='cinv_id')
+    cinv_id = models.ForeignKey('CommodityInventory', on_delete=models.PROTECT,  db_column='cinv_id')
 
     class Meta:
         db_table = 'commodity_transaction'
@@ -212,7 +217,7 @@ class FirstAidInventory(models.Model):
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
     inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id')
-    fa_id = models.ForeignKey(FirstAidList, on_delete=models.CASCADE, db_column='fa_id')
+    fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id')
     # cat_id = models.ForeignKey('Category', on_delete=models.CASCADE)
     
     class Meta:
@@ -226,26 +231,43 @@ class FirstAidTransactions(models.Model):
     fat_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.CASCADE,  db_column='finv_id')
+    finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
 
     class Meta:
         db_table = 'firstaid_transaction'
 
 # VACCINATION MODELS
 
+class Agegroup(models.Model):
+    agegrp_id = models.BigAutoField(primary_key=True)
+    agegroup_name = models.CharField(max_length=100, default="N/A")
+    min_age = models.PositiveIntegerField(default=0)
+    max_age = models.PositiveIntegerField(default=0)
+    time_unit = models.CharField(max_length=100, default="N/A")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'age_group'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._meta.ordering = ['-updated_at'] if 'updated_at' in [field.name for field in self._meta.fields] else ['-created_at']
+        ordering = ['-updated_at'] if 'updated_at' in [field.name for field in Agegroup._meta.fields] else ['-created_at']
+        
 class VaccineList(models.Model):
     vac_id = models.BigAutoField(primary_key=True)
     vac_type_choices = models.CharField(max_length=100)
     vac_name = models.CharField(max_length=255)
     no_of_doses = models.PositiveIntegerField(default=0)
-    age_group = models.CharField(max_length=50)
-    specify_age = models.CharField(max_length=100)
+    # specify_age = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     category =models.CharField(max_length=100, default='Vaccine')
-   
+    ageGroup = models.ForeignKey(Agegroup, on_delete=models.PROTECT, db_column='ageGroup', related_name='vaccines', null=True, blank=True)
     class Meta:
         db_table = 'vaccines'
+        
+    
         
 
 
@@ -253,7 +275,7 @@ class VaccineInterval(models.Model):
     vacInt_id = models.BigAutoField(primary_key=True)
     vac_id = models.ForeignKey(
         'VaccineList', 
-        on_delete=models.CASCADE,  
+        on_delete=models.PROTECT,  
         db_column='vac_id',
         related_name='intervals'
     )
@@ -271,7 +293,7 @@ class RoutineFrequency(models.Model):
     time_unit = models.CharField(max_length=100)
     vac_id = models.OneToOneField(
         'VaccineList', 
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='routine_frequency',
         db_column='vac_id'
 
@@ -282,11 +304,9 @@ class RoutineFrequency(models.Model):
     
 class ConditionalVaccine(models.Model):
     condvac_id = models.BigAutoField(primary_key=True)
-    vac_id = models.ForeignKey('VaccineList', on_delete=models.CASCADE, db_column='vac_id', related_name='conditional_vaccines')
-    vac_conditional = models.CharField(max_length=255, default="N/A")
-    dose_number = models.PositiveIntegerField(default=0)
+    vac_id = models.ForeignKey(VaccineList, on_delete=models.PROTECT, db_column='vac_id', related_name='conditional_vaccines')
     class Meta:
-        db_table = 'conditional_vaccines'    
+        db_table = 'conditional_vaccine'    
           
 class VaccineStock(models.Model):
     vacStck_id =models.BigAutoField(primary_key=True)
@@ -300,26 +320,14 @@ class VaccineStock(models.Model):
     wasted_dose =models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+    # ageGroup = models.ForeignKey(Agegroup, on_delete=models.PROTECT, db_column='ageGroup', related_name='vaccine_stock', null=True, blank=True)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
-    vac_id = models.ForeignKey('VaccineList',on_delete=models.CASCADE,related_name='vaccine_stock',db_column='vac_id')
+    vac_id = models.ForeignKey('VaccineList',on_delete=models.PROTECT,related_name='vaccine_stock',db_column='vac_id')
  
     class Meta:
         db_table = 'vaccine_stocks'
 
         
-class AntigenTransaction(models.Model):
-    antt_id =models.BigAutoField(primary_key=True)
-    antt_qty = models.CharField(max_length=100)
-    antt_action = models.CharField(max_length=100)
-    staff = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)  
-    vacStck_id = models.ForeignKey('VaccineStock', on_delete=models.CASCADE,  db_column='vacStck_id',related_name='antigen_transactions')
-
-
-    class Meta:
-        db_table = 'antigen_transaction'
-
 
 class ImmunizationSupplies(models.Model):
     imz_id = models.BigAutoField(primary_key=True)   
@@ -346,7 +354,7 @@ class ImmunizationStock(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,related_name='immunization_stock',db_column='inv_id')
-    imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.CASCADE ,related_name='immunization_stock',db_column='imz_id')
+    imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.PROTECT ,related_name='immunization_stock',db_column='imz_id')
 
     
     class Meta:
@@ -359,11 +367,24 @@ class ImmunizationTransaction(models.Model):
     imzt_action = models.CharField(max_length=100)
     staff = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)  
-    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.CASCADE, db_column='imzStck_id')
+    imzStck_id = models.ForeignKey('ImmunizationStock', on_delete=models.PROTECT, db_column='imzStck_id')
 
 
     class Meta:
         db_table = 'immunization_transaction'
         
-        
+
+class AntigenTransaction(models.Model):
+    antt_id =models.BigAutoField(primary_key=True)
+    antt_qty = models.CharField(max_length=100)
+    antt_action = models.CharField(max_length=100)
+    staff = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)  
+    vacStck_id = models.ForeignKey(VaccineStock, on_delete=models.PROTECT,  db_column='vacStck_id',related_name='antigen_transactions', null=True, blank=True)
+    imzStck_id = models.ForeignKey(ImmunizationStock, on_delete=models.PROTECT, db_column='imzStck_id',related_name='antigen_transactions' ,null=True, blank=True)
+
+
+    class Meta:
+        db_table = 'antigen_transaction'
+
         
